@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import type { HonoEnv } from "./env";
 import { session } from "./middleware/session";
+import { checkInRouter } from "./modules/check-in";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono<HonoEnv>();
@@ -44,6 +45,7 @@ app.use("*", session);
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
+app.route("/api/check-in", checkInRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {

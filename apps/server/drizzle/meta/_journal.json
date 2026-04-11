@@ -15,6 +15,13 @@
       "when": 1775891190861,
       "tag": "0001_smooth_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775896617626,
+      "tag": "0002_worthless_frightful_four",
+      "breakpoints": true
     }
   ]
 }
