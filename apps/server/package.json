@@ -4,12 +4,33 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "db:generate": "dotenv -e .dev.vars -- drizzle-kit generate",
+    "db:migrate": "dotenv -e .dev.vars -- drizzle-kit migrate",
+    "db:push": "dotenv -e .dev.vars -- drizzle-kit push",
+    "db:studio": "dotenv -e .dev.vars -- drizzle-kit studio",
+    "auth:generate": "dotenv -e .dev.vars -- better-auth generate --config ./auth.config.ts --output ./src/schema/auth.ts -y"
   },
   "dependencies": {
-    "hono": "^4.12.12"
+    "@hono/zod-openapi": "^1.2.4",
+    "@neondatabase/serverless": "^1.0.2",
+    "@scalar/hono-api-reference": "^0.10.7",
+    "better-auth": "^1.6.2",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.12",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@better-auth/cli": "^1.4.21",
+    "@repo/eslint-config": "workspace:^",
+    "@repo/typescript-config": "workspace:^",
+    "@types/node": "^22.15.3",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.39.1",
+    "typescript": "5.9.2",
     "wrangler": "^4.4.0"
   }
 }
