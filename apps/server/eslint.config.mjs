@@ -1,0 +1,14 @@
+import { config } from "@repo/eslint-config/base";
+
+/** @type {import("eslint").Linter.Config[]} */
+export default [
+  ...config,
+  {
+    ignores: [
+      "worker-configuration.d.ts",
+      ".wrangler/**",
+      "drizzle/**",
+      "node_modules/**",
+    ],
+  },
+];

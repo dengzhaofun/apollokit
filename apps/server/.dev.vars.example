@@ -1,0 +1,6 @@
+# Copy to .dev.vars and fill in real values. .dev.vars is gitignored.
+# Used by `wrangler dev` and (via dotenv-cli) by drizzle-kit scripts.
+
+DATABASE_URL="postgresql://user:password@ep-example.us-east-2.aws.neon.tech/neondb?sslmode=require"
+BETTER_AUTH_SECRET="replace-me-with-a-32-byte-random-string"
+BETTER_AUTH_URL="http://localhost:8787"
