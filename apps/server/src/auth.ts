@@ -1,8 +1,11 @@
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { organization } from "better-auth/plugins";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "./db";
+import { member } from "./schema";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
@@ -10,5 +13,36 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   emailAndPassword: {
     enabled: true,
+  },
+  plugins: [
+    organization({
+      creatorRole: "owner",
+      // MVP: single user creates multiple projects. No invitation UI, no
+      // email service wired yet — sendInvitationEmail is intentionally
+      // omitted so /api/auth/organization/invite-member will error loudly
+      // if the frontend ever tries to call it before we're ready.
+    }),
+  ],
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          // Auto-select the user's earliest organization as the active one
+          // on sign-in so the frontend doesn't have to call setActive.
+          const [first] = await db
+            .select({ organizationId: member.organizationId })
+            .from(member)
+            .where(eq(member.userId, session.userId))
+            .orderBy(asc(member.createdAt))
+            .limit(1);
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: first?.organizationId ?? null,
+            },
+          };
+        },
+      },
+    },
   },
 });

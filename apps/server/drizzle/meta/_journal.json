@@ -8,6 +8,13 @@
       "when": 1775889215809,
       "tag": "0000_jazzy_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775891190861,
+      "tag": "0001_smooth_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }
