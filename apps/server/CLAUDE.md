@@ -52,6 +52,13 @@ never be confused in code, schema, or API payloads:
 Never pass `c.var.user.id` into a business service as an end user id.
 Never name an end user column `user_id`.
 
+> **Why `endUserId` and not something prettier?** The awkwardness is
+> load-bearing. We considered `gameUserId` (too narrow — apollokit is a
+> generic SaaS toolkit, not a gaming platform), `tenantUserId` (the
+> tenant *is* the org, not a user), and `appUserId` (too close to
+> `userId`, defeats the point). The mildly weird name is a deliberate
+> speed-bump so nobody types `userId = c.var.user.id` on autopilot.
+
 ## Service layer purity
 
 `service.ts` **must not import**:
@@ -216,6 +223,60 @@ and resolve `organizationId` from the API key instead of the session.
    configured in `.dev.vars`.
 5. Commit both the schema and the generated migration file together.
 
+## Testing
+
+Vitest runs in plain Node, **not** under `@cloudflare/vitest-pool-workers`.
+Our code only touches Web Standards APIs (`fetch`, `crypto`, `Intl`,
+`neon-http`) and Better Auth, all of which behave identically in Node and
+workerd. Pool-workers adds real startup cost for marginal fidelity gain —
+we'll revisit when we actually bind KV / DO / R2 / AI.
+
+**The `cloudflare:workers` shim.** `src/db.ts` and `src/auth.ts` import
+`env` from the wrangler-only virtual module `cloudflare:workers`.
+`vitest.config.ts` aliases that specifier to
+`src/testing/cloudflare-workers-shim.ts`, which exposes `env` as lazy
+getters over `process.env`. `src/testing/setup.ts` loads `.dev.vars` into
+`process.env` (via `dotenv`, `override: false` so CI secrets always win)
+before any test module is imported.
+
+Tests hit the **real Neon dev branch** in `.dev.vars`. We do not mock
+the database — the `neon-http` upsert pattern documented in the
+`neon-http` section above depends on real Postgres `ON CONFLICT … DO
+UPDATE … WHERE` semantics, and mocks would hide exactly the concurrency
+bugs the pattern exists to catch.
+
+**Two layers of tests, different entry points:**
+
+1. **Service-layer** (`modules/<name>/service.test.ts`) — the main event.
+   Instantiates the service factory directly with the real `db`
+   singleton. Bypasses Hono, Better Auth, and cookies entirely. Covers
+   all business logic: streaks, cycles, targets, idempotency, timezone
+   edge cases, typed errors. Use `svc.checkIn({ ..., now })` style
+   clock injection to test cross-day behavior in-process.
+
+2. **Route-layer** (`modules/<name>/routes.test.ts`) — thin. Exercises
+   only the HTTP edges: `requireAuth` 401, path prefix, Zod validation
+   → 400, `ModuleError` → router `onError` status mapping, one happy
+   path end-to-end. Drives `app.request("/api/auth/sign-up/email", …)`
+   and `/api/auth/organization/create` in-process to get a real session
+   cookie — no curl, no wrangler.
+
+**Test data isolation via cascade.** `src/testing/fixtures.ts` exposes
+`createTestOrg(label)` / `deleteTestOrg(id)`. Each test file seeds its
+own `organization` row with a random id in `beforeAll` and deletes it
+in `afterAll`. ON DELETE CASCADE on every module FK (`check_in_configs`,
+`check_in_user_states`, future `points_*`, `task_*`, …) sweeps the rest.
+**Fixtures are the only place that touches `organization` directly** —
+tests never seed module tables via raw SQL.
+
+`vitest.config.ts` sets `fileParallelism: false` so two test files can't
+seed overlapping orgs into the same Neon branch. Tests within a single
+file run serially by default.
+
+**Scripts:** `pnpm --filter=server test` (one-shot), `pnpm --filter=server
+test:watch` (interactive). No `turbo` task yet — only `apps/server` has
+tests.
+
 ## Don'ts
 
 - Don't import `hono` or `@hono/zod-openapi` from `service.ts` or `time.ts`.
@@ -227,3 +288,6 @@ and resolve `organizationId` from the API key instead of the session.
 - Don't add a new dep to a service factory by fishing it in as an
   import — add it to `AppDeps` and extend the factory's `Pick`.
 - Don't mount `requireAuth` globally.
+- Don't mock the database in tests — use `createTestOrg` + cascade.
+- Don't seed module tables directly in test setup — go through the
+  service factory or fixtures, never raw inserts into `check_in_*`.

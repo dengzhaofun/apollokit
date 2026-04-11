@@ -1,0 +1,296 @@
+/**
+ * Service-layer tests for check-in.
+ *
+ * These talk to the real Neon dev branch configured in `.dev.vars` —
+ * no mocks. The `createCheckInService` factory is invoked directly with
+ * the real `db` singleton, bypassing HTTP and Better Auth entirely. A
+ * single test org is seeded in `beforeAll` and deleted in `afterAll`;
+ * ON DELETE CASCADE sweeps up every config and user_state row.
+ *
+ * All test-specific aliases must be unique within this file because
+ * they share the single test org.
+ */
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+
+import { db } from "../../db";
+import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
+import { createCheckInService } from "./service";
+
+describe("check-in service", () => {
+  const svc = createCheckInService({ db });
+  let orgId: string;
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("check-in-svc");
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  test("first check-in, none mode, no target", async () => {
+    await svc.createConfig(orgId, {
+      name: "None No-Target",
+      alias: "none-nt",
+      resetMode: "none",
+      timezone: "Asia/Shanghai",
+    });
+    const r = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "none-nt",
+      endUserId: "u-none-nt",
+    });
+    expect(r.alreadyCheckedIn).toBe(false);
+    expect(r.justCompleted).toBe(false);
+    expect(r.state.totalDays).toBe(1);
+    expect(r.state.currentStreak).toBe(1);
+    expect(r.state.longestStreak).toBe(1);
+    expect(r.state.currentCycleKey).toBe("all");
+    expect(r.state.currentCycleDays).toBe(1);
+    expect(r.target).toBeNull();
+    expect(r.isCompleted).toBe(false);
+    expect(r.remaining).toBeNull();
+    expect(r.state.firstCheckInAt).toBeInstanceOf(Date);
+    expect(r.state.lastCheckInAt).toBeInstanceOf(Date);
+  });
+
+  test("repeat check-in same day is idempotent", async () => {
+    await svc.createConfig(orgId, {
+      name: "Idempotent",
+      alias: "idem",
+      resetMode: "none",
+      timezone: "Asia/Shanghai",
+    });
+    const a = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "idem",
+      endUserId: "u-idem",
+    });
+    const b = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "idem",
+      endUserId: "u-idem",
+    });
+    expect(a.alreadyCheckedIn).toBe(false);
+    expect(b.alreadyCheckedIn).toBe(true);
+    expect(b.justCompleted).toBe(false);
+    expect(b.state.totalDays).toBe(a.state.totalDays);
+    expect(b.state.currentStreak).toBe(a.state.currentStreak);
+    // firstCheckInAt should be preserved across the "already" path.
+    expect(b.state.firstCheckInAt?.toISOString()).toBe(
+      a.state.firstCheckInAt?.toISOString(),
+    );
+  });
+
+  test("target=1 flips justCompleted on first check-in, false on repeat", async () => {
+    await svc.createConfig(orgId, {
+      name: "Instant",
+      alias: "instant",
+      resetMode: "none",
+      target: 1,
+      timezone: "Asia/Shanghai",
+    });
+    const a = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "instant",
+      endUserId: "u-instant",
+    });
+    expect(a.justCompleted).toBe(true);
+    expect(a.isCompleted).toBe(true);
+    expect(a.remaining).toBe(0);
+
+    const b = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "instant",
+      endUserId: "u-instant",
+    });
+    expect(b.alreadyCheckedIn).toBe(true);
+    expect(b.justCompleted).toBe(false);
+    expect(b.isCompleted).toBe(true);
+    expect(b.remaining).toBe(0);
+  });
+
+  test("week mode populates cycleKey and remaining reflects target", async () => {
+    await svc.createConfig(orgId, {
+      name: "Weekly",
+      alias: "weekly",
+      resetMode: "week",
+      target: 5,
+      timezone: "Asia/Shanghai",
+    });
+    const r = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "weekly",
+      endUserId: "u-weekly",
+    });
+    expect(r.state.currentCycleKey).toMatch(/^\d{4}-\d{2}$/);
+    expect(r.target).toBe(5);
+    expect(r.isCompleted).toBe(false);
+    expect(r.remaining).toBe(4);
+  });
+
+  test("createConfig rejects target above week limit", async () => {
+    await expect(
+      svc.createConfig(orgId, {
+        name: "Bad",
+        alias: "bad-week",
+        resetMode: "week",
+        target: 8,
+        timezone: "Asia/Shanghai",
+      }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("createConfig rejects zero target", async () => {
+    await expect(
+      svc.createConfig(orgId, {
+        name: "Bad",
+        alias: "bad-zero",
+        resetMode: "none",
+        target: 0,
+        timezone: "Asia/Shanghai",
+      }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("alias collision surfaces typed error", async () => {
+    await svc.createConfig(orgId, {
+      name: "First",
+      alias: "dup-alias",
+      resetMode: "none",
+      timezone: "Asia/Shanghai",
+    });
+    await expect(
+      svc.createConfig(orgId, {
+        name: "Second",
+        alias: "dup-alias",
+        resetMode: "none",
+        timezone: "Asia/Shanghai",
+      }),
+    ).rejects.toMatchObject({ code: "check_in.alias_conflict" });
+  });
+
+  test("deleteConfig cascades user_states", async () => {
+    const cfg = await svc.createConfig(orgId, {
+      name: "To Delete",
+      alias: "to-delete",
+      resetMode: "none",
+      timezone: "Asia/Shanghai",
+    });
+    await svc.checkIn({
+      organizationId: orgId,
+      configKey: "to-delete",
+      endUserId: "u-del",
+    });
+    await svc.deleteConfig(orgId, cfg.id);
+    await expect(
+      svc.getConfig(orgId, "to-delete"),
+    ).rejects.toMatchObject({ code: "check_in.config_not_found" });
+    // Probing the cascade explicitly: the user state row referenced the
+    // deleted config via FK cascade, so any lookup via the (now-missing)
+    // config key should surface config-not-found, not a stale state.
+    await expect(
+      svc.getUserState({
+        organizationId: orgId,
+        configKey: cfg.id,
+        endUserId: "u-del",
+      }),
+    ).rejects.toMatchObject({ code: "check_in.config_not_found" });
+  });
+
+  test("consecutive days across natural-day boundaries increment streak", async () => {
+    await svc.createConfig(orgId, {
+      name: "Streak",
+      alias: "streak",
+      resetMode: "none",
+      timezone: "Asia/Shanghai",
+    });
+    const userId = "u-streak";
+    // 10:00 local on three separate days (Shanghai = UTC+8). Noon keeps
+    // us safely away from midnight edge cases in timezone conversion.
+    const day1 = new Date("2026-04-10T02:00:00Z"); // 10:00 Shanghai
+    const day2 = new Date("2026-04-11T02:00:00Z");
+    const day3 = new Date("2026-04-12T02:00:00Z");
+    const day5 = new Date("2026-04-14T02:00:00Z"); // skip day 4
+
+    const r1 = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "streak",
+      endUserId: userId,
+      now: day1,
+    });
+    expect(r1.state.currentStreak).toBe(1);
+
+    const r2 = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "streak",
+      endUserId: userId,
+      now: day2,
+    });
+    expect(r2.state.currentStreak).toBe(2);
+    expect(r2.state.totalDays).toBe(2);
+
+    const r3 = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "streak",
+      endUserId: userId,
+      now: day3,
+    });
+    expect(r3.state.currentStreak).toBe(3);
+    expect(r3.state.longestStreak).toBe(3);
+
+    const r5 = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "streak",
+      endUserId: userId,
+      now: day5,
+    });
+    // Gap of one day → streak resets to 1, longest preserves the peak.
+    expect(r5.state.currentStreak).toBe(1);
+    expect(r5.state.longestStreak).toBe(3);
+    expect(r5.state.totalDays).toBe(4);
+  });
+
+  test("getUserState returns synthetic zero state for unknown user", async () => {
+    await svc.createConfig(orgId, {
+      name: "Empty",
+      alias: "empty",
+      resetMode: "none",
+      target: 3,
+      timezone: "Asia/Shanghai",
+    });
+    const view = await svc.getUserState({
+      organizationId: orgId,
+      configKey: "empty",
+      endUserId: "nobody",
+    });
+    expect(view.state.totalDays).toBe(0);
+    expect(view.state.currentStreak).toBe(0);
+    expect(view.state.lastCheckInDate).toBeNull();
+    expect(view.target).toBe(3);
+    expect(view.isCompleted).toBe(false);
+    expect(view.remaining).toBe(3);
+  });
+
+  test("updateConfig rejects changing target above resetMode limit", async () => {
+    const cfg = await svc.createConfig(orgId, {
+      name: "PatchTarget",
+      alias: "patch-target",
+      resetMode: "month",
+      timezone: "Asia/Shanghai",
+    });
+    await expect(
+      svc.updateConfig(orgId, cfg.id, { target: 32 }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("listConfigs is scoped to organization", async () => {
+    const rows = await svc.listConfigs(orgId);
+    // Every config we created above should be visible and all rows must
+    // belong to the current test org.
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.organizationId).toBe(orgId);
+    }
+  });
+});
