@@ -6,6 +6,7 @@
 import { neon } from "@neondatabase/serverless";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { organization } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/neon-http";
 
 import * as schema from "./src/schema";
@@ -20,4 +21,5 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  plugins: [organization()],
 });
