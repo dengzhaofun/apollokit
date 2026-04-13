@@ -13,10 +13,11 @@
  */
 
 import { deps } from "../../deps";
+import { itemService } from "../item";
 import { createCheckInService } from "./service";
 
 export { createCheckInService };
 export type { CheckInService } from "./service";
-export const checkInService = createCheckInService(deps);
+export const checkInService = createCheckInService(deps, itemService);
 export { checkInRouter } from "./routes";
 export { checkInClientRouter } from "./client-routes";

@@ -6,6 +6,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import { organization } from "./auth";
@@ -28,7 +29,7 @@ import { organization } from "./auth";
 export const clientCredentials = pgTable(
   "client_credentials",
   {
-    id: text("id")
+    id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     organizationId: text("organization_id")

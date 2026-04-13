@@ -11,8 +11,10 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
+import type { ItemEntry } from "../modules/item/types";
 import { organization } from "./auth";
 
 /**
@@ -34,7 +36,7 @@ import { organization } from "./auth";
 export const checkInConfigs = pgTable(
   "check_in_configs",
   {
-    id: text("id")
+    id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     organizationId: text("organization_id")
@@ -78,7 +80,7 @@ export const checkInConfigs = pgTable(
 export const checkInUserStates = pgTable(
   "check_in_user_states",
   {
-    configId: text("config_id")
+    configId: uuid("config_id")
       .notNull()
       .references(() => checkInConfigs.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
@@ -110,5 +112,46 @@ export const checkInUserStates = pgTable(
       table.configId,
       table.lastCheckInDate,
     ),
+  ],
+);
+
+/**
+ * Check-in rewards — per-day reward configuration for a check-in config.
+ *
+ * `day_number` (1-based) maps to the day in the current streak/cycle.
+ * For example, day_number=1 is the first day of consecutive check-in.
+ *
+ * `reward_items` is a jsonb array of `{definitionId: string, quantity: number}`
+ * referencing item_definitions. When a user checks in and their
+ * currentCycleDays matches a day_number, the corresponding rewards are
+ * granted via itemService.grantItems().
+ *
+ * If no reward row exists for a given day, no reward is granted (silent).
+ */
+export const checkInRewards = pgTable(
+  "check_in_rewards",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    configId: uuid("config_id")
+      .notNull()
+      .references(() => checkInConfigs.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id").notNull(),
+    dayNumber: integer("day_number").notNull(),
+    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("check_in_rewards_config_day_uidx").on(
+      table.configId,
+      table.dayNumber,
+    ),
+    index("check_in_rewards_config_idx").on(table.configId),
   ],
 );

@@ -244,6 +244,11 @@ export const CheckInUserStateViewSchema = z
   })
   .openapi("CheckInUserStateView");
 
+const RewardItemSchema = z.object({
+  definitionId: z.string(),
+  quantity: z.number().int().positive(),
+});
+
 export const CheckInResultSchema = z
   .object({
     alreadyCheckedIn: z.boolean(),
@@ -252,8 +257,67 @@ export const CheckInResultSchema = z
     target: z.number().int().nullable(),
     isCompleted: z.boolean(),
     remaining: z.number().int().nullable(),
+    rewards: z.array(RewardItemSchema).nullable().optional(),
   })
   .openapi("CheckInResult");
+
+// ─── Reward schemas ─────────────────────────────────────────────
+
+export const CreateRewardSchema = z
+  .object({
+    dayNumber: z.number().int().positive().openapi({
+      description: "Which day in the sequence (1-based).",
+      example: 1,
+    }),
+    rewardItems: z.array(RewardItemSchema).min(1).openapi({
+      description: "Items to grant on this day.",
+    }),
+    metadata: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional(),
+  })
+  .openapi("CheckInCreateReward");
+
+export const UpdateRewardSchema = z
+  .object({
+    dayNumber: z.number().int().positive().optional(),
+    rewardItems: z.array(RewardItemSchema).min(1).optional(),
+    metadata: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional(),
+  })
+  .openapi("CheckInUpdateReward");
+
+export const RewardIdParamSchema = z.object({
+  rewardId: z
+    .string()
+    .min(1)
+    .openapi({
+      param: { name: "rewardId", in: "path" },
+      description: "Reward id.",
+    }),
+});
+
+export const CheckInRewardResponseSchema = z
+  .object({
+    id: z.string(),
+    configId: z.string(),
+    organizationId: z.string(),
+    dayNumber: z.number().int(),
+    rewardItems: z.array(RewardItemSchema),
+    metadata: z.record(z.string(), z.unknown()).nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .openapi("CheckInReward");
+
+export const RewardListResponseSchema = z
+  .object({
+    items: z.array(CheckInRewardResponseSchema),
+  })
+  .openapi("CheckInRewardList");
 
 export const ErrorResponseSchema = z
   .object({

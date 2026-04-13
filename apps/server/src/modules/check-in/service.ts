@@ -52,7 +52,12 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
-import { checkInConfigs, checkInUserStates } from "../../schema/check-in";
+import {
+  checkInConfigs,
+  checkInRewards,
+  checkInUserStates,
+} from "../../schema/check-in";
+import type { ItemService } from "../item/service";
 import {
   CheckInAliasConflict,
   CheckInConfigInactive,
@@ -108,7 +113,7 @@ function computeCompletion(
   return { isCompleted: currentCycleDays >= target, remaining };
 }
 
-export function createCheckInService(d: CheckInDeps) {
+export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
   const { db } = d;
 
   async function loadConfigByKey(
@@ -471,6 +476,37 @@ export function createCheckInService(d: CheckInDeps) {
       const justCompleted =
         !prevCompletion.isCompleted && nextCompletion.isCompleted;
 
+      // Grant daily reward if itemSvc is available
+      let rewards: Array<{ definitionId: string; quantity: number }> | null =
+        null;
+      if (itemSvc) {
+        const rewardRows = await db
+          .select()
+          .from(checkInRewards)
+          .where(
+            and(
+              eq(checkInRewards.configId, config.id),
+              eq(checkInRewards.dayNumber, nextCycleDays),
+            ),
+          )
+          .limit(1);
+
+        const reward = rewardRows[0];
+        if (reward) {
+          const items = reward.rewardItems;
+          if (items.length > 0) {
+            await itemSvc.grantItems({
+              organizationId: params.organizationId,
+              endUserId: params.endUserId,
+              grants: items,
+              source: "check_in_reward",
+              sourceId: `${config.id}:${today}`,
+            });
+            rewards = items;
+          }
+        }
+      }
+
       return {
         alreadyCheckedIn: false,
         justCompleted,
@@ -478,7 +514,111 @@ export function createCheckInService(d: CheckInDeps) {
         target: config.target,
         isCompleted: nextCompletion.isCompleted,
         remaining: nextCompletion.remaining,
+        rewards,
       };
+    },
+
+    // ─── Reward CRUD ──────────────────────────────────────────
+
+    async createReward(
+      organizationId: string,
+      configKey: string,
+      input: {
+        dayNumber: number;
+        rewardItems: Array<{ definitionId: string; quantity: number }>;
+        metadata?: Record<string, unknown> | null;
+      },
+    ) {
+      const config = await loadConfigByKey(organizationId, configKey);
+      if (input.dayNumber < 1) {
+        throw new CheckInInvalidInput("dayNumber must be >= 1");
+      }
+      const [row] = await db
+        .insert(checkInRewards)
+        .values({
+          configId: config.id,
+          organizationId,
+          dayNumber: input.dayNumber,
+          rewardItems: input.rewardItems,
+          metadata: input.metadata ?? null,
+        })
+        .returning();
+      if (!row) throw new Error("insert returned no row");
+      return row;
+    },
+
+    async updateReward(
+      organizationId: string,
+      rewardId: string,
+      patch: {
+        dayNumber?: number;
+        rewardItems?: Array<{ definitionId: string; quantity: number }>;
+        metadata?: Record<string, unknown> | null;
+      },
+    ) {
+      const updateValues: Partial<typeof checkInRewards.$inferInsert> = {};
+      if (patch.dayNumber !== undefined) {
+        if (patch.dayNumber < 1) {
+          throw new CheckInInvalidInput("dayNumber must be >= 1");
+        }
+        updateValues.dayNumber = patch.dayNumber;
+      }
+      if (patch.rewardItems !== undefined)
+        updateValues.rewardItems = patch.rewardItems;
+      if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
+
+      if (Object.keys(updateValues).length === 0) {
+        const rows = await db
+          .select()
+          .from(checkInRewards)
+          .where(
+            and(
+              eq(checkInRewards.id, rewardId),
+              eq(checkInRewards.organizationId, organizationId),
+            ),
+          )
+          .limit(1);
+        if (!rows[0]) throw new CheckInConfigNotFound(rewardId);
+        return rows[0];
+      }
+
+      const [row] = await db
+        .update(checkInRewards)
+        .set(updateValues)
+        .where(
+          and(
+            eq(checkInRewards.id, rewardId),
+            eq(checkInRewards.organizationId, organizationId),
+          ),
+        )
+        .returning();
+      if (!row) throw new CheckInConfigNotFound(rewardId);
+      return row;
+    },
+
+    async deleteReward(
+      organizationId: string,
+      rewardId: string,
+    ): Promise<void> {
+      const deleted = await db
+        .delete(checkInRewards)
+        .where(
+          and(
+            eq(checkInRewards.id, rewardId),
+            eq(checkInRewards.organizationId, organizationId),
+          ),
+        )
+        .returning({ id: checkInRewards.id });
+      if (deleted.length === 0) throw new CheckInConfigNotFound(rewardId);
+    },
+
+    async listRewards(organizationId: string, configKey: string) {
+      const config = await loadConfigByKey(organizationId, configKey);
+      return db
+        .select()
+        .from(checkInRewards)
+        .where(eq(checkInRewards.configId, config.id))
+        .orderBy(checkInRewards.dayNumber);
     },
   };
 }
