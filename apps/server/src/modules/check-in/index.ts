@@ -19,3 +19,4 @@ export { createCheckInService };
 export type { CheckInService } from "./service";
 export const checkInService = createCheckInService(deps);
 export { checkInRouter } from "./routes";
+export { checkInClientRouter } from "./client-routes";

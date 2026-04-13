@@ -5,28 +5,19 @@
  * Zod-validated inputs into service calls and maps typed errors onto HTTP
  * responses. No business logic lives here.
  *
- * Every route is guarded by `requireAuth` — unauthenticated requests get
- * 401, and sessions without an active organization get 400. Downstream
- * handlers can safely read `c.var.user.id` and
- * `c.var.session.activeOrganizationId` without null checks.
+ * Every route is guarded by `requireAdminOrApiKey` — accepts either a
+ * valid Better Auth session or an admin API key (ak_). Downstream handlers
+ * can safely read `c.var.session!.activeOrganizationId!` without null checks.
  *
- * Error handling: handlers throw `ModuleError` subclasses; a router-level
- * `onError` maps them onto JSON responses with the right status code.
- * This is cleaner than returning c.json(..., err.httpStatus) per handler,
- * because @hono/zod-openapi requires every `c.json` status literal to
- * match a specific declared response type — a runtime-typed status won't
- * narrow.
- *
- * No public (tenant-frontend) routes yet. When we add them they'll mount
- * under a different base path with API-key / JWT auth and reuse the same
- * `checkInService` singleton.
+ * C-end (client) routes live in `client-routes.ts` under a separate base
+ * path with client credential + HMAC auth.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
-import { requireAuth } from "../../middleware/require-auth";
+import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { checkInService } from "./index";
 import {
@@ -137,7 +128,7 @@ const errorResponses = {
 
 export const checkInRouter = new OpenAPIHono<HonoEnv>();
 
-checkInRouter.use("*", requireAuth);
+checkInRouter.use("*", requireAdminOrApiKey);
 
 checkInRouter.onError((err, c) => {
   if (err instanceof ModuleError) {

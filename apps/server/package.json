@@ -16,6 +16,7 @@
     "auth:generate": "dotenv -e .dev.vars -- better-auth generate --config ./auth.config.ts --output ./src/schema/auth.ts -y"
   },
   "dependencies": {
+    "@better-auth/api-key": "^1.6.2",
     "@hono/zod-openapi": "^1.2.4",
     "@neondatabase/serverless": "^1.0.2",
     "@scalar/hono-api-reference": "^0.10.7",

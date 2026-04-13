@@ -7,5 +7,6 @@ export const session = createMiddleware<HonoEnv>(async (c, next) => {
   const data = await auth.api.getSession({ headers: c.req.raw.headers });
   c.set("user", data?.user ?? null);
   c.set("session", data?.session ?? null);
+  c.set("authMethod", data?.user ? "session" : null);
   await next();
 });

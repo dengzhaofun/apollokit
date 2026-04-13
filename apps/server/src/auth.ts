@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -18,11 +19,14 @@ export const auth = betterAuth({
   plugins: [
     organization({
       creatorRole: "owner",
-      // MVP: single user creates multiple projects. No invitation UI, no
-      // email service wired yet — sendInvitationEmail is intentionally
-      // omitted so /api/auth/organization/invite-member will error loudly
-      // if the frontend ever tries to call it before we're ready.
     }),
+    apiKey([
+      {
+        configId: "admin",
+        defaultPrefix: "ak_",
+        references: "organization",
+      },
+    ]),
   ],
   databaseHooks: {
     session: {
