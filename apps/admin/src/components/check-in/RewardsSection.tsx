@@ -29,6 +29,7 @@ import {
   useUpdateCheckInReward,
   useDeleteCheckInReward,
 } from "#/hooks/use-check-in-rewards"
+import { useItemDefinitions } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
 import type { CheckInReward } from "#/lib/types/check-in-reward"
 
@@ -38,9 +39,14 @@ interface RewardsSectionProps {
 
 export function RewardsSection({ configKey }: RewardsSectionProps) {
   const { data: rewards, isPending } = useCheckInRewards(configKey)
+  const { data: definitions } = useItemDefinitions()
   const createMutation = useCreateCheckInReward()
   const updateMutation = useUpdateCheckInReward()
   const deleteMutation = useDeleteCheckInReward()
+
+  const defNameMap = new Map(
+    (definitions ?? []).map((d) => [d.id, d.name]),
+  )
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editingReward, setEditingReward] = useState<CheckInReward | null>(null)
@@ -109,9 +115,11 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
                   <span key={i}>
                     {i > 0 && ", "}
                     {item.quantity}x{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                      {item.definitionId.slice(0, 8)}...
-                    </code>
+                    {defNameMap.get(item.definitionId) ?? (
+                      <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                        {item.definitionId.slice(0, 8)}...
+                      </code>
+                    )}
                   </span>
                 ))}
               </div>
