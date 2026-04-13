@@ -1,0 +1,15 @@
+{
+  "name": "@repo/sdk-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "tsx scripts/extract-openapi.ts",
+    "split": "tsx scripts/split-spec.ts",
+    "openapi": "tsx scripts/extract-openapi.ts && tsx scripts/split-spec.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "5.9.2"
+  }
+}

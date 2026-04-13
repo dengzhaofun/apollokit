@@ -1,0 +1,24 @@
+{
+  "name": "@apollokit/client",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "generate": "openapi-ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.9.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.70.0",
+    "@repo/sdk-core": "workspace:*",
+    "typescript": "5.9.2"
+  }
+}

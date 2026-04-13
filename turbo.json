@@ -21,6 +21,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "generate": {
+      "inputs": ["openapi-ts.config.ts", "../sdk-core/specs/**"],
+      "outputs": ["src/generated/**"]
     }
   }
 }

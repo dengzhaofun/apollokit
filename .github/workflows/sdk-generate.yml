@@ -1,0 +1,80 @@
+name: SDK Generate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/server/src/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    name: Regenerate SDKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Fetch the OpenAPI spec from the deployed production server.
+      # No local server startup needed — no DB credentials required.
+      - name: Extract & split OpenAPI spec
+        env:
+          API_URL: ${{ vars.API_URL || 'https://api.apollokit.com' }}
+        run: |
+          cd packages/sdk-core
+          pnpm exec tsx scripts/extract-openapi.ts --url "$API_URL"
+          pnpm exec tsx scripts/split-spec.ts
+
+      - name: Generate Client SDK
+        working-directory: packages/sdk-client-ts
+        run: pnpm exec openapi-ts
+
+      - name: Generate Admin SDK
+        working-directory: packages/sdk-admin-ts
+        run: pnpm exec openapi-ts
+
+      - name: Type check SDKs
+        run: |
+          cd packages/sdk-client-ts && pnpm exec tsc --noEmit
+          cd ../sdk-admin-ts && pnpm exec tsc --noEmit
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet packages/sdk-core/specs/ packages/sdk-client-ts/src/generated/ packages/sdk-admin-ts/src/generated/ || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: regenerate SDKs from OpenAPI spec"
+          title: "chore: regenerate SDKs from OpenAPI spec"
+          body: |
+            Automated SDK regeneration triggered by server code changes.
+
+            This PR updates the generated SDK code in:
+            - `packages/sdk-core/specs/` (OpenAPI specs)
+            - `packages/sdk-client-ts/src/generated/` (Client SDK)
+            - `packages/sdk-admin-ts/src/generated/` (Admin SDK)
+
+            Review the type changes and merge when ready.
+          branch: chore/regenerate-sdks
+          delete-branch: true
+          labels: sdk,automated
