@@ -3,6 +3,7 @@
 // env via `cloudflare:workers`, which doesn't resolve in Node. This file
 // mirrors the same config shape but reads from process.env so the CLI can
 // introspect the schema. Loaded by `dotenv -e .dev.vars` in package.json.
+import { apiKey } from "@better-auth/api-key";
 import { neon } from "@neondatabase/serverless";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -21,5 +22,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [organization()],
+  plugins: [
+    organization(),
+    apiKey([
+      {
+        configId: "admin",
+        defaultPrefix: "ak_",
+        references: "organization",
+      },
+    ]),
+  ],
 });

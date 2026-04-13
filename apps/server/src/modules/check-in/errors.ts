@@ -4,21 +4,9 @@
  * Service methods throw these instead of returning `{ error }` objects or
  * raising plain `Error`s. The HTTP layer (routes.ts) maps `ModuleError`
  * instances onto JSON responses via `respondError()`.
- *
- * `ModuleError` is intentionally local to this module for now. When the
- * second business module arrives we'll hoist it to
- * `apps/server/src/lib/errors.ts` and share — YAGNI until then.
  */
-export class ModuleError extends Error {
-  constructor(
-    public readonly code: string,
-    public readonly httpStatus: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ModuleError";
-  }
-}
+export { ModuleError } from "../../lib/errors";
+import { ModuleError } from "../../lib/errors";
 
 export class CheckInConfigNotFound extends ModuleError {
   constructor(key: string) {

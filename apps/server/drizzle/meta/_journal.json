@@ -22,6 +22,20 @@
       "when": 1775896617626,
       "tag": "0002_worthless_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776058614166,
+      "tag": "0003_parched_sumo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776058984144,
+      "tag": "0004_vengeful_cannonball",
+      "breakpoints": true
     }
   ]
 }

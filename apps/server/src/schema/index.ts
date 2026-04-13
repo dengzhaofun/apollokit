@@ -3,3 +3,4 @@
 // re-export them here so drizzle picks them up.
 export * from "./auth";
 export * from "./check-in";
+export * from "./client-credential";

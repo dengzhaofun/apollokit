@@ -1,3 +1,5 @@
+import { env } from "cloudflare:workers";
+
 import { db } from "./db";
 
 /**
@@ -12,6 +14,7 @@ import { db } from "./db";
  */
 export type AppDeps = {
   db: typeof db;
+  appSecret: string;
   // redis: typeof redis;
   // logger: typeof logger;
   // events: typeof events;
@@ -25,4 +28,5 @@ export type AppDeps = {
  */
 export const deps: AppDeps = {
   db,
+  appSecret: env.BETTER_AUTH_SECRET,
 };

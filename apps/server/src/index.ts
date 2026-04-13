@@ -9,7 +9,10 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import type { HonoEnv } from "./env";
 import { session } from "./middleware/session";
-import { checkInRouter } from "./modules/check-in";
+import { checkInRouter, checkInClientRouter } from "./modules/check-in";
+import {
+  clientCredentialRouter,
+} from "./modules/client-credentials";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono<HonoEnv>();
@@ -45,7 +48,13 @@ app.use("*", session);
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
+
+// Admin routes — session or admin API key
 app.route("/api/check-in", checkInRouter);
+app.route("/api/client-credentials", clientCredentialRouter);
+
+// C-end client routes — client credential + HMAC
+app.route("/api/client/check-in", checkInClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {
