@@ -18,19 +18,25 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import type { ItemEntry } from "../item/types";
 import { ModuleError } from "./errors";
 import { checkInService } from "./index";
 import {
   CheckInBodySchema,
   CheckInConfigResponseSchema,
   CheckInResultSchema,
+  CheckInRewardResponseSchema,
   CheckInUserStateViewSchema,
   ConfigIdParamSchema,
   ConfigKeyParamSchema,
   ConfigListResponseSchema,
   CreateConfigSchema,
+  CreateRewardSchema,
   ErrorResponseSchema,
+  RewardIdParamSchema,
+  RewardListResponseSchema,
   UpdateConfigSchema,
+  UpdateRewardSchema,
   UserStateListResponseSchema,
   UserStateParamSchema,
 } from "./validators";
@@ -344,6 +350,7 @@ checkInRouter.openapi(
         target: result.target,
         isCompleted: result.isCompleted,
         remaining: result.remaining,
+        rewards: result.rewards ?? null,
       },
       200,
     );
@@ -385,5 +392,145 @@ checkInRouter.openapi(
       },
       200,
     );
+  },
+);
+
+// ─── Reward routes ────────────────────────────────────────────────
+
+const TAG_REWARD = "Check-In Rewards";
+
+function serializeReward(row: {
+  id: string;
+  configId: string;
+  organizationId: string;
+  dayNumber: number;
+  rewardItems: ItemEntry[];
+  metadata: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return {
+    id: row.id,
+    configId: row.configId,
+    organizationId: row.organizationId,
+    dayNumber: row.dayNumber,
+    rewardItems: row.rewardItems,
+    metadata: (row.metadata ?? null) as Record<string, unknown> | null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+// POST /check-in/configs/:key/rewards
+checkInRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/configs/{key}/rewards",
+    tags: [TAG_REWARD],
+    summary: "Create a daily reward for a check-in config",
+    request: {
+      params: ConfigKeyParamSchema,
+      body: {
+        content: { "application/json": { schema: CreateRewardSchema } },
+      },
+    },
+    responses: {
+      201: {
+        description: "Created",
+        content: {
+          "application/json": { schema: CheckInRewardResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await checkInService.createReward(orgId, key, body);
+    return c.json(serializeReward(row), 201);
+  },
+);
+
+// GET /check-in/configs/:key/rewards
+checkInRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/configs/{key}/rewards",
+    tags: [TAG_REWARD],
+    summary: "List daily rewards for a check-in config",
+    request: { params: ConfigKeyParamSchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: RewardListResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const rows = await checkInService.listRewards(orgId, key);
+    return c.json({ items: rows.map(serializeReward) }, 200);
+  },
+);
+
+// PATCH /check-in/rewards/:rewardId
+checkInRouter.openapi(
+  createRoute({
+    method: "patch",
+    path: "/rewards/{rewardId}",
+    tags: [TAG_REWARD],
+    summary: "Update a check-in reward",
+    request: {
+      params: RewardIdParamSchema,
+      body: {
+        content: { "application/json": { schema: UpdateRewardSchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: CheckInRewardResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { rewardId } = c.req.valid("param");
+    const row = await checkInService.updateReward(
+      orgId,
+      rewardId,
+      c.req.valid("json"),
+    );
+    return c.json(serializeReward(row), 200);
+  },
+);
+
+// DELETE /check-in/rewards/:rewardId
+checkInRouter.openapi(
+  createRoute({
+    method: "delete",
+    path: "/rewards/{rewardId}",
+    tags: [TAG_REWARD],
+    summary: "Delete a check-in reward",
+    request: { params: RewardIdParamSchema },
+    responses: {
+      204: { description: "Deleted" },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { rewardId } = c.req.valid("param");
+    await checkInService.deleteReward(orgId, rewardId);
+    return c.body(null, 204);
   },
 );

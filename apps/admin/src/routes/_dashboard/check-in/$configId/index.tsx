@@ -12,6 +12,7 @@ import { Badge } from "#/components/ui/badge"
 import { ConfigForm } from "#/components/check-in/ConfigForm"
 import { DeleteConfigDialog } from "#/components/check-in/DeleteConfigDialog"
 import { UserStatesTable } from "#/components/check-in/UserStatesTable"
+import { RewardsSection } from "#/components/check-in/RewardsSection"
 import {
   useCheckInConfig,
   useCheckInUserStates,
@@ -219,6 +220,9 @@ function CheckInDetailPage() {
               </Link>
             </Button>
           )}
+
+          {/* Rewards */}
+          {!editing && <RewardsSection configKey={configId} />}
 
           {/* User States (read-only) */}
           <div className="space-y-3">

@@ -9,6 +9,15 @@
   "observability": {
     "enabled": true
   },
+  // Workaround: @better-auth/api-key imports @better-auth/core/utils/* sub-paths
+  // via the wildcard export pattern ("./utils/*"), which wrangler's esbuild doesn't resolve.
+  // Use relative paths so esbuild treats them as file paths, not package specifiers.
+  "alias": {
+    "@better-auth/core/utils/id": "./node_modules/@better-auth/core/dist/utils/id.mjs",
+    "@better-auth/core/utils/json": "./node_modules/@better-auth/core/dist/utils/json.mjs",
+    "@better-auth/core/utils/ip": "./node_modules/@better-auth/core/dist/utils/ip.mjs",
+    "@better-auth/core/utils/error-codes": "./node_modules/@better-auth/core/dist/utils/error-codes.mjs"
+  },
   // Secrets used by the worker (configured via .dev.vars in dev, `wrangler secret put` in prod):
   //   DATABASE_URL          — Neon Postgres connection string
   //   BETTER_AUTH_SECRET    — random 32+ byte string for cookie signing

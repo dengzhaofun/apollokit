@@ -1,4 +1,8 @@
-import type { checkInConfigs, checkInUserStates } from "../../schema/check-in";
+import type {
+  checkInConfigs,
+  checkInRewards,
+  checkInUserStates,
+} from "../../schema/check-in";
 
 export const RESET_MODES = ["none", "week", "month"] as const;
 export type ResetMode = (typeof RESET_MODES)[number];
@@ -15,6 +19,7 @@ export type ResetMode = (typeof RESET_MODES)[number];
  */
 export type CheckInConfig = typeof checkInConfigs.$inferSelect;
 export type CheckInUserState = typeof checkInUserStates.$inferSelect;
+export type CheckInReward = typeof checkInRewards.$inferSelect;
 
 export type CheckInResult = {
   alreadyCheckedIn: boolean;
@@ -23,6 +28,7 @@ export type CheckInResult = {
   target: number | null;
   isCompleted: boolean;
   remaining: number | null;
+  rewards?: Array<{ definitionId: string; quantity: number }> | null;
 };
 
 export type CheckInUserStateView = {

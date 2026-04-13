@@ -1,0 +1,243 @@
+import { useState } from "react"
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { format } from "date-fns"
+import { Pencil, ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
+
+import { SidebarTrigger } from "#/components/ui/sidebar"
+import { Separator } from "#/components/ui/separator"
+import { Button } from "#/components/ui/button"
+import { Badge } from "#/components/ui/badge"
+import { OptionForm } from "#/components/exchange/OptionForm"
+import { ExchangeDeleteDialog } from "#/components/exchange/DeleteDialog"
+import { ExecutePanel } from "#/components/exchange/ExecutePanel"
+import {
+  useExchangeOptions,
+  useUpdateExchangeOption,
+  useDeleteExchangeOption,
+} from "#/hooks/use-exchange"
+import { ApiError } from "#/lib/api-client"
+
+export const Route = createFileRoute(
+  "/_dashboard/exchange/$configId/options/$optionId/",
+)({
+  component: OptionDetailPage,
+})
+
+function OptionDetailPage() {
+  const { configId, optionId } = Route.useParams()
+  const navigate = useNavigate()
+  const [editing, setEditing] = useState(false)
+
+  const { data: options, isPending, error } = useExchangeOptions(configId)
+  const option = options?.find((o) => o.id === optionId)
+  const updateMutation = useUpdateExchangeOption()
+  const deleteMutation = useDeleteExchangeOption()
+
+  if (isPending) {
+    return (
+      <>
+        <Header title="Loading..." />
+        <main className="flex h-40 items-center justify-center text-muted-foreground">
+          Loading...
+        </main>
+      </>
+    )
+  }
+
+  if (error || !option) {
+    return (
+      <>
+        <Header title="Error" />
+        <main className="flex h-40 items-center justify-center text-destructive">
+          {error?.message ?? "Option not found"}
+        </main>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Header title={option.name} />
+
+      <main className="flex-1 p-6">
+        <div className="mx-auto max-w-2xl space-y-6">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/exchange/$configId" params={{ configId }}>
+                <ArrowLeft className="size-4" />
+                Back
+              </Link>
+            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(!editing)}
+              >
+                <Pencil className="size-4" />
+                {editing ? "Cancel" : "Edit"}
+              </Button>
+              <ExchangeDeleteDialog
+                name={option.name}
+                description="This will permanently delete this exchange option. This action cannot be undone."
+                isPending={deleteMutation.isPending}
+                onConfirm={async () => {
+                  try {
+                    await deleteMutation.mutateAsync(option.id)
+                    toast.success("Option deleted")
+                    navigate({
+                      to: "/exchange/$configId",
+                      params: { configId },
+                    })
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : "Failed to delete option",
+                    )
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {editing ? (
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <OptionForm
+                defaultValues={{
+                  name: option.name,
+                  description: option.description,
+                  costItems: option.costItems,
+                  rewardItems: option.rewardItems,
+                  userLimit: option.userLimit,
+                  globalLimit: option.globalLimit,
+                  sortOrder: option.sortOrder,
+                  isActive: option.isActive,
+                }}
+                submitLabel="Save Changes"
+                isPending={updateMutation.isPending}
+                onSubmit={async (values) => {
+                  try {
+                    await updateMutation.mutateAsync({
+                      optionId: option.id,
+                      ...values,
+                    })
+                    toast.success("Option updated")
+                    setEditing(false)
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : "Failed to update option",
+                    )
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <DetailItem label="Name" value={option.name} />
+                <DetailItem
+                  label="Status"
+                  value={
+                    <Badge variant={option.isActive ? "default" : "outline"}>
+                      {option.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  }
+                />
+                <DetailItem
+                  label="Cost Items"
+                  value={
+                    <ItemList items={option.costItems} />
+                  }
+                />
+                <DetailItem
+                  label="Reward Items"
+                  value={
+                    <ItemList items={option.rewardItems} />
+                  }
+                />
+                <DetailItem
+                  label="User Limit"
+                  value={option.userLimit ?? "Unlimited"}
+                />
+                <DetailItem
+                  label="Global Limit"
+                  value={
+                    option.globalLimit != null
+                      ? `${option.globalCount} / ${option.globalLimit}`
+                      : `${option.globalCount} (unlimited)`
+                  }
+                />
+                <DetailItem label="Sort Order" value={option.sortOrder} />
+                <DetailItem
+                  label="Created"
+                  value={format(new Date(option.createdAt), "yyyy-MM-dd HH:mm")}
+                />
+                {option.description && (
+                  <div className="sm:col-span-2">
+                    <DetailItem label="Description" value={option.description} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Execute Test */}
+          {!editing && (
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-semibold">Execute Test</h3>
+              <ExecutePanel optionId={optionId} />
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  )
+}
+
+function Header({ title }: { title: string }) {
+  return (
+    <header className="flex h-14 items-center gap-2 border-b px-4">
+      <SidebarTrigger />
+      <Separator orientation="vertical" className="mx-2 h-4" />
+      <h1 className="text-sm font-semibold">{title}</h1>
+    </header>
+  )
+}
+
+function DetailItem({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="text-sm">{value}</div>
+    </div>
+  )
+}
+
+function ItemList({
+  items,
+}: {
+  items: { definitionId: string; quantity: number }[]
+}) {
+  return (
+    <ul className="space-y-1">
+      {items.map((item, i) => (
+        <li key={i} className="text-xs">
+          {item.quantity}x{" "}
+          <code className="rounded bg-muted px-1 py-0.5">
+            {item.definitionId.slice(0, 8)}...
+          </code>
+        </li>
+      ))}
+    </ul>
+  )
+}

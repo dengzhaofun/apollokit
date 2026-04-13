@@ -1,0 +1,86 @@
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { Plus } from "lucide-react"
+
+import { SidebarTrigger } from "#/components/ui/sidebar"
+import { Separator } from "#/components/ui/separator"
+import { Button } from "#/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
+import { CategoryTable } from "#/components/item/CategoryTable"
+import { DefinitionTable } from "#/components/item/DefinitionTable"
+import { useItemCategories, useItemDefinitions } from "#/hooks/use-item"
+
+export const Route = createFileRoute("/_dashboard/item/")({
+  component: ItemListPage,
+})
+
+function ItemListPage() {
+  const { data: categories, isPending: catPending, error: catError } = useItemCategories()
+  const { data: definitions, isPending: defPending, error: defError } = useItemDefinitions()
+
+  return (
+    <>
+      <header className="flex h-14 items-center gap-2 border-b px-4">
+        <SidebarTrigger />
+        <Separator orientation="vertical" className="mx-2 h-4" />
+        <h1 className="text-sm font-semibold">Items</h1>
+      </header>
+
+      <main className="flex-1 p-6">
+        <Tabs defaultValue="definitions">
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="definitions">Definitions</TabsTrigger>
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+            </TabsList>
+            <div className="flex gap-2">
+              <Button asChild size="sm">
+                <Link to="/item/definitions/create">
+                  <Plus className="size-4" />
+                  New Definition
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/item/categories/create">
+                  <Plus className="size-4" />
+                  New Category
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <TabsContent value="definitions" className="mt-4">
+            {defPending ? (
+              <div className="flex h-40 items-center justify-center text-muted-foreground">
+                Loading...
+              </div>
+            ) : defError ? (
+              <div className="flex h-40 items-center justify-center text-destructive">
+                Failed to load definitions: {defError.message}
+              </div>
+            ) : (
+              <div className="rounded-xl border bg-card shadow-sm">
+                <DefinitionTable data={definitions ?? []} />
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="categories" className="mt-4">
+            {catPending ? (
+              <div className="flex h-40 items-center justify-center text-muted-foreground">
+                Loading...
+              </div>
+            ) : catError ? (
+              <div className="flex h-40 items-center justify-center text-destructive">
+                Failed to load categories: {catError.message}
+              </div>
+            ) : (
+              <div className="rounded-xl border bg-card shadow-sm">
+                <CategoryTable data={categories ?? []} />
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+    </>
+  )
+}

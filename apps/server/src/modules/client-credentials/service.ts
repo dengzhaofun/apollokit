@@ -84,26 +84,33 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
     },
 
     async get(orgId: string, id: string) {
-      const [row] = await db
-        .select({
-          id: clientCredentials.id,
-          organizationId: clientCredentials.organizationId,
-          name: clientCredentials.name,
-          publishableKey: clientCredentials.publishableKey,
-          devMode: clientCredentials.devMode,
-          enabled: clientCredentials.enabled,
-          expiresAt: clientCredentials.expiresAt,
-          metadata: clientCredentials.metadata,
-          createdAt: clientCredentials.createdAt,
-          updatedAt: clientCredentials.updatedAt,
-        })
-        .from(clientCredentials)
-        .where(
-          and(
-            eq(clientCredentials.id, id),
-            eq(clientCredentials.organizationId, orgId),
-          ),
-        );
+      let row;
+      try {
+        [row] = await db
+          .select({
+            id: clientCredentials.id,
+            organizationId: clientCredentials.organizationId,
+            name: clientCredentials.name,
+            publishableKey: clientCredentials.publishableKey,
+            devMode: clientCredentials.devMode,
+            enabled: clientCredentials.enabled,
+            expiresAt: clientCredentials.expiresAt,
+            metadata: clientCredentials.metadata,
+            createdAt: clientCredentials.createdAt,
+            updatedAt: clientCredentials.updatedAt,
+          })
+          .from(clientCredentials)
+          .where(
+            and(
+              eq(clientCredentials.id, id),
+              eq(clientCredentials.organizationId, orgId),
+            ),
+          );
+      } catch (err) {
+        // id column is uuid — invalid format triggers Postgres 22P02
+        if (isInvalidUuid(err)) throw new CredentialNotFound(id);
+        throw err;
+      }
       if (!row) throw new CredentialNotFound(id);
       return row;
     },
@@ -234,3 +241,12 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
 export type ClientCredentialService = ReturnType<
   typeof createClientCredentialService
 >;
+
+function isInvalidUuid(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { cause?: { code?: unknown } };
+  if (e.cause && typeof e.cause === "object" && e.cause.code === "22P02")
+    return true;
+  const msg = (err as { message?: unknown }).message;
+  return typeof msg === "string" && msg.includes("22P02");
+}
