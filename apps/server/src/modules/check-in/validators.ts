@@ -268,3 +268,9 @@ export const ConfigListResponseSchema = z
     items: z.array(CheckInConfigResponseSchema),
   })
   .openapi("CheckInConfigList");
+
+export const UserStateListResponseSchema = z
+  .object({
+    items: z.array(CheckInUserStateSchema),
+  })
+  .openapi("CheckInUserStateList");
