@@ -2,14 +2,40 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 @import "@daveyplate/better-auth-ui/css";
 
 @custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
 
+/* fumadocs 代码块在浅色模式下也是深色背景，强制使用 dark shiki 配色 */
+.shiki:not(.not-fumadocs-codeblock *) code span {
+  color: var(--shiki-dark, var(--shiki-light)) !important;
+  font-style: var(--shiki-dark-font-style, var(--shiki-light-font-style)) !important;
+}
+
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Override @tailwindcss/typography prose colors in dark mode to use fumadocs variables */
+:is(.dark *):where(.prose) {
+  --tw-prose-body: var(--color-fd-foreground);
+  --tw-prose-headings: var(--color-fd-foreground);
+  --tw-prose-lead: var(--color-fd-muted-foreground);
+  --tw-prose-links: var(--color-fd-primary);
+  --tw-prose-bold: var(--color-fd-foreground);
+  --tw-prose-counters: var(--color-fd-muted-foreground);
+  --tw-prose-bullets: var(--color-fd-muted-foreground);
+  --tw-prose-hr: var(--color-fd-border);
+  --tw-prose-quotes: var(--color-fd-foreground);
+  --tw-prose-quote-borders: var(--color-fd-border);
+  --tw-prose-captions: var(--color-fd-muted-foreground);
+  --tw-prose-th-borders: var(--color-fd-border);
+  --tw-prose-td-borders: var(--color-fd-border);
+  --tw-prose-code: var(--color-fd-foreground);
 }
 
 :root {
@@ -66,7 +92,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-:root[data-theme="dark"] {
+:root.dark {
   --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
@@ -107,7 +133,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not(.light) {
     --sea-ink: #d7ece8;
     --sea-ink-soft: #afcdc8;
     --lagoon: #60d7cf;

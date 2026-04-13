@@ -1,0 +1,171 @@
+---
+title: 兑换系统
+description: 积分/物品兑换、用户与全局限额、幂等执行
+---
+
+兑换模块管理物品之间的交换关系，支持用户维度和全局维度的执行限额。
+
+## 核心概念
+
+### 兑换配置 (ExchangeConfig)
+
+兑换配置是一组兑换选项的容器（如"春节兑换活动"）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | 配置名称 |
+| `alias` | string? | 组织内唯一别名 |
+| `isActive` | boolean | 是否启用 |
+| `metadata` | object? | 自定义扩展数据 |
+
+### 兑换选项 (ExchangeOption)
+
+每个选项定义一次兑换的"花费"和"获得"：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | 选项名称 |
+| `costItems` | array | 花费物品 `[{definitionId, quantity}]` |
+| `rewardItems` | array | 获得物品 `[{definitionId, quantity}]` |
+| `userLimit` | number? | 单用户执行上限（`null` = 不限） |
+| `globalLimit` | number? | 全局执行上限（`null` = 不限） |
+| `globalCount` | number | 当前全局已执行次数（只读） |
+| `sortOrder` | number | 排序权重 |
+| `isActive` | boolean | 是否启用 |
+
+### 用户兑换状态 (ExchangeUserState)
+
+追踪每个用户对每个选项的执行次数：
+
+| 字段 | 说明 |
+|------|------|
+| `optionId` | 兑换选项 ID |
+| `endUserId` | 终端用户 ID |
+| `count` | 已执行次数 |
+
+---
+
+## 管理端 API
+
+### 兑换配置 CRUD
+
+```http
+POST   /api/exchange/configs                # 创建配置
+GET    /api/exchange/configs                # 列出配置
+GET    /api/exchange/configs/{key}          # 按 UUID 或 alias 查询
+PATCH  /api/exchange/configs/{id}           # 更新配置
+DELETE /api/exchange/configs/{id}           # 删除配置
+```
+
+### 兑换选项 CRUD
+
+```http
+POST   /api/exchange/configs/{configKey}/options          # 创建选项
+GET    /api/exchange/configs/{configKey}/options          # 列出选项
+PATCH  /api/exchange/options/{optionId}                   # 更新选项
+DELETE /api/exchange/options/{optionId}                   # 删除选项
+```
+
+创建选项示例：
+
+```json
+{
+  "name": "100 金币兑换 10 宝石",
+  "costItems": [
+    { "definitionId": "gold-uuid", "quantity": 100 }
+  ],
+  "rewardItems": [
+    { "definitionId": "gem-uuid", "quantity": 10 }
+  ],
+  "userLimit": 5,
+  "globalLimit": 1000,
+  "sortOrder": 1,
+  "isActive": true
+}
+```
+
+### 管理端执行兑换
+
+```http
+POST /api/exchange/options/{optionId}/execute
+Content-Type: application/json
+
+{
+  "endUserId": "user-42",
+  "idempotencyKey": "unique-request-id"
+}
+```
+
+### 查询用户兑换状态
+
+```http
+GET /api/exchange/options/{optionId}/users/{endUserId}/state
+```
+
+---
+
+## 客户端 API
+
+### 执行兑换
+
+```http
+POST /api/client/exchange/execute
+x-api-key: cpk_...
+Content-Type: application/json
+
+{
+  "optionId": "option-uuid",
+  "endUserId": "user-42",
+  "userHash": "hmac_hex_string",
+  "idempotencyKey": "unique-request-id"
+}
+```
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "exchangeId": "uuid",
+  "optionId": "option-uuid",
+  "costItems": [
+    { "definitionId": "gold-uuid", "quantity": 100 }
+  ],
+  "rewardItems": [
+    { "definitionId": "gem-uuid", "quantity": 10 }
+  ]
+}
+```
+
+---
+
+## 执行流程
+
+```
+1. 客户端调用执行兑换 API
+2. 服务端校验：
+   ├─ 用户执行次数 < userLimit?
+   ├─ 全局执行次数 < globalLimit?
+   └─ 用户背包中 costItems 数量足够？
+3. 校验通过后原子执行：
+   ├─ 扣除 costItems（通过物品模块 deductItems）
+   ├─ 发放 rewardItems（通过物品模块 grantItems）
+   ├─ 递增用户执行计数
+   └─ 递增全局执行计数
+4. 返回兑换结果
+```
+
+### 限额错误
+
+当触及限额时返回 `LIMIT_EXCEEDED`：
+
+```json
+{
+  "error": "User exchange limit exceeded",
+  "code": "LIMIT_EXCEEDED"
+}
+```
+
+### 幂等性
+
+传入 `idempotencyKey` 可防止重复执行。相同 key 的重复请求将返回之前的结果而非再次执行。

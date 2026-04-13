@@ -40,3 +40,6 @@ yarn-error.log*
 # Cloudflare
 .dev.vars
 .wrangler
+
+# Fumadocs MDX (auto-generated)
+.source
