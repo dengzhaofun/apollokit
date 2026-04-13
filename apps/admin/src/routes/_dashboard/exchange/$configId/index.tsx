@@ -1,57 +1,38 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
-import { Pencil, ArrowLeft, Play } from "lucide-react"
+import { Pencil, ArrowLeft, Plus } from "lucide-react"
 import { toast } from "sonner"
-import { Link } from "@tanstack/react-router"
 
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
-import { ConfigForm } from "#/components/check-in/ConfigForm"
-import { DeleteConfigDialog } from "#/components/check-in/DeleteConfigDialog"
-import { UserStatesTable } from "#/components/check-in/UserStatesTable"
-import { RewardsSection } from "#/components/check-in/RewardsSection"
+import { ExchangeConfigForm } from "#/components/exchange/ConfigForm"
+import { ExchangeDeleteDialog } from "#/components/exchange/DeleteDialog"
+import { OptionTable } from "#/components/exchange/OptionTable"
 import {
-  useCheckInConfig,
-  useCheckInUserStates,
-  useUpdateCheckInConfig,
-  useDeleteCheckInConfig,
-} from "#/hooks/use-check-in"
+  useExchangeConfig,
+  useUpdateExchangeConfig,
+  useDeleteExchangeConfig,
+  useExchangeOptions,
+} from "#/hooks/use-exchange"
 import { ApiError } from "#/lib/api-client"
 
-
-const RESET_MODE_LABEL: Record<string, string> = {
-  none: "None (cumulative)",
-  week: "Weekly",
-  month: "Monthly",
-}
-
-const WEEK_DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-]
-
-export const Route = createFileRoute("/_dashboard/check-in/$configId/")({
-  component: CheckInDetailPage,
+export const Route = createFileRoute("/_dashboard/exchange/$configId/")({
+  component: ExchangeConfigDetailPage,
 })
 
-function CheckInDetailPage() {
+function ExchangeConfigDetailPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
 
-  const { data: config, isPending, error } = useCheckInConfig(configId)
-  const { data: userStates, isPending: userStatesPending } =
-    useCheckInUserStates(configId)
-  const updateMutation = useUpdateCheckInConfig()
-  const deleteMutation = useDeleteCheckInConfig()
+  const { data: config, isPending, error } = useExchangeConfig(configId)
+  const { data: options, isPending: optionsPending } =
+    useExchangeOptions(configId)
+  const updateMutation = useUpdateExchangeConfig()
+  const deleteMutation = useDeleteExchangeConfig()
 
   if (isPending) {
     return (
@@ -81,10 +62,9 @@ function CheckInDetailPage() {
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl space-y-6">
-          {/* Actions */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/check-in">
+              <Link to="/exchange">
                 <ArrowLeft className="size-4" />
                 Back
               </Link>
@@ -98,20 +78,21 @@ function CheckInDetailPage() {
                 <Pencil className="size-4" />
                 {editing ? "Cancel" : "Edit"}
               </Button>
-              <DeleteConfigDialog
-                configName={config.name}
+              <ExchangeDeleteDialog
+                name={config.name}
+                description="This will permanently delete this exchange config and all its options. This action cannot be undone."
                 isPending={deleteMutation.isPending}
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success("Config deleted")
-                    navigate({ to: "/check-in" })
+                    navigate({ to: "/exchange" })
                   } catch (err) {
-                    if (err instanceof ApiError) {
-                      toast.error(err.body.error)
-                    } else {
-                      toast.error("Failed to delete config")
-                    }
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : "Failed to delete config",
+                    )
                   }
                 }}
               />
@@ -120,30 +101,29 @@ function CheckInDetailPage() {
 
           {editing ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <ConfigForm
+              <ExchangeConfigForm
                 defaultValues={{
                   name: config.name,
                   alias: config.alias,
                   description: config.description,
-                  resetMode: config.resetMode,
-                  weekStartsOn: config.weekStartsOn,
-                  target: config.target,
-                  timezone: config.timezone,
                   isActive: config.isActive,
                 }}
                 submitLabel="Save Changes"
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
-                    await updateMutation.mutateAsync({ id: config.id, ...values })
+                    await updateMutation.mutateAsync({
+                      id: config.id,
+                      ...values,
+                    })
                     toast.success("Config updated")
                     setEditing(false)
                   } catch (err) {
-                    if (err instanceof ApiError) {
-                      toast.error(err.body.error)
-                    } else {
-                      toast.error("Failed to update config")
-                    }
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : "Failed to update config",
+                    )
                   }
                 }}
               />
@@ -164,25 +144,6 @@ function CheckInDetailPage() {
                     )
                   }
                 />
-                <DetailItem
-                  label="Reset Mode"
-                  value={
-                    <Badge variant="secondary">
-                      {RESET_MODE_LABEL[config.resetMode] ?? config.resetMode}
-                    </Badge>
-                  }
-                />
-                {config.resetMode === "week" && (
-                  <DetailItem
-                    label="Week Starts On"
-                    value={WEEK_DAY_LABELS[config.weekStartsOn] ?? config.weekStartsOn}
-                  />
-                )}
-                <DetailItem
-                  label="Target"
-                  value={config.target != null ? `${config.target} days` : "—"}
-                />
-                <DetailItem label="Timezone" value={config.timezone} />
                 <DetailItem
                   label="Status"
                   value={
@@ -208,32 +169,27 @@ function CheckInDetailPage() {
             </div>
           )}
 
-          {/* Preview link */}
-          {!editing && (
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                to="/check-in/$configId/preview"
-                params={{ configId }}
-              >
-                <Play className="size-4" />
-                Preview &amp; Test
-              </Link>
-            </Button>
-          )}
-
-          {/* Rewards */}
-          {!editing && <RewardsSection configKey={configId} />}
-
-          {/* User States (read-only) */}
+          {/* Options */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Check-in Users</h3>
-            {userStatesPending ? (
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Exchange Options</h3>
+              <Button asChild size="sm">
+                <Link
+                  to="/exchange/$configId/options/create"
+                  params={{ configId }}
+                >
+                  <Plus className="size-4" />
+                  New Option
+                </Link>
+              </Button>
+            </div>
+            {optionsPending ? (
               <div className="flex h-24 items-center justify-center text-muted-foreground">
                 Loading...
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">
-                <UserStatesTable data={userStates ?? []} />
+                <OptionTable data={options ?? []} />
               </div>
             )}
           </div>

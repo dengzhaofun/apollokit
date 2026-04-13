@@ -39,6 +39,7 @@ export interface CheckInResult {
   target: number | null
   isCompleted: boolean
   remaining: number | null
+  rewards: { definitionId: string; quantity: number }[] | null
 }
 
 export interface CheckInUserStateView {
