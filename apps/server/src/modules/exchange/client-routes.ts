@@ -19,6 +19,8 @@ import {
   ExchangeResultSchema,
 } from "./validators";
 
+const TAG = "Exchange (Client)";
+
 const errorResponses = {
   400: {
     description: "Bad request",
