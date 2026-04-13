@@ -1,0 +1,788 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "apollokit Client API",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8787",
+      "description": "Dev"
+    }
+  ],
+  "paths": {
+    "/api/client/check-in/check-ins": {
+      "post": {
+        "tags": [
+          "Check-In (Client)"
+        ],
+        "summary": "Perform a check-in for an end user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCheckInRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/check-in/users/{endUserId}/state": {
+      "get": {
+        "tags": [
+          "Check-In (Client)"
+        ],
+        "summary": "Get an end user's check-in state",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The end user's business id."
+            },
+            "required": true,
+            "description": "The end user's business id.",
+            "name": "endUserId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Config id or alias."
+            },
+            "required": true,
+            "description": "Config id or alias.",
+            "name": "configKey",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInUserStateView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckInErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/item/users/{endUserId}/inventory": {
+      "get": {
+        "tags": [
+          "Item (Client)"
+        ],
+        "summary": "Get an end user's inventory",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The end user's business id."
+            },
+            "required": true,
+            "description": "The end user's business id.",
+            "name": "endUserId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filter by definition ID."
+            },
+            "required": false,
+            "description": "Filter by definition ID.",
+            "name": "definitionId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemInventoryList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/item/users/{endUserId}/balance/{key}": {
+      "get": {
+        "tags": [
+          "Item (Client)"
+        ],
+        "summary": "Get an end user's balance for a specific item",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The end user's business id."
+            },
+            "required": true,
+            "description": "The end user's business id.",
+            "name": "endUserId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Definition id or alias."
+            },
+            "required": true,
+            "description": "Definition id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/exchange/execute": {
+      "post": {
+        "tags": [
+          "Exchange (Client)"
+        ],
+        "summary": "Execute an exchange for an end user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientExchangeExecuteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClientCheckInRequest": {
+        "type": "object",
+        "properties": {
+          "configKey": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Config id or alias.",
+            "example": "daily"
+          },
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id.",
+            "example": "user-42"
+          },
+          "userHash": {
+            "type": "string",
+            "description": "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled."
+          }
+        },
+        "required": [
+          "configKey",
+          "endUserId"
+        ]
+      },
+      "CheckInResult": {
+        "type": "object",
+        "properties": {
+          "alreadyCheckedIn": {
+            "type": "boolean"
+          },
+          "justCompleted": {
+            "type": "boolean"
+          },
+          "state": {
+            "$ref": "#/components/schemas/CheckInUserState"
+          },
+          "target": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "remaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rewards": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          }
+        },
+        "required": [
+          "alreadyCheckedIn",
+          "justCompleted",
+          "state",
+          "target",
+          "isCompleted",
+          "remaining"
+        ]
+      },
+      "CheckInErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "CheckInUserStateView": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/CheckInUserState"
+          },
+          "target": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "remaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "target",
+          "isCompleted",
+          "remaining"
+        ]
+      },
+      "ItemInventoryList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemInventoryView"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ItemErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "ItemBalance": {
+        "type": "object",
+        "properties": {
+          "definitionId": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "definitionId",
+          "balance"
+        ]
+      },
+      "ClientExchangeExecuteRequest": {
+        "type": "object",
+        "properties": {
+          "optionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The exchange option to execute."
+          },
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id.",
+            "example": "user-42"
+          },
+          "userHash": {
+            "type": "string",
+            "description": "HMAC-SHA256(endUserId, clientSecret)."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "optionId",
+          "endUserId"
+        ]
+      },
+      "ExchangeResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "exchangeId": {
+            "type": "string"
+          },
+          "optionId": {
+            "type": "string"
+          },
+          "costItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "rewardItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          }
+        },
+        "required": [
+          "success",
+          "exchangeId",
+          "optionId",
+          "costItems",
+          "rewardItems"
+        ]
+      },
+      "ExchangeErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "ItemInventoryView": {
+        "type": "object",
+        "properties": {
+          "definitionId": {
+            "type": "string"
+          },
+          "definitionAlias": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "definitionName": {
+            "type": "string"
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stackable": {
+            "type": "boolean"
+          },
+          "totalQuantity": {
+            "type": "integer"
+          },
+          "stacks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "instanceData": {}
+              },
+              "required": [
+                "id",
+                "quantity"
+              ]
+            }
+          }
+        },
+        "required": [
+          "definitionId",
+          "definitionAlias",
+          "definitionName",
+          "icon",
+          "stackable",
+          "totalQuantity",
+          "stacks"
+        ]
+      },
+      "CheckInUserState": {
+        "type": "object",
+        "properties": {
+          "configId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "totalDays": {
+            "type": "integer"
+          },
+          "currentStreak": {
+            "type": "integer"
+          },
+          "longestStreak": {
+            "type": "integer"
+          },
+          "currentCycleKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currentCycleDays": {
+            "type": "integer"
+          },
+          "lastCheckInDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstCheckInAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastCheckInAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "configId",
+          "endUserId",
+          "organizationId",
+          "totalDays",
+          "currentStreak",
+          "longestStreak",
+          "currentCycleKey",
+          "currentCycleDays",
+          "lastCheckInDate",
+          "firstCheckInAt",
+          "lastCheckInAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "ClientKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Client publishable key with cpk_ prefix. Obtain from your admin dashboard."
+      }
+    }
+  }
+}
