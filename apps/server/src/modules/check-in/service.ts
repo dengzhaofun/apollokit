@@ -244,6 +244,21 @@ export function createCheckInService(d: CheckInDeps) {
       return loadConfigByKey(organizationId, idOrAlias);
     },
 
+    async listUserStates(params: {
+      organizationId: string;
+      configKey: string;
+    }): Promise<CheckInUserState[]> {
+      const config = await loadConfigByKey(
+        params.organizationId,
+        params.configKey,
+      );
+      return db
+        .select()
+        .from(checkInUserStates)
+        .where(eq(checkInUserStates.configId, config.id))
+        .orderBy(desc(checkInUserStates.lastCheckInAt));
+    },
+
     async getUserState(params: {
       organizationId: string;
       configKey: string;

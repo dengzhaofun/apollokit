@@ -1,6 +1,6 @@
 import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
 import { Link } from "@tanstack/react-router"
-import { LayoutDashboard } from "lucide-react"
+import { CalendarCheck, LayoutDashboard } from "lucide-react"
 
 import {
   Sidebar,
@@ -18,6 +18,7 @@ import {
 
 const navItems = [
   { title: "Dashboard", to: "/dashboard" as const, icon: LayoutDashboard },
+  { title: "Check-in", to: "/check-in" as const, icon: CalendarCheck },
 ]
 
 export function AppSidebar() {

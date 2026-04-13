@@ -40,6 +40,7 @@ import {
   CreateConfigSchema,
   ErrorResponseSchema,
   UpdateConfigSchema,
+  UserStateListResponseSchema,
   UserStateParamSchema,
 } from "./validators";
 
@@ -282,6 +283,35 @@ checkInRouter.openapi(
     const { id } = c.req.valid("param");
     await checkInService.deleteConfig(orgId, id);
     return c.body(null, 204);
+  },
+);
+
+// GET /check-in/configs/:key/users — list user states
+checkInRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/configs/{key}/users",
+    tags: [TAG],
+    summary: "List all user states for a check-in config",
+    request: { params: ConfigKeyParamSchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: UserStateListResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const rows = await checkInService.listUserStates({
+      organizationId: orgId,
+      configKey: key,
+    });
+    return c.json({ items: rows.map(serializeState) }, 200);
   },
 );
 
