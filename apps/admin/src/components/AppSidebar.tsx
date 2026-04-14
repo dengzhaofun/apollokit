@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
   CalendarCheck,
+  Dices,
   KeyRound,
   LayoutDashboard,
   Package,
@@ -27,6 +28,7 @@ const navItems = [
   { title: "Check-in", to: "/check-in" as const, icon: CalendarCheck },
   { title: "Item", to: "/item" as const, icon: Package },
   { title: "Exchange", to: "/exchange" as const, icon: ArrowLeftRight },
+  { title: "Lottery", to: "/lottery" as const, icon: Dices },
   { title: "API Keys", to: "/api-keys" as const, icon: KeyRound },
 ]
 
