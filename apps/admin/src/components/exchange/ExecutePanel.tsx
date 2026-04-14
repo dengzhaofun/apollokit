@@ -8,6 +8,7 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Badge } from "#/components/ui/badge"
 import { useExecuteExchange } from "#/hooks/use-exchange"
+import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import { ApiError } from "#/lib/api-client"
 import type { ExchangeResult } from "#/lib/types/exchange"
 
@@ -84,20 +85,28 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
             </span>
           </div>
           <div className="grid gap-2 text-sm sm:grid-cols-2">
-            <div>
+            <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Consumed</p>
               {result.costItems.map((item, i) => (
-                <p key={i}>
-                  {item.quantity}x {item.definitionId.slice(0, 8)}...
-                </p>
+                <div key={i}>
+                  <ItemRewardRow
+                    size="sm"
+                    definitionId={item.definitionId}
+                    quantity={item.quantity}
+                  />
+                </div>
               ))}
             </div>
-            <div>
+            <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Granted</p>
               {result.rewardItems.map((item, i) => (
-                <p key={i}>
-                  {item.quantity}x {item.definitionId.slice(0, 8)}...
-                </p>
+                <div key={i}>
+                  <ItemRewardRow
+                    size="sm"
+                    definitionId={item.definitionId}
+                    quantity={item.quantity}
+                  />
+                </div>
               ))}
             </div>
           </div>
