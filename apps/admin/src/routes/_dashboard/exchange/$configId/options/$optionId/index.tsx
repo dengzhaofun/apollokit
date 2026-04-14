@@ -12,6 +12,7 @@ import { Badge } from "#/components/ui/badge"
 import { OptionForm } from "#/components/exchange/OptionForm"
 import { ExchangeDeleteDialog } from "#/components/exchange/DeleteDialog"
 import { ExecutePanel } from "#/components/exchange/ExecutePanel"
+import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import {
   useExchangeOptions,
   useUpdateExchangeOption,
@@ -232,11 +233,12 @@ function ItemList({
   return (
     <ul className="space-y-1">
       {items.map((item, i) => (
-        <li key={i} className="text-xs">
-          {item.quantity}x{" "}
-          <code className="rounded bg-muted px-1 py-0.5">
-            {item.definitionId.slice(0, 8)}...
-          </code>
+        <li key={i}>
+          <ItemRewardRow
+            size="sm"
+            definitionId={item.definitionId}
+            quantity={item.quantity}
+          />
         </li>
       ))}
     </ul>

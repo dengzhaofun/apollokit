@@ -30,7 +30,7 @@ import {
   useUpdateCheckInReward,
   useDeleteCheckInReward,
 } from "#/hooks/use-check-in-rewards"
-import { useItemDefinitions } from "#/hooks/use-item"
+import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import { ApiError } from "#/lib/api-client"
 import type { CheckInReward } from "#/lib/types/check-in-reward"
 
@@ -40,14 +40,9 @@ interface RewardsSectionProps {
 
 export function RewardsSection({ configKey }: RewardsSectionProps) {
   const { data: rewards, isPending } = useCheckInRewards(configKey)
-  const { data: definitions } = useItemDefinitions()
   const createMutation = useCreateCheckInReward()
   const updateMutation = useUpdateCheckInReward()
   const deleteMutation = useDeleteCheckInReward()
-
-  const defNameMap = new Map(
-    (definitions ?? []).map((d) => [d.id, d.name]),
-  )
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editingReward, setEditingReward] = useState<CheckInReward | null>(null)
@@ -111,17 +106,14 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
               className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3"
             >
               <Badge variant="secondary">Day {reward.dayNumber}</Badge>
-              <div className="flex-1 text-sm">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 text-sm">
                 {reward.rewardItems.map((item, i) => (
-                  <span key={i}>
-                    {i > 0 && ", "}
-                    {item.quantity}x{" "}
-                    {defNameMap.get(item.definitionId) ?? (
-                      <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                        {item.definitionId.slice(0, 8)}...
-                      </code>
-                    )}
-                  </span>
+                  <ItemRewardRow
+                    key={i}
+                    size="sm"
+                    definitionId={item.definitionId}
+                    quantity={item.quantity}
+                  />
                 ))}
               </div>
 

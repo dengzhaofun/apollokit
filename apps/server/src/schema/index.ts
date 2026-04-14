@@ -7,3 +7,4 @@ export * from "./client-credential";
 export * from "./exchange";
 export * from "./item";
 export * from "./lottery";
+export * from "./mail";

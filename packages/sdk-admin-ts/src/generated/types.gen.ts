@@ -614,6 +614,441 @@ export type ExchangeUserState = {
     count: number;
 };
 
+export type LotteryCreatePool = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    /**
+     * Cost per single pull. Empty array for item-triggered pools.
+     */
+    costPerPull?: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive?: boolean;
+    startAt?: string | null;
+    endAt?: string | null;
+    globalPullLimit?: number | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryPool = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    costPerPull: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive: boolean;
+    startAt: string | null;
+    endAt: string | null;
+    globalPullLimit: number | null;
+    globalPullCount: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LotteryErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type LotteryPoolList = {
+    items: Array<LotteryPool>;
+};
+
+export type LotteryUpdatePool = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    costPerPull?: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive?: boolean;
+    startAt?: string | null;
+    endAt?: string | null;
+    globalPullLimit?: number | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryCreateTier = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    /**
+     * Relative weight for tier selection.
+     */
+    baseWeight: number;
+    color?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryTier = {
+    id: string;
+    poolId: string;
+    organizationId: string;
+    name: string;
+    alias: string | null;
+    baseWeight: number;
+    color: string | null;
+    icon: string | null;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LotteryTierList = {
+    items: Array<LotteryTier>;
+};
+
+export type LotteryUpdateTier = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    baseWeight?: number;
+    color?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryCreatePrize = {
+    name: string;
+    description?: string | null;
+    /**
+     * Items granted on win. Empty array for 'Better luck next time'.
+     */
+    rewardItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    /**
+     * Selection weight (relative).
+     */
+    weight?: number;
+    isRateUp?: boolean;
+    rateUpWeight?: number;
+    globalStockLimit?: number | null;
+    fallbackPrizeId?: string | null;
+    isActive?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryPrize = {
+    id: string;
+    tierId: string | null;
+    poolId: string;
+    organizationId: string;
+    name: string;
+    description: string | null;
+    rewardItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    weight: number;
+    isRateUp: boolean;
+    rateUpWeight: number;
+    globalStockLimit: number | null;
+    globalStockUsed: number;
+    fallbackPrizeId: string | null;
+    isActive: boolean;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LotteryPrizeList = {
+    items: Array<LotteryPrize>;
+};
+
+export type LotteryUpdatePrize = {
+    name?: string;
+    description?: string | null;
+    rewardItems?: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    weight?: number;
+    isRateUp?: boolean;
+    rateUpWeight?: number;
+    globalStockLimit?: number | null;
+    fallbackPrizeId?: string | null;
+    isActive?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryCreatePityRule = {
+    /**
+     * The tier this rule guarantees.
+     */
+    guaranteeTierId: string;
+    /**
+     * After this many pulls without the tier, force it.
+     */
+    hardPityThreshold: number;
+    /**
+     * Start boosting tier weight after this many pulls.
+     */
+    softPityStartAt?: number | null;
+    /**
+     * Extra weight added per pull after soft pity starts.
+     */
+    softPityWeightIncrement?: number | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryPityRule = {
+    id: string;
+    poolId: string;
+    organizationId: string;
+    guaranteeTierId: string;
+    hardPityThreshold: number;
+    softPityStartAt: number | null;
+    softPityWeightIncrement: number | null;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LotteryPityRuleList = {
+    items: Array<LotteryPityRule>;
+};
+
+export type LotteryUpdatePityRule = {
+    hardPityThreshold?: number;
+    softPityStartAt?: number | null;
+    softPityWeightIncrement?: number | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LotteryPullRequest = {
+    /**
+     * The end user's business id.
+     */
+    endUserId: string;
+    idempotencyKey?: string;
+};
+
+export type LotteryPullResult = {
+    batchId: string;
+    poolId: string;
+    endUserId: string;
+    costItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    pulls: Array<{
+        batchIndex: number;
+        prizeId: string;
+        prizeName: string;
+        tierId: string | null;
+        tierName: string | null;
+        rewardItems: Array<{
+            definitionId: string;
+            quantity: number;
+        }>;
+        pityTriggered: boolean;
+        pityRuleId: string | null;
+    }>;
+};
+
+export type LotteryMultiPullRequest = {
+    /**
+     * The end user's business id.
+     */
+    endUserId: string;
+    /**
+     * Number of pulls to execute.
+     */
+    count: number;
+    idempotencyKey?: string;
+};
+
+export type LotteryUserState = {
+    poolId: string;
+    endUserId: string;
+    totalPullCount: number;
+    pityCounters: {
+        [key: string]: number;
+    };
+};
+
+export type LotteryPullLogList = {
+    items: Array<LotteryPullLog>;
+};
+
+export type MailCreateRequest = {
+    title: string;
+    /**
+     * Mail body. Tenant decides whether to render as markdown.
+     */
+    content: string;
+    /**
+     * Optional reward list. Empty = informational-only mail.
+     */
+    rewards: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    /**
+     * 'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).
+     */
+    targetType: 'broadcast' | 'multicast';
+    /**
+     * Required and 1..5000 when targetType='multicast'; must be omitted/null when targetType='broadcast'.
+     */
+    targetUserIds?: Array<string>;
+    /**
+     * When true, the user must hit the /read endpoint before /claim will succeed.
+     */
+    requireRead?: boolean;
+    /**
+     * ISO-8601 timestamp. After this time the mail is hidden and no longer claimable. null/omitted = never expires.
+     */
+    expiresAt?: string | null;
+};
+
+export type MailMessage = {
+    id: string;
+    organizationId: string;
+    title: string;
+    content: string;
+    rewards: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    /**
+     * 'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).
+     */
+    targetType: 'broadcast' | 'multicast';
+    targetUserIds: Array<string> | null;
+    requireRead: boolean;
+    senderAdminId: string | null;
+    sentAt: string;
+    expiresAt: string | null;
+    revokedAt: string | null;
+    originSource: string | null;
+    originSourceId: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MailErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type MailList = {
+    items: Array<MailMessage>;
+    nextCursor: string | null;
+};
+
+export type MailMessageWithStats = MailMessage & {
+    readCount: number;
+    claimCount: number;
+    targetCount: number | null;
+};
+
+export type LotteryPullLog = {
+    id: string;
+    poolId: string;
+    endUserId: string;
+    batchId: string;
+    batchIndex: number;
+    prizeId: string;
+    tierId: string | null;
+    tierName: string | null;
+    prizeName: string;
+    rewardItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    pityTriggered: boolean;
+    pityRuleId: string | null;
+    costItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    createdAt: string;
+};
+
 export type ItemInventoryView = {
     definitionId: string;
     definitionAlias: string | null;
@@ -2384,6 +2819,1162 @@ export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses = {
 };
 
 export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponse = GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses[keyof GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses];
+
+export type GetApiLotteryPoolsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/lottery/pools';
+};
+
+export type GetApiLotteryPoolsErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsError = GetApiLotteryPoolsErrors[keyof GetApiLotteryPoolsErrors];
+
+export type GetApiLotteryPoolsResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPoolList;
+};
+
+export type GetApiLotteryPoolsResponse = GetApiLotteryPoolsResponses[keyof GetApiLotteryPoolsResponses];
+
+export type PostApiLotteryPoolsData = {
+    body?: LotteryCreatePool;
+    path?: never;
+    query?: never;
+    url: '/api/lottery/pools';
+};
+
+export type PostApiLotteryPoolsErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsError = PostApiLotteryPoolsErrors[keyof PostApiLotteryPoolsErrors];
+
+export type PostApiLotteryPoolsResponses = {
+    /**
+     * Created
+     */
+    201: LotteryPool;
+};
+
+export type PostApiLotteryPoolsResponse = PostApiLotteryPoolsResponses[keyof PostApiLotteryPoolsResponses];
+
+export type GetApiLotteryPoolsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{key}';
+};
+
+export type GetApiLotteryPoolsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByKeyError = GetApiLotteryPoolsByKeyErrors[keyof GetApiLotteryPoolsByKeyErrors];
+
+export type GetApiLotteryPoolsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPool;
+};
+
+export type GetApiLotteryPoolsByKeyResponse = GetApiLotteryPoolsByKeyResponses[keyof GetApiLotteryPoolsByKeyResponses];
+
+export type DeleteApiLotteryPoolsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{id}';
+};
+
+export type DeleteApiLotteryPoolsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type DeleteApiLotteryPoolsByIdError = DeleteApiLotteryPoolsByIdErrors[keyof DeleteApiLotteryPoolsByIdErrors];
+
+export type DeleteApiLotteryPoolsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DeleteApiLotteryPoolsByIdResponse = DeleteApiLotteryPoolsByIdResponses[keyof DeleteApiLotteryPoolsByIdResponses];
+
+export type PatchApiLotteryPoolsByIdData = {
+    body?: LotteryUpdatePool;
+    path: {
+        /**
+         * UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{id}';
+};
+
+export type PatchApiLotteryPoolsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PatchApiLotteryPoolsByIdError = PatchApiLotteryPoolsByIdErrors[keyof PatchApiLotteryPoolsByIdErrors];
+
+export type PatchApiLotteryPoolsByIdResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPool;
+};
+
+export type PatchApiLotteryPoolsByIdResponse = PatchApiLotteryPoolsByIdResponses[keyof PatchApiLotteryPoolsByIdResponses];
+
+export type GetApiLotteryPoolsByPoolKeyTiersData = {
+    body?: never;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/tiers';
+};
+
+export type GetApiLotteryPoolsByPoolKeyTiersErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByPoolKeyTiersError = GetApiLotteryPoolsByPoolKeyTiersErrors[keyof GetApiLotteryPoolsByPoolKeyTiersErrors];
+
+export type GetApiLotteryPoolsByPoolKeyTiersResponses = {
+    /**
+     * OK
+     */
+    200: LotteryTierList;
+};
+
+export type GetApiLotteryPoolsByPoolKeyTiersResponse = GetApiLotteryPoolsByPoolKeyTiersResponses[keyof GetApiLotteryPoolsByPoolKeyTiersResponses];
+
+export type PostApiLotteryPoolsByPoolKeyTiersData = {
+    body?: LotteryCreateTier;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/tiers';
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersError = PostApiLotteryPoolsByPoolKeyTiersErrors[keyof PostApiLotteryPoolsByPoolKeyTiersErrors];
+
+export type PostApiLotteryPoolsByPoolKeyTiersResponses = {
+    /**
+     * Created
+     */
+    201: LotteryTier;
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersResponse = PostApiLotteryPoolsByPoolKeyTiersResponses[keyof PostApiLotteryPoolsByPoolKeyTiersResponses];
+
+export type DeleteApiLotteryTiersByTierIdData = {
+    body?: never;
+    path: {
+        /**
+         * Tier UUID.
+         */
+        tierId: string;
+    };
+    query?: never;
+    url: '/api/lottery/tiers/{tierId}';
+};
+
+export type DeleteApiLotteryTiersByTierIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type DeleteApiLotteryTiersByTierIdError = DeleteApiLotteryTiersByTierIdErrors[keyof DeleteApiLotteryTiersByTierIdErrors];
+
+export type DeleteApiLotteryTiersByTierIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DeleteApiLotteryTiersByTierIdResponse = DeleteApiLotteryTiersByTierIdResponses[keyof DeleteApiLotteryTiersByTierIdResponses];
+
+export type PatchApiLotteryTiersByTierIdData = {
+    body?: LotteryUpdateTier;
+    path: {
+        /**
+         * Tier UUID.
+         */
+        tierId: string;
+    };
+    query?: never;
+    url: '/api/lottery/tiers/{tierId}';
+};
+
+export type PatchApiLotteryTiersByTierIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PatchApiLotteryTiersByTierIdError = PatchApiLotteryTiersByTierIdErrors[keyof PatchApiLotteryTiersByTierIdErrors];
+
+export type PatchApiLotteryTiersByTierIdResponses = {
+    /**
+     * OK
+     */
+    200: LotteryTier;
+};
+
+export type PatchApiLotteryTiersByTierIdResponse = PatchApiLotteryTiersByTierIdResponses[keyof PatchApiLotteryTiersByTierIdResponses];
+
+export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesData = {
+    body?: LotteryCreatePrize;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+        /**
+         * Tier UUID.
+         */
+        tierId: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/tiers/{tierId}/prizes';
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesError = PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors[keyof PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors];
+
+export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses = {
+    /**
+     * Created
+     */
+    201: LotteryPrize;
+};
+
+export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponse = PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses[keyof PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses];
+
+export type GetApiLotteryPoolsByPoolKeyPrizesData = {
+    body?: never;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/prizes';
+};
+
+export type GetApiLotteryPoolsByPoolKeyPrizesErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByPoolKeyPrizesError = GetApiLotteryPoolsByPoolKeyPrizesErrors[keyof GetApiLotteryPoolsByPoolKeyPrizesErrors];
+
+export type GetApiLotteryPoolsByPoolKeyPrizesResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPrizeList;
+};
+
+export type GetApiLotteryPoolsByPoolKeyPrizesResponse = GetApiLotteryPoolsByPoolKeyPrizesResponses[keyof GetApiLotteryPoolsByPoolKeyPrizesResponses];
+
+export type PostApiLotteryPoolsByPoolKeyPrizesData = {
+    body?: LotteryCreatePrize;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/prizes';
+};
+
+export type PostApiLotteryPoolsByPoolKeyPrizesErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPrizesError = PostApiLotteryPoolsByPoolKeyPrizesErrors[keyof PostApiLotteryPoolsByPoolKeyPrizesErrors];
+
+export type PostApiLotteryPoolsByPoolKeyPrizesResponses = {
+    /**
+     * Created
+     */
+    201: LotteryPrize;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPrizesResponse = PostApiLotteryPoolsByPoolKeyPrizesResponses[keyof PostApiLotteryPoolsByPoolKeyPrizesResponses];
+
+export type DeleteApiLotteryPrizesByPrizeIdData = {
+    body?: never;
+    path: {
+        /**
+         * Prize UUID.
+         */
+        prizeId: string;
+    };
+    query?: never;
+    url: '/api/lottery/prizes/{prizeId}';
+};
+
+export type DeleteApiLotteryPrizesByPrizeIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type DeleteApiLotteryPrizesByPrizeIdError = DeleteApiLotteryPrizesByPrizeIdErrors[keyof DeleteApiLotteryPrizesByPrizeIdErrors];
+
+export type DeleteApiLotteryPrizesByPrizeIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DeleteApiLotteryPrizesByPrizeIdResponse = DeleteApiLotteryPrizesByPrizeIdResponses[keyof DeleteApiLotteryPrizesByPrizeIdResponses];
+
+export type PatchApiLotteryPrizesByPrizeIdData = {
+    body?: LotteryUpdatePrize;
+    path: {
+        /**
+         * Prize UUID.
+         */
+        prizeId: string;
+    };
+    query?: never;
+    url: '/api/lottery/prizes/{prizeId}';
+};
+
+export type PatchApiLotteryPrizesByPrizeIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PatchApiLotteryPrizesByPrizeIdError = PatchApiLotteryPrizesByPrizeIdErrors[keyof PatchApiLotteryPrizesByPrizeIdErrors];
+
+export type PatchApiLotteryPrizesByPrizeIdResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPrize;
+};
+
+export type PatchApiLotteryPrizesByPrizeIdResponse = PatchApiLotteryPrizesByPrizeIdResponses[keyof PatchApiLotteryPrizesByPrizeIdResponses];
+
+export type GetApiLotteryPoolsByPoolKeyPityRulesData = {
+    body?: never;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/pity-rules';
+};
+
+export type GetApiLotteryPoolsByPoolKeyPityRulesErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByPoolKeyPityRulesError = GetApiLotteryPoolsByPoolKeyPityRulesErrors[keyof GetApiLotteryPoolsByPoolKeyPityRulesErrors];
+
+export type GetApiLotteryPoolsByPoolKeyPityRulesResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPityRuleList;
+};
+
+export type GetApiLotteryPoolsByPoolKeyPityRulesResponse = GetApiLotteryPoolsByPoolKeyPityRulesResponses[keyof GetApiLotteryPoolsByPoolKeyPityRulesResponses];
+
+export type PostApiLotteryPoolsByPoolKeyPityRulesData = {
+    body?: LotteryCreatePityRule;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/pity-rules';
+};
+
+export type PostApiLotteryPoolsByPoolKeyPityRulesErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPityRulesError = PostApiLotteryPoolsByPoolKeyPityRulesErrors[keyof PostApiLotteryPoolsByPoolKeyPityRulesErrors];
+
+export type PostApiLotteryPoolsByPoolKeyPityRulesResponses = {
+    /**
+     * Created
+     */
+    201: LotteryPityRule;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPityRulesResponse = PostApiLotteryPoolsByPoolKeyPityRulesResponses[keyof PostApiLotteryPoolsByPoolKeyPityRulesResponses];
+
+export type DeleteApiLotteryPityRulesByRuleIdData = {
+    body?: never;
+    path: {
+        /**
+         * Pity rule UUID.
+         */
+        ruleId: string;
+    };
+    query?: never;
+    url: '/api/lottery/pity-rules/{ruleId}';
+};
+
+export type DeleteApiLotteryPityRulesByRuleIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type DeleteApiLotteryPityRulesByRuleIdError = DeleteApiLotteryPityRulesByRuleIdErrors[keyof DeleteApiLotteryPityRulesByRuleIdErrors];
+
+export type DeleteApiLotteryPityRulesByRuleIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DeleteApiLotteryPityRulesByRuleIdResponse = DeleteApiLotteryPityRulesByRuleIdResponses[keyof DeleteApiLotteryPityRulesByRuleIdResponses];
+
+export type PatchApiLotteryPityRulesByRuleIdData = {
+    body?: LotteryUpdatePityRule;
+    path: {
+        /**
+         * Pity rule UUID.
+         */
+        ruleId: string;
+    };
+    query?: never;
+    url: '/api/lottery/pity-rules/{ruleId}';
+};
+
+export type PatchApiLotteryPityRulesByRuleIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PatchApiLotteryPityRulesByRuleIdError = PatchApiLotteryPityRulesByRuleIdErrors[keyof PatchApiLotteryPityRulesByRuleIdErrors];
+
+export type PatchApiLotteryPityRulesByRuleIdResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPityRule;
+};
+
+export type PatchApiLotteryPityRulesByRuleIdResponse = PatchApiLotteryPityRulesByRuleIdResponses[keyof PatchApiLotteryPityRulesByRuleIdResponses];
+
+export type PostApiLotteryPoolsByPoolKeyPullData = {
+    body?: LotteryPullRequest;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/pull';
+};
+
+export type PostApiLotteryPoolsByPoolKeyPullErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPullError = PostApiLotteryPoolsByPoolKeyPullErrors[keyof PostApiLotteryPoolsByPoolKeyPullErrors];
+
+export type PostApiLotteryPoolsByPoolKeyPullResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPullResult;
+};
+
+export type PostApiLotteryPoolsByPoolKeyPullResponse = PostApiLotteryPoolsByPoolKeyPullResponses[keyof PostApiLotteryPoolsByPoolKeyPullResponses];
+
+export type PostApiLotteryPoolsByPoolKeyMultiPullData = {
+    body?: LotteryMultiPullRequest;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/multi-pull';
+};
+
+export type PostApiLotteryPoolsByPoolKeyMultiPullErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type PostApiLotteryPoolsByPoolKeyMultiPullError = PostApiLotteryPoolsByPoolKeyMultiPullErrors[keyof PostApiLotteryPoolsByPoolKeyMultiPullErrors];
+
+export type PostApiLotteryPoolsByPoolKeyMultiPullResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPullResult;
+};
+
+export type PostApiLotteryPoolsByPoolKeyMultiPullResponse = PostApiLotteryPoolsByPoolKeyMultiPullResponses[keyof PostApiLotteryPoolsByPoolKeyMultiPullResponses];
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateData = {
+    body?: never;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+        /**
+         * End user id.
+         */
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/users/{endUserId}/state';
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateError = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors];
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses = {
+    /**
+     * OK
+     */
+    200: LotteryUserState;
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponse = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses];
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryData = {
+    body?: never;
+    path: {
+        /**
+         * Pool id or alias.
+         */
+        poolKey: string;
+        /**
+         * End user id.
+         */
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/lottery/pools/{poolKey}/users/{endUserId}/history';
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors = {
+    /**
+     * Bad request
+     */
+    400: LotteryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LotteryErrorResponse;
+    /**
+     * Not found
+     */
+    404: LotteryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LotteryErrorResponse;
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryError = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors];
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses = {
+    /**
+     * OK
+     */
+    200: LotteryPullLogList;
+};
+
+export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponse = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses];
+
+export type GetApiMailMessagesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        limit?: number;
+        /**
+         * Opaque cursor from a previous response's `nextCursor`.
+         */
+        cursor?: string;
+        /**
+         * 'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).
+         */
+        targetType?: 'broadcast' | 'multicast';
+    };
+    url: '/api/mail/messages';
+};
+
+export type GetApiMailMessagesErrors = {
+    /**
+     * Bad request
+     */
+    400: MailErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MailErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: MailErrorResponse;
+    /**
+     * Not found
+     */
+    404: MailErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MailErrorResponse;
+};
+
+export type GetApiMailMessagesError = GetApiMailMessagesErrors[keyof GetApiMailMessagesErrors];
+
+export type GetApiMailMessagesResponses = {
+    /**
+     * OK
+     */
+    200: MailList;
+};
+
+export type GetApiMailMessagesResponse = GetApiMailMessagesResponses[keyof GetApiMailMessagesResponses];
+
+export type PostApiMailMessagesData = {
+    body?: MailCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/mail/messages';
+};
+
+export type PostApiMailMessagesErrors = {
+    /**
+     * Bad request
+     */
+    400: MailErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MailErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: MailErrorResponse;
+    /**
+     * Not found
+     */
+    404: MailErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MailErrorResponse;
+};
+
+export type PostApiMailMessagesError = PostApiMailMessagesErrors[keyof PostApiMailMessagesErrors];
+
+export type PostApiMailMessagesResponses = {
+    /**
+     * Created
+     */
+    201: MailMessage;
+};
+
+export type PostApiMailMessagesResponse = PostApiMailMessagesResponses[keyof PostApiMailMessagesResponses];
+
+export type DeleteApiMailMessagesByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Mail message UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/mail/messages/{id}';
+};
+
+export type DeleteApiMailMessagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MailErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MailErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: MailErrorResponse;
+    /**
+     * Not found
+     */
+    404: MailErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MailErrorResponse;
+};
+
+export type DeleteApiMailMessagesByIdError = DeleteApiMailMessagesByIdErrors[keyof DeleteApiMailMessagesByIdErrors];
+
+export type DeleteApiMailMessagesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DeleteApiMailMessagesByIdResponse = DeleteApiMailMessagesByIdResponses[keyof DeleteApiMailMessagesByIdResponses];
+
+export type GetApiMailMessagesByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Mail message UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/mail/messages/{id}';
+};
+
+export type GetApiMailMessagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MailErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MailErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: MailErrorResponse;
+    /**
+     * Not found
+     */
+    404: MailErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MailErrorResponse;
+};
+
+export type GetApiMailMessagesByIdError = GetApiMailMessagesByIdErrors[keyof GetApiMailMessagesByIdErrors];
+
+export type GetApiMailMessagesByIdResponses = {
+    /**
+     * OK
+     */
+    200: MailMessageWithStats;
+};
+
+export type GetApiMailMessagesByIdResponse = GetApiMailMessagesByIdResponses[keyof GetApiMailMessagesByIdResponses];
+
+export type PostApiMailMessagesByIdRevokeData = {
+    body?: never;
+    path: {
+        /**
+         * Mail message UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/mail/messages/{id}/revoke';
+};
+
+export type PostApiMailMessagesByIdRevokeErrors = {
+    /**
+     * Bad request
+     */
+    400: MailErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MailErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: MailErrorResponse;
+    /**
+     * Not found
+     */
+    404: MailErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MailErrorResponse;
+};
+
+export type PostApiMailMessagesByIdRevokeError = PostApiMailMessagesByIdRevokeErrors[keyof PostApiMailMessagesByIdRevokeErrors];
+
+export type PostApiMailMessagesByIdRevokeResponses = {
+    /**
+     * Revoked
+     */
+    204: void;
+};
+
+export type PostApiMailMessagesByIdRevokeResponse = PostApiMailMessagesByIdRevokeResponses[keyof PostApiMailMessagesByIdRevokeResponses];
 
 export type ClientOptions = {
     baseUrl: 'http://localhost:8787' | (string & {});

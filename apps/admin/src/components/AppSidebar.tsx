@@ -6,6 +6,7 @@ import {
   Dices,
   KeyRound,
   LayoutDashboard,
+  Mail,
   Package,
 } from "lucide-react"
 
@@ -31,6 +32,7 @@ function getNavItems() {
     { title: m.nav_checkin(), to: "/check-in" as const, icon: CalendarCheck },
     { title: m.nav_item(), to: "/item" as const, icon: Package },
     { title: m.nav_exchange(), to: "/exchange" as const, icon: ArrowLeftRight },
+    { title: m.nav_mail(), to: "/mail" as const, icon: Mail },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }

@@ -2048,6 +2048,1485 @@
           "count"
         ]
       },
+      "LotteryPool": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "costPerPull": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "globalPullLimit": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "globalPullCount": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "alias",
+          "name",
+          "description",
+          "costPerPull",
+          "isActive",
+          "startAt",
+          "endAt",
+          "globalPullLimit",
+          "globalPullCount",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LotteryErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "LotteryCreatePool": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "example": "Lucky Wheel"
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "Optional human-readable key, unique within the organization."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "costPerPull": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            },
+            "default": [],
+            "description": "Cost per single pull. Empty array for item-triggered pools."
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "globalPullLimit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "LotteryPoolList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotteryPool"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "LotteryUpdatePool": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "Optional human-readable key, unique within the organization."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "costPerPull": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "globalPullLimit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        }
+      },
+      "LotteryTier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "poolId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baseWeight": {
+            "type": "integer"
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "poolId",
+          "organizationId",
+          "name",
+          "alias",
+          "baseWeight",
+          "color",
+          "icon",
+          "sortOrder",
+          "isActive",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LotteryCreateTier": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "example": "SSR"
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "Optional human-readable key, unique within the organization."
+          },
+          "baseWeight": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Relative weight for tier selection.",
+            "example": 6
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        },
+        "required": [
+          "name",
+          "baseWeight"
+        ]
+      },
+      "LotteryTierList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotteryTier"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "LotteryUpdateTier": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "Optional human-readable key, unique within the organization."
+          },
+          "baseWeight": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 20
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        }
+      },
+      "LotteryPrize": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tierId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "poolId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rewardItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "weight": {
+            "type": "integer"
+          },
+          "isRateUp": {
+            "type": "boolean"
+          },
+          "rateUpWeight": {
+            "type": "integer"
+          },
+          "globalStockLimit": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "globalStockUsed": {
+            "type": "integer"
+          },
+          "fallbackPrizeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tierId",
+          "poolId",
+          "organizationId",
+          "name",
+          "description",
+          "rewardItems",
+          "weight",
+          "isRateUp",
+          "rateUpWeight",
+          "globalStockLimit",
+          "globalStockUsed",
+          "fallbackPrizeId",
+          "isActive",
+          "sortOrder",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LotteryCreatePrize": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "example": "100 Diamonds"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "rewardItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            },
+            "description": "Items granted on win. Empty array for 'Better luck next time'."
+          },
+          "weight": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "default": 100,
+            "description": "Selection weight (relative)."
+          },
+          "isRateUp": {
+            "type": "boolean"
+          },
+          "rateUpWeight": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "globalStockLimit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "fallbackPrizeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        },
+        "required": [
+          "name",
+          "rewardItems"
+        ]
+      },
+      "LotteryPrizeList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotteryPrize"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "LotteryUpdatePrize": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "rewardItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "weight": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "isRateUp": {
+            "type": "boolean"
+          },
+          "rateUpWeight": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "globalStockLimit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "fallbackPrizeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        }
+      },
+      "LotteryPityRule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "poolId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "guaranteeTierId": {
+            "type": "string"
+          },
+          "hardPityThreshold": {
+            "type": "integer"
+          },
+          "softPityStartAt": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "softPityWeightIncrement": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "poolId",
+          "organizationId",
+          "guaranteeTierId",
+          "hardPityThreshold",
+          "softPityStartAt",
+          "softPityWeightIncrement",
+          "isActive",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LotteryCreatePityRule": {
+        "type": "object",
+        "properties": {
+          "guaranteeTierId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tier this rule guarantees."
+          },
+          "hardPityThreshold": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "After this many pulls without the tier, force it.",
+            "example": 90
+          },
+          "softPityStartAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "description": "Start boosting tier weight after this many pulls.",
+            "example": 74
+          },
+          "softPityWeightIncrement": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "description": "Extra weight added per pull after soft pity starts.",
+            "example": 60
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        },
+        "required": [
+          "guaranteeTierId",
+          "hardPityThreshold"
+        ]
+      },
+      "LotteryPityRuleList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotteryPityRule"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "LotteryUpdatePityRule": {
+        "type": "object",
+        "properties": {
+          "hardPityThreshold": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "softPityStartAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "softPityWeightIncrement": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Arbitrary JSON blob for tenant-specific extensions."
+          }
+        }
+      },
+      "LotteryPullResult": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string"
+          },
+          "poolId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "costItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "pulls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "batchIndex": {
+                  "type": "integer"
+                },
+                "prizeId": {
+                  "type": "string"
+                },
+                "prizeName": {
+                  "type": "string"
+                },
+                "tierId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tierName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rewardItems": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "definitionId": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "definitionId",
+                      "quantity"
+                    ]
+                  }
+                },
+                "pityTriggered": {
+                  "type": "boolean"
+                },
+                "pityRuleId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "batchIndex",
+                "prizeId",
+                "prizeName",
+                "tierId",
+                "tierName",
+                "rewardItems",
+                "pityTriggered",
+                "pityRuleId"
+              ]
+            }
+          }
+        },
+        "required": [
+          "batchId",
+          "poolId",
+          "endUserId",
+          "costItems",
+          "pulls"
+        ]
+      },
+      "LotteryPullRequest": {
+        "type": "object",
+        "properties": {
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id.",
+            "example": "user-42"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "endUserId"
+        ]
+      },
+      "LotteryMultiPullRequest": {
+        "type": "object",
+        "properties": {
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id.",
+            "example": "user-42"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100,
+            "description": "Number of pulls to execute.",
+            "example": 10
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "endUserId",
+          "count"
+        ]
+      },
+      "LotteryUserState": {
+        "type": "object",
+        "properties": {
+          "poolId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "totalPullCount": {
+            "type": "integer"
+          },
+          "pityCounters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "poolId",
+          "endUserId",
+          "totalPullCount",
+          "pityCounters"
+        ]
+      },
+      "LotteryPullLogList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotteryPullLog"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "LotteryPullLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "poolId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "batchIndex": {
+            "type": "integer"
+          },
+          "prizeId": {
+            "type": "string"
+          },
+          "tierId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tierName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prizeName": {
+            "type": "string"
+          },
+          "rewardItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "pityTriggered": {
+            "type": "boolean"
+          },
+          "pityRuleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "costItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "poolId",
+          "endUserId",
+          "batchId",
+          "batchIndex",
+          "prizeId",
+          "tierId",
+          "tierName",
+          "prizeName",
+          "rewardItems",
+          "pityTriggered",
+          "pityRuleId",
+          "costItems",
+          "createdAt"
+        ]
+      },
+      "MailMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "broadcast",
+              "multicast"
+            ],
+            "description": "'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1)."
+          },
+          "targetUserIds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "requireRead": {
+            "type": "boolean"
+          },
+          "senderAdminId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "originSource": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "originSourceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "title",
+          "content",
+          "rewards",
+          "targetType",
+          "targetUserIds",
+          "requireRead",
+          "senderAdminId",
+          "sentAt",
+          "expiresAt",
+          "revokedAt",
+          "originSource",
+          "originSourceId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MailErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "MailCreateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "example": "Maintenance compensation"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000,
+            "description": "Mail body. Tenant decides whether to render as markdown."
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            },
+            "minItems": 0,
+            "description": "Optional reward list. Empty = informational-only mail."
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "broadcast",
+              "multicast"
+            ],
+            "description": "'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1)."
+          },
+          "targetUserIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "Required and 1..5000 when targetType='multicast'; must be omitted/null when targetType='broadcast'."
+          },
+          "requireRead": {
+            "type": "boolean",
+            "description": "When true, the user must hit the /read endpoint before /claim will succeed."
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO-8601 timestamp. After this time the mail is hidden and no longer claimable. null/omitted = never expires."
+          }
+        },
+        "required": [
+          "title",
+          "content",
+          "rewards",
+          "targetType"
+        ]
+      },
+      "MailList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailMessage"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "MailMessageWithStats": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MailMessage"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "readCount": {
+                "type": "integer"
+              },
+              "claimCount": {
+                "type": "integer"
+              },
+              "targetCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "readCount",
+              "claimCount",
+              "targetCount"
+            ]
+          }
+        ]
+      },
       "ClientCheckInRequest": {
         "type": "object",
         "properties": {
@@ -2071,6 +3550,157 @@
         },
         "required": [
           "configKey",
+          "endUserId"
+        ]
+      },
+      "UseItemResult": {
+        "type": "object",
+        "properties": {
+          "definitionId": {
+            "type": "string"
+          },
+          "definitionName": {
+            "type": "string"
+          },
+          "lotteryResult": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "batchId": {
+                "type": "string"
+              },
+              "poolId": {
+                "type": "string"
+              },
+              "endUserId": {
+                "type": "string"
+              },
+              "costItems": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "definitionId": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "definitionId",
+                    "quantity"
+                  ]
+                }
+              },
+              "pulls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "batchIndex": {
+                      "type": "integer"
+                    },
+                    "prizeId": {
+                      "type": "string"
+                    },
+                    "prizeName": {
+                      "type": "string"
+                    },
+                    "tierId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "tierName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "rewardItems": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "definitionId": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "definitionId",
+                          "quantity"
+                        ]
+                      }
+                    },
+                    "pityTriggered": {
+                      "type": "boolean"
+                    },
+                    "pityRuleId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "batchIndex",
+                    "prizeId",
+                    "prizeName",
+                    "tierId",
+                    "tierName",
+                    "rewardItems",
+                    "pityTriggered",
+                    "pityRuleId"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "batchId",
+              "poolId",
+              "endUserId",
+              "costItems",
+              "pulls"
+            ]
+          }
+        },
+        "required": [
+          "definitionId",
+          "definitionName",
+          "lotteryResult"
+        ]
+      },
+      "UseItemRequest": {
+        "type": "object",
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The item definition to use."
+          },
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id."
+          },
+          "userHash": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "definitionId",
           "endUserId"
         ]
       },
@@ -2101,6 +3731,241 @@
         "required": [
           "optionId",
           "endUserId"
+        ]
+      },
+      "ClientLotteryPullRequest": {
+        "type": "object",
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The lottery pool to pull from."
+          },
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "userHash": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "poolId",
+          "endUserId"
+        ]
+      },
+      "ClientLotteryMultiPullRequest": {
+        "type": "object",
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100
+          },
+          "userHash": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "poolId",
+          "endUserId",
+          "count"
+        ]
+      },
+      "MailInboxList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MailInboxItem"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "MailInboxItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "requireRead": {
+            "type": "boolean"
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "rewards",
+          "requireRead",
+          "sentAt",
+          "expiresAt",
+          "readAt",
+          "claimedAt"
+        ]
+      },
+      "MailUserState": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "endUserId",
+          "readAt",
+          "claimedAt"
+        ]
+      },
+      "MailEndUserRequest": {
+        "type": "object",
+        "properties": {
+          "endUserId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The end user's business id.",
+            "example": "user-42"
+          },
+          "userHash": {
+            "type": "string",
+            "description": "HMAC-SHA256(endUserId, clientSecret)."
+          }
+        },
+        "required": [
+          "endUserId"
+        ]
+      },
+      "MailClaimResult": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definitionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "definitionId",
+                "quantity"
+              ]
+            }
+          },
+          "claimedAt": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "endUserId",
+          "rewards",
+          "claimedAt",
+          "readAt"
         ]
       }
     },
@@ -5146,6 +7011,2090 @@
         }
       }
     },
+    "/api/lottery/pools": {
+      "post": {
+        "tags": [
+          "Lottery Pools"
+        ],
+        "summary": "Create a lottery pool",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryCreatePool"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPool"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Lottery Pools"
+        ],
+        "summary": "List lottery pools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPoolList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{key}": {
+      "get": {
+        "tags": [
+          "Lottery Pools"
+        ],
+        "summary": "Get a lottery pool by id or alias",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPool"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{id}": {
+      "patch": {
+        "tags": [
+          "Lottery Pools"
+        ],
+        "summary": "Update a lottery pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "UUID."
+            },
+            "required": true,
+            "description": "UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryUpdatePool"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPool"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Lottery Pools"
+        ],
+        "summary": "Delete a lottery pool (cascades)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "UUID."
+            },
+            "required": true,
+            "description": "UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/tiers": {
+      "post": {
+        "tags": [
+          "Lottery Tiers"
+        ],
+        "summary": "Create a tier in a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryCreateTier"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryTier"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Lottery Tiers"
+        ],
+        "summary": "List tiers for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryTierList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/tiers/{tierId}": {
+      "patch": {
+        "tags": [
+          "Lottery Tiers"
+        ],
+        "summary": "Update a tier",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tier UUID."
+            },
+            "required": true,
+            "description": "Tier UUID.",
+            "name": "tierId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryUpdateTier"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryTier"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Lottery Tiers"
+        ],
+        "summary": "Delete a tier",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tier UUID."
+            },
+            "required": true,
+            "description": "Tier UUID.",
+            "name": "tierId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/tiers/{tierId}/prizes": {
+      "post": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "Create a prize under a tier",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tier UUID."
+            },
+            "required": true,
+            "description": "Tier UUID.",
+            "name": "tierId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryCreatePrize"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPrize"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/prizes": {
+      "post": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "Create a prize directly in a pool (flat mode, no tier)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryCreatePrize"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPrize"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "List all prizes in a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPrizeList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/prizes/{prizeId}": {
+      "patch": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "Update a prize",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Prize UUID."
+            },
+            "required": true,
+            "description": "Prize UUID.",
+            "name": "prizeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryUpdatePrize"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPrize"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "Delete a prize",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Prize UUID."
+            },
+            "required": true,
+            "description": "Prize UUID.",
+            "name": "prizeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/pity-rules": {
+      "post": {
+        "tags": [
+          "Lottery Pity Rules"
+        ],
+        "summary": "Create a pity rule for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryCreatePityRule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPityRule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Lottery Pity Rules"
+        ],
+        "summary": "List pity rules for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPityRuleList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pity-rules/{ruleId}": {
+      "patch": {
+        "tags": [
+          "Lottery Pity Rules"
+        ],
+        "summary": "Update a pity rule",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pity rule UUID."
+            },
+            "required": true,
+            "description": "Pity rule UUID.",
+            "name": "ruleId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryUpdatePityRule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPityRule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Lottery Pity Rules"
+        ],
+        "summary": "Delete a pity rule",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pity rule UUID."
+            },
+            "required": true,
+            "description": "Pity rule UUID.",
+            "name": "ruleId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/pull": {
+      "post": {
+        "tags": [
+          "Lottery Pull"
+        ],
+        "summary": "Execute a single pull (admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryPullRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/multi-pull": {
+      "post": {
+        "tags": [
+          "Lottery Pull"
+        ],
+        "summary": "Execute multiple pulls (admin)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotteryMultiPullRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/users/{endUserId}/state": {
+      "get": {
+        "tags": [
+          "Lottery Pull"
+        ],
+        "summary": "Get user pity state for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "End user id."
+            },
+            "required": true,
+            "description": "End user id.",
+            "name": "endUserId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryUserState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/pools/{poolKey}/users/{endUserId}/history": {
+      "get": {
+        "tags": [
+          "Lottery Pull"
+        ],
+        "summary": "Get pull history for a user in a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "End user id."
+            },
+            "required": true,
+            "description": "End user id.",
+            "name": "endUserId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullLogList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages": {
+      "post": {
+        "tags": [
+          "Mail (Admin)"
+        ],
+        "summary": "Send a mail message (broadcast or multicast)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Mail (Admin)"
+        ],
+        "summary": "List mail messages for the active org",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque cursor from a previous response's `nextCursor`."
+            },
+            "required": false,
+            "description": "Opaque cursor from a previous response's `nextCursor`.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "broadcast",
+                "multicast"
+              ],
+              "description": "'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1)."
+            },
+            "required": false,
+            "description": "'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).",
+            "name": "targetType",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{id}": {
+      "get": {
+        "tags": [
+          "Mail (Admin)"
+        ],
+        "summary": "Get a mail message by id (with read/claim stats)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailMessageWithStats"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mail (Admin)"
+        ],
+        "summary": "Hard-delete a mail message (cascades to user states)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{id}/revoke": {
+      "post": {
+        "tags": [
+          "Mail (Admin)"
+        ],
+        "summary": "Revoke (soft-delete) a mail message",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/client/check-in/check-ins": {
       "post": {
         "tags": [
@@ -5430,6 +9379,65 @@
         }
       }
     },
+    "/api/client/item/use": {
+      "post": {
+        "tags": [
+          "Item (Client)"
+        ],
+        "summary": "Use an item (deducts 1 and triggers lottery if linked)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UseItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UseItemResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/client/exchange/execute": {
       "post": {
         "tags": [
@@ -5492,6 +9500,674 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExchangeErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/lottery/pull": {
+      "post": {
+        "tags": [
+          "Lottery (Client)"
+        ],
+        "summary": "Execute a single lottery pull",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientLotteryPullRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/lottery/multi-pull": {
+      "post": {
+        "tags": [
+          "Lottery (Client)"
+        ],
+        "summary": "Execute multiple lottery pulls",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientLotteryMultiPullRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/lottery/pools/{poolKey}/state": {
+      "get": {
+        "tags": [
+          "Lottery (Client)"
+        ],
+        "summary": "Get current user's pity state for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryUserState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/lottery/pools/{poolKey}/history": {
+      "get": {
+        "tags": [
+          "Lottery (Client)"
+        ],
+        "summary": "Get current user's pull history for a pool",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Pool id or alias."
+            },
+            "required": true,
+            "description": "Pool id or alias.",
+            "name": "poolKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryPullLogList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotteryErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/mail/messages": {
+      "get": {
+        "tags": [
+          "Mail (Client)"
+        ],
+        "summary": "List an end user's mail inbox",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The end user whose inbox to load."
+            },
+            "required": true,
+            "description": "The end user whose inbox to load.",
+            "name": "endUserId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO-8601 timestamp. Broadcasts with sentAt < since are filtered out. Typically set to the player's registration time so new users don't see historical broadcasts. Multicasts are unaffected."
+            },
+            "required": false,
+            "description": "ISO-8601 timestamp. Broadcasts with sentAt < since are filtered out. Typically set to the player's registration time so new users don't see historical broadcasts. Multicasts are unaffected.",
+            "name": "since",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailInboxList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/mail/messages/{id}": {
+      "get": {
+        "tags": [
+          "Mail (Client)"
+        ],
+        "summary": "Get a single inbox message (does not auto-mark read)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The end user whose inbox to load."
+            },
+            "required": true,
+            "description": "The end user whose inbox to load.",
+            "name": "endUserId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailInboxItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/mail/messages/{id}/read": {
+      "post": {
+        "tags": [
+          "Mail (Client)"
+        ],
+        "summary": "Mark a mail message as read (idempotent)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailEndUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailUserState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/mail/messages/{id}/claim": {
+      "post": {
+        "tags": [
+          "Mail (Client)"
+        ],
+        "summary": "Claim rewards attached to a mail message",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Mail message UUID."
+            },
+            "required": true,
+            "description": "Mail message UUID.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailEndUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailClaimResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailErrorResponse"
                 }
               }
             }
