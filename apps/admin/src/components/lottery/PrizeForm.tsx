@@ -1,0 +1,316 @@
+import { useForm } from "@tanstack/react-form"
+import { Button } from "#/components/ui/button"
+import { Input } from "#/components/ui/input"
+import { Textarea } from "#/components/ui/textarea"
+import { Switch } from "#/components/ui/switch"
+import { Label } from "#/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select"
+import type { CreatePrizeInput } from "#/lib/types/lottery"
+import type { LotteryTier } from "#/lib/types/lottery"
+import type { ItemEntry } from "#/lib/types/item"
+import { useItemDefinitions } from "#/hooks/use-item"
+
+interface PrizeFormProps {
+  tiers?: LotteryTier[]
+  defaultValues?: Partial<CreatePrizeInput> & { tierId?: string | null }
+  onSubmit: (values: CreatePrizeInput & { tierId?: string }) => void | Promise<void>
+  onCancel?: () => void
+  isPending?: boolean
+  submitLabel?: string
+}
+
+export function PrizeForm({
+  tiers,
+  defaultValues,
+  onSubmit,
+  onCancel,
+  isPending,
+  submitLabel = "Create",
+}: PrizeFormProps) {
+  const { data: definitions } = useItemDefinitions()
+
+  const form = useForm({
+    defaultValues: {
+      name: defaultValues?.name ?? "",
+      description: defaultValues?.description ?? "",
+      tierId: defaultValues?.tierId ?? "",
+      weight: defaultValues?.weight ?? 100,
+      isRateUp: defaultValues?.isRateUp ?? false,
+      rateUpWeight: defaultValues?.rateUpWeight ?? 0,
+      globalStockLimit: defaultValues?.globalStockLimit ?? (null as number | null),
+      sortOrder: defaultValues?.sortOrder ?? 0,
+      isActive: defaultValues?.isActive ?? true,
+      // Reward items: simple single-item for now
+      rewardDefinitionId: (defaultValues?.rewardItems?.[0]?.definitionId ?? "") as string,
+      rewardQuantity: (defaultValues?.rewardItems?.[0]?.quantity ?? 1) as number,
+    },
+    onSubmit: async ({ value }) => {
+      const rewardItems: ItemEntry[] = value.rewardDefinitionId
+        ? [{ definitionId: value.rewardDefinitionId, quantity: value.rewardQuantity }]
+        : []
+      const input: CreatePrizeInput & { tierId?: string } = {
+        name: value.name,
+        description: value.description || null,
+        rewardItems,
+        weight: value.weight,
+        isRateUp: value.isRateUp,
+        rateUpWeight: value.rateUpWeight,
+        globalStockLimit: value.globalStockLimit,
+        sortOrder: value.sortOrder,
+        isActive: value.isActive,
+      }
+      if (value.tierId) {
+        input.tierId = value.tierId
+      }
+      await onSubmit(input)
+    },
+  })
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        form.handleSubmit()
+      }}
+      className="space-y-4"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) =>
+              !value ? "Name is required" : undefined,
+          }}
+        >
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor={field.name}>Name *</Label>
+              <Input
+                id={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="e.g. 100 Diamonds"
+              />
+              {field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
+              )}
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="weight">
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor={field.name}>Weight *</Label>
+              <Input
+                id={field.name}
+                type="number"
+                min={1}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(Number(e.target.value))}
+              />
+            </div>
+          )}
+        </form.Field>
+
+        {tiers && tiers.length > 0 && (
+          <form.Field name="tierId">
+            {(field) => (
+              <div className="space-y-2">
+                <Label>Tier</Label>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="No tier (flat mode)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No tier (flat mode)</SelectItem>
+                    {tiers.map((tier) => (
+                      <SelectItem key={tier.id} value={tier.id}>
+                        {tier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </form.Field>
+        )}
+
+        <form.Field name="globalStockLimit">
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor={field.name}>Stock Limit</Label>
+              <Input
+                id={field.name}
+                type="number"
+                min={1}
+                value={field.state.value ?? ""}
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(e.target.value ? Number(e.target.value) : null)
+                }
+                placeholder="Unlimited"
+              />
+            </div>
+          )}
+        </form.Field>
+      </div>
+
+      <form.Field name="description">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={field.name}>Description</Label>
+            <Textarea
+              id={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              rows={2}
+              placeholder="Optional..."
+            />
+          </div>
+        )}
+      </form.Field>
+
+      <div className="space-y-2">
+        <Label>Reward Item</Label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <form.Field name="rewardDefinitionId">
+            {(field) => (
+              <Select
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select item..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None (no reward)</SelectItem>
+                  {definitions?.map((def) => (
+                    <SelectItem key={def.id} value={def.id}>
+                      {def.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </form.Field>
+
+          <form.Field name="rewardQuantity">
+            {(field) => (
+              <Input
+                type="number"
+                min={1}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(Number(e.target.value))}
+                placeholder="Quantity"
+              />
+            )}
+          </form.Field>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Select an item definition and quantity to reward on win.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-6">
+        <form.Field name="isRateUp">
+          {(field) => (
+            <div className="flex items-center gap-3">
+              <Switch
+                id={field.name}
+                checked={field.state.value}
+                onCheckedChange={(checked) => field.handleChange(checked === true)}
+              />
+              <Label htmlFor={field.name}>Rate Up</Label>
+            </div>
+          )}
+        </form.Field>
+
+        <form.Subscribe selector={(s) => s.values.isRateUp}>
+          {(isRateUp) =>
+            isRateUp ? (
+              <form.Field name="rateUpWeight">
+                {(field) => (
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={field.name} className="shrink-0">
+                      Extra Weight
+                    </Label>
+                    <Input
+                      id={field.name}
+                      type="number"
+                      min={0}
+                      className="w-24"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                    />
+                  </div>
+                )}
+              </form.Field>
+            ) : null
+          }
+        </form.Subscribe>
+      </div>
+
+      <div className="flex items-center gap-6">
+        <form.Field name="isActive">
+          {(field) => (
+            <div className="flex items-center gap-3">
+              <Switch
+                id={field.name}
+                checked={field.state.value}
+                onCheckedChange={(checked) => field.handleChange(checked === true)}
+              />
+              <Label htmlFor={field.name}>Active</Label>
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="sortOrder">
+          {(field) => (
+            <div className="flex items-center gap-2">
+              <Label htmlFor={field.name}>Order</Label>
+              <Input
+                id={field.name}
+                type="number"
+                className="w-20"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(Number(e.target.value))}
+              />
+            </div>
+          )}
+        </form.Field>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <form.Subscribe selector={(s) => s.canSubmit}>
+          {(canSubmit) => (
+            <Button type="submit" size="sm" disabled={!canSubmit || isPending}>
+              {isPending ? "Saving..." : submitLabel}
+            </Button>
+          )}
+        </form.Subscribe>
+        {onCancel && (
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    </form>
+  )
+}

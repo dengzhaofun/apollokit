@@ -118,6 +118,7 @@ function DefinitionDetailPage() {
                   stackable: definition.stackable,
                   stackLimit: definition.stackLimit,
                   holdLimit: definition.holdLimit,
+                  lotteryPoolId: definition.lotteryPoolId,
                   isActive: definition.isActive,
                 }}
                 submitLabel="Save Changes"
@@ -181,6 +182,10 @@ function DefinitionDetailPage() {
                 <DetailItem
                   label="Icon"
                   value={definition.icon ?? "—"}
+                />
+                <DetailItem
+                  label="Lottery Pool"
+                  value={definition.lotteryPoolId ?? "—"}
                 />
                 <DetailItem
                   label="Created"

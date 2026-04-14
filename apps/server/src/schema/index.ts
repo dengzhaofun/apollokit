@@ -6,3 +6,4 @@ export * from "./check-in";
 export * from "./client-credential";
 export * from "./exchange";
 export * from "./item";
+export * from "./lottery";
