@@ -18,6 +18,10 @@ import {
   exchangeClientRouter,
 } from "./modules/exchange";
 import { itemRouter, itemClientRouter } from "./modules/item";
+import {
+  lotteryRouter,
+  lotteryClientRouter,
+} from "./modules/lottery";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono<HonoEnv>();
@@ -59,11 +63,13 @@ app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
 app.route("/api/item", itemRouter);
 app.route("/api/exchange", exchangeRouter);
+app.route("/api/lottery", lotteryRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/check-in", checkInClientRouter);
 app.route("/api/client/item", itemClientRouter);
 app.route("/api/client/exchange", exchangeClientRouter);
+app.route("/api/client/lottery", lotteryClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {

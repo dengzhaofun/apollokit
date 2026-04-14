@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { organization } from "./auth";
+import { lotteryPools } from "./lottery";
 
 /**
  * Item categories — organizational grouping for item definitions.
@@ -84,6 +85,9 @@ export const itemDefinitions = pgTable(
     stackable: boolean("stackable").default(true).notNull(),
     stackLimit: integer("stack_limit"),
     holdLimit: integer("hold_limit"),
+    lotteryPoolId: uuid("lottery_pool_id").references(() => lotteryPools.id, {
+      onDelete: "set null",
+    }),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

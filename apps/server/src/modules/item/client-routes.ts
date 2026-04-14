@@ -15,11 +15,14 @@ import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { clientCredentialService } from "../client-credentials";
+import { lotteryService } from "../lottery";
 import { itemService } from "./index";
 import {
   BalanceResponseSchema,
   ErrorResponseSchema,
   InventoryListResponseSchema,
+  UseItemSchema,
+  UseItemResponseSchema,
 } from "./validators";
 
 const TAG = "Item (Client)";
@@ -160,5 +163,72 @@ itemClientRouter.openapi(
       definitionId: def.id,
     });
     return c.json({ definitionId: def.id, balance }, 200);
+  },
+);
+
+// POST /use — use an item (deduct + trigger lottery if linked)
+itemClientRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/use",
+    tags: [TAG],
+    summary: "Use an item (deducts 1 and triggers lottery if linked)",
+    request: {
+      body: {
+        content: { "application/json": { schema: UseItemSchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: UseItemResponseSchema } },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const publishableKey = c.req.header("x-api-key")!;
+    const { definitionId, endUserId, userHash, idempotencyKey } =
+      c.req.valid("json");
+
+    await clientCredentialService.verifyRequest(
+      publishableKey,
+      endUserId,
+      userHash,
+    );
+
+    const orgId = c.var.session!.activeOrganizationId!;
+
+    // 1. Look up the item definition
+    const def = await itemService.getDefinition(orgId, definitionId);
+
+    // 2. Deduct 1 from inventory
+    await itemService.deductItems({
+      organizationId: orgId,
+      endUserId,
+      deductions: [{ definitionId: def.id, quantity: 1 }],
+      source: "use_item",
+      sourceId: idempotencyKey,
+    });
+
+    // 3. If linked to a lottery pool, trigger a pull
+    let lotteryResult = null;
+    if (def.lotteryPoolId) {
+      lotteryResult = await lotteryService.pull({
+        organizationId: orgId,
+        endUserId,
+        poolKey: def.lotteryPoolId,
+        idempotencyKey,
+      });
+    }
+
+    return c.json(
+      {
+        definitionId: def.id,
+        definitionName: def.name,
+        lotteryResult,
+      },
+      200,
+    );
   },
 );

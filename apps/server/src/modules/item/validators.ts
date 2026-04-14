@@ -273,6 +273,53 @@ export const InventoryListResponseSchema = z
   .object({ items: z.array(InventoryViewSchema) })
   .openapi("ItemInventoryList");
 
+// ─── Use Item ─────────────────────────────────────────────────────
+
+export const UseItemSchema = z
+  .object({
+    definitionId: z.string().uuid().openapi({
+      description: "The item definition to use.",
+    }),
+    endUserId: z.string().min(1).max(256).openapi({
+      description: "The end user's business id.",
+    }),
+    userHash: z.string().optional(),
+    idempotencyKey: z.string().max(256).optional(),
+  })
+  .openapi("UseItemRequest");
+
+const ItemEntryResponseSchema = z.object({
+  definitionId: z.string(),
+  quantity: z.number().int(),
+});
+
+const PullResultEntrySchema = z.object({
+  batchIndex: z.number().int(),
+  prizeId: z.string(),
+  prizeName: z.string(),
+  tierId: z.string().nullable(),
+  tierName: z.string().nullable(),
+  rewardItems: z.array(ItemEntryResponseSchema),
+  pityTriggered: z.boolean(),
+  pityRuleId: z.string().nullable(),
+});
+
+export const UseItemResponseSchema = z
+  .object({
+    definitionId: z.string(),
+    definitionName: z.string(),
+    lotteryResult: z
+      .object({
+        batchId: z.string(),
+        poolId: z.string(),
+        endUserId: z.string(),
+        costItems: z.array(ItemEntryResponseSchema),
+        pulls: z.array(PullResultEntrySchema),
+      })
+      .nullable(),
+  })
+  .openapi("UseItemResult");
+
 export const ErrorResponseSchema = z
   .object({
     error: z.string(),

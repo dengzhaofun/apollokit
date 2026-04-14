@@ -119,6 +119,7 @@ function DefinitionDetailPage() {
                   stackable: definition.stackable,
                   stackLimit: definition.stackLimit,
                   holdLimit: definition.holdLimit,
+                  lotteryPoolId: definition.lotteryPoolId,
                   isActive: definition.isActive,
                 }}
                 submitLabel={m.common_save_changes()}

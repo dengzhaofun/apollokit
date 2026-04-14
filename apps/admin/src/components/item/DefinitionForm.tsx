@@ -13,6 +13,7 @@ import {
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
 import { useItemCategories } from "#/hooks/use-item"
+import { useLotteryPools } from "#/hooks/use-lottery"
 import type { CreateDefinitionInput } from "#/lib/types/item"
 
 interface DefinitionFormProps {
@@ -29,6 +30,7 @@ export function DefinitionForm({
   submitLabel,
 }: DefinitionFormProps) {
   const { data: categories } = useItemCategories()
+  const { data: pools } = useLotteryPools()
 
   const form = useForm({
     defaultValues: {
@@ -40,6 +42,7 @@ export function DefinitionForm({
       stackable: defaultValues?.stackable ?? true,
       stackLimit: defaultValues?.stackLimit ?? (null as number | null),
       holdLimit: defaultValues?.holdLimit ?? (null as number | null),
+      lotteryPoolId: (defaultValues as Record<string, unknown>)?.lotteryPoolId as string ?? "",
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -52,6 +55,7 @@ export function DefinitionForm({
         stackable: value.stackable,
         stackLimit: value.stackable ? value.stackLimit : null,
         holdLimit: value.holdLimit,
+        lotteryPoolId: value.lotteryPoolId || null,
         isActive: value.isActive,
       }
       await onSubmit(input)
@@ -225,6 +229,33 @@ export function DefinitionForm({
             />
             <p className="text-xs text-muted-foreground">
               Max total quantity a user can hold. 1 = unique item. Empty = unlimited.
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="lotteryPoolId">
+        {(field) => (
+          <div className="space-y-2">
+            <Label>Lottery Pool</Label>
+            <Select
+              value={field.state.value}
+              onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {pools?.map((pool) => (
+                  <SelectItem key={pool.id} value={pool.id}>
+                    {pool.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Link to a lottery pool to make this item openable (e.g. treasure chest).
             </p>
           </div>
         )}

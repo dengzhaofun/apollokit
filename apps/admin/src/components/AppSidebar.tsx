@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
   CalendarCheck,
+  Dices,
   KeyRound,
   LayoutDashboard,
   Package,
