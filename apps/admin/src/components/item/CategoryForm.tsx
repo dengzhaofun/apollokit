@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Switch } from "#/components/ui/switch"
@@ -16,7 +17,7 @@ export function CategoryForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "Create",
+  submitLabel,
 }: CategoryFormProps) {
   const form = useForm({
     defaultValues: {
@@ -56,7 +57,7 @@ export function CategoryForm({
       >
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Name *</Label>
+            <Label htmlFor={field.name}>{m.common_name()} *</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -74,7 +75,7 @@ export function CategoryForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Alias</Label>
+            <Label htmlFor={field.name}>{m.common_alias()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -107,7 +108,7 @@ export function CategoryForm({
       <form.Field name="sortOrder">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Sort Order</Label>
+            <Label htmlFor={field.name}>{m.common_sort_order()}</Label>
             <Input
               id={field.name}
               type="number"
@@ -127,7 +128,7 @@ export function CategoryForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>Active</Label>
+            <Label htmlFor={field.name}>{m.common_active()}</Label>
           </div>
         )}
       </form.Field>
@@ -135,7 +136,7 @@ export function CategoryForm({
       <form.Subscribe selector={(s) => s.canSubmit}>
         {(canSubmit) => (
           <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "Saving..." : submitLabel}
+            {isPending ? "Saving..." : (submitLabel ?? m.common_create())}
           </Button>
         )}
       </form.Subscribe>

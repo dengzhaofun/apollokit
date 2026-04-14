@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { Plus, Trash2 } from "lucide-react"
+import * as m from "#/paraglide/messages.js"
 
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -58,7 +59,7 @@ function ItemEntryEditor({
             </Select>
           </div>
           <div className="w-28 space-y-1">
-            {i === 0 && <Label className="text-xs">Qty</Label>}
+            {i === 0 && <Label className="text-xs">{m.item_qty()}</Label>}
             <Input
               type="number"
               min={1}
@@ -91,7 +92,7 @@ function ItemEntryEditor({
         onClick={() => onChange([...entries, { definitionId: "", quantity: 1 }])}
       >
         <Plus className="size-4" />
-        Add Item
+        {m.item_add_item()}
       </Button>
     </div>
   )
@@ -117,7 +118,7 @@ export function GrantDeductForm() {
   function validateEntries(entries: EntryRow[]): ItemEntry[] | null {
     const valid = entries.filter((e) => e.definitionId && e.quantity > 0)
     if (valid.length === 0) {
-      toast.error("Add at least one item with a valid definition")
+      toast.error(m.item_add_valid_item())
       return null
     }
     return valid
@@ -125,7 +126,7 @@ export function GrantDeductForm() {
 
   async function handleGrant() {
     if (!endUserId.trim()) {
-      toast.error("End User ID is required")
+      toast.error(m.item_end_user_id_required())
       return
     }
     const grants = validateEntries(grantEntries)
@@ -141,13 +142,13 @@ export function GrantDeductForm() {
         `Granted ${result.grants.length} item(s) successfully`,
       )
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.body.error : "Failed to grant items")
+      toast.error(err instanceof ApiError ? err.body.error : m.item_failed_grant())
     }
   }
 
   async function handleDeduct() {
     if (!endUserId.trim()) {
-      toast.error("End User ID is required")
+      toast.error(m.item_end_user_id_required())
       return
     }
     const deductions = validateEntries(deductEntries)
@@ -163,7 +164,7 @@ export function GrantDeductForm() {
         `Deducted ${result.deductions.length} item(s) successfully`,
       )
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.body.error : "Failed to deduct items")
+      toast.error(err instanceof ApiError ? err.body.error : m.item_failed_deduct())
     }
   }
 
@@ -171,7 +172,7 @@ export function GrantDeductForm() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="gd-endUserId">End User ID *</Label>
+          <Label htmlFor="gd-endUserId">{m.item_end_user_id()} *</Label>
           <Input
             id="gd-endUserId"
             value={endUserId}
@@ -180,7 +181,7 @@ export function GrantDeductForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="gd-source">Source *</Label>
+          <Label htmlFor="gd-source">{m.item_source()} *</Label>
           <Input
             id="gd-source"
             value={source}
@@ -190,19 +191,19 @@ export function GrantDeductForm() {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="gd-sourceId">Source ID (optional)</Label>
+        <Label htmlFor="gd-sourceId">{m.item_source_id()}</Label>
         <Input
           id="gd-sourceId"
           value={sourceId}
           onChange={(e) => setSourceId(e.target.value)}
-          placeholder="Optional idempotency key"
+          placeholder={m.item_source_id_placeholder()}
         />
       </div>
 
       <Tabs defaultValue="grant">
         <TabsList>
-          <TabsTrigger value="grant">Grant</TabsTrigger>
-          <TabsTrigger value="deduct">Deduct</TabsTrigger>
+          <TabsTrigger value="grant">{m.item_grant()}</TabsTrigger>
+          <TabsTrigger value="deduct">{m.item_deduct()}</TabsTrigger>
         </TabsList>
         <TabsContent value="grant" className="space-y-4 pt-4">
           <ItemEntryEditor
@@ -214,7 +215,7 @@ export function GrantDeductForm() {
             onClick={handleGrant}
             disabled={grantMutation.isPending}
           >
-            {grantMutation.isPending ? "Granting..." : "Grant Items"}
+            {grantMutation.isPending ? m.item_granting() : m.item_grant_items()}
           </Button>
         </TabsContent>
         <TabsContent value="deduct" className="space-y-4 pt-4">
@@ -228,7 +229,7 @@ export function GrantDeductForm() {
             onClick={handleDeduct}
             disabled={deductMutation.isPending}
           >
-            {deductMutation.isPending ? "Deducting..." : "Deduct Items"}
+            {deductMutation.isPending ? m.item_deducting() : m.item_deduct_items()}
           </Button>
         </TabsContent>
       </Tabs>

@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -18,21 +19,25 @@ import type {
 
 const TIMEZONES = Intl.supportedValuesOf("timeZone")
 
-const RESET_MODE_LABELS: Record<ResetMode, string> = {
-  none: "None (cumulative)",
-  week: "Weekly",
-  month: "Monthly",
+function getResetModeLabels(): Record<ResetMode, string> {
+  return {
+    none: m.checkin_reset_none(),
+    week: m.checkin_reset_weekly(),
+    month: m.checkin_reset_monthly(),
+  }
 }
 
-const WEEK_DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-]
+function getWeekDayLabels(): string[] {
+  return [
+    m.checkin_sunday(),
+    m.checkin_monday(),
+    m.checkin_tuesday(),
+    m.checkin_wednesday(),
+    m.checkin_thursday(),
+    m.checkin_friday(),
+    m.checkin_saturday(),
+  ]
+}
 
 interface ConfigFormProps {
   defaultValues?: Partial<CreateConfigInput>
@@ -45,8 +50,10 @@ export function ConfigForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "Create",
+  submitLabel = m.common_create(),
 }: ConfigFormProps) {
+  const RESET_MODE_LABELS = getResetModeLabels()
+  const WEEK_DAY_LABELS = getWeekDayLabels()
   const form = useForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
@@ -91,7 +98,7 @@ export function ConfigForm({
       >
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Name *</Label>
+            <Label htmlFor={field.name}>{m.common_name()} *</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -109,7 +116,7 @@ export function ConfigForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Alias</Label>
+            <Label htmlFor={field.name}>{m.common_alias()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -127,7 +134,7 @@ export function ConfigForm({
       <form.Field name="description">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Description</Label>
+            <Label htmlFor={field.name}>{m.common_description()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -143,7 +150,7 @@ export function ConfigForm({
       <form.Field name="resetMode">
         {(field) => (
           <div className="space-y-2">
-            <Label>Reset Mode *</Label>
+            <Label>{m.checkin_reset_mode()} *</Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v as ResetMode)}
@@ -172,7 +179,7 @@ export function ConfigForm({
             <form.Field name="weekStartsOn">
               {(field) => (
                 <div className="space-y-2">
-                  <Label>Week Starts On</Label>
+                  <Label>{m.checkin_week_starts_on()}</Label>
                   <Select
                     value={String(field.state.value)}
                     onValueChange={(v) => field.handleChange(Number(v))}
@@ -198,7 +205,7 @@ export function ConfigForm({
       <form.Field name="target">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Target (days)</Label>
+            <Label htmlFor={field.name}>{m.checkin_target()} ({m.checkin_days()})</Label>
             <Input
               id={field.name}
               type="number"
@@ -220,7 +227,7 @@ export function ConfigForm({
       <form.Field name="timezone">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Timezone</Label>
+            <Label htmlFor={field.name}>{m.checkin_timezone()}</Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v)}
@@ -248,7 +255,7 @@ export function ConfigForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>Active</Label>
+            <Label htmlFor={field.name}>{m.common_active()}</Label>
           </div>
         )}
       </form.Field>

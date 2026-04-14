@@ -21,16 +21,22 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "#/components/ui/sidebar"
+import { LanguageSwitcher } from "./LanguageSwitcher"
+import * as m from "../paraglide/messages.js"
 
-const navItems = [
-  { title: "Dashboard", to: "/dashboard" as const, icon: LayoutDashboard },
-  { title: "Check-in", to: "/check-in" as const, icon: CalendarCheck },
-  { title: "Item", to: "/item" as const, icon: Package },
-  { title: "Exchange", to: "/exchange" as const, icon: ArrowLeftRight },
-  { title: "API Keys", to: "/api-keys" as const, icon: KeyRound },
-]
+function getNavItems() {
+  return [
+    { title: m.nav_dashboard(), to: "/dashboard" as const, icon: LayoutDashboard },
+    { title: m.nav_checkin(), to: "/check-in" as const, icon: CalendarCheck },
+    { title: m.nav_item(), to: "/item" as const, icon: Package },
+    { title: m.nav_exchange(), to: "/exchange" as const, icon: ArrowLeftRight },
+    { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
+  ]
+}
 
 export function AppSidebar() {
+  const navItems = getNavItems()
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -42,8 +48,8 @@ export function AppSidebar() {
                   <span className="text-sm font-bold">A</span>
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">ApolloKit</span>
-                  <span className="text-xs text-muted-foreground">Admin</span>
+                  <span className="font-semibold">{m.nav_brand()}</span>
+                  <span className="text-xs text-muted-foreground">{m.nav_admin()}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -59,11 +65,11 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{m.nav_navigation()}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton asChild>
                     <Link to={item.to}>
                       <item.icon className="size-4" />
@@ -79,6 +85,11 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="px-1 py-1">
+              <LanguageSwitcher />
+            </div>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="px-1 py-1 [&_button]:w-full">
               <UserButton size="lg" />

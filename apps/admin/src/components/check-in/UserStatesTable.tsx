@@ -14,13 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import * as m from "#/paraglide/messages.js"
 import type { CheckInUserState } from "#/lib/types/check-in"
 
 const columnHelper = createColumnHelper<CheckInUserState>()
 
 const columns = [
   columnHelper.accessor("endUserId", {
-    header: "User ID",
+    header: () => m.checkin_user_id(),
     cell: (info) => (
       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
         {info.getValue()}
@@ -28,33 +29,33 @@ const columns = [
     ),
   }),
   columnHelper.accessor("totalDays", {
-    header: "Total Days",
+    header: () => m.checkin_total_days(),
   }),
   columnHelper.accessor("currentStreak", {
-    header: "Streak",
+    header: () => m.checkin_current_streak(),
   }),
   columnHelper.accessor("longestStreak", {
-    header: "Best Streak",
+    header: () => m.checkin_longest_streak(),
   }),
   columnHelper.accessor("currentCycleDays", {
-    header: "Cycle Days",
+    header: () => m.checkin_cycle_days(),
   }),
   columnHelper.accessor("currentCycleKey", {
-    header: "Cycle",
+    header: () => m.checkin_cycle_key(),
     cell: (info) => {
       const key = info.getValue()
       return key ?? <span className="text-muted-foreground">—</span>
     },
   }),
   columnHelper.accessor("lastCheckInDate", {
-    header: "Last Check-in",
+    header: () => m.checkin_last_checkin_date(),
     cell: (info) => {
       const date = info.getValue()
       return date ?? <span className="text-muted-foreground">—</span>
     },
   }),
   columnHelper.accessor("firstCheckInAt", {
-    header: "First Check-in",
+    header: () => m.checkin_first_checkin_at(),
     cell: (info) => {
       const val = info.getValue()
       return val ? (

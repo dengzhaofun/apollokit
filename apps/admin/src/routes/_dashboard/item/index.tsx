@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import * as m from "#/paraglide/messages.js"
 
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
@@ -22,27 +23,27 @@ function ItemListPage() {
       <header className="flex h-14 items-center gap-2 border-b px-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">Items</h1>
+        <h1 className="text-sm font-semibold">{m.item_items()}</h1>
       </header>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="definitions">
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="definitions">Definitions</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="definitions">{m.item_definitions()}</TabsTrigger>
+              <TabsTrigger value="categories">{m.item_categories()}</TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
               <Button asChild size="sm">
                 <Link to="/item/definitions/create">
                   <Plus className="size-4" />
-                  New Definition
+                  {m.item_new_definition()}
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
                 <Link to="/item/categories/create">
                   <Plus className="size-4" />
-                  New Category
+                  {m.item_new_category()}
                 </Link>
               </Button>
             </div>
@@ -51,11 +52,11 @@ function ItemListPage() {
           <TabsContent value="definitions" className="mt-4">
             {defPending ? (
               <div className="flex h-40 items-center justify-center text-muted-foreground">
-                Loading...
+                {m.common_loading()}
               </div>
             ) : defError ? (
               <div className="flex h-40 items-center justify-center text-destructive">
-                Failed to load definitions: {defError.message}
+                {m.item_failed_load_definitions()} {defError.message}
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">
@@ -67,11 +68,11 @@ function ItemListPage() {
           <TabsContent value="categories" className="mt-4">
             {catPending ? (
               <div className="flex h-40 items-center justify-center text-muted-foreground">
-                Loading...
+                {m.common_loading()}
               </div>
             ) : catError ? (
               <div className="flex h-40 items-center justify-center text-destructive">
-                Failed to load categories: {catError.message}
+                {m.item_failed_load_categories()} {catError.message}
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">

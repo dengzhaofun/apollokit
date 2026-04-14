@@ -1,4 +1,5 @@
 import { useState } from "react"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -24,7 +25,7 @@ export function InventoryLookup() {
     <div className="space-y-4">
       <div className="flex items-end gap-3">
         <div className="flex-1 space-y-2">
-          <Label htmlFor="endUserId">End User ID</Label>
+          <Label htmlFor="endUserId">{m.item_end_user_id()}</Label>
           <Input
             id="endUserId"
             value={endUserId}
@@ -42,7 +43,7 @@ export function InventoryLookup() {
           disabled={!endUserId.trim()}
         >
           <Search className="size-4" />
-          Look Up
+          {m.item_look_up()}
         </Button>
       </div>
 
@@ -50,7 +51,7 @@ export function InventoryLookup() {
         <>
           {isPending ? (
             <div className="flex h-24 items-center justify-center text-muted-foreground">
-              Loading...
+              {m.common_loading()}
             </div>
           ) : error ? (
             <div className="flex h-24 items-center justify-center text-destructive">
@@ -62,10 +63,10 @@ export function InventoryLookup() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Item</TableHead>
-                    <TableHead>Alias</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Stacks</TableHead>
+                    <TableHead>{m.common_alias()}</TableHead>
+                    <TableHead>{m.common_type()}</TableHead>
+                    <TableHead>{m.item_quantity()}</TableHead>
+                    <TableHead>{m.item_stacks()}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -86,7 +87,7 @@ export function InventoryLookup() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {item.stackable ? "Stackable" : "Non-stackable"}
+                            {item.stackable ? m.item_stackable() : m.item_non_stackable()}
                           </Badge>
                         </TableCell>
                         <TableCell>{item.totalQuantity}</TableCell>
@@ -96,7 +97,7 @@ export function InventoryLookup() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center">
-                        No items in inventory.
+                        {m.item_no_inventory()}
                       </TableCell>
                     </TableRow>
                   )}

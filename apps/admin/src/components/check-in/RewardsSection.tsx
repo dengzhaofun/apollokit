@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import {
@@ -96,7 +97,7 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
 
       {isPending ? (
         <div className="flex h-16 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </div>
       ) : sortedRewards.length === 0 ? (
         <div className="rounded-xl border bg-card p-4 text-center text-sm text-muted-foreground">
@@ -187,7 +188,7 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={async () => {
                         try {
@@ -204,7 +205,7 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
                       disabled={deleteMutation.isPending}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Delete
+                      {m.common_delete()}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

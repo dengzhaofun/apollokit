@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -31,7 +32,7 @@ export function RewardForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "Create",
+  submitLabel = m.common_create(),
 }: RewardFormProps) {
   const { data: definitions } = useItemDefinitions()
   const defs = (definitions ?? []).map((d) => ({ id: d.id, name: d.name }))

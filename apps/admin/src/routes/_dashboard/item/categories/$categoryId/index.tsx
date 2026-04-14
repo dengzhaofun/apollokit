@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
@@ -35,9 +36,9 @@ function CategoryDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="Loading..." />
+        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -64,7 +65,7 @@ function CategoryDetailPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/item">
                 <ArrowLeft className="size-4" />
-                Back
+                {m.common_back()}
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
@@ -74,22 +75,22 @@ function CategoryDetailPage() {
                 onClick={() => setEditing(!editing)}
               >
                 <Pencil className="size-4" />
-                {editing ? "Cancel" : "Edit"}
+                {editing ? m.common_cancel() : m.common_edit()}
               </Button>
               <DeleteItemDialog
                 name={category.name}
-                description="This will permanently delete this category. Item definitions using this category will become uncategorized."
+                description={m.item_delete_category_desc()}
                 isPending={deleteMutation.isPending}
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(category.id)
-                    toast.success("Category deleted")
+                    toast.success(m.item_category_deleted())
                     navigate({ to: "/item" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError
                         ? err.body.error
-                        : "Failed to delete category",
+                        : m.item_failed_delete_category(),
                     )
                   }
                 }}
@@ -107,7 +108,7 @@ function CategoryDetailPage() {
                   sortOrder: category.sortOrder,
                   isActive: category.isActive,
                 }}
-                submitLabel="Save Changes"
+                submitLabel={m.common_save_changes()}
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
@@ -115,7 +116,7 @@ function CategoryDetailPage() {
                       id: category.id,
                       ...values,
                     })
-                    toast.success("Category updated")
+                    toast.success(m.item_category_updated())
                     setEditing(false)
                   } catch (err) {
                     toast.error(
@@ -130,9 +131,9 @@ function CategoryDetailPage() {
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2">
-                <DetailItem label="Name" value={category.name} />
+                <DetailItem label={m.common_name()} value={category.name} />
                 <DetailItem
-                  label="Alias"
+                  label={m.common_alias()}
                   value={
                     category.alias ? (
                       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -144,23 +145,23 @@ function CategoryDetailPage() {
                   }
                 />
                 <DetailItem
-                  label="Icon"
+                  label={m.common_icon()}
                   value={category.icon ?? "—"}
                 />
                 <DetailItem
-                  label="Sort Order"
+                  label={m.common_sort_order()}
                   value={category.sortOrder}
                 />
                 <DetailItem
-                  label="Status"
+                  label={m.common_status()}
                   value={
                     <Badge variant={category.isActive ? "default" : "outline"}>
-                      {category.isActive ? "Active" : "Inactive"}
+                      {category.isActive ? m.common_active() : m.common_inactive()}
                     </Badge>
                   }
                 />
                 <DetailItem
-                  label="Created"
+                  label={m.common_created()}
                   value={format(new Date(category.createdAt), "yyyy-MM-dd HH:mm")}
                 />
                 <DetailItem

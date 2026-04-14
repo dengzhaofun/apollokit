@@ -3,6 +3,7 @@ import { SidebarTrigger } from "../../components/ui/sidebar"
 import { Separator } from "../../components/ui/separator"
 
 import { authClient } from "../../lib/auth-client"
+import * as m from "../../paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/dashboard")({
   component: Dashboard,
@@ -16,7 +17,7 @@ function Dashboard() {
       <header className="flex h-14 items-center gap-2 border-b px-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">Dashboard</h1>
+        <h1 className="text-sm font-semibold">{m.dashboard_title()}</h1>
       </header>
 
       <main className="flex-1 p-6">
@@ -25,7 +26,7 @@ function Dashboard() {
             Welcome{session?.user.name ? `, ${session.user.name}` : ""}
           </h2>
           <p className="text-muted-foreground">
-            Signed in as {session?.user.email}
+            {m.dashboard_signed_in_as()} {session?.user.email}
           </p>
         </div>
       </main>

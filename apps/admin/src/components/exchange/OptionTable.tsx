@@ -23,13 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import * as m from "#/paraglide/messages.js"
 import type { ExchangeOption } from "#/lib/types/exchange"
 
 const columnHelper = createColumnHelper<ExchangeOption>()
 
 const columns = [
   columnHelper.accessor("name", {
-    header: "Name",
+    header: () => m.common_name(),
     cell: (info) => (
       <Link
         to="/exchange/$configId/options/$optionId"
@@ -44,19 +45,19 @@ const columns = [
     ),
   }),
   columnHelper.accessor("costItems", {
-    header: "Costs",
+    header: () => m.exchange_costs(),
     cell: (info) => (
-      <span className="text-xs">{info.getValue().length} item(s)</span>
+      <span className="text-xs">{info.getValue().length} {m.exchange_items_suffix()}</span>
     ),
   }),
   columnHelper.accessor("rewardItems", {
-    header: "Rewards",
+    header: () => m.exchange_rewards(),
     cell: (info) => (
-      <span className="text-xs">{info.getValue().length} item(s)</span>
+      <span className="text-xs">{info.getValue().length} {m.exchange_items_suffix()}</span>
     ),
   }),
   columnHelper.accessor("globalCount", {
-    header: "Usage",
+    header: () => m.exchange_usage(),
     cell: (info) => {
       const option = info.row.original
       if (option.globalLimit != null) {
@@ -66,10 +67,10 @@ const columns = [
     },
   }),
   columnHelper.accessor("isActive", {
-    header: "Status",
+    header: () => m.common_status(),
     cell: (info) => (
       <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "Active" : "Inactive"}
+        {info.getValue() ? m.common_active() : m.common_inactive()}
       </Badge>
     ),
   }),
@@ -86,7 +87,7 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -99,7 +100,7 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
             }}
           >
             <Pencil className="size-4" />
-            Edit
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -112,7 +113,7 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            Delete
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -160,7 +161,7 @@ export function OptionTable({ data }: OptionTableProps) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              No exchange options yet.
+              {m.exchange_no_options()}
             </TableCell>
           </TableRow>
         )}

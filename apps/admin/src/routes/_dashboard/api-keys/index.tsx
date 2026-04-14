@@ -46,6 +46,7 @@ import {
   useUpdateDevMode,
 } from "#/hooks/use-client-credentials"
 import { authClient } from "#/lib/auth-client"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/api-keys/")({
   component: ApiKeysPage,
@@ -58,14 +59,14 @@ function ApiKeysPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <KeyRound className="size-4" />
-        <h1 className="text-sm font-semibold">API Keys</h1>
+        <h1 className="text-sm font-semibold">{m.apikeys_title()}</h1>
       </header>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="admin">
           <TabsList>
-            <TabsTrigger value="admin">Admin Keys</TabsTrigger>
-            <TabsTrigger value="client">Client Credentials</TabsTrigger>
+            <TabsTrigger value="admin">{m.apikeys_admin_keys()}</TabsTrigger>
+            <TabsTrigger value="client">{m.apikeys_client_credentials()}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="admin" className="mt-4">
@@ -94,35 +95,35 @@ function AdminKeysTab() {
     <>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Server-to-server API keys for admin access. Keep these secret.
+          {m.apikeys_admin_keys_desc()}
         </p>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus className="size-4" />
-          Create Admin Key
+          {m.apikeys_create_admin_key()}
         </Button>
       </div>
 
       {isPending ? (
         <div className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </div>
       ) : error ? (
         <div className="flex h-40 items-center justify-center text-destructive">
-          Failed to load keys: {String(error)}
+          {m.apikeys_failed_to_load_keys()} {String(error)}
         </div>
       ) : !keys?.length ? (
         <div className="flex h-40 items-center justify-center text-muted-foreground">
-          No admin keys yet.
+          {m.apikeys_no_admin_keys()}
         </div>
       ) : (
         <div className="rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead>{m.common_name()}</TableHead>
+                <TableHead>{m.common_created()}</TableHead>
+                <TableHead>{m.apikeys_expires()}</TableHead>
+                <TableHead className="w-24">{m.common_actions()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -144,7 +145,7 @@ function AdminKeysTab() {
       />
 
       <KeyRevealDialog
-        title="Admin Key Created"
+        title={m.apikeys_admin_key_created_title()}
         label="API Key"
         value={createdKey}
         onClose={() => setCreatedKey(null)}
@@ -186,17 +187,17 @@ function AdminKeyRow({ apiKey }: { apiKey: Record<string, unknown> }) {
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Admin Key?</AlertDialogTitle>
+            <AlertDialogTitle>{m.apikeys_delete_admin_key_title()}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the key. Any services using it will lose access.
+              {m.apikeys_delete_admin_key_desc()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => revoke.mutate(apiKey.id as string)}
             >
-              Delete
+              {m.common_delete()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -234,14 +235,14 @@ function CreateAdminKeyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Admin Key</DialogTitle>
+          <DialogTitle>{m.apikeys_create_admin_key()}</DialogTitle>
           <DialogDescription>
             Create a server-to-server API key for admin access.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="admin-key-name">Name</Label>
+            <Label htmlFor="admin-key-name">{m.common_name()}</Label>
             <Input
               id="admin-key-name"
               value={name}
@@ -279,37 +280,37 @@ function ClientCredentialsTab() {
     <>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Client credentials for C-end access with HMAC identity verification.
+          {m.apikeys_client_credentials_desc()}
         </p>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus className="size-4" />
-          Create Credential
+          {m.apikeys_create_credential()}
         </Button>
       </div>
 
       {isPending ? (
         <div className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </div>
       ) : error ? (
         <div className="flex h-40 items-center justify-center text-destructive">
-          Failed to load credentials: {error.message}
+          {m.apikeys_failed_to_load_credentials()} {error.message}
         </div>
       ) : !credentials?.length ? (
         <div className="flex h-40 items-center justify-center text-muted-foreground">
-          No client credentials yet.
+          {m.apikeys_no_credentials()}
         </div>
       ) : (
         <div className="rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Publishable Key</TableHead>
-                <TableHead>Dev Mode</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="w-32">Actions</TableHead>
+                <TableHead>{m.common_name()}</TableHead>
+                <TableHead>{m.apikeys_publishable_key()}</TableHead>
+                <TableHead>{m.apikeys_dev_mode()}</TableHead>
+                <TableHead>{m.common_status()}</TableHead>
+                <TableHead>{m.common_created()}</TableHead>
+                <TableHead className="w-32">{m.common_actions()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -334,9 +335,9 @@ function ClientCredentialsTab() {
         <Dialog open onOpenChange={() => setCreated(null)}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Client Credential Created</DialogTitle>
+              <DialogTitle>{m.apikeys_credential_created_title()}</DialogTitle>
               <DialogDescription>
-                Copy both keys now. The secret will not be shown again.
+                {m.apikeys_credential_created_desc()}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-4">
@@ -344,7 +345,7 @@ function ClientCredentialsTab() {
               <CopyField label="Secret Key" value={created.secret} />
             </div>
             <DialogFooter>
-              <Button onClick={() => setCreated(null)}>Done</Button>
+              <Button onClick={() => setCreated(null)}>{m.common_done()}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -395,7 +396,7 @@ function ClientCredentialRow({
         </TableCell>
         <TableCell>
           {credential.enabled ? (
-            <Badge variant="default">Active</Badge>
+            <Badge variant="default">{m.common_active()}</Badge>
           ) : (
             <Badge variant="secondary">Disabled</Badge>
           )}
@@ -410,17 +411,17 @@ function ClientCredentialRow({
                 variant="ghost"
                 size="sm"
                 className="text-destructive"
-                title="Revoke"
+                title={m.common_revoke()}
                 onClick={() => revoke.mutate(credential.id)}
               >
-                Revoke
+                {m.common_revoke()}
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
               className="text-destructive"
-              title="Delete"
+              title={m.common_delete()}
               onClick={() => setShowDelete(true)}
             >
               <Trash2 className="size-4" />
@@ -432,17 +433,17 @@ function ClientCredentialRow({
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Credential?</AlertDialogTitle>
+            <AlertDialogTitle>{m.apikeys_delete_credential_title()}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the credential. Any clients using it will lose access.
+              {m.apikeys_delete_credential_desc()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => remove.mutate(credential.id)}
             >
-              Delete
+              {m.common_delete()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -474,14 +475,14 @@ function CreateClientCredentialDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Client Credential</DialogTitle>
+          <DialogTitle>{m.apikeys_create_credential()}</DialogTitle>
           <DialogDescription>
             Create a publishable key + secret pair for C-end API access.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="cred-name">Name</Label>
+            <Label htmlFor="cred-name">{m.common_name()}</Label>
             <Input
               id="cred-name"
               value={name}
@@ -525,14 +526,14 @@ function KeyRevealDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Copy this key now. It will not be shown again.
+            {m.apikeys_admin_key_created_desc()}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <CopyField label={label} value={value} />
         </div>
         <DialogFooter>
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{m.common_done()}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -557,7 +558,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
         </code>
         <Button variant="outline" size="sm" onClick={handleCopy}>
           <Copy className="size-3" />
-          {copied ? "Copied!" : "Copy"}
+          {copied ? m.common_copied() : m.common_copy()}
         </Button>
       </div>
     </div>
