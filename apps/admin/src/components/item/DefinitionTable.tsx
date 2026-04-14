@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import {
   createColumnHelper,
   flexRender,
@@ -7,6 +8,7 @@ import {
 import { Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import * as m from "#/paraglide/messages.js"
 
 import {
   Table,
@@ -29,66 +31,68 @@ import type { ItemDefinition } from "#/lib/types/item"
 const columnHelper = createColumnHelper<ItemDefinition>()
 
 function stackLabel(def: ItemDefinition): string {
-  if (!def.stackable) return "Non-stackable"
-  if (def.stackLimit == null) return "Unlimited"
+  if (!def.stackable) return m.item_non_stackable()
+  if (def.stackLimit == null) return m.common_unlimited()
   return `Stack ≤ ${def.stackLimit}`
 }
 
-const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: (info) => (
-      <Link
-        to="/item/definitions/$definitionId"
-        params={{ definitionId: info.row.original.id }}
-        className="font-medium hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor("alias", {
-    header: "Alias",
-    cell: (info) => {
-      const alias = info.getValue()
-      return alias ? (
-        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      )
-    },
-  }),
-  columnHelper.accessor("stackable", {
-    header: "Type",
-    cell: (info) => (
-      <Badge variant="secondary">{stackLabel(info.row.original)}</Badge>
-    ),
-  }),
-  columnHelper.accessor("holdLimit", {
-    header: "Hold Limit",
-    cell: (info) => {
-      const limit = info.getValue()
-      return limit != null ? limit : <span className="text-muted-foreground">—</span>
-    },
-  }),
-  columnHelper.accessor("isActive", {
-    header: "Status",
-    cell: (info) => (
-      <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("createdAt", {
-    header: "Created",
-    cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "",
-    cell: (info) => <ActionsCell def={info.row.original} />,
-  }),
-]
+function useColumns() {
+  return useMemo(() => [
+    columnHelper.accessor("name", {
+      header: m.common_name(),
+      cell: (info) => (
+        <Link
+          to="/item/definitions/$definitionId"
+          params={{ definitionId: info.row.original.id }}
+          className="font-medium hover:underline"
+        >
+          {info.getValue()}
+        </Link>
+      ),
+    }),
+    columnHelper.accessor("alias", {
+      header: m.common_alias(),
+      cell: (info) => {
+        const alias = info.getValue()
+        return alias ? (
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )
+      },
+    }),
+    columnHelper.accessor("stackable", {
+      header: m.common_type(),
+      cell: (info) => (
+        <Badge variant="secondary">{stackLabel(info.row.original)}</Badge>
+      ),
+    }),
+    columnHelper.accessor("holdLimit", {
+      header: m.item_hold_limit(),
+      cell: (info) => {
+        const limit = info.getValue()
+        return limit != null ? limit : <span className="text-muted-foreground">—</span>
+      },
+    }),
+    columnHelper.accessor("isActive", {
+      header: m.common_status(),
+      cell: (info) => (
+        <Badge variant={info.getValue() ? "default" : "outline"}>
+          {info.getValue() ? m.common_active() : m.common_inactive()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("createdAt", {
+      header: m.common_created(),
+      cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "",
+      cell: (info) => <ActionsCell def={info.row.original} />,
+    }),
+  ], [])
+}
 
 function ActionsCell({ def }: { def: ItemDefinition }) {
   return (
@@ -96,7 +100,7 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -106,7 +110,7 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
             params={{ definitionId: def.id }}
           >
             <Pencil className="size-4" />
-            Edit
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -116,7 +120,7 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            Delete
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -129,6 +133,7 @@ interface DefinitionTableProps {
 }
 
 export function DefinitionTable({ data }: DefinitionTableProps) {
+  const columns = useColumns()
   const table = useReactTable({
     data,
     columns,

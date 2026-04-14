@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { Pencil, ArrowLeft, Plus } from "lucide-react"
 import { toast } from "sonner"
 
+import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -37,9 +38,9 @@ function ExchangeConfigDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="Loading..." />
+        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -66,7 +67,7 @@ function ExchangeConfigDetailPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/exchange">
                 <ArrowLeft className="size-4" />
-                Back
+                {m.common_back()}
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
@@ -76,7 +77,7 @@ function ExchangeConfigDetailPage() {
                 onClick={() => setEditing(!editing)}
               >
                 <Pencil className="size-4" />
-                {editing ? "Cancel" : "Edit"}
+                {editing ? m.common_cancel() : m.common_edit()}
               </Button>
               <ExchangeDeleteDialog
                 name={config.name}
@@ -85,7 +86,7 @@ function ExchangeConfigDetailPage() {
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(config.id)
-                    toast.success("Config deleted")
+                    toast.success(m.exchange_config_deleted())
                     navigate({ to: "/exchange" })
                   } catch (err) {
                     toast.error(
@@ -108,7 +109,7 @@ function ExchangeConfigDetailPage() {
                   description: config.description,
                   isActive: config.isActive,
                 }}
-                submitLabel="Save Changes"
+                submitLabel={m.common_save_changes()}
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
@@ -116,7 +117,7 @@ function ExchangeConfigDetailPage() {
                       id: config.id,
                       ...values,
                     })
-                    toast.success("Config updated")
+                    toast.success(m.checkin_config_updated())
                     setEditing(false)
                   } catch (err) {
                     toast.error(
@@ -131,9 +132,9 @@ function ExchangeConfigDetailPage() {
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2">
-                <DetailItem label="Name" value={config.name} />
+                <DetailItem label={m.common_name()} value={config.name} />
                 <DetailItem
-                  label="Alias"
+                  label={m.common_alias()}
                   value={
                     config.alias ? (
                       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -145,15 +146,15 @@ function ExchangeConfigDetailPage() {
                   }
                 />
                 <DetailItem
-                  label="Status"
+                  label={m.common_status()}
                   value={
                     <Badge variant={config.isActive ? "default" : "outline"}>
-                      {config.isActive ? "Active" : "Inactive"}
+                      {config.isActive ? m.common_active() : m.common_inactive()}
                     </Badge>
                   }
                 />
                 <DetailItem
-                  label="Created"
+                  label={m.common_created()}
                   value={format(new Date(config.createdAt), "yyyy-MM-dd HH:mm")}
                 />
                 <DetailItem
@@ -162,7 +163,7 @@ function ExchangeConfigDetailPage() {
                 />
                 {config.description && (
                   <div className="sm:col-span-2">
-                    <DetailItem label="Description" value={config.description} />
+                    <DetailItem label={m.common_description()} value={config.description} />
                   </div>
                 )}
               </div>
@@ -172,20 +173,20 @@ function ExchangeConfigDetailPage() {
           {/* Options */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Exchange Options</h3>
+              <h3 className="text-sm font-semibold">{m.exchange_options()}</h3>
               <Button asChild size="sm">
                 <Link
                   to="/exchange/$configId/options/create"
                   params={{ configId }}
                 >
                   <Plus className="size-4" />
-                  New Option
+                  {m.exchange_new_option()}
                 </Link>
               </Button>
             </div>
             {optionsPending ? (
               <div className="flex h-24 items-center justify-center text-muted-foreground">
-                Loading...
+                {m.common_loading()}
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
@@ -15,18 +16,18 @@ function ItemToolsPage() {
       <header className="flex h-14 items-center gap-2 border-b px-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">Item Tools</h1>
+        <h1 className="text-sm font-semibold">{m.item_item_tools()}</h1>
       </header>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-8">
           <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold">Inventory Lookup</h2>
+            <h2 className="mb-4 text-sm font-semibold">{m.item_inventory_lookup()}</h2>
             <InventoryLookup />
           </div>
 
           <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold">Grant / Deduct Items</h2>
+            <h2 className="mb-4 text-sm font-semibold">{m.item_grant_deduct()}</h2>
             <GrantDeductForm />
           </div>
         </div>

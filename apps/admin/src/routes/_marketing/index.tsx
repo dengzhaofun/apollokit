@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 
 import { authClient } from "../../lib/auth-client"
+import * as m from "../../paraglide/messages.js"
 
 export const Route = createFileRoute("/_marketing/")({ component: App })
 
@@ -14,11 +15,10 @@ function App() {
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
         <p className="island-kicker mb-3">ApolloKit</p>
         <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
+          {m.marketing_hero_title()}
         </h1>
         <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
+          {m.marketing_hero_description()}
         </p>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -26,13 +26,13 @@ function App() {
             params={session ? undefined : { authView: "sign-in" }}
             className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[var(--lagoon)] px-5 py-2.5 text-sm font-semibold text-white no-underline transition hover:-translate-y-0.5 hover:bg-[var(--lagoon-deep)]"
           >
-            {session ? "Go to Dashboard" : "Sign In"}
+            {session ? m.nav_go_to_dashboard() : "Sign In"}
           </Link>
           <Link
             to="/about"
             className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
           >
-            About This Starter
+            {m.nav_about_starter()}
           </Link>
         </div>
       </section>
@@ -40,20 +40,20 @@ function App() {
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           [
-            "Type-Safe Routing",
-            "Routes and links stay in sync across every page.",
+            m.marketing_feature_routing_title(),
+            m.marketing_feature_routing_desc(),
           ],
           [
-            "Server Functions",
-            "Call server code from your UI without creating API boilerplate.",
+            m.marketing_feature_server_title(),
+            m.marketing_feature_server_desc(),
           ],
           [
-            "Streaming by Default",
-            "Ship progressively rendered responses for faster experiences.",
+            m.marketing_feature_streaming_title(),
+            m.marketing_feature_streaming_desc(),
           ],
           [
-            "Tailwind Native",
-            "Design quickly with utility-first styling and reusable tokens.",
+            m.marketing_feature_tailwind_title(),
+            m.marketing_feature_tailwind_desc(),
           ],
         ].map(([title, desc], index) => (
           <article

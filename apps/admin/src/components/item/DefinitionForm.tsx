@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -26,7 +27,7 @@ export function DefinitionForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "Create",
+  submitLabel,
 }: DefinitionFormProps) {
   const { data: categories } = useItemCategories()
   const { data: pools } = useLotteryPools()
@@ -79,7 +80,7 @@ export function DefinitionForm({
       >
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Name *</Label>
+            <Label htmlFor={field.name}>{m.common_name()} *</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -97,7 +98,7 @@ export function DefinitionForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Alias</Label>
+            <Label htmlFor={field.name}>{m.common_alias()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -139,7 +140,7 @@ export function DefinitionForm({
       <form.Field name="description">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Description</Label>
+            <Label htmlFor={field.name}>{m.common_description()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -175,7 +176,7 @@ export function DefinitionForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>Stackable</Label>
+            <Label htmlFor={field.name}>{m.item_stackable()}</Label>
             <p className="text-xs text-muted-foreground">
               Stackable items can share inventory rows. Non-stackable items get one row per instance.
             </p>
@@ -214,7 +215,7 @@ export function DefinitionForm({
       <form.Field name="holdLimit">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Hold Limit</Label>
+            <Label htmlFor={field.name}>{m.item_hold_limit()}</Label>
             <Input
               id={field.name}
               type="number"
@@ -268,7 +269,7 @@ export function DefinitionForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>Active</Label>
+            <Label htmlFor={field.name}>{m.common_active()}</Label>
           </div>
         )}
       </form.Field>
@@ -276,7 +277,7 @@ export function DefinitionForm({
       <form.Subscribe selector={(s) => s.canSubmit}>
         {(canSubmit) => (
           <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "Saving..." : submitLabel}
+            {isPending ? "Saving..." : (submitLabel ?? m.common_create())}
           </Button>
         )}
       </form.Subscribe>

@@ -5,6 +5,7 @@ import { Pencil, ArrowLeft, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Link } from "@tanstack/react-router"
 
+import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -22,21 +23,25 @@ import {
 import { ApiError } from "#/lib/api-client"
 
 
-const RESET_MODE_LABEL: Record<string, string> = {
-  none: "None (cumulative)",
-  week: "Weekly",
-  month: "Monthly",
+function getResetModeLabels(): Record<string, string> {
+  return {
+    none: m.checkin_reset_none(),
+    week: m.checkin_reset_weekly(),
+    month: m.checkin_reset_monthly(),
+  }
 }
 
-const WEEK_DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-]
+function getWeekDayLabels(): string[] {
+  return [
+    m.checkin_sunday(),
+    m.checkin_monday(),
+    m.checkin_tuesday(),
+    m.checkin_wednesday(),
+    m.checkin_thursday(),
+    m.checkin_friday(),
+    m.checkin_saturday(),
+  ]
+}
 
 export const Route = createFileRoute("/_dashboard/check-in/$configId/")({
   component: CheckInDetailPage,
@@ -47,6 +52,9 @@ function CheckInDetailPage() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
 
+  const RESET_MODE_LABEL = getResetModeLabels()
+  const WEEK_DAY_LABELS = getWeekDayLabels()
+
   const { data: config, isPending, error } = useCheckInConfig(configId)
   const { data: userStates, isPending: userStatesPending } =
     useCheckInUserStates(configId)
@@ -56,9 +64,9 @@ function CheckInDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="Loading..." />
+        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -86,7 +94,7 @@ function CheckInDetailPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/check-in">
                 <ArrowLeft className="size-4" />
-                Back
+                {m.common_back()}
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
@@ -96,7 +104,7 @@ function CheckInDetailPage() {
                 onClick={() => setEditing(!editing)}
               >
                 <Pencil className="size-4" />
-                {editing ? "Cancel" : "Edit"}
+                {editing ? m.common_cancel() : m.common_edit()}
               </Button>
               <DeleteConfigDialog
                 configName={config.name}
@@ -104,13 +112,13 @@ function CheckInDetailPage() {
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(config.id)
-                    toast.success("Config deleted")
+                    toast.success(m.checkin_config_deleted())
                     navigate({ to: "/check-in" })
                   } catch (err) {
                     if (err instanceof ApiError) {
                       toast.error(err.body.error)
                     } else {
-                      toast.error("Failed to delete config")
+                      toast.error(m.checkin_failed_delete_config())
                     }
                   }
                 }}
@@ -131,18 +139,18 @@ function CheckInDetailPage() {
                   timezone: config.timezone,
                   isActive: config.isActive,
                 }}
-                submitLabel="Save Changes"
+                submitLabel={m.common_save_changes()}
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
                     await updateMutation.mutateAsync({ id: config.id, ...values })
-                    toast.success("Config updated")
+                    toast.success(m.checkin_config_updated())
                     setEditing(false)
                   } catch (err) {
                     if (err instanceof ApiError) {
                       toast.error(err.body.error)
                     } else {
-                      toast.error("Failed to update config")
+                      toast.error(m.checkin_failed_update_config())
                     }
                   }
                 }}
@@ -151,9 +159,9 @@ function CheckInDetailPage() {
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2">
-                <DetailItem label="Name" value={config.name} />
+                <DetailItem label={m.common_name()} value={config.name} />
                 <DetailItem
-                  label="Alias"
+                  label={m.common_alias()}
                   value={
                     config.alias ? (
                       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -165,7 +173,7 @@ function CheckInDetailPage() {
                   }
                 />
                 <DetailItem
-                  label="Reset Mode"
+                  label={m.checkin_reset_mode()}
                   value={
                     <Badge variant="secondary">
                       {RESET_MODE_LABEL[config.resetMode] ?? config.resetMode}
@@ -174,25 +182,25 @@ function CheckInDetailPage() {
                 />
                 {config.resetMode === "week" && (
                   <DetailItem
-                    label="Week Starts On"
+                    label={m.checkin_week_starts_on()}
                     value={WEEK_DAY_LABELS[config.weekStartsOn] ?? config.weekStartsOn}
                   />
                 )}
                 <DetailItem
-                  label="Target"
-                  value={config.target != null ? `${config.target} days` : "—"}
+                  label={m.checkin_target()}
+                  value={config.target != null ? `${config.target} ${m.checkin_days()}` : "—"}
                 />
-                <DetailItem label="Timezone" value={config.timezone} />
+                <DetailItem label={m.checkin_timezone()} value={config.timezone} />
                 <DetailItem
-                  label="Status"
+                  label={m.common_status()}
                   value={
                     <Badge variant={config.isActive ? "default" : "outline"}>
-                      {config.isActive ? "Active" : "Inactive"}
+                      {config.isActive ? m.common_active() : m.common_inactive()}
                     </Badge>
                   }
                 />
                 <DetailItem
-                  label="Created"
+                  label={m.common_created()}
                   value={format(new Date(config.createdAt), "yyyy-MM-dd HH:mm")}
                 />
                 <DetailItem
@@ -201,7 +209,7 @@ function CheckInDetailPage() {
                 />
                 {config.description && (
                   <div className="sm:col-span-2">
-                    <DetailItem label="Description" value={config.description} />
+                    <DetailItem label={m.common_description()} value={config.description} />
                   </div>
                 )}
               </div>
@@ -216,7 +224,7 @@ function CheckInDetailPage() {
                 params={{ configId }}
               >
                 <Play className="size-4" />
-                Preview &amp; Test
+                {m.checkin_preview_test()}
               </Link>
             </Button>
           )}
@@ -226,10 +234,10 @@ function CheckInDetailPage() {
 
           {/* User States (read-only) */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Check-in Users</h3>
+            <h3 className="text-sm font-semibold">{m.checkin_checkin_users()}</h3>
             {userStatesPending ? (
               <div className="flex h-24 items-center justify-center text-muted-foreground">
-                Loading...
+                {m.common_loading()}
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">

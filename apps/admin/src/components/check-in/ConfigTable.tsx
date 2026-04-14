@@ -24,19 +24,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import * as m from "#/paraglide/messages.js"
 import type { CheckInConfig } from "#/lib/types/check-in"
 
-const RESET_MODE_LABEL: Record<string, string> = {
-  none: "None",
-  week: "Weekly",
-  month: "Monthly",
+function getResetModeLabels(): Record<string, string> {
+  return {
+    none: m.checkin_reset_none(),
+    week: m.checkin_reset_weekly(),
+    month: m.checkin_reset_monthly(),
+  }
 }
 
 const columnHelper = createColumnHelper<CheckInConfig>()
 
 const columns = [
   columnHelper.accessor("name", {
-    header: "Name",
+    header: () => m.common_name(),
     cell: (info) => (
       <Link
         to="/check-in/$configId"
@@ -48,7 +51,7 @@ const columns = [
     ),
   }),
   columnHelper.accessor("alias", {
-    header: "Alias",
+    header: () => m.common_alias(),
     cell: (info) => {
       const alias = info.getValue()
       return alias ? (
@@ -59,34 +62,34 @@ const columns = [
     },
   }),
   columnHelper.accessor("resetMode", {
-    header: "Reset Mode",
+    header: () => m.checkin_reset_mode(),
     cell: (info) => (
       <Badge variant="secondary">
-        {RESET_MODE_LABEL[info.getValue()] ?? info.getValue()}
+        {getResetModeLabels()[info.getValue()] ?? info.getValue()}
       </Badge>
     ),
   }),
   columnHelper.accessor("target", {
-    header: "Target",
+    header: () => m.checkin_target(),
     cell: (info) => {
       const target = info.getValue()
       return target != null ? (
-        <span>{target} days</span>
+        <span>{target} {m.checkin_days()}</span>
       ) : (
         <span className="text-muted-foreground">—</span>
       )
     },
   }),
   columnHelper.accessor("isActive", {
-    header: "Status",
+    header: () => m.common_status(),
     cell: (info) => (
       <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "Active" : "Inactive"}
+        {info.getValue() ? m.common_active() : m.common_inactive()}
       </Badge>
     ),
   }),
   columnHelper.accessor("createdAt", {
-    header: "Created",
+    header: () => m.common_created(),
     cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
   }),
   columnHelper.display({
@@ -102,14 +105,14 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link to="/check-in/$configId" params={{ configId: config.id }}>
             <Pencil className="size-4" />
-            Edit
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -119,7 +122,7 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            Delete
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

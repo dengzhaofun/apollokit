@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
+import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -37,9 +38,9 @@ function OptionDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="Loading..." />
+        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -66,7 +67,7 @@ function OptionDetailPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/exchange/$configId" params={{ configId }}>
                 <ArrowLeft className="size-4" />
-                Back
+                {m.common_back()}
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
@@ -76,7 +77,7 @@ function OptionDetailPage() {
                 onClick={() => setEditing(!editing)}
               >
                 <Pencil className="size-4" />
-                {editing ? "Cancel" : "Edit"}
+                {editing ? m.common_cancel() : m.common_edit()}
               </Button>
               <ExchangeDeleteDialog
                 name={option.name}
@@ -85,7 +86,7 @@ function OptionDetailPage() {
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(option.id)
-                    toast.success("Option deleted")
+                    toast.success(m.exchange_option_deleted())
                     navigate({
                       to: "/exchange/$configId",
                       params: { configId },
@@ -94,7 +95,7 @@ function OptionDetailPage() {
                     toast.error(
                       err instanceof ApiError
                         ? err.body.error
-                        : "Failed to delete option",
+                        : m.exchange_failed_delete_option(),
                     )
                   }
                 }}
@@ -115,7 +116,7 @@ function OptionDetailPage() {
                   sortOrder: option.sortOrder,
                   isActive: option.isActive,
                 }}
-                submitLabel="Save Changes"
+                submitLabel={m.common_save_changes()}
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
@@ -129,7 +130,7 @@ function OptionDetailPage() {
                     toast.error(
                       err instanceof ApiError
                         ? err.body.error
-                        : "Failed to update option",
+                        : m.exchange_failed_update_option(),
                     )
                   }
                 }}
@@ -138,47 +139,47 @@ function OptionDetailPage() {
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2">
-                <DetailItem label="Name" value={option.name} />
+                <DetailItem label={m.common_name()} value={option.name} />
                 <DetailItem
-                  label="Status"
+                  label={m.common_status()}
                   value={
                     <Badge variant={option.isActive ? "default" : "outline"}>
-                      {option.isActive ? "Active" : "Inactive"}
+                      {option.isActive ? m.common_active() : m.common_inactive()}
                     </Badge>
                   }
                 />
                 <DetailItem
-                  label="Cost Items"
+                  label={m.exchange_cost_items()}
                   value={
                     <ItemList items={option.costItems} />
                   }
                 />
                 <DetailItem
-                  label="Reward Items"
+                  label={m.exchange_reward_items()}
                   value={
                     <ItemList items={option.rewardItems} />
                   }
                 />
                 <DetailItem
-                  label="User Limit"
-                  value={option.userLimit ?? "Unlimited"}
+                  label={m.exchange_user_limit()}
+                  value={option.userLimit ?? m.common_unlimited()}
                 />
                 <DetailItem
-                  label="Global Limit"
+                  label={m.exchange_global_limit()}
                   value={
                     option.globalLimit != null
                       ? `${option.globalCount} / ${option.globalLimit}`
                       : `${option.globalCount} (unlimited)`
                   }
                 />
-                <DetailItem label="Sort Order" value={option.sortOrder} />
+                <DetailItem label={m.common_sort_order()} value={option.sortOrder} />
                 <DetailItem
-                  label="Created"
+                  label={m.common_created()}
                   value={format(new Date(option.createdAt), "yyyy-MM-dd HH:mm")}
                 />
                 {option.description && (
                   <div className="sm:col-span-2">
-                    <DetailItem label="Description" value={option.description} />
+                    <DetailItem label={m.common_description()} value={option.description} />
                   </div>
                 )}
               </div>
@@ -188,7 +189,7 @@ function OptionDetailPage() {
           {/* Execute Test */}
           {!editing && (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold">Execute Test</h3>
+              <h3 className="mb-4 text-sm font-semibold">{m.exchange_execute_test()}</h3>
               <ExecutePanel optionId={optionId} />
             </div>
           )}

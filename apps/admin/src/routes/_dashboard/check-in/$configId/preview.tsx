@@ -5,6 +5,7 @@ import { Play, ArrowLeft, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Link } from "@tanstack/react-router"
 
+import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_dashboard/check-in/$configId/preview")({
 
 function CheckInPreviewPage() {
   const { configId } = Route.useParams()
+  const RESET_MODE_LABEL = getResetModeLabels()
   const { data: session } = authClient.useSession()
   const { data: config, isPending, error } = useCheckInConfig(configId)
   const checkInMutation = usePerformCheckIn()
@@ -40,16 +42,16 @@ function CheckInPreviewPage() {
       setResults((prev) => [result, ...prev])
       toast.success(
         result.alreadyCheckedIn
-          ? "Already checked in today"
+          ? m.checkin_already_checked_in_today()
           : result.justCompleted
-            ? "Check-in successful — target completed!"
-            : "Check-in successful!",
+            ? m.checkin_checkin_target_completed()
+            : m.checkin_checkin_successful(),
       )
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)
       } else {
-        toast.error("Check-in failed")
+        toast.error(m.checkin_checkin_failed())
       }
     }
   }
@@ -57,9 +59,9 @@ function CheckInPreviewPage() {
   if (isPending) {
     return (
       <>
-        <Header configName="Loading..." configId="" />
+        <Header configName={m.common_loading()} configId="" />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -92,10 +94,10 @@ function CheckInPreviewPage() {
             )}
             <Badge variant="secondary">{RESET_MODE_LABEL[config.resetMode]}</Badge>
             {config.target != null && (
-              <Badge variant="outline">Target: {config.target} days</Badge>
+              <Badge variant="outline">{m.checkin_target()}: {config.target} {m.checkin_days()}</Badge>
             )}
             <Badge variant={config.isActive ? "default" : "outline"}>
-              {config.isActive ? "Active" : "Inactive"}
+              {config.isActive ? m.common_active() : m.common_inactive()}
             </Badge>
             <span className="ml-auto text-xs text-muted-foreground">{config.timezone}</span>
           </div>
@@ -104,14 +106,14 @@ function CheckInPreviewPage() {
           <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold">Test User</h3>
+                <h3 className="text-sm font-semibold">{m.checkin_test_user()}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Using your admin account as the test end-user
+                  {m.checkin_test_user_desc()}
                 </p>
                 <div className="mt-2 space-y-1">
-                  <Row label="User ID" value={testUserId} mono />
-                  <Row label="Name" value={session?.user.name ?? "—"} />
-                  <Row label="Email" value={session?.user.email ?? "—"} />
+                  <Row label={m.checkin_user_id()} value={testUserId} mono />
+                  <Row label={m.common_name()} value={session?.user.name ?? "—"} />
+                  <Row label={m.checkin_email()} value={session?.user.email ?? "—"} />
                 </div>
               </div>
               <Button
@@ -120,7 +122,7 @@ function CheckInPreviewPage() {
                 onClick={handleCheckIn}
               >
                 <Play className="size-4" />
-                {checkInMutation.isPending ? "Checking in..." : "Check In"}
+                {checkInMutation.isPending ? m.checkin_checking_in() : m.checkin_check_in()}
               </Button>
             </div>
           </div>
@@ -129,48 +131,48 @@ function CheckInPreviewPage() {
           {latestResult && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Latest Result</h3>
+                <h3 className="text-sm font-semibold">{m.checkin_latest_result()}</h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setResults([])}
                 >
                   <RotateCcw className="size-3" />
-                  Clear
+                  {m.checkin_clear()}
                 </Button>
               </div>
               <div className="rounded-xl border bg-card p-6 shadow-sm">
                 {latestResult.justCompleted && (
                   <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:bg-green-950/30 dark:text-green-400">
-                    Target just completed!
+                    {m.checkin_target_just_completed()}
                   </div>
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <StatCard
-                    label="Status"
+                    label={m.common_status()}
                     value={
                       <Badge
                         variant={latestResult.alreadyCheckedIn ? "secondary" : "default"}
                       >
-                        {latestResult.alreadyCheckedIn ? "Already checked in" : "New check-in"}
+                        {latestResult.alreadyCheckedIn ? m.checkin_already_checked_in() : m.checkin_new_checkin()}
                       </Badge>
                     }
                   />
-                  <StatCard label="Total Days" value={latestResult.state.totalDays} />
-                  <StatCard label="Current Streak" value={latestResult.state.currentStreak} />
-                  <StatCard label="Longest Streak" value={latestResult.state.longestStreak} />
-                  <StatCard label="Cycle Days" value={latestResult.state.currentCycleDays} />
+                  <StatCard label={m.checkin_total_days()} value={latestResult.state.totalDays} />
+                  <StatCard label={m.checkin_current_streak()} value={latestResult.state.currentStreak} />
+                  <StatCard label={m.checkin_longest_streak()} value={latestResult.state.longestStreak} />
+                  <StatCard label={m.checkin_cycle_days()} value={latestResult.state.currentCycleDays} />
                   <StatCard
-                    label="Target Progress"
+                    label={m.checkin_target_progress()}
                     value={
                       latestResult.target != null
                         ? `${latestResult.state.currentCycleDays} / ${latestResult.target}`
-                        : "No target"
+                        : m.checkin_no_target()
                     }
                   />
                   <StatCard
-                    label="Completed"
+                    label={m.checkin_completed()}
                     value={
                       latestResult.target != null ? (
                         <Badge variant={latestResult.isCompleted ? "default" : "outline"}>
@@ -182,11 +184,11 @@ function CheckInPreviewPage() {
                     }
                   />
                   <StatCard
-                    label="Remaining"
-                    value={latestResult.remaining != null ? `${latestResult.remaining} days` : "—"}
+                    label={m.checkin_remaining()}
+                    value={latestResult.remaining != null ? `${latestResult.remaining} ${m.checkin_days()}` : "—"}
                   />
                   <StatCard
-                    label="Cycle Key"
+                    label={m.checkin_cycle_key()}
                     value={latestResult.state.currentCycleKey ?? "—"}
                   />
                 </div>
@@ -194,15 +196,15 @@ function CheckInPreviewPage() {
                 {/* Detailed state */}
                 <div className="mt-4 rounded-lg border bg-muted/30 p-4">
                   <h4 className="mb-2 text-xs font-medium text-muted-foreground">
-                    Full User State
+                    {m.checkin_full_user_state()}
                   </h4>
                   <div className="grid gap-2 text-xs sm:grid-cols-2">
                     <Row
-                      label="Last Check-in Date"
+                      label={m.checkin_last_checkin_date()}
                       value={latestResult.state.lastCheckInDate ?? "—"}
                     />
                     <Row
-                      label="Last Check-in At"
+                      label={m.checkin_last_checkin_at()}
                       value={
                         latestResult.state.lastCheckInAt
                           ? format(new Date(latestResult.state.lastCheckInAt), "yyyy-MM-dd HH:mm:ss")
@@ -210,16 +212,16 @@ function CheckInPreviewPage() {
                       }
                     />
                     <Row
-                      label="First Check-in At"
+                      label={m.checkin_first_checkin_at()}
                       value={
                         latestResult.state.firstCheckInAt
                           ? format(new Date(latestResult.state.firstCheckInAt), "yyyy-MM-dd HH:mm:ss")
                           : "—"
                       }
                     />
-                    <Row label="Config ID" value={latestResult.state.configId} mono />
-                    <Row label="End User ID" value={latestResult.state.endUserId} mono />
-                    <Row label="Organization ID" value={latestResult.state.organizationId} mono />
+                    <Row label={m.checkin_config_id()} value={latestResult.state.configId} mono />
+                    <Row label={m.checkin_end_user_id()} value={latestResult.state.endUserId} mono />
+                    <Row label={m.checkin_organization_id()} value={latestResult.state.organizationId} mono />
                   </div>
                 </div>
               </div>
@@ -242,13 +244,13 @@ function CheckInPreviewPage() {
                       variant={r.alreadyCheckedIn ? "secondary" : "default"}
                       className="shrink-0"
                     >
-                      {r.alreadyCheckedIn ? "duplicate" : "new"}
+                      {r.alreadyCheckedIn ? m.checkin_duplicate() : m.checkin_new()}
                     </Badge>
                     <span>
                       Total: {r.state.totalDays} &middot; Streak: {r.state.currentStreak} &middot; Cycle: {r.state.currentCycleDays}
                     </span>
                     {r.justCompleted && (
-                      <Badge className="ml-auto bg-green-600">completed</Badge>
+                      <Badge className="ml-auto bg-green-600">{m.checkin_completed()}</Badge>
                     )}
                   </div>
                 ))}
@@ -261,10 +263,12 @@ function CheckInPreviewPage() {
   )
 }
 
-const RESET_MODE_LABEL: Record<string, string> = {
-  none: "None (cumulative)",
-  week: "Weekly",
-  month: "Monthly",
+function getResetModeLabels(): Record<string, string> {
+  return {
+    none: m.checkin_reset_none(),
+    week: m.checkin_reset_weekly(),
+    month: m.checkin_reset_monthly(),
+  }
 }
 
 function Header({ configName, configId }: { configName: string; configId: string }) {

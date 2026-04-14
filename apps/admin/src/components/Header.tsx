@@ -3,6 +3,8 @@ import { Link } from '@tanstack/react-router'
 
 import { authClient } from '../lib/auth-client'
 import ThemeToggle from './ThemeToggle'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import * as m from '../paraglide/messages.js'
 
 export default function Header() {
   const { data: session } = authClient.useSession()
@@ -16,11 +18,12 @@ export default function Header() {
             className="inline-flex items-center gap-2 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm text-[var(--sea-ink)] no-underline shadow-[0_8px_24px_rgba(30,90,72,0.08)] sm:px-4 sm:py-2"
           >
             <span className="h-2 w-2 rounded-full bg-[linear-gradient(90deg,#56c6be,#7ed3bf)]" />
-            ApolloKit
+            {m.nav_brand()}
           </Link>
         </h2>
 
         <div className="ml-auto flex items-center gap-1.5 sm:ml-0 sm:gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
 
           {session ? (
@@ -30,7 +33,7 @@ export default function Header() {
               to="/auth/$authView" params={{ authView: "sign-in" }}
               className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-4 py-1.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
             >
-              Sign In
+              {m.nav_sign_in()}
             </Link>
           )}
         </div>
@@ -41,7 +44,7 @@ export default function Header() {
             className="nav-link"
             activeProps={{ className: 'nav-link is-active' }}
           >
-            Home
+            {m.nav_home()}
           </Link>
           {session && (
             <Link
@@ -49,7 +52,7 @@ export default function Header() {
               className="nav-link"
               activeProps={{ className: 'nav-link is-active' }}
             >
-              Dashboard
+              {m.nav_dashboard()}
             </Link>
           )}
           <Link
@@ -57,7 +60,7 @@ export default function Header() {
             className="nav-link"
             activeProps={{ className: 'nav-link is-active' }}
           >
-            About
+            {m.nav_about()}
           </Link>
         </div>
       </nav>

@@ -11,6 +11,7 @@ import {
 } from "#/components/ui/alert-dialog"
 import { Button } from "#/components/ui/button"
 import { Trash2 } from "lucide-react"
+import * as m from "#/paraglide/messages.js"
 
 interface DeleteConfigDialogProps {
   configName: string
@@ -28,7 +29,7 @@ export function DeleteConfigDialog({
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="size-4" />
-          Delete
+          {m.common_delete()}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -40,13 +41,13 @@ export function DeleteConfigDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? m.common_deleting() : m.common_delete()}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

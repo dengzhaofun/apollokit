@@ -2,6 +2,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { Play } from "lucide-react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -45,7 +46,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="exec-endUserId">End User ID *</Label>
+          <Label htmlFor="exec-endUserId">{m.checkin_end_user_id()} *</Label>
           <Input
             id="exec-endUserId"
             value={endUserId}
@@ -69,7 +70,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
         disabled={executeMutation.isPending}
       >
         <Play className="size-4" />
-        {executeMutation.isPending ? "Executing..." : "Execute Exchange"}
+        {executeMutation.isPending ? m.exchange_executing() : m.exchange_execute()}
       </Button>
 
       {result && (

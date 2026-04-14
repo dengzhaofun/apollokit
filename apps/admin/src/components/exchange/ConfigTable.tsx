@@ -24,13 +24,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import * as m from "#/paraglide/messages.js"
 import type { ExchangeConfig } from "#/lib/types/exchange"
 
 const columnHelper = createColumnHelper<ExchangeConfig>()
 
 const columns = [
   columnHelper.accessor("name", {
-    header: "Name",
+    header: () => m.common_name(),
     cell: (info) => (
       <Link
         to="/exchange/$configId"
@@ -42,7 +43,7 @@ const columns = [
     ),
   }),
   columnHelper.accessor("alias", {
-    header: "Alias",
+    header: () => m.common_alias(),
     cell: (info) => {
       const alias = info.getValue()
       return alias ? (
@@ -53,15 +54,15 @@ const columns = [
     },
   }),
   columnHelper.accessor("isActive", {
-    header: "Status",
+    header: () => m.common_status(),
     cell: (info) => (
       <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "Active" : "Inactive"}
+        {info.getValue() ? m.common_active() : m.common_inactive()}
       </Badge>
     ),
   }),
   columnHelper.accessor("createdAt", {
-    header: "Created",
+    header: () => m.common_created(),
     cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
   }),
   columnHelper.display({
@@ -77,7 +78,7 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -87,7 +88,7 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
             params={{ configId: config.id }}
           >
             <Pencil className="size-4" />
-            Edit
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -97,7 +98,7 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            Delete
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -145,7 +146,7 @@ export function ExchangeConfigTable({ data }: ConfigTableProps) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              No exchange configurations yet.
+              {m.exchange_no_configs()}
             </TableCell>
           </TableRow>
         )}

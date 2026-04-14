@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import {
   createColumnHelper,
   flexRender,
@@ -7,6 +8,7 @@ import {
 import { Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import * as m from "#/paraglide/messages.js"
 
 import {
   Table,
@@ -28,52 +30,54 @@ import type { ItemCategory } from "#/lib/types/item"
 
 const columnHelper = createColumnHelper<ItemCategory>()
 
-const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: (info) => (
-      <Link
-        to="/item/categories/$categoryId"
-        params={{ categoryId: info.row.original.id }}
-        className="font-medium hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor("alias", {
-    header: "Alias",
-    cell: (info) => {
-      const alias = info.getValue()
-      return alias ? (
-        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      )
-    },
-  }),
-  columnHelper.accessor("sortOrder", {
-    header: "Sort Order",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("isActive", {
-    header: "Status",
-    cell: (info) => (
-      <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("createdAt", {
-    header: "Created",
-    cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "",
-    cell: (info) => <ActionsCell category={info.row.original} />,
-  }),
-]
+function useColumns() {
+  return useMemo(() => [
+    columnHelper.accessor("name", {
+      header: m.common_name(),
+      cell: (info) => (
+        <Link
+          to="/item/categories/$categoryId"
+          params={{ categoryId: info.row.original.id }}
+          className="font-medium hover:underline"
+        >
+          {info.getValue()}
+        </Link>
+      ),
+    }),
+    columnHelper.accessor("alias", {
+      header: m.common_alias(),
+      cell: (info) => {
+        const alias = info.getValue()
+        return alias ? (
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )
+      },
+    }),
+    columnHelper.accessor("sortOrder", {
+      header: m.common_sort_order(),
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("isActive", {
+      header: m.common_status(),
+      cell: (info) => (
+        <Badge variant={info.getValue() ? "default" : "outline"}>
+          {info.getValue() ? m.common_active() : m.common_inactive()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("createdAt", {
+      header: m.common_created(),
+      cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "",
+      cell: (info) => <ActionsCell category={info.row.original} />,
+    }),
+  ], [])
+}
 
 function ActionsCell({ category }: { category: ItemCategory }) {
   return (
@@ -81,7 +85,7 @@ function ActionsCell({ category }: { category: ItemCategory }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -91,7 +95,7 @@ function ActionsCell({ category }: { category: ItemCategory }) {
             params={{ categoryId: category.id }}
           >
             <Pencil className="size-4" />
-            Edit
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -101,7 +105,7 @@ function ActionsCell({ category }: { category: ItemCategory }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            Delete
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -114,6 +118,7 @@ interface CategoryTableProps {
 }
 
 export function CategoryTable({ data }: CategoryTableProps) {
+  const columns = useColumns()
   const table = useReactTable({
     data,
     columns,
@@ -149,7 +154,7 @@ export function CategoryTable({ data }: CategoryTableProps) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              No categories yet.
+              {m.item_no_categories()}
             </TableCell>
           </TableRow>
         )}

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -109,7 +110,7 @@ export function OptionForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "Create",
+  submitLabel = m.common_create(),
 }: OptionFormProps) {
   const { data: definitions } = useItemDefinitions()
   const defs = (definitions ?? []).map((d) => ({ id: d.id, name: d.name }))
@@ -163,7 +164,7 @@ export function OptionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="opt-name">Name *</Label>
+        <Label htmlFor="opt-name">{m.common_name()} *</Label>
         <Input
           id="opt-name"
           value={name}
@@ -176,7 +177,7 @@ export function OptionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="opt-desc">Description</Label>
+        <Label htmlFor="opt-desc">{m.common_description()}</Label>
         <Textarea
           id="opt-desc"
           value={description}
@@ -187,14 +188,14 @@ export function OptionForm({
       </div>
 
       <ItemEntryEditor
-        label="Cost Items (consumed) *"
+        label={`${m.exchange_cost_items()} *`}
         entries={costItems}
         onChange={setCostItems}
         definitions={defs}
       />
 
       <ItemEntryEditor
-        label="Reward Items (granted) *"
+        label={`${m.exchange_reward_items()} *`}
         entries={rewardItems}
         onChange={setRewardItems}
         definitions={defs}
@@ -202,7 +203,7 @@ export function OptionForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="opt-userLimit">User Limit</Label>
+          <Label htmlFor="opt-userLimit">{m.exchange_user_limit()}</Label>
           <Input
             id="opt-userLimit"
             type="number"
@@ -211,14 +212,14 @@ export function OptionForm({
             onChange={(e) =>
               setUserLimit(e.target.value ? Number(e.target.value) : null)
             }
-            placeholder="Unlimited"
+            placeholder={m.common_unlimited()}
           />
           <p className="text-xs text-muted-foreground">
             Max times per user. Empty = unlimited.
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="opt-globalLimit">Global Limit</Label>
+          <Label htmlFor="opt-globalLimit">{m.exchange_global_limit()}</Label>
           <Input
             id="opt-globalLimit"
             type="number"
@@ -227,7 +228,7 @@ export function OptionForm({
             onChange={(e) =>
               setGlobalLimit(e.target.value ? Number(e.target.value) : null)
             }
-            placeholder="Unlimited"
+            placeholder={m.common_unlimited()}
           />
           <p className="text-xs text-muted-foreground">
             Total exchanges allowed. Empty = unlimited.
@@ -236,7 +237,7 @@ export function OptionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="opt-sortOrder">Sort Order</Label>
+        <Label htmlFor="opt-sortOrder">{m.common_sort_order()}</Label>
         <Input
           id="opt-sortOrder"
           type="number"
@@ -251,7 +252,7 @@ export function OptionForm({
           checked={isActive}
           onCheckedChange={(checked) => setIsActive(checked === true)}
         />
-        <Label htmlFor="opt-isActive">Active</Label>
+        <Label htmlFor="opt-isActive">{m.common_active()}</Label>
       </div>
 
       <Button type="submit" disabled={isPending}>
