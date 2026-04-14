@@ -8,3 +8,4 @@ export * from "./exchange";
 export * from "./item";
 export * from "./lottery";
 export * from "./mail";
+export * from "./shop";
