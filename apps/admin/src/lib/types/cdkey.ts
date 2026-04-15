@@ -1,0 +1,77 @@
+import type { ItemEntry } from "./item"
+
+export type CdkeyCodeType = "universal" | "unique"
+
+export interface CdkeyBatch {
+  id: string
+  organizationId: string
+  alias: string | null
+  name: string
+  description: string | null
+  codeType: CdkeyCodeType
+  reward: ItemEntry[]
+  totalLimit: number | null
+  perUserLimit: number
+  totalRedeemed: number
+  startsAt: string | null
+  endsAt: string | null
+  isActive: boolean
+  metadata: Record<string, unknown> | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CdkeyCode {
+  id: string
+  organizationId: string
+  batchId: string
+  code: string
+  status: string
+  redeemedBy: string | null
+  redeemedAt: string | null
+  createdAt: string
+}
+
+export interface CdkeyRedemptionLog {
+  id: string
+  organizationId: string
+  endUserId: string
+  batchId: string
+  codeId: string | null
+  code: string
+  source: string
+  sourceId: string
+  status: string
+  failReason: string | null
+  reward: ItemEntry[] | null
+  createdAt: string
+}
+
+export interface CreateBatchInput {
+  name: string
+  alias?: string | null
+  description?: string | null
+  codeType: CdkeyCodeType
+  reward: ItemEntry[]
+  totalLimit?: number | null
+  perUserLimit?: number
+  startsAt?: string | null
+  endsAt?: string | null
+  isActive?: boolean
+  metadata?: Record<string, unknown> | null
+  universalCode?: string
+  initialCount?: number
+}
+
+export interface UpdateBatchInput {
+  name?: string
+  alias?: string | null
+  description?: string | null
+  reward?: ItemEntry[]
+  totalLimit?: number | null
+  perUserLimit?: number
+  startsAt?: string | null
+  endsAt?: string | null
+  isActive?: boolean
+  metadata?: Record<string, unknown> | null
+}
