@@ -64,8 +64,29 @@ function looksLikeId(key: string): boolean {
   return UUID_RE.test(key);
 }
 
+/**
+ * Post-grant hook signature. Other modules (currently: collection) can
+ * register a fire-and-forget callback that receives the same params
+ * grantItems was called with, AFTER all inventory + log writes have
+ * succeeded. The hook must be idempotent and must never throw — its
+ * errors are caught and logged here, because a hook failure absolutely
+ * must not roll back the user-facing grant.
+ */
+export type GrantHook = (params: {
+  organizationId: string;
+  endUserId: string;
+  grants: Array<{ definitionId: string; quantity: number }>;
+  source: string;
+  sourceId?: string;
+}) => Promise<void>;
+
 export function createItemService(d: ItemDeps) {
   const { db } = d;
+
+  // Single slot for a post-grant hook. Module-scope so `setGrantHook`
+  // can rebind it from outside (e.g., the collection barrel) after this
+  // factory has been called.
+  let grantHook: GrantHook | null = null;
 
   // ─── Category helpers ───────────────────────────────────────────
 
@@ -634,7 +655,27 @@ export function createItemService(d: ItemDeps) {
         });
       }
 
+      // Fire the post-grant hook (collection unlocks, future behavior
+      // log, etc.). Swallow failures — the hook must never break the
+      // main grant path.
+      if (grantHook) {
+        try {
+          await grantHook(params);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error("[item] grant hook failed", { err, source: params.source });
+        }
+      }
+
       return { grants: results };
+    },
+
+    /**
+     * Register a post-grant hook. Called by the collection module
+     * during its barrel init to wire up unlock propagation.
+     */
+    setGrantHook(fn: GrantHook): void {
+      grantHook = fn;
     },
 
     /**

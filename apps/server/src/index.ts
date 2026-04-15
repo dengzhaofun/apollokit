@@ -19,6 +19,10 @@ import {
   clientCredentialRouter,
 } from "./modules/client-credentials";
 import {
+  collectionRouter,
+  collectionClientRouter,
+} from "./modules/collection";
+import {
   dialogueRouter,
   dialogueClientRouter,
 } from "./modules/dialogue";
@@ -74,6 +78,7 @@ app.route("/api/banner", bannerRouter);
 app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
+app.route("/api/collection", collectionRouter);
 app.route("/api/dialogue", dialogueRouter);
 app.route("/api/item", itemRouter);
 app.route("/api/exchange", exchangeRouter);
@@ -85,6 +90,7 @@ app.route("/api/shop", shopRouter);
 app.route("/api/client/banner", bannerClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
+app.route("/api/client/collection", collectionClientRouter);
 app.route("/api/client/dialogue", dialogueClientRouter);
 app.route("/api/client/item", itemClientRouter);
 app.route("/api/client/exchange", exchangeClientRouter);

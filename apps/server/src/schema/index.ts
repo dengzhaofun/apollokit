@@ -6,6 +6,7 @@ export * from "./banner";
 export * from "./cdkey";
 export * from "./check-in";
 export * from "./client-credential";
+export * from "./collection";
 export * from "./dialogue";
 export * from "./exchange";
 export * from "./item";
