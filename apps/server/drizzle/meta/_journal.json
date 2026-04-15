@@ -71,6 +71,13 @@
       "when": 1776156278386,
       "tag": "0009_sticky_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776218747474,
+      "tag": "0010_burly_silver_centurion",
+      "breakpoints": true
     }
   ]
 }

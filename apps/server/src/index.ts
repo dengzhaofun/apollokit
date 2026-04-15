@@ -9,10 +9,15 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import type { HonoEnv } from "./env";
 import { session } from "./middleware/session";
+import { bannerRouter, bannerClientRouter } from "./modules/banner";
 import { checkInRouter, checkInClientRouter } from "./modules/check-in";
 import {
   clientCredentialRouter,
 } from "./modules/client-credentials";
+import {
+  dialogueRouter,
+  dialogueClientRouter,
+} from "./modules/dialogue";
 import {
   exchangeRouter,
   exchangeClientRouter,
@@ -61,8 +66,10 @@ app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
 
 // Admin routes — session or admin API key
+app.route("/api/banner", bannerRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
+app.route("/api/dialogue", dialogueRouter);
 app.route("/api/item", itemRouter);
 app.route("/api/exchange", exchangeRouter);
 app.route("/api/lottery", lotteryRouter);
@@ -70,7 +77,9 @@ app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
 
 // C-end client routes — client credential + HMAC
+app.route("/api/client/banner", bannerClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
+app.route("/api/client/dialogue", dialogueClientRouter);
 app.route("/api/client/item", itemClientRouter);
 app.route("/api/client/exchange", exchangeClientRouter);
 app.route("/api/client/lottery", lotteryClientRouter);

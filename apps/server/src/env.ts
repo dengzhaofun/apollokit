@@ -2,14 +2,38 @@ import type { RequestIdVariables } from "hono/request-id";
 
 import type { auth } from "./auth";
 
-type Session = Awaited<ReturnType<typeof auth.api.getSession>>;
+/**
+ * Better Auth's `auth.$Infer.Session` is the officially recommended type
+ * entry-point (see https://better-auth.com/docs/concepts/typescript), but
+ * it has a known caveat:
+ *
+ *   > The session object does not automatically infer fields added by
+ *   > plugins.
+ *   — https://better-auth.com/docs/concepts/session-management#caveats
+ *
+ * The `organization` plugin adds `activeOrganizationId` (and `activeTeamId`
+ * when teams are enabled) to the session table at the *schema* layer
+ * (see `src/schema/auth.ts → session.activeOrganizationId`), and the
+ * `databaseHooks.session.create.before` hook in `src/auth.ts` populates
+ * it on every sign-in — so the runtime value is always there. The type
+ * layer just doesn't know.
+ *
+ * Rather than reach for the heavier `customSession(..., options)`
+ * workaround, we patch the gap here with an intersection that mirrors the
+ * schema. Keep this in sync with what the organization plugin adds — if
+ * we later enable teams, add `activeTeamId: string | null` here too.
+ */
+type InferredSession = typeof auth.$Infer.Session.session & {
+  activeOrganizationId: string | null;
+};
+type InferredUser = typeof auth.$Infer.Session.user;
 
 export type AuthMethod = "session" | "admin-api-key" | "client-credential";
 
 export type HonoEnv = {
   Variables: RequestIdVariables & {
-    user: NonNullable<Session>["user"] | null;
-    session: NonNullable<Session>["session"] | null;
+    user: InferredUser | null;
+    session: InferredSession | null;
     authMethod: AuthMethod | null;
   };
 };
