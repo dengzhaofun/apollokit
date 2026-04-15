@@ -2,6 +2,7 @@ import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
 import { Link } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
+  BookOpen,
   CalendarCheck,
   GalleryHorizontal,
   KeyRound,
@@ -38,6 +39,7 @@ function getNavItems() {
     { title: m.nav_mail(), to: "/mail" as const, icon: Mail },
     { title: m.nav_banner(), to: "/banner" as const, icon: GalleryHorizontal },
     { title: m.nav_dialogue(), to: "/dialogue" as const, icon: MessagesSquare },
+    { title: "图鉴", to: "/collection" as const, icon: BookOpen },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }
