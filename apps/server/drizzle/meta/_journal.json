@@ -85,6 +85,13 @@
       "when": 1776234323552,
       "tag": "0011_dazzling_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776241470388,
+      "tag": "0012_supreme_the_hunter",
+      "breakpoints": true
     }
   ]
 }
