@@ -12,6 +12,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
+import * as m from "#/paraglide/messages.js"
 import type {
   AlbumScope,
   CollectionAlbum,
@@ -60,7 +61,7 @@ export function AlbumForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="name">名称</Label>
+          <Label htmlFor="name">{m.collection_field_name()}</Label>
           <Input
             id="name"
             value={name}
@@ -69,20 +70,20 @@ export function AlbumForm({
           />
         </div>
         <div>
-          <Label htmlFor="alias">别名 (可选)</Label>
+          <Label htmlFor="alias">{m.collection_field_alias()}</Label>
           <Input
             id="alias"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
-            placeholder="例如 dragons"
+            placeholder="dragons"
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            小写字母/数字/- _，同组织内唯一
+            {m.collection_field_alias_hint()}
           </p>
         </div>
       </div>
       <div>
-        <Label htmlFor="description">描述</Label>
+        <Label htmlFor="description">{m.collection_field_description()}</Label>
         <Textarea
           id="description"
           value={description}
@@ -92,7 +93,7 @@ export function AlbumForm({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="coverImage">封面图 URL</Label>
+          <Label htmlFor="coverImage">{m.collection_field_cover()}</Label>
           <Input
             id="coverImage"
             value={coverImage}
@@ -100,7 +101,7 @@ export function AlbumForm({
           />
         </div>
         <div>
-          <Label htmlFor="icon">图标 URL</Label>
+          <Label htmlFor="icon">{m.collection_field_icon()}</Label>
           <Input
             id="icon"
             value={icon}
@@ -110,7 +111,7 @@ export function AlbumForm({
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <div>
-          <Label htmlFor="scope">分类</Label>
+          <Label htmlFor="scope">{m.collection_field_scope()}</Label>
           <Select
             value={scope}
             onValueChange={(v) => setScope(v as AlbumScope)}
@@ -119,15 +120,21 @@ export function AlbumForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="hero">英雄</SelectItem>
-              <SelectItem value="monster">怪物</SelectItem>
-              <SelectItem value="equipment">装备</SelectItem>
-              <SelectItem value="custom">自定义</SelectItem>
+              <SelectItem value="hero">{m.collection_scope_hero()}</SelectItem>
+              <SelectItem value="monster">
+                {m.collection_scope_monster()}
+              </SelectItem>
+              <SelectItem value="equipment">
+                {m.collection_scope_equipment()}
+              </SelectItem>
+              <SelectItem value="custom">
+                {m.collection_scope_custom()}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label htmlFor="sortOrder">排序</Label>
+          <Label htmlFor="sortOrder">{m.collection_field_sort_order()}</Label>
           <Input
             id="sortOrder"
             type="number"
@@ -141,12 +148,12 @@ export function AlbumForm({
             checked={isActive}
             onCheckedChange={setIsActive}
           />
-          <Label htmlFor="isActive">启用</Label>
+          <Label htmlFor="isActive">{m.collection_field_enabled()}</Label>
         </div>
       </div>
       <div className="flex justify-end gap-2">
         <Button type="submit" disabled={isPending}>
-          {isPending ? "保存中..." : submitLabel}
+          {isPending ? m.collection_saving() : submitLabel}
         </Button>
       </div>
     </form>

@@ -4,6 +4,7 @@ import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Textarea } from "#/components/ui/textarea"
+import * as m from "#/paraglide/messages.js"
 import type {
   CollectionGroup,
   CreateGroupInput,
@@ -42,7 +43,7 @@ export function GroupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="g-name">名称</Label>
+        <Label htmlFor="g-name">{m.collection_field_name()}</Label>
         <Input
           id="g-name"
           value={name}
@@ -51,7 +52,7 @@ export function GroupForm({
         />
       </div>
       <div>
-        <Label htmlFor="g-description">描述</Label>
+        <Label htmlFor="g-description">{m.collection_field_description()}</Label>
         <Textarea
           id="g-description"
           value={description}
@@ -61,7 +62,7 @@ export function GroupForm({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="g-icon">图标 URL</Label>
+          <Label htmlFor="g-icon">{m.collection_field_icon()}</Label>
           <Input
             id="g-icon"
             value={icon}
@@ -69,7 +70,7 @@ export function GroupForm({
           />
         </div>
         <div>
-          <Label htmlFor="g-sortOrder">排序</Label>
+          <Label htmlFor="g-sortOrder">{m.collection_field_sort_order()}</Label>
           <Input
             id="g-sortOrder"
             type="number"
@@ -81,11 +82,11 @@ export function GroupForm({
       <div className="flex justify-end gap-2">
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel}>
-            取消
+            {m.common_cancel()}
           </Button>
         ) : null}
         <Button type="submit" disabled={isPending}>
-          {isPending ? "保存中..." : submitLabel}
+          {isPending ? m.collection_saving() : submitLabel}
         </Button>
       </div>
     </form>

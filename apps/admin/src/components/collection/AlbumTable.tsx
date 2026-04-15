@@ -10,13 +10,20 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import * as m from "#/paraglide/messages.js"
 import type { CollectionAlbum } from "#/lib/types/collection"
 
-const SCOPE_LABELS: Record<string, string> = {
-  hero: "英雄",
-  monster: "怪物",
-  equipment: "装备",
-  custom: "自定义",
+function scopeLabel(scope: string): string {
+  switch (scope) {
+    case "hero":
+      return m.collection_scope_hero()
+    case "monster":
+      return m.collection_scope_monster()
+    case "equipment":
+      return m.collection_scope_equipment()
+    default:
+      return m.collection_scope_custom()
+  }
 }
 
 interface AlbumTableProps {
@@ -28,18 +35,18 @@ export function AlbumTable({ data }: AlbumTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>名称</TableHead>
-          <TableHead>别名</TableHead>
-          <TableHead>分类</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>更新时间</TableHead>
+          <TableHead>{m.common_name()}</TableHead>
+          <TableHead>{m.common_alias()}</TableHead>
+          <TableHead>{m.collection_field_scope()}</TableHead>
+          <TableHead>{m.common_status()}</TableHead>
+          <TableHead>{m.common_updated()}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={5} className="h-24 text-center">
-              暂无图鉴
+              {m.collection_empty()}
             </TableCell>
           </TableRow>
         ) : (
@@ -60,17 +67,19 @@ export function AlbumTable({ data }: AlbumTableProps) {
                     {a.alias}
                   </code>
                 ) : (
-                  <Badge variant="outline">草稿</Badge>
+                  <Badge variant="outline">
+                    {m.collection_draft_badge()}
+                  </Badge>
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
-                  {SCOPE_LABELS[a.scope] ?? a.scope}
-                </Badge>
+                <Badge variant="secondary">{scopeLabel(a.scope)}</Badge>
               </TableCell>
               <TableCell>
                 <Badge variant={a.isActive ? "default" : "outline"}>
-                  {a.isActive ? "启用" : "停用"}
+                  {a.isActive
+                    ? m.collection_status_active()
+                    : m.collection_status_inactive()}
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">

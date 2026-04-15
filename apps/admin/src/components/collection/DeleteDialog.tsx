@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog"
 import { Button } from "#/components/ui/button"
+import * as m from "#/paraglide/messages.js"
 
 interface CollectionDeleteDialogProps {
   title: string
@@ -35,7 +36,7 @@ export function CollectionDeleteDialog({
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size={size}>
           <Trash2 className="size-4" />
-          {size === "sm" ? (triggerLabel ?? "删除") : null}
+          {size === "sm" ? (triggerLabel ?? m.common_delete()) : null}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -44,13 +45,13 @@ export function CollectionDeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? "删除中..." : "确认删除"}
+            {isPending ? m.common_deleting() : m.common_delete()}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

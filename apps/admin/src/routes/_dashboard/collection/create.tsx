@@ -8,6 +8,7 @@ import { Separator } from "#/components/ui/separator"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useCreateCollectionAlbum } from "#/hooks/use-collection"
 import { ApiError } from "#/lib/api-client"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/collection/create")({
   component: CollectionCreatePage,
@@ -27,18 +28,20 @@ function CollectionCreatePage() {
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">新建图鉴</h1>
+        <h1 className="text-sm font-semibold">
+          {m.collection_create_album()}
+        </h1>
       </header>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl rounded-xl border bg-card p-6 shadow-sm">
           <AlbumForm
-            submitLabel="创建"
+            submitLabel={m.common_create()}
             isPending={createMutation.isPending}
             onSubmit={async (values) => {
               try {
                 const row = await createMutation.mutateAsync(values)
-                toast.success("图鉴已创建")
+                toast.success(m.collection_album_created())
                 navigate({
                   to: "/collection/$albumId",
                   params: { albumId: row.id },
@@ -47,7 +50,7 @@ function CollectionCreatePage() {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)
                 } else {
-                  toast.error("创建失败")
+                  toast.error(m.collection_failed_create())
                 }
               }
             }}

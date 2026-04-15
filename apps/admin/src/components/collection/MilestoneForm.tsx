@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
+import * as m from "#/paraglide/messages.js"
 import type {
   CollectionEntry,
   CollectionGroup,
@@ -63,19 +64,19 @@ export function MilestoneForm({
     setError(null)
 
     if (rewardItems.length === 0) {
-      setError("请至少添加一个奖励物品")
+      setError(m.collection_milestone_error_no_reward())
       return
     }
     if (rewardItems.some((r) => !r.definitionId)) {
-      setError("请为所有奖励物品选择道具")
+      setError(m.collection_milestone_error_reward_def())
       return
     }
     if (scope === "entry" && !entryId) {
-      setError("entry 范围下必须选择条目")
+      setError(m.collection_milestone_error_entry_required())
       return
     }
     if (scope === "group" && !groupId) {
-      setError("group 范围下必须选择分组")
+      setError(m.collection_milestone_error_group_required())
       return
     }
 
@@ -101,7 +102,9 @@ export function MilestoneForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <div>
-          <Label htmlFor="m-scope">范围</Label>
+          <Label htmlFor="m-scope">
+            {m.collection_milestone_field_scope()}
+          </Label>
           <Select
             value={scope}
             onValueChange={(v) => setScope(v as MilestoneScope)}
@@ -111,23 +114,33 @@ export function MilestoneForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="entry">条目 (首次解锁)</SelectItem>
-              <SelectItem value="group">分组 (集齐 N 个)</SelectItem>
-              <SelectItem value="album">整本 (集齐 N 个)</SelectItem>
+              <SelectItem value="entry">
+                {m.collection_milestone_scope_entry()}
+              </SelectItem>
+              <SelectItem value="group">
+                {m.collection_milestone_scope_group()}
+              </SelectItem>
+              <SelectItem value="album">
+                {m.collection_milestone_scope_album()}
+              </SelectItem>
             </SelectContent>
           </Select>
           {initial ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              创建后不可更改范围
+              {m.collection_milestone_scope_locked()}
             </p>
           ) : null}
         </div>
         {scope === "entry" ? (
           <div className="md:col-span-2">
-            <Label htmlFor="m-entry">条目</Label>
+            <Label htmlFor="m-entry">
+              {m.collection_milestone_field_entry()}
+            </Label>
             <Select value={entryId} onValueChange={setEntryId}>
               <SelectTrigger id="m-entry">
-                <SelectValue placeholder="选择条目" />
+                <SelectValue
+                  placeholder={m.collection_milestone_entry_placeholder()}
+                />
               </SelectTrigger>
               <SelectContent>
                 {entries.map((e) => (
@@ -142,10 +155,14 @@ export function MilestoneForm({
         {scope === "group" ? (
           <>
             <div>
-              <Label htmlFor="m-group">分组</Label>
+              <Label htmlFor="m-group">
+                {m.collection_milestone_field_group()}
+              </Label>
               <Select value={groupId} onValueChange={setGroupId}>
                 <SelectTrigger id="m-group">
-                  <SelectValue placeholder="选择分组" />
+                  <SelectValue
+                    placeholder={m.collection_milestone_group_placeholder()}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {groups.map((g) => (
@@ -157,7 +174,9 @@ export function MilestoneForm({
               </Select>
             </div>
             <div>
-              <Label htmlFor="m-threshold-g">阈值</Label>
+              <Label htmlFor="m-threshold-g">
+                {m.collection_milestone_field_threshold()}
+              </Label>
               <Input
                 id="m-threshold-g"
                 type="number"
@@ -170,7 +189,9 @@ export function MilestoneForm({
         ) : null}
         {scope === "album" ? (
           <div>
-            <Label htmlFor="m-threshold-a">阈值</Label>
+            <Label htmlFor="m-threshold-a">
+              {m.collection_milestone_field_threshold()}
+            </Label>
             <Input
               id="m-threshold-a"
               type="number"
@@ -182,23 +203,27 @@ export function MilestoneForm({
         ) : null}
       </div>
       <div>
-        <Label htmlFor="m-label">显示文案</Label>
+        <Label htmlFor="m-label">
+          {m.collection_milestone_field_label()}
+        </Label>
         <Input
           id="m-label"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="如 集齐 5 张火系卡"
+          placeholder={m.collection_milestone_label_placeholder()}
         />
       </div>
       <ItemEntryEditor
-        label="奖励"
+        label={m.collection_milestone_field_rewards()}
         entries={rewardItems}
         onChange={setRewardItems}
         definitions={itemDefinitions}
       />
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="m-sortOrder">排序</Label>
+          <Label htmlFor="m-sortOrder">
+            {m.collection_field_sort_order()}
+          </Label>
           <Input
             id="m-sortOrder"
             type="number"
@@ -212,18 +237,20 @@ export function MilestoneForm({
             checked={autoClaim}
             onCheckedChange={setAutoClaim}
           />
-          <Label htmlFor="m-autoClaim">自动发放 (通过邮件)</Label>
+          <Label htmlFor="m-autoClaim">
+            {m.collection_milestone_field_auto_claim()}
+          </Label>
         </div>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end gap-2">
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel}>
-            取消
+            {m.common_cancel()}
           </Button>
         ) : null}
         <Button type="submit" disabled={isPending}>
-          {isPending ? "保存中..." : submitLabel}
+          {isPending ? m.collection_saving() : submitLabel}
         </Button>
       </div>
     </form>

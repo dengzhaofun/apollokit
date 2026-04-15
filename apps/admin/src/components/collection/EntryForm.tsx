@@ -12,6 +12,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
+import * as m from "#/paraglide/messages.js"
 import type {
   CollectionEntry,
   CollectionGroup,
@@ -81,7 +82,7 @@ export function EntryForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="e-name">名称</Label>
+          <Label htmlFor="e-name">{m.collection_field_name()}</Label>
           <Input
             id="e-name"
             value={name}
@@ -90,7 +91,7 @@ export function EntryForm({
           />
         </div>
         <div>
-          <Label htmlFor="e-alias">别名 (可选)</Label>
+          <Label htmlFor="e-alias">{m.collection_field_alias()}</Label>
           <Input
             id="e-alias"
             value={alias}
@@ -99,7 +100,9 @@ export function EntryForm({
         </div>
       </div>
       <div>
-        <Label htmlFor="e-description">描述</Label>
+        <Label htmlFor="e-description">
+          {m.collection_field_description()}
+        </Label>
         <Textarea
           id="e-description"
           value={description}
@@ -109,7 +112,7 @@ export function EntryForm({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="e-image">图片 URL</Label>
+          <Label htmlFor="e-image">{m.collection_entry_field_image()}</Label>
           <Input
             id="e-image"
             value={image}
@@ -117,24 +120,26 @@ export function EntryForm({
           />
         </div>
         <div>
-          <Label htmlFor="e-rarity">稀有度</Label>
+          <Label htmlFor="e-rarity">{m.collection_entry_field_rarity()}</Label>
           <Input
             id="e-rarity"
             value={rarity}
             onChange={(e) => setRarity(e.target.value)}
-            placeholder="common / rare / sr / ssr"
+            placeholder={m.collection_entry_rarity_placeholder()}
           />
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="e-group">分组</Label>
+          <Label htmlFor="e-group">{m.collection_entry_field_group()}</Label>
           <Select value={groupId} onValueChange={setGroupId}>
             <SelectTrigger id="e-group">
-              <SelectValue placeholder="选择分组 (可选)" />
+              <SelectValue placeholder={m.collection_entry_group_placeholder()} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>-- 无分组 --</SelectItem>
+              <SelectItem value={NONE}>
+                {m.collection_entry_group_none()}
+              </SelectItem>
               {groups.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
                   {g.name}
@@ -144,16 +149,22 @@ export function EntryForm({
           </Select>
         </div>
         <div>
-          <Label htmlFor="e-trigger">解锁物品</Label>
+          <Label htmlFor="e-trigger">
+            {m.collection_entry_field_trigger()}
+          </Label>
           <Select
             value={triggerItemDefinitionId}
             onValueChange={setTriggerDef}
           >
             <SelectTrigger id="e-trigger">
-              <SelectValue placeholder="选择触发物品" />
+              <SelectValue
+                placeholder={m.collection_entry_trigger_placeholder()}
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>-- 未绑定 --</SelectItem>
+              <SelectItem value={NONE}>
+                {m.collection_entry_trigger_none()}
+              </SelectItem>
               {itemDefinitions.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -162,13 +173,15 @@ export function EntryForm({
             </SelectContent>
           </Select>
           <p className="mt-1 text-xs text-muted-foreground">
-            玩家持有此物品达到阈值即解锁
+            {m.collection_entry_trigger_hint()}
           </p>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <div>
-          <Label htmlFor="e-quantity">所需数量</Label>
+          <Label htmlFor="e-quantity">
+            {m.collection_entry_field_quantity()}
+          </Label>
           <Input
             id="e-quantity"
             type="number"
@@ -178,7 +191,9 @@ export function EntryForm({
           />
         </div>
         <div>
-          <Label htmlFor="e-sortOrder">排序</Label>
+          <Label htmlFor="e-sortOrder">
+            {m.collection_field_sort_order()}
+          </Label>
           <Input
             id="e-sortOrder"
             type="number"
@@ -192,17 +207,19 @@ export function EntryForm({
             checked={hiddenUntilUnlocked}
             onCheckedChange={setHidden}
           />
-          <Label htmlFor="e-hidden">未解锁时隐藏</Label>
+          <Label htmlFor="e-hidden">
+            {m.collection_entry_field_hidden()}
+          </Label>
         </div>
       </div>
       <div className="flex justify-end gap-2">
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel}>
-            取消
+            {m.common_cancel()}
           </Button>
         ) : null}
         <Button type="submit" disabled={isPending}>
-          {isPending ? "保存中..." : submitLabel}
+          {isPending ? m.collection_saving() : submitLabel}
         </Button>
       </div>
     </form>
