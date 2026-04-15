@@ -2,8 +2,10 @@
 // by `pnpm auth:generate`). Add business tables in their own files and
 // re-export them here so drizzle picks them up.
 export * from "./auth";
+export * from "./banner";
 export * from "./check-in";
 export * from "./client-credential";
+export * from "./dialogue";
 export * from "./exchange";
 export * from "./item";
 export * from "./lottery";

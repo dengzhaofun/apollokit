@@ -1,0 +1,607 @@
+/**
+ * Banner service — protocol-agnostic business logic for the carousel/banner
+ * slot system.
+ *
+ * This file MUST NOT import Hono, @hono/zod-openapi, or `../../db`. It
+ * receives its dependencies through the AppDeps type. See
+ * apps/server/CLAUDE.md for the rule.
+ *
+ * ---------------------------------------------------------------------
+ * Resolution model
+ * ---------------------------------------------------------------------
+ *
+ * Admin CRUD operates on groups (banner_groups) and banners (banners)
+ * strictly by `id`. Client API resolves a group by its alias — groups
+ * without an alias are effectively unpublished and never visible.
+ *
+ * Visibility for client payloads (evaluated at read time):
+ *   banner.isActive = true
+ *   AND (visibleFrom IS NULL OR visibleFrom <= now)
+ *   AND (visibleUntil IS NULL OR visibleUntil  > now)
+ *   AND (targetType = 'broadcast'
+ *        OR targetUserIds @> to_jsonb(ARRAY[endUserId]))
+ *
+ * Ordering: `sortOrder ASC, createdAt ASC` for stable pagination-free lists.
+ *
+ * ---------------------------------------------------------------------
+ * Reorder — full-set validation
+ * ---------------------------------------------------------------------
+ *
+ * `reorderBanners` requires the caller to pass the complete, ordered list
+ * of banner ids in the group. The service re-reads the current membership
+ * and aborts with BannerReorderMismatch if the sets differ. This prevents
+ * drift (stale frontend sending 9 ids when 10 exist) and duplicate
+ * sortOrders arising from partial reorders.
+ *
+ * Without transactions on neon-http, we emit one UPDATE per banner inside
+ * a `Promise.all`. A concurrent admin create could insert a new banner
+ * with sortOrder colliding with what we just assigned — that's fine, the
+ * next reorder / manual edit fixes it and no data is lost. sortOrder is
+ * not a unique constraint.
+ */
+
+import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
+
+import type { AppDeps } from "../../deps";
+import { banners, bannerGroups } from "../../schema/banner";
+import type { LinkAction } from "../link/types";
+import {
+  BannerGroupAliasConflict,
+  BannerGroupNotFound,
+  BannerInvalidTarget,
+  BannerInvalidVisibilityWindow,
+  BannerMulticastTooLarge,
+  BannerNotFound,
+  BannerReorderMismatch,
+} from "./errors";
+import {
+  BANNER_MULTICAST_MAX,
+  type Banner,
+  type BannerGroup,
+  type BannerLayout,
+  type BannerTargetType,
+  type ClientBanner,
+  type ClientBannerGroup,
+} from "./types";
+import type {
+  CreateBannerGroupInput,
+  CreateBannerInput,
+  UpdateBannerGroupInput,
+  UpdateBannerInput,
+} from "./validators";
+
+type BannerDeps = Pick<AppDeps, "db">;
+
+function validateTargeting(input: {
+  targetType?: BannerTargetType;
+  targetUserIds?: string[] | null | undefined;
+}): void {
+  const type = input.targetType ?? "broadcast";
+  if (type === "broadcast") {
+    if (input.targetUserIds && input.targetUserIds.length > 0) {
+      throw new BannerInvalidTarget(
+        "targetUserIds must be empty when targetType='broadcast'",
+      );
+    }
+  } else {
+    const list = input.targetUserIds;
+    if (!list || list.length === 0) {
+      throw new BannerInvalidTarget(
+        "targetUserIds must contain at least one id when targetType='multicast'",
+      );
+    }
+    if (list.length > BANNER_MULTICAST_MAX) {
+      throw new BannerMulticastTooLarge(list.length, BANNER_MULTICAST_MAX);
+    }
+  }
+}
+
+function validateVisibilityWindow(input: {
+  visibleFrom?: string | null | undefined;
+  visibleUntil?: string | null | undefined;
+}): void {
+  if (!input.visibleFrom || !input.visibleUntil) return;
+  const from = new Date(input.visibleFrom);
+  const until = new Date(input.visibleUntil);
+  if (from.getTime() >= until.getTime()) {
+    throw new BannerInvalidVisibilityWindow(
+      "visibleFrom must be strictly before visibleUntil",
+    );
+  }
+}
+
+function toDate(iso: string | null | undefined): Date | null {
+  if (iso == null) return null;
+  return new Date(iso);
+}
+
+function toClientBanner(row: Banner): ClientBanner {
+  return {
+    id: row.id,
+    title: row.title,
+    imageUrlMobile: row.imageUrlMobile,
+    imageUrlDesktop: row.imageUrlDesktop,
+    altText: row.altText,
+    linkAction: row.linkAction,
+    sortOrder: row.sortOrder,
+  };
+}
+
+export function createBannerService(d: BannerDeps) {
+  const { db } = d;
+
+  async function loadGroupById(
+    organizationId: string,
+    id: string,
+  ): Promise<BannerGroup> {
+    const rows = await db
+      .select()
+      .from(bannerGroups)
+      .where(
+        and(
+          eq(bannerGroups.id, id),
+          eq(bannerGroups.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    if (!rows[0]) throw new BannerGroupNotFound(id);
+    return rows[0];
+  }
+
+  async function loadGroupByAlias(
+    organizationId: string,
+    alias: string,
+  ): Promise<BannerGroup> {
+    const rows = await db
+      .select()
+      .from(bannerGroups)
+      .where(
+        and(
+          eq(bannerGroups.alias, alias),
+          eq(bannerGroups.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    if (!rows[0]) throw new BannerGroupNotFound(alias);
+    return rows[0];
+  }
+
+  async function loadBannerById(
+    organizationId: string,
+    id: string,
+  ): Promise<Banner> {
+    const rows = await db
+      .select()
+      .from(banners)
+      .where(
+        and(
+          eq(banners.id, id),
+          eq(banners.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    if (!rows[0]) throw new BannerNotFound(id);
+    return rows[0];
+  }
+
+  return {
+    // ─── Admin — groups ────────────────────────────────────────
+
+    async createGroup(
+      organizationId: string,
+      input: CreateBannerGroupInput,
+    ): Promise<BannerGroup> {
+      try {
+        const [row] = await db
+          .insert(bannerGroups)
+          .values({
+            organizationId,
+            alias: input.alias ?? null,
+            name: input.name,
+            description: input.description ?? null,
+            layout: (input.layout ?? "carousel") as BannerLayout,
+            intervalMs: input.intervalMs ?? 4000,
+            isActive: input.isActive ?? true,
+            metadata: input.metadata ?? null,
+          })
+          .returning();
+        if (!row) throw new Error("banner group insert returned no row");
+        return row;
+      } catch (err) {
+        if (isUniqueViolation(err) && input.alias) {
+          throw new BannerGroupAliasConflict(input.alias);
+        }
+        throw err;
+      }
+    },
+
+    async updateGroup(
+      organizationId: string,
+      id: string,
+      input: UpdateBannerGroupInput,
+    ): Promise<BannerGroup> {
+      // Ensure the row exists in this org before UPDATE (explicit 404 beats
+      // "0 rows affected" ambiguity).
+      await loadGroupById(organizationId, id);
+      const patch: Record<string, unknown> = {};
+      if (input.alias !== undefined) patch.alias = input.alias;
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.description !== undefined) patch.description = input.description;
+      if (input.layout !== undefined) patch.layout = input.layout;
+      if (input.intervalMs !== undefined) patch.intervalMs = input.intervalMs;
+      if (input.isActive !== undefined) patch.isActive = input.isActive;
+      if (input.metadata !== undefined) patch.metadata = input.metadata;
+      if (Object.keys(patch).length === 0) {
+        return loadGroupById(organizationId, id);
+      }
+      try {
+        const [row] = await db
+          .update(bannerGroups)
+          .set(patch)
+          .where(
+            and(
+              eq(bannerGroups.id, id),
+              eq(bannerGroups.organizationId, organizationId),
+            ),
+          )
+          .returning();
+        if (!row) throw new BannerGroupNotFound(id);
+        return row;
+      } catch (err) {
+        if (isUniqueViolation(err) && typeof input.alias === "string") {
+          throw new BannerGroupAliasConflict(input.alias);
+        }
+        throw err;
+      }
+    },
+
+    async deleteGroup(organizationId: string, id: string): Promise<void> {
+      const deleted = await db
+        .delete(bannerGroups)
+        .where(
+          and(
+            eq(bannerGroups.id, id),
+            eq(bannerGroups.organizationId, organizationId),
+          ),
+        )
+        .returning({ id: bannerGroups.id });
+      if (deleted.length === 0) throw new BannerGroupNotFound(id);
+    },
+
+    async listGroups(organizationId: string): Promise<BannerGroup[]> {
+      return db
+        .select()
+        .from(bannerGroups)
+        .where(eq(bannerGroups.organizationId, organizationId))
+        .orderBy(asc(bannerGroups.createdAt));
+    },
+
+    async getGroup(
+      organizationId: string,
+      id: string,
+    ): Promise<BannerGroup> {
+      return loadGroupById(organizationId, id);
+    },
+
+    // ─── Admin — banners within a group ────────────────────────
+
+    async createBanner(
+      organizationId: string,
+      groupId: string,
+      input: CreateBannerInput,
+    ): Promise<Banner> {
+      await loadGroupById(organizationId, groupId); // 404 on wrong org/group
+      validateTargeting(input);
+      validateVisibilityWindow(input);
+
+      const targetType = (input.targetType ?? "broadcast") as BannerTargetType;
+      const targetUserIds =
+        targetType === "multicast" ? input.targetUserIds ?? null : null;
+
+      // Default sortOrder: max(existing) + 1 so new banners land at the end.
+      let nextSortOrder = input.sortOrder;
+      if (nextSortOrder === undefined) {
+        const [max] = await db
+          .select({
+            max: sql<number | null>`MAX(${banners.sortOrder})`,
+          })
+          .from(banners)
+          .where(
+            and(
+              eq(banners.organizationId, organizationId),
+              eq(banners.groupId, groupId),
+            ),
+          );
+        nextSortOrder = (max?.max ?? -1) + 1;
+      }
+
+      const [row] = await db
+        .insert(banners)
+        .values({
+          organizationId,
+          groupId,
+          title: input.title,
+          imageUrlMobile: input.imageUrlMobile,
+          imageUrlDesktop: input.imageUrlDesktop,
+          altText: input.altText ?? null,
+          linkAction: input.linkAction as unknown as LinkAction,
+          sortOrder: nextSortOrder,
+          visibleFrom: toDate(input.visibleFrom ?? null),
+          visibleUntil: toDate(input.visibleUntil ?? null),
+          targetType,
+          targetUserIds,
+          isActive: input.isActive ?? true,
+          metadata: input.metadata ?? null,
+        })
+        .returning();
+      if (!row) throw new Error("banner insert returned no row");
+      return row;
+    },
+
+    async updateBanner(
+      organizationId: string,
+      id: string,
+      input: UpdateBannerInput,
+    ): Promise<Banner> {
+      const existing = await loadBannerById(organizationId, id);
+
+      // Re-validate targeting + window with merged values so partial updates
+      // can't leave the row in an inconsistent state.
+      const mergedTargetType =
+        (input.targetType ?? existing.targetType) as BannerTargetType;
+      const mergedTargetUserIds =
+        input.targetUserIds !== undefined
+          ? input.targetUserIds
+          : existing.targetUserIds;
+      validateTargeting({
+        targetType: mergedTargetType,
+        targetUserIds: mergedTargetUserIds,
+      });
+      const mergedFrom =
+        input.visibleFrom !== undefined
+          ? input.visibleFrom
+          : existing.visibleFrom?.toISOString() ?? null;
+      const mergedUntil =
+        input.visibleUntil !== undefined
+          ? input.visibleUntil
+          : existing.visibleUntil?.toISOString() ?? null;
+      validateVisibilityWindow({
+        visibleFrom: mergedFrom,
+        visibleUntil: mergedUntil,
+      });
+
+      const patch: Record<string, unknown> = {};
+      if (input.title !== undefined) patch.title = input.title;
+      if (input.imageUrlMobile !== undefined)
+        patch.imageUrlMobile = input.imageUrlMobile;
+      if (input.imageUrlDesktop !== undefined)
+        patch.imageUrlDesktop = input.imageUrlDesktop;
+      if (input.altText !== undefined) patch.altText = input.altText;
+      if (input.linkAction !== undefined)
+        patch.linkAction = input.linkAction as unknown as LinkAction;
+      if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
+      if (input.visibleFrom !== undefined)
+        patch.visibleFrom = toDate(input.visibleFrom);
+      if (input.visibleUntil !== undefined)
+        patch.visibleUntil = toDate(input.visibleUntil);
+      if (input.targetType !== undefined) patch.targetType = input.targetType;
+      if (input.targetUserIds !== undefined) {
+        patch.targetUserIds =
+          mergedTargetType === "multicast" ? input.targetUserIds : null;
+      } else if (
+        input.targetType === "broadcast" &&
+        existing.targetUserIds !== null
+      ) {
+        // Switching to broadcast implicitly clears any prior multicast list.
+        patch.targetUserIds = null;
+      }
+      if (input.isActive !== undefined) patch.isActive = input.isActive;
+      if (input.metadata !== undefined) patch.metadata = input.metadata;
+
+      if (Object.keys(patch).length === 0) return existing;
+
+      const [row] = await db
+        .update(banners)
+        .set(patch)
+        .where(
+          and(
+            eq(banners.id, id),
+            eq(banners.organizationId, organizationId),
+          ),
+        )
+        .returning();
+      if (!row) throw new BannerNotFound(id);
+      return row;
+    },
+
+    async deleteBanner(
+      organizationId: string,
+      id: string,
+    ): Promise<void> {
+      const deleted = await db
+        .delete(banners)
+        .where(
+          and(
+            eq(banners.id, id),
+            eq(banners.organizationId, organizationId),
+          ),
+        )
+        .returning({ id: banners.id });
+      if (deleted.length === 0) throw new BannerNotFound(id);
+    },
+
+    async listBanners(
+      organizationId: string,
+      groupId: string,
+    ): Promise<Banner[]> {
+      await loadGroupById(organizationId, groupId);
+      return db
+        .select()
+        .from(banners)
+        .where(
+          and(
+            eq(banners.organizationId, organizationId),
+            eq(banners.groupId, groupId),
+          ),
+        )
+        .orderBy(asc(banners.sortOrder), asc(banners.createdAt));
+    },
+
+    async getBanner(
+      organizationId: string,
+      id: string,
+    ): Promise<Banner> {
+      return loadBannerById(organizationId, id);
+    },
+
+    async reorderBanners(
+      organizationId: string,
+      groupId: string,
+      orderedIds: string[],
+    ): Promise<Banner[]> {
+      await loadGroupById(organizationId, groupId);
+
+      const rows = await db
+        .select({ id: banners.id })
+        .from(banners)
+        .where(
+          and(
+            eq(banners.organizationId, organizationId),
+            eq(banners.groupId, groupId),
+          ),
+        );
+      const currentIds = new Set(rows.map((r) => r.id));
+      const incomingIds = new Set(orderedIds);
+
+      if (currentIds.size !== incomingIds.size) {
+        throw new BannerReorderMismatch(
+          `expected ${currentIds.size} banner ids, got ${incomingIds.size}`,
+        );
+      }
+      if (incomingIds.size !== orderedIds.length) {
+        throw new BannerReorderMismatch("duplicate banner ids in payload");
+      }
+      for (const id of orderedIds) {
+        if (!currentIds.has(id)) {
+          throw new BannerReorderMismatch(
+            `banner ${id} is not a member of group ${groupId}`,
+          );
+        }
+      }
+
+      // Emit per-banner updates. sortOrder is NOT unique so there is no
+      // intermediate-state conflict; the final ordering is what matters.
+      await Promise.all(
+        orderedIds.map((id, index) =>
+          db
+            .update(banners)
+            .set({ sortOrder: index })
+            .where(
+              and(
+                eq(banners.id, id),
+                eq(banners.organizationId, organizationId),
+                eq(banners.groupId, groupId),
+              ),
+            ),
+        ),
+      );
+
+      return db
+        .select()
+        .from(banners)
+        .where(
+          and(
+            eq(banners.organizationId, organizationId),
+            eq(banners.groupId, groupId),
+          ),
+        )
+        .orderBy(asc(banners.sortOrder), asc(banners.createdAt));
+    },
+
+    // ─── Client — resolve by alias ─────────────────────────────
+
+    /**
+     * Resolve a publishable banner group for an end user.
+     *
+     * `endUserId` is only used for multicast visibility (broadcast rows
+     * bypass it). Inactive groups are surfaced with an empty `banners`
+     * array so callers can distinguish "group turned off" from "alias
+     * doesn't exist" via HTTP status (200 + empty vs 404).
+     */
+    async getClientGroupByAlias(
+      organizationId: string,
+      alias: string,
+      endUserId: string,
+      nowParam?: Date,
+    ): Promise<ClientBannerGroup> {
+      const group = await loadGroupByAlias(organizationId, alias);
+      if (!group.alias) {
+        // Defensive — we queried by alias so this shouldn't happen, but the
+        // type system doesn't know that.
+        throw new BannerGroupNotFound(alias);
+      }
+
+      if (!group.isActive) {
+        return {
+          id: group.id,
+          alias: group.alias,
+          name: group.name,
+          description: group.description,
+          layout: group.layout as BannerLayout,
+          intervalMs: group.intervalMs,
+          banners: [],
+        };
+      }
+
+      const now = nowParam ?? new Date();
+
+      // Visibility predicate. Multicast uses jsonb containment (GIN-backed).
+      const visibilityClauses = and(
+        eq(banners.organizationId, organizationId),
+        eq(banners.groupId, group.id),
+        eq(banners.isActive, true),
+        or(isNull(banners.visibleFrom), sql`${banners.visibleFrom} <= ${now}`),
+        or(
+          isNull(banners.visibleUntil),
+          sql`${banners.visibleUntil} > ${now}`,
+        ),
+        or(
+          eq(banners.targetType, "broadcast"),
+          and(
+            eq(banners.targetType, "multicast"),
+            sql`${banners.targetUserIds} @> ${JSON.stringify([endUserId])}::jsonb`,
+          ),
+        ),
+      );
+
+      const rows = await db
+        .select()
+        .from(banners)
+        .where(visibilityClauses)
+        .orderBy(asc(banners.sortOrder), asc(banners.createdAt));
+
+      return {
+        id: group.id,
+        alias: group.alias,
+        name: group.name,
+        description: group.description,
+        layout: group.layout as BannerLayout,
+        intervalMs: group.intervalMs,
+        banners: rows.map(toClientBanner),
+      };
+    },
+  };
+}
+
+export type BannerService = ReturnType<typeof createBannerService>;
+
+function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: unknown; cause?: { code?: unknown } };
+  if (e.code === "23505") return true;
+  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
+    return true;
+  const msg = (err as { message?: unknown }).message;
+  return typeof msg === "string" && msg.includes("23505");
+}
+

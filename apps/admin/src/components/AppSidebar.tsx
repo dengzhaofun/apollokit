@@ -3,9 +3,11 @@ import { Link } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
   CalendarCheck,
+  GalleryHorizontal,
   KeyRound,
   LayoutDashboard,
   Mail,
+  MessagesSquare,
   Package,
   ShoppingCart,
 } from "lucide-react"
@@ -34,6 +36,8 @@ function getNavItems() {
     { title: m.nav_exchange(), to: "/exchange" as const, icon: ArrowLeftRight },
     { title: m.nav_shop(), to: "/shop" as const, icon: ShoppingCart },
     { title: m.nav_mail(), to: "/mail" as const, icon: Mail },
+    { title: m.nav_banner(), to: "/banner" as const, icon: GalleryHorizontal },
+    { title: m.nav_dialogue(), to: "/dialogue" as const, icon: MessagesSquare },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }
