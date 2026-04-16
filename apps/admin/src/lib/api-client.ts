@@ -51,6 +51,12 @@ export const api = {
       body: body != null ? JSON.stringify(body) : undefined,
     })
   },
+  put<T>(path: string, body?: unknown) {
+    return request<T>(path, {
+      method: "PUT",
+      body: body != null ? JSON.stringify(body) : undefined,
+    })
+  },
   delete(path: string) {
     return request<void>(path, { method: "DELETE" })
   },

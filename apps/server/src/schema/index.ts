@@ -13,3 +13,7 @@ export * from "./item";
 export * from "./lottery";
 export * from "./mail";
 export * from "./shop";
+export * from "./friend";
+export * from "./guild";
+export * from "./team";
+export * from "./friend-gift";
