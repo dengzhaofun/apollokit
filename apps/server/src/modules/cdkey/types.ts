@@ -4,7 +4,7 @@ import type {
   cdkeyRedemptionLogs,
   cdkeyUserStates,
 } from "../../schema/cdkey";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 
 export type CdkeyBatch = typeof cdkeyBatches.$inferSelect;
 export type CdkeyCode = typeof cdkeyCodes.$inferSelect;
@@ -20,6 +20,6 @@ export type CdkeyRedeemResult = {
   batchId: string;
   codeId: string;
   code: string;
-  reward: ItemEntry[];
+  reward: RewardEntry[];
   logId: string;
 };

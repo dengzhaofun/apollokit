@@ -52,6 +52,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import type { RewardEntry } from "../../lib/rewards";
 import {
   checkInConfigs,
   checkInRewards,
@@ -477,8 +478,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         !prevCompletion.isCompleted && nextCompletion.isCompleted;
 
       // Grant daily reward if itemSvc is available
-      let rewards: Array<{ definitionId: string; quantity: number }> | null =
-        null;
+      let rewards: RewardEntry[] | null = null;
       if (itemSvc) {
         const rewardRows = await db
           .select()
@@ -525,7 +525,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       configKey: string,
       input: {
         dayNumber: number;
-        rewardItems: Array<{ definitionId: string; quantity: number }>;
+        rewardItems: RewardEntry[];
         metadata?: Record<string, unknown> | null;
       },
     ) {
@@ -552,7 +552,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       rewardId: string,
       patch: {
         dayNumber?: number;
-        rewardItems?: Array<{ definitionId: string; quantity: number }>;
+        rewardItems?: RewardEntry[];
         metadata?: Record<string, unknown> | null;
       },
     ) {

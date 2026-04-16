@@ -56,7 +56,7 @@ import type { AppDeps } from "../../deps";
 import { mailMessages, mailUserStates } from "../../schema/mail";
 import { itemGrantLogs } from "../../schema/item";
 import type { ItemService } from "../item";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import {
   MailAlreadyClaimed,
   MailExpired,
@@ -203,7 +203,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       validateCreateTargeting(input);
       validateOriginPair(input);
 
-      const rewards: ItemEntry[] = input.rewards ?? [];
+      const rewards: RewardEntry[] = input.rewards ?? [];
       const targetUserIds =
         input.targetType === "multicast" ? input.targetUserIds! : null;
       const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;

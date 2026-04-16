@@ -30,7 +30,7 @@ import {
   lotteryPullLogs,
 } from "../../schema/lottery";
 import type { ItemService } from "../item";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import {
   LotteryPoolNotFound,
   LotteryPoolInactive,
@@ -912,11 +912,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       }
 
       // 4. Deduct total cost (costPerPull × count)
-      const singleCost = pool.costPerPull;
-      const totalCost: ItemEntry[] = singleCost.map((c) => ({
-        definitionId: c.definitionId,
-        quantity: c.quantity * params.count,
-      }));
+      const totalCost = pool.costPerPull.map((c) => ({
+        type: c.type,
+        id: c.id,
+        count: c.count * params.count,
+      } as RewardEntry));
       if (totalCost.length > 0) {
         await itemSvc.deductItems({
           organizationId: params.organizationId,
@@ -1062,13 +1062,13 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       for (const entry of pullEntries) {
         for (const item of entry.rewardItems) {
           mergedGrants.set(
-            item.definitionId,
-            (mergedGrants.get(item.definitionId) ?? 0) + item.quantity,
+            item.id,
+            (mergedGrants.get(item.id) ?? 0) + item.count,
           );
         }
       }
       if (mergedGrants.size > 0) {
-        const grants: ItemEntry[] = Array.from(mergedGrants.entries()).map(
+        const grants = Array.from(mergedGrants.entries()).map(
           ([definitionId, quantity]) => ({ definitionId, quantity }),
         );
         await itemSvc.grantItems({
@@ -1096,7 +1096,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           pityTriggered: entry.pityTriggered,
           pityRuleId: entry.pityRuleId,
           pityCountersBefore: userState.pityCounters,
-          costItems: singleCost,
+          costItems: pool.costPerPull,
         })),
       );
 
@@ -1104,7 +1104,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         batchId,
         poolId: pool.id,
         endUserId: params.endUserId,
-        costItems: totalCost,
+        costItems: pool.costPerPull.map((c) => ({ ...c, count: c.count * params.count })),
         pulls: pullEntries,
       };
     },

@@ -13,7 +13,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import type { MailMessage, MailMessageWithStats } from "./types";
 import { ModuleError } from "./errors";
 import { mailService } from "./index";
@@ -35,7 +35,7 @@ function serializeMessage(row: MailMessage) {
     organizationId: row.organizationId,
     title: row.title,
     content: row.content,
-    rewards: row.rewards as ItemEntry[],
+    rewards: row.rewards as RewardEntry[],
     targetType: row.targetType as "broadcast" | "multicast",
     targetUserIds: row.targetUserIds ?? null,
     requireRead: row.requireRead,

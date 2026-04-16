@@ -40,7 +40,7 @@ describe("cdkey service", () => {
       alias: "uni-a",
       codeType: "universal",
       universalCode: "SPRINGA",
-      reward: [{ definitionId: goldId, quantity: 100 }],
+      reward: [{ type: "item" as const, id: goldId, count: 100 }],
       totalLimit: 100,
       perUserLimit: 1,
     });
@@ -58,7 +58,7 @@ describe("cdkey service", () => {
       name: "Unique A",
       alias: "unq-a",
       codeType: "unique",
-      reward: [{ definitionId: goldId, quantity: 50 }],
+      reward: [{ type: "item" as const, id: goldId, count: 50 }],
       initialCount: 10,
     });
     expect(batch.codeType).toBe("unique");
@@ -75,7 +75,7 @@ describe("cdkey service", () => {
       name: "Unique Append",
       alias: "unq-append",
       codeType: "unique",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       initialCount: 3,
     });
     const { generated } = await svc.generateCodes(orgId, batch.id, {
@@ -95,7 +95,7 @@ describe("cdkey service", () => {
       alias: "upd-me",
       codeType: "universal",
       universalCode: "UPDCODE",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
     });
     const updated = await svc.updateBatch(orgId, batch.id, {
       name: "After",
@@ -110,7 +110,7 @@ describe("cdkey service", () => {
       name: "Gone",
       alias: "gone",
       codeType: "unique",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       initialCount: 2,
     });
     await svc.deleteBatch(orgId, batch.id);
@@ -126,7 +126,7 @@ describe("cdkey service", () => {
       alias: "uni-redeem",
       codeType: "universal",
       universalCode: "UNIRED",
-      reward: [{ definitionId: goldId, quantity: 10 }],
+      reward: [{ type: "item" as const, id: goldId, count: 10 }],
       totalLimit: 5,
       perUserLimit: 1,
     });
@@ -138,7 +138,7 @@ describe("cdkey service", () => {
       idempotencyKey: "k-uni-1",
     });
     expect(r1.status).toBe("success");
-    expect(r1.reward).toEqual([{ definitionId: goldId, quantity: 10 }]);
+    expect(r1.reward).toEqual([{ type: "item" as const, id: goldId, count: 10 }]);
 
     // Same idempotencyKey → already_redeemed cached
     const r1dup = await svc.redeem({
@@ -157,7 +157,7 @@ describe("cdkey service", () => {
       alias: "uni-perlimit",
       codeType: "universal",
       universalCode: "USERLIM",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       totalLimit: null,
       perUserLimit: 1,
     });
@@ -188,7 +188,7 @@ describe("cdkey service", () => {
       alias: "uni-total",
       codeType: "universal",
       universalCode: "TOTLIM",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       totalLimit: 2,
       perUserLimit: 1,
     });
@@ -222,7 +222,7 @@ describe("cdkey service", () => {
       name: "Unique Redeem",
       alias: "unq-red",
       codeType: "unique",
-      reward: [{ definitionId: goldId, quantity: 5 }],
+      reward: [{ type: "item" as const, id: goldId, count: 5 }],
       initialCount: 3,
     });
     const { items } = await svc.listCodes(orgId, batch.id, {
@@ -257,7 +257,7 @@ describe("cdkey service", () => {
       name: "Revoke Test",
       alias: "unq-rev",
       codeType: "unique",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       initialCount: 2,
     });
     const { items } = await svc.listCodes(orgId, batch.id, {
@@ -295,7 +295,7 @@ describe("cdkey service", () => {
       alias: "uni-inac",
       codeType: "universal",
       universalCode: "INACCODE",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
     });
     await svc.updateBatch(orgId, batch.id, { isActive: false });
     await expect(
@@ -315,7 +315,7 @@ describe("cdkey service", () => {
       alias: "uni-exp",
       codeType: "universal",
       universalCode: "EXPCODE",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
       endsAt: yesterday.toISOString(),
     });
     expect(batch.endsAt).not.toBeNull();
@@ -335,7 +335,7 @@ describe("cdkey service", () => {
       alias: "coll-1",
       codeType: "universal",
       universalCode: "COLLIDE",
-      reward: [{ definitionId: goldId, quantity: 1 }],
+      reward: [{ type: "item" as const, id: goldId, count: 1 }],
     });
     await expect(
       svc.createBatch(orgId, {
@@ -343,7 +343,7 @@ describe("cdkey service", () => {
         alias: "coll-2",
         codeType: "universal",
         universalCode: "COLLIDE",
-        reward: [{ definitionId: goldId, quantity: 1 }],
+        reward: [{ type: "item" as const, id: goldId, count: 1 }],
       }),
     ).rejects.toMatchObject({ code: "cdkey.universal_code_conflict" });
   });

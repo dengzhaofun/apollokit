@@ -65,8 +65,8 @@ function serializeUserProduct(row: UserProductView) {
     coverImage: row.coverImage,
     galleryImages: (row.galleryImages ?? null) as string[] | null,
     productType: row.productType as "regular" | "growth_pack",
-    costItems: row.costItems as Array<{ definitionId: string; quantity: number }>,
-    rewardItems: row.rewardItems as Array<{ definitionId: string; quantity: number }>,
+    costItems: row.costItems,
+    rewardItems: row.rewardItems,
     timeWindowType: row.timeWindowType as
       | "none"
       | "absolute"

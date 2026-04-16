@@ -75,7 +75,7 @@ function looksLikeId(key: string): boolean {
 export type GrantHook = (params: {
   organizationId: string;
   endUserId: string;
-  grants: Array<{ definitionId: string; quantity: number }>;
+  grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
   source: string;
   sourceId?: string;
 }) => Promise<void>;
@@ -613,26 +613,30 @@ export function createItemService(d: ItemDeps) {
     async grantItems(params: {
       organizationId: string;
       endUserId: string;
-      grants: Array<{ definitionId: string; quantity: number }>;
+      grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
       sourceId?: string;
     }): Promise<GrantResult> {
       const results: GrantResult["grants"] = [];
 
-      for (const grant of params.grants) {
-        if (grant.quantity <= 0) {
+      for (const raw of params.grants) {
+        // Support both RewardEntry { id, count } and legacy { definitionId, quantity }
+        const definitionId = "id" in raw ? raw.id : raw.definitionId;
+        const quantity = "count" in raw ? raw.count : raw.quantity;
+
+        if (quantity <= 0) {
           throw new ItemInvalidInput("grant quantity must be positive");
         }
         const def = await loadDefinitionByKey(
           params.organizationId,
-          grant.definitionId,
+          definitionId,
         );
 
         const { quantityBefore, quantityAfter } = await grantSingleItem(
           params.organizationId,
           params.endUserId,
           def,
-          grant.quantity,
+          quantity,
         );
 
         // Write grant log
@@ -640,7 +644,7 @@ export function createItemService(d: ItemDeps) {
           organizationId: params.organizationId,
           endUserId: params.endUserId,
           definitionId: def.id,
-          delta: grant.quantity,
+          delta: quantity,
           source: params.source,
           sourceId: params.sourceId ?? null,
           quantityBefore,
@@ -651,7 +655,7 @@ export function createItemService(d: ItemDeps) {
           definitionId: def.id,
           quantityBefore,
           quantityAfter,
-          delta: grant.quantity,
+          delta: quantity,
         });
       }
 
@@ -687,26 +691,30 @@ export function createItemService(d: ItemDeps) {
     async deductItems(params: {
       organizationId: string;
       endUserId: string;
-      deductions: Array<{ definitionId: string; quantity: number }>;
+      deductions: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
       sourceId?: string;
     }): Promise<DeductResult> {
       const results: DeductResult["deductions"] = [];
 
-      for (const deduction of params.deductions) {
-        if (deduction.quantity <= 0) {
+      for (const raw of params.deductions) {
+        // Support both RewardEntry { id, count } and legacy { definitionId, quantity }
+        const definitionId = "id" in raw ? raw.id : raw.definitionId;
+        const quantity = "count" in raw ? raw.count : raw.quantity;
+
+        if (quantity <= 0) {
           throw new ItemInvalidInput("deduction quantity must be positive");
         }
         const def = await loadDefinitionByKey(
           params.organizationId,
-          deduction.definitionId,
+          definitionId,
         );
 
         const { quantityBefore, quantityAfter } = await deductSingleItem(
           params.organizationId,
           params.endUserId,
           def,
-          deduction.quantity,
+          quantity,
         );
 
         // Write grant log (negative delta)
@@ -714,7 +722,7 @@ export function createItemService(d: ItemDeps) {
           organizationId: params.organizationId,
           endUserId: params.endUserId,
           definitionId: def.id,
-          delta: -deduction.quantity,
+          delta: -quantity,
           source: params.source,
           sourceId: params.sourceId ?? null,
           quantityBefore,
@@ -725,7 +733,7 @@ export function createItemService(d: ItemDeps) {
           definitionId: def.id,
           quantityBefore,
           quantityAfter,
-          delta: -deduction.quantity,
+          delta: -quantity,
         });
       }
 

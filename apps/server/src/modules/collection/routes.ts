@@ -14,7 +14,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import { collectionService } from "./index";
 import { ModuleError } from "./errors";
 import {
@@ -161,7 +161,7 @@ function serializeMilestone(row: {
   entryId: string | null;
   threshold: number;
   label: string | null;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
   autoClaim: boolean;
   sortOrder: number;
   metadata: unknown;

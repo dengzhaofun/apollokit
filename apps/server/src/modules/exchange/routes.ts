@@ -6,8 +6,8 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
 import { ModuleError } from "./errors";
 import { exchangeService } from "./index";
 import {
@@ -63,8 +63,8 @@ function serializeOption(row: {
   organizationId: string;
   name: string;
   description: string | null;
-  costItems: ItemEntry[];
-  rewardItems: ItemEntry[];
+  costItems: RewardEntry[];
+  rewardItems: RewardEntry[];
   userLimit: number | null;
   globalLimit: number | null;
   globalCount: number;

@@ -14,7 +14,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -139,7 +139,7 @@ export const checkInRewards = pgTable(
       .references(() => checkInConfigs.id, { onDelete: "cascade" }),
     organizationId: text("organization_id").notNull(),
     dayNumber: integer("day_number").notNull(),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

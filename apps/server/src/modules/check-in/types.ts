@@ -28,7 +28,7 @@ export type CheckInResult = {
   target: number | null;
   isCompleted: boolean;
   remaining: number | null;
-  rewards?: Array<{ definitionId: string; quantity: number }> | null;
+  rewards?: import("../../lib/rewards").RewardEntry[] | null;
 };
 
 export type CheckInUserStateView = {

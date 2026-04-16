@@ -13,7 +13,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -145,8 +145,8 @@ export const shopProducts = pgTable(
     coverImage: text("cover_image"),
     galleryImages: jsonb("gallery_images").$type<string[]>(),
     productType: text("product_type").default("regular").notNull(),
-    costItems: jsonb("cost_items").$type<ItemEntry[]>().notNull(),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    costItems: jsonb("cost_items").$type<RewardEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
 
     // Time window discriminator and its columns (mutually exclusive groups).
     timeWindowType: text("time_window_type").default("none").notNull(),
@@ -263,7 +263,7 @@ export const shopGrowthStages = pgTable(
     description: text("description"),
     triggerType: text("trigger_type").notNull(),
     triggerConfig: jsonb("trigger_config"),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

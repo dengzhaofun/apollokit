@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -42,7 +42,7 @@ export const lotteryPools = pgTable(
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
-    costPerPull: jsonb("cost_per_pull").$type<ItemEntry[]>().notNull(),
+    costPerPull: jsonb("cost_per_pull").$type<RewardEntry[]>().notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     startAt: timestamp("start_at"),
     endAt: timestamp("end_at"),
@@ -138,7 +138,7 @@ export const lotteryPrizes = pgTable(
     organizationId: text("organization_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     weight: integer("weight").default(100).notNull(),
     isRateUp: boolean("is_rate_up").default(false).notNull(),
     rateUpWeight: integer("rate_up_weight").default(0).notNull(),
@@ -279,13 +279,13 @@ export const lotteryPullLogs = pgTable(
     tierId: uuid("tier_id"),
     tierName: text("tier_name"),
     prizeName: text("prize_name").notNull(),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     pityTriggered: boolean("pity_triggered").default(false).notNull(),
     pityRuleId: uuid("pity_rule_id"),
     pityCountersBefore: jsonb("pity_counters_before").$type<
       Record<string, number>
     >(),
-    costItems: jsonb("cost_items").$type<ItemEntry[]>().notNull(),
+    costItems: jsonb("cost_items").$type<RewardEntry[]>().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

@@ -225,7 +225,7 @@ describe("collection service", () => {
       const m = await svc.createMilestone(orgId, "c-dragons", {
         scope: "entry",
         entryId: fireEntryId,
-        rewardItems: [{ definitionId: defDiamondId, quantity: 10 }],
+        rewardItems: [{ type: "item" as const, id: defDiamondId, count: 10 }],
         label: "First Fire Dragon",
       });
       expect(m.scope).toBe("entry");
@@ -239,7 +239,7 @@ describe("collection service", () => {
         scope: "group",
         groupId: dragonsGroupId,
         threshold: 2,
-        rewardItems: [{ definitionId: defDiamondId, quantity: 50 }],
+        rewardItems: [{ type: "item" as const, id: defDiamondId, count: 50 }],
       });
       expect(m.scope).toBe("group");
       expect(m.threshold).toBe(2);
@@ -250,7 +250,7 @@ describe("collection service", () => {
       const m = await svc.createMilestone(orgId, "c-dragons", {
         scope: "album",
         threshold: 2,
-        rewardItems: [{ definitionId: defDiamondId, quantity: 100 }],
+        rewardItems: [{ type: "item" as const, id: defDiamondId, count: 100 }],
       });
       expect(m.scope).toBe("album");
       albumMilestoneId = m.id;
@@ -396,7 +396,7 @@ describe("collection service", () => {
         milestoneId: entryMilestoneId,
       });
       expect(result.grantedItems).toHaveLength(1);
-      expect(result.grantedItems[0]!.definitionId).toBe(defDiamondId);
+      expect(result.grantedItems[0]!.id).toBe(defDiamondId);
 
       const inv = await itemSvc.getInventory({
         organizationId: orgId,

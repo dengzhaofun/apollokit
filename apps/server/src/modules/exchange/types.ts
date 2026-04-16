@@ -3,19 +3,16 @@ import type {
   exchangeOptions,
   exchangeUserStates,
 } from "../../schema/exchange";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 
 export type ExchangeConfig = typeof exchangeConfigs.$inferSelect;
 export type ExchangeOption = typeof exchangeOptions.$inferSelect;
 export type ExchangeUserState = typeof exchangeUserStates.$inferSelect;
 
-/** @deprecated Use `ItemEntry` from `../item/types` directly. */
-export type ExchangeItemEntry = ItemEntry;
-
 export type ExchangeResult = {
   success: boolean;
   exchangeId: string;
   optionId: string;
-  costItems: ItemEntry[];
-  rewardItems: ItemEntry[];
+  costItems: RewardEntry[];
+  rewardItems: RewardEntry[];
 };

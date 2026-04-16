@@ -3,8 +3,9 @@ import { z } from "@hono/zod-openapi";
 import { MAIL_MULTICAST_MAX, MAIL_TARGET_TYPES } from "./types";
 
 const ItemEntrySchema = z.object({
-  definitionId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 const TargetTypeSchema = z.enum(MAIL_TARGET_TYPES).openapi({

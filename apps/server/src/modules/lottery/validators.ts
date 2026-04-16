@@ -22,13 +22,15 @@ const MetadataSchema = z
   });
 
 const ItemEntrySchema = z.object({
-  definitionId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 const ItemEntryResponseSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int(),
 });
 
 // ─── Pool ──────────────────────────────────────────────────────

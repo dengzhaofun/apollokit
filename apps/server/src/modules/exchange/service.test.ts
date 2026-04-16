@@ -115,8 +115,8 @@ describe("exchange service", () => {
     // create
     const opt = await svc.createOption(orgId, "opt-crud", {
       name: "Buy Gem",
-      costItems: [{ definitionId: goldDef.id, quantity: 50 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 5 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 50 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 5 }],
       userLimit: 10,
     });
     expect(opt.name).toBe("Buy Gem");
@@ -170,8 +170,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "100 Gold → 10 Gem",
-      costItems: [{ definitionId: goldDef.id, quantity: 100 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
     });
 
     const result = await svc.execute({
@@ -226,8 +226,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "Expensive",
-      costItems: [{ definitionId: goldDef.id, quantity: 100 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
     });
 
     await expect(
@@ -266,8 +266,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "Limited",
-      costItems: [{ definitionId: goldDef.id, quantity: 10 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
       userLimit: 2,
     });
 
@@ -335,8 +335,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "Scarce",
-      costItems: [{ definitionId: goldDef.id, quantity: 10 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
       globalLimit: 1,
     });
 
@@ -384,8 +384,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "Idemp Option",
-      costItems: [{ definitionId: goldDef.id, quantity: 100 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
     });
 
     const idemKey = crypto.randomUUID();
@@ -444,8 +444,8 @@ describe("exchange service", () => {
     });
     const opt = await svc.createOption(orgId, cfg.id, {
       name: "Inactive Option",
-      costItems: [{ definitionId: goldDef.id, quantity: 10 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
     });
 
     // Deactivate the config
@@ -480,8 +480,8 @@ describe("exchange service", () => {
     });
     await svc.createOption(orgId, cfg.id, {
       name: "Cascade Option",
-      costItems: [{ definitionId: goldDef.id, quantity: 10 }],
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldDef.id, count: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
     });
 
     // Verify option exists
