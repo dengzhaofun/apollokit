@@ -1,20 +1,19 @@
 /**
  * Entity module barrel.
  *
- * Phase 1 wiring: only admin CRUD for schemas, blueprints, skins,
- * and formation configs. No cross-module hooks yet.
- *
- * Phase 2+ will add itemService dependency for material consumption
- * during level-up, rank-up, and synthesis operations.
+ * Wiring: entity depends on item (for material deduction during
+ * level-up, rank-up, synthesis). The dependency is one-way — item
+ * does not import entity.
  */
 
 import { deps } from "../../deps";
+import { itemService } from "../item";
 import { createEntityService } from "./service";
 
 export { createEntityService };
 export type { EntityService } from "./service";
 
-export const entityService = createEntityService(deps);
+export const entityService = createEntityService(deps, itemService);
 
 export { entityRouter } from "./routes";
 export { entityClientRouter } from "./client-routes";

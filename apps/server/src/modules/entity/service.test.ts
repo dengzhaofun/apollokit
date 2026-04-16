@@ -17,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../../db";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
+import { createItemService } from "../item/service";
 import { createEntityService } from "./service";
 
 describe("entity service — Phase 1 CRUD", () => {
@@ -382,5 +383,394 @@ describe("entity service — Phase 1 CRUD", () => {
     await expect(
       svc.getBlueprint(orgId, tmpBp.id),
     ).rejects.toThrow("not found");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Phase 2-5: Instance, Progression, Slots, Formations
+// ═══════════════════════════════════════════════════════════════
+
+describe("entity service — Phase 2-5", () => {
+  const itemSvc = createItemService({ db });
+  const svc = createEntityService({ db }, itemSvc);
+  let orgId: string;
+
+  // Schema + blueprint IDs seeded in beforeAll
+  let heroSchemaId: string;
+  let weaponSchemaId: string;
+  let fireWarriorBpId: string;
+  let fireWarriorBp2Id: string; // duplicate for synthesis
+  let fireWarriorBp3Id: string; // another duplicate
+  let flameSwordBpId: string;
+  let skinId: string;
+  let goldDefId: string;
+  let formConfigId: string;
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("entity-svc-p2");
+
+    // Create schemas
+    const heroSchema = await svc.createSchema(orgId, {
+      name: "Hero",
+      alias: "hero-p2",
+      statDefinitions: [
+        { key: "hp", label: "HP", type: "integer", defaultValue: 0 },
+        { key: "atk", label: "ATK", type: "integer", defaultValue: 0 },
+      ],
+      tagDefinitions: [
+        { key: "class", label: "Class", values: ["warrior", "mage", "all"] },
+      ],
+      slotDefinitions: [
+        {
+          key: "weapon",
+          label: "Weapon",
+          acceptsSchemaIds: [],  // will be filled after weapon schema
+          acceptsTags: { class: "$owner.class" },
+          maxCount: 1,
+        },
+      ],
+      levelConfig: { enabled: true, maxLevel: 10 },
+      rankConfig: {
+        enabled: true,
+        ranks: [
+          { key: "N", label: "Normal", order: 0 },
+          { key: "R", label: "Rare", order: 1 },
+          { key: "SR", label: "Super Rare", order: 2 },
+        ],
+      },
+      synthesisConfig: { enabled: true, sameBlueprint: true, inputCount: 2 },
+    });
+    heroSchemaId = heroSchema.id;
+
+    const weaponSchema = await svc.createSchema(orgId, {
+      name: "Weapon",
+      alias: "weapon-p2",
+      statDefinitions: [
+        { key: "atk", label: "ATK", type: "integer", defaultValue: 0 },
+      ],
+      tagDefinitions: [
+        { key: "class", label: "Class", values: ["warrior", "mage", "all"] },
+      ],
+      levelConfig: { enabled: false, maxLevel: 1 },
+    });
+    weaponSchemaId = weaponSchema.id;
+
+    // Update hero schema slots to reference weapon schema
+    await svc.updateSchema(orgId, heroSchemaId, {
+      slotDefinitions: [
+        {
+          key: "weapon",
+          label: "Weapon",
+          acceptsSchemaIds: [weaponSchemaId],
+          acceptsTags: { class: "$owner.class" },
+          maxCount: 1,
+        },
+      ],
+    });
+
+    // Create item definition for gold (material)
+    const goldDef = await itemSvc.createDefinition(orgId, {
+      name: "Gold",
+      alias: "gold-p2",
+      stackable: true,
+    });
+    goldDefId = goldDef.id;
+
+    // Create blueprints
+    const fw = await svc.createBlueprint(orgId, {
+      schemaId: heroSchemaId,
+      name: "Fire Warrior",
+      alias: "fw-p2",
+      rarity: "SSR",
+      tags: { class: "warrior" },
+      baseStats: { hp: 100, atk: 50 },
+      statGrowth: { hp: 10, atk: 5 },
+      levelUpCosts: [
+        { level: 2, cost: [{ definitionId: goldDefId, quantity: 10 }] },
+        { level: 3, cost: [{ definitionId: goldDefId, quantity: 20 }] },
+      ],
+      rankUpCosts: [
+        {
+          fromRank: "N",
+          toRank: "R",
+          cost: [{ definitionId: goldDefId, quantity: 50 }],
+          statBonuses: { hp: 20, atk: 10 },
+        },
+      ],
+      synthesisCost: {
+        inputCount: 2,
+        cost: [{ definitionId: goldDefId, quantity: 100 }],
+        resultBonuses: { hp: 50, atk: 25 },
+      },
+    });
+    fireWarriorBpId = fw.id;
+
+    const fs = await svc.createBlueprint(orgId, {
+      schemaId: weaponSchemaId,
+      name: "Flame Sword",
+      alias: "fs-p2",
+      tags: { class: "warrior" },
+      baseStats: { atk: 30 },
+    });
+    flameSwordBpId = fs.id;
+
+    // Create skin
+    const sk = await svc.createSkin(orgId, fireWarriorBpId, {
+      name: "Dragon Armor",
+      alias: "dragon-p2",
+      statBonuses: { hp: 5, atk: 3 },
+    });
+    skinId = sk.id;
+
+    // Create formation config
+    const fc = await svc.createFormationConfig(orgId, {
+      name: "Battle",
+      alias: "battle-p2",
+      maxFormations: 3,
+      maxSlots: 2,
+      acceptsSchemaIds: [heroSchemaId],
+      allowDuplicateBlueprints: false,
+    });
+    formConfigId = fc.id;
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  // ─── Instance Management ──────────────────────────────────────
+
+  let heroInstId: string;
+  let heroInstId2: string;
+  let heroInstId3: string;
+  let weaponInstId: string;
+
+  test("acquireEntity — hero", async () => {
+    const inst = await svc.acquireEntity(
+      orgId, "player-1", fireWarriorBpId, "test",
+    );
+    expect(inst.level).toBe(1);
+    expect(inst.rankKey).toBe("N");
+    expect(inst.computedStats.hp).toBe(100);
+    expect(inst.computedStats.atk).toBe(50);
+    heroInstId = inst.id;
+  });
+
+  test("acquireEntity — duplicate heroes for synthesis", async () => {
+    const inst2 = await svc.acquireEntity(
+      orgId, "player-1", fireWarriorBpId, "test",
+    );
+    heroInstId2 = inst2.id;
+
+    const inst3 = await svc.acquireEntity(
+      orgId, "player-1", fireWarriorBpId, "test",
+    );
+    heroInstId3 = inst3.id;
+  });
+
+  test("acquireEntity — weapon", async () => {
+    const inst = await svc.acquireEntity(
+      orgId, "player-1", flameSwordBpId, "test",
+    );
+    expect(inst.computedStats.atk).toBe(30);
+    weaponInstId = inst.id;
+  });
+
+  test("listInstances — all", async () => {
+    const rows = await svc.listInstances(orgId, "player-1");
+    expect(rows.length).toBe(4);
+  });
+
+  test("listInstances — filter by schemaId", async () => {
+    const heroes = await svc.listInstances(orgId, "player-1", {
+      schemaId: heroSchemaId,
+    });
+    expect(heroes.length).toBe(3);
+  });
+
+  test("getInstance — returns instance + slots", async () => {
+    const result = await svc.getInstance(orgId, "player-1", heroInstId);
+    expect(result.instance.id).toBe(heroInstId);
+    expect(result.slots).toEqual([]);
+  });
+
+  test("toggleLock", async () => {
+    const locked = await svc.toggleLock(orgId, "player-1", heroInstId, true);
+    expect(locked.isLocked).toBe(true);
+    const unlocked = await svc.toggleLock(orgId, "player-1", heroInstId, false);
+    expect(unlocked.isLocked).toBe(false);
+  });
+
+  // ─── Progression ──────────────────────────────────────────────
+
+  test("addExp", async () => {
+    const inst = await svc.addExp(orgId, "player-1", heroInstId, 500);
+    expect(inst.exp).toBe(500);
+  });
+
+  test("levelUp — from 1 to 2 (consumes gold)", async () => {
+    // Grant gold first
+    await itemSvc.grantItems({
+      organizationId: orgId,
+      endUserId: "player-1",
+      grants: [{ definitionId: goldDefId, quantity: 1000 }],
+      source: "test",
+    });
+
+    const inst = await svc.levelUp(orgId, "player-1", heroInstId);
+    expect(inst.level).toBe(2);
+    // Stats: base(100) + growth(10)×1 = 110
+    expect(inst.computedStats.hp).toBe(110);
+    expect(inst.computedStats.atk).toBe(55);
+  });
+
+  test("levelUp — multi-level from 2 to 3", async () => {
+    const inst = await svc.levelUp(orgId, "player-1", heroInstId, 3);
+    expect(inst.level).toBe(3);
+    // Stats: base(100) + growth(10)×2 = 120
+    expect(inst.computedStats.hp).toBe(120);
+  });
+
+  test("levelUp — max level error", async () => {
+    // Level up to 10 (max)
+    for (let lv = 4; lv <= 10; lv++) {
+      await svc.levelUp(orgId, "player-1", heroInstId, lv);
+    }
+    await expect(
+      svc.levelUp(orgId, "player-1", heroInstId),
+    ).rejects.toThrow("max level");
+  });
+
+  test("rankUp — N to R (consumes gold)", async () => {
+    const inst = await svc.rankUp(orgId, "player-1", heroInstId);
+    expect(inst.rankKey).toBe("R");
+    // Stats include rank bonus: base(100) + growth(10)×9 + rankBonus(20) = 210
+    expect(inst.computedStats.hp).toBe(210);
+    expect(inst.computedStats.atk).toBe(105); // 50 + 5×9 + 10
+  });
+
+  // ─── Slot System ──────────────────────────────────────────────
+
+  test("equip — weapon into hero slot", async () => {
+    const slot = await svc.equip(
+      orgId, "player-1", heroInstId, "weapon", 0, weaponInstId,
+    );
+    expect(slot.slotKey).toBe("weapon");
+    expect(slot.equippedInstanceId).toBe(weaponInstId);
+
+    // Hero stats should now include weapon ATK
+    const result = await svc.getInstance(orgId, "player-1", heroInstId);
+    // atk = 50 + 5×9 + 10(rank) + 30(weapon) = 135
+    expect(result.instance.computedStats.atk).toBe(135);
+  });
+
+  test("equip — already equipped error", async () => {
+    const weapon2 = await svc.acquireEntity(
+      orgId, "player-1", flameSwordBpId, "test",
+    );
+    // Try to equip weapon that's already in a slot elsewhere
+    await expect(
+      svc.equip(orgId, "player-1", heroInstId, "weapon", 0, weapon2.id),
+    ).rejects.toThrow("occupied");
+
+    // Clean up
+    await svc.discardEntity(orgId, "player-1", weapon2.id);
+  });
+
+  test("unequip — weapon from hero slot", async () => {
+    await svc.unequip(orgId, "player-1", heroInstId, "weapon", 0);
+
+    const result = await svc.getInstance(orgId, "player-1", heroInstId);
+    expect(result.slots).toEqual([]);
+    // atk back to: 50 + 5×9 + 10(rank) = 105
+    expect(result.instance.computedStats.atk).toBe(105);
+  });
+
+  // ─── Skin ─────────────────────────────────────────────────────
+
+  test("changeSkin — apply skin with stat bonuses", async () => {
+    const inst = await svc.changeSkin(orgId, "player-1", heroInstId, skinId);
+    expect(inst.skinId).toBe(skinId);
+    // hp = 210 + 5(skin) = 215, atk = 105 + 3(skin) = 108
+    expect(inst.computedStats.hp).toBe(215);
+    expect(inst.computedStats.atk).toBe(108);
+  });
+
+  test("changeSkin — remove skin", async () => {
+    const inst = await svc.changeSkin(orgId, "player-1", heroInstId, null);
+    expect(inst.skinId).toBeNull();
+    expect(inst.computedStats.hp).toBe(210);
+  });
+
+  // ─── Synthesis ────────────────────────────────────────────────
+
+  test("synthesize — merge 2 duplicates (consumes gold)", async () => {
+    // Need a 4th duplicate as extra feed (synthesisCost.inputCount=2)
+    const extra = await svc.acquireEntity(
+      orgId, "player-1", fireWarriorBpId, "test",
+    );
+
+    const inst = await svc.synthesize(
+      orgId,
+      "player-1",
+      heroInstId2,
+      [heroInstId3, extra.id],
+    );
+    expect(inst.id).toBe(heroInstId2);
+    // Feeds should be deleted
+    await expect(
+      svc.getInstance(orgId, "player-1", heroInstId3),
+    ).rejects.toThrow("not found");
+    await expect(
+      svc.getInstance(orgId, "player-1", extra.id),
+    ).rejects.toThrow("not found");
+  });
+
+  // ─── Discard ──────────────────────────────────────────────────
+
+  test("discardEntity — locked entity fails", async () => {
+    await svc.toggleLock(orgId, "player-1", heroInstId2, true);
+    await expect(
+      svc.discardEntity(orgId, "player-1", heroInstId2),
+    ).rejects.toThrow("locked");
+    await svc.toggleLock(orgId, "player-1", heroInstId2, false);
+  });
+
+  test("discardEntity — success", async () => {
+    await svc.discardEntity(orgId, "player-1", heroInstId2);
+    await expect(
+      svc.getInstance(orgId, "player-1", heroInstId2),
+    ).rejects.toThrow("not found");
+  });
+
+  // ─── Formations ───────────────────────────────────────────────
+
+  test("updateFormation — create a new formation", async () => {
+    const form = await svc.updateFormation(
+      orgId,
+      "player-1",
+      formConfigId,
+      0,
+      "Main Team",
+      [
+        { slotIndex: 0, instanceId: heroInstId },
+        { slotIndex: 1, instanceId: null },
+      ],
+    );
+    expect(form.name).toBe("Main Team");
+    expect(form.formationIndex).toBe(0);
+    expect(form.slots).toHaveLength(2);
+  });
+
+  test("listFormations", async () => {
+    const rows = await svc.listFormations(orgId, "player-1", formConfigId);
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.name).toBe("Main Team");
+  });
+
+  test("updateFormation — exceeds maxFormations", async () => {
+    await expect(
+      svc.updateFormation(orgId, "player-1", formConfigId, 5, "Bad", []),
+    ).rejects.toThrow("exceeds max");
   });
 });
