@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 // ─── JSONB type helpers ──────────────────────────────────────────
@@ -74,21 +74,21 @@ export type SynthesisConfig = {
 /** Per-level upgrade cost. */
 export type LevelUpCost = {
   level: number;
-  cost: ItemEntry[];
+  cost: RewardEntry[];
 };
 
 /** Per-rank upgrade cost with stat bonuses. */
 export type RankUpCost = {
   fromRank: string;
   toRank: string;
-  cost: ItemEntry[];
+  cost: RewardEntry[];
   statBonuses: Record<string, number>;
 };
 
 /** Synthesis cost configuration on a blueprint. */
 export type SynthesisCostConfig = {
   inputCount: number;
-  cost: ItemEntry[];
+  cost: RewardEntry[];
   resultBonuses: Record<string, number>;
 };
 

@@ -17,8 +17,8 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
 import { ModuleError } from "./errors";
 import { checkInService } from "./index";
 import {
@@ -404,7 +404,7 @@ function serializeReward(row: {
   configId: string;
   organizationId: string;
   dayNumber: number;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;

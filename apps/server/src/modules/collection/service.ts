@@ -78,7 +78,7 @@ import {
   collectionUserMilestones,
 } from "../../schema/collection";
 import { itemDefinitions, itemInventories } from "../../schema/item";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import type { MailService } from "../mail/service";
 import {
   CollectionAlbumNotFound,
@@ -118,7 +118,7 @@ export type ItemSvc = {
   grantItems: (params: {
     organizationId: string;
     endUserId: string;
-    grants: Array<{ definitionId: string; quantity: number }>;
+    grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }) => Promise<unknown>;
@@ -150,7 +150,7 @@ function isUniqueViolation(err: unknown): boolean {
 const SOURCE_PREFIX = "collection.";
 const MILESTONE_SOURCE = `${SOURCE_PREFIX}milestone`;
 
-type GrantHookEntry = { definitionId: string; quantity: number };
+type GrantHookEntry = { type?: string; id: string; count: number } | { definitionId: string; quantity: number };
 
 export function createCollectionService(
   d: CollectionDeps,
@@ -987,7 +987,11 @@ export function createCollectionService(
       if (params.grants.length === 0) return;
 
       const defIds = Array.from(
-        new Set(params.grants.map((g) => g.definitionId)),
+        new Set(
+          params.grants.map((g) =>
+            "definitionId" in g ? g.definitionId : g.id,
+          ),
+        ),
       );
 
       // Fetch candidate entries matching any granted def, scoped to org.
@@ -1083,7 +1087,7 @@ export function createCollectionService(
             content:
               m.label ??
               `恭喜达成图鉴里程碑 (${m.scope}, 阈值 ${m.threshold})`,
-            rewards: m.rewardItems as ItemEntry[],
+            rewards: m.rewardItems,
             originSource: MILESTONE_SOURCE,
             originSourceId: `${m.id}:${params.endUserId}`,
           });
@@ -1185,7 +1189,7 @@ export function createCollectionService(
     endUserId: string;
     milestoneId: string;
   }): Promise<{
-    grantedItems: ItemEntry[];
+    grantedItems: RewardEntry[];
     claimedAt: Date;
   }> {
     const m = await loadMilestoneById(
@@ -1211,7 +1215,7 @@ export function createCollectionService(
     );
     if (!inserted) throw new CollectionMilestoneAlreadyClaimed();
 
-    const items = m.rewardItems as ItemEntry[];
+    const items = m.rewardItems;
     await itemSvc.grantItems({
       organizationId: params.organizationId,
       endUserId: params.endUserId,
@@ -1398,7 +1402,7 @@ export function createCollectionService(
         entryId: m.entryId,
         threshold: m.threshold,
         label: m.label,
-        rewardItems: m.rewardItems as ItemEntry[],
+        rewardItems: m.rewardItems,
         autoClaim: m.autoClaim,
         sortOrder: m.sortOrder,
         unlockedCount,

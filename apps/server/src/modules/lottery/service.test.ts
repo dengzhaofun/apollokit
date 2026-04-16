@@ -144,7 +144,7 @@ describe("lottery service", () => {
 
     const prize = await svc.createPrize(orgId, pool.id, null, {
       name: "10 Gems",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
       weight: 500,
     });
     expect(prize.name).toBe("10 Gems");
@@ -247,12 +247,12 @@ describe("lottery service", () => {
     const pool = await svc.createPool(orgId, {
       name: "Flat Wheel",
       alias: "flat-wheel",
-      costPerPull: [{ definitionId: coinDef.id, quantity: 100 }],
+      costPerPull: [{ type: "item" as const, id: coinDef.id, count: 100 }],
     });
 
     await svc.createPrize(orgId, pool.id, null, {
       name: "10 Gems",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
       weight: 1000,
     });
 
@@ -267,7 +267,7 @@ describe("lottery service", () => {
     expect(result.pulls).toHaveLength(1);
     expect(result.pulls[0]!.prizeName).toBe("10 Gems");
     expect(result.costItems).toEqual([
-      { definitionId: coinDef.id, quantity: 100 },
+      { type: "item" as const, id: coinDef.id, count: 100 },
     ]);
 
     // Verify cost deducted
@@ -313,12 +313,12 @@ describe("lottery service", () => {
 
     await svc.createPrize(orgId, pool.id, ssrTier.id, {
       name: "SSR Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 100 }],
       weight: 100,
     });
     await svc.createPrize(orgId, pool.id, rTier.id, {
       name: "R Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
       weight: 100,
     });
 
@@ -382,12 +382,12 @@ describe("lottery service", () => {
     const pool = await svc.createPool(orgId, {
       name: "Multi Pool",
       alias: "multi-pool",
-      costPerPull: [{ definitionId: coinDef.id, quantity: 100 }],
+      costPerPull: [{ type: "item" as const, id: coinDef.id, count: 100 }],
     });
 
     await svc.createPrize(orgId, pool.id, null, {
       name: "Gem Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 5 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 5 }],
       weight: 1000,
     });
 
@@ -401,7 +401,7 @@ describe("lottery service", () => {
     expect(result.pulls).toHaveLength(10);
     // Total cost = 100 * 10 = 1000
     expect(result.costItems).toEqual([
-      { definitionId: coinDef.id, quantity: 1000 },
+      { type: "item" as const, id: coinDef.id, count: 1000 },
     ]);
     // Each pull should have batchIndex 0-9
     for (let i = 0; i < 10; i++) {
@@ -441,7 +441,7 @@ describe("lottery service", () => {
 
     await svc.createPrize(orgId, pool.id, null, {
       name: "Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 10 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
       weight: 1000,
     });
 
@@ -519,7 +519,7 @@ describe("lottery service", () => {
     // Limited prize with stock = 1
     const limitedPrize = await svc.createPrize(orgId, pool.id, null, {
       name: "Rare",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 100 }],
       weight: 999,
       globalStockLimit: 1,
     });
@@ -527,7 +527,7 @@ describe("lottery service", () => {
     // Fallback prize (unlimited)
     await svc.createPrize(orgId, pool.id, null, {
       name: "Common",
-      rewardItems: [{ definitionId: coinDef.id, quantity: 1 }],
+      rewardItems: [{ type: "item" as const, id: coinDef.id, count: 1 }],
       weight: 1,
     });
 
@@ -567,7 +567,7 @@ describe("lottery service", () => {
 
     await svc.createPrize(orgId, pool.id, null, {
       name: "Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
       weight: 1000,
     });
 
@@ -609,7 +609,7 @@ describe("lottery service", () => {
 
     await svc.createPrize(orgId, pool.id, null, {
       name: "Prize",
-      rewardItems: [{ definitionId: gemDef.id, quantity: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemDef.id, count: 1 }],
       weight: 1000,
     });
 

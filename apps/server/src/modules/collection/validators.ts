@@ -54,8 +54,9 @@ const MilestoneScopeSchema = z.enum(MILESTONE_SCOPES).openapi({
 });
 
 const RewardItemSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int().positive(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 // ─── Album ────────────────────────────────────────────────────────

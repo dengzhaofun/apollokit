@@ -21,6 +21,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import type { RewardEntry } from "../../lib/rewards";
 import {
   exchangeConfigs,
   exchangeOptions,
@@ -37,7 +38,6 @@ import {
   ExchangeOptionNotFound,
   ExchangeUserLimitReached,
 } from "./errors";
-import type { ItemEntry } from "../item/types";
 import type {
   ExchangeConfig,
   ExchangeOption,
@@ -396,7 +396,7 @@ export function createExchangeService(d: ExchangeDeps, itemSvc: ItemService) {
       }
 
       // 5. Deduct cost items
-      const deductedEntries: ItemEntry[] = [];
+      const deductedEntries: RewardEntry[] = [];
       try {
         for (const cost of costItems) {
           await itemSvc.deductItems({

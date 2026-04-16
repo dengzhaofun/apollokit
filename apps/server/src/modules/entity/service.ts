@@ -82,14 +82,14 @@ export type ItemSvc = {
   grantItems: (params: {
     organizationId: string;
     endUserId: string;
-    grants: Array<{ definitionId: string; quantity: number }>;
+    grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }) => Promise<unknown>;
   deductItems: (params: {
     organizationId: string;
     endUserId: string;
-    deductions: Array<{ definitionId: string; quantity: number }>;
+    deductions: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }) => Promise<unknown>;
@@ -1029,8 +1029,8 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         const costEntry = bp.levelUpCosts.find((c) => c.level === lv);
         if (costEntry) {
           for (const item of costEntry.cost) {
-            totalCost[item.definitionId] =
-              (totalCost[item.definitionId] ?? 0) + item.quantity;
+            totalCost[item.id] =
+              (totalCost[item.id] ?? 0) + item.count;
           }
         }
       }
@@ -1105,10 +1105,9 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         await itemSvc.deductItems({
           organizationId,
           endUserId,
-          deductions: costEntry.cost.map((c) => ({
-            definitionId: c.definitionId,
-            quantity: c.quantity,
-          })),
+          deductions: costEntry.cost
+            .filter((c) => c.type === "item")
+            .map((c) => ({ definitionId: c.id, quantity: c.count })),
           source: "entity.rank_up",
           sourceId: instanceId,
         });
@@ -1213,10 +1212,9 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         await itemSvc.deductItems({
           organizationId,
           endUserId,
-          deductions: bp.synthesisCost.cost.map((c) => ({
-            definitionId: c.definitionId,
-            quantity: c.quantity,
-          })),
+          deductions: bp.synthesisCost.cost
+            .filter((c) => c.type === "item")
+            .map((c) => ({ definitionId: c.id, quantity: c.count })),
           source: "entity.synthesize",
           sourceId: targetInstanceId,
         });

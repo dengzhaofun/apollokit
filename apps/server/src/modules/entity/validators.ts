@@ -73,26 +73,27 @@ const SynthesisConfigSchema = z.object({
   inputCount: z.number().int().min(1),
 });
 
-const ItemEntrySchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int().positive(),
+const RewardEntrySchema = z.object({
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 const LevelUpCostSchema = z.object({
   level: z.number().int().min(2),
-  cost: z.array(ItemEntrySchema),
+  cost: z.array(RewardEntrySchema),
 });
 
 const RankUpCostSchema = z.object({
   fromRank: z.string(),
   toRank: z.string(),
-  cost: z.array(ItemEntrySchema),
+  cost: z.array(RewardEntrySchema),
   statBonuses: z.record(z.string(), z.number()),
 });
 
 const SynthesisCostConfigSchema = z.object({
   inputCount: z.number().int().min(1),
-  cost: z.array(ItemEntrySchema),
+  cost: z.array(RewardEntrySchema),
   resultBonuses: z.record(z.string(), z.number()),
 });
 

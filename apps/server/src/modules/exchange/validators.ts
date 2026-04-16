@@ -22,8 +22,9 @@ const MetadataSchema = z
   });
 
 const ExchangeItemEntrySchema = z.object({
-  definitionId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 // ─── Config ─────────────────────────────────────────────────────
@@ -151,8 +152,9 @@ export const OptionIdParamSchema = z.object({
 // ─── Response schemas ───────────────────────────────────────────
 
 const ExchangeItemResponseSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int(),
 });
 
 export const ExchangeConfigResponseSchema = z

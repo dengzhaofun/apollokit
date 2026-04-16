@@ -1,5 +1,5 @@
 import type { mailMessages, mailUserStates } from "../../schema/mail";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 
 export type MailMessage = typeof mailMessages.$inferSelect;
 export type MailUserState = typeof mailUserStates.$inferSelect;
@@ -18,7 +18,7 @@ export type InboxMessage = {
   id: string;
   title: string;
   content: string;
-  rewards: ItemEntry[];
+  rewards: RewardEntry[];
   requireRead: boolean;
   sentAt: Date;
   expiresAt: Date | null;
@@ -42,7 +42,7 @@ export type MailMessageWithStats = MailMessage & {
 export type ClaimResult = {
   messageId: string;
   endUserId: string;
-  rewards: ItemEntry[];
+  rewards: RewardEntry[];
   claimedAt: Date;
   readAt: Date | null;
 };

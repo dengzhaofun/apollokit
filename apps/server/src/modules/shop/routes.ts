@@ -11,7 +11,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import { shopService } from "./index";
 import type {
   ShopCategory,
@@ -119,8 +119,8 @@ function serializeProduct(row: ShopProduct & { tags?: ShopTag[] }) {
     coverImage: row.coverImage,
     galleryImages: (row.galleryImages ?? null) as string[] | null,
     productType: row.productType as "regular" | "growth_pack",
-    costItems: row.costItems as ItemEntry[],
-    rewardItems: row.rewardItems as ItemEntry[],
+    costItems: row.costItems as RewardEntry[],
+    rewardItems: row.rewardItems as RewardEntry[],
     timeWindowType: row.timeWindowType as
       | "none"
       | "absolute"
@@ -165,7 +165,7 @@ function serializeStage(row: ShopGrowthStage) {
       | "custom_metric"
       | "manual",
     triggerConfig: (row.triggerConfig ?? null) as Record<string, unknown> | null,
-    rewardItems: row.rewardItems as ItemEntry[],
+    rewardItems: row.rewardItems as RewardEntry[],
     sortOrder: row.sortOrder,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,
     createdAt: row.createdAt.toISOString(),

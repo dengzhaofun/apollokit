@@ -6,7 +6,7 @@ import type {
   lotteryUserStates,
   lotteryPullLogs,
 } from "../../schema/lottery";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 
 export type LotteryPool = typeof lotteryPools.$inferSelect;
 export type LotteryTier = typeof lotteryTiers.$inferSelect;
@@ -21,7 +21,7 @@ export type PullResultEntry = {
   prizeName: string;
   tierId: string | null;
   tierName: string | null;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
   pityTriggered: boolean;
   pityRuleId: string | null;
 };
@@ -30,6 +30,6 @@ export type PullResult = {
   batchId: string;
   poolId: string;
   endUserId: string;
-  costItems: ItemEntry[];
+  costItems: RewardEntry[];
   pulls: PullResultEntry[];
 };

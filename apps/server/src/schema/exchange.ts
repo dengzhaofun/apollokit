@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -78,8 +78,8 @@ export const exchangeOptions = pgTable(
     organizationId: text("organization_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
-    costItems: jsonb("cost_items").$type<ItemEntry[]>().notNull(),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    costItems: jsonb("cost_items").$type<RewardEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     userLimit: integer("user_limit"),
     globalLimit: integer("global_limit"),
     globalCount: integer("global_count").default(0).notNull(),

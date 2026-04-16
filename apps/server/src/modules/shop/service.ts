@@ -52,7 +52,7 @@ import {
 } from "../../schema/shop";
 import { itemGrantLogs } from "../../schema/item";
 import type { ItemService } from "../item";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import {
   ShopAlreadyClaimed,
   ShopCategoryAliasConflict,
@@ -1027,10 +1027,10 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         purchaseId,
         productId: product.id,
         productType: product.productType as ProductType,
-        costItems: product.costItems as ItemEntry[],
+        costItems: product.costItems,
         rewardItems:
           product.productType === "regular"
-            ? (product.rewardItems as ItemEntry[])
+            ? product.rewardItems
             : [],
       };
     }
@@ -1196,9 +1196,9 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     }
 
     // 6. Deduct cost items; on failure, rollback user + global.
-    const deducted: ItemEntry[] = [];
+    const deducted: RewardEntry[] = [];
     try {
-      for (const cost of product.costItems as ItemEntry[]) {
+      for (const cost of product.costItems) {
         await itemSvc.deductItems({
           organizationId: params.organizationId,
           endUserId: params.endUserId,
@@ -1229,11 +1229,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     }
 
     // 7. Grant reward items — only for `regular`. Growth packs wait for claims.
-    const rewards: ItemEntry[] =
+    const rewardItemEntries =
       product.productType === "regular"
-        ? (product.rewardItems as ItemEntry[])
+        ? product.rewardItems
         : [];
-    for (const reward of rewards) {
+    for (const reward of rewardItemEntries) {
       await itemSvc.grantItems({
         organizationId: params.organizationId,
         endUserId: params.endUserId,
@@ -1248,8 +1248,8 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       purchaseId,
       productId: product.id,
       productType: product.productType as ProductType,
-      costItems: product.costItems as ItemEntry[],
-      rewardItems: rewards,
+      costItems: product.costItems,
+      rewardItems: product.productType === "regular" ? product.rewardItems : [],
     };
   }
 
@@ -1330,8 +1330,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (inserted.length === 0) throw new ShopAlreadyClaimed(stage.id);
 
     // 4. Grant stage rewards.
-    const rewards = stage.rewardItems as ItemEntry[];
-    for (const reward of rewards) {
+    for (const reward of stage.rewardItems) {
       await itemSvc.grantItems({
         organizationId: params.organizationId,
         endUserId: params.endUserId,
@@ -1346,7 +1345,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       claimId,
       stageId: stage.id,
       productId: stage.productId,
-      rewardItems: rewards,
+      rewardItems: stage.rewardItems,
     };
   }
 

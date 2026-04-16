@@ -7,7 +7,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import { ModuleError } from "./errors";
 import { cdkeyService } from "./index";
 import {
@@ -86,7 +86,7 @@ function serializeLog(row: CdkeyRedemptionLog) {
     sourceId: row.sourceId,
     status: row.status,
     failReason: row.failReason,
-    reward: (row.reward ?? null) as ItemEntry[] | null,
+    reward: (row.reward ?? null) as RewardEntry[] | null,
     createdAt: row.createdAt.toISOString(),
   };
 }

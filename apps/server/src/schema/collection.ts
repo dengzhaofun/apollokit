@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 import { itemDefinitions } from "./item";
 
@@ -250,7 +250,7 @@ export const collectionMilestones = pgTable(
     }),
     threshold: integer("threshold").default(1).notNull(),
     label: text("label"),
-    rewardItems: jsonb("reward_items").$type<ItemEntry[]>().notNull(),
+    rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     autoClaim: boolean("auto_claim").default(false).notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
     metadata: jsonb("metadata"),

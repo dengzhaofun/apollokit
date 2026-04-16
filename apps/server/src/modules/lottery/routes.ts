@@ -7,7 +7,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import { ModuleError } from "./errors";
 import { lotteryService } from "./index";
 import {
@@ -56,7 +56,7 @@ function serializePool(row: {
   alias: string | null;
   name: string;
   description: string | null;
-  costPerPull: ItemEntry[];
+  costPerPull: RewardEntry[];
   isActive: boolean;
   startAt: Date | null;
   endAt: Date | null;
@@ -123,7 +123,7 @@ function serializePrize(row: {
   organizationId: string;
   name: string;
   description: string | null;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
   weight: number;
   isRateUp: boolean;
   rateUpWeight: number;
@@ -196,10 +196,10 @@ function serializePullLog(row: {
   tierId: string | null;
   tierName: string | null;
   prizeName: string;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
   pityTriggered: boolean;
   pityRuleId: string | null;
-  costItems: ItemEntry[];
+  costItems: RewardEntry[];
   createdAt: Date;
 }) {
   return {

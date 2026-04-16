@@ -43,8 +43,9 @@ const MetadataSchema = z
   .openapi({ description: "Arbitrary JSON blob for tenant-specific extensions." });
 
 const ItemEntrySchema = z.object({
-  definitionId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 const ColorSchema = z
@@ -268,7 +269,7 @@ function refineProductTimeWindow(
 function refineProductRewardsVsType(
   data: {
     productType?: "regular" | "growth_pack";
-    rewardItems?: Array<{ definitionId: string; quantity: number }>;
+    rewardItems?: Array<{ type: string; id: string; count: number }>;
   },
   ctx: z.RefinementCtx,
 ) {
@@ -615,8 +616,9 @@ export const EndUserAndStageParamSchema = z.object({
 // ─── Response schemas ────────────────────────────────────────────
 
 const ItemResponseSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int(),
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int(),
 });
 
 export const ShopCategoryResponseSchema = z

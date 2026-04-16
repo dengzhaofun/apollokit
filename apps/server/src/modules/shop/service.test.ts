@@ -144,8 +144,8 @@ describe("shop service", () => {
       alias: "prod-helmet",
       categoryId: cat.id,
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 100 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "none",
       tagIds: [tag.id],
     });
@@ -178,8 +178,8 @@ describe("shop service", () => {
       name: "Buy Gem 10",
       alias: "prod-happy",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 100 }],
-      rewardItems: [{ definitionId: gemId, quantity: 10 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 100 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 10 }],
       timeWindowType: "none",
     });
 
@@ -215,8 +215,8 @@ describe("shop service", () => {
       name: "Future Gem",
       alias: "prod-absolute",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "absolute",
       availableFrom: from.toISOString(),
       availableTo: to.toISOString(),
@@ -255,8 +255,8 @@ describe("shop service", () => {
       name: "Daily Gem",
       alias: "prod-cyclic",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "cyclic",
       refreshCycle: "daily",
       refreshLimit: 1,
@@ -304,8 +304,8 @@ describe("shop service", () => {
       name: "Capped",
       alias: "prod-userlim",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "none",
       userLimit: 2,
     });
@@ -349,8 +349,8 @@ describe("shop service", () => {
       name: "Scarce",
       alias: "prod-globlim",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "none",
       globalLimit: 1,
     });
@@ -382,8 +382,8 @@ describe("shop service", () => {
       name: "Idemp",
       alias: "prod-idemp",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 50 }],
-      rewardItems: [{ definitionId: gemId, quantity: 5 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 50 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 5 }],
       timeWindowType: "none",
     });
     const key = crypto.randomUUID();
@@ -422,7 +422,7 @@ describe("shop service", () => {
       name: "Growth Pack",
       alias: "prod-growth",
       productType: "growth_pack",
-      costItems: [{ definitionId: goldId, quantity: 1000 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1000 }],
       rewardItems: [], // growth pack: rewards live on stages
       timeWindowType: "none",
     });
@@ -433,7 +433,7 @@ describe("shop service", () => {
       name: "Stage 1",
       triggerType: "accumulated_cost",
       triggerConfig: { threshold: 500 },
-      rewardItems: [{ definitionId: gemId, quantity: 50 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 50 }],
     });
 
     // Cannot claim before purchasing (no entitlement)
@@ -503,7 +503,7 @@ describe("shop service", () => {
       name: "Manual Growth",
       alias: "prod-growth-manual",
       productType: "growth_pack",
-      costItems: [{ definitionId: goldId, quantity: 100 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 100 }],
       rewardItems: [],
       timeWindowType: "none",
     });
@@ -512,7 +512,7 @@ describe("shop service", () => {
       name: "Manual",
       triggerType: "manual",
       triggerConfig: null,
-      rewardItems: [{ definitionId: gemId, quantity: 7 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 7 }],
     });
 
     await svc.purchase({
@@ -554,8 +554,8 @@ describe("shop service", () => {
       name: "Visible",
       alias: "prod-list-ok",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "none",
     });
     // Outside future window
@@ -563,8 +563,8 @@ describe("shop service", () => {
       name: "Not Yet",
       alias: "prod-list-future",
       productType: "regular",
-      costItems: [{ definitionId: goldId, quantity: 1 }],
-      rewardItems: [{ definitionId: gemId, quantity: 1 }],
+      costItems: [{ type: "item" as const, id: goldId, count: 1 }],
+      rewardItems: [{ type: "item" as const, id: gemId, count: 1 }],
       timeWindowType: "absolute",
       availableFrom: "2099-01-01T00:00:00.000Z",
       availableTo: "2099-12-31T00:00:00.000Z",

@@ -21,9 +21,10 @@ const MetadataSchema = z
     description: "Arbitrary JSON blob for tenant-specific extensions.",
   });
 
-const ItemEntrySchema = z.object({
-  definitionId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+const RewardEntrySchema = z.object({
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int().positive(),
 });
 
 const CodeTypeSchema = z.enum(["universal", "unique"]).openapi({
@@ -50,7 +51,7 @@ export const CreateBatchSchema = z
     alias: AliasSchema.nullable().optional(),
     description: z.string().max(2000).nullable().optional(),
     codeType: CodeTypeSchema,
-    reward: z.array(ItemEntrySchema).min(1).openapi({
+    reward: z.array(RewardEntrySchema).min(1).openapi({
       description: "Items granted on successful redemption.",
     }),
     totalLimit: z.number().int().positive().nullable().optional(),
@@ -93,7 +94,7 @@ export const UpdateBatchSchema = z
     name: z.string().min(1).max(200).optional(),
     alias: AliasSchema.nullable().optional(),
     description: z.string().max(2000).nullable().optional(),
-    reward: z.array(ItemEntrySchema).min(1).optional(),
+    reward: z.array(RewardEntrySchema).min(1).optional(),
     totalLimit: z.number().int().positive().nullable().optional(),
     perUserLimit: z.number().int().positive().optional(),
     startsAt: IsoDateSchema.nullable().optional(),
@@ -174,9 +175,10 @@ export const CodeIdParamSchema = z.object({
 
 // ─── Response schemas ──────────────────────────────────────────
 
-const ItemEntryResponseSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int(),
+const RewardEntryResponseSchema = z.object({
+  type: z.enum(["item", "entity"]),
+  id: z.string(),
+  count: z.number().int(),
 });
 
 export const BatchResponseSchema = z
@@ -187,7 +189,7 @@ export const BatchResponseSchema = z
     name: z.string(),
     description: z.string().nullable(),
     codeType: CodeTypeSchema,
-    reward: z.array(ItemEntryResponseSchema),
+    reward: z.array(RewardEntryResponseSchema),
     totalLimit: z.number().int().nullable(),
     perUserLimit: z.number().int(),
     totalRedeemed: z.number().int(),
@@ -234,7 +236,7 @@ export const RedeemResultSchema = z
     batchId: z.string(),
     codeId: z.string(),
     code: z.string(),
-    reward: z.array(ItemEntryResponseSchema),
+    reward: z.array(RewardEntryResponseSchema),
     logId: z.string(),
   })
   .openapi("CdkeyRedeemResult");
@@ -251,7 +253,7 @@ export const LogResponseSchema = z
     sourceId: z.string(),
     status: z.string(),
     failReason: z.string().nullable(),
-    reward: z.array(ItemEntryResponseSchema).nullable(),
+    reward: z.array(RewardEntryResponseSchema).nullable(),
     createdAt: z.string(),
   })
   .openapi("CdkeyRedemptionLog");

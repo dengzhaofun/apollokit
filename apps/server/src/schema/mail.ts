@@ -11,7 +11,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -69,7 +69,7 @@ export const mailMessages = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     content: text("content").notNull(),
-    rewards: jsonb("rewards").$type<ItemEntry[]>().notNull(),
+    rewards: jsonb("rewards").$type<RewardEntry[]>().notNull(),
     // 'broadcast' | 'multicast' — Zod enum at validator layer
     targetType: text("target_type").notNull(),
     // text[] serialized as jsonb; null for broadcasts

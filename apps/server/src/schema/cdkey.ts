@@ -31,7 +31,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ItemEntry } from "../modules/item/types";
+import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
@@ -59,7 +59,7 @@ export const cdkeyBatches = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     codeType: text("code_type").notNull(), // 'universal' | 'unique'
-    reward: jsonb("reward").$type<ItemEntry[]>().notNull(),
+    reward: jsonb("reward").$type<RewardEntry[]>().notNull(),
     totalLimit: integer("total_limit"),
     perUserLimit: integer("per_user_limit").default(1).notNull(),
     totalRedeemed: integer("total_redeemed").default(0).notNull(),
@@ -183,7 +183,7 @@ export const cdkeyRedemptionLogs = pgTable(
     sourceId: text("source_id").notNull(),
     status: text("status").notNull(), // 'pending' | 'success' | 'failed'
     failReason: text("fail_reason"),
-    reward: jsonb("reward").$type<ItemEntry[] | null>(),
+    reward: jsonb("reward").$type<RewardEntry[] | null>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

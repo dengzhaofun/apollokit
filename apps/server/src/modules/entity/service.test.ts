@@ -486,20 +486,20 @@ describe("entity service — Phase 2-5", () => {
       baseStats: { hp: 100, atk: 50 },
       statGrowth: { hp: 10, atk: 5 },
       levelUpCosts: [
-        { level: 2, cost: [{ definitionId: goldDefId, quantity: 10 }] },
-        { level: 3, cost: [{ definitionId: goldDefId, quantity: 20 }] },
+        { level: 2, cost: [{ type: "item" as const, id: goldDefId, count: 10 }] },
+        { level: 3, cost: [{ type: "item" as const, id: goldDefId, count: 20 }] },
       ],
       rankUpCosts: [
         {
           fromRank: "N",
           toRank: "R",
-          cost: [{ definitionId: goldDefId, quantity: 50 }],
+          cost: [{ type: "item" as const, id: goldDefId, count: 50 }],
           statBonuses: { hp: 20, atk: 10 },
         },
       ],
       synthesisCost: {
         inputCount: 2,
-        cost: [{ definitionId: goldDefId, quantity: 100 }],
+        cost: [{ type: "item" as const, id: goldDefId, count: 100 }],
         resultBonuses: { hp: 50, atk: 25 },
       },
     });

@@ -217,7 +217,7 @@ describe("mail service", () => {
     const mail = await svc.createMessage(orgId, {
       title: "100 gold",
       content: "free",
-      rewards: [{ definitionId: goldDef.id, quantity: 100 }],
+      rewards: [{ type: "item" as const, id: goldDef.id, count: 100 }],
       targetType: "multicast",
       targetUserIds: ["u-claim"],
     });
@@ -225,7 +225,7 @@ describe("mail service", () => {
     const result = await svc.claim(orgId, "u-claim", mail.id);
     expect(result.messageId).toBe(mail.id);
     expect(result.rewards).toEqual([
-      { definitionId: goldDef.id, quantity: 100 },
+      { type: "item" as const, id: goldDef.id, count: 100 },
     ]);
     expect(result.claimedAt).toBeInstanceOf(Date);
 
@@ -246,7 +246,7 @@ describe("mail service", () => {
     const mail = await svc.createMessage(orgId, {
       title: "dup",
       content: "x",
-      rewards: [{ definitionId: def.id, quantity: 10 }],
+      rewards: [{ type: "item" as const, id: def.id, count: 10 }],
       targetType: "multicast",
       targetUserIds: ["u-dup"],
     });
@@ -274,7 +274,7 @@ describe("mail service", () => {
     const mail = await svc.createMessage(orgId, {
       title: "read me",
       content: "x",
-      rewards: [{ definitionId: def.id, quantity: 5 }],
+      rewards: [{ type: "item" as const, id: def.id, count: 5 }],
       targetType: "multicast",
       targetUserIds: ["u-gate"],
       requireRead: true,
@@ -353,7 +353,7 @@ describe("mail service", () => {
     const mail = await svc.createMessage(orgId, {
       title: "race",
       content: "x",
-      rewards: [{ definitionId: def.id, quantity: 50 }],
+      rewards: [{ type: "item" as const, id: def.id, count: 50 }],
       targetType: "multicast",
       targetUserIds: ["u-race"],
     });

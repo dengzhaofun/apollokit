@@ -6,7 +6,7 @@ import type {
   shopTags,
   shopUserPurchaseStates,
 } from "../../schema/shop";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 
 export type ShopCategory = typeof shopCategories.$inferSelect;
 export type ShopTag = typeof shopTags.$inferSelect;
@@ -51,9 +51,9 @@ export type PurchaseResult = {
   purchaseId: string;
   productId: string;
   productType: ProductType;
-  costItems: ItemEntry[];
+  costItems: RewardEntry[];
   /** Empty for `growth_pack` — rewards come from stage claims. */
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
 };
 
 /** Result of a successful `claimGrowthStage` call. */
@@ -62,7 +62,7 @@ export type ClaimStageResult = {
   claimId: string;
   stageId: string;
   productId: string;
-  rewardItems: ItemEntry[];
+  rewardItems: RewardEntry[];
 };
 
 /**
