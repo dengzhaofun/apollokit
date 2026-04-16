@@ -1,0 +1,209 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { api } from "#/lib/api-client"
+import type {
+  EntitySchema,
+  EntityBlueprint,
+  EntityBlueprintSkin,
+  EntityFormationConfig,
+  CreateSchemaInput,
+  UpdateSchemaInput,
+  CreateBlueprintInput,
+  UpdateBlueprintInput,
+  CreateSkinInput,
+  UpdateSkinInput,
+  CreateFormationConfigInput,
+  UpdateFormationConfigInput,
+} from "#/lib/types/entity"
+
+const SCHEMAS_KEY = ["entity-schemas"] as const
+const BLUEPRINTS_KEY = ["entity-blueprints"] as const
+const SKINS_KEY = ["entity-skins"] as const
+const FORMATION_CONFIGS_KEY = ["entity-formation-configs"] as const
+
+// ─── Schemas ─────────────────────────────────────────────────────
+
+export function useEntitySchemas() {
+  return useQuery({
+    queryKey: SCHEMAS_KEY,
+    queryFn: () => api.get<EntitySchema[]>("/api/entity/schemas"),
+  })
+}
+
+export function useEntitySchema(key: string) {
+  return useQuery({
+    queryKey: [...SCHEMAS_KEY, key],
+    queryFn: () => api.get<EntitySchema>(`/api/entity/schemas/${key}`),
+    enabled: !!key,
+  })
+}
+
+export function useCreateEntitySchema() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateSchemaInput) =>
+      api.post<EntitySchema>("/api/entity/schemas", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SCHEMAS_KEY }),
+  })
+}
+
+export function useUpdateEntitySchema() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...input }: UpdateSchemaInput & { id: string }) =>
+      api.patch<EntitySchema>(`/api/entity/schemas/${id}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SCHEMAS_KEY }),
+  })
+}
+
+export function useDeleteEntitySchema() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/entity/schemas/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SCHEMAS_KEY }),
+  })
+}
+
+// ─── Blueprints ──────────────────────────────────────────────────
+
+export function useEntityBlueprints(schemaId?: string) {
+  return useQuery({
+    queryKey: [...BLUEPRINTS_KEY, schemaId],
+    queryFn: () => {
+      const params = schemaId ? `?schemaId=${schemaId}` : ""
+      return api.get<EntityBlueprint[]>(`/api/entity/blueprints${params}`)
+    },
+  })
+}
+
+export function useEntityBlueprint(key: string) {
+  return useQuery({
+    queryKey: [...BLUEPRINTS_KEY, "detail", key],
+    queryFn: () =>
+      api.get<EntityBlueprint>(`/api/entity/blueprints/${key}`),
+    enabled: !!key,
+  })
+}
+
+export function useCreateEntityBlueprint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateBlueprintInput) =>
+      api.post<EntityBlueprint>("/api/entity/blueprints", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: BLUEPRINTS_KEY }),
+  })
+}
+
+export function useUpdateEntityBlueprint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...input }: UpdateBlueprintInput & { id: string }) =>
+      api.patch<EntityBlueprint>(`/api/entity/blueprints/${id}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: BLUEPRINTS_KEY }),
+  })
+}
+
+export function useDeleteEntityBlueprint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/entity/blueprints/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: BLUEPRINTS_KEY }),
+  })
+}
+
+// ─── Skins ───────────────────────────────────────────────────────
+
+export function useEntitySkins(blueprintId: string) {
+  return useQuery({
+    queryKey: [...SKINS_KEY, blueprintId],
+    queryFn: () =>
+      api.get<EntityBlueprintSkin[]>(
+        `/api/entity/blueprints/${blueprintId}/skins`,
+      ),
+    enabled: !!blueprintId,
+  })
+}
+
+export function useCreateEntitySkin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      blueprintId,
+      ...input
+    }: CreateSkinInput & { blueprintId: string }) =>
+      api.post<EntityBlueprintSkin>(
+        `/api/entity/blueprints/${blueprintId}/skins`,
+        input,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SKINS_KEY }),
+  })
+}
+
+export function useUpdateEntitySkin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ skinId, ...input }: UpdateSkinInput & { skinId: string }) =>
+      api.patch<EntityBlueprintSkin>(
+        `/api/entity/skins/${skinId}`,
+        input,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SKINS_KEY }),
+  })
+}
+
+export function useDeleteEntitySkin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (skinId: string) =>
+      api.delete(`/api/entity/skins/${skinId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SKINS_KEY }),
+  })
+}
+
+// ─── Formation Configs ───────────────────────────────────────────
+
+export function useEntityFormationConfigs() {
+  return useQuery({
+    queryKey: FORMATION_CONFIGS_KEY,
+    queryFn: () =>
+      api.get<EntityFormationConfig[]>("/api/entity/formation-configs"),
+  })
+}
+
+export function useCreateEntityFormationConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateFormationConfigInput) =>
+      api.post<EntityFormationConfig>(
+        "/api/entity/formation-configs",
+        input,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: FORMATION_CONFIGS_KEY }),
+  })
+}
+
+export function useUpdateEntityFormationConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...input
+    }: UpdateFormationConfigInput & { id: string }) =>
+      api.patch<EntityFormationConfig>(
+        `/api/entity/formation-configs/${id}`,
+        input,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: FORMATION_CONFIGS_KEY }),
+  })
+}
+
+export function useDeleteEntityFormationConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/api/entity/formation-configs/${id}`),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: FORMATION_CONFIGS_KEY }),
+  })
+}

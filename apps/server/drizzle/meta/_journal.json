@@ -99,6 +99,13 @@
       "when": 1776307330497,
       "tag": "0013_abandoned_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1776319176463,
+      "tag": "0014_friendly_blue_blade",
+      "breakpoints": true
     }
   ]
 }
