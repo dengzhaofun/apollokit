@@ -92,6 +92,13 @@
       "when": 1776241470388,
       "tag": "0012_supreme_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776307330497,
+      "tag": "0013_abandoned_luckman",
+      "breakpoints": true
     }
   ]
 }

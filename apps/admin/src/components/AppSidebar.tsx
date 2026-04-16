@@ -5,13 +5,17 @@ import {
   BookOpen,
   CalendarCheck,
   GalleryHorizontal,
+  Gift,
   KeyRound,
   LayoutDashboard,
   Mail,
   MessagesSquare,
   Package,
+  Shield,
   ShoppingCart,
+  Swords,
   Ticket,
+  Users,
 } from "lucide-react"
 
 import {
@@ -42,6 +46,10 @@ function getNavItems() {
     { title: m.nav_banner(), to: "/banner" as const, icon: GalleryHorizontal },
     { title: m.nav_dialogue(), to: "/dialogue" as const, icon: MessagesSquare },
     { title: m.nav_collection(), to: "/collection" as const, icon: BookOpen },
+    { title: m.nav_friend(), to: "/friend" as const, icon: Users },
+    { title: m.nav_guild(), to: "/guild" as const, icon: Shield },
+    { title: m.nav_team(), to: "/team" as const, icon: Swords },
+    { title: m.nav_gift(), to: "/friend-gift" as const, icon: Gift },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }

@@ -30,6 +30,15 @@ import {
   exchangeRouter,
   exchangeClientRouter,
 } from "./modules/exchange";
+import { friendRouter, friendClientRouter } from "./modules/friend";
+import {
+  guildRouter,
+  guildClientRouter,
+} from "./modules/guild";
+import {
+  friendGiftRouter,
+  friendGiftClientRouter,
+} from "./modules/friend-gift";
 import { itemRouter, itemClientRouter } from "./modules/item";
 import {
   lotteryRouter,
@@ -37,6 +46,10 @@ import {
 } from "./modules/lottery";
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { shopRouter, shopClientRouter } from "./modules/shop";
+import {
+  teamRouter,
+  teamClientRouter,
+} from "./modules/team";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono<HonoEnv>();
@@ -82,9 +95,13 @@ app.route("/api/collection", collectionRouter);
 app.route("/api/dialogue", dialogueRouter);
 app.route("/api/item", itemRouter);
 app.route("/api/exchange", exchangeRouter);
+app.route("/api/friend", friendRouter);
+app.route("/api/friend-gift", friendGiftRouter);
+app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
+app.route("/api/team", teamRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/banner", bannerClientRouter);
@@ -94,9 +111,13 @@ app.route("/api/client/collection", collectionClientRouter);
 app.route("/api/client/dialogue", dialogueClientRouter);
 app.route("/api/client/item", itemClientRouter);
 app.route("/api/client/exchange", exchangeClientRouter);
+app.route("/api/client/friend", friendClientRouter);
+app.route("/api/client/friend-gift", friendGiftClientRouter);
+app.route("/api/client/guild", guildClientRouter);
 app.route("/api/client/lottery", lotteryClientRouter);
 app.route("/api/client/mail", mailClientRouter);
 app.route("/api/client/shop", shopClientRouter);
+app.route("/api/client/team", teamClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {
