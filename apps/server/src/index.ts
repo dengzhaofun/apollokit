@@ -54,6 +54,10 @@ import {
   teamRouter,
   teamClientRouter,
 } from "./modules/team";
+import {
+  levelRouter,
+  levelClientRouter,
+} from "./modules/level";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono<HonoEnv>();
@@ -107,6 +111,7 @@ app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
 app.route("/api/team", teamRouter);
+app.route("/api/level", levelRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/banner", bannerClientRouter);
@@ -124,6 +129,7 @@ app.route("/api/client/lottery", lotteryClientRouter);
 app.route("/api/client/mail", mailClientRouter);
 app.route("/api/client/shop", shopClientRouter);
 app.route("/api/client/team", teamClientRouter);
+app.route("/api/client/level", levelClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {
