@@ -1,0 +1,248 @@
+import { useState } from "react"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { ArrowLeft, Pencil } from "lucide-react"
+import { format } from "date-fns"
+import { toast } from "sonner"
+
+import { Badge } from "#/components/ui/badge"
+import { Button } from "#/components/ui/button"
+import { Separator } from "#/components/ui/separator"
+import { SidebarTrigger } from "#/components/ui/sidebar"
+import { StorageBoxConfigForm } from "#/components/storage-box/StorageBoxConfigForm"
+import { DeleteStorageBoxDialog } from "#/components/storage-box/DeleteStorageBoxDialog"
+import {
+  useDeleteStorageBoxConfig,
+  useStorageBoxConfig,
+  useUpdateStorageBoxConfig,
+} from "#/hooks/use-storage-box"
+import { useItemDefinitions } from "#/hooks/use-item"
+import { ApiError } from "#/lib/api-client"
+
+export const Route = createFileRoute(
+  "/_dashboard/storage-box/configs/$configId/",
+)({
+  component: StorageBoxConfigDetailPage,
+})
+
+function StorageBoxConfigDetailPage() {
+  const { configId } = Route.useParams()
+  const navigate = useNavigate()
+  const [editing, setEditing] = useState(false)
+
+  const { data: config, isPending, error } = useStorageBoxConfig(configId)
+  const { data: defs } = useItemDefinitions()
+  const updateMutation = useUpdateStorageBoxConfig()
+  const deleteMutation = useDeleteStorageBoxConfig()
+
+  if (isPending) {
+    return (
+      <>
+        <Header title="加载中..." />
+        <main className="flex h-40 items-center justify-center text-muted-foreground">
+          加载中...
+        </main>
+      </>
+    )
+  }
+
+  if (error || !config) {
+    return (
+      <>
+        <Header title="错误" />
+        <main className="flex h-40 items-center justify-center text-destructive">
+          {error?.message ?? "存储箱不存在"}
+        </main>
+      </>
+    )
+  }
+
+  const defById = new Map((defs ?? []).map((d) => [d.id, d]))
+
+  return (
+    <>
+      <Header title={config.name} />
+
+      <main className="flex-1 p-6">
+        <div className="mx-auto max-w-2xl space-y-6">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/storage-box">
+                <ArrowLeft className="size-4" />
+                返回
+              </Link>
+            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(!editing)}
+              >
+                <Pencil className="size-4" />
+                {editing ? "取消" : "编辑"}
+              </Button>
+              <DeleteStorageBoxDialog
+                name={config.name}
+                isPending={deleteMutation.isPending}
+                onConfirm={async () => {
+                  try {
+                    await deleteMutation.mutateAsync(config.id)
+                    toast.success("存储箱已删除")
+                    navigate({ to: "/storage-box" })
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError ? err.body.error : "删除失败",
+                    )
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {editing ? (
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <StorageBoxConfigForm
+                defaultValues={{
+                  name: config.name,
+                  alias: config.alias,
+                  description: config.description,
+                  icon: config.icon,
+                  type: config.type as "demand" | "fixed",
+                  lockupDays: config.lockupDays,
+                  interestRateBps: config.interestRateBps,
+                  interestPeriodDays: config.interestPeriodDays,
+                  acceptedCurrencyIds: config.acceptedCurrencyIds,
+                  minDeposit: config.minDeposit,
+                  maxDeposit: config.maxDeposit,
+                  allowEarlyWithdraw: config.allowEarlyWithdraw,
+                  sortOrder: config.sortOrder,
+                  isActive: config.isActive,
+                }}
+                submitLabel="保存修改"
+                isPending={updateMutation.isPending}
+                onSubmit={async (values) => {
+                  try {
+                    await updateMutation.mutateAsync({
+                      id: config.id,
+                      ...values,
+                    })
+                    toast.success("修改已保存")
+                    setEditing(false)
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError ? err.body.error : "保存失败",
+                    )
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Detail label="名称" value={config.name} />
+                <Detail
+                  label="别名"
+                  value={
+                    config.alias ? (
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                        {config.alias}
+                      </code>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+                <Detail
+                  label="类型"
+                  value={
+                    config.type === "fixed" ? (
+                      <Badge variant="default">定期</Badge>
+                    ) : (
+                      <Badge variant="secondary">活期</Badge>
+                    )
+                  }
+                />
+                <Detail
+                  label="锁仓天数"
+                  value={config.lockupDays ?? "—"}
+                />
+                <Detail
+                  label="利率"
+                  value={`${(config.interestRateBps / 100).toFixed(2)}% / ${config.interestPeriodDays} 天`}
+                />
+                <Detail
+                  label="提前取款"
+                  value={
+                    config.allowEarlyWithdraw ? "允许（没收利息）" : "不允许"
+                  }
+                />
+                <Detail label="最小金额" value={config.minDeposit ?? "—"} />
+                <Detail label="最大金额" value={config.maxDeposit ?? "—"} />
+                <Detail
+                  label="状态"
+                  value={
+                    <Badge variant={config.isActive ? "default" : "outline"}>
+                      {config.isActive ? "激活" : "禁用"}
+                    </Badge>
+                  }
+                />
+                <Detail
+                  label="创建时间"
+                  value={format(new Date(config.createdAt), "yyyy-MM-dd HH:mm")}
+                />
+                {config.description && (
+                  <div className="sm:col-span-2">
+                    <Detail label="描述" value={config.description} />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  接收的货币
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {config.acceptedCurrencyIds.length === 0 ? (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  ) : (
+                    config.acceptedCurrencyIds.map((id) => {
+                      const def = defById.get(id)
+                      return (
+                        <Badge key={id} variant="outline">
+                          {def?.name ?? id.slice(0, 8)}
+                        </Badge>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  )
+}
+
+function Header({ title }: { title: string }) {
+  return (
+    <header className="flex h-14 items-center gap-2 border-b px-4">
+      <SidebarTrigger />
+      <Separator orientation="vertical" className="mx-2 h-4" />
+      <h1 className="text-sm font-semibold">{title}</h1>
+    </header>
+  )
+}
+
+function Detail({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="text-sm">{value}</div>
+    </div>
+  )
+}

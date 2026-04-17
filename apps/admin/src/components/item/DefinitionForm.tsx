@@ -42,6 +42,7 @@ export function DefinitionForm({
       stackable: defaultValues?.stackable ?? true,
       stackLimit: defaultValues?.stackLimit ?? (null as number | null),
       holdLimit: defaultValues?.holdLimit ?? (null as number | null),
+      isCurrency: defaultValues?.isCurrency ?? false,
       lotteryPoolId: (defaultValues as Record<string, unknown>)?.lotteryPoolId as string ?? "",
       isActive: defaultValues?.isActive ?? true,
     },
@@ -55,6 +56,7 @@ export function DefinitionForm({
         stackable: value.stackable,
         stackLimit: value.stackable ? value.stackLimit : null,
         holdLimit: value.holdLimit,
+        isCurrency: value.isCurrency,
         lotteryPoolId: value.lotteryPoolId || null,
         isActive: value.isActive,
       }
@@ -229,6 +231,22 @@ export function DefinitionForm({
             />
             <p className="text-xs text-muted-foreground">
               Max total quantity a user can hold. 1 = unique item. Empty = unlimited.
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="isCurrency">
+        {(field) => (
+          <div className="flex items-center gap-3">
+            <Switch
+              id={field.name}
+              checked={field.state.value}
+              onCheckedChange={(checked) => field.handleChange(checked === true)}
+            />
+            <Label htmlFor={field.name}>货币</Label>
+            <p className="text-xs text-muted-foreground">
+              标记为货币后，可在存储箱、商店等场景下被"仅货币"选择器识别。
             </p>
           </div>
         )}

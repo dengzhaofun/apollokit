@@ -73,6 +73,10 @@ export const CreateDefinitionSchema = z
       description:
         "Max total qty a user can own. null = unlimited. 1 = unique (hero).",
     }),
+    isCurrency: z.boolean().optional().openapi({
+      description:
+        "Mark this definition as a currency. Enables currency-only pickers (e.g. storage-box accepted currencies).",
+    }),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -88,6 +92,7 @@ export const UpdateDefinitionSchema = z
     stackable: z.boolean().optional(),
     stackLimit: z.number().int().positive().nullable().optional(),
     holdLimit: z.number().int().positive().nullable().optional(),
+    isCurrency: z.boolean().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -203,6 +208,7 @@ export const ItemDefinitionResponseSchema = z
     stackable: z.boolean(),
     stackLimit: z.number().int().nullable(),
     holdLimit: z.number().int().nullable(),
+    isCurrency: z.boolean(),
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
