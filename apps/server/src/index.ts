@@ -51,6 +51,10 @@ import {
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import {
+  taskRouter,
+  taskClientRouter,
+} from "./modules/task";
+import {
   teamRouter,
   teamClientRouter,
 } from "./modules/team";
@@ -106,6 +110,7 @@ app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
+app.route("/api/task", taskRouter);
 app.route("/api/team", teamRouter);
 
 // C-end client routes — client credential + HMAC
@@ -123,6 +128,7 @@ app.route("/api/client/guild", guildClientRouter);
 app.route("/api/client/lottery", lotteryClientRouter);
 app.route("/api/client/mail", mailClientRouter);
 app.route("/api/client/shop", shopClientRouter);
+app.route("/api/client/task", taskClientRouter);
 app.route("/api/client/team", teamClientRouter);
 
 // OpenAPI document + Scalar UI

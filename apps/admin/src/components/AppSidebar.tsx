@@ -8,6 +8,7 @@ import {
   Gift,
   KeyRound,
   LayoutDashboard,
+  ListTodo,
   Mail,
   MessagesSquare,
   Package,
@@ -52,6 +53,7 @@ function getNavItems() {
     { title: m.nav_guild(), to: "/guild" as const, icon: Shield },
     { title: m.nav_team(), to: "/team" as const, icon: Swords },
     { title: m.nav_gift(), to: "/friend-gift" as const, icon: Gift },
+    { title: m.nav_task(), to: "/task" as const, icon: ListTodo },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }

@@ -1,0 +1,1043 @@
+/**
+ * Task service — protocol-agnostic business logic for the task / quest /
+ * achievement module.
+ *
+ * This file MUST NOT import Hono or any HTTP concepts. Its only view of
+ * the outside world is a typed `AppDeps` object.
+ *
+ * Phase 1: Admin CRUD for categories + definitions.
+ * Phase 2: Event processing, progress tracking, reward claiming.
+ */
+
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+
+import type { AppDeps } from "../../deps";
+import {
+  taskCategories,
+  taskDefinitions,
+  taskUserProgress,
+} from "../../schema/task";
+import type { RewardEntry } from "../../lib/rewards";
+import { grantRewards, type RewardServices } from "../../lib/rewards";
+import type { MailService } from "../mail/service";
+import {
+  TaskAliasConflict,
+  TaskAlreadyClaimed,
+  TaskAutoClaimOnly,
+  TaskCategoryNotFound,
+  TaskDefinitionNotFound,
+  TaskInvalidInput,
+  TaskNestingTooDeep,
+  TaskNotCompleted,
+  TaskPrerequisitesNotMet,
+} from "./errors";
+import type {
+  TaskCategory,
+  TaskDefinition,
+  TaskUserProgress,
+} from "./types";
+import type {
+  CreateCategoryInput,
+  CreateDefinitionInput,
+  UpdateCategoryInput,
+  UpdateDefinitionInput,
+} from "./validators";
+import { computePeriodKey, isPeriodStale } from "./time";
+
+type TaskDeps = Pick<AppDeps, "db">;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function looksLikeId(key: string): boolean {
+  return UUID_RE.test(key);
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: unknown; cause?: { code?: unknown } };
+  if (e.code === "23505") return true;
+  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
+    return true;
+  const msg = (err as { message?: unknown }).message;
+  return typeof msg === "string" && msg.includes("23505");
+}
+
+/** Extract a numeric value from eventData using a dot-path. */
+function extractValue(
+  data: Record<string, unknown>,
+  path: string,
+): number {
+  const parts = path.split(".");
+  let cur: unknown = data;
+  for (const p of parts) {
+    if (cur == null || typeof cur !== "object") return 0;
+    cur = (cur as Record<string, unknown>)[p];
+  }
+  const num = Number(cur);
+  return Number.isFinite(num) ? num : 0;
+}
+
+const SOURCE_PREFIX = "task.";
+const CLAIM_SOURCE = `${SOURCE_PREFIX}claim`;
+const AUTOCLAIM_SOURCE = `${SOURCE_PREFIX}complete`;
+
+export function createTaskService(
+  d: TaskDeps,
+  rewardServices: RewardServices,
+  mailSvcGetter: () => MailService | undefined,
+) {
+  const { db } = d;
+
+  // ─── Load helpers ─────────────────────────────────────────────
+
+  async function loadCategoryById(
+    organizationId: string,
+    id: string,
+  ): Promise<TaskCategory> {
+    const rows = await db
+      .select()
+      .from(taskCategories)
+      .where(
+        and(
+          eq(taskCategories.organizationId, organizationId),
+          eq(taskCategories.id, id),
+        ),
+      )
+      .limit(1);
+    const row = rows[0];
+    if (!row) throw new TaskCategoryNotFound(id);
+    return row;
+  }
+
+  async function loadDefinitionByKey(
+    organizationId: string,
+    key: string,
+  ): Promise<TaskDefinition> {
+    const where = looksLikeId(key)
+      ? and(
+          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.id, key),
+        )
+      : and(
+          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.alias, key),
+        );
+    const rows = await db
+      .select()
+      .from(taskDefinitions)
+      .where(where)
+      .limit(1);
+    const row = rows[0];
+    if (!row) throw new TaskDefinitionNotFound(key);
+    return row;
+  }
+
+  // ─── Category CRUD ────────────────────────────────────────────
+
+  async function listCategories(
+    organizationId: string,
+  ): Promise<TaskCategory[]> {
+    return db
+      .select()
+      .from(taskCategories)
+      .where(eq(taskCategories.organizationId, organizationId))
+      .orderBy(taskCategories.sortOrder);
+  }
+
+  async function getCategory(
+    organizationId: string,
+    id: string,
+  ): Promise<TaskCategory> {
+    return loadCategoryById(organizationId, id);
+  }
+
+  async function createCategory(
+    organizationId: string,
+    input: CreateCategoryInput,
+  ): Promise<TaskCategory> {
+    try {
+      const [row] = await db
+        .insert(taskCategories)
+        .values({
+          organizationId,
+          name: input.name,
+          alias: input.alias ?? null,
+          description: input.description ?? null,
+          icon: input.icon ?? null,
+          scope: input.scope ?? "task",
+          sortOrder: input.sortOrder ?? 0,
+          isActive: input.isActive ?? true,
+          metadata: input.metadata ?? null,
+        })
+        .returning();
+      if (!row) throw new Error("insert returned no row");
+      return row;
+    } catch (err) {
+      if (isUniqueViolation(err) && input.alias) {
+        throw new TaskAliasConflict(input.alias);
+      }
+      throw err;
+    }
+  }
+
+  async function updateCategory(
+    organizationId: string,
+    id: string,
+    patch: UpdateCategoryInput,
+  ): Promise<TaskCategory> {
+    const existing = await loadCategoryById(organizationId, id);
+    const values: Partial<typeof taskCategories.$inferInsert> = {};
+    if (patch.name !== undefined) values.name = patch.name;
+    if (patch.alias !== undefined) values.alias = patch.alias;
+    if (patch.description !== undefined) values.description = patch.description;
+    if (patch.icon !== undefined) values.icon = patch.icon;
+    if (patch.scope !== undefined) values.scope = patch.scope;
+    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
+    if (patch.isActive !== undefined) values.isActive = patch.isActive;
+    if (patch.metadata !== undefined) values.metadata = patch.metadata;
+
+    if (Object.keys(values).length === 0) return existing;
+
+    try {
+      const [row] = await db
+        .update(taskCategories)
+        .set(values)
+        .where(
+          and(
+            eq(taskCategories.id, existing.id),
+            eq(taskCategories.organizationId, organizationId),
+          ),
+        )
+        .returning();
+      if (!row) throw new TaskCategoryNotFound(id);
+      return row;
+    } catch (err) {
+      if (isUniqueViolation(err) && patch.alias) {
+        throw new TaskAliasConflict(patch.alias);
+      }
+      throw err;
+    }
+  }
+
+  async function deleteCategory(
+    organizationId: string,
+    id: string,
+  ): Promise<void> {
+    await loadCategoryById(organizationId, id);
+    await db
+      .delete(taskCategories)
+      .where(
+        and(
+          eq(taskCategories.id, id),
+          eq(taskCategories.organizationId, organizationId),
+        ),
+      );
+  }
+
+  // ─── Definition CRUD ──────────────────────────────────────────
+
+  async function listDefinitions(
+    organizationId: string,
+    filters?: {
+      categoryId?: string;
+      period?: string;
+      parentId?: string | null;
+    },
+  ): Promise<TaskDefinition[]> {
+    const conditions = [eq(taskDefinitions.organizationId, organizationId)];
+    if (filters?.categoryId) {
+      conditions.push(eq(taskDefinitions.categoryId, filters.categoryId));
+    }
+    if (filters?.period) {
+      conditions.push(eq(taskDefinitions.period, filters.period));
+    }
+    if (filters?.parentId !== undefined) {
+      if (filters.parentId === null) {
+        conditions.push(isNull(taskDefinitions.parentId));
+      } else {
+        conditions.push(eq(taskDefinitions.parentId, filters.parentId));
+      }
+    }
+    return db
+      .select()
+      .from(taskDefinitions)
+      .where(and(...conditions))
+      .orderBy(taskDefinitions.sortOrder);
+  }
+
+  async function getDefinition(
+    organizationId: string,
+    key: string,
+  ): Promise<TaskDefinition> {
+    return loadDefinitionByKey(organizationId, key);
+  }
+
+  async function createDefinition(
+    organizationId: string,
+    input: CreateDefinitionInput,
+  ): Promise<TaskDefinition> {
+    // Validate parent nesting depth: only one level allowed
+    if (input.parentId) {
+      const parent = await loadDefinitionByKey(organizationId, input.parentId);
+      if (parent.parentId) {
+        throw new TaskNestingTooDeep();
+      }
+    }
+
+    try {
+      const [row] = await db
+        .insert(taskDefinitions)
+        .values({
+          organizationId,
+          categoryId: input.categoryId ?? null,
+          parentId: input.parentId ?? null,
+          alias: input.alias ?? null,
+          name: input.name,
+          description: input.description ?? null,
+          icon: input.icon ?? null,
+          period: input.period,
+          timezone: input.timezone ?? "UTC",
+          weekStartsOn: input.weekStartsOn ?? 1,
+          countingMethod: input.countingMethod,
+          eventName: input.eventName ?? null,
+          eventValueField: input.eventValueField ?? null,
+          targetValue: input.targetValue,
+          parentProgressValue: input.parentProgressValue ?? 1,
+          prerequisiteTaskIds: input.prerequisiteTaskIds ?? [],
+          rewards: input.rewards,
+          autoClaim: input.autoClaim ?? false,
+          navigation: input.navigation ?? null,
+          isActive: input.isActive ?? true,
+          isHidden: input.isHidden ?? false,
+          sortOrder: input.sortOrder ?? 0,
+          metadata: input.metadata ?? null,
+        })
+        .returning();
+      if (!row) throw new Error("insert returned no row");
+      return row;
+    } catch (err) {
+      if (isUniqueViolation(err) && input.alias) {
+        throw new TaskAliasConflict(input.alias);
+      }
+      throw err;
+    }
+  }
+
+  async function updateDefinition(
+    organizationId: string,
+    key: string,
+    patch: UpdateDefinitionInput,
+  ): Promise<TaskDefinition> {
+    const existing = await loadDefinitionByKey(organizationId, key);
+
+    // Validate parent nesting if changing parentId
+    if (patch.parentId !== undefined && patch.parentId !== null) {
+      const parent = await loadDefinitionByKey(organizationId, patch.parentId);
+      if (parent.parentId) {
+        throw new TaskNestingTooDeep();
+      }
+      // Prevent setting parentId to self
+      if (parent.id === existing.id) {
+        throw new TaskInvalidInput("a task cannot be its own parent");
+      }
+    }
+
+    const values: Partial<typeof taskDefinitions.$inferInsert> = {};
+    if (patch.categoryId !== undefined) values.categoryId = patch.categoryId;
+    if (patch.parentId !== undefined) values.parentId = patch.parentId;
+    if (patch.alias !== undefined) values.alias = patch.alias;
+    if (patch.name !== undefined) values.name = patch.name;
+    if (patch.description !== undefined) values.description = patch.description;
+    if (patch.icon !== undefined) values.icon = patch.icon;
+    if (patch.period !== undefined) values.period = patch.period;
+    if (patch.timezone !== undefined) values.timezone = patch.timezone;
+    if (patch.weekStartsOn !== undefined)
+      values.weekStartsOn = patch.weekStartsOn;
+    if (patch.countingMethod !== undefined)
+      values.countingMethod = patch.countingMethod;
+    if (patch.eventName !== undefined) values.eventName = patch.eventName;
+    if (patch.eventValueField !== undefined)
+      values.eventValueField = patch.eventValueField;
+    if (patch.targetValue !== undefined) values.targetValue = patch.targetValue;
+    if (patch.parentProgressValue !== undefined)
+      values.parentProgressValue = patch.parentProgressValue;
+    if (patch.prerequisiteTaskIds !== undefined)
+      values.prerequisiteTaskIds = patch.prerequisiteTaskIds;
+    if (patch.rewards !== undefined) values.rewards = patch.rewards;
+    if (patch.autoClaim !== undefined) values.autoClaim = patch.autoClaim;
+    if (patch.navigation !== undefined) values.navigation = patch.navigation;
+    if (patch.isActive !== undefined) values.isActive = patch.isActive;
+    if (patch.isHidden !== undefined) values.isHidden = patch.isHidden;
+    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
+    if (patch.metadata !== undefined) values.metadata = patch.metadata;
+
+    if (Object.keys(values).length === 0) return existing;
+
+    try {
+      const [row] = await db
+        .update(taskDefinitions)
+        .set(values)
+        .where(
+          and(
+            eq(taskDefinitions.id, existing.id),
+            eq(taskDefinitions.organizationId, organizationId),
+          ),
+        )
+        .returning();
+      if (!row) throw new TaskDefinitionNotFound(key);
+      return row;
+    } catch (err) {
+      if (isUniqueViolation(err) && patch.alias) {
+        throw new TaskAliasConflict(patch.alias);
+      }
+      throw err;
+    }
+  }
+
+  async function deleteDefinition(
+    organizationId: string,
+    key: string,
+  ): Promise<void> {
+    const existing = await loadDefinitionByKey(organizationId, key);
+    await db
+      .delete(taskDefinitions)
+      .where(
+        and(
+          eq(taskDefinitions.id, existing.id),
+          eq(taskDefinitions.organizationId, organizationId),
+        ),
+      );
+  }
+
+  // ─── Phase 2: Event processing ────────────────────────────────
+
+  /**
+   * Process a business event and update matching task progress.
+   * Returns the number of task definitions that were processed.
+   */
+  async function processEvent(
+    organizationId: string,
+    endUserId: string,
+    eventName: string,
+    eventData: Record<string, unknown>,
+    now?: Date,
+  ): Promise<number> {
+    const ts = now ?? new Date();
+
+    // 1. Find all active definitions matching this eventName
+    const defs = await db
+      .select()
+      .from(taskDefinitions)
+      .where(
+        and(
+          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.eventName, eventName),
+          eq(taskDefinitions.isActive, true),
+        ),
+      );
+
+    if (defs.length === 0) return 0;
+
+    let processed = 0;
+
+    for (const def of defs) {
+      // 2. Compute current period key
+      const currentPeriodKey = computePeriodKey(
+        def.period as "daily" | "weekly" | "monthly" | "none",
+        def.timezone,
+        def.weekStartsOn,
+        ts,
+      );
+
+      // 3. Check prerequisites
+      if (def.prerequisiteTaskIds.length > 0) {
+        const prereqsMet = await checkPrerequisites(
+          organizationId,
+          endUserId,
+          def.prerequisiteTaskIds,
+          ts,
+        );
+        if (!prereqsMet) continue;
+      }
+
+      // 4. Compute increment
+      let increment = 1;
+      if (def.countingMethod === "event_value" && def.eventValueField) {
+        increment = extractValue(eventData, def.eventValueField);
+        if (increment <= 0) continue;
+      }
+
+      // 5. Atomic upsert progress
+      const result = await db
+        .insert(taskUserProgress)
+        .values({
+          taskId: def.id,
+          endUserId,
+          organizationId,
+          periodKey: currentPeriodKey,
+          currentValue: increment,
+          isCompleted: increment >= def.targetValue,
+          completedAt: increment >= def.targetValue ? ts : null,
+        })
+        .onConflictDoUpdate({
+          target: [taskUserProgress.taskId, taskUserProgress.endUserId],
+          set: {
+            periodKey: currentPeriodKey,
+            currentValue: sql`CASE
+              WHEN ${taskUserProgress.periodKey} IS DISTINCT FROM ${currentPeriodKey}
+                THEN ${increment}
+              WHEN ${taskUserProgress.isCompleted}
+                THEN ${taskUserProgress.currentValue}
+              ELSE ${taskUserProgress.currentValue} + ${increment}
+            END`,
+            isCompleted: sql`CASE
+              WHEN ${taskUserProgress.periodKey} IS DISTINCT FROM ${currentPeriodKey}
+                THEN ${increment} >= ${def.targetValue}
+              WHEN ${taskUserProgress.isCompleted}
+                THEN true
+              ELSE (${taskUserProgress.currentValue} + ${increment}) >= ${def.targetValue}
+            END`,
+            completedAt: sql`CASE
+              WHEN ${taskUserProgress.isCompleted}
+                AND ${taskUserProgress.periodKey} IS NOT DISTINCT FROM ${currentPeriodKey}
+                THEN ${taskUserProgress.completedAt}
+              WHEN CASE
+                WHEN ${taskUserProgress.periodKey} IS DISTINCT FROM ${currentPeriodKey}
+                  THEN ${increment} >= ${def.targetValue}
+                ELSE (${taskUserProgress.currentValue} + ${increment}) >= ${def.targetValue}
+              END
+                THEN ${ts}
+              ELSE NULL
+            END`,
+            claimedAt: sql`CASE
+              WHEN ${taskUserProgress.periodKey} IS DISTINCT FROM ${currentPeriodKey}
+                THEN NULL
+              ELSE ${taskUserProgress.claimedAt}
+            END`,
+            updatedAt: ts,
+          },
+        })
+        .returning();
+
+      const row = result[0];
+      if (!row) continue;
+
+      processed++;
+
+      // 6. If task is completed and unclaimed, fire side-effects.
+      // Both propagateToParent and handleAutoClaim are idempotent, so
+      // re-running them on an already-completed task is safe and avoids
+      // the timestamp-precision problem of detecting "just completed".
+      if (row.isCompleted && !row.claimedAt) {
+        // Propagate to parent
+        if (def.parentId) {
+          try {
+            await propagateToParent(organizationId, endUserId, def, ts);
+          } catch (err) {
+            console.error("task: propagateToParent failed", err);
+          }
+        }
+
+        // Auto-claim via mail
+        if (def.autoClaim) {
+          try {
+            await handleAutoClaim(organizationId, endUserId, def, row, ts);
+          } catch (err) {
+            console.error("task: handleAutoClaim failed", err);
+          }
+        }
+      }
+    }
+
+    return processed;
+  }
+
+  /**
+   * Check whether all prerequisite tasks are completed for this user.
+   */
+  async function checkPrerequisites(
+    organizationId: string,
+    endUserId: string,
+    prereqIds: string[],
+    now: Date,
+  ): Promise<boolean> {
+    if (prereqIds.length === 0) return true;
+
+    // Load all prereq definitions to compute their periodKeys
+    const prereqDefs = await db
+      .select()
+      .from(taskDefinitions)
+      .where(
+        and(
+          eq(taskDefinitions.organizationId, organizationId),
+          inArray(taskDefinitions.id, prereqIds),
+        ),
+      );
+
+    if (prereqDefs.length !== prereqIds.length) return false;
+
+    // Load progress rows for these tasks
+    const progressRows = await db
+      .select()
+      .from(taskUserProgress)
+      .where(
+        and(
+          eq(taskUserProgress.endUserId, endUserId),
+          inArray(taskUserProgress.taskId, prereqIds),
+        ),
+      );
+
+    const progressMap = new Map(
+      progressRows.map((r) => [r.taskId, r]),
+    );
+
+    for (const def of prereqDefs) {
+      const progress = progressMap.get(def.id);
+      if (!progress) return false;
+      if (!progress.isCompleted) return false;
+
+      // Check if progress is stale (period rolled)
+      const currentKey = computePeriodKey(
+        def.period as "daily" | "weekly" | "monthly" | "none",
+        def.timezone,
+        def.weekStartsOn,
+        now,
+      );
+      if (isPeriodStale(progress.periodKey, currentKey)) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Propagate child completion to parent task.
+   * Uses SUM(parentProgressValue) of completed children — idempotent.
+   */
+  async function propagateToParent(
+    organizationId: string,
+    endUserId: string,
+    childDef: TaskDefinition,
+    now: Date,
+  ): Promise<void> {
+    if (!childDef.parentId) return;
+
+    const parentDef = await loadDefinitionByKey(
+      organizationId,
+      childDef.parentId,
+    );
+
+    // Compute current period key for parent
+    const parentPeriodKey = computePeriodKey(
+      parentDef.period as "daily" | "weekly" | "monthly" | "none",
+      parentDef.timezone,
+      parentDef.weekStartsOn,
+      now,
+    );
+
+    // Get all children of this parent
+    const children = await db
+      .select()
+      .from(taskDefinitions)
+      .where(
+        and(
+          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.parentId, parentDef.id),
+        ),
+      );
+
+    const childIds = children.map((c) => c.id);
+    if (childIds.length === 0) return;
+
+    // Load progress for all children
+    const childProgress = await db
+      .select()
+      .from(taskUserProgress)
+      .where(
+        and(
+          eq(taskUserProgress.endUserId, endUserId),
+          inArray(taskUserProgress.taskId, childIds),
+        ),
+      );
+
+    // SUM(parentProgressValue) of completed children whose periodKey is current
+    let totalValue = 0;
+    for (const cp of childProgress) {
+      if (!cp.isCompleted) continue;
+      const childDef2 = children.find((c) => c.id === cp.taskId);
+      if (!childDef2) continue;
+
+      // Check if child progress is current (not stale)
+      const childPeriodKey = computePeriodKey(
+        childDef2.period as "daily" | "weekly" | "monthly" | "none",
+        childDef2.timezone,
+        childDef2.weekStartsOn,
+        now,
+      );
+      if (isPeriodStale(cp.periodKey, childPeriodKey)) continue;
+
+      totalValue += childDef2.parentProgressValue;
+    }
+
+    const completed = totalValue >= parentDef.targetValue;
+
+    // Upsert parent progress
+    const result = await db
+      .insert(taskUserProgress)
+      .values({
+        taskId: parentDef.id,
+        endUserId,
+        organizationId,
+        periodKey: parentPeriodKey,
+        currentValue: totalValue,
+        isCompleted: completed,
+        completedAt: completed ? now : null,
+      })
+      .onConflictDoUpdate({
+        target: [taskUserProgress.taskId, taskUserProgress.endUserId],
+        set: {
+          periodKey: parentPeriodKey,
+          currentValue: totalValue,
+          isCompleted: completed,
+          completedAt: sql`CASE
+            WHEN ${taskUserProgress.isCompleted}
+              AND ${taskUserProgress.periodKey} IS NOT DISTINCT FROM ${parentPeriodKey}
+              THEN ${taskUserProgress.completedAt}
+            WHEN ${completed}
+              THEN ${now}
+            ELSE NULL
+          END`,
+          claimedAt: sql`CASE
+            WHEN ${taskUserProgress.periodKey} IS DISTINCT FROM ${parentPeriodKey}
+              THEN NULL
+            ELSE ${taskUserProgress.claimedAt}
+          END`,
+          updatedAt: now,
+        },
+      })
+      .returning();
+
+    const row = result[0];
+    if (
+      row &&
+      row.isCompleted &&
+      !row.claimedAt &&
+      row.completedAt?.getTime() === now.getTime() &&
+      parentDef.autoClaim
+    ) {
+      try {
+        await handleAutoClaim(organizationId, endUserId, parentDef, row, now);
+      } catch (err) {
+        console.error("task: parent handleAutoClaim failed", err);
+      }
+    }
+  }
+
+  /**
+   * Handle auto-claim: send rewards via mail.
+   */
+  async function handleAutoClaim(
+    organizationId: string,
+    endUserId: string,
+    def: TaskDefinition,
+    progress: TaskUserProgress,
+    now: Date,
+  ): Promise<void> {
+    const mailSvc = mailSvcGetter();
+    if (!mailSvc) return;
+
+    // Mark as claimed first (atomic gate)
+    const [updated] = await db
+      .update(taskUserProgress)
+      .set({ claimedAt: now })
+      .where(
+        and(
+          eq(taskUserProgress.taskId, def.id),
+          eq(taskUserProgress.endUserId, endUserId),
+          isNull(taskUserProgress.claimedAt),
+          eq(taskUserProgress.isCompleted, true),
+        ),
+      )
+      .returning();
+
+    if (!updated) return; // Already claimed by concurrent request
+
+    // Send mail with rewards
+    const originSourceId = `${def.id}:${endUserId}:${progress.periodKey}`;
+    await mailSvc.createMessage(organizationId, {
+      title: def.name,
+      content: `Task completed: ${def.name}`,
+      rewards: def.rewards,
+      targetType: "multicast",
+      targetUserIds: [endUserId],
+      originSource: AUTOCLAIM_SOURCE,
+      originSourceId,
+    });
+  }
+
+  // ─── Player-facing methods ────────────────────────────────────
+
+  /**
+   * Get all tasks with progress for a player.
+   */
+  async function getTasksForUser(
+    organizationId: string,
+    endUserId: string,
+    filters?: {
+      categoryId?: string;
+      period?: string;
+      includeHidden?: boolean;
+    },
+    now?: Date,
+  ) {
+    const ts = now ?? new Date();
+
+    // Load definitions
+    const conditions = [
+      eq(taskDefinitions.organizationId, organizationId),
+      eq(taskDefinitions.isActive, true),
+    ];
+    if (filters?.categoryId) {
+      conditions.push(eq(taskDefinitions.categoryId, filters.categoryId));
+    }
+    if (filters?.period) {
+      conditions.push(eq(taskDefinitions.period, filters.period));
+    }
+
+    const defs = await db
+      .select()
+      .from(taskDefinitions)
+      .where(and(...conditions))
+      .orderBy(taskDefinitions.sortOrder);
+
+    if (defs.length === 0) return [];
+
+    // Load all progress rows for this user
+    const defIds = defs.map((d) => d.id);
+    const progressRows = await db
+      .select()
+      .from(taskUserProgress)
+      .where(
+        and(
+          eq(taskUserProgress.endUserId, endUserId),
+          eq(taskUserProgress.organizationId, organizationId),
+          inArray(taskUserProgress.taskId, defIds),
+        ),
+      );
+
+    const progressMap = new Map(
+      progressRows.map((r) => [r.taskId, r]),
+    );
+
+    // Check prerequisites for hidden tasks
+    const allPrereqIds = new Set<string>();
+    for (const def of defs) {
+      for (const pid of def.prerequisiteTaskIds) {
+        allPrereqIds.add(pid);
+      }
+    }
+
+    let prereqProgress: Map<string, TaskUserProgress> = new Map();
+    let prereqDefs: Map<string, TaskDefinition> = new Map();
+    if (allPrereqIds.size > 0) {
+      const prereqDefRows = await db
+        .select()
+        .from(taskDefinitions)
+        .where(
+          and(
+            eq(taskDefinitions.organizationId, organizationId),
+            inArray(taskDefinitions.id, [...allPrereqIds]),
+          ),
+        );
+      prereqDefs = new Map(prereqDefRows.map((d) => [d.id, d]));
+
+      const prereqProgressRows = await db
+        .select()
+        .from(taskUserProgress)
+        .where(
+          and(
+            eq(taskUserProgress.endUserId, endUserId),
+            inArray(taskUserProgress.taskId, [...allPrereqIds]),
+          ),
+        );
+      prereqProgress = new Map(
+        prereqProgressRows.map((r) => [r.taskId, r]),
+      );
+    }
+
+    const results = [];
+
+    for (const def of defs) {
+      // Check prerequisites
+      let prerequisitesMet = true;
+      if (def.prerequisiteTaskIds.length > 0) {
+        for (const pid of def.prerequisiteTaskIds) {
+          const pDef = prereqDefs.get(pid);
+          const pProgress = prereqProgress.get(pid);
+          if (!pDef || !pProgress || !pProgress.isCompleted) {
+            prerequisitesMet = false;
+            break;
+          }
+          // Check staleness
+          const pKey = computePeriodKey(
+            pDef.period as "daily" | "weekly" | "monthly" | "none",
+            pDef.timezone,
+            pDef.weekStartsOn,
+            ts,
+          );
+          if (isPeriodStale(pProgress.periodKey, pKey)) {
+            prerequisitesMet = false;
+            break;
+          }
+        }
+      }
+
+      // Skip hidden tasks whose prereqs are not met
+      if (!prerequisitesMet && def.isHidden && !filters?.includeHidden) {
+        continue;
+      }
+
+      // Compute current progress (with lazy reset)
+      const progress = progressMap.get(def.id);
+      const currentPeriodKey = computePeriodKey(
+        def.period as "daily" | "weekly" | "monthly" | "none",
+        def.timezone,
+        def.weekStartsOn,
+        ts,
+      );
+
+      let currentValue = 0;
+      let isCompleted = false;
+      let completedAt: Date | null = null;
+      let claimedAt: Date | null = null;
+
+      if (progress && !isPeriodStale(progress.periodKey, currentPeriodKey)) {
+        currentValue = progress.currentValue;
+        isCompleted = progress.isCompleted;
+        completedAt = progress.completedAt;
+        claimedAt = progress.claimedAt;
+      }
+
+      results.push({
+        id: def.id,
+        categoryId: def.categoryId,
+        parentId: def.parentId,
+        name: def.name,
+        description: def.description,
+        icon: def.icon,
+        period: def.period,
+        countingMethod: def.countingMethod,
+        targetValue: def.targetValue,
+        rewards: def.rewards,
+        autoClaim: def.autoClaim,
+        navigation: def.navigation,
+        sortOrder: def.sortOrder,
+        currentValue,
+        isCompleted,
+        completedAt: completedAt?.toISOString() ?? null,
+        claimedAt: claimedAt?.toISOString() ?? null,
+        prerequisitesMet,
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Manual reward claim for a completed task.
+   */
+  async function claimReward(
+    organizationId: string,
+    endUserId: string,
+    taskId: string,
+    now?: Date,
+  ) {
+    const ts = now ?? new Date();
+    const def = await loadDefinitionByKey(organizationId, taskId);
+
+    if (def.autoClaim) throw new TaskAutoClaimOnly();
+
+    // Load progress
+    const rows = await db
+      .select()
+      .from(taskUserProgress)
+      .where(
+        and(
+          eq(taskUserProgress.taskId, def.id),
+          eq(taskUserProgress.endUserId, endUserId),
+        ),
+      )
+      .limit(1);
+
+    const progress = rows[0];
+    if (!progress) throw new TaskNotCompleted();
+
+    // Check period staleness
+    const currentPeriodKey = computePeriodKey(
+      def.period as "daily" | "weekly" | "monthly" | "none",
+      def.timezone,
+      def.weekStartsOn,
+      ts,
+    );
+    if (isPeriodStale(progress.periodKey, currentPeriodKey)) {
+      throw new TaskNotCompleted();
+    }
+    if (!progress.isCompleted) throw new TaskNotCompleted();
+    if (progress.claimedAt) throw new TaskAlreadyClaimed();
+
+    // Atomic claim
+    const [updated] = await db
+      .update(taskUserProgress)
+      .set({ claimedAt: ts })
+      .where(
+        and(
+          eq(taskUserProgress.taskId, def.id),
+          eq(taskUserProgress.endUserId, endUserId),
+          isNull(taskUserProgress.claimedAt),
+          eq(taskUserProgress.isCompleted, true),
+        ),
+      )
+      .returning();
+
+    if (!updated) throw new TaskAlreadyClaimed();
+
+    // Grant rewards
+    const sourceId = `${def.id}:${endUserId}:${progress.periodKey}`;
+    await grantRewards(
+      rewardServices,
+      organizationId,
+      endUserId,
+      def.rewards,
+      CLAIM_SOURCE,
+      sourceId,
+    );
+
+    return {
+      taskId: def.id,
+      grantedRewards: def.rewards,
+      claimedAt: ts.toISOString(),
+    };
+  }
+
+  return {
+    // Category CRUD
+    listCategories,
+    getCategory,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    // Definition CRUD
+    listDefinitions,
+    getDefinition,
+    createDefinition,
+    updateDefinition,
+    deleteDefinition,
+    // Event processing (Phase 2)
+    processEvent,
+    // Player-facing (Phase 2)
+    getTasksForUser,
+    claimReward,
+  };
+}
+
+export type TaskService = ReturnType<typeof createTaskService>;
