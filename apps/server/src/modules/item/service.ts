@@ -510,6 +510,7 @@ export function createItemService(d: ItemDeps) {
             stackable: input.stackable ?? true,
             stackLimit: input.stackLimit ?? null,
             holdLimit: input.holdLimit ?? null,
+            isCurrency: input.isCurrency ?? false,
             isActive: input.isActive ?? true,
             metadata: input.metadata ?? null,
           })
@@ -540,6 +541,7 @@ export function createItemService(d: ItemDeps) {
       if (patch.stackable !== undefined) updateValues.stackable = patch.stackable;
       if (patch.stackLimit !== undefined) updateValues.stackLimit = patch.stackLimit;
       if (patch.holdLimit !== undefined) updateValues.holdLimit = patch.holdLimit;
+      if (patch.isCurrency !== undefined) updateValues.isCurrency = patch.isCurrency;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 

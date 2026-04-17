@@ -50,6 +50,7 @@ import {
 } from "./modules/lottery";
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { shopRouter, shopClientRouter } from "./modules/shop";
+import { storageBoxRouter } from "./modules/storage-box";
 import {
   taskRouter,
   taskClientRouter,
@@ -123,6 +124,7 @@ app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
+app.route("/api/storage-box", storageBoxRouter);
 app.route("/api/task", taskRouter);
 app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);

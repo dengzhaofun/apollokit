@@ -22,3 +22,4 @@ export * from "./level";
 export * from "./task";
 export * from "./leaderboard";
 export * from "./activity";
+export * from "./storage-box";

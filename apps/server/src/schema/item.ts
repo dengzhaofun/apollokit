@@ -85,6 +85,11 @@ export const itemDefinitions = pgTable(
     stackable: boolean("stackable").default(true).notNull(),
     stackLimit: integer("stack_limit"),
     holdLimit: integer("hold_limit"),
+    // Explicit currency flag. Historically "currency" was inferred as
+    // stackable=true AND stackLimit=null AND holdLimit=null; keeping this
+    // invariant is still the contract, but downstream modules (storage-box
+    // white-listing, admin UI filters) need an explicit, cheap predicate.
+    isCurrency: boolean("is_currency").default(false).notNull(),
     lotteryPoolId: uuid("lottery_pool_id").references(() => lotteryPools.id, {
       onDelete: "set null",
     }),
