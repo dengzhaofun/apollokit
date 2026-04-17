@@ -19,9 +19,11 @@
     "@better-auth/core/utils/error-codes": "./node_modules/@better-auth/core/dist/utils/error-codes.mjs"
   },
   // Secrets used by the worker (configured via .dev.vars in dev, `wrangler secret put` in prod):
-  //   DATABASE_URL          — Neon Postgres connection string
-  //   BETTER_AUTH_SECRET    — random 32+ byte string for cookie signing
-  //   BETTER_AUTH_URL       — base URL the auth handler is served at
+  //   DATABASE_URL              — Neon Postgres connection string
+  //   BETTER_AUTH_SECRET        — random 32+ byte string for cookie signing
+  //   BETTER_AUTH_URL           — base URL the auth handler is served at
+  //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)
+  //   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST API token
   //
   // Bindings (uncomment as needed):
   // "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],

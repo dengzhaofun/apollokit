@@ -32,3 +32,13 @@ if (!process.env.BETTER_AUTH_SECRET) {
     "[vitest setup] BETTER_AUTH_SECRET not set — check apps/server/.dev.vars or CI env",
   );
 }
+if (!process.env.UPSTASH_REDIS_REST_URL) {
+  throw new Error(
+    "[vitest setup] UPSTASH_REDIS_REST_URL not set — check apps/server/.dev.vars or CI env",
+  );
+}
+if (!process.env.UPSTASH_REDIS_REST_TOKEN) {
+  throw new Error(
+    "[vitest setup] UPSTASH_REDIS_REST_TOKEN not set — check apps/server/.dev.vars or CI env",
+  );
+}

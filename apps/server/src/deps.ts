@@ -1,12 +1,13 @@
 import { env } from "cloudflare:workers";
 
 import { db } from "./db";
+import { redis } from "./redis";
 
 /**
  * Single source of truth for all shared application dependencies.
  *
- * When a new dependency arrives (redis, logger, event bus, unified behavior
- * log, etc.) add it to this type and to the `deps` singleton below.
+ * When a new dependency arrives (logger, event bus, unified behavior log,
+ * etc.) add it to this type and to the `deps` singleton below.
  * Services declare what they need via `Pick<AppDeps, ...>` — only services
  * that actually use the new dependency have to change.
  *
@@ -14,8 +15,8 @@ import { db } from "./db";
  */
 export type AppDeps = {
   db: typeof db;
+  redis: typeof redis;
   appSecret: string;
-  // redis: typeof redis;
   // logger: typeof logger;
   // events: typeof events;
   // behaviorLog: typeof behaviorLog;
@@ -28,5 +29,6 @@ export type AppDeps = {
  */
 export const deps: AppDeps = {
   db,
+  redis,
   appSecret: env.BETTER_AUTH_SECRET,
 };
