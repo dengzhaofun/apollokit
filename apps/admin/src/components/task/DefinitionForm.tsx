@@ -13,7 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import type { CreateDefinitionInput, TaskCategory } from "#/lib/types/task"
+import type {
+  CreateDefinitionInput,
+  TaskCategory,
+  TaskRewardTier,
+} from "#/lib/types/task"
 
 interface DefinitionFormProps {
   defaultValues?: Partial<CreateDefinitionInput>
@@ -48,12 +52,34 @@ export function DefinitionForm({
       isHidden: defaultValues?.isHidden ?? false,
       sortOrder: defaultValues?.sortOrder ?? 0,
       activityId: defaultValues?.activityId ?? (null as string | null),
+      rewardTiersJson: JSON.stringify(
+        defaultValues?.rewardTiers ?? [],
+        null,
+        2,
+      ),
     },
     onSubmit: async ({ value }) => {
       const isEventBased =
         value.countingMethod === "event_count" ||
         value.countingMethod === "event_value"
       const trimmedFilter = value.filter.trim()
+
+      let rewardTiers: TaskRewardTier[] = []
+      const rewardTiersRaw = value.rewardTiersJson.trim()
+      if (rewardTiersRaw.length > 0) {
+        try {
+          const parsed = JSON.parse(rewardTiersRaw) as unknown
+          if (!Array.isArray(parsed)) {
+            throw new Error("rewardTiers must be an array")
+          }
+          rewardTiers = parsed as TaskRewardTier[]
+        } catch (err) {
+          throw new Error(
+            `阶段性奖励 JSON 解析失败: ${err instanceof Error ? err.message : String(err)}`,
+          )
+        }
+      }
+
       const input: CreateDefinitionInput = {
         name: value.name,
         alias: value.alias || null,
@@ -72,6 +98,7 @@ export function DefinitionForm({
         sortOrder: value.sortOrder,
         activityId: value.activityId,
         rewards: defaultValues?.rewards ?? [{ type: "item", id: "", count: 1 }],
+        rewardTiers,
       }
       await onSubmit(input)
     },
@@ -379,6 +406,27 @@ export function DefinitionForm({
             />
             <p className="text-xs text-muted-foreground">
               选活动后这个任务会自动出现在活动任务池；不选即常驻任务。
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="rewardTiersJson">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={field.name}>阶段性奖励 (JSON, 可留空)</Label>
+            <Textarea
+              id={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              rows={5}
+              className="font-mono text-xs"
+              placeholder='[{"alias":"tier-1","threshold":3,"rewards":[{"type":"item","id":"gold-uuid","count":100}]}]'
+            />
+            <p className="text-xs text-muted-foreground">
+              到达 threshold 后，该阶段奖励独立结算（autoClaim 任务走邮件自动发放，否则走手动领取）。
+              alias 必须唯一，threshold 必须严格递增且不超过 targetValue。
             </p>
           </div>
         )}

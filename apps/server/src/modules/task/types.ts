@@ -1,6 +1,7 @@
 import type {
   taskCategories,
   taskDefinitions,
+  taskUserMilestoneClaims,
   taskUserProgress,
 } from "../../schema/task";
 
@@ -11,6 +12,10 @@ import type {
 export type TaskCategory = typeof taskCategories.$inferSelect;
 export type TaskDefinition = typeof taskDefinitions.$inferSelect;
 export type TaskUserProgress = typeof taskUserProgress.$inferSelect;
+export type TaskUserMilestoneClaim =
+  typeof taskUserMilestoneClaims.$inferSelect;
+
+export type { TaskRewardTier } from "../../schema/task";
 
 /** Task period — drives lazy reset cycle logic. */
 export const TASK_PERIODS = ["daily", "weekly", "monthly", "none"] as const;

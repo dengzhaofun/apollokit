@@ -962,4 +962,330 @@ describe("task service", () => {
     );
     expect(processed).toBe(0);
   });
+
+  // ─── Reward tiers (阶段性奖励) ────────────────────────────────
+
+  describe("reward tiers", () => {
+    const tierRewardA = [{ type: "item" as const, id: "tier-a", count: 1 }];
+    const tierRewardB = [{ type: "item" as const, id: "tier-b", count: 2 }];
+    const tierRewardC = [{ type: "item" as const, id: "tier-c", count: 3 }];
+
+    test("validator rejects non-increasing thresholds", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        name: "Tiered",
+        period: "none" as const,
+        countingMethod: "event_count" as const,
+        eventName: "tier_evt",
+        targetValue: 10,
+        rewards: [{ type: "item" as const, id: "done", count: 1 }],
+        rewardTiers: [
+          { alias: "t1", threshold: 5, rewards: tierRewardA },
+          { alias: "t2", threshold: 5, rewards: tierRewardB },
+        ],
+      });
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        const paths = res.error.issues.map((i) => i.path.join("."));
+        expect(paths.some((p) => p.includes("threshold"))).toBe(true);
+      }
+    });
+
+    test("validator rejects duplicate alias", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        name: "Tiered",
+        period: "none" as const,
+        countingMethod: "event_count" as const,
+        eventName: "tier_evt",
+        targetValue: 10,
+        rewards: [{ type: "item" as const, id: "done", count: 1 }],
+        rewardTiers: [
+          { alias: "t1", threshold: 3, rewards: tierRewardA },
+          { alias: "t1", threshold: 5, rewards: tierRewardB },
+        ],
+      });
+      expect(res.success).toBe(false);
+    });
+
+    test("validator rejects threshold > targetValue", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        name: "Tiered",
+        period: "none" as const,
+        countingMethod: "event_count" as const,
+        eventName: "tier_evt",
+        targetValue: 5,
+        rewards: [{ type: "item" as const, id: "done", count: 1 }],
+        rewardTiers: [
+          { alias: "t1", threshold: 6, rewards: tierRewardA },
+        ],
+      });
+      expect(res.success).toBe(false);
+    });
+
+    test("event_count crosses single tier — manual task surfaces claimable", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Manual Tier",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_manual_evt",
+        targetValue: 10,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "s1", threshold: 3, rewards: tierRewardA },
+          { alias: "s2", threshold: 7, rewards: tierRewardB },
+        ],
+      });
+      const userId = `tier-manual-${Date.now()}`;
+
+      // 3 events → crosses s1 but not s2
+      for (let i = 0; i < 3; i++) {
+        await svc.processEvent(orgId, userId, "tier_manual_evt", {});
+      }
+
+      const list = await svc.getTasksForUser(orgId, userId);
+      const view = list.find((t) => t.id === def.id);
+      expect(view).toBeDefined();
+      expect(view!.currentValue).toBe(3);
+      expect(view!.rewardTiers).toHaveLength(2);
+      // Manual task — tier not auto-claimed yet, but cross surfaced on
+      // currentValue vs threshold; ledger empty until explicit claim.
+      expect(view!.claimedTierAliases).toEqual([]);
+    });
+
+    test("claimTier succeeds above threshold, grants rewards, is idempotent", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Claim Tier",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_claim_evt",
+        targetValue: 10,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "g1", threshold: 2, rewards: tierRewardA },
+          { alias: "g2", threshold: 5, rewards: tierRewardB },
+        ],
+      });
+      const userId = `tier-claim-${Date.now()}`;
+
+      // Cross g1 (2 events) but not g2
+      await svc.processEvent(orgId, userId, "tier_claim_evt", {});
+      await svc.processEvent(orgId, userId, "tier_claim_evt", {});
+
+      const beforeLen = grantLog.length;
+      const result = await svc.claimTier(orgId, userId, def.id, "g1");
+      expect(result.tierAlias).toBe("g1");
+      expect(result.grantedRewards).toEqual(tierRewardA);
+      expect(grantLog.length).toBe(beforeLen + 1);
+      expect(grantLog[grantLog.length - 1]!.source).toBe("task.tier.claim");
+
+      // Second claim is rejected as already claimed.
+      await expect(
+        svc.claimTier(orgId, userId, def.id, "g1"),
+      ).rejects.toThrow(/already claimed/i);
+
+      // Verify list surfaces g1 as claimed.
+      const list = await svc.getTasksForUser(orgId, userId);
+      const view = list.find((t) => t.id === def.id)!;
+      expect(view.claimedTierAliases).toContain("g1");
+      expect(view.claimedTierAliases).not.toContain("g2");
+    });
+
+    test("claimTier below threshold throws TaskTierNotReached", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Not Reached",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_notreached_evt",
+        targetValue: 10,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "n1", threshold: 5, rewards: tierRewardA },
+        ],
+      });
+      const userId = `tier-nr-${Date.now()}`;
+      await svc.processEvent(orgId, userId, "tier_notreached_evt", {});
+
+      await expect(
+        svc.claimTier(orgId, userId, def.id, "n1"),
+      ).rejects.toThrow(/not reached|has not reached/i);
+    });
+
+    test("claimTier on unknown alias throws TaskTierNotFound", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Unknown Alias",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_unknown_evt",
+        targetValue: 5,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "known", threshold: 1, rewards: tierRewardA },
+        ],
+      });
+      const userId = `tier-unknown-${Date.now()}`;
+      await svc.processEvent(orgId, userId, "tier_unknown_evt", {});
+
+      await expect(
+        svc.claimTier(orgId, userId, def.id, "bogus"),
+      ).rejects.toThrow(/tier not found|not found/i);
+    });
+
+    test("claimTier on autoClaim task throws TaskAutoClaimOnly", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Auto Tier",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_auto_evt",
+        targetValue: 5,
+        autoClaim: true,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "a1", threshold: 1, rewards: tierRewardA },
+        ],
+      });
+      const userId = `tier-auto-${Date.now()}`;
+      await svc.processEvent(orgId, userId, "tier_auto_evt", {});
+
+      await expect(
+        svc.claimTier(orgId, userId, def.id, "a1"),
+      ).rejects.toThrow(/auto.*claim|autoClaim/i);
+    });
+
+    test("autoClaim task dispatches tier via mail on progress bump", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Auto Dispatch",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_autodispatch_evt",
+        targetValue: 10,
+        autoClaim: true,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "d1", threshold: 2, rewards: tierRewardA },
+          { alias: "d2", threshold: 4, rewards: tierRewardB },
+        ],
+      });
+      const userId = `tier-autodispatch-${Date.now()}`;
+      const mailBefore = captured.length;
+
+      // 2 events → crosses d1 only.
+      await svc.processEvent(orgId, userId, "tier_autodispatch_evt", {});
+      await svc.processEvent(orgId, userId, "tier_autodispatch_evt", {});
+
+      const d1Mails = captured
+        .slice(mailBefore)
+        .filter(
+          (m) =>
+            (m.input.originSource as string | undefined) === "task.tier" &&
+            String(m.input.content ?? "").includes("d1"),
+        );
+      expect(d1Mails).toHaveLength(1);
+
+      // Re-fire — must stay idempotent.
+      await svc.processEvent(orgId, userId, "tier_autodispatch_evt", {});
+      const d1MailsAfter = captured
+        .slice(mailBefore)
+        .filter(
+          (m) =>
+            (m.input.originSource as string | undefined) === "task.tier" &&
+            String(m.input.content ?? "").includes("d1"),
+        );
+      expect(d1MailsAfter).toHaveLength(1);
+    });
+
+    test("event_value single event crossing 2 tiers dispatches both", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Big Jump",
+        period: "none",
+        countingMethod: "event_value",
+        eventName: "tier_bigjump_evt",
+        eventValueField: "amount",
+        targetValue: 100,
+        autoClaim: true,
+        rewards: [{ type: "item", id: "final", count: 1 }],
+        rewardTiers: [
+          { alias: "j1", threshold: 10, rewards: tierRewardA },
+          { alias: "j2", threshold: 25, rewards: tierRewardB },
+          { alias: "j3", threshold: 70, rewards: tierRewardC },
+        ],
+      });
+      const userId = `tier-bigjump-${Date.now()}`;
+      const mailBefore = captured.length;
+
+      await svc.processEvent(orgId, userId, "tier_bigjump_evt", {
+        amount: 30,
+      });
+
+      const mails = captured
+        .slice(mailBefore)
+        .filter(
+          (m) => (m.input.originSource as string | undefined) === "task.tier",
+        );
+      const aliases = mails
+        .map((m) => {
+          const id = m.input.originSourceId as string;
+          return id.split(":").pop();
+        })
+        .filter(Boolean);
+      expect(aliases.sort()).toEqual(["j1", "j2"]);
+
+      // Definition used — satisfy lint.
+      expect(def.id).toBeDefined();
+    });
+
+    test("subtask completion bumps parent past parent tier — tier fires", async () => {
+      const parent = await svc.createDefinition(orgId, {
+        name: "Parent Tier",
+        period: "none",
+        countingMethod: "child_completion",
+        targetValue: 4,
+        autoClaim: true,
+        rewards: [{ type: "item", id: "parent-done", count: 1 }],
+        rewardTiers: [
+          { alias: "pt1", threshold: 2, rewards: tierRewardA },
+          { alias: "pt2", threshold: 4, rewards: tierRewardB },
+        ],
+      });
+      const child1 = await svc.createDefinition(orgId, {
+        name: "Child 1",
+        parentId: parent.id,
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_sub_evt_1",
+        targetValue: 1,
+        parentProgressValue: 2,
+        rewards: [{ type: "item", id: "c1", count: 1 }],
+      });
+      // Child2 exists so parent config is "realistic" but we only fire
+      // child1 — its parentProgressValue=2 alone bumps parent past pt1.
+      await svc.createDefinition(orgId, {
+        name: "Child 2",
+        parentId: parent.id,
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "tier_sub_evt_2",
+        targetValue: 1,
+        parentProgressValue: 2,
+        rewards: [{ type: "item", id: "c2", count: 1 }],
+      });
+      const userId = `tier-sub-${Date.now()}`;
+      const mailBefore = captured.length;
+
+      // Complete child1 → parent progress jumps 0 → 2 (crosses pt1).
+      await svc.processEvent(orgId, userId, "tier_sub_evt_1", {});
+
+      const tierMails = captured
+        .slice(mailBefore)
+        .filter(
+          (m) =>
+            (m.input.originSource as string | undefined) === "task.tier" &&
+            (m.input.originSourceId as string).startsWith(`${parent.id}:`),
+        );
+      expect(tierMails).toHaveLength(1);
+      const id = tierMails[0]!.input.originSourceId as string;
+      expect(id.endsWith(":pt1")).toBe(true);
+
+      // Silence unused-var lint.
+      expect(child1.id).toBeDefined();
+    });
+  });
 });

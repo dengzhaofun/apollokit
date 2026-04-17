@@ -15,7 +15,9 @@ import type { AppDeps } from "../../deps";
 import {
   taskCategories,
   taskDefinitions,
+  taskUserMilestoneClaims,
   taskUserProgress,
+  type TaskRewardTier,
 } from "../../schema/task";
 import type { RewardEntry } from "../../lib/rewards";
 import { grantRewards, type RewardServices } from "../../lib/rewards";
@@ -31,6 +33,8 @@ import {
   TaskNestingTooDeep,
   TaskNotCompleted,
   TaskPrerequisitesNotMet,
+  TaskTierNotFound,
+  TaskTierNotReached,
 } from "./errors";
 import type {
   TaskCategory,
@@ -74,6 +78,18 @@ declare module "../../lib/event-bus" {
       progressValue: number;
       completedAt: Date;
     };
+    "task.tier.claimed": {
+      organizationId: string;
+      endUserId: string;
+      taskId: string;
+      taskAlias: string | null;
+      tierAlias: string;
+      threshold: number;
+      progressValue: number;
+      rewards: RewardEntry[];
+      periodKey: string;
+      claimedAt: Date;
+    };
   }
 }
 
@@ -112,6 +128,8 @@ function extractValue(
 const SOURCE_PREFIX = "task.";
 const CLAIM_SOURCE = `${SOURCE_PREFIX}claim`;
 const AUTOCLAIM_SOURCE = `${SOURCE_PREFIX}complete`;
+const TIER_CLAIM_SOURCE = `${SOURCE_PREFIX}tier.claim`;
+const TIER_AUTOCLAIM_SOURCE = `${SOURCE_PREFIX}tier`;
 
 export function createTaskService(
   d: TaskDeps,
@@ -413,6 +431,7 @@ export function createTaskService(
           parentProgressValue: input.parentProgressValue ?? 1,
           prerequisiteTaskIds: input.prerequisiteTaskIds ?? [],
           rewards: input.rewards,
+          rewardTiers: input.rewardTiers ?? [],
           autoClaim: input.autoClaim ?? false,
           navigation: input.navigation ?? null,
           isActive: input.isActive ?? true,
@@ -466,6 +485,22 @@ export function createTaskService(
       );
     }
 
+    // Cross-check tier thresholds against the merged targetValue. The
+    // update validator only sees what was patched — if the caller
+    // bumps targetValue down or edits only rewardTiers, the check
+    // needs the post-merge view.
+    const effectiveTargetValue = patch.targetValue ?? existing.targetValue;
+    const effectiveRewardTiers = patch.rewardTiers ?? existing.rewardTiers;
+    if (effectiveRewardTiers && effectiveRewardTiers.length > 0) {
+      for (const t of effectiveRewardTiers) {
+        if (t.threshold > effectiveTargetValue) {
+          throw new TaskInvalidInput(
+            `tier threshold (${t.threshold}) must be <= targetValue (${effectiveTargetValue})`,
+          );
+        }
+      }
+    }
+
     const values: Partial<typeof taskDefinitions.$inferInsert> = {};
     if (patch.categoryId !== undefined) values.categoryId = patch.categoryId;
     if (patch.parentId !== undefined) values.parentId = patch.parentId;
@@ -489,6 +524,7 @@ export function createTaskService(
     if (patch.prerequisiteTaskIds !== undefined)
       values.prerequisiteTaskIds = patch.prerequisiteTaskIds;
     if (patch.rewards !== undefined) values.rewards = patch.rewards;
+    if (patch.rewardTiers !== undefined) values.rewardTiers = patch.rewardTiers;
     if (patch.autoClaim !== undefined) values.autoClaim = patch.autoClaim;
     if (patch.navigation !== undefined) values.navigation = patch.navigation;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
@@ -657,7 +693,18 @@ export function createTaskService(
 
       processed++;
 
-      // 6. If task is completed and unclaimed, fire side-effects.
+      // 6a. Tier (阶段) rewards fire on every progress bump — a tier
+      // can be crossed before the task as a whole is completed, and
+      // one big event can cross multiple tiers in a single step.
+      // Idempotency is enforced by the ledger's unique PK, so calling
+      // this on a stale/no-change update is safe.
+      try {
+        await evaluateAndDispatchTiers(organizationId, endUserId, def, row, ts);
+      } catch (err) {
+        console.error("task: evaluateAndDispatchTiers failed", err);
+      }
+
+      // 6b. If task is completed and unclaimed, fire side-effects.
       // Both propagateToParent and handleAutoClaim are idempotent, so
       // re-running them on an already-completed task is safe and avoids
       // the timestamp-precision problem of detecting "just completed".
@@ -850,8 +897,26 @@ export function createTaskService(
       .returning();
 
     const row = result[0];
+    if (!row) return;
+
+    // Tier evaluation on the parent — this is what closes the gap
+    // where a subtask completing (and only a subtask) would let the
+    // parent cross a staged-reward threshold without the tier
+    // firing. Runs regardless of whether the parent itself is
+    // completed.
+    try {
+      await evaluateAndDispatchTiers(
+        organizationId,
+        endUserId,
+        parentDef,
+        row,
+        now,
+      );
+    } catch (err) {
+      console.error("task: parent evaluateAndDispatchTiers failed", err);
+    }
+
     if (
-      row &&
       row.isCompleted &&
       !row.claimedAt &&
       row.completedAt?.getTime() === now.getTime() &&
@@ -863,6 +928,118 @@ export function createTaskService(
         console.error("task: parent handleAutoClaim failed", err);
       }
     }
+  }
+
+  /**
+   * Load the set of tier aliases already claimed this period for a
+   * given (task, endUser). Rows from past periods are excluded —
+   * period reset is lazy, so a stale row for yesterday must not shadow
+   * a fresh unlock today.
+   */
+  async function loadClaimedTierAliases(
+    taskId: string,
+    endUserId: string,
+    periodKey: string,
+  ): Promise<Set<string>> {
+    const rows = await db
+      .select({ tierAlias: taskUserMilestoneClaims.tierAlias })
+      .from(taskUserMilestoneClaims)
+      .where(
+        and(
+          eq(taskUserMilestoneClaims.taskId, taskId),
+          eq(taskUserMilestoneClaims.endUserId, endUserId),
+          eq(taskUserMilestoneClaims.periodKey, periodKey),
+        ),
+      );
+    return new Set(rows.map((r) => r.tierAlias));
+  }
+
+  /**
+   * Evaluate reward tiers against the latest `progress.currentValue`.
+   * Used from both the event-update path (`processEvent`) and the
+   * subtask → parent propagation path (`propagateToParent`), so a
+   * child task completing and bumping its parent's progress past a
+   * parent tier triggers that tier just like a direct event would.
+   *
+   * For `autoClaim=true` tasks the tier is dispatched immediately via
+   * mail (idempotent through the ledger's primary-key unique
+   * constraint). For manual tasks the tier is left unclaimed — it
+   * surfaces in `getTasksForUser` and the player calls `claimTier`.
+   *
+   * Not using a `previousValue` comparison: without cheap transaction
+   * support on neon-http we would have to race-prone piece it together
+   * from RETURNING diffs. Instead the ledger itself is the source of
+   * truth — any tier whose threshold fits the current progress and
+   * has no ledger row is eligible. `currentValue` is monotonically
+   * non-decreasing within a period, so no tier can become eligible
+   * and then lose eligibility.
+   */
+  async function evaluateAndDispatchTiers(
+    organizationId: string,
+    endUserId: string,
+    def: TaskDefinition,
+    progress: TaskUserProgress,
+    now: Date,
+  ): Promise<{ crossedTierAliases: string[] }> {
+    const tiers = def.rewardTiers;
+    if (!tiers || tiers.length === 0) return { crossedTierAliases: [] };
+
+    const alreadyClaimed = await loadClaimedTierAliases(
+      def.id,
+      endUserId,
+      progress.periodKey,
+    );
+
+    const crossed: string[] = [];
+    const mailSvc = def.autoClaim ? mailSvcGetter() : undefined;
+
+    for (const tier of tiers) {
+      if (tier.threshold > progress.currentValue) continue;
+      if (alreadyClaimed.has(tier.alias)) continue;
+      crossed.push(tier.alias);
+
+      if (!def.autoClaim) continue;
+
+      // autoClaim path: insert the ledger row first (idempotency
+      // gate), then send the mail. The unique-PK violation path is
+      // the concurrent-call "already dispatched" branch.
+      try {
+        const [inserted] = await db
+          .insert(taskUserMilestoneClaims)
+          .values({
+            taskId: def.id,
+            endUserId,
+            organizationId,
+            periodKey: progress.periodKey,
+            tierAlias: tier.alias,
+            claimedAt: now,
+          })
+          .onConflictDoNothing()
+          .returning();
+        if (!inserted) continue;
+      } catch (err) {
+        if (isUniqueViolation(err)) continue;
+        console.error("task: tier ledger insert failed", err);
+        continue;
+      }
+
+      if (!mailSvc) continue;
+      try {
+        await mailSvc.createMessage(organizationId, {
+          title: def.name,
+          content: `Task tier reached: ${def.name} (${tier.alias})`,
+          rewards: tier.rewards,
+          targetType: "multicast",
+          targetUserIds: [endUserId],
+          originSource: TIER_AUTOCLAIM_SOURCE,
+          originSourceId: `${def.id}:${endUserId}:${progress.periodKey}:${tier.alias}`,
+        });
+      } catch (err) {
+        console.error("task: tier auto-claim mail failed", err);
+      }
+    }
+
+    return { crossedTierAliases: crossed };
   }
 
   /**
@@ -961,6 +1138,41 @@ export function createTaskService(
       progressRows.map((r) => [r.taskId, r]),
     );
 
+    // Batch-load tier claims for any task that has tiers configured.
+    // One query covers every task in the result set. Past-period rows
+    // are filtered out in-memory below against each def's current
+    // periodKey so the query itself stays a simple inArray lookup.
+    const tieredDefIds = defs
+      .filter((d) => (d.rewardTiers?.length ?? 0) > 0)
+      .map((d) => d.id);
+    const tierClaimsByTask = new Map<string, Map<string, string[]>>();
+    if (tieredDefIds.length > 0) {
+      const claimRows = await db
+        .select({
+          taskId: taskUserMilestoneClaims.taskId,
+          periodKey: taskUserMilestoneClaims.periodKey,
+          tierAlias: taskUserMilestoneClaims.tierAlias,
+        })
+        .from(taskUserMilestoneClaims)
+        .where(
+          and(
+            eq(taskUserMilestoneClaims.endUserId, endUserId),
+            eq(taskUserMilestoneClaims.organizationId, organizationId),
+            inArray(taskUserMilestoneClaims.taskId, tieredDefIds),
+          ),
+        );
+      for (const row of claimRows) {
+        let byPeriod = tierClaimsByTask.get(row.taskId);
+        if (!byPeriod) {
+          byPeriod = new Map();
+          tierClaimsByTask.set(row.taskId, byPeriod);
+        }
+        const list = byPeriod.get(row.periodKey) ?? [];
+        list.push(row.tierAlias);
+        byPeriod.set(row.periodKey, list);
+      }
+    }
+
     // Check prerequisites for hidden tasks
     const allPrereqIds = new Set<string>();
     for (const def of defs) {
@@ -1050,6 +1262,9 @@ export function createTaskService(
         claimedAt = progress.claimedAt;
       }
 
+      const claimedTierAliases =
+        tierClaimsByTask.get(def.id)?.get(currentPeriodKey) ?? [];
+
       results.push({
         id: def.id,
         categoryId: def.categoryId,
@@ -1061,6 +1276,7 @@ export function createTaskService(
         countingMethod: def.countingMethod,
         targetValue: def.targetValue,
         rewards: def.rewards,
+        rewardTiers: def.rewardTiers ?? [],
         autoClaim: def.autoClaim,
         navigation: def.navigation,
         sortOrder: def.sortOrder,
@@ -1068,6 +1284,7 @@ export function createTaskService(
         isCompleted,
         completedAt: completedAt?.toISOString() ?? null,
         claimedAt: claimedAt?.toISOString() ?? null,
+        claimedTierAliases,
         prerequisitesMet,
       });
     }
@@ -1168,6 +1385,119 @@ export function createTaskService(
     };
   }
 
+  /**
+   * Manual claim for a single reward tier (阶段性奖励). Rejects if the
+   * task is `autoClaim=true` (those tasks deliver tiers via mail
+   * automatically), if the tier alias is unknown, or if the player
+   * has not reached the tier threshold. Idempotent — re-claiming the
+   * same (task, user, period, tier) throws TaskAlreadyClaimed.
+   */
+  async function claimTier(
+    organizationId: string,
+    endUserId: string,
+    taskId: string,
+    tierAlias: string,
+    now?: Date,
+  ) {
+    const ts = now ?? new Date();
+    const def = await loadDefinitionByKey(organizationId, taskId);
+
+    if (def.autoClaim) throw new TaskAutoClaimOnly();
+
+    const tier: TaskRewardTier | undefined = (def.rewardTiers ?? []).find(
+      (t) => t.alias === tierAlias,
+    );
+    if (!tier) throw new TaskTierNotFound(tierAlias);
+
+    // Load progress
+    const rows = await db
+      .select()
+      .from(taskUserProgress)
+      .where(
+        and(
+          eq(taskUserProgress.taskId, def.id),
+          eq(taskUserProgress.endUserId, endUserId),
+        ),
+      )
+      .limit(1);
+
+    const progress = rows[0];
+    if (!progress) throw new TaskTierNotReached();
+
+    // Check period staleness — a tier claim uses the same lazy reset
+    // semantics as the completion claim; a stale row is treated as
+    // zero progress.
+    const currentPeriodKey = computePeriodKey(
+      def.period as "daily" | "weekly" | "monthly" | "none",
+      def.timezone,
+      def.weekStartsOn,
+      ts,
+    );
+    if (isPeriodStale(progress.periodKey, currentPeriodKey)) {
+      throw new TaskTierNotReached();
+    }
+    if (progress.currentValue < tier.threshold) {
+      throw new TaskTierNotReached();
+    }
+
+    // Insert ledger row — unique PK on (task, user, period, alias) is
+    // the idempotency gate. Zero rows back = already claimed.
+    let inserted: typeof taskUserMilestoneClaims.$inferSelect | undefined;
+    try {
+      const result = await db
+        .insert(taskUserMilestoneClaims)
+        .values({
+          taskId: def.id,
+          endUserId,
+          organizationId,
+          periodKey: progress.periodKey,
+          tierAlias: tier.alias,
+          claimedAt: ts,
+        })
+        .onConflictDoNothing()
+        .returning();
+      inserted = result[0];
+    } catch (err) {
+      if (isUniqueViolation(err)) throw new TaskAlreadyClaimed();
+      throw err;
+    }
+    if (!inserted) throw new TaskAlreadyClaimed();
+
+    // Grant rewards via the shared helper — same path as the
+    // completion-reward manual claim, just scoped to this tier.
+    const sourceId = `${def.id}:${endUserId}:${progress.periodKey}:${tier.alias}`;
+    await grantRewards(
+      rewardServices,
+      organizationId,
+      endUserId,
+      tier.rewards,
+      TIER_CLAIM_SOURCE,
+      sourceId,
+    );
+
+    if (events) {
+      await events.emit("task.tier.claimed", {
+        organizationId,
+        endUserId,
+        taskId: def.id,
+        taskAlias: def.alias,
+        tierAlias: tier.alias,
+        threshold: tier.threshold,
+        progressValue: progress.currentValue,
+        rewards: tier.rewards,
+        periodKey: progress.periodKey ?? "",
+        claimedAt: ts,
+      });
+    }
+
+    return {
+      taskId: def.id,
+      tierAlias: tier.alias,
+      grantedRewards: tier.rewards,
+      claimedAt: ts.toISOString(),
+    };
+  }
+
   return {
     // Category CRUD
     listCategories,
@@ -1186,6 +1516,7 @@ export function createTaskService(
     // Player-facing (Phase 2)
     getTasksForUser,
     claimReward,
+    claimTier,
   };
 }
 

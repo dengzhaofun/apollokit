@@ -38,6 +38,83 @@ const RewardItemSchema = z.object({
   count: z.number().int().positive(),
 });
 
+const TierAliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
+
+const TaskRewardTierSchema = z
+  .object({
+    alias: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(TierAliasRegex, {
+        message:
+          "tier alias must start with [a-z0-9] and contain only [a-z0-9-_]",
+      })
+      .openapi({
+        description:
+          "Stable identifier for this tier, unique within the task. Used as the idempotency key on the claim ledger — keeping it stable lets admins add/remove/reorder tiers without invalidating prior claims.",
+        example: "tier-1",
+      }),
+    threshold: z.number().int().positive().openapi({
+      description:
+        "currentValue >= threshold makes this tier claimable. Must be <= targetValue.",
+      example: 3,
+    }),
+    rewards: z.array(RewardItemSchema).min(1).openapi({
+      description: "Rewards granted when this tier is claimed.",
+    }),
+  })
+  .openapi("TaskRewardTier");
+
+/**
+ * Cross-field validation shared by create & update validators for the
+ * `rewardTiers` array. Keeps aliases unique, enforces strictly
+ * increasing thresholds, and (when `targetValue` is known) requires
+ * every threshold to fit within it.
+ *
+ * Exposed as a free function so the create superRefine and the update
+ * superRefine can both call it — the update path only has
+ * `targetValue` sometimes (patch may omit it), in which case the
+ * target-bound check is skipped and deferred to the service layer when
+ * it merges the patch with the existing row.
+ */
+function refineRewardTiers(
+  tiers: Array<{ alias: string; threshold: number }> | undefined,
+  targetValue: number | undefined,
+  ctx: z.RefinementCtx,
+) {
+  if (!tiers || tiers.length === 0) return;
+  const seenAliases = new Set<string>();
+  let prevThreshold = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    const t = tiers[i]!;
+    if (seenAliases.has(t.alias)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rewardTiers", i, "alias"],
+        message: `duplicate tier alias: ${t.alias}`,
+      });
+    } else {
+      seenAliases.add(t.alias);
+    }
+    if (t.threshold <= prevThreshold) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rewardTiers", i, "threshold"],
+        message: "tier thresholds must be strictly increasing",
+      });
+    }
+    if (targetValue !== undefined && t.threshold > targetValue) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rewardTiers", i, "threshold"],
+        message: `tier threshold (${t.threshold}) must be <= targetValue (${targetValue})`,
+      });
+    }
+    prevThreshold = t.threshold;
+  }
+}
+
 const NavigationSchema = z
   .object({
     type: z.string().min(1).max(64),
@@ -137,6 +214,14 @@ export const CreateDefinitionSchema = z
     rewards: z.array(RewardItemSchema).min(1).openapi({
       description: "Rewards granted on completion.",
     }),
+    rewardTiers: z
+      .array(TaskRewardTierSchema)
+      .default([])
+      .optional()
+      .openapi({
+        description:
+          "Staged (阶段性) rewards claimable at intermediate progress thresholds. Empty array keeps the legacy single-reward behavior. Aliases must be unique and thresholds strictly increasing and <= targetValue.",
+      }),
     autoClaim: z.boolean().optional(),
     navigation: NavigationSchema,
     isActive: z.boolean().optional(),
@@ -198,6 +283,7 @@ export const CreateDefinitionSchema = z
         });
       }
     }
+    refineRewardTiers(val.rewardTiers, val.targetValue, ctx);
   })
   .openapi("TaskCreateDefinition");
 
@@ -220,6 +306,7 @@ export const UpdateDefinitionSchema = z
     parentProgressValue: z.number().int().positive().optional(),
     prerequisiteTaskIds: z.array(z.string().uuid()).optional(),
     rewards: z.array(RewardItemSchema).min(1).optional(),
+    rewardTiers: z.array(TaskRewardTierSchema).optional(),
     autoClaim: z.boolean().optional(),
     navigation: NavigationSchema,
     isActive: z.boolean().optional(),
@@ -246,6 +333,9 @@ export const UpdateDefinitionSchema = z
         });
       }
     }
+    // `targetValue` may be omitted in a patch; pass whatever we have
+    // and let the service layer re-check against the merged row.
+    refineRewardTiers(val.rewardTiers, val.targetValue, ctx);
   })
   .openapi("TaskUpdateDefinition");
 
@@ -331,6 +421,20 @@ export const ClaimBodySchema = z
   })
   .openapi("TaskClaimBody");
 
+export const ClaimTierBodySchema = z
+  .object({
+    endUserId: z.string().min(1).max(256),
+    userHash: z.string().optional(),
+    taskId: z.string().uuid().openapi({
+      description: "Task definition id whose tier is being claimed.",
+    }),
+    tierAlias: z.string().min(1).max(64).openapi({
+      description: "Stable alias of the reward tier to claim.",
+      example: "tier-1",
+    }),
+  })
+  .openapi("TaskClaimTierBody");
+
 // ─── Response schemas ─────────────────────────────────────────────
 
 export const CategoryResponseSchema = z
@@ -375,6 +479,7 @@ export const DefinitionResponseSchema = z
     parentProgressValue: z.number().int(),
     prerequisiteTaskIds: z.array(z.string()),
     rewards: z.array(RewardItemSchema),
+    rewardTiers: z.array(TaskRewardTierSchema),
     autoClaim: z.boolean(),
     navigation: z
       .object({
@@ -409,6 +514,9 @@ export const ClientTaskViewSchema = z
     countingMethod: z.string(),
     targetValue: z.number().int(),
     rewards: z.array(RewardItemSchema),
+    rewardTiers: z.array(TaskRewardTierSchema).openapi({
+      description: "Staged reward tier definitions configured for this task.",
+    }),
     autoClaim: z.boolean(),
     navigation: z
       .object({
@@ -424,6 +532,11 @@ export const ClientTaskViewSchema = z
     isCompleted: z.boolean(),
     completedAt: z.string().nullable(),
     claimedAt: z.string().nullable(),
+    // Tier claim state (aliases already claimed this period)
+    claimedTierAliases: z.array(z.string()).openapi({
+      description:
+        "Tier aliases the user has already claimed this period. Stale (past-period) rows are excluded.",
+    }),
     // Prerequisite status
     prerequisitesMet: z.boolean(),
   })
@@ -448,6 +561,15 @@ export const ClaimResponseSchema = z
     claimedAt: z.string(),
   })
   .openapi("TaskClaimResponse");
+
+export const ClaimTierResponseSchema = z
+  .object({
+    taskId: z.string(),
+    tierAlias: z.string(),
+    grantedRewards: z.array(RewardItemSchema),
+    claimedAt: z.string(),
+  })
+  .openapi("TaskClaimTierResponse");
 
 export const ErrorResponseSchema = z
   .object({

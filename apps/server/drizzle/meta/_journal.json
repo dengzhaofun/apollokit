@@ -176,6 +176,13 @@
       "when": 1776430188522,
       "tag": "0024_stiff_prism",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1776435290332,
+      "tag": "0025_rare_network",
+      "breakpoints": true
     }
   ]
 }
