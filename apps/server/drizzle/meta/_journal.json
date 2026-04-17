@@ -113,6 +113,13 @@
       "when": 1776335151697,
       "tag": "0015_shiny_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1776388180999,
+      "tag": "0016_aromatic_gauntlet",
+      "breakpoints": true
     }
   ]
 }

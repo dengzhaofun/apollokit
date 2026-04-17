@@ -19,3 +19,4 @@ export * from "./team";
 export * from "./friend-gift";
 export * from "./entity";
 export * from "./level";
+export * from "./task";
