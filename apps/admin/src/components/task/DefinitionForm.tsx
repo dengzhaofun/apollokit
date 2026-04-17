@@ -40,6 +40,7 @@ export function DefinitionForm({
       countingMethod: defaultValues?.countingMethod ?? "event_count",
       eventName: defaultValues?.eventName ?? "",
       eventValueField: defaultValues?.eventValueField ?? "",
+      filter: defaultValues?.filter ?? "",
       targetValue: defaultValues?.targetValue ?? 1,
       parentProgressValue: defaultValues?.parentProgressValue ?? 1,
       autoClaim: defaultValues?.autoClaim ?? false,
@@ -49,6 +50,10 @@ export function DefinitionForm({
       activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
+      const isEventBased =
+        value.countingMethod === "event_count" ||
+        value.countingMethod === "event_value"
+      const trimmedFilter = value.filter.trim()
       const input: CreateDefinitionInput = {
         name: value.name,
         alias: value.alias || null,
@@ -58,6 +63,7 @@ export function DefinitionForm({
         countingMethod: value.countingMethod as CreateDefinitionInput["countingMethod"],
         eventName: value.eventName || null,
         eventValueField: value.eventValueField || null,
+        filter: isEventBased && trimmedFilter ? trimmedFilter : null,
         targetValue: value.targetValue,
         parentProgressValue: value.parentProgressValue,
         autoClaim: value.autoClaim,
@@ -255,6 +261,38 @@ export function DefinitionForm({
           </div>
         )}
       </form.Field>
+
+      <form.Subscribe selector={(state) => state.values.countingMethod}>
+        {(countingMethod) => {
+          const isEventBased =
+            countingMethod === "event_count" ||
+            countingMethod === "event_value"
+          if (!isEventBased) return null
+          return (
+            <form.Field name="filter">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name}>Filter Expression</Label>
+                  <Textarea
+                    id={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    rows={3}
+                    className="font-mono text-xs"
+                    placeholder={'monsterId == "dragon" and stats.level >= 10'}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    可选。针对事件数据做过滤，只有表达式求值为真时才计入进度。
+                    使用 filtrex 语法：<code>==</code>、<code>!=</code>、<code>and</code>、<code>or</code>、<code>not</code>、<code>in</code>、<code>{"x >= y"}</code>、<code>{"x of obj"}</code>；
+                    嵌套字段用点号，例如 <code>stats.level</code>。字符串用双引号。
+                  </p>
+                </div>
+              )}
+            </form.Field>
+          )
+        }}
+      </form.Subscribe>
 
       <div className="grid gap-4 md:grid-cols-2">
         <form.Field name="parentProgressValue">

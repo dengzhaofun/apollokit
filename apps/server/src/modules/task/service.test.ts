@@ -18,10 +18,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../../db";
+import { taskDefinitions } from "../../schema/task";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
 import type { MailService } from "../mail/service";
 import type { RewardItemSvc } from "../../lib/rewards";
 import { createTaskService } from "./service";
+import {
+  CreateDefinitionSchema,
+  UpdateDefinitionSchema,
+} from "./validators";
 
 type CapturedMail = {
   organizationId: string;
@@ -612,6 +617,337 @@ describe("task service", () => {
       const shown = tasksAll.find((t) => t.name === "Hidden Task");
       expect(shown).toBeDefined();
       expect(shown!.prerequisitesMet).toBe(false);
+    });
+  });
+
+  // ─── Filter expression ──────────────────────────────────────
+
+  describe("filter expression", () => {
+    const now = new Date("2026-04-16T10:00:00Z");
+
+    test("filter matches → increments progress", async () => {
+      const endUser = "player-filter-match";
+      const def = await svc.createDefinition(orgId, {
+        name: "Kill 1 dragon",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "monster_killed",
+        filter: 'monsterId == "dragon"',
+        targetValue: 1,
+        rewards: [{ type: "item", id: "dragon-reward", count: 1 }],
+      });
+
+      const processed = await svc.processEvent(
+        orgId,
+        endUser,
+        "monster_killed",
+        { monsterId: "dragon" },
+        now,
+      );
+      expect(processed).toBe(1);
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const t = tasks.find((t) => t.id === def.id);
+      expect(t!.currentValue).toBe(1);
+      expect(t!.isCompleted).toBe(true);
+    });
+
+    test("filter rejects → progress unchanged", async () => {
+      const endUser = "player-filter-reject";
+      const def = await svc.createDefinition(orgId, {
+        name: "Kill 1 dragon (reject)",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "monster_killed_reject",
+        filter: 'monsterId == "dragon"',
+        targetValue: 1,
+        rewards: [{ type: "item", id: "dragon-reward-2", count: 1 }],
+      });
+
+      const processed = await svc.processEvent(
+        orgId,
+        endUser,
+        "monster_killed_reject",
+        { monsterId: "goblin" },
+        now,
+      );
+      expect(processed).toBe(0);
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const t = tasks.find((t) => t.id === def.id);
+      expect(t!.currentValue).toBe(0);
+      expect(t!.isCompleted).toBe(false);
+    });
+
+    test("nested dot access via useDotAccessOperator", async () => {
+      const endUser = "player-filter-nested";
+      const def = await svc.createDefinition(orgId, {
+        name: "High level kill",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "nested_kill",
+        filter: "stats.level >= 10",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "lvl-reward", count: 1 }],
+      });
+
+      // Nested object should satisfy
+      await svc.processEvent(
+        orgId,
+        endUser,
+        "nested_kill",
+        { stats: { level: 15 } },
+        now,
+      );
+
+      let tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      let t = tasks.find((t) => t.id === def.id);
+      expect(t!.currentValue).toBe(1);
+    });
+
+    test("dot notation resolves nested fields, not literal 'a.b' keys", async () => {
+      const endUser = "player-filter-nested-literal";
+      const def = await svc.createDefinition(orgId, {
+        name: "Literal dot rejected",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "literal_dot_kill",
+        filter: "stats.level >= 10",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+      });
+
+      // A literal "stats.level" key must NOT be treated as a match.
+      const processed = await svc.processEvent(
+        orgId,
+        endUser,
+        "literal_dot_kill",
+        { "stats.level": 15 },
+        now,
+      );
+      expect(processed).toBe(0);
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const t = tasks.find((t) => t.id === def.id);
+      expect(t!.currentValue).toBe(0);
+    });
+
+    test("filter combined with event_value accumulation", async () => {
+      const endUser = "player-filter-value";
+      const def = await svc.createDefinition(orgId, {
+        name: "Spend 500 gold on weapons",
+        period: "none",
+        countingMethod: "event_value",
+        eventName: "purchase_filtered",
+        eventValueField: "amount",
+        filter: 'category == "weapon"',
+        targetValue: 500,
+        rewards: [{ type: "item", id: "weapon-reward", count: 1 }],
+      });
+
+      // Non-matching event: filtered out, no progress
+      await svc.processEvent(
+        orgId,
+        endUser,
+        "purchase_filtered",
+        { amount: 400, category: "potion" },
+        now,
+      );
+
+      // Matching events: accumulate
+      await svc.processEvent(
+        orgId,
+        endUser,
+        "purchase_filtered",
+        { amount: 300, category: "weapon" },
+        now,
+      );
+      await svc.processEvent(
+        orgId,
+        endUser,
+        "purchase_filtered",
+        { amount: 250, category: "weapon" },
+        now,
+      );
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const t = tasks.find((t) => t.id === def.id);
+      expect(t!.currentValue).toBe(550);
+      expect(t!.isCompleted).toBe(true);
+    });
+
+    test("malformed filter stored via raw insert → event skipped, other tasks unaffected", async () => {
+      const endUser = "player-filter-malformed";
+
+      // Legit task on the same event.
+      const legit = await svc.createDefinition(orgId, {
+        name: "Legit task",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "malformed_event",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+      });
+
+      // Broken task: bypass the validator by inserting a garbage filter
+      // directly into the DB, simulating corrupted / legacy data.
+      const [broken] = await db
+        .insert(taskDefinitions)
+        .values({
+          organizationId: orgId,
+          name: "Broken filter task",
+          period: "none",
+          timezone: "UTC",
+          weekStartsOn: 1,
+          countingMethod: "event_count",
+          eventName: "malformed_event",
+          filter: "monsterId ===", // syntax error
+          targetValue: 1,
+          parentProgressValue: 1,
+          prerequisiteTaskIds: [],
+          rewards: [{ type: "item", id: "x", count: 1 }],
+          autoClaim: false,
+        })
+        .returning();
+
+      const processed = await svc.processEvent(
+        orgId,
+        endUser,
+        "malformed_event",
+        {},
+        now,
+      );
+
+      // Legit task processed; broken task skipped.
+      expect(processed).toBe(1);
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const tLegit = tasks.find((t) => t.id === legit.id);
+      expect(tLegit!.currentValue).toBe(1);
+
+      const tBroken = tasks.find((t) => t.id === broken!.id);
+      // No progress row was created for the broken task.
+      expect(tBroken!.currentValue).toBe(0);
+      expect(tBroken!.isCompleted).toBe(false);
+    });
+
+    test("filter blocks downstream prerequisite from unlocking", async () => {
+      const endUser = "player-filter-prereq";
+
+      const prereq = await svc.createDefinition(orgId, {
+        name: "Kill 1 dragon (prereq)",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "prereq_filtered_kill",
+        filter: 'monsterId == "dragon"',
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+      });
+
+      const dependent = await svc.createDefinition(orgId, {
+        name: "Post-dragon task",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "dependent_filtered_event",
+        prerequisiteTaskIds: [prereq.id],
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+      });
+
+      // Event for the prereq arrives but filter rejects → prereq stays at 0.
+      await svc.processEvent(
+        orgId,
+        endUser,
+        "prereq_filtered_kill",
+        { monsterId: "goblin" },
+        now,
+      );
+
+      // Dependent event should be gated because prereq is incomplete.
+      const processed = await svc.processEvent(
+        orgId,
+        endUser,
+        "dependent_filtered_event",
+        {},
+        now,
+      );
+      expect(processed).toBe(0);
+
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const tDep = tasks.find((t) => t.id === dependent.id);
+      expect(tDep!.currentValue).toBe(0);
+    });
+
+    test("update with filter + child_completion is rejected", async () => {
+      const parent = await svc.createDefinition(orgId, {
+        name: "Parent for filter conflict",
+        period: "none",
+        countingMethod: "child_completion",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+      });
+
+      await expect(
+        svc.updateDefinition(orgId, parent.id, {
+          filter: 'x == "y"',
+        }),
+      ).rejects.toThrow(/child_completion/);
+    });
+  });
+
+  // ─── Validator-level filter checks ──────────────────────────
+
+  describe("filter validator", () => {
+    const baseInput = {
+      name: "T",
+      period: "none" as const,
+      countingMethod: "event_count" as const,
+      eventName: "evt",
+      targetValue: 1,
+      rewards: [{ type: "item" as const, id: "x", count: 1 }],
+    };
+
+    test("rejects syntactically invalid filter", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        ...baseInput,
+        filter: "monsterId ===",
+      });
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        const paths = res.error.issues.map((i) => i.path.join("."));
+        expect(paths).toContain("filter");
+      }
+    });
+
+    test("rejects filter with countingMethod=child_completion", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        name: "T",
+        period: "none" as const,
+        countingMethod: "child_completion" as const,
+        filter: 'x == "y"',
+        targetValue: 1,
+        rewards: [{ type: "item" as const, id: "x", count: 1 }],
+      });
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        const paths = res.error.issues.map((i) => i.path.join("."));
+        expect(paths).toContain("filter");
+      }
+    });
+
+    test("accepts valid filter on event_count", () => {
+      const res = CreateDefinitionSchema.safeParse({
+        ...baseInput,
+        filter: 'monsterId == "dragon" and stats.level >= 10',
+      });
+      expect(res.success).toBe(true);
+    });
+
+    test("UpdateDefinitionSchema rejects syntactically invalid filter", () => {
+      const res = UpdateDefinitionSchema.safeParse({
+        filter: "bad ===",
+      });
+      expect(res.success).toBe(false);
     });
   });
 

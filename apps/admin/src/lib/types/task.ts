@@ -41,6 +41,7 @@ export interface TaskDefinition {
   countingMethod: string
   eventName: string | null
   eventValueField: string | null
+  filter: string | null
   targetValue: number
   parentProgressValue: number
   prerequisiteTaskIds: string[]
@@ -83,6 +84,7 @@ export interface CreateDefinitionInput {
   countingMethod: CountingMethod
   eventName?: string | null
   eventValueField?: string | null
+  filter?: string | null
   targetValue: number
   parentProgressValue?: number
   prerequisiteTaskIds?: string[]

@@ -158,6 +158,10 @@ export const taskDefinitions = pgTable(
     countingMethod: text("counting_method").notNull(),
     eventName: text("event_name"),
     eventValueField: text("event_value_field"),
+    // Optional filtrex expression evaluated against eventData. When set,
+    // the event only advances progress if the expression returns truthy.
+    // NULL means "no filter" (legacy behaviour, backward compatible).
+    filter: text("filter"),
     targetValue: integer("target_value").notNull(),
     parentProgressValue: integer("parent_progress_value").default(1).notNull(),
     prerequisiteTaskIds: jsonb("prerequisite_task_ids")

@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { compileTaskFilter, FILTER_MAX_LENGTH } from "./filter";
 import { CATEGORY_SCOPES, COUNTING_METHODS, TASK_PERIODS } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -108,6 +109,20 @@ export const CreateDefinitionSchema = z
         "Dot-path into eventData for event_value counting. e.g. 'amount'.",
       example: "amount",
     }),
+    filter: z
+      .string()
+      .min(1)
+      .max(FILTER_MAX_LENGTH)
+      .nullable()
+      .optional()
+      .openapi({
+        description:
+          "Optional filtrex expression evaluated against eventData. The " +
+          "event only advances progress if it returns truthy. Nested " +
+          "fields use dot notation, e.g. `monsterId == \"dragon\" and " +
+          "stats.level >= 10`.",
+        example: 'monsterId == "dragon"',
+      }),
     targetValue: z.number().int().positive().openapi({
       description: "Goal value to complete the task.",
       example: 3,
@@ -161,6 +176,27 @@ export const CreateDefinitionSchema = z
             "eventName must not be set when countingMethod='child_completion'",
         });
       }
+      if (val.filter) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["filter"],
+          message:
+            "filter must not be set when countingMethod='child_completion'",
+        });
+      }
+    }
+    if (val.filter) {
+      try {
+        compileTaskFilter(val.filter);
+      } catch (err) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["filter"],
+          message: `invalid filter expression: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        });
+      }
     }
   })
   .openapi("TaskCreateDefinition");
@@ -179,6 +215,7 @@ export const UpdateDefinitionSchema = z
     countingMethod: z.enum(COUNTING_METHODS).optional(),
     eventName: z.string().min(1).max(128).nullable().optional(),
     eventValueField: z.string().min(1).max(128).nullable().optional(),
+    filter: z.string().min(1).max(FILTER_MAX_LENGTH).nullable().optional(),
     targetValue: z.number().int().positive().optional(),
     parentProgressValue: z.number().int().positive().optional(),
     prerequisiteTaskIds: z.array(z.string().uuid()).optional(),
@@ -191,6 +228,24 @@ export const UpdateDefinitionSchema = z
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
+  })
+  .superRefine((val, ctx) => {
+    // Only validate shape here — cross-field rules that depend on
+    // countingMethod live on the service layer (the caller may be
+    // patching only `filter` while countingMethod is unchanged).
+    if (val.filter) {
+      try {
+        compileTaskFilter(val.filter);
+      } catch (err) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["filter"],
+          message: `invalid filter expression: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        });
+      }
+    }
   })
   .openapi("TaskUpdateDefinition");
 
@@ -315,6 +370,7 @@ export const DefinitionResponseSchema = z
     countingMethod: z.string(),
     eventName: z.string().nullable(),
     eventValueField: z.string().nullable(),
+    filter: z.string().nullable(),
     targetValue: z.number().int(),
     parentProgressValue: z.number().int(),
     prerequisiteTaskIds: z.array(z.string()),

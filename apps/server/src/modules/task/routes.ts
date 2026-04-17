@@ -78,6 +78,7 @@ function serializeDefinition(row: {
   countingMethod: string;
   eventName: string | null;
   eventValueField: string | null;
+  filter: string | null;
   targetValue: number;
   parentProgressValue: number;
   prerequisiteTaskIds: string[];
@@ -106,6 +107,7 @@ function serializeDefinition(row: {
     countingMethod: row.countingMethod,
     eventName: row.eventName,
     eventValueField: row.eventValueField,
+    filter: row.filter,
     targetValue: row.targetValue,
     parentProgressValue: row.parentProgressValue,
     prerequisiteTaskIds: row.prerequisiteTaskIds,
