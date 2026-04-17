@@ -20,6 +20,7 @@ import {
 import type { RewardEntry } from "../../lib/rewards";
 import { grantRewards, type RewardServices } from "../../lib/rewards";
 import type { MailService } from "../mail/service";
+import { compileTaskFilter, type TaskFilterFn } from "./filter";
 import {
   TaskAliasConflict,
   TaskAlreadyClaimed,
@@ -118,6 +119,67 @@ export function createTaskService(
   mailSvcGetter: () => MailService | undefined,
 ) {
   const { db, events } = d;
+
+  // ─── Filter expression cache ──────────────────────────────────
+  //
+  // Compile filtrex expressions once per (taskId + expression) and reuse the
+  // resulting function across events. Bound to this factory closure, so each
+  // Workers isolate gets its own cache. The key embeds the expression itself
+  // so that updating a definition's filter transparently invalidates the old
+  // compiled function without needing a manual purge step.
+  const filterCache = new Map<string, TaskFilterFn>();
+
+  function getCompiledFilter(
+    taskId: string,
+    expression: string,
+  ): TaskFilterFn | null {
+    const key = `${taskId}:${expression}`;
+    const cached = filterCache.get(key);
+    if (cached) return cached;
+    try {
+      const fn = compileTaskFilter(expression);
+      filterCache.set(key, fn);
+      return fn;
+    } catch (err) {
+      // Malformed filter reached runtime (e.g. definition written via raw SQL
+      // bypassing the validator). Log and fail-closed — the task is skipped
+      // but other tasks in the dispatch loop keep processing.
+      console.error("task: filter compile failed", {
+        taskId,
+        expression,
+        err,
+      });
+      return null;
+    }
+  }
+
+  function matchesFilter(
+    def: TaskDefinition,
+    eventData: Record<string, unknown>,
+  ): boolean {
+    if (!def.filter) return true;
+    const fn = getCompiledFilter(def.id, def.filter);
+    if (!fn) return false;
+    let result: unknown;
+    try {
+      result = fn(eventData);
+    } catch (err) {
+      console.error("task: filter evaluation failed", {
+        taskId: def.id,
+        err,
+      });
+      return false;
+    }
+    // filtrex wraps its compiled function in `try { ... } catch (e) { return e }`
+    // — runtime errors (e.g. UnknownPropertyError when a referenced field is
+    // missing from eventData) come back as Error instances rather than
+    // thrown exceptions. An Error return counts as "filter did not match",
+    // keeping the fail-closed contract even for missing-field cases.
+    if (result instanceof Error) {
+      return false;
+    }
+    return Boolean(result);
+  }
 
   // ─── Load helpers ─────────────────────────────────────────────
 
@@ -346,6 +408,7 @@ export function createTaskService(
           countingMethod: input.countingMethod,
           eventName: input.eventName ?? null,
           eventValueField: input.eventValueField ?? null,
+          filter: input.filter ?? null,
           targetValue: input.targetValue,
           parentProgressValue: input.parentProgressValue ?? 1,
           prerequisiteTaskIds: input.prerequisiteTaskIds ?? [],
@@ -389,6 +452,20 @@ export function createTaskService(
       }
     }
 
+    // Reject filter + child_completion. The update validator can't enforce
+    // this alone because a caller may be patching only `filter` or only
+    // `countingMethod`; the conflict is only visible once merged with the
+    // existing row.
+    const effectiveCountingMethod =
+      patch.countingMethod ?? existing.countingMethod;
+    const effectiveFilter =
+      patch.filter !== undefined ? patch.filter : existing.filter;
+    if (effectiveFilter && effectiveCountingMethod === "child_completion") {
+      throw new TaskInvalidInput(
+        "filter must not be set when countingMethod='child_completion'",
+      );
+    }
+
     const values: Partial<typeof taskDefinitions.$inferInsert> = {};
     if (patch.categoryId !== undefined) values.categoryId = patch.categoryId;
     if (patch.parentId !== undefined) values.parentId = patch.parentId;
@@ -405,6 +482,7 @@ export function createTaskService(
     if (patch.eventName !== undefined) values.eventName = patch.eventName;
     if (patch.eventValueField !== undefined)
       values.eventValueField = patch.eventValueField;
+    if (patch.filter !== undefined) values.filter = patch.filter;
     if (patch.targetValue !== undefined) values.targetValue = patch.targetValue;
     if (patch.parentProgressValue !== undefined)
       values.parentProgressValue = patch.parentProgressValue;
@@ -510,7 +588,12 @@ export function createTaskService(
         if (!prereqsMet) continue;
       }
 
-      // 4. Compute increment
+      // 4. Apply filter expression (if configured). Runs in-memory against
+      //    eventData. Fail-closed on compile/eval errors — a broken filter
+      //    on one task must not poison dispatch for the rest.
+      if (!matchesFilter(def, eventData)) continue;
+
+      // 5. Compute increment
       let increment = 1;
       if (def.countingMethod === "event_value" && def.eventValueField) {
         increment = extractValue(eventData, def.eventValueField);
