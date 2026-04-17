@@ -62,7 +62,16 @@ import {
   levelRouter,
   levelClientRouter,
 } from "./modules/level";
+import {
+  leaderboardRouter,
+  leaderboardClientRouter,
+} from "./modules/leaderboard";
+import {
+  activityRouter,
+  activityClientRouter,
+} from "./modules/activity";
 import { health } from "./routes/health";
+import { scheduled } from "./scheduled";
 
 const app = new OpenAPIHono<HonoEnv>();
 
@@ -117,6 +126,8 @@ app.route("/api/shop", shopRouter);
 app.route("/api/task", taskRouter);
 app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);
+app.route("/api/leaderboard", leaderboardRouter);
+app.route("/api/activity", activityRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/banner", bannerClientRouter);
@@ -136,6 +147,8 @@ app.route("/api/client/shop", shopClientRouter);
 app.route("/api/client/task", taskClientRouter);
 app.route("/api/client/team", teamClientRouter);
 app.route("/api/client/level", levelClientRouter);
+app.route("/api/client/leaderboard", leaderboardClientRouter);
+app.route("/api/client/activity", activityClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {
@@ -155,4 +168,9 @@ app.get(
   }),
 );
 
-export default app;
+// Module-worker form: Cloudflare reads `.fetch` and `.scheduled` off the
+// default export. We attach `scheduled` directly to the Hono app instance
+// so tests that still do `import app from "./index"` keep working with
+// `app.request(...)` / `app.fetch(...)`.
+Object.assign(app, { scheduled });
+export default app as typeof app & { scheduled: typeof scheduled };

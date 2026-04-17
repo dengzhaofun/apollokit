@@ -150,6 +150,8 @@ function buildProductsQueryString(query: ShopListProductsQuery): string {
     params.set("isActive", String(query.isActive))
   if (query.includeDescendantCategories)
     params.set("includeDescendantCategories", "true")
+  if (query.activityId) params.set("activityId", query.activityId)
+  if (query.includeActivity) params.set("includeActivity", "true")
   const s = params.toString()
   return s ? `?${s}` : ""
 }

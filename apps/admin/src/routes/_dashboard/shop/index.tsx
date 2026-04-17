@@ -14,6 +14,11 @@ import {
 import { Separator } from "#/components/ui/separator"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
+import {
   useShopCategories,
   useShopProducts,
   useShopTags,
@@ -31,6 +36,7 @@ function ShopProductsPage() {
   const [productType, setProductType] = useState<string>(ALL)
   const [categoryId, setCategoryId] = useState<string>(ALL)
   const [tagId, setTagId] = useState<string>(ALL)
+  const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
 
   const { data: categories } = useShopCategories()
   const { data: tags } = useShopTags()
@@ -43,6 +49,7 @@ function ShopProductsPage() {
       productType === ALL ? undefined : (productType as ShopProductType),
     categoryId: categoryId === ALL ? undefined : categoryId,
     tagId: tagId === ALL ? undefined : tagId,
+    ...scopeToFilter(scope),
   })
 
   return (
@@ -106,6 +113,7 @@ function ShopProductsPage() {
               ...(tags ?? []).map((t) => ({ value: t.id, label: t.name })),
             ]}
           />
+          <ActivityScopeFilter value={scope} onChange={setScope} />
         </div>
 
         {isPending ? (

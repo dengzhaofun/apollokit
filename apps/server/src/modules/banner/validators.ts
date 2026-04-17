@@ -37,6 +37,11 @@ export const CreateBannerGroupSchema = z
     layout: LayoutSchema.optional(),
     intervalMs: z.number().int().min(500).max(60_000).optional(),
     isActive: z.boolean().optional(),
+    activityId: z.string().uuid().nullable().optional().openapi({
+      description:
+        "Bind this banner group to an activity. Null means a permanent placement.",
+    }),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .openapi("BannerGroupCreateRequest");

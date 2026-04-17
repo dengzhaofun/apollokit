@@ -306,6 +306,8 @@ const ProductBaseShape = {
   globalLimit: z.number().int().positive().nullable().optional(),
   sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
+  activityId: z.string().uuid().nullable().optional(),
+  activityNodeId: z.string().uuid().nullable().optional(),
   metadata: MetadataSchema,
   tagIds: z.array(z.string().uuid()).max(32).optional(),
 };
@@ -340,6 +342,8 @@ export const UpdateProductSchema = z
     globalLimit: z.number().int().positive().nullable().optional(),
     sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
+    activityId: z.string().uuid().nullable().optional(),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
     tagIds: z.array(z.string().uuid()).max(32).optional(),
   })
@@ -541,6 +545,14 @@ export const ListProductsQuerySchema = z
     availableAt: z.string().datetime().optional().openapi({
       description:
         "Restrict to products whose absolute time-window contains this instant.",
+    }),
+    activityId: z.string().uuid().optional().openapi({
+      description:
+        "Only list products linked to this activity. Overrides the default (activityId IS NULL) filter.",
+    }),
+    includeActivity: z.enum(["true", "false"]).optional().openapi({
+      description:
+        "When 'true', include activity-scoped products in the result. Default lists standalone products only.",
     }),
   })
   .openapi("ShopListProductsQuery");

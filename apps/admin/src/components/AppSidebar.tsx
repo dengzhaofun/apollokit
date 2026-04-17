@@ -13,11 +13,13 @@ import {
   Map,
   MessagesSquare,
   Package,
+  PartyPopper,
   Shield,
   ShoppingCart,
   Sparkles,
   Swords,
   Ticket,
+  Trophy,
   Users,
 } from "lucide-react"
 
@@ -56,6 +58,8 @@ function getNavItems() {
     { title: m.nav_team(), to: "/team" as const, icon: Swords },
     { title: m.nav_gift(), to: "/friend-gift" as const, icon: Gift },
     { title: m.nav_task(), to: "/task" as const, icon: ListTodo },
+    { title: m.nav_activity(), to: "/activity" as const, icon: PartyPopper },
+    { title: m.nav_leaderboard(), to: "/leaderboard" as const, icon: Trophy },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
 }

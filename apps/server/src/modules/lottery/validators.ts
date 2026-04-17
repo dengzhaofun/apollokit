@@ -48,6 +48,8 @@ export const CreatePoolSchema = z
     startAt: z.string().datetime().nullable().optional(),
     endAt: z.string().datetime().nullable().optional(),
     globalPullLimit: z.number().int().positive().nullable().optional(),
+    activityId: z.string().uuid().nullable().optional(),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LotteryCreatePool");
@@ -62,6 +64,8 @@ export const UpdatePoolSchema = z
     startAt: z.string().datetime().nullable().optional(),
     endAt: z.string().datetime().nullable().optional(),
     globalPullLimit: z.number().int().positive().nullable().optional(),
+    activityId: z.string().uuid().nullable().optional(),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LotteryUpdatePool");

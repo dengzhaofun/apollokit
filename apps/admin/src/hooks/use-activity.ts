@@ -1,0 +1,288 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
+import { api } from "#/lib/api-client"
+import type {
+  Activity,
+  ActivityNode,
+  ActivitySchedule,
+  ActivityTemplate,
+  ActivityViewForUser,
+  CreateActivityInput,
+  CreateActivityTemplateInput,
+  CreateNodeInput,
+  CreateScheduleInput,
+  CreateWebhookEndpointInput,
+  UpdateActivityInput,
+  WebhookEndpoint,
+} from "#/lib/types/activity"
+
+const KEY = ["activities"] as const
+
+export function useActivities() {
+  return useQuery({
+    queryKey: KEY,
+    queryFn: () => api.get<{ items: Activity[] }>("/api/activity"),
+    select: (data) => data.items,
+  })
+}
+
+export function useActivity(key: string) {
+  return useQuery({
+    queryKey: [...KEY, key],
+    queryFn: () => api.get<Activity>(`/api/activity/${key}`),
+    enabled: !!key,
+  })
+}
+
+export function useCreateActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateActivityInput) =>
+      api.post<Activity>("/api/activity", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useUpdateActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...patch }: UpdateActivityInput & { id: string }) =>
+      api.patch<Activity>(`/api/activity/${id}`, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useDeleteActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/activity/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useActivityLifecycle() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      key,
+      action,
+    }: {
+      key: string
+      action: "publish" | "unpublish" | "archive"
+    }) => api.post<Activity>(`/api/activity/${key}/publish`, { action }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+// ─── Nodes ─────────────────────────────────────────────────────────
+
+export function useActivityNodes(key: string) {
+  return useQuery({
+    queryKey: ["activity-nodes", key],
+    queryFn: () =>
+      api.get<{ items: ActivityNode[] }>(`/api/activity/${key}/nodes`),
+    select: (data) => data.items,
+    enabled: !!key,
+  })
+}
+
+export function useCreateActivityNode(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateNodeInput) =>
+      api.post<ActivityNode>(`/api/activity/${activityKey}/nodes`, input),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
+  })
+}
+
+export function useUpdateActivityNode(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...patch
+    }: {
+      id: string
+      enabled?: boolean
+      orderIndex?: number
+      nodeConfig?: Record<string, unknown> | null
+      refId?: string | null
+      unlockRule?: Record<string, unknown> | null
+    }) =>
+      api.patch<ActivityNode>(`/api/activity/nodes/${id}`, patch),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
+  })
+}
+
+export function useDeleteActivityNode(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (nodeId: string) =>
+      api.delete(`/api/activity/nodes/${nodeId}`),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
+  })
+}
+
+// ─── Schedules ─────────────────────────────────────────────────────
+
+export function useActivitySchedules(key: string) {
+  return useQuery({
+    queryKey: ["activity-schedules", key],
+    queryFn: () =>
+      api.get<{ items: ActivitySchedule[] }>(
+        `/api/activity/${key}/schedules`,
+      ),
+    select: (data) => data.items,
+    enabled: !!key,
+  })
+}
+
+export function useCreateActivitySchedule(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateScheduleInput) =>
+      api.post<ActivitySchedule>(
+        `/api/activity/${activityKey}/schedules`,
+        input,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-schedules", activityKey] }),
+  })
+}
+
+export function useDeleteActivitySchedule(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/activity/schedules/${id}`),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-schedules", activityKey] }),
+  })
+}
+
+// ─── Player view (aggregated) ──────────────────────────────────────
+
+export function useActivityForUser(activityKey: string, endUserId: string) {
+  return useQuery({
+    queryKey: ["activity-view", activityKey, endUserId],
+    queryFn: () =>
+      api.get<ActivityViewForUser>(
+        `/api/activity/${activityKey}/view/${encodeURIComponent(endUserId)}`,
+      ),
+    enabled: !!activityKey && !!endUserId,
+  })
+}
+
+// ─── Webhook endpoints ─────────────────────────────────────────────
+
+const WEBHOOK_KEY = ["activity-webhooks"] as const
+
+export function useWebhookEndpoints() {
+  return useQuery({
+    queryKey: WEBHOOK_KEY,
+    queryFn: () =>
+      api.get<{ items: WebhookEndpoint[] }>(
+        "/api/activity/webhook-endpoints",
+      ),
+    select: (d) => d.items,
+  })
+}
+
+export function useCreateWebhookEndpoint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateWebhookEndpointInput) =>
+      api.post<WebhookEndpoint>("/api/activity/webhook-endpoints", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: WEBHOOK_KEY }),
+  })
+}
+
+export function useDeleteWebhookEndpoint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/api/activity/webhook-endpoints/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: WEBHOOK_KEY }),
+  })
+}
+
+// ─── Templates (recurring activities) ─────────────────────────────
+
+const TEMPLATES_KEY = ["activity-templates"] as const
+
+export function useActivityTemplates() {
+  return useQuery({
+    queryKey: TEMPLATES_KEY,
+    queryFn: () =>
+      api.get<{ items: ActivityTemplate[] }>("/api/activity/templates"),
+    select: (d) => d.items,
+  })
+}
+
+export function useCreateActivityTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateActivityTemplateInput) =>
+      api.post<ActivityTemplate>("/api/activity/templates", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TEMPLATES_KEY }),
+  })
+}
+
+export function useDeleteActivityTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/activity/templates/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TEMPLATES_KEY }),
+  })
+}
+
+export function useInstantiateActivityTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post<{ activityAlias: string; activityId: string }>(
+        `/api/activity/templates/${id}/instantiate`,
+      ),
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
+// ─── Analytics ─────────────────────────────────────────────────────
+
+export interface ActivityAnalytics {
+  participants: number
+  completed: number
+  dropped: number
+  avgPoints: number
+  maxPoints: number
+  p50Points: number
+  milestoneClaims: Array<{ milestoneAlias: string; count: number }>
+  pointsBuckets: Array<{ bucket: string; count: number }>
+}
+
+export function useActivityAnalytics(key: string) {
+  return useQuery({
+    queryKey: ["activity-analytics", key],
+    queryFn: () =>
+      api.get<ActivityAnalytics>(`/api/activity/${key}/analytics`),
+    enabled: !!key,
+  })
+}
+
+// ─── Ops ───────────────────────────────────────────────────────────
+
+export function useActivityTickRun() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      api.post<{
+        advanced: number
+        scheduleFired: number
+        webhooksDelivered: number
+        errors: number
+      }>("/api/activity/tick/run"),
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}

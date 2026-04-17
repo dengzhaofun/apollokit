@@ -170,6 +170,14 @@ export const taskDefinitions = pgTable(
     isActive: boolean("is_active").default(true).notNull(),
     isHidden: boolean("is_hidden").default(false).notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this task belongs to
+     * an activity's `task_group` node. NULL = standalone (permanent)
+     * task. See `check_in_configs.activityId` for the rationale behind
+     * keeping this FK-less.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -198,6 +206,9 @@ export const taskDefinitions = pgTable(
     uniqueIndex("task_definitions_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    // Filter by activity (admin "show activity configs" toggle,
+    // player-side activity node resolution)
+    index("task_definitions_activity_idx").on(table.activityId),
   ],
 );
 

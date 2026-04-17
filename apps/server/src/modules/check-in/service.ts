@@ -49,7 +49,7 @@
  * record at the end — nothing else needs to change.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import type { RewardEntry } from "../../lib/rewards";
@@ -158,6 +158,8 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
             target: input.target ?? null,
             timezone: input.timezone ?? "UTC",
             isActive: input.isActive ?? true,
+            activityId: input.activityId ?? null,
+            activityNodeId: input.activityNodeId ?? null,
             metadata: input.metadata ?? null,
           })
           .returning();
@@ -197,6 +199,10 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       if (patch.target !== undefined) updateValues.target = patch.target;
       if (patch.timezone !== undefined) updateValues.timezone = patch.timezone;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
+      if (patch.activityId !== undefined)
+        updateValues.activityId = patch.activityId;
+      if (patch.activityNodeId !== undefined)
+        updateValues.activityNodeId = patch.activityNodeId;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
       if (Object.keys(updateValues).length === 0) return existing;
@@ -235,11 +241,27 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       if (deleted.length === 0) throw new CheckInConfigNotFound(id);
     },
 
-    async listConfigs(organizationId: string): Promise<CheckInConfig[]> {
+    /**
+     * List check-in configs. By default, activity-scoped configs (with
+     * `activityId IS NOT NULL`) are excluded so the "standalone
+     * check-ins" admin page isn't polluted by per-event one-offs. Pass
+     * `{ includeActivity: true }` to show everything, or
+     * `{ activityId: "<uuid>" }` to list configs for a specific activity.
+     */
+    async listConfigs(
+      organizationId: string,
+      filter?: { includeActivity?: boolean; activityId?: string },
+    ): Promise<CheckInConfig[]> {
+      const conds = [eq(checkInConfigs.organizationId, organizationId)];
+      if (filter?.activityId) {
+        conds.push(eq(checkInConfigs.activityId, filter.activityId));
+      } else if (!filter?.includeActivity) {
+        conds.push(isNull(checkInConfigs.activityId));
+      }
       return db
         .select()
         .from(checkInConfigs)
-        .where(eq(checkInConfigs.organizationId, organizationId))
+        .where(and(...conds))
         .orderBy(desc(checkInConfigs.createdAt));
     },
 

@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
 import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { ConfigTable } from "#/components/check-in/ConfigTable"
+import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
 import { useCheckInConfigs } from "#/hooks/use-check-in"
 
 export const Route = createFileRoute("/_dashboard/check-in/")({
@@ -13,7 +19,10 @@ export const Route = createFileRoute("/_dashboard/check-in/")({
 })
 
 function CheckInListPage() {
-  const { data: configs, isPending, error } = useCheckInConfigs()
+  const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
+  const { data: configs, isPending, error } = useCheckInConfigs(
+    scopeToFilter(scope),
+  )
 
   return (
     <>
@@ -21,7 +30,8 @@ function CheckInListPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold">{m.checkin_title()}</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm">
             <Link to="/check-in/create">
               <Plus className="size-4" />

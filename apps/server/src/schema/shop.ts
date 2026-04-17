@@ -164,6 +164,14 @@ export const shopProducts = pgTable(
 
     sortOrder: integer("sort_order").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this product belongs
+     * to an activity's `exchange` node. NULL = permanent shop product.
+     * When an activity archives, the activity service flips `isActive`
+     * off for its products per the activity's `cleanupRule`.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -197,6 +205,7 @@ export const shopProducts = pgTable(
     uniqueIndex("shop_products_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("shop_products_activity_idx").on(table.activityId),
   ],
 );
 

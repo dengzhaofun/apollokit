@@ -337,10 +337,14 @@ taskRouter.openapi(
     const categoryId = c.req.query("categoryId") ?? undefined;
     const period = c.req.query("period") ?? undefined;
     const parentId = c.req.query("parentId");
+    const activityId = c.req.query("activityId") ?? undefined;
+    const includeActivity = c.req.query("includeActivity") === "true";
     const rows = await taskService.listDefinitions(orgId, {
       categoryId,
       period,
       parentId: parentId === undefined ? undefined : parentId === "null" ? null : parentId,
+      activityId,
+      includeActivity,
     });
     return c.json({ items: rows.map(serializeDefinition) }, 200);
   },

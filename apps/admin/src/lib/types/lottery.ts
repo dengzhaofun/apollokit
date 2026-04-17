@@ -12,6 +12,8 @@ export interface LotteryPool {
   endAt: string | null
   globalPullLimit: number | null
   globalPullCount: number
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -103,6 +105,8 @@ export interface CreatePoolInput {
   startAt?: string | null
   endAt?: string | null
   globalPullLimit?: number | null
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -115,6 +119,8 @@ export interface UpdatePoolInput {
   startAt?: string | null
   endAt?: string | null
   globalPullLimit?: number | null
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 

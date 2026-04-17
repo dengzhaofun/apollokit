@@ -11,6 +11,8 @@ export interface CheckInConfig {
   target: number | null
   timezone: string
   isActive: boolean
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -58,6 +60,8 @@ export interface CreateConfigInput {
   target?: number | null
   timezone?: string
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -69,5 +73,8 @@ export interface UpdateConfigInput {
   target?: number | null
   timezone?: string
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
+

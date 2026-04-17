@@ -1,6 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
+import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
 import { GroupTable } from "#/components/banner/GroupTable"
 import { Button } from "#/components/ui/button"
 import { Separator } from "#/components/ui/separator"
@@ -13,7 +19,10 @@ export const Route = createFileRoute("/_dashboard/banner/")({
 })
 
 function BannerListPage() {
-  const { data: items, isPending, error } = useBannerGroups()
+  const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
+  const { data: items, isPending, error } = useBannerGroups(
+    scopeToFilter(scope),
+  )
 
   return (
     <>
@@ -21,7 +30,8 @@ function BannerListPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold">{m.banner_title()}</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm">
             <Link to="/banner/create">
               <Plus className="size-4" />

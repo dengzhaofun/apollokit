@@ -303,7 +303,12 @@ lotteryRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await lotteryService.listPools(orgId);
+    const activityId = c.req.query("activityId") ?? undefined;
+    const includeActivity = c.req.query("includeActivity") === "true";
+    const rows = await lotteryService.listPools(orgId, {
+      activityId,
+      includeActivity,
+    });
     return c.json({ items: rows.map(serializePool) }, 200);
   },
 );

@@ -44,7 +44,37 @@ import type {
 } from "./validators";
 import { computePeriodKey, isPeriodStale } from "./time";
 
-type TaskDeps = Pick<AppDeps, "db">;
+// `events` is optional so existing tests that pass only { db } keep
+// compiling. In production wiring (barrel index.ts) we always supply
+// the bus from `deps`.
+type TaskDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with task-domain events.
+// Subscribers (leaderboard, analytics, ...) register handlers on
+// their own barrel.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "task.claimed": {
+      organizationId: string;
+      endUserId: string;
+      taskId: string;
+      taskAlias: string | null;
+      categoryId: string | null;
+      progressValue: number;
+      rewards: RewardEntry[];
+      periodKey: string;
+      claimedAt: Date;
+    };
+    "task.completed": {
+      organizationId: string;
+      endUserId: string;
+      taskId: string;
+      taskAlias: string | null;
+      progressValue: number;
+      completedAt: Date;
+    };
+  }
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -87,7 +117,7 @@ export function createTaskService(
   rewardServices: RewardServices,
   mailSvcGetter: () => MailService | undefined,
 ) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Load helpers ─────────────────────────────────────────────
 
@@ -243,6 +273,15 @@ export function createTaskService(
       categoryId?: string;
       period?: string;
       parentId?: string | null;
+      /**
+       * Activity scoping. Defaults to "standalone only" so the main
+       * task admin page isn't polluted by per-activity copies.
+       *   - activityId set   → only that activity's tasks
+       *   - includeActivity true → standalone + all activity tasks
+       *   - neither set       → activityId IS NULL (standalone only)
+       */
+      activityId?: string;
+      includeActivity?: boolean;
     },
   ): Promise<TaskDefinition[]> {
     const conditions = [eq(taskDefinitions.organizationId, organizationId)];
@@ -258,6 +297,11 @@ export function createTaskService(
       } else {
         conditions.push(eq(taskDefinitions.parentId, filters.parentId));
       }
+    }
+    if (filters?.activityId) {
+      conditions.push(eq(taskDefinitions.activityId, filters.activityId));
+    } else if (!filters?.includeActivity) {
+      conditions.push(isNull(taskDefinitions.activityId));
     }
     return db
       .select()
@@ -311,6 +355,8 @@ export function createTaskService(
           isActive: input.isActive ?? true,
           isHidden: input.isHidden ?? false,
           sortOrder: input.sortOrder ?? 0,
+          activityId: input.activityId ?? null,
+          activityNodeId: input.activityNodeId ?? null,
           metadata: input.metadata ?? null,
         })
         .returning();
@@ -370,6 +416,9 @@ export function createTaskService(
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.isHidden !== undefined) values.isHidden = patch.isHidden;
     if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
+    if (patch.activityId !== undefined) values.activityId = patch.activityId;
+    if (patch.activityNodeId !== undefined)
+      values.activityNodeId = patch.activityNodeId;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) return existing;
@@ -1011,6 +1060,23 @@ export function createTaskService(
       CLAIM_SOURCE,
       sourceId,
     );
+
+    // Domain event — subscribers (leaderboard, etc.) react without
+    // coupling the task service to them. Fire-and-forget inside the
+    // bus; a failing handler is logged and does not affect the claim.
+    if (events) {
+      await events.emit("task.claimed", {
+        organizationId,
+        endUserId,
+        taskId: def.id,
+        taskAlias: def.alias,
+        categoryId: def.categoryId,
+        progressValue: progress.currentValue,
+        rewards: def.rewards,
+        periodKey: progress.periodKey ?? "",
+        claimedAt: ts,
+      });
+    }
 
     return {
       taskId: def.id,

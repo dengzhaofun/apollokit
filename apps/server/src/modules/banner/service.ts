@@ -202,6 +202,8 @@ export function createBannerService(d: BannerDeps) {
             layout: (input.layout ?? "carousel") as BannerLayout,
             intervalMs: input.intervalMs ?? 4000,
             isActive: input.isActive ?? true,
+            activityId: input.activityId ?? null,
+            activityNodeId: input.activityNodeId ?? null,
             metadata: input.metadata ?? null,
           })
           .returning();
@@ -230,6 +232,9 @@ export function createBannerService(d: BannerDeps) {
       if (input.layout !== undefined) patch.layout = input.layout;
       if (input.intervalMs !== undefined) patch.intervalMs = input.intervalMs;
       if (input.isActive !== undefined) patch.isActive = input.isActive;
+      if (input.activityId !== undefined) patch.activityId = input.activityId;
+      if (input.activityNodeId !== undefined)
+        patch.activityNodeId = input.activityNodeId;
       if (input.metadata !== undefined) patch.metadata = input.metadata;
       if (Object.keys(patch).length === 0) {
         return loadGroupById(organizationId, id);
@@ -268,11 +273,27 @@ export function createBannerService(d: BannerDeps) {
       if (deleted.length === 0) throw new BannerGroupNotFound(id);
     },
 
-    async listGroups(organizationId: string): Promise<BannerGroup[]> {
+    /**
+     * List banner groups. Defaults to standalone groups only
+     * (`activityId IS NULL`) so the permanent placements page isn't
+     * polluted by per-activity carousels. Pass `{ activityId }` to list
+     * a specific activity's groups, or `{ includeActivity: true }` to
+     * list everything.
+     */
+    async listGroups(
+      organizationId: string,
+      filter?: { includeActivity?: boolean; activityId?: string },
+    ): Promise<BannerGroup[]> {
+      const conds = [eq(bannerGroups.organizationId, organizationId)];
+      if (filter?.activityId) {
+        conds.push(eq(bannerGroups.activityId, filter.activityId));
+      } else if (!filter?.includeActivity) {
+        conds.push(isNull(bannerGroups.activityId));
+      }
       return db
         .select()
         .from(bannerGroups)
-        .where(eq(bannerGroups.organizationId, organizationId))
+        .where(and(...conds))
         .orderBy(asc(bannerGroups.createdAt));
     },
 

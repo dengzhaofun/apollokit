@@ -69,15 +69,25 @@ export function useDeleteTaskCategory() {
 export function useTaskDefinitions(filters?: {
   categoryId?: string
   period?: string
+  activityId?: string
+  includeActivity?: boolean
 }) {
   const params = new URLSearchParams()
   if (filters?.categoryId) params.set("categoryId", filters.categoryId)
   if (filters?.period) params.set("period", filters.period)
+  if (filters?.activityId) params.set("activityId", filters.activityId)
+  if (filters?.includeActivity) params.set("includeActivity", "true")
   const qs = params.toString()
   const path = `/api/task/definitions${qs ? `?${qs}` : ""}`
 
   return useQuery({
-    queryKey: [...DEFINITIONS_KEY, filters?.categoryId, filters?.period],
+    queryKey: [
+      ...DEFINITIONS_KEY,
+      filters?.categoryId,
+      filters?.period,
+      filters?.activityId,
+      !!filters?.includeActivity,
+    ],
     queryFn: () => api.get<DefinitionListResponse>(path),
     select: (data) => data.items,
   })

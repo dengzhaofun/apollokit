@@ -1,6 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
+import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -12,7 +18,10 @@ export const Route = createFileRoute("/_dashboard/lottery/")({
 })
 
 function LotteryListPage() {
-  const { data: pools, isPending, error } = useLotteryPools()
+  const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
+  const { data: pools, isPending, error } = useLotteryPools(
+    scopeToFilter(scope),
+  )
 
   return (
     <>
@@ -20,7 +29,8 @@ function LotteryListPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold">Lottery Pools</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm">
             <Link to="/lottery/create">
               <Plus className="size-4" />

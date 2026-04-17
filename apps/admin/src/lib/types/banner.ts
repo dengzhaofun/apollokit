@@ -12,6 +12,8 @@ export interface BannerGroup {
   layout: BannerLayout
   intervalMs: number
   isActive: boolean
+  activityId: string | null
+  activityNodeId: string | null
   metadata: unknown
   createdAt: string
   updatedAt: string
@@ -44,6 +46,8 @@ export interface CreateBannerGroupInput {
   layout?: BannerLayout
   intervalMs?: number
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
 }
 
 export type UpdateBannerGroupInput = Partial<CreateBannerGroupInput>

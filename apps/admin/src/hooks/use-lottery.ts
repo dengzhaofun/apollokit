@@ -24,11 +24,19 @@ const POOLS_KEY = ["lottery-pools"] as const
 
 // ─── Pools ───────────────────────────────────────────────────────
 
-export function useLotteryPools() {
+export function useLotteryPools(
+  filter: { activityId?: string; includeActivity?: boolean } = {},
+) {
+  const params = new URLSearchParams()
+  if (filter.activityId) params.set("activityId", filter.activityId)
+  if (filter.includeActivity) params.set("includeActivity", "true")
+  const qs = params.toString()
   return useQuery({
-    queryKey: POOLS_KEY,
+    queryKey: [...POOLS_KEY, filter.activityId ?? null, !!filter.includeActivity],
     queryFn: () =>
-      api.get<{ items: LotteryPool[] }>("/api/lottery/pools"),
+      api.get<{ items: LotteryPool[] }>(
+        `/api/lottery/pools${qs ? `?${qs}` : ""}`,
+      ),
     select: (data) => data.items,
   })
 }

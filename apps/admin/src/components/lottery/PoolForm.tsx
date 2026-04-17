@@ -1,4 +1,6 @@
 import { useForm } from "@tanstack/react-form"
+
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -26,6 +28,7 @@ export function LotteryPoolForm({
       description: defaultValues?.description ?? "",
       isActive: defaultValues?.isActive ?? true,
       globalPullLimit: defaultValues?.globalPullLimit ?? (null as number | null),
+      activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
       const input: CreatePoolInput = {
@@ -34,6 +37,7 @@ export function LotteryPoolForm({
         description: value.description || null,
         isActive: value.isActive,
         globalPullLimit: value.globalPullLimit,
+        activityId: value.activityId,
       }
       await onSubmit(input)
     },
@@ -137,6 +141,21 @@ export function LotteryPoolForm({
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
             <Label htmlFor={field.name}>Active</Label>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="activityId">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <ActivityPicker
+              value={field.state.value}
+              onChange={(v) => field.handleChange(v)}
+            />
+            <p className="text-xs text-muted-foreground">
+              选活动后此抽奖池仅在活动节点可用；不选即常驻抽奖池。
+            </p>
           </div>
         )}
       </form.Field>

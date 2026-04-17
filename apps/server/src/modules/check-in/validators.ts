@@ -112,6 +112,26 @@ function validateTargetForMode(
  * optional/defaulted fields stay optional so non-HTTP callers (future
  * cron jobs / MCP / tests) can omit them.
  */
+const ActivityIdSchema = z
+  .string()
+  .uuid()
+  .nullable()
+  .optional()
+  .openapi({
+    description:
+      "When set, the config is an activity-scoped check-in that belongs to the given activity. Null = standalone.",
+  });
+
+const ActivityNodeIdSchema = z
+  .string()
+  .uuid()
+  .nullable()
+  .optional()
+  .openapi({
+    description:
+      "When set alongside activityId, points at the specific activity node this config is mounted on.",
+  });
+
 export const CreateConfigSchema = z
   .object({
     name: z.string().min(1).max(200).openapi({ example: "Daily Check-In" }),
@@ -122,6 +142,8 @@ export const CreateConfigSchema = z
     target: TargetSchema,
     timezone: TimezoneSchema.optional(),
     isActive: z.boolean().optional(),
+    activityId: ActivityIdSchema,
+    activityNodeId: ActivityNodeIdSchema,
     metadata: MetadataSchema,
   })
   .superRefine((val, ctx) => {
@@ -138,6 +160,8 @@ export const UpdateConfigSchema = z
     target: TargetSchema,
     timezone: TimezoneSchema.optional(),
     isActive: z.boolean().optional(),
+    activityId: ActivityIdSchema,
+    activityNodeId: ActivityNodeIdSchema,
     metadata: MetadataSchema,
   })
   .openapi("CheckInUpdateConfig");
