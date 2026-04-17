@@ -21,6 +21,8 @@ import { taskService } from "./index";
 import {
   ClaimBodySchema,
   ClaimResponseSchema,
+  ClaimTierBodySchema,
+  ClaimTierResponseSchema,
   ClientTaskListResponseSchema,
   ErrorResponseSchema,
   EventBodySchema,
@@ -198,6 +200,48 @@ taskClientRouter.openapi(
       credential.organizationId,
       body.endUserId,
       taskId,
+    );
+
+    return c.json(result, 200);
+  },
+);
+
+// ─── Claim Tier (阶段性奖励) ───────────────────────────────────────
+
+taskClientRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/claim-tier",
+    tags: [TAG],
+    summary: "Manually claim a staged-reward tier (阶段性奖励)",
+    request: {
+      body: {
+        content: { "application/json": { schema: ClaimTierBodySchema } },
+      },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: ClaimTierResponseSchema } },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const credential = c.var.clientCredential!;
+    const body = c.req.valid("json");
+
+    await clientCredentialService.verifyRequest(
+      credential,
+      body.endUserId,
+      body.userHash,
+    );
+
+    const result = await taskService.claimTier(
+      credential.organizationId,
+      body.endUserId,
+      body.taskId,
+      body.tierAlias,
     );
 
     return c.json(result, 200);

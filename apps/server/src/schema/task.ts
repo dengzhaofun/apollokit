@@ -119,6 +119,26 @@ export type TaskNavigation = {
 };
 
 /**
+ * A progress-threshold reward tier on a single task (阶段性奖励).
+ *
+ * A task may declare any number of tiers. While `currentValue` advances
+ * (via event or via subtask-driven parent propagation), any tier whose
+ * `threshold <= currentValue` becomes claimable. Each tier is claimed
+ * independently from the terminal `rewards` payout; terminal completion
+ * still fires its own reward on `isCompleted = true`.
+ *
+ * `alias` is the stable identifier — used as the idempotency key on the
+ * `task_user_milestone_claims` ledger — so admins can reorder / add /
+ * remove tiers without invalidating prior claims. Validators enforce
+ * alias uniqueness and strictly-increasing thresholds within a task.
+ */
+export type TaskRewardTier = {
+  alias: string;
+  threshold: number;
+  rewards: RewardEntry[];
+};
+
+/**
  * Task definitions — admin-configured task templates.
  *
  * `parentId` is self-referential (SET NULL on delete). Only one level of
@@ -169,6 +189,16 @@ export const taskDefinitions = pgTable(
       .default([])
       .notNull(),
     rewards: jsonb("rewards").$type<RewardEntry[]>().notNull(),
+    /**
+     * Staged-reward tiers keyed off `currentValue` (阶段性奖励). Each
+     * entry unlocks independently when its `threshold` is crossed. See
+     * the `TaskRewardTier` type above for semantics. An empty array =
+     * legacy single-reward behavior.
+     */
+    rewardTiers: jsonb("reward_tiers")
+      .$type<TaskRewardTier[]>()
+      .default([])
+      .notNull(),
     autoClaim: boolean("auto_claim").default(false).notNull(),
     navigation: jsonb("navigation").$type<TaskNavigation | null>(),
     isActive: boolean("is_active").default(true).notNull(),
@@ -268,6 +298,51 @@ export const taskUserProgress = pgTable(
     index("task_user_progress_task_completed_idx").on(
       table.taskId,
       table.isCompleted,
+    ),
+  ],
+);
+
+// ─── Task User Milestone Claims ───────────────────────────────────
+
+/**
+ * Idempotent ledger of tier-level (阶段) reward claims — one row per
+ * `(task, endUser, periodKey, tierAlias)`.
+ *
+ * Rationale for `periodKey` in the primary key (unlike
+ * `activity_user_rewards`): daily / weekly / monthly tasks reset, so a
+ * row for `periodKey = '2026-04-17'` must not block the same tier from
+ * re-unlocking on `'2026-04-18'`. Composite PK gives DB-level
+ * idempotency within a period and natural reclaimability across
+ * periods. Stale rows from past periods are harmless dead weight; a
+ * periodic GC job can sweep them later if volume warrants.
+ */
+export const taskUserMilestoneClaims = pgTable(
+  "task_user_milestone_claims",
+  {
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => taskDefinitions.id, { onDelete: "cascade" }),
+    endUserId: text("end_user_id").notNull(),
+    organizationId: text("organization_id").notNull(),
+    periodKey: text("period_key").notNull(),
+    tierAlias: text("tier_alias").notNull(),
+    claimedAt: timestamp("claimed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.taskId, table.endUserId, table.periodKey, table.tierAlias],
+      name: "task_user_milestone_claims_pk",
+    }),
+    // "All my tier claims" inbox lookup
+    index("task_user_milestone_claims_org_user_idx").on(
+      table.organizationId,
+      table.endUserId,
+    ),
+    // Batched "what has this user claimed across these tasks this period"
+    index("task_user_milestone_claims_user_task_period_idx").on(
+      table.endUserId,
+      table.taskId,
+      table.periodKey,
     ),
   ],
 );

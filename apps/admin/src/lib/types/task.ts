@@ -11,6 +11,12 @@ export interface TaskNavigation {
   label?: string
 }
 
+export interface TaskRewardTier {
+  alias: string
+  threshold: number
+  rewards: ItemEntry[]
+}
+
 export interface TaskCategory {
   id: string
   organizationId: string
@@ -46,6 +52,7 @@ export interface TaskDefinition {
   parentProgressValue: number
   prerequisiteTaskIds: string[]
   rewards: ItemEntry[]
+  rewardTiers: TaskRewardTier[]
   autoClaim: boolean
   navigation: TaskNavigation | null
   isActive: boolean
@@ -89,6 +96,7 @@ export interface CreateDefinitionInput {
   parentProgressValue?: number
   prerequisiteTaskIds?: string[]
   rewards: ItemEntry[]
+  rewardTiers?: TaskRewardTier[]
   autoClaim?: boolean
   navigation?: TaskNavigation | null
   isActive?: boolean

@@ -11,7 +11,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
-import type { TaskNavigation } from "../../schema/task";
+import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
 import { taskService } from "./index";
 import { ModuleError } from "./errors";
 import {
@@ -83,6 +83,7 @@ function serializeDefinition(row: {
   parentProgressValue: number;
   prerequisiteTaskIds: string[];
   rewards: RewardEntry[];
+  rewardTiers: TaskRewardTier[];
   autoClaim: boolean;
   navigation: TaskNavigation | null;
   isActive: boolean;
@@ -112,6 +113,7 @@ function serializeDefinition(row: {
     parentProgressValue: row.parentProgressValue,
     prerequisiteTaskIds: row.prerequisiteTaskIds,
     rewards: row.rewards,
+    rewardTiers: row.rewardTiers ?? [],
     autoClaim: row.autoClaim,
     navigation: row.navigation,
     isActive: row.isActive,

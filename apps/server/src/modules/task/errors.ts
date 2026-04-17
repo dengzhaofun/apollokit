@@ -93,3 +93,21 @@ export class TaskNestingTooDeep extends ModuleError {
     this.name = "TaskNestingTooDeep";
   }
 }
+
+export class TaskTierNotFound extends ModuleError {
+  constructor(alias: string) {
+    super("task.tier_not_found", 404, `reward tier not found: ${alias}`);
+    this.name = "TaskTierNotFound";
+  }
+}
+
+export class TaskTierNotReached extends ModuleError {
+  constructor() {
+    super(
+      "task.tier_not_reached",
+      409,
+      "task progress has not reached this tier threshold",
+    );
+    this.name = "TaskTierNotReached";
+  }
+}
