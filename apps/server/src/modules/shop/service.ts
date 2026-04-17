@@ -38,7 +38,7 @@
  *    the subtree using a recursive CTE — SQL is generated inline.
  */
 
-import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
@@ -539,6 +539,8 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           globalLimit: input.globalLimit ?? null,
           sortOrder: input.sortOrder ?? 0,
           isActive: input.isActive ?? true,
+          activityId: input.activityId ?? null,
+          activityNodeId: input.activityNodeId ?? null,
           metadata: input.metadata ?? null,
         })
         .returning();
@@ -595,6 +597,9 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (patch.globalLimit !== undefined) values.globalLimit = patch.globalLimit;
     if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
+    if (patch.activityId !== undefined) values.activityId = patch.activityId;
+    if (patch.activityNodeId !== undefined)
+      values.activityNodeId = patch.activityNodeId;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     let row: ShopProduct = existing;
@@ -690,6 +695,14 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (query.isActive === "true") conds.push(eq(shopProducts.isActive, true));
     if (query.isActive === "false")
       conds.push(eq(shopProducts.isActive, false));
+
+    // Activity scoping: default excludes activity-bound products so the
+    // permanent shop isn't polluted by limited-time activity bundles.
+    if (query.activityId) {
+      conds.push(eq(shopProducts.activityId, query.activityId));
+    } else if (query.includeActivity !== "true") {
+      conds.push(isNull(shopProducts.activityId));
+    }
 
     if (query.availableAt) {
       const at = new Date(query.availableAt);

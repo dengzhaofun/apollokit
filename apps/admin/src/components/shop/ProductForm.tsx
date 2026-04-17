@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -118,6 +119,9 @@ export function ProductForm({
   )
   const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
   const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
+  const [activityId, setActivityId] = useState<string | null>(
+    defaultValues?.activityId ?? null,
+  )
   const [tagIds, setTagIds] = useState<string[]>(defaultValues?.tagIds ?? [])
 
   const [error, setError] = useState<string>("")
@@ -170,6 +174,7 @@ export function ProductForm({
       globalLimit: globalLimit === "" ? null : Number(globalLimit),
       sortOrder,
       isActive,
+      activityId,
       tagIds,
     }
     onSubmit(input)
@@ -515,6 +520,14 @@ export function ProductForm({
           />
           <Label htmlFor="prod-active">{m.common_active()}</Label>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="prod-activity">关联活动（可选）</Label>
+        <ActivityPicker value={activityId} onChange={setActivityId} />
+        <p className="text-xs text-muted-foreground">
+          选择活动后，该商品只在对应活动节点里展示；不选即常驻商店商品。
+        </p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

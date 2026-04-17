@@ -10,11 +10,19 @@ import type {
 
 const CONFIGS_KEY = ["check-in-configs"] as const
 
-export function useCheckInConfigs() {
+export function useCheckInConfigs(
+  filter: { activityId?: string; includeActivity?: boolean } = {},
+) {
+  const params = new URLSearchParams()
+  if (filter.activityId) params.set("activityId", filter.activityId)
+  if (filter.includeActivity) params.set("includeActivity", "true")
+  const qs = params.toString()
   return useQuery({
-    queryKey: CONFIGS_KEY,
+    queryKey: [...CONFIGS_KEY, filter.activityId ?? null, !!filter.includeActivity],
     queryFn: () =>
-      api.get<{ items: CheckInConfig[] }>("/api/check-in/configs"),
+      api.get<{ items: CheckInConfig[] }>(
+        `/api/check-in/configs${qs ? `?${qs}` : ""}`,
+      ),
     select: (data) => data.items,
   })
 }

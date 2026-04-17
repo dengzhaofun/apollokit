@@ -40,6 +40,15 @@ export const bannerGroups = pgTable(
     layout: text("layout").default("carousel").notNull(),
     intervalMs: integer("interval_ms").default(4000).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this banner group is an
+     * activity-scoped carousel (e.g. a spring-festival landing page). NULL
+     * means this is a permanent group (home, shop top, …). The activity
+     * service flips `isActive` off for its groups per the activity's
+     * `cleanupRule` when archiving.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -52,6 +61,7 @@ export const bannerGroups = pgTable(
     uniqueIndex("banner_groups_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("banner_groups_activity_idx").on(table.activityId),
   ],
 );
 

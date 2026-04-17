@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -64,6 +65,7 @@ export function ConfigForm({
       target: defaultValues?.target ?? (null as number | null),
       timezone: defaultValues?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       isActive: defaultValues?.isActive ?? true,
+      activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
       const input: CreateConfigInput = {
@@ -75,6 +77,7 @@ export function ConfigForm({
         alias: value.alias || null,
         description: value.description || null,
         target: value.target,
+        activityId: value.activityId,
       }
       await onSubmit(input)
     },
@@ -256,6 +259,21 @@ export function ConfigForm({
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
             <Label htmlFor={field.name}>{m.common_active()}</Label>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="activityId">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <ActivityPicker
+              value={field.state.value}
+              onChange={(v) => field.handleChange(v)}
+            />
+            <p className="text-xs text-muted-foreground">
+              选择一个活动把这个签到挂成活动节点；不选即作为常驻签到。
+            </p>
           </div>
         )}
       </form.Field>

@@ -50,6 +50,8 @@ export interface TaskDefinition {
   isActive: boolean
   isHidden: boolean
   sortOrder: number
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -90,6 +92,8 @@ export interface CreateDefinitionInput {
   isActive?: boolean
   isHidden?: boolean
   sortOrder?: number
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 

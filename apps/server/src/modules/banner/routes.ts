@@ -131,7 +131,12 @@ bannerRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const items = await bannerService.listGroups(orgId);
+    const activityId = c.req.query("activityId") ?? undefined;
+    const includeActivity = c.req.query("includeActivity") === "true";
+    const items = await bannerService.listGroups(orgId, {
+      activityId,
+      includeActivity,
+    });
     return c.json({ items: items.map(serializeGroup) }, 200);
   },
 );

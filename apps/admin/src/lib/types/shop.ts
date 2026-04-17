@@ -79,6 +79,8 @@ export interface ShopProduct {
   globalCount: number
   sortOrder: number
   isActive: boolean
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -205,6 +207,8 @@ export interface CreateShopProductInput {
   globalLimit?: number | null
   sortOrder?: number
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
   tagIds?: string[]
 }
@@ -251,6 +255,8 @@ export interface ShopListProductsQuery {
   productType?: ShopProductType
   isActive?: boolean
   includeDescendantCategories?: boolean
+  activityId?: string
+  includeActivity?: boolean
 }
 
 export interface ShopListUserProductsQuery {

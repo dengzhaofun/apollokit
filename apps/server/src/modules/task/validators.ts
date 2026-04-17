@@ -127,6 +127,11 @@ export const CreateDefinitionSchema = z
     isActive: z.boolean().optional(),
     isHidden: z.boolean().optional(),
     sortOrder: z.number().int().optional(),
+    activityId: z.string().uuid().nullable().optional().openapi({
+      description:
+        "Soft link to an activity. Null means this is a permanent task.",
+    }),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .superRefine((val, ctx) => {
@@ -183,6 +188,8 @@ export const UpdateDefinitionSchema = z
     isActive: z.boolean().optional(),
     isHidden: z.boolean().optional(),
     sortOrder: z.number().int().optional(),
+    activityId: z.string().uuid().nullable().optional(),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .openapi("TaskUpdateDefinition");

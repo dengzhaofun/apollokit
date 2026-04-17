@@ -9,6 +9,18 @@
   "observability": {
     "enabled": true
   },
+  // Cron triggers — scheduled handler in src/scheduled.ts.
+  // Every-minute tick keeps activity state transitions (scheduled →
+  // teasing → active → settling → ended → archived) and schedule
+  // triggers within ~1 minute of their `fire_at`. Leaderboard cycle
+  // settlement is also throttled internally by checking whether the
+  // previous cycleKey has already been snapshotted — so running every
+  // minute is idempotent and cheap. For true second/millisecond
+  // precision (e.g. flash sales), attach a Durable Object with
+  // `storage.setAlarm(...)` per activity in a follow-up phase.
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
   // Workaround: @better-auth/api-key imports @better-auth/core/utils/* sub-paths
   // via the wildcard export pattern ("./utils/*"), which wrangler's esbuild doesn't resolve.
   // Use relative paths so esbuild treats them as file paths, not package specifiers.

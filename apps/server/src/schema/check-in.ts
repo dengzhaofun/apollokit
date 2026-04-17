@@ -50,6 +50,16 @@ export const checkInConfigs = pgTable(
     target: integer("target"),
     timezone: text("timezone").default("UTC").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this config is an
+     * activity-scoped check-in (e.g. "Spring Festival 7-day streak").
+     * NULL means this is a standalone config, not tied to any activity.
+     * No FK constraint to keep the migration surgical — the activity
+     * service is responsible for coordinated cleanup via
+     * `activity_configs.cleanup_rule` when the activity archives.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -62,6 +72,7 @@ export const checkInConfigs = pgTable(
     uniqueIndex("check_in_configs_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("check_in_configs_activity_idx").on(table.activityId),
   ],
 );
 

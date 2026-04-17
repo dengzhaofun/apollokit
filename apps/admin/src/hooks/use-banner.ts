@@ -18,10 +18,19 @@ const bannersKey = (groupId: string) =>
 
 // ─── Groups ────────────────────────────────────────────────────
 
-export function useBannerGroups() {
+export function useBannerGroups(
+  filter: { activityId?: string; includeActivity?: boolean } = {},
+) {
+  const params = new URLSearchParams()
+  if (filter.activityId) params.set("activityId", filter.activityId)
+  if (filter.includeActivity) params.set("includeActivity", "true")
+  const qs = params.toString()
   return useQuery({
-    queryKey: GROUPS_KEY,
-    queryFn: () => api.get<BannerGroupListResponse>("/api/banner/groups"),
+    queryKey: [...GROUPS_KEY, filter.activityId ?? null, !!filter.includeActivity],
+    queryFn: () =>
+      api.get<BannerGroupListResponse>(
+        `/api/banner/groups${qs ? `?${qs}` : ""}`,
+      ),
     select: (data) => data.items,
   })
 }

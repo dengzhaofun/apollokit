@@ -13,7 +13,7 @@
  * path with client credential + HMAC auth.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
@@ -185,7 +185,21 @@ checkInRouter.openapi(
     method: "get",
     path: "/configs",
     tags: [TAG],
-    summary: "List check-in configs for the current organization",
+    summary:
+      "List check-in configs. Default filters out activity-scoped configs so the permanent list isn't polluted.",
+    request: {
+      query: z.object({
+        activityId: z
+          .string()
+          .uuid()
+          .optional()
+          .openapi({ param: { name: "activityId", in: "query" } }),
+        includeActivity: z
+          .enum(["true", "false"])
+          .optional()
+          .openapi({ param: { name: "includeActivity", in: "query" } }),
+      }),
+    },
     responses: {
       200: {
         description: "OK",
@@ -196,7 +210,11 @@ checkInRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await checkInService.listConfigs(orgId);
+    const q = c.req.valid("query");
+    const rows = await checkInService.listConfigs(orgId, {
+      activityId: q.activityId,
+      includeActivity: q.includeActivity === "true",
+    });
     return c.json({ items: rows.map(serializeConfig) }, 200);
   },
 );

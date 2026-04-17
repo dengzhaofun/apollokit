@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -45,6 +46,7 @@ export function DefinitionForm({
       isActive: defaultValues?.isActive ?? true,
       isHidden: defaultValues?.isHidden ?? false,
       sortOrder: defaultValues?.sortOrder ?? 0,
+      activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
       const input: CreateDefinitionInput = {
@@ -62,6 +64,7 @@ export function DefinitionForm({
         isActive: value.isActive,
         isHidden: value.isHidden,
         sortOrder: value.sortOrder,
+        activityId: value.activityId,
         rewards: defaultValues?.rewards ?? [{ type: "item", id: "", count: 1 }],
       }
       await onSubmit(input)
@@ -327,6 +330,21 @@ export function DefinitionForm({
           )}
         </form.Field>
       </div>
+
+      <form.Field name="activityId">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <ActivityPicker
+              value={field.state.value}
+              onChange={(v) => field.handleChange(v)}
+            />
+            <p className="text-xs text-muted-foreground">
+              选活动后这个任务会自动出现在活动任务池；不选即常驻任务。
+            </p>
+          </div>
+        )}
+      </form.Field>
 
       <Button type="submit" disabled={isPending}>
         {isPending ? m.common_saving() : submitLabel}

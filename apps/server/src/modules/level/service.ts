@@ -175,13 +175,32 @@ function evaluateUnlockRule(
 
 // ─── Factory ──────────────────────────────────────────────────────
 
-type LevelDeps = Pick<AppDeps, "db">;
+// `events` is optional so existing tests that pass `{ db }` alone
+// keep compiling. Production wiring (`modules/level/index.ts`) always
+// supplies the bus from `deps`.
+type LevelDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Event-bus augmentation — leaderboard / activity / analytics subscribe
+// to these without any cross-module import cycles.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "level.cleared": {
+      organizationId: string;
+      endUserId: string;
+      configId: string;
+      levelId: string;
+      stars: number;
+      bestScore: number | null;
+      firstClear: boolean;
+    };
+  }
+}
 
 export function createLevelService(
   d: LevelDeps,
   rewardServices: RewardServices,
 ) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Load helpers ─────────────────────────────────────────────
 
@@ -975,6 +994,21 @@ export function createLevelService(
       if (nowUnlocked) {
         newlyUnlocked.push(l.id);
       }
+    }
+
+    // Domain event — leaderboard can subscribe to build a
+    // `metricKey="level.cleared"` / `metricKey="level.stars"` board
+    // without touching this service.
+    if (events) {
+      await events.emit("level.cleared", {
+        organizationId,
+        endUserId,
+        configId: level.configId,
+        levelId,
+        stars: newStars,
+        bestScore: result.bestScore ?? input.score ?? null,
+        firstClear,
+      });
     }
 
     return {

@@ -18,7 +18,7 @@
  * state written once at the end.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
@@ -230,6 +230,8 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
             startAt: input.startAt ? new Date(input.startAt) : null,
             endAt: input.endAt ? new Date(input.endAt) : null,
             globalPullLimit: input.globalPullLimit ?? null,
+            activityId: input.activityId ?? null,
+            activityNodeId: input.activityNodeId ?? null,
             metadata: input.metadata ?? null,
           })
           .returning();
@@ -261,6 +263,9 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         v.endAt = patch.endAt ? new Date(patch.endAt) : null;
       if (patch.globalPullLimit !== undefined)
         v.globalPullLimit = patch.globalPullLimit;
+      if (patch.activityId !== undefined) v.activityId = patch.activityId;
+      if (patch.activityNodeId !== undefined)
+        v.activityNodeId = patch.activityNodeId;
       if (patch.metadata !== undefined) v.metadata = patch.metadata;
 
       if (Object.keys(v).length === 0) return existing;
@@ -299,11 +304,25 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       if (deleted.length === 0) throw new LotteryPoolNotFound(id);
     },
 
-    async listPools(organizationId: string): Promise<LotteryPool[]> {
+    /**
+     * List lottery pools. Defaults to standalone pools only
+     * (`activityId IS NULL`). Pass `{ activityId }` for a single
+     * activity's pools, or `{ includeActivity: true }` for everything.
+     */
+    async listPools(
+      organizationId: string,
+      filter?: { includeActivity?: boolean; activityId?: string },
+    ): Promise<LotteryPool[]> {
+      const conds = [eq(lotteryPools.organizationId, organizationId)];
+      if (filter?.activityId) {
+        conds.push(eq(lotteryPools.activityId, filter.activityId));
+      } else if (!filter?.includeActivity) {
+        conds.push(isNull(lotteryPools.activityId));
+      }
       return db
         .select()
         .from(lotteryPools)
-        .where(eq(lotteryPools.organizationId, organizationId))
+        .where(and(...conds))
         .orderBy(desc(lotteryPools.createdAt));
     },
 

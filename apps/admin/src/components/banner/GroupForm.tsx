@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -42,6 +43,9 @@ export function GroupForm({
     initial?.intervalMs ?? 4000,
   )
   const [isActive, setIsActive] = useState<boolean>(initial?.isActive ?? true)
+  const [activityId, setActivityId] = useState<string | null>(
+    initial?.activityId ?? null,
+  )
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +56,7 @@ export function GroupForm({
       layout,
       intervalMs,
       isActive,
+      activityId,
     })
   }
 
@@ -130,6 +135,14 @@ export function GroupForm({
           checked={isActive}
           onCheckedChange={setIsActive}
         />
+      </div>
+
+      <div className="space-y-1">
+        <Label>关联活动（可选）</Label>
+        <ActivityPicker value={activityId} onChange={setActivityId} />
+        <p className="text-xs text-muted-foreground">
+          选择活动后此轮播图仅在对应活动节点展示；不选即常驻位置。
+        </p>
       </div>
 
       <div className="flex justify-end">

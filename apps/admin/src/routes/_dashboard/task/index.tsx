@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { useState } from "react"
 
 import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
@@ -7,6 +8,11 @@ import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { DefinitionTable } from "#/components/task/DefinitionTable"
+import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
 import { useTaskDefinitions, useTaskCategories } from "#/hooks/use-task"
 
 export const Route = createFileRoute("/_dashboard/task/")({
@@ -14,7 +20,12 @@ export const Route = createFileRoute("/_dashboard/task/")({
 })
 
 function TaskListPage() {
-  const { data: definitions, isPending, error } = useTaskDefinitions()
+  const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
+  const {
+    data: definitions,
+    isPending,
+    error,
+  } = useTaskDefinitions(scopeToFilter(scope))
   const { data: categories } = useTaskCategories()
 
   return (
@@ -23,7 +34,8 @@ function TaskListPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold">Tasks</h1>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm" variant="outline">
             <Link to="/task/categories">Categories</Link>
           </Button>

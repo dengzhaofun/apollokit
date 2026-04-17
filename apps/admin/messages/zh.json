@@ -894,5 +894,7 @@
   "level_col_difficulty": "难度",
   "level_col_max_stars": "星数",
   "level_col_stage": "阶段",
-  "level_filter_all_stages": "全部阶段"
+  "level_filter_all_stages": "全部阶段",
+  "nav_activity": "活动",
+  "nav_leaderboard": "排行榜"
 }

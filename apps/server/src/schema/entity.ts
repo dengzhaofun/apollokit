@@ -315,6 +315,19 @@ export const entityInstances = pgTable(
     customData: jsonb("custom_data"),
     isLocked: boolean("is_locked").default(false).notNull(),
     acquiredAt: timestamp("acquired_at").defaultNow().notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this entity instance
+     * was granted as an activity-scoped item (spring-festival badge,
+     * one-time pass, …). NULL means permanent player inventory.
+     *
+     * When the activity archives, the activity service's cleanup path
+     * acts on rows matching `activity_id` per the activity's
+     * `cleanupRule`:
+     *   - purge   → DELETE these rows
+     *   - convert → run the conversion map (future), then DELETE
+     *   - keep    → no-op (stays as a souvenir)
+     */
+    activityId: uuid("activity_id"),
     version: integer("version").default(1).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -337,6 +350,7 @@ export const entityInstances = pgTable(
       table.endUserId,
       table.blueprintId,
     ),
+    index("entity_instances_activity_idx").on(table.activityId),
   ],
 );
 

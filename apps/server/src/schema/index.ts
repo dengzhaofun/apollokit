@@ -20,3 +20,5 @@ export * from "./friend-gift";
 export * from "./entity";
 export * from "./level";
 export * from "./task";
+export * from "./leaderboard";
+export * from "./activity";

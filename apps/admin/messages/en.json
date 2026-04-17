@@ -894,5 +894,7 @@
   "level_col_difficulty": "Difficulty",
   "level_col_max_stars": "Stars",
   "level_col_stage": "Stage",
-  "level_filter_all_stages": "All stages"
+  "level_filter_all_stages": "All stages",
+  "nav_activity": "Activities",
+  "nav_leaderboard": "Leaderboards"
 }

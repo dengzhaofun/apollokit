@@ -48,6 +48,13 @@ export const lotteryPools = pgTable(
     endAt: timestamp("end_at"),
     globalPullLimit: integer("global_pull_limit"),
     globalPullCount: integer("global_pull_count").default(0).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` for activity-scoped gachas
+     * (e.g. limited pool that only runs during Spring Festival). NULL
+     * means a permanent lottery pool.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -60,6 +67,7 @@ export const lotteryPools = pgTable(
     uniqueIndex("lottery_pools_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("lottery_pools_activity_idx").on(table.activityId),
   ],
 );
 
