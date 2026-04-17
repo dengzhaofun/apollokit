@@ -23,4 +23,10 @@ export const env = {
   get BETTER_AUTH_URL() {
     return process.env.BETTER_AUTH_URL ?? "http://localhost:8787";
   },
+  get UPSTASH_REDIS_REST_URL() {
+    return process.env.UPSTASH_REDIS_REST_URL!;
+  },
+  get UPSTASH_REDIS_REST_TOKEN() {
+    return process.env.UPSTASH_REDIS_REST_TOKEN!;
+  },
 };
