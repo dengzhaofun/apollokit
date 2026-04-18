@@ -250,10 +250,7 @@ function MailDetailPage() {
               <ul className="space-y-2 rounded-lg border bg-card p-4 text-sm">
                 {detail.rewards.map((r, i) => (
                   <li key={i}>
-                    <ItemRewardRow
-                      definitionId={r.definitionId}
-                      quantity={r.quantity}
-                    />
+                    <ItemRewardRow entry={r} />
                   </li>
                 ))}
               </ul>

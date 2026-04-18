@@ -13,6 +13,7 @@ import { OptionForm } from "#/components/exchange/OptionForm"
 import { ExchangeDeleteDialog } from "#/components/exchange/DeleteDialog"
 import { ExecutePanel } from "#/components/exchange/ExecutePanel"
 import { ItemRewardRow } from "#/components/item/ItemRewardRow"
+import type { RewardEntry } from "#/lib/types/rewards"
 import {
   useExchangeOptions,
   useUpdateExchangeOption,
@@ -225,20 +226,12 @@ function DetailItem({
   )
 }
 
-function ItemList({
-  items,
-}: {
-  items: { definitionId: string; quantity: number }[]
-}) {
+function ItemList({ items }: { items: RewardEntry[] }) {
   return (
     <ul className="space-y-1">
       {items.map((item, i) => (
         <li key={i}>
-          <ItemRewardRow
-            size="sm"
-            definitionId={item.definitionId}
-            quantity={item.quantity}
-          />
+          <ItemRewardRow size="sm" entry={item} />
         </li>
       ))}
     </ul>

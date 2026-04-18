@@ -1,8 +1,5 @@
-export interface RewardEntry {
-  type: "item" | "entity"
-  id: string
-  count: number
-}
+import type { RewardEntry } from "./rewards"
+export type { RewardEntry }
 
 export interface StarRewardTier {
   stars: number

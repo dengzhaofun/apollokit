@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export interface LotteryPool {
   id: string
@@ -6,7 +6,7 @@ export interface LotteryPool {
   alias: string | null
   name: string
   description: string | null
-  costPerPull: ItemEntry[]
+  costPerPull: RewardEntry[]
   isActive: boolean
   startAt: string | null
   endAt: string | null
@@ -42,7 +42,7 @@ export interface LotteryPrize {
   organizationId: string
   name: string
   description: string | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   weight: number
   isRateUp: boolean
   rateUpWeight: number
@@ -87,10 +87,10 @@ export interface LotteryPullLog {
   tierId: string | null
   tierName: string | null
   prizeName: string
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   pityTriggered: boolean
   pityRuleId: string | null
-  costItems: ItemEntry[]
+  costItems: RewardEntry[]
   createdAt: string
 }
 
@@ -100,7 +100,7 @@ export interface CreatePoolInput {
   name: string
   alias?: string | null
   description?: string | null
-  costPerPull?: ItemEntry[]
+  costPerPull?: RewardEntry[]
   isActive?: boolean
   startAt?: string | null
   endAt?: string | null
@@ -114,7 +114,7 @@ export interface UpdatePoolInput {
   name?: string
   alias?: string | null
   description?: string | null
-  costPerPull?: ItemEntry[]
+  costPerPull?: RewardEntry[]
   isActive?: boolean
   startAt?: string | null
   endAt?: string | null
@@ -149,7 +149,7 @@ export interface UpdateTierInput {
 export interface CreatePrizeInput {
   name: string
   description?: string | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   weight?: number
   isRateUp?: boolean
   rateUpWeight?: number
@@ -163,7 +163,7 @@ export interface CreatePrizeInput {
 export interface UpdatePrizeInput {
   name?: string
   description?: string | null
-  rewardItems?: ItemEntry[]
+  rewardItems?: RewardEntry[]
   weight?: number
   isRateUp?: boolean
   rateUpWeight?: number
@@ -208,7 +208,7 @@ export interface PullResultEntry {
   prizeName: string
   tierId: string | null
   tierName: string | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   pityTriggered: boolean
   pityRuleId: string | null
 }
@@ -217,6 +217,6 @@ export interface PullResult {
   batchId: string
   poolId: string
   endUserId: string
-  costItems: ItemEntry[]
+  costItems: RewardEntry[]
   pulls: PullResultEntry[]
 }

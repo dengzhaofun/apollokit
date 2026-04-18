@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -11,14 +12,12 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Textarea } from "#/components/ui/textarea"
-import { useItemDefinitions } from "#/hooks/use-item"
-import type { ItemEntry } from "#/lib/types/item"
+import type { RewardEntry } from "#/lib/types/rewards"
 import type {
   CreateShopGrowthStageInput,
   ShopGrowthTriggerType,
 } from "#/lib/types/shop"
 import * as m from "#/paraglide/messages.js"
-import { ItemEntryEditor } from "./ItemEntryEditor"
 
 interface StageFormProps {
   defaultValues?: Partial<CreateShopGrowthStageInput>
@@ -33,9 +32,6 @@ export function StageForm({
   isPending,
   submitLabel,
 }: StageFormProps) {
-  const { data: definitions } = useItemDefinitions()
-  const defs = (definitions ?? []).map((d) => ({ id: d.id, name: d.name }))
-
   const [stageIndex, setStageIndex] = useState(defaultValues?.stageIndex ?? 1)
   const [name, setName] = useState(defaultValues?.name ?? "")
   const [description, setDescription] = useState(
@@ -49,7 +45,7 @@ export function StageForm({
       ? JSON.stringify(defaultValues.triggerConfig, null, 2)
       : "",
   )
-  const [rewardItems, setRewardItems] = useState<ItemEntry[]>(
+  const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
     defaultValues?.rewardItems ?? [],
   )
   const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
@@ -71,9 +67,7 @@ export function StageForm({
         return
       }
     }
-    const validRewards = rewardItems.filter(
-      (e) => e.definitionId && e.quantity > 0,
-    )
+    const validRewards = rewardItems.filter((e) => e.id && e.count > 0)
     onSubmit({
       stageIndex,
       name: name.trim(),
@@ -168,11 +162,10 @@ export function StageForm({
         </p>
       </div>
 
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={m.shop_reward_items()}
         entries={rewardItems}
         onChange={setRewardItems}
-        definitions={defs}
       />
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

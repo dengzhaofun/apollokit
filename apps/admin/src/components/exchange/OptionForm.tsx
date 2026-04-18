@@ -1,103 +1,14 @@
 import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select"
-import { useItemDefinitions } from "#/hooks/use-item"
 import type { CreateOptionInput } from "#/lib/types/exchange"
-import type { ItemEntry } from "#/lib/types/item"
-
-interface EntryRow {
-  definitionId: string
-  quantity: number
-}
-
-function ItemEntryEditor({
-  label,
-  entries,
-  onChange,
-  definitions,
-}: {
-  label: string
-  entries: EntryRow[]
-  onChange: (entries: EntryRow[]) => void
-  definitions: { id: string; name: string }[]
-}) {
-  return (
-    <div className="space-y-3">
-      <Label>{label}</Label>
-      {entries.map((entry, i) => (
-        <div key={i} className="flex items-end gap-2">
-          <div className="flex-1">
-            <Select
-              value={entry.definitionId}
-              onValueChange={(v) => {
-                const next = [...entries]
-                next[i] = { ...entry, definitionId: v }
-                onChange(next)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select item..." />
-              </SelectTrigger>
-              <SelectContent>
-                {definitions.map((def) => (
-                  <SelectItem key={def.id} value={def.id}>
-                    {def.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-24">
-            <Input
-              type="number"
-              min={1}
-              value={entry.quantity}
-              onChange={(e) => {
-                const next = [...entries]
-                next[i] = { ...entry, quantity: Number(e.target.value) || 1 }
-                onChange(next)
-              }}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9"
-            onClick={() => {
-              const next = entries.filter((_, j) => j !== i)
-              onChange(next.length > 0 ? next : [{ definitionId: "", quantity: 1 }])
-            }}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onChange([...entries, { definitionId: "", quantity: 1 }])}
-      >
-        <Plus className="size-4" />
-        Add
-      </Button>
-    </div>
-  )
-}
+import type { RewardEntry } from "#/lib/types/rewards"
 
 interface OptionFormProps {
   defaultValues?: Partial<CreateOptionInput>
@@ -112,20 +23,17 @@ export function OptionForm({
   isPending,
   submitLabel = m.common_create(),
 }: OptionFormProps) {
-  const { data: definitions } = useItemDefinitions()
-  const defs = (definitions ?? []).map((d) => ({ id: d.id, name: d.name }))
-
   const [name, setName] = useState(defaultValues?.name ?? "")
   const [description, setDescription] = useState(defaultValues?.description ?? "")
-  const [costItems, setCostItems] = useState<EntryRow[]>(
+  const [costItems, setCostItems] = useState<RewardEntry[]>(
     defaultValues?.costItems?.length
       ? defaultValues.costItems.map((e) => ({ ...e }))
-      : [{ definitionId: "", quantity: 1 }],
+      : [],
   )
-  const [rewardItems, setRewardItems] = useState<EntryRow[]>(
+  const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
     defaultValues?.rewardItems?.length
       ? defaultValues.rewardItems.map((e) => ({ ...e }))
-      : [{ definitionId: "", quantity: 1 }],
+      : [],
   )
   const [userLimit, setUserLimit] = useState<number | null>(
     defaultValues?.userLimit ?? null,
@@ -145,14 +53,14 @@ export function OptionForm({
     }
     setNameError("")
 
-    const validCosts = costItems.filter((e) => e.definitionId && e.quantity > 0)
-    const validRewards = rewardItems.filter((e) => e.definitionId && e.quantity > 0)
+    const validCosts = costItems.filter((e) => e.id && e.count > 0)
+    const validRewards = rewardItems.filter((e) => e.id && e.count > 0)
 
     const input: CreateOptionInput = {
       name: name.trim(),
       description: description || null,
-      costItems: validCosts as ItemEntry[],
-      rewardItems: validRewards as ItemEntry[],
+      costItems: validCosts,
+      rewardItems: validRewards,
       userLimit,
       globalLimit,
       sortOrder,
@@ -187,18 +95,17 @@ export function OptionForm({
         />
       </div>
 
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={`${m.exchange_cost_items()} *`}
         entries={costItems}
         onChange={setCostItems}
-        definitions={defs}
       />
 
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={`${m.exchange_reward_items()} *`}
         entries={rewardItems}
         onChange={setRewardItems}
-        definitions={defs}
+        // Entity rewards are not spendable as costs, but valid as rewards.
       />
 
       <div className="grid gap-4 sm:grid-cols-2">

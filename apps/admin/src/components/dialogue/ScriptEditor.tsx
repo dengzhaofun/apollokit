@@ -1,8 +1,8 @@
 import { Plus, Trash2 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 
 import { LinkActionEditor } from "#/components/common/LinkActionEditor"
-import { ItemEntryEditor } from "#/components/shop/ItemEntryEditor"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -15,7 +15,6 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import { useItemDefinitions } from "#/hooks/use-item"
 import type {
   CreateDialogueScriptInput,
   DialogueNode,
@@ -24,7 +23,6 @@ import type {
   DialogueSpeakerSide,
 } from "#/lib/types/dialogue"
 import type { LinkAction } from "#/lib/types/link"
-import type { ItemEntry } from "#/lib/types/item"
 import { validateLinkAction } from "#/lib/types/link"
 import * as m from "#/paraglide/messages.js"
 
@@ -53,12 +51,6 @@ export function ScriptEditor({
   submitLabel,
   isPending,
 }: ScriptEditorProps) {
-  const { data: definitions } = useItemDefinitions()
-  const defs = useMemo(
-    () => (definitions ?? []).map((d) => ({ id: d.id, name: d.name })),
-    [definitions],
-  )
-
   const [alias, setAlias] = useState(initial?.alias ?? "")
   const [name, setName] = useState(initial?.name ?? "")
   const [description, setDescription] = useState(initial?.description ?? "")
@@ -234,7 +226,6 @@ export function ScriptEditor({
               key={index}
               node={node}
               nodeIds={nodeIdOptions}
-              definitions={defs}
               onChange={(patch) => updateNode(index, patch)}
               onRemove={() => removeNode(index)}
             />
@@ -258,7 +249,6 @@ export function ScriptEditor({
 interface NodeCardProps {
   node: DialogueNode
   nodeIds: string[]
-  definitions: Array<{ id: string; name: string }>
   onChange: (patch: Partial<DialogueNode>) => void
   onRemove: () => void
 }
@@ -268,7 +258,6 @@ const NEXT_NONE = "__none__"
 function NodeCard({
   node,
   nodeIds,
-  definitions,
   onChange,
   onRemove,
 }: NodeCardProps) {
@@ -387,7 +376,7 @@ function NodeCard({
         </Select>
       </div>
 
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={m.dialogue_node_on_enter_rewards()}
         entries={node.onEnter?.rewards ?? []}
         onChange={(rewards) =>
@@ -395,7 +384,6 @@ function NodeCard({
             onEnter: rewards.length > 0 ? { rewards } : undefined,
           })
         }
-        definitions={definitions}
       />
 
       {/* Options */}
@@ -425,7 +413,6 @@ function NodeCard({
             key={i}
             option={opt}
             nodeIds={nodeIds.filter((id) => id !== node.id)}
-            definitions={definitions}
             onChange={(patch) => {
               const next = [...(node.options ?? [])]
               next[i] = { ...next[i]!, ...patch }
@@ -447,7 +434,6 @@ function NodeCard({
 interface OptionCardProps {
   option: DialogueOption
   nodeIds: string[]
-  definitions: Array<{ id: string; name: string }>
   onChange: (patch: Partial<DialogueOption>) => void
   onRemove: () => void
 }
@@ -455,7 +441,6 @@ interface OptionCardProps {
 function OptionCard({
   option,
   nodeIds,
-  definitions,
   onChange,
   onRemove,
 }: OptionCardProps) {
@@ -512,13 +497,12 @@ function OptionCard({
         </Select>
       </div>
 
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={m.dialogue_option_rewards()}
         entries={option.rewards ?? []}
-        onChange={(rewards: ItemEntry[]) =>
+        onChange={(rewards) =>
           onChange({ rewards: rewards.length > 0 ? rewards : undefined })
         }
-        definitions={definitions}
       />
 
       <LinkActionEditor

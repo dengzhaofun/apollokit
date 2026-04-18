@@ -1,26 +1,41 @@
-import { useItemDefinitions } from "#/hooks/use-item"
+import { useRewardCatalog } from "#/hooks/use-reward-catalog"
+import type { RewardEntry, RewardType } from "#/lib/types/rewards"
 
 interface Props {
-  definitionId: string
-  quantity: number
+  /**
+   * Polymorphic entry preferred. The old `definitionId` + `quantity`
+   * shape is still accepted for legacy callers (they are treated as
+   * `type: "item"`) — the ternary below keeps call sites compiling
+   * until they migrate.
+   */
+  entry?: RewardEntry
+  definitionId?: string
+  quantity?: number
   /** sm: size-4 icon, tighter gap (for inline / tables). md: size-6 icon (for detail cards). */
   size?: "sm" | "md"
   className?: string
 }
 
 /**
- * Renders a single reward entry as: [icon] Name × quantity.
- * Falls back to a muted square + truncated id when the definition can't be resolved
- * (e.g. the item was deleted). Uses `useItemDefinitions` which is react-query-cached.
+ * Renders a single reward entry as: [icon] Name × count. Resolves the
+ * display name against `useRewardCatalog()` so all three target types
+ * (item / currency / entity) render uniformly. Falls back to a muted
+ * square + truncated id when the target can't be resolved (e.g. deleted).
  */
 export function ItemRewardRow({
+  entry,
   definitionId,
   quantity,
   size = "md",
   className,
 }: Props) {
-  const { data: definitions } = useItemDefinitions()
-  const def = (definitions ?? []).find((d) => d.id === definitionId)
+  const { byType } = useRewardCatalog()
+
+  const type: RewardType = entry?.type ?? "item"
+  const id = entry?.id ?? definitionId ?? ""
+  const count = entry?.count ?? quantity ?? 0
+
+  const opt = byType[type].find((o) => o.id === id)
 
   const iconClass =
     size === "sm" ? "size-4 shrink-0" : "size-6 shrink-0"
@@ -28,19 +43,23 @@ export function ItemRewardRow({
 
   return (
     <span className={`inline-flex items-center ${gapClass} ${className ?? ""}`}>
-      {def?.icon ? (
-        <img src={def.icon} alt="" className={`${iconClass} rounded object-cover`} />
+      {opt?.icon ? (
+        <img
+          src={opt.icon}
+          alt=""
+          className={`${iconClass} rounded object-cover`}
+        />
       ) : (
         <span className={`${iconClass} rounded bg-muted`} aria-hidden />
       )}
-      {def ? (
-        <span className="font-medium">{def.name}</span>
+      {opt ? (
+        <span className="font-medium">{opt.name}</span>
       ) : (
         <code className="rounded bg-muted px-1 py-0.5 text-xs">
-          {definitionId.slice(0, 8)}…
+          {id.slice(0, 8)}…
         </code>
       )}
-      <span className="text-muted-foreground">× {quantity}</span>
+      <span className="text-muted-foreground">× {count}</span>
     </span>
   )
 }

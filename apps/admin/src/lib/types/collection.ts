@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export type AlbumScope = "hero" | "monster" | "equipment" | "custom"
 export type MilestoneScope = "entry" | "group" | "album"
@@ -62,7 +62,7 @@ export interface CollectionMilestone {
   entryId: string | null
   threshold: number
   label: string | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   autoClaim: boolean
   sortOrder: number
   metadata: Record<string, unknown> | null
@@ -111,14 +111,14 @@ export interface CreateMilestoneInput {
   entryId?: string | null
   threshold?: number
   label?: string | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   autoClaim?: boolean
   sortOrder?: number
 }
 export interface UpdateMilestoneInput {
   threshold?: number
   label?: string | null
-  rewardItems?: ItemEntry[]
+  rewardItems?: RewardEntry[]
   autoClaim?: boolean
   sortOrder?: number
 }

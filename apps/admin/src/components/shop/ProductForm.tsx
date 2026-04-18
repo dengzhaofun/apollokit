@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { ActivityPicker } from "#/components/activity/ActivityPicker"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -13,12 +14,11 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import { useItemDefinitions } from "#/hooks/use-item"
 import {
   useShopCategories,
   useShopTags,
 } from "#/hooks/use-shop"
-import type { ItemEntry } from "#/lib/types/item"
+import type { RewardEntry } from "#/lib/types/rewards"
 import type {
   CreateShopProductInput,
   ShopEligibilityAnchor,
@@ -27,7 +27,6 @@ import type {
   ShopTimeWindowType,
 } from "#/lib/types/shop"
 import * as m from "#/paraglide/messages.js"
-import { ItemEntryEditor } from "./ItemEntryEditor"
 import { TagBadge } from "./TagBadge"
 
 interface ProductFormProps {
@@ -61,10 +60,8 @@ export function ProductForm({
   isPending,
   submitLabel,
 }: ProductFormProps) {
-  const { data: definitions } = useItemDefinitions()
   const { data: categories } = useShopCategories()
   const { data: tags } = useShopTags()
-  const defs = (definitions ?? []).map((d) => ({ id: d.id, name: d.name }))
 
   const [name, setName] = useState(defaultValues?.name ?? "")
   const [alias, setAlias] = useState(defaultValues?.alias ?? "")
@@ -81,10 +78,10 @@ export function ProductForm({
   const [productType, setProductType] = useState<ShopProductType>(
     defaultValues?.productType ?? "regular",
   )
-  const [costItems, setCostItems] = useState<ItemEntry[]>(
+  const [costItems, setCostItems] = useState<RewardEntry[]>(
     defaultValues?.costItems ?? [],
   )
-  const [rewardItems, setRewardItems] = useState<ItemEntry[]>(
+  const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
     defaultValues?.rewardItems ?? [],
   )
 
@@ -133,12 +130,8 @@ export function ProductForm({
       setError(m.common_name() + " *")
       return
     }
-    const validCosts = costItems.filter(
-      (e) => e.definitionId && e.quantity > 0,
-    )
-    const validRewards = rewardItems.filter(
-      (e) => e.definitionId && e.quantity > 0,
-    )
+    const validCosts = costItems.filter((e) => e.id && e.count > 0)
+    const validRewards = rewardItems.filter((e) => e.id && e.count > 0)
     const gallery = galleryText
       .split("\n")
       .map((s) => s.trim())
@@ -285,17 +278,15 @@ export function ProductForm({
         <h2 className="text-sm font-semibold uppercase text-muted-foreground">
           {m.shop_cost_items()} / {m.shop_reward_items()}
         </h2>
-        <ItemEntryEditor
+        <RewardEntryEditor
           label={m.shop_cost_items()}
           entries={costItems}
           onChange={setCostItems}
-          definitions={defs}
         />
-        <ItemEntryEditor
+        <RewardEntryEditor
           label={m.shop_reward_items()}
           entries={rewardItems}
           onChange={setRewardItems}
-          definitions={defs}
           hint={
             productType === "growth_pack" ? m.shop_reward_items_hint() : undefined
           }

@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export type ShopProductType = "regular" | "growth_pack"
 export type ShopTimeWindowType = "none" | "absolute" | "relative" | "cyclic"
@@ -65,8 +65,8 @@ export interface ShopProduct {
   coverImage: string | null
   galleryImages: string[] | null
   productType: ShopProductType
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
   timeWindowType: ShopTimeWindowType
   availableFrom: string | null
   availableTo: string | null
@@ -96,7 +96,7 @@ export interface ShopGrowthStage {
   description: string | null
   triggerType: ShopGrowthTriggerType
   triggerConfig: Record<string, unknown> | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   sortOrder: number
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -127,8 +127,8 @@ export interface ShopPurchaseResult {
   productId: string
   endUserId: string
   productType: ShopProductType
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
   grantedRewards: boolean
 }
 
@@ -137,7 +137,7 @@ export interface ShopClaimStageResult {
   stageId: string
   productId: string
   endUserId: string
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
 }
 
 // ─── Write shapes ───────────────────────────────────────────────────
@@ -194,8 +194,8 @@ export interface CreateShopProductInput {
   coverImage?: string | null
   galleryImages?: string[] | null
   productType: ShopProductType
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
   timeWindowType: ShopTimeWindowType
   availableFrom?: string | null
   availableTo?: string | null
@@ -224,7 +224,7 @@ export interface CreateShopGrowthStageInput {
   description?: string | null
   triggerType: ShopGrowthTriggerType
   triggerConfig?: Record<string, unknown> | null
-  rewardItems: ItemEntry[]
+  rewardItems: RewardEntry[]
   sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
@@ -235,7 +235,7 @@ export interface UpdateShopGrowthStageInput {
   description?: string | null
   triggerType?: ShopGrowthTriggerType
   triggerConfig?: Record<string, unknown> | null
-  rewardItems?: ItemEntry[]
+  rewardItems?: RewardEntry[]
   sortOrder?: number
   metadata?: Record<string, unknown> | null
 }

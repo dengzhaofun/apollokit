@@ -4,11 +4,8 @@ export type AggregationMode = "sum" | "max" | "latest"
 export type TieBreaker = "earliest" | "latest"
 export type ConfigStatus = "draft" | "active" | "paused" | "archived"
 
-export interface RewardEntry {
-  type: "item" | "entity"
-  id: string
-  count: number
-}
+import type { RewardEntry } from "./rewards"
+export type { RewardEntry }
 
 export interface RewardTier {
   from: number

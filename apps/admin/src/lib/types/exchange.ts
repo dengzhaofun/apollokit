@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export interface ExchangeConfig {
   id: string
@@ -18,8 +18,8 @@ export interface ExchangeOption {
   organizationId: string
   name: string
   description: string | null
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
   userLimit: number | null
   globalLimit: number | null
   globalCount: number
@@ -34,8 +34,8 @@ export interface ExchangeResult {
   success: boolean
   exchangeId: string
   optionId: string
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
 }
 
 export interface ExchangeUserState {
@@ -63,8 +63,8 @@ export interface UpdateConfigInput {
 export interface CreateOptionInput {
   name: string
   description?: string | null
-  costItems: ItemEntry[]
-  rewardItems: ItemEntry[]
+  costItems: RewardEntry[]
+  rewardItems: RewardEntry[]
   userLimit?: number | null
   globalLimit?: number | null
   sortOrder?: number
@@ -75,8 +75,8 @@ export interface CreateOptionInput {
 export interface UpdateOptionInput {
   name?: string
   description?: string | null
-  costItems?: ItemEntry[]
-  rewardItems?: ItemEntry[]
+  costItems?: RewardEntry[]
+  rewardItems?: RewardEntry[]
   userLimit?: number | null
   globalLimit?: number | null
   sortOrder?: number
