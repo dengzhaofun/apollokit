@@ -23,6 +23,10 @@ import {
   collectionClientRouter,
 } from "./modules/collection";
 import {
+  currencyRouter,
+  currencyClientRouter,
+} from "./modules/currency";
+import {
   dialogueRouter,
   dialogueClientRouter,
 } from "./modules/dialogue";
@@ -125,6 +129,7 @@ app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
 app.route("/api/collection", collectionRouter);
+app.route("/api/currency", currencyRouter);
 app.route("/api/dialogue", dialogueRouter);
 app.route("/api/entity", entityRouter);
 app.route("/api/item", itemRouter);
@@ -148,6 +153,7 @@ app.route("/api/client/banner", bannerClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
 app.route("/api/client/collection", collectionClientRouter);
+app.route("/api/client/currency", currencyClientRouter);
 app.route("/api/client/dialogue", dialogueClientRouter);
 app.route("/api/client/entity", entityClientRouter);
 app.route("/api/client/item", itemClientRouter);
