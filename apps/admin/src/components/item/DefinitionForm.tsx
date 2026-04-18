@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -42,9 +43,9 @@ export function DefinitionForm({
       stackable: defaultValues?.stackable ?? true,
       stackLimit: defaultValues?.stackLimit ?? (null as number | null),
       holdLimit: defaultValues?.holdLimit ?? (null as number | null),
-      isCurrency: defaultValues?.isCurrency ?? false,
       lotteryPoolId: (defaultValues as Record<string, unknown>)?.lotteryPoolId as string ?? "",
       isActive: defaultValues?.isActive ?? true,
+      activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
       const input: CreateDefinitionInput = {
@@ -56,9 +57,9 @@ export function DefinitionForm({
         stackable: value.stackable,
         stackLimit: value.stackable ? value.stackLimit : null,
         holdLimit: value.holdLimit,
-        isCurrency: value.isCurrency,
         lotteryPoolId: value.lotteryPoolId || null,
         isActive: value.isActive,
+        activityId: value.activityId,
       }
       await onSubmit(input)
     },
@@ -236,17 +237,16 @@ export function DefinitionForm({
         )}
       </form.Field>
 
-      <form.Field name="isCurrency">
+      <form.Field name="activityId">
         {(field) => (
-          <div className="flex items-center gap-3">
-            <Switch
-              id={field.name}
-              checked={field.state.value}
-              onCheckedChange={(checked) => field.handleChange(checked === true)}
+          <div className="space-y-2">
+            <Label>{m.common_link_activity()}</Label>
+            <ActivityPicker
+              value={field.state.value}
+              onChange={(v) => field.handleChange(v)}
             />
-            <Label htmlFor={field.name}>货币</Label>
             <p className="text-xs text-muted-foreground">
-              标记为货币后，可在存储箱、商店等场景下被"仅货币"选择器识别。
+              {m.common_link_activity_hint()}
             </p>
           </div>
         )}

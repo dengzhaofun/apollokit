@@ -107,6 +107,8 @@ export interface EntityBlueprint {
   maxLevel: number | null
   sortOrder: number
   isActive: boolean
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -194,6 +196,8 @@ export interface CreateBlueprintInput {
   maxLevel?: number | null
   sortOrder?: number
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -213,6 +217,8 @@ export interface UpdateBlueprintInput {
   maxLevel?: number | null
   sortOrder?: number
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 

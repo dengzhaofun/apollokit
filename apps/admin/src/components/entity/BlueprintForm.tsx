@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 
+import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -36,6 +37,7 @@ export function BlueprintForm({
       maxLevel: defaultValues?.maxLevel ?? null as number | null,
       sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
+      activityId: defaultValues?.activityId ?? (null as string | null),
     },
     onSubmit: async ({ value }) => {
       const input: CreateBlueprintInput = {
@@ -51,6 +53,7 @@ export function BlueprintForm({
         maxLevel: value.maxLevel,
         sortOrder: value.sortOrder,
         isActive: value.isActive,
+        activityId: value.activityId,
       }
       await onSubmit(input)
     },
@@ -287,6 +290,22 @@ export function BlueprintForm({
           )}
         </form.Field>
       </div>
+
+      {/* Activity binding */}
+      <form.Field name="activityId">
+        {(field) => (
+          <div className="space-y-2">
+            <Label>{m.common_link_activity()}</Label>
+            <ActivityPicker
+              value={field.state.value}
+              onChange={(v) => field.handleChange(v)}
+            />
+            <p className="text-xs text-muted-foreground">
+              {m.common_link_activity_hint()}
+            </p>
+          </div>
+        )}
+      </form.Field>
 
       {/* Submit */}
       <form.Subscribe selector={(s) => s.canSubmit}>

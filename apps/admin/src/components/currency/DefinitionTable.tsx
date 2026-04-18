@@ -26,75 +26,78 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import type { ItemDefinition } from "#/lib/types/item"
+import type { CurrencyDefinition } from "#/lib/types/currency"
 
-const columnHelper = createColumnHelper<ItemDefinition>()
-
-function stackLabel(def: ItemDefinition): string {
-  if (!def.stackable) return m.item_non_stackable()
-  if (def.stackLimit == null) return m.common_unlimited()
-  return `Stack ≤ ${def.stackLimit}`
-}
+const columnHelper = createColumnHelper<CurrencyDefinition>()
 
 function useColumns() {
-  return useMemo(() => [
-    columnHelper.accessor("name", {
-      header: m.common_name(),
-      cell: (info) => (
-        <Link
-          to="/item/definitions/$definitionId"
-          params={{ definitionId: info.row.original.id }}
-          className="font-medium hover:underline"
-        >
-          {info.getValue()}
-        </Link>
-      ),
-    }),
-    columnHelper.accessor("alias", {
-      header: m.common_alias(),
-      cell: (info) => {
-        const alias = info.getValue()
-        return alias ? (
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )
-      },
-    }),
-    columnHelper.accessor("stackable", {
-      header: m.common_type(),
-      cell: (info) => (
-        <Badge variant="secondary">{stackLabel(info.row.original)}</Badge>
-      ),
-    }),
-    columnHelper.accessor("holdLimit", {
-      header: m.item_hold_limit(),
-      cell: (info) => {
-        const limit = info.getValue()
-        return limit != null ? limit : <span className="text-muted-foreground">—</span>
-      },
-    }),
-    columnHelper.accessor("isActive", {
-      header: m.common_status(),
-      cell: (info) => (
-        <Badge variant={info.getValue() ? "default" : "outline"}>
-          {info.getValue() ? m.common_active() : m.common_inactive()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("createdAt", {
-      header: m.common_created(),
-      cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: (info) => <ActionsCell def={info.row.original} />,
-    }),
-  ], [])
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: m.common_name(),
+        cell: (info) => (
+          <Link
+            to="/currency/$currencyId"
+            params={{ currencyId: info.row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: m.common_alias(),
+        cell: (info) => {
+          const alias = info.getValue()
+          return alias ? (
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+              {alias}
+            </code>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )
+        },
+      }),
+      columnHelper.accessor("activityId", {
+        header: m.common_link_activity(),
+        cell: (info) => {
+          const id = info.getValue()
+          return id ? (
+            <Badge variant="secondary">{id.slice(0, 8)}…</Badge>
+          ) : (
+            <span className="text-muted-foreground">
+              {m.currency_permanent()}
+            </span>
+          )
+        },
+      }),
+      columnHelper.accessor("sortOrder", {
+        header: m.currency_sort_order(),
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("isActive", {
+        header: m.common_status(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "outline"}>
+            {info.getValue() ? m.common_active() : m.common_inactive()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("createdAt", {
+        header: m.common_created(),
+        cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: (info) => <ActionsCell def={info.row.original} />,
+      }),
+    ],
+    [],
+  )
 }
 
-function ActionsCell({ def }: { def: ItemDefinition }) {
+function ActionsCell({ def }: { def: CurrencyDefinition }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -105,18 +108,15 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link
-            to="/item/definitions/$definitionId"
-            params={{ definitionId: def.id }}
-          >
+          <Link to="/currency/$currencyId" params={{ currencyId: def.id }}>
             <Pencil className="size-4" />
             {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link
-            to="/item/definitions/$definitionId"
-            params={{ definitionId: def.id }}
+            to="/currency/$currencyId"
+            params={{ currencyId: def.id }}
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
@@ -129,7 +129,7 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
 }
 
 interface DefinitionTableProps {
-  data: ItemDefinition[]
+  data: CurrencyDefinition[]
 }
 
 export function DefinitionTable({ data }: DefinitionTableProps) {
@@ -149,7 +149,10 @@ export function DefinitionTable({ data }: DefinitionTableProps) {
               <TableHead key={header.id}>
                 {header.isPlaceholder
                   ? null
-                  : flexRender(header.column.columnDef.header, header.getContext())}
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
               </TableHead>
             ))}
           </TableRow>
@@ -169,7 +172,7 @@ export function DefinitionTable({ data }: DefinitionTableProps) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              No item definitions yet.
+              {m.currency_empty()}
             </TableCell>
           </TableRow>
         )}
