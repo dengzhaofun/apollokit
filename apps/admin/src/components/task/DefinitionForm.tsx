@@ -50,6 +50,11 @@ export function DefinitionForm({
       autoClaim: defaultValues?.autoClaim ?? false,
       isActive: defaultValues?.isActive ?? true,
       isHidden: defaultValues?.isHidden ?? false,
+      visibility:
+        (defaultValues?.visibility as "broadcast" | "assigned" | undefined) ??
+        "broadcast",
+      defaultAssignmentTtlSeconds:
+        defaultValues?.defaultAssignmentTtlSeconds ?? ("" as number | ""),
       sortOrder: defaultValues?.sortOrder ?? 0,
       activityId: defaultValues?.activityId ?? (null as string | null),
       rewardTiersJson: JSON.stringify(
@@ -80,6 +85,10 @@ export function DefinitionForm({
         }
       }
 
+      const ttlRaw = value.defaultAssignmentTtlSeconds
+      const ttlSeconds =
+        ttlRaw === "" || ttlRaw == null ? null : Number(ttlRaw)
+
       const input: CreateDefinitionInput = {
         name: value.name,
         alias: value.alias || null,
@@ -95,6 +104,9 @@ export function DefinitionForm({
         autoClaim: value.autoClaim,
         isActive: value.isActive,
         isHidden: value.isHidden,
+        visibility: value.visibility,
+        defaultAssignmentTtlSeconds:
+          value.visibility === "assigned" ? ttlSeconds : null,
         sortOrder: value.sortOrder,
         activityId: value.activityId,
         rewards: defaultValues?.rewards ?? [{ type: "item", id: "", count: 1 }],
@@ -410,6 +422,70 @@ export function DefinitionForm({
           </div>
         )}
       </form.Field>
+
+      <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-1">
+            <Label>{m.task_visibility_label()}</Label>
+            <p className="text-xs text-muted-foreground">
+              {m.task_visibility_hint()}
+            </p>
+          </div>
+          <form.Field name="visibility">
+            {(field) => (
+              <Select
+                value={field.state.value}
+                onValueChange={(v) =>
+                  field.handleChange(v as "broadcast" | "assigned")
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="broadcast">
+                    {m.task_visibility_broadcast()}
+                  </SelectItem>
+                  <SelectItem value="assigned">
+                    {m.task_visibility_assigned()}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </form.Field>
+        </div>
+
+        <form.Subscribe selector={(state) => state.values.visibility}>
+          {(visibility) =>
+            visibility === "assigned" ? (
+              <form.Field name="defaultAssignmentTtlSeconds">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor={field.name}>
+                      {m.task_default_ttl_label()}
+                    </Label>
+                    <Input
+                      id={field.name}
+                      type="number"
+                      min={1}
+                      placeholder={m.task_default_ttl_placeholder()}
+                      value={field.state.value === "" ? "" : field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        field.handleChange(v === "" ? "" : Number(v))
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {m.task_default_ttl_hint()}
+                    </p>
+                  </div>
+                )}
+              </form.Field>
+            ) : null
+          }
+        </form.Subscribe>
+      </div>
 
       <form.Field name="rewardTiersJson">
         {(field) => (

@@ -183,6 +183,13 @@
       "when": 1776435290332,
       "tag": "0025_rare_network",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1776480271498,
+      "tag": "0026_wonderful_ares",
+      "breakpoints": true
     }
   ]
 }

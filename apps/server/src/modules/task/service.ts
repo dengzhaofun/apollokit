@@ -9,12 +9,13 @@
  * Phase 2: Event processing, progress tracking, reward claiming.
  */
 
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
   taskCategories,
   taskDefinitions,
+  taskUserAssignments,
   taskUserMilestoneClaims,
   taskUserProgress,
   type TaskRewardTier,
@@ -26,21 +27,27 @@ import { compileTaskFilter, type TaskFilterFn } from "./filter";
 import {
   TaskAliasConflict,
   TaskAlreadyClaimed,
+  TaskAssignmentBatchTooLarge,
+  TaskAssignmentNotFound,
   TaskAutoClaimOnly,
   TaskCategoryNotFound,
   TaskDefinitionNotFound,
   TaskInvalidInput,
   TaskNestingTooDeep,
+  TaskNotAssignable,
   TaskNotCompleted,
   TaskPrerequisitesNotMet,
   TaskTierNotFound,
   TaskTierNotReached,
 } from "./errors";
 import type {
+  TaskAssignmentSource,
   TaskCategory,
   TaskDefinition,
+  TaskUserAssignment,
   TaskUserProgress,
 } from "./types";
+import { ASSIGNMENT_BATCH_MAX } from "./validators";
 import type {
   CreateCategoryInput,
   CreateDefinitionInput,
@@ -436,6 +443,8 @@ export function createTaskService(
           navigation: input.navigation ?? null,
           isActive: input.isActive ?? true,
           isHidden: input.isHidden ?? false,
+          visibility: input.visibility ?? "broadcast",
+          defaultAssignmentTtlSeconds: input.defaultAssignmentTtlSeconds ?? null,
           sortOrder: input.sortOrder ?? 0,
           activityId: input.activityId ?? null,
           activityNodeId: input.activityNodeId ?? null,
@@ -533,6 +542,9 @@ export function createTaskService(
     if (patch.activityId !== undefined) values.activityId = patch.activityId;
     if (patch.activityNodeId !== undefined)
       values.activityNodeId = patch.activityNodeId;
+    if (patch.visibility !== undefined) values.visibility = patch.visibility;
+    if (patch.defaultAssignmentTtlSeconds !== undefined)
+      values.defaultAssignmentTtlSeconds = patch.defaultAssignmentTtlSeconds;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) return existing;
@@ -613,7 +625,22 @@ export function createTaskService(
         ts,
       );
 
-      // 3. Check prerequisites
+      // 3. Visibility gate — 'assigned' tasks must NOT accumulate
+      //    progress for unassigned users, otherwise the list-side
+      //    filter is only cosmetic and autoClaim tasks would still
+      //    mail rewards to everyone who fires the event. See
+      //    getActiveAssignment for expiry semantics.
+      if (def.visibility === "assigned") {
+        const assignment = await getActiveAssignment(
+          organizationId,
+          endUserId,
+          def.id,
+          ts,
+        );
+        if (!assignment) continue;
+      }
+
+      // 4. Check prerequisites
       if (def.prerequisiteTaskIds.length > 0) {
         const prereqsMet = await checkPrerequisites(
           organizationId,
@@ -624,7 +651,7 @@ export function createTaskService(
         if (!prereqsMet) continue;
       }
 
-      // 4. Apply filter expression (if configured). Runs in-memory against
+      // 5. Apply filter expression (if configured). Runs in-memory against
       //    eventData. Fail-closed on compile/eval errors — a broken filter
       //    on one task must not poison dispatch for the rest.
       if (!matchesFilter(def, eventData)) continue;
@@ -1121,6 +1148,31 @@ export function createTaskService(
 
     if (defs.length === 0) return [];
 
+    // Batch-load active assignments for any 'assigned'-visibility
+    // tasks this user might see. Broadcast tasks never consult the
+    // assignment map — legacy behaviour preserved.
+    const assignedDefIds = defs
+      .filter((d) => d.visibility === "assigned")
+      .map((d) => d.id);
+    const assignmentMap = new Map<string, TaskUserAssignment>();
+    if (assignedDefIds.length > 0) {
+      const rows = await db
+        .select()
+        .from(taskUserAssignments)
+        .where(
+          and(
+            eq(taskUserAssignments.organizationId, organizationId),
+            eq(taskUserAssignments.endUserId, endUserId),
+            inArray(taskUserAssignments.taskId, assignedDefIds),
+            isNull(taskUserAssignments.revokedAt),
+          ),
+        );
+      for (const row of rows) {
+        if (row.expiresAt && row.expiresAt.getTime() <= ts.getTime()) continue;
+        assignmentMap.set(row.taskId, row);
+      }
+    }
+
     // Load all progress rows for this user
     const defIds = defs.map((d) => d.id);
     const progressRows = await db
@@ -1212,6 +1264,14 @@ export function createTaskService(
     const results = [];
 
     for (const def of defs) {
+      // Visibility gate — drop 'assigned' tasks the user has no
+      // active assignment for. Broadcast tasks fall through.
+      const activeAssignment =
+        def.visibility === "assigned"
+          ? assignmentMap.get(def.id) ?? null
+          : null;
+      if (def.visibility === "assigned" && !activeAssignment) continue;
+
       // Check prerequisites
       let prerequisitesMet = true;
       if (def.prerequisiteTaskIds.length > 0) {
@@ -1286,6 +1346,13 @@ export function createTaskService(
         claimedAt: claimedAt?.toISOString() ?? null,
         claimedTierAliases,
         prerequisitesMet,
+        assignment: activeAssignment
+          ? {
+              assignedAt: activeAssignment.assignedAt.toISOString(),
+              expiresAt: activeAssignment.expiresAt?.toISOString() ?? null,
+              source: activeAssignment.source,
+            }
+          : null,
       });
     }
 
@@ -1498,6 +1565,333 @@ export function createTaskService(
     };
   }
 
+  // ─── Assignment (定向分配) ─────────────────────────────────────
+
+  /**
+   * Fetch a single user's active assignment for a task, or null.
+   *
+   * "Active" = the row exists, `revoked_at` is null, and either
+   * `expires_at` is null or strictly in the future.
+   */
+  async function getActiveAssignment(
+    organizationId: string,
+    endUserId: string,
+    taskId: string,
+    now: Date,
+  ): Promise<TaskUserAssignment | null> {
+    const rows = await db
+      .select()
+      .from(taskUserAssignments)
+      .where(
+        and(
+          eq(taskUserAssignments.organizationId, organizationId),
+          eq(taskUserAssignments.endUserId, endUserId),
+          eq(taskUserAssignments.taskId, taskId),
+          isNull(taskUserAssignments.revokedAt),
+          or(
+            isNull(taskUserAssignments.expiresAt),
+            gt(taskUserAssignments.expiresAt, now),
+          ),
+        ),
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  type AssignTaskOptions = {
+    source?: TaskAssignmentSource;
+    sourceRef?: string | null;
+    expiresAt?: Date | null;
+    ttlSeconds?: number;
+    metadata?: Record<string, unknown> | null;
+    allowReassign?: boolean;
+    now?: Date;
+  };
+
+  /** Resolve the effective expiresAt from call-level options + def default. */
+  function resolveExpiresAt(
+    def: TaskDefinition,
+    options: AssignTaskOptions,
+    ts: Date,
+  ): Date | null {
+    if (options.expiresAt !== undefined) return options.expiresAt;
+    if (options.ttlSeconds !== undefined) {
+      return new Date(ts.getTime() + options.ttlSeconds * 1000);
+    }
+    if (def.defaultAssignmentTtlSeconds != null) {
+      return new Date(ts.getTime() + def.defaultAssignmentTtlSeconds * 1000);
+    }
+    return null;
+  }
+
+  /**
+   * Assign a task to a single end user. Intended as the primary
+   * callable for programmatic triggers (activity schedules, other
+   * modules, external webhooks via admin API).
+   *
+   * Idempotency model (driven by the `(task_id, end_user_id)` PK):
+   *   - If no row exists → INSERT new active assignment.
+   *   - If a row exists AND `revoked_at IS NOT NULL` → revive it
+   *     (clear revoked_at, refresh assignedAt/expiresAt/source). This
+   *     branch runs regardless of `allowReassign` — a revoked
+   *     assignment being explicitly re-assigned is the normal re-enable
+   *     flow.
+   *   - If an active row exists AND `allowReassign` is true → refresh
+   *     assignedAt/expiresAt/source/metadata.
+   *   - If an active row exists AND `allowReassign` is false (default)
+   *     → keep the existing row as-is (no-op), return the existing
+   *     row so callers can still inspect source/expiry.
+   *
+   * `visibility === 'broadcast'` tasks may still be assigned — the row
+   * has no visibility effect there but the audit / source tagging is
+   * still useful for mixed-mode definitions. This is called out in the
+   * plan doc as "harmless noop on broadcast defs".
+   */
+  async function assignTask(
+    organizationId: string,
+    endUserId: string,
+    taskKey: string,
+    options: AssignTaskOptions = {},
+  ): Promise<TaskUserAssignment> {
+    if (options.expiresAt && options.ttlSeconds != null) {
+      throw new TaskInvalidInput(
+        "expiresAt and ttlSeconds are mutually exclusive",
+      );
+    }
+
+    const ts = options.now ?? new Date();
+    const def = await loadDefinitionByKey(organizationId, taskKey);
+    if (!def.isActive) {
+      throw new TaskNotAssignable("task is inactive");
+    }
+
+    const expiresAt = resolveExpiresAt(def, options, ts);
+    const source = options.source ?? "manual";
+    const sourceRef = options.sourceRef ?? null;
+    const metadata = options.metadata ?? null;
+    const allowReassign = options.allowReassign ?? false;
+
+    // Branch 1 — caller opted into "refresh existing": unconditional
+    // upsert that always overwrites the mutable fields on conflict.
+    if (allowReassign) {
+      const [row] = await db
+        .insert(taskUserAssignments)
+        .values({
+          taskId: def.id,
+          endUserId,
+          organizationId,
+          assignedAt: ts,
+          expiresAt,
+          revokedAt: null,
+          source,
+          sourceRef,
+          metadata,
+        })
+        .onConflictDoUpdate({
+          target: [taskUserAssignments.taskId, taskUserAssignments.endUserId],
+          set: {
+            assignedAt: ts,
+            expiresAt,
+            revokedAt: null,
+            source,
+            sourceRef,
+            metadata,
+            updatedAt: ts,
+          },
+        })
+        .returning();
+      if (!row) throw new Error("assign upsert returned no row");
+      return row;
+    }
+
+    // Branch 2 — default path: INSERT new row, or revive a revoked
+    // row if one exists. The WHERE on DO UPDATE ensures an active row
+    // is NOT overwritten — we still return the existing row below.
+    const inserted = await db
+      .insert(taskUserAssignments)
+      .values({
+        taskId: def.id,
+        endUserId,
+        organizationId,
+        assignedAt: ts,
+        expiresAt,
+        revokedAt: null,
+        source,
+        sourceRef,
+        metadata,
+      })
+      .onConflictDoUpdate({
+        target: [taskUserAssignments.taskId, taskUserAssignments.endUserId],
+        set: {
+          assignedAt: ts,
+          expiresAt,
+          revokedAt: null,
+          source,
+          sourceRef,
+          metadata,
+          updatedAt: ts,
+        },
+        setWhere: sql`${taskUserAssignments.revokedAt} IS NOT NULL`,
+      })
+      .returning();
+
+    if (inserted[0]) return inserted[0];
+
+    // The upsert updated nothing (active row present). Read it back.
+    const existingRows = await db
+      .select()
+      .from(taskUserAssignments)
+      .where(
+        and(
+          eq(taskUserAssignments.taskId, def.id),
+          eq(taskUserAssignments.endUserId, endUserId),
+        ),
+      )
+      .limit(1);
+    const existing = existingRows[0];
+    if (!existing) throw new Error("assign upsert vanished mid-call");
+    return existing;
+  }
+
+  /**
+   * Batch-assign a task to multiple users. Enforces the batch cap so
+   * a single HTTP call can't fan out unbounded inserts over neon-http.
+   *
+   * Not wrapped in a transaction (neon-http has none) — individual
+   * `assignTask` calls run sequentially. Each call is atomic on its
+   * own row; a partial failure leaves earlier rows assigned. Caller
+   * logs / retries by diffing the returned `items` against the
+   * requested `endUserIds`.
+   */
+  async function assignTaskToUsers(
+    organizationId: string,
+    taskKey: string,
+    endUserIds: string[],
+    options: AssignTaskOptions = {},
+  ): Promise<{
+    assigned: number;
+    skipped: number;
+    items: TaskUserAssignment[];
+  }> {
+    if (endUserIds.length === 0) {
+      return { assigned: 0, skipped: 0, items: [] };
+    }
+    if (endUserIds.length > ASSIGNMENT_BATCH_MAX) {
+      throw new TaskAssignmentBatchTooLarge(
+        endUserIds.length,
+        ASSIGNMENT_BATCH_MAX,
+      );
+    }
+
+    // Dedupe while preserving caller order — avoids double-counting
+    // `skipped` for a duplicate user id in one request.
+    const unique = Array.from(new Set(endUserIds));
+    const ts = options.now ?? new Date();
+
+    // Resolve the definition once, not N times — `assignTask`'s own
+    // load-by-key is correct but wasteful in a batch loop.
+    const def = await loadDefinitionByKey(organizationId, taskKey);
+    if (!def.isActive) {
+      throw new TaskNotAssignable("task is inactive");
+    }
+
+    let assigned = 0;
+    let skipped = 0;
+    const items: TaskUserAssignment[] = [];
+
+    for (const uid of unique) {
+      const before = await getActiveAssignment(organizationId, uid, def.id, ts);
+      const row = await assignTask(organizationId, uid, def.id, {
+        ...options,
+        now: ts,
+      });
+      if (before && !options.allowReassign) {
+        skipped++;
+      } else {
+        assigned++;
+      }
+      items.push(row);
+    }
+
+    return { assigned, skipped, items };
+  }
+
+  /**
+   * Revoke an assignment (soft delete). Idempotent: revoking an
+   * already-revoked / non-existent assignment throws
+   * `TaskAssignmentNotFound`. The row is kept for audit; progress
+   * rows are untouched so a future re-assign resumes where the user
+   * left off (subject to period reset).
+   */
+  async function revokeAssignment(
+    organizationId: string,
+    endUserId: string,
+    taskKey: string,
+    options?: { now?: Date },
+  ): Promise<void> {
+    const ts = options?.now ?? new Date();
+    const def = await loadDefinitionByKey(organizationId, taskKey);
+
+    const [row] = await db
+      .update(taskUserAssignments)
+      .set({ revokedAt: ts, updatedAt: ts })
+      .where(
+        and(
+          eq(taskUserAssignments.taskId, def.id),
+          eq(taskUserAssignments.endUserId, endUserId),
+          eq(taskUserAssignments.organizationId, organizationId),
+          isNull(taskUserAssignments.revokedAt),
+        ),
+      )
+      .returning();
+
+    if (!row) throw new TaskAssignmentNotFound(endUserId);
+  }
+
+  /**
+   * List assignments. Two query modes:
+   *   - filter.taskId set → "who has this task been assigned to"
+   *   - filter.endUserId set → "which tasks is this user assigned"
+   * Callers can combine both.
+   *
+   * `activeOnly` (default true) excludes revoked and expired rows.
+   */
+  async function listAssignments(
+    organizationId: string,
+    filter: { endUserId?: string; taskId?: string; activeOnly?: boolean } = {},
+    options?: { limit?: number; now?: Date },
+  ): Promise<TaskUserAssignment[]> {
+    const ts = options?.now ?? new Date();
+    const activeOnly = filter.activeOnly ?? true;
+
+    const conditions = [eq(taskUserAssignments.organizationId, organizationId)];
+    if (filter.taskId) {
+      conditions.push(eq(taskUserAssignments.taskId, filter.taskId));
+    }
+    if (filter.endUserId) {
+      conditions.push(eq(taskUserAssignments.endUserId, filter.endUserId));
+    }
+    if (activeOnly) {
+      conditions.push(isNull(taskUserAssignments.revokedAt));
+      // expires_at NULL or in the future — enforced in SQL so the
+      // admin "active only" listing returns a stable count across
+      // pagination without post-filtering.
+      conditions.push(
+        or(
+          isNull(taskUserAssignments.expiresAt),
+          gt(taskUserAssignments.expiresAt, ts),
+        )!,
+      );
+    }
+
+    return db
+      .select()
+      .from(taskUserAssignments)
+      .where(and(...conditions))
+      .orderBy(taskUserAssignments.assignedAt)
+      .limit(options?.limit ?? 100);
+  }
+
   return {
     // Category CRUD
     listCategories,
@@ -1517,6 +1911,12 @@ export function createTaskService(
     getTasksForUser,
     claimReward,
     claimTier,
+    // Assignment (定向分配)
+    assignTask,
+    assignTaskToUsers,
+    revokeAssignment,
+    listAssignments,
+    getActiveAssignment,
   };
 }
 

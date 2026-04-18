@@ -14,7 +14,11 @@ import type { RewardEntry } from "../../lib/rewards";
 import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
 import { taskService } from "./index";
 import { ModuleError } from "./errors";
+import type { TaskUserAssignment } from "./types";
 import {
+  AssignBatchResponseSchema,
+  AssignmentListResponseSchema,
+  AssignTaskBodySchema,
   CategoryIdParamSchema,
   CategoryListResponseSchema,
   CategoryResponseSchema,
@@ -24,12 +28,15 @@ import {
   DefinitionListResponseSchema,
   DefinitionResponseSchema,
   ErrorResponseSchema,
+  ListAssignmentsQuerySchema,
+  RevokeAssignmentParamsSchema,
   UpdateCategorySchema,
   UpdateDefinitionSchema,
 } from "./validators";
 
 const TAG_CAT = "Task Categories";
 const TAG_DEF = "Task Definitions";
+const TAG_ASSIGN = "Task Assignments";
 
 // ─── Serializers ─────────────────────────────────────────────────
 
@@ -88,6 +95,8 @@ function serializeDefinition(row: {
   navigation: TaskNavigation | null;
   isActive: boolean;
   isHidden: boolean;
+  visibility: string;
+  defaultAssignmentTtlSeconds: number | null;
   sortOrder: number;
   metadata: unknown;
   createdAt: Date;
@@ -118,6 +127,8 @@ function serializeDefinition(row: {
     navigation: row.navigation,
     isActive: row.isActive,
     isHidden: row.isHidden,
+    visibility: row.visibility,
+    defaultAssignmentTtlSeconds: row.defaultAssignmentTtlSeconds,
     sortOrder: row.sortOrder,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,
     createdAt: row.createdAt.toISOString(),
@@ -429,3 +440,161 @@ taskRouter.openapi(
     return c.body(null, 204);
   },
 );
+
+// ─── Assignments (定向分配) ─────────────────────────────────────
+
+function serializeAssignment(row: TaskUserAssignment) {
+  return {
+    taskId: row.taskId,
+    endUserId: row.endUserId,
+    organizationId: row.organizationId,
+    assignedAt: row.assignedAt.toISOString(),
+    expiresAt: row.expiresAt?.toISOString() ?? null,
+    revokedAt: row.revokedAt?.toISOString() ?? null,
+    source: row.source,
+    sourceRef: row.sourceRef,
+    metadata: (row.metadata ?? null) as Record<string, unknown> | null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+taskRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/definitions/{key}/assignments",
+    tags: [TAG_ASSIGN],
+    summary: "Assign a task to one or more end users",
+    request: {
+      params: DefinitionKeyParamSchema,
+      body: {
+        content: { "application/json": { schema: AssignTaskBodySchema } },
+      },
+    },
+    responses: {
+      201: {
+        description: "Assigned",
+        content: {
+          "application/json": { schema: AssignBatchResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+
+    const result = await taskService.assignTaskToUsers(
+      orgId,
+      key,
+      body.endUserIds,
+      {
+        source: body.source,
+        sourceRef: body.sourceRef ?? null,
+        expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
+        ttlSeconds: body.ttlSeconds,
+        metadata: body.metadata ?? null,
+        allowReassign: body.allowReassign,
+      },
+    );
+
+    return c.json(
+      {
+        assigned: result.assigned,
+        skipped: result.skipped,
+        items: result.items.map(serializeAssignment),
+      },
+      201,
+    );
+  },
+);
+
+taskRouter.openapi(
+  createRoute({
+    method: "delete",
+    path: "/definitions/{key}/assignments/{endUserId}",
+    tags: [TAG_ASSIGN],
+    summary: "Revoke a task assignment for a single end user",
+    request: { params: RevokeAssignmentParamsSchema },
+    responses: { 204: { description: "Revoked" }, ...errorResponses },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key, endUserId } = c.req.valid("param");
+    await taskService.revokeAssignment(orgId, endUserId, key);
+    return c.body(null, 204);
+  },
+);
+
+taskRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/definitions/{key}/assignments",
+    tags: [TAG_ASSIGN],
+    summary: "List end users assigned to this task",
+    request: {
+      params: DefinitionKeyParamSchema,
+      query: ListAssignmentsQuerySchema,
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: AssignmentListResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const { endUserId, activeOnly, limit } = c.req.valid("query");
+    const def = await taskService.getDefinition(orgId, key);
+    const rows = await taskService.listAssignments(
+      orgId,
+      {
+        taskId: def.id,
+        endUserId,
+        activeOnly: activeOnly === undefined ? true : activeOnly === "true",
+      },
+      { limit },
+    );
+    return c.json({ items: rows.map(serializeAssignment) }, 200);
+  },
+);
+
+taskRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/assignments",
+    tags: [TAG_ASSIGN],
+    summary: "List assignments across all tasks (admin/customer-support view)",
+    request: { query: ListAssignmentsQuerySchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: AssignmentListResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { endUserId, activeOnly, limit } = c.req.valid("query");
+    const rows = await taskService.listAssignments(
+      orgId,
+      {
+        endUserId,
+        activeOnly: activeOnly === undefined ? true : activeOnly === "true",
+      },
+      { limit },
+    );
+    return c.json({ items: rows.map(serializeAssignment) }, 200);
+  },
+);
+

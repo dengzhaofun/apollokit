@@ -1288,4 +1288,396 @@ describe("task service", () => {
       expect(child1.id).toBeDefined();
     });
   });
+
+  // ─── Assignment (定向分配) ────────────────────────────────────
+
+  describe("assignment", () => {
+    const baseRewards = [
+      { type: "item" as const, id: "assign-reward", count: 1 },
+    ];
+
+    test("broadcast task: unassigned user sees and progresses normally", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Broadcast Control",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_broadcast_evt",
+        targetValue: 1,
+        rewards: baseRewards,
+      });
+      const userId = `assign-broadcast-${Date.now()}`;
+
+      const processed = await svc.processEvent(
+        orgId,
+        userId,
+        "assign_broadcast_evt",
+        {},
+      );
+      expect(processed).toBe(1);
+
+      const list = await svc.getTasksForUser(orgId, userId);
+      const view = list.find((t) => t.id === def.id);
+      expect(view).toBeDefined();
+      expect(view!.isCompleted).toBe(true);
+      expect(view!.assignment).toBeNull();
+    });
+
+    test("assigned task: unassigned user gets NO progress and NO visibility", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Assigned Only",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_only_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const userId = `assign-nope-${Date.now()}`;
+
+      const processed = await svc.processEvent(
+        orgId,
+        userId,
+        "assign_only_evt",
+        {},
+      );
+      expect(processed).toBe(0); // event short-circuits
+
+      const list = await svc.getTasksForUser(orgId, userId);
+      expect(list.find((t) => t.id === def.id)).toBeUndefined();
+    });
+
+    test("assignTask then event: user sees task, progresses, can claim", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Assigned Flow",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_flow_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        autoClaim: false,
+        rewards: baseRewards,
+      });
+      const userId = `assign-flow-${Date.now()}`;
+
+      const assigned = await svc.assignTask(orgId, userId, def.id, {
+        source: "manual",
+        sourceRef: "test",
+      });
+      expect(assigned.taskId).toBe(def.id);
+      expect(assigned.endUserId).toBe(userId);
+      expect(assigned.revokedAt).toBeNull();
+      expect(assigned.source).toBe("manual");
+
+      const processed = await svc.processEvent(
+        orgId,
+        userId,
+        "assign_flow_evt",
+        {},
+      );
+      expect(processed).toBe(1);
+
+      const list = await svc.getTasksForUser(orgId, userId);
+      const view = list.find((t) => t.id === def.id)!;
+      expect(view.isCompleted).toBe(true);
+      expect(view.assignment).not.toBeNull();
+      expect(view.assignment!.source).toBe("manual");
+
+      // Manual claim path still works.
+      const before = grantLog.length;
+      const claim = await svc.claimReward(orgId, userId, def.id);
+      expect(claim.taskId).toBe(def.id);
+      expect(grantLog.length).toBe(before + 1);
+    });
+
+    test("assignTask on inactive task throws TaskNotAssignable", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Inactive",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_inactive_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        isActive: false,
+        rewards: baseRewards,
+      });
+      await expect(
+        svc.assignTask(orgId, "whoever", def.id),
+      ).rejects.toThrow(/not assignable|inactive/);
+    });
+
+    test("idempotency: second assignTask returns existing row, does NOT refresh assignedAt", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Idem",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_idem_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const userId = `assign-idem-${Date.now()}`;
+      const t0 = new Date("2026-04-18T10:00:00Z");
+      const t1 = new Date("2026-04-18T11:00:00Z");
+
+      const a = await svc.assignTask(orgId, userId, def.id, {
+        source: "manual",
+        sourceRef: "first",
+        now: t0,
+      });
+      const b = await svc.assignTask(orgId, userId, def.id, {
+        source: "rule",
+        sourceRef: "second",
+        now: t1,
+      });
+      expect(b.assignedAt.getTime()).toBe(a.assignedAt.getTime());
+      expect(b.source).toBe("manual");
+      expect(b.sourceRef).toBe("first");
+    });
+
+    test("allowReassign=true refreshes existing row", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Reassign",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_reassign_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const userId = `assign-reassign-${Date.now()}`;
+      const t0 = new Date("2026-04-18T10:00:00Z");
+      const t1 = new Date("2026-04-18T11:00:00Z");
+
+      await svc.assignTask(orgId, userId, def.id, {
+        source: "manual",
+        sourceRef: "first",
+        now: t0,
+      });
+      const b = await svc.assignTask(orgId, userId, def.id, {
+        source: "rule",
+        sourceRef: "second",
+        allowReassign: true,
+        now: t1,
+      });
+      expect(b.assignedAt.getTime()).toBe(t1.getTime());
+      expect(b.source).toBe("rule");
+      expect(b.sourceRef).toBe("second");
+    });
+
+    test("expired assignment is treated as unassigned (list + processEvent)", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Expiring",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_expire_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const userId = `assign-expire-${Date.now()}`;
+      const start = new Date("2026-04-18T10:00:00Z");
+      const later = new Date("2026-04-18T11:30:00Z");
+
+      await svc.assignTask(orgId, userId, def.id, {
+        ttlSeconds: 3600, // expires at start + 1h = 11:00Z
+        now: start,
+      });
+
+      // At `later` (11:30Z), assignment is expired.
+      const processed = await svc.processEvent(
+        orgId,
+        userId,
+        "assign_expire_evt",
+        {},
+        later,
+      );
+      expect(processed).toBe(0);
+
+      const list = await svc.getTasksForUser(orgId, userId, {}, later);
+      expect(list.find((t) => t.id === def.id)).toBeUndefined();
+    });
+
+    test("revokeAssignment hides task and stops progress; re-assign revives", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Revoke Then Revive",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_revoke_evt",
+        targetValue: 2,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const userId = `assign-revoke-${Date.now()}`;
+
+      await svc.assignTask(orgId, userId, def.id);
+      await svc.processEvent(orgId, userId, "assign_revoke_evt", {});
+      // Confirm progress advanced (currentValue=1, not complete yet).
+      let list = await svc.getTasksForUser(orgId, userId);
+      expect(list.find((t) => t.id === def.id)!.currentValue).toBe(1);
+
+      await svc.revokeAssignment(orgId, userId, def.id);
+      list = await svc.getTasksForUser(orgId, userId);
+      expect(list.find((t) => t.id === def.id)).toBeUndefined();
+
+      // Event now short-circuits.
+      const processed = await svc.processEvent(
+        orgId,
+        userId,
+        "assign_revoke_evt",
+        {},
+      );
+      expect(processed).toBe(0);
+
+      // Re-assign → prior progress (currentValue=1) is retained.
+      await svc.assignTask(orgId, userId, def.id);
+      list = await svc.getTasksForUser(orgId, userId);
+      const view = list.find((t) => t.id === def.id)!;
+      expect(view.currentValue).toBe(1);
+      expect(view.assignment).not.toBeNull();
+    });
+
+    test("revokeAssignment on nonexistent row throws TaskAssignmentNotFound", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Revoke Nothing",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_revoke_nothing_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      await expect(
+        svc.revokeAssignment(orgId, "never-assigned", def.id),
+      ).rejects.toThrow(/assignment_not_found|not found/i);
+    });
+
+    test("assignTaskToUsers: mixed new + existing counts correctly", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Batch",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_batch_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const stamp = Date.now();
+      const u1 = `batch-${stamp}-1`;
+      const u2 = `batch-${stamp}-2`;
+      const u3 = `batch-${stamp}-3`;
+
+      // Pre-assign one user.
+      await svc.assignTask(orgId, u1, def.id);
+
+      const result = await svc.assignTaskToUsers(
+        orgId,
+        def.id,
+        [u1, u2, u2, u3], // u2 duplicated in input
+      );
+
+      expect(result.assigned).toBe(2); // u2 + u3
+      expect(result.skipped).toBe(1); // u1 already had active row
+      expect(result.items).toHaveLength(3); // deduped
+    });
+
+    test("assignTaskToUsers above cap throws TaskAssignmentBatchTooLarge", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "TooBig",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_toobig_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const ids = Array.from({ length: 1001 }, (_, i) => `u-${i}`);
+      await expect(svc.assignTaskToUsers(orgId, def.id, ids)).rejects.toThrow(
+        /batch_too_large|too large/i,
+      );
+    });
+
+    test("listAssignments filters active by default; activeOnly=false shows revoked", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "ListFilter",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_list_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        rewards: baseRewards,
+      });
+      const stamp = Date.now();
+      const active = `list-${stamp}-a`;
+      const revoked = `list-${stamp}-r`;
+
+      await svc.assignTask(orgId, active, def.id);
+      await svc.assignTask(orgId, revoked, def.id);
+      await svc.revokeAssignment(orgId, revoked, def.id);
+
+      const activeList = await svc.listAssignments(orgId, {
+        taskId: def.id,
+      });
+      const uids = activeList.map((r) => r.endUserId);
+      expect(uids).toContain(active);
+      expect(uids).not.toContain(revoked);
+
+      const allList = await svc.listAssignments(orgId, {
+        taskId: def.id,
+        activeOnly: false,
+      });
+      const allUids = allList.map((r) => r.endUserId);
+      expect(allUids).toContain(active);
+      expect(allUids).toContain(revoked);
+    });
+
+    test("defaultAssignmentTtlSeconds fallback used when no call-level expiry given", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Default TTL",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_ttl_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        defaultAssignmentTtlSeconds: 7200, // 2h
+        rewards: baseRewards,
+      });
+      const userId = `ttl-${Date.now()}`;
+      const t0 = new Date("2026-04-18T10:00:00Z");
+
+      const a = await svc.assignTask(orgId, userId, def.id, { now: t0 });
+      expect(a.expiresAt).not.toBeNull();
+      expect(a.expiresAt!.getTime()).toBe(t0.getTime() + 7200 * 1000);
+    });
+
+    test("autoClaim with visibility=assigned does NOT mail unassigned users", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Autoclaim Assigned",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "assign_autoclaim_evt",
+        targetValue: 1,
+        visibility: "assigned",
+        autoClaim: true,
+        rewards: baseRewards,
+      });
+      const before = captured.length;
+      const outsider = `outsider-${Date.now()}`;
+
+      // Outsider fires event — must NOT receive mail.
+      await svc.processEvent(orgId, outsider, "assign_autoclaim_evt", {});
+      expect(captured.length).toBe(before);
+
+      // Assign real user; same event now mails.
+      const insider = `insider-${Date.now()}`;
+      await svc.assignTask(orgId, insider, def.id);
+      await svc.processEvent(orgId, insider, "assign_autoclaim_evt", {});
+      expect(captured.length).toBe(before + 1);
+      const mail = captured[captured.length - 1]!;
+      expect(Array.isArray(mail.input.targetUserIds)).toBe(true);
+      expect((mail.input.targetUserIds as string[])[0]).toBe(insider);
+
+      // Silence unused-var lint.
+      expect(def.id).toBeDefined();
+    });
+  });
 });

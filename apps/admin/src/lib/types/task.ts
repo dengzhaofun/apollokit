@@ -3,6 +3,12 @@ import type { ItemEntry } from "./item"
 export type TaskPeriod = "daily" | "weekly" | "monthly" | "none"
 export type CountingMethod = "event_count" | "event_value" | "child_completion"
 export type CategoryScope = "task" | "achievement" | "custom"
+export type TaskVisibility = "broadcast" | "assigned"
+export type TaskAssignmentSource =
+  | "manual"
+  | "rule"
+  | "schedule"
+  | "external"
 
 export interface TaskNavigation {
   type: string
@@ -57,6 +63,8 @@ export interface TaskDefinition {
   navigation: TaskNavigation | null
   isActive: boolean
   isHidden: boolean
+  visibility: string
+  defaultAssignmentTtlSeconds: number | null
   sortOrder: number
   activityId: string | null
   activityNodeId: string | null
@@ -101,6 +109,8 @@ export interface CreateDefinitionInput {
   navigation?: TaskNavigation | null
   isActive?: boolean
   isHidden?: boolean
+  visibility?: TaskVisibility
+  defaultAssignmentTtlSeconds?: number | null
   sortOrder?: number
   activityId?: string | null
   activityNodeId?: string | null
@@ -115,4 +125,40 @@ export interface CategoryListResponse {
 
 export interface DefinitionListResponse {
   items: TaskDefinition[]
+}
+
+// ─── Assignments (定向分配) ─────────────────────────────────────
+
+export interface TaskAssignment {
+  taskId: string
+  endUserId: string
+  organizationId: string
+  assignedAt: string
+  expiresAt: string | null
+  revokedAt: string | null
+  source: string
+  sourceRef: string | null
+  metadata: Record<string, unknown> | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AssignTaskInput {
+  endUserIds: string[]
+  source?: TaskAssignmentSource
+  sourceRef?: string | null
+  expiresAt?: string | null
+  ttlSeconds?: number
+  metadata?: Record<string, unknown> | null
+  allowReassign?: boolean
+}
+
+export interface AssignBatchResponse {
+  assigned: number
+  skipped: number
+  items: TaskAssignment[]
+}
+
+export interface AssignmentListResponse {
+  items: TaskAssignment[]
 }

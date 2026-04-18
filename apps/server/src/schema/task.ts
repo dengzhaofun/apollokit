@@ -203,6 +203,24 @@ export const taskDefinitions = pgTable(
     navigation: jsonb("navigation").$type<TaskNavigation | null>(),
     isActive: boolean("is_active").default(true).notNull(),
     isHidden: boolean("is_hidden").default(false).notNull(),
+    /**
+     * Visibility mode (see TASK_VISIBILITIES):
+     *   - 'broadcast' (default) → visible to every end user in the org.
+     *     Legacy behaviour. All existing rows backfill to this value.
+     *   - 'assigned'  → only visible to end users who have an active
+     *     row in `task_user_assignments`. `processEvent` also
+     *     short-circuits progress updates for unassigned users, so a
+     *     defn with `assigned` visibility is truly scoped — not just
+     *     hidden from the list.
+     */
+    visibility: text("visibility").default("broadcast").notNull(),
+    /**
+     * Default TTL (in seconds) for assignments created against this
+     * definition. When a caller to `assignTask` doesn't supply its own
+     * `expiresAt` or `ttlSeconds`, the service falls back to this value.
+     * NULL = no default expiry (callers decide per-call).
+     */
+    defaultAssignmentTtlSeconds: integer("default_assignment_ttl_seconds"),
     sortOrder: integer("sort_order").default(0).notNull(),
     /**
      * Soft link to an `activity_configs.id` when this task belongs to
@@ -243,6 +261,14 @@ export const taskDefinitions = pgTable(
     // Filter by activity (admin "show activity configs" toggle,
     // player-side activity node resolution)
     index("task_definitions_activity_idx").on(table.activityId),
+    // Hot path for getTasksForUser: it filters by visibility + isActive
+    // before joining progress and assignment maps. Partial index keeps
+    // it small since most rows are `broadcast`.
+    index("task_definitions_org_visibility_idx").on(
+      table.organizationId,
+      table.visibility,
+      table.isActive,
+    ),
   ],
 );
 
@@ -344,5 +370,110 @@ export const taskUserMilestoneClaims = pgTable(
       table.taskId,
       table.periodKey,
     ),
+  ],
+);
+
+// ─── Task Visibility & Assignments ────────────────────────────────
+
+/**
+ * Task visibility mode — controls who can see and progress a task.
+ *
+ *   - 'broadcast' (default) → every end user in the org sees this task,
+ *     and any user triggering a matching event advances their own
+ *     progress. This is the legacy behaviour every pre-existing row
+ *     backfills to.
+ *   - 'assigned'            → the task is dark by default. Only end
+ *     users with an active row in `task_user_assignments` see it in
+ *     `getTasksForUser`, and only they advance progress when a matching
+ *     event fires (`processEvent` short-circuits the rest). Callers
+ *     (admin API, upstream webhooks, other modules reacting to events)
+ *     grant visibility via `taskService.assignTask*`.
+ */
+export const TASK_VISIBILITIES = ["broadcast", "assigned"] as const;
+export type TaskVisibility = (typeof TASK_VISIBILITIES)[number];
+
+/**
+ * Who/what created an assignment row. Free-form tag captured alongside
+ * an optional `sourceRef` for audit and debugging:
+ *
+ *   - 'manual'   → admin dashboard / CSV import via the admin API.
+ *   - 'rule'     → another module reacted to a domain event
+ *                  (`task.completed`, `level.cleared`, …) and assigned.
+ *   - 'schedule' → fired by a recurring/activity schedule.
+ *   - 'external' → an upstream system (CRM, ops tooling) called the
+ *                  admin API directly with its own API key.
+ */
+export const TASK_ASSIGNMENT_SOURCES = [
+  "manual",
+  "rule",
+  "schedule",
+  "external",
+] as const;
+export type TaskAssignmentSource = (typeof TASK_ASSIGNMENT_SOURCES)[number];
+
+/**
+ * Per-user assignment ledger for `visibility = 'assigned'` tasks.
+ *
+ * One row per (task, endUser). A row with `revoked_at = NULL` and
+ * either `expires_at = NULL` or `expires_at > now` is "active" — it
+ * unlocks visibility and progress for this user on this task.
+ *
+ * Revocation is a soft delete (`revoked_at` timestamp) rather than a
+ * physical DELETE so that:
+ *
+ *   1. Re-assigning later can cheaply "revive" the same row via
+ *      `ON CONFLICT DO UPDATE` without recomputing the PK.
+ *   2. An audit trail remains available for operations debugging.
+ *
+ * Progress is not coupled to assignment: revoking an assignment does
+ * NOT clear `task_user_progress`, and claiming rewards uses the same
+ * existing path. If the admin re-assigns a revoked user, the prior
+ * progress resumes from where it left off (subject to the usual period
+ * reset semantics).
+ */
+export const taskUserAssignments = pgTable(
+  "task_user_assignments",
+  {
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => taskDefinitions.id, { onDelete: "cascade" }),
+    endUserId: text("end_user_id").notNull(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+    /** NULL = never expires. Otherwise the assignment auto-deactivates past this instant. */
+    expiresAt: timestamp("expires_at"),
+    /** NULL = active. Set to revoke without deleting the row. */
+    revokedAt: timestamp("revoked_at"),
+    /** One of TASK_ASSIGNMENT_SOURCES — who/what caused the assignment. */
+    source: text("source").notNull(),
+    /** Free-form caller-defined pointer (request id, rule alias, admin user id, …). */
+    sourceRef: text("source_ref"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.taskId, table.endUserId],
+      name: "task_user_assignments_pk",
+    }),
+    // Hot path for getTasksForUser: batch-fetch active assignments
+    // for a (org, endUser) pair against a set of assigned-visibility
+    // task ids.
+    index("task_user_assignments_org_user_idx").on(
+      table.organizationId,
+      table.endUserId,
+    ),
+    // Admin "who has this task been assigned to" list
+    index("task_user_assignments_task_idx").on(table.taskId),
+    // Future GC / expiry sweeper hint — active rows with an expiry.
+    index("task_user_assignments_expires_idx")
+      .on(table.expiresAt)
+      .where(sql`${table.expiresAt} IS NOT NULL AND ${table.revokedAt} IS NULL`),
   ],
 );
