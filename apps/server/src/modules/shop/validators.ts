@@ -43,7 +43,7 @@ const MetadataSchema = z
   .openapi({ description: "Arbitrary JSON blob for tenant-specific extensions." });
 
 const ItemEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });
@@ -628,7 +628,7 @@ export const EndUserAndStageParamSchema = z.object({
 // ─── Response schemas ────────────────────────────────────────────
 
 const ItemResponseSchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int(),
 });

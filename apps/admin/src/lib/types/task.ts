@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export type TaskPeriod = "daily" | "weekly" | "monthly" | "none"
 export type CountingMethod = "event_count" | "event_value" | "child_completion"
@@ -20,7 +20,7 @@ export interface TaskNavigation {
 export interface TaskRewardTier {
   alias: string
   threshold: number
-  rewards: ItemEntry[]
+  rewards: RewardEntry[]
 }
 
 export interface TaskCategory {
@@ -57,7 +57,7 @@ export interface TaskDefinition {
   targetValue: number
   parentProgressValue: number
   prerequisiteTaskIds: string[]
-  rewards: ItemEntry[]
+  rewards: RewardEntry[]
   rewardTiers: TaskRewardTier[]
   autoClaim: boolean
   navigation: TaskNavigation | null
@@ -103,7 +103,7 @@ export interface CreateDefinitionInput {
   targetValue: number
   parentProgressValue?: number
   prerequisiteTaskIds?: string[]
-  rewards: ItemEntry[]
+  rewards: RewardEntry[]
   rewardTiers?: TaskRewardTier[]
   autoClaim?: boolean
   navigation?: TaskNavigation | null

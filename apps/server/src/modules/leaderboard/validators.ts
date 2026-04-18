@@ -23,7 +23,7 @@ import {
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const RewardEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string().min(1),
   count: z.number().int().positive(),
 });

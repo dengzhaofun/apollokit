@@ -22,7 +22,7 @@ const MetadataSchema = z
   });
 
 const RewardEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });
@@ -176,7 +176,7 @@ export const CodeIdParamSchema = z.object({
 // ─── Response schemas ──────────────────────────────────────────
 
 const RewardEntryResponseSchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int(),
 });

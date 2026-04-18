@@ -269,7 +269,7 @@ export const CheckInUserStateViewSchema = z
   .openapi("CheckInUserStateView");
 
 const RewardItemSchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });

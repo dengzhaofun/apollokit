@@ -43,7 +43,7 @@ export const CreateConfigSchema = z
       .min(1)
       .openapi({
         description:
-          "Whitelist of item_definitions.id the box accepts. Each must be isCurrency=true in the same org.",
+          "Whitelist of currencies.id the box accepts. Each must be a currency definition in the same org.",
       }),
     minDeposit: z.number().int().positive().nullable().optional(),
     maxDeposit: z.number().int().positive().nullable().optional(),

@@ -108,12 +108,7 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
               <Badge variant="secondary">Day {reward.dayNumber}</Badge>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 text-sm">
                 {reward.rewardItems.map((item, i) => (
-                  <ItemRewardRow
-                    key={i}
-                    size="sm"
-                    definitionId={item.definitionId}
-                    quantity={item.quantity}
-                  />
+                  <ItemRewardRow key={i} size="sm" entry={item} />
                 ))}
               </div>
 

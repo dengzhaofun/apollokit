@@ -41,6 +41,10 @@ const mockRewardServices: RewardServices = {
     },
     deductItems: async () => {},
   },
+  currencySvc: {
+    grant: async () => {},
+    deduct: async () => {},
+  },
 };
 
 describe("level service", () => {

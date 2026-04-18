@@ -510,8 +510,9 @@ export function createItemService(d: ItemDeps) {
             stackable: input.stackable ?? true,
             stackLimit: input.stackLimit ?? null,
             holdLimit: input.holdLimit ?? null,
-            isCurrency: input.isCurrency ?? false,
             isActive: input.isActive ?? true,
+            activityId: input.activityId ?? null,
+            activityNodeId: input.activityNodeId ?? null,
             metadata: input.metadata ?? null,
           })
           .returning();
@@ -541,8 +542,11 @@ export function createItemService(d: ItemDeps) {
       if (patch.stackable !== undefined) updateValues.stackable = patch.stackable;
       if (patch.stackLimit !== undefined) updateValues.stackLimit = patch.stackLimit;
       if (patch.holdLimit !== undefined) updateValues.holdLimit = patch.holdLimit;
-      if (patch.isCurrency !== undefined) updateValues.isCurrency = patch.isCurrency;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
+      if (patch.activityId !== undefined)
+        updateValues.activityId = patch.activityId;
+      if (patch.activityNodeId !== undefined)
+        updateValues.activityNodeId = patch.activityNodeId;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
       if (Object.keys(updateValues).length === 0) return existing;
@@ -583,11 +587,18 @@ export function createItemService(d: ItemDeps) {
 
     async listDefinitions(
       organizationId: string,
-      opts?: { categoryId?: string },
+      opts?: { categoryId?: string; activityId?: string | null },
     ): Promise<ItemDefinition[]> {
       const conditions = [eq(itemDefinitions.organizationId, organizationId)];
       if (opts?.categoryId) {
         conditions.push(eq(itemDefinitions.categoryId, opts.categoryId));
+      }
+      if (opts?.activityId !== undefined) {
+        if (opts.activityId === null) {
+          conditions.push(sql`${itemDefinitions.activityId} IS NULL`);
+        } else {
+          conditions.push(eq(itemDefinitions.activityId, opts.activityId));
+        }
       }
       return db
         .select()

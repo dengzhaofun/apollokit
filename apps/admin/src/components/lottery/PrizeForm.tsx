@@ -1,4 +1,6 @@
+import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -13,8 +15,7 @@ import {
 } from "#/components/ui/select"
 import type { CreatePrizeInput } from "#/lib/types/lottery"
 import type { LotteryTier } from "#/lib/types/lottery"
-import type { ItemEntry } from "#/lib/types/item"
-import { useItemDefinitions } from "#/hooks/use-item"
+import type { RewardEntry } from "#/lib/types/rewards"
 
 interface PrizeFormProps {
   tiers?: LotteryTier[]
@@ -33,7 +34,11 @@ export function PrizeForm({
   isPending,
   submitLabel = "Create",
 }: PrizeFormProps) {
-  const { data: definitions } = useItemDefinitions()
+  const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
+    defaultValues?.rewardItems?.length
+      ? defaultValues.rewardItems.map((e) => ({ ...e }))
+      : [],
+  )
 
   const form = useForm({
     defaultValues: {
@@ -46,18 +51,13 @@ export function PrizeForm({
       globalStockLimit: defaultValues?.globalStockLimit ?? (null as number | null),
       sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
-      // Reward items: simple single-item for now
-      rewardDefinitionId: (defaultValues?.rewardItems?.[0]?.definitionId ?? "") as string,
-      rewardQuantity: (defaultValues?.rewardItems?.[0]?.quantity ?? 1) as number,
     },
     onSubmit: async ({ value }) => {
-      const rewardItems: ItemEntry[] = value.rewardDefinitionId
-        ? [{ definitionId: value.rewardDefinitionId, quantity: value.rewardQuantity }]
-        : []
+      const validRewards = rewardItems.filter((e) => e.id && e.count > 0)
       const input: CreatePrizeInput & { tierId?: string } = {
         name: value.name,
         description: value.description || null,
-        rewardItems,
+        rewardItems: validRewards,
         weight: value.weight,
         isRateUp: value.isRateUp,
         rateUpWeight: value.rateUpWeight,
@@ -184,47 +184,12 @@ export function PrizeForm({
         )}
       </form.Field>
 
-      <div className="space-y-2">
-        <Label>Reward Item</Label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form.Field name="rewardDefinitionId">
-            {(field) => (
-              <Select
-                value={field.state.value}
-                onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select item..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None (no reward)</SelectItem>
-                  {definitions?.map((def) => (
-                    <SelectItem key={def.id} value={def.id}>
-                      {def.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </form.Field>
-
-          <form.Field name="rewardQuantity">
-            {(field) => (
-              <Input
-                type="number"
-                min={1}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-                placeholder="Quantity"
-              />
-            )}
-          </form.Field>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Select an item definition and quantity to reward on win.
-        </p>
-      </div>
+      <RewardEntryEditor
+        label="Reward"
+        entries={rewardItems}
+        onChange={setRewardItems}
+        hint="Pick item / currency / entity targets and quantity to reward on win."
+      />
 
       <div className="flex items-center gap-6">
         <form.Field name="isRateUp">

@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { organization } from "./auth";
-import { itemDefinitions } from "./item";
+import { currencies } from "./currency";
 
 /**
  * Storage-box configs — admin-authored templates that describe a "box"
@@ -107,7 +107,7 @@ export const storageBoxDeposits = pgTable(
       .references(() => storageBoxConfigs.id, { onDelete: "cascade" }),
     currencyDefinitionId: uuid("currency_definition_id")
       .notNull()
-      .references(() => itemDefinitions.id, { onDelete: "cascade" }),
+      .references(() => currencies.id, { onDelete: "cascade" }),
     principal: integer("principal").default(0).notNull(),
     accruedInterest: integer("accrued_interest").default(0).notNull(),
     status: text("status").default("active").notNull(),

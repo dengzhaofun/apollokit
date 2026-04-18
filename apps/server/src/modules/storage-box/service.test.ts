@@ -15,12 +15,14 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../../db";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
+import { createCurrencyService } from "../currency/service";
 import { createItemService } from "../item/service";
 import { createStorageBoxService } from "./service";
 
 describe("storage-box service", () => {
   const itemSvc = createItemService({ db });
-  const svc = createStorageBoxService({ db }, itemSvc);
+  const currencySvc = createCurrencyService({ db });
+  const svc = createStorageBoxService({ db }, currencySvc);
   let orgId: string;
 
   beforeAll(async () => {
@@ -32,23 +34,21 @@ describe("storage-box service", () => {
   });
 
   async function makeCurrency(alias: string) {
-    return itemSvc.createDefinition(orgId, {
+    return currencySvc.createDefinition(orgId, {
       name: `Currency ${alias}`,
       alias,
-      stackable: true,
-      isCurrency: true,
     });
   }
 
   async function grantCurrency(
     endUserId: string,
-    definitionId: string,
+    currencyId: string,
     amount: number,
   ) {
-    await itemSvc.grantItems({
+    await currencySvc.grant({
       organizationId: orgId,
       endUserId,
-      grants: [{ definitionId, quantity: amount }],
+      grants: [{ currencyId, amount }],
       source: "test-seed",
     });
   }
@@ -82,12 +82,13 @@ describe("storage-box service", () => {
   });
 
   test("createConfig rejects non-currency acceptedCurrencyIds", async () => {
+    // A plain item.id is not a valid currency — the validator now checks
+    // the dedicated `currencies` table.
     const item = await itemSvc.createDefinition(orgId, {
       name: "Sword",
       alias: "sb-cfg-sword",
       stackable: false,
       holdLimit: 1,
-      isCurrency: false,
     });
     await expect(
       svc.createConfig(orgId, {
@@ -167,11 +168,8 @@ describe("storage-box service", () => {
     expect(r2.deposit.id).toBe(r1.deposit.id);
     expect(r2.deposit.principal).toBe(500);
 
-    const bal = await itemSvc.getBalance({
-      organizationId: orgId,
-      endUserId: "u-demand-1",
-      definitionId: gold.id,
-    });
+    // Wallet now holds 1000 - 500 = 500 gold.
+    const bal = await currencySvc.getBalance(orgId, "u-demand-1", gold.id);
     expect(bal).toBe(500);
   });
 
@@ -246,12 +244,12 @@ describe("storage-box service", () => {
       },
       now: t0,
     });
-    // Inventory now has 0 gold.
-    const midBal = await itemSvc.getBalance({
-      organizationId: orgId,
-      endUserId: "u-withdraw-1",
-      definitionId: gold.id,
-    });
+    // Wallet now has 0 gold.
+    const midBal = await currencySvc.getBalance(
+      orgId,
+      "u-withdraw-1",
+      gold.id,
+    );
     expect(midBal).toBe(0);
 
     const w = await svc.withdraw({
@@ -267,11 +265,11 @@ describe("storage-box service", () => {
     expect(w.interestPaid).toBe(100); // 1000 * 10%
     expect(w.currencyGranted).toBe(1100);
 
-    const finalBal = await itemSvc.getBalance({
-      organizationId: orgId,
-      endUserId: "u-withdraw-1",
-      definitionId: gold.id,
-    });
+    const finalBal = await currencySvc.getBalance(
+      orgId,
+      "u-withdraw-1",
+      gold.id,
+    );
     expect(finalBal).toBe(1100);
   });
 

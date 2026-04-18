@@ -85,15 +85,20 @@ export const itemDefinitions = pgTable(
     stackable: boolean("stackable").default(true).notNull(),
     stackLimit: integer("stack_limit"),
     holdLimit: integer("hold_limit"),
-    // Explicit currency flag. Historically "currency" was inferred as
-    // stackable=true AND stackLimit=null AND holdLimit=null; keeping this
-    // invariant is still the contract, but downstream modules (storage-box
-    // white-listing, admin UI filters) need an explicit, cheap predicate.
-    isCurrency: boolean("is_currency").default(false).notNull(),
     lotteryPoolId: uuid("lottery_pool_id").references(() => lotteryPools.id, {
       onDelete: "set null",
     }),
     isActive: boolean("is_active").default(true).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this definition is
+     * activity-scoped (e.g. "Spring Festival limited item"). NULL means
+     * permanent catalog entry. No FK constraint to keep the migration
+     * surgical — the activity service is responsible for coordinated
+     * cleanup via `activity_configs.cleanup_rule` when the activity
+     * archives.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -107,6 +112,7 @@ export const itemDefinitions = pgTable(
     uniqueIndex("item_definitions_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("item_definitions_activity_idx").on(table.activityId),
   ],
 );
 

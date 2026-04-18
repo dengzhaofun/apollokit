@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export type CdkeyCodeType = "universal" | "unique"
 
@@ -9,7 +9,7 @@ export interface CdkeyBatch {
   name: string
   description: string | null
   codeType: CdkeyCodeType
-  reward: ItemEntry[]
+  reward: RewardEntry[]
   totalLimit: number | null
   perUserLimit: number
   totalRedeemed: number
@@ -43,7 +43,7 @@ export interface CdkeyRedemptionLog {
   sourceId: string
   status: string
   failReason: string | null
-  reward: ItemEntry[] | null
+  reward: RewardEntry[] | null
   createdAt: string
 }
 
@@ -52,7 +52,7 @@ export interface CreateBatchInput {
   alias?: string | null
   description?: string | null
   codeType: CdkeyCodeType
-  reward: ItemEntry[]
+  reward: RewardEntry[]
   totalLimit?: number | null
   perUserLimit?: number
   startsAt?: string | null
@@ -67,7 +67,7 @@ export interface UpdateBatchInput {
   name?: string
   alias?: string | null
   description?: string | null
-  reward?: ItemEntry[]
+  reward?: RewardEntry[]
   totalLimit?: number | null
   perUserLimit?: number
   startsAt?: string | null

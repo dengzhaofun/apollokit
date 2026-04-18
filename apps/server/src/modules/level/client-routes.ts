@@ -159,7 +159,7 @@ function toLevelView(
       starRewards,
     ),
     clearRewards: (level?.clearRewards ?? null) as
-      | Array<{ type: "item" | "entity"; id: string; count: number }>
+      | Array<{ type: "item" | "entity" | "currency"; id: string; count: number }>
       | null,
     starRewards,
   };
@@ -187,14 +187,14 @@ const ClientLevelDetailSchema = z
     rewardsClaimed: z.boolean(),
     starRewardsClaimed: z.array(z.number().int()),
     clearRewards: z.array(z.object({
-      type: z.enum(["item", "entity"]),
+      type: z.enum(["item", "entity", "currency"]),
       id: z.string(),
       count: z.number().int().positive(),
     })).nullable(),
     starRewards: z.array(z.object({
       stars: z.number().int().min(1),
       rewards: z.array(z.object({
-        type: z.enum(["item", "entity"]),
+        type: z.enum(["item", "entity", "currency"]),
         id: z.string(),
         count: z.number().int().positive(),
       })).min(1),
@@ -441,7 +441,7 @@ levelClientRouter.openapi(
         ),
         clearRewards:
           (detail.level.clearRewards as Array<{
-            type: "item" | "entity";
+            type: "item" | "entity" | "currency";
             id: string;
             count: number;
           }>) ?? null,

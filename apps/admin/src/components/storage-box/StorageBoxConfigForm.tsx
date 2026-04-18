@@ -14,7 +14,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import { useCurrencies } from "#/hooks/use-item"
+import { useCurrencies } from "#/hooks/use-currency"
 import type {
   CreateStorageBoxConfigInput,
   StorageBoxType,

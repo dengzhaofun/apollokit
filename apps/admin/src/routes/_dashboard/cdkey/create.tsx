@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -19,10 +19,9 @@ import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
 import { useCreateCdkeyBatch } from "#/hooks/use-cdkey"
-import { useItemDefinitions } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
 import type { CdkeyCodeType, CreateBatchInput } from "#/lib/types/cdkey"
-import type { ItemEntry } from "#/lib/types/item"
+import type { RewardEntry } from "#/lib/types/rewards"
 
 export const Route = createFileRoute("/_dashboard/cdkey/create")({
   component: CdkeyCreatePage,
@@ -31,7 +30,6 @@ export const Route = createFileRoute("/_dashboard/cdkey/create")({
 function CdkeyCreatePage() {
   const navigate = useNavigate()
   const mutation = useCreateCdkeyBatch()
-  const { data: defs } = useItemDefinitions()
 
   const [name, setName] = useState("")
   const [alias, setAlias] = useState("")
@@ -44,7 +42,7 @@ function CdkeyCreatePage() {
   const [startsAt, setStartsAt] = useState("")
   const [endsAt, setEndsAt] = useState("")
   const [isActive, setIsActive] = useState(true)
-  const [reward, setReward] = useState<ItemEntry[]>([])
+  const [reward, setReward] = useState<RewardEntry[]>([])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -211,10 +209,10 @@ function CdkeyCreatePage() {
 
           <Separator />
 
-          <RewardEditor
-            value={reward}
+          <RewardEntryEditor
+            label={m.cdkey_reward()}
+            entries={reward}
             onChange={setReward}
-            definitions={defs ?? []}
           />
 
           <Button type="submit" disabled={mutation.isPending}>
@@ -226,78 +224,3 @@ function CdkeyCreatePage() {
   )
 }
 
-function RewardEditor({
-  value,
-  onChange,
-  definitions,
-}: {
-  value: ItemEntry[]
-  onChange: (v: ItemEntry[]) => void
-  definitions: { id: string; name: string }[]
-}) {
-  return (
-    <div className="space-y-3">
-      <Label>{m.cdkey_reward()}</Label>
-      {value.map((entry, i) => (
-        <div key={i} className="flex items-end gap-2">
-          <div className="flex-1">
-            <Select
-              value={entry.definitionId}
-              onValueChange={(v) => {
-                const next = [...value]
-                next[i] = { ...entry, definitionId: v }
-                onChange(next)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select item..." />
-              </SelectTrigger>
-              <SelectContent>
-                {definitions.map((def) => (
-                  <SelectItem key={def.id} value={def.id}>
-                    {def.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-24">
-            <Input
-              type="number"
-              min={1}
-              value={entry.quantity}
-              onChange={(e) => {
-                const next = [...value]
-                next[i] = {
-                  ...entry,
-                  quantity: Number(e.target.value) || 1,
-                }
-                onChange(next)
-              }}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9"
-            onClick={() => onChange(value.filter((_, idx) => idx !== i))}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() =>
-          onChange([...value, { definitionId: "", quantity: 1 }])
-        }
-      >
-        <Plus className="size-4" />
-        {m.common_add()}
-      </Button>
-    </div>
-  )
-}

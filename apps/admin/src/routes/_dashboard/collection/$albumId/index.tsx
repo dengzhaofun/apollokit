@@ -8,6 +8,7 @@ import { CollectionDeleteDialog } from "#/components/collection/DeleteDialog"
 import { EntryForm } from "#/components/collection/EntryForm"
 import { GroupForm } from "#/components/collection/GroupForm"
 import { MilestoneForm } from "#/components/collection/MilestoneForm"
+import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -172,8 +173,7 @@ function CollectionAlbumDetailPage() {
               groups={groups}
               entries={entries}
               milestones={milestones}
-              itemDefs={itemDefs}
-            />
+/>
           </TabsContent>
 
           <TabsContent value="stats" className="mt-4">
@@ -545,13 +545,11 @@ function MilestonesTab({
   groups,
   entries,
   milestones,
-  itemDefs,
 }: {
   albumKey: string
   groups: CollectionGroup[]
   entries: CollectionEntry[]
   milestones: CollectionMilestone[]
-  itemDefs: ItemDefinition[]
 }) {
   const [openCreate, setOpenCreate] = useState(false)
   const [editing, setEditing] = useState<CollectionMilestone | null>(null)
@@ -561,7 +559,6 @@ function MilestonesTab({
 
   const groupById = new Map(groups.map((g) => [g.id, g.name]))
   const entryById = new Map(entries.map((e) => [e.id, e.name]))
-  const defById = new Map(itemDefs.map((d) => [d.id, d.name]))
 
   function describeMilestone(row: CollectionMilestone): string {
     if (row.scope === "entry") {
@@ -614,12 +611,11 @@ function MilestonesTab({
                   </TableCell>
                   <TableCell>{describeMilestone(row)}</TableCell>
                   <TableCell>
-                    {row.rewardItems
-                      .map(
-                        (r) =>
-                          `${defById.get(r.definitionId) ?? r.definitionId} ×${r.quantity}`,
-                      )
-                      .join(", ")}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {row.rewardItems.map((r, i) => (
+                        <ItemRewardRow key={i} size="sm" entry={r} />
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={row.autoClaim ? "default" : "outline"}>
@@ -674,7 +670,6 @@ function MilestonesTab({
           <MilestoneForm
             groups={groups}
             entries={entries}
-            itemDefinitions={itemDefs}
             submitLabel={m.common_create()}
             isPending={createMutation.isPending}
             onCancel={() => setOpenCreate(false)}
@@ -707,7 +702,6 @@ function MilestonesTab({
               initial={editing}
               groups={groups}
               entries={entries}
-              itemDefinitions={itemDefs}
               submitLabel={m.common_save_changes()}
               isPending={updateMutation.isPending}
               onCancel={() => setEditing(null)}

@@ -89,11 +89,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
               <p className="text-xs font-medium text-muted-foreground">Consumed</p>
               {result.costItems.map((item, i) => (
                 <div key={i}>
-                  <ItemRewardRow
-                    size="sm"
-                    definitionId={item.definitionId}
-                    quantity={item.quantity}
-                  />
+                  <ItemRewardRow size="sm" entry={item} />
                 </div>
               ))}
             </div>
@@ -101,11 +97,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
               <p className="text-xs font-medium text-muted-foreground">Granted</p>
               {result.rewardItems.map((item, i) => (
                 <div key={i}>
-                  <ItemRewardRow
-                    size="sm"
-                    definitionId={item.definitionId}
-                    quantity={item.quantity}
-                  />
+                  <ItemRewardRow size="sm" entry={item} />
                 </div>
               ))}
             </div>

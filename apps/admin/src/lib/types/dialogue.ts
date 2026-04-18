@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 import type { LinkAction } from "./link"
 
 export type DialogueSpeakerSide = "left" | "right"
@@ -8,7 +8,7 @@ export interface DialogueOption {
   label: string
   next?: string
   action?: LinkAction
-  rewards?: ItemEntry[]
+  rewards?: RewardEntry[]
 }
 
 export interface DialogueNode {
@@ -22,7 +22,7 @@ export interface DialogueNode {
   next?: string
   options?: DialogueOption[]
   onEnter?: {
-    rewards?: ItemEntry[]
+    rewards?: RewardEntry[]
   }
 }
 

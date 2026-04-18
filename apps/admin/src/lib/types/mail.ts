@@ -1,4 +1,4 @@
-import type { ItemEntry } from "./item"
+import type { RewardEntry } from "./rewards"
 
 export type MailTargetType = "broadcast" | "multicast"
 
@@ -7,7 +7,7 @@ export interface MailMessage {
   organizationId: string
   title: string
   content: string
-  rewards: ItemEntry[]
+  rewards: RewardEntry[]
   targetType: MailTargetType
   targetUserIds: string[] | null
   requireRead: boolean
@@ -30,7 +30,7 @@ export interface MailMessageWithStats extends MailMessage {
 export interface CreateMailInput {
   title: string
   content: string
-  rewards: ItemEntry[]
+  rewards: RewardEntry[]
   targetType: MailTargetType
   targetUserIds?: string[]
   requireRead?: boolean

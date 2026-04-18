@@ -36,11 +36,8 @@ export type ActionType =
   | "broadcast_mail"
   | "set_flag"
 
-export interface RewardEntry {
-  type: "item" | "entity"
-  id: string
-  count: number
-}
+import type { RewardEntry } from "./rewards"
+export type { RewardEntry }
 
 export interface ActivityCurrency {
   alias: string

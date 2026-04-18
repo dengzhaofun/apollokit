@@ -28,6 +28,7 @@ import {
   exchangeUserStates,
 } from "../../schema/exchange";
 import { itemGrantLogs } from "../../schema/item";
+import type { CurrencyService } from "../currency";
 import type { ItemService } from "../item";
 import {
   ExchangeConfigAliasConflict,
@@ -59,8 +60,84 @@ function looksLikeId(key: string): boolean {
   return UUID_RE.test(key);
 }
 
-export function createExchangeService(d: ExchangeDeps, itemSvc: ItemService) {
+export function createExchangeService(
+  d: ExchangeDeps,
+  itemSvc: ItemService,
+  currencySvc: CurrencyService,
+) {
   const { db } = d;
+
+  /**
+   * Deduct one RewardEntry, routed by type.
+   *
+   * Keeps the per-entry deduct loop (required for the exchange rollback
+   * semantics: already-deducted entries need to be individually refunded
+   * on a mid-flight failure). `"entity"` is rejected because entities
+   * cannot be spent — use synthesis/discard for that.
+   */
+  async function deductOne(
+    entry: RewardEntry,
+    organizationId: string,
+    endUserId: string,
+    source: string,
+    sourceId: string,
+  ): Promise<void> {
+    if (entry.type === "currency") {
+      await currencySvc.deduct({
+        organizationId,
+        endUserId,
+        deductions: [{ currencyId: entry.id, amount: entry.count }],
+        source,
+        sourceId,
+      });
+    } else if (entry.type === "item") {
+      await itemSvc.deductItems({
+        organizationId,
+        endUserId,
+        deductions: [{ definitionId: entry.id, quantity: entry.count }],
+        source,
+        sourceId,
+      });
+    } else {
+      throw new Error(
+        `exchange: reward entry type "${entry.type}" is not deductible`,
+      );
+    }
+  }
+
+  /** Grant one RewardEntry, routed by type. */
+  async function grantOne(
+    entry: RewardEntry,
+    organizationId: string,
+    endUserId: string,
+    source: string,
+    sourceId: string,
+  ): Promise<void> {
+    if (entry.type === "currency") {
+      await currencySvc.grant({
+        organizationId,
+        endUserId,
+        grants: [{ currencyId: entry.id, amount: entry.count }],
+        source,
+        sourceId,
+      });
+    } else if (entry.type === "item") {
+      await itemSvc.grantItems({
+        organizationId,
+        endUserId,
+        grants: [{ definitionId: entry.id, quantity: entry.count }],
+        source,
+        sourceId,
+      });
+    } else {
+      // "entity" — not supported as a refund target here. The exchange
+      // reward path typically delegates entity rewards to a higher-level
+      // orchestrator; this module has no `entitySvc` injected.
+      throw new Error(
+        `exchange: reward entry type "${entry.type}" is not supported here`,
+      );
+    }
+  }
 
   async function loadConfigByKey(
     organizationId: string,
@@ -395,29 +472,29 @@ export function createExchangeService(d: ExchangeDeps, itemSvc: ItemService) {
         }
       }
 
-      // 5. Deduct cost items
+      // 5. Deduct cost items (items + currencies via per-entry dispatch)
       const deductedEntries: RewardEntry[] = [];
       try {
         for (const cost of costItems) {
-          await itemSvc.deductItems({
-            organizationId: params.organizationId,
-            endUserId: params.endUserId,
-            deductions: [cost],
-            source: "exchange",
-            sourceId: exchangeId,
-          });
+          await deductOne(
+            cost,
+            params.organizationId,
+            params.endUserId,
+            "exchange",
+            exchangeId,
+          );
           deductedEntries.push(cost);
         }
       } catch (err) {
-        // Rollback already-deducted items
+        // Rollback already-deducted entries, routed by type.
         for (const deducted of deductedEntries) {
-          await itemSvc.grantItems({
-            organizationId: params.organizationId,
-            endUserId: params.endUserId,
-            grants: [deducted],
-            source: "exchange_rollback",
-            sourceId: exchangeId,
-          });
+          await grantOne(
+            deducted,
+            params.organizationId,
+            params.endUserId,
+            "exchange_rollback",
+            exchangeId,
+          );
         }
 
         // Rollback user count
@@ -449,15 +526,15 @@ export function createExchangeService(d: ExchangeDeps, itemSvc: ItemService) {
         throw err;
       }
 
-      // 6. Grant reward items
+      // 6. Grant reward items (items + currencies via per-entry dispatch)
       for (const reward of rewardItems) {
-        await itemSvc.grantItems({
-          organizationId: params.organizationId,
-          endUserId: params.endUserId,
-          grants: [reward],
-          source: "exchange",
-          sourceId: exchangeId,
-        });
+        await grantOne(
+          reward,
+          params.organizationId,
+          params.endUserId,
+          "exchange",
+          exchangeId,
+        );
       }
 
       return {

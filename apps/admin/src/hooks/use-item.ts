@@ -74,19 +74,6 @@ export function useItemDefinitions() {
   })
 }
 
-/**
- * Only definitions flagged isCurrency. Used by features (storage box,
- * shop cost selectors) that must restrict input to currencies.
- */
-export function useCurrencies() {
-  return useQuery({
-    queryKey: [...DEFINITIONS_KEY, "currencies"],
-    queryFn: () =>
-      api.get<{ items: ItemDefinition[] }>("/api/item/definitions"),
-    select: (data) => data.items.filter((d) => d.isCurrency),
-  })
-}
-
 export function useItemDefinition(key: string) {
   return useQuery({
     queryKey: [...DEFINITIONS_KEY, key],

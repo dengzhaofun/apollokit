@@ -22,9 +22,10 @@ export interface ItemDefinition {
   stackable: boolean
   stackLimit: number | null
   holdLimit: number | null
-  isCurrency: boolean
   lotteryPoolId: string | null
   isActive: boolean
+  activityId: string | null
+  activityNodeId: string | null
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -98,9 +99,10 @@ export interface CreateDefinitionInput {
   stackable?: boolean
   stackLimit?: number | null
   holdLimit?: number | null
-  isCurrency?: boolean
   lotteryPoolId?: string | null
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -113,9 +115,10 @@ export interface UpdateDefinitionInput {
   stackable?: boolean
   stackLimit?: number | null
   holdLimit?: number | null
-  isCurrency?: boolean
   lotteryPoolId?: string | null
   isActive?: boolean
+  activityId?: string | null
+  activityNodeId?: string | null
   metadata?: Record<string, unknown> | null
 }
 

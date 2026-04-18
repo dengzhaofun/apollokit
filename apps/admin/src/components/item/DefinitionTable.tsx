@@ -64,12 +64,7 @@ function useColumns() {
     columnHelper.accessor("stackable", {
       header: m.common_type(),
       cell: (info) => (
-        <div className="flex items-center gap-1">
-          <Badge variant="secondary">{stackLabel(info.row.original)}</Badge>
-          {info.row.original.isCurrency && (
-            <Badge variant="default">货币</Badge>
-          )}
-        </div>
+        <Badge variant="secondary">{stackLabel(info.row.original)}</Badge>
       ),
     }),
     columnHelper.accessor("holdLimit", {

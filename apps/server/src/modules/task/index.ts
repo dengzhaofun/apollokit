@@ -12,6 +12,7 @@
  */
 
 import { deps } from "../../deps";
+import { currencyService } from "../currency";
 import { itemService } from "../item";
 import { mailService } from "../mail";
 import { createTaskService } from "./service";
@@ -21,7 +22,7 @@ export type { TaskService } from "./service";
 
 export const taskService = createTaskService(
   deps,
-  { itemSvc: itemService },
+  { itemSvc: itemService, currencySvc: currencyService },
   () => mailService,
 );
 

@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import { ItemEntryEditor } from "#/components/shop/ItemEntryEditor"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -20,13 +20,12 @@ import type {
   CreateMilestoneInput,
   MilestoneScope,
 } from "#/lib/types/collection"
-import type { ItemDefinition, ItemEntry } from "#/lib/types/item"
+import type { RewardEntry } from "#/lib/types/rewards"
 
 interface MilestoneFormProps {
   initial?: CollectionMilestone
   groups: CollectionGroup[]
   entries: CollectionEntry[]
-  itemDefinitions: ItemDefinition[]
   onSubmit: (values: CreateMilestoneInput) => void | Promise<void>
   submitLabel: string
   isPending?: boolean
@@ -37,7 +36,6 @@ export function MilestoneForm({
   initial,
   groups,
   entries,
-  itemDefinitions,
   onSubmit,
   submitLabel,
   isPending,
@@ -50,7 +48,7 @@ export function MilestoneForm({
   const [entryId, setEntryId] = useState<string>(initial?.entryId ?? "")
   const [threshold, setThreshold] = useState<number>(initial?.threshold ?? 1)
   const [label, setLabel] = useState<string>(initial?.label ?? "")
-  const [rewardItems, setRewardItems] = useState<ItemEntry[]>(
+  const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
     initial?.rewardItems ?? [],
   )
   const [autoClaim, setAutoClaim] = useState<boolean>(
@@ -67,7 +65,7 @@ export function MilestoneForm({
       setError(m.collection_milestone_error_no_reward())
       return
     }
-    if (rewardItems.some((r) => !r.definitionId)) {
+    if (rewardItems.some((r) => !r.id)) {
       setError(m.collection_milestone_error_reward_def())
       return
     }
@@ -213,11 +211,10 @@ export function MilestoneForm({
           placeholder={m.collection_milestone_label_placeholder()}
         />
       </div>
-      <ItemEntryEditor
+      <RewardEntryEditor
         label={m.collection_milestone_field_rewards()}
         entries={rewardItems}
         onChange={setRewardItems}
-        definitions={itemDefinitions}
       />
       <div className="grid gap-4 md:grid-cols-2">
         <div>

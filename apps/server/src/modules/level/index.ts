@@ -13,8 +13,9 @@
  */
 
 import { deps } from "../../deps";
-import { itemService } from "../item";
+import { currencyService } from "../currency";
 import { entityService } from "../entity";
+import { itemService } from "../item";
 import { createLevelService } from "./service";
 
 export { createLevelService };
@@ -22,6 +23,7 @@ export type { LevelService } from "./service";
 
 export const levelService = createLevelService(deps, {
   itemSvc: itemService,
+  currencySvc: currencyService,
   entitySvc: entityService,
 });
 

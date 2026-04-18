@@ -74,7 +74,7 @@ const SynthesisConfigSchema = z.object({
 });
 
 const RewardEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });
@@ -161,6 +161,11 @@ export const CreateBlueprintInput = z
     maxLevel: z.number().int().min(1).nullable().optional(),
     sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
+    activityId: z.string().uuid().nullable().optional().openapi({
+      description:
+        "Soft link to activity_configs.id when the blueprint is activity-scoped. NULL = permanent.",
+    }),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .openapi("EntityCreateBlueprint");
@@ -182,6 +187,8 @@ export const UpdateBlueprintInput = z
     maxLevel: z.number().int().min(1).nullable().optional(),
     sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
+    activityId: z.string().uuid().nullable().optional(),
+    activityNodeId: z.string().uuid().nullable().optional(),
     metadata: MetadataSchema,
   })
   .openapi("EntityUpdateBlueprint");
@@ -347,6 +354,8 @@ export const BlueprintResponseSchema = z
     maxLevel: z.number().nullable(),
     sortOrder: z.number(),
     isActive: z.boolean(),
+    activityId: z.string().nullable(),
+    activityNodeId: z.string().nullable(),
     metadata: z.unknown().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
