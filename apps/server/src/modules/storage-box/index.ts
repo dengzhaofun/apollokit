@@ -1,8 +1,11 @@
 import { deps } from "../../deps";
-import { itemService } from "../item";
+import { currencyService } from "../currency";
 import { createStorageBoxService } from "./service";
 
 export { createStorageBoxService };
 export type { StorageBoxService } from "./service";
-export const storageBoxService = createStorageBoxService(deps, itemService);
+export const storageBoxService = createStorageBoxService(
+  deps,
+  currencyService,
+);
 export { storageBoxRouter } from "./routes";

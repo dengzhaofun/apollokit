@@ -34,13 +34,13 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
-import { itemDefinitions } from "../../schema/item";
+import { currencies } from "../../schema/currency";
 import {
   storageBoxConfigs,
   storageBoxDeposits,
   storageBoxLogs,
 } from "../../schema/storage-box";
-import type { ItemService } from "../item";
+import type { CurrencyService } from "../currency";
 import {
   StorageBoxAliasConflict,
   StorageBoxConcurrencyConflict,
@@ -100,7 +100,7 @@ function toView(
 
 export function createStorageBoxService(
   d: StorageBoxDeps,
-  itemSvc: ItemService,
+  currencySvc: CurrencyService,
 ) {
   const { db } = d;
 
@@ -134,27 +134,20 @@ export function createStorageBoxService(
       throw new StorageBoxInvalidInput("acceptedCurrencyIds must not be empty");
     }
     const uniqueIds = Array.from(new Set(ids));
+    // Every id must resolve to a row in the dedicated `currencies` table
+    // (items are no longer a currency carrier).
     const rows = await db
-      .select({
-        id: itemDefinitions.id,
-        isCurrency: itemDefinitions.isCurrency,
-      })
-      .from(itemDefinitions)
+      .select({ id: currencies.id })
+      .from(currencies)
       .where(
         and(
-          eq(itemDefinitions.organizationId, organizationId),
-          inArray(itemDefinitions.id, uniqueIds),
+          eq(currencies.organizationId, organizationId),
+          inArray(currencies.id, uniqueIds),
         ),
       );
-    const found = new Map(rows.map((r) => [r.id, r.isCurrency]));
+    const found = new Set(rows.map((r) => r.id));
     for (const id of uniqueIds) {
-      const isCurrency = found.get(id);
-      if (isCurrency === undefined) {
-        throw new StorageBoxInvalidInput(
-          `currency definition not found: ${id}`,
-        );
-      }
-      if (!isCurrency) {
+      if (!found.has(id)) {
         throw new StorageBoxInvalidCurrency(id);
       }
     }
@@ -347,15 +340,15 @@ export function createStorageBoxService(
       }
       validateDepositAmount(config, input.amount);
 
-      // Step 1: deduct currency from user's inventory. Idempotency key
-      // flows to item_grant_logs.source_id.
+      // Step 1: deduct currency from user's wallet. Idempotency key
+      // flows to currency_ledger.source_id.
       const idempotencyKey =
         input.idempotencyKey ?? `storage-box-deposit:${crypto.randomUUID()}`;
-      await itemSvc.deductItems({
+      await currencySvc.deduct({
         organizationId,
         endUserId: input.endUserId,
         deductions: [
-          { id: input.currencyDefinitionId, count: input.amount },
+          { currencyId: input.currencyDefinitionId, amount: input.amount },
         ],
         source: "storage-box-deposit",
         sourceId: idempotencyKey,
@@ -617,19 +610,19 @@ export function createStorageBoxService(
       if (updated.length === 0) throw new StorageBoxConcurrencyConflict();
       const updatedDeposit = updated[0]!;
 
-      // Step 2: return currency to user's inventory.
+      // Step 2: return currency to user's wallet.
       const totalPayout = principalPaid + interestPaid;
       if (totalPayout > 0) {
         const grantKey =
           input.idempotencyKey ??
           `storage-box-withdraw:${deposit.id}:${now.getTime()}`;
-        await itemSvc.grantItems({
+        await currencySvc.grant({
           organizationId,
           endUserId: input.endUserId,
           grants: [
             {
-              id: deposit.currencyDefinitionId,
-              count: totalPayout,
+              currencyId: deposit.currencyDefinitionId,
+              amount: totalPayout,
             },
           ],
           source: "storage-box-withdraw",

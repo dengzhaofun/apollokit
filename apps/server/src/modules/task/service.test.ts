@@ -66,9 +66,14 @@ describe("task service", () => {
     },
   } as unknown as MailService;
 
+  const stubCurrencySvc = {
+    grant: async () => {},
+    deduct: async () => {},
+  };
+
   const svc = createTaskService(
     { db },
-    { itemSvc: stubItemSvc },
+    { itemSvc: stubItemSvc, currencySvc: stubCurrencySvc },
     () => stubMail,
   );
 

@@ -18,12 +18,14 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../../db";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
+import { createCurrencyService } from "../currency/service";
 import { createItemService } from "../item/service";
 import { createExchangeService } from "./service";
 
 describe("exchange service", () => {
   const itemSvc = createItemService({ db });
-  const svc = createExchangeService({ db }, itemSvc);
+  const currencySvc = createCurrencyService({ db });
+  const svc = createExchangeService({ db }, itemSvc, currencySvc);
   let orgId: string;
 
   beforeAll(async () => {
