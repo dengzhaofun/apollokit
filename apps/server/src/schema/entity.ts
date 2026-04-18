@@ -213,6 +213,16 @@ export const entityBlueprints = pgTable(
     maxLevel: integer("max_level"),
     sortOrder: integer("sort_order").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    /**
+     * Soft link to an `activity_configs.id` when this blueprint is
+     * activity-scoped (e.g. "Spring Festival limited hero"). NULL means
+     * permanent catalog entry. No FK constraint to keep the migration
+     * surgical — the activity service is responsible for coordinated
+     * cleanup via `activity_configs.cleanup_rule` when the activity
+     * archives.
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -230,6 +240,7 @@ export const entityBlueprints = pgTable(
     uniqueIndex("entity_blueprints_org_alias_uidx")
       .on(table.organizationId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
+    index("entity_blueprints_activity_idx").on(table.activityId),
   ],
 );
 
