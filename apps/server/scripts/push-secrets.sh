@@ -51,8 +51,11 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   fi
 
   echo "→ wrangler secret put $key"
-  # stdin-fed value keeps it off the process table
-  printf '%s' "$value" | npx --yes wrangler secret put "$key" "${extra_args[@]}" >/dev/null
+  # stdin-fed value keeps it off the process table.
+  # `${extra_args[@]+"${extra_args[@]}"}` expands the array only when set —
+  # plain `"${extra_args[@]}"` tripping `set -u` with an empty array is
+  # the exact bug this pattern avoids.
+  printf '%s' "$value" | npx --yes wrangler secret put "$key" ${extra_args[@]+"${extra_args[@]}"} >/dev/null
   count=$((count + 1))
 done < .dev.vars
 
