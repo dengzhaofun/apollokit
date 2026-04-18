@@ -472,7 +472,7 @@ describe("collection service", () => {
       expect(mail.input.originSourceId).toBe(
         `${albumMilestoneId}:${endUserId}`,
       );
-      expect(mail.input.rewards[0]!.definitionId).toBe(defDiamondId);
+      expect(mail.input.rewards[0]!.id).toBe(defDiamondId);
       expect(mail.endUserId).toBe(endUserId);
 
       // The hook did NOT grant items directly — diamond inventory for this
