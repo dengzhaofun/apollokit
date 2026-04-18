@@ -111,3 +111,32 @@ export class TaskTierNotReached extends ModuleError {
     this.name = "TaskTierNotReached";
   }
 }
+
+export class TaskNotAssignable extends ModuleError {
+  constructor(reason: string) {
+    super("task.not_assignable", 400, `task not assignable: ${reason}`);
+    this.name = "TaskNotAssignable";
+  }
+}
+
+export class TaskAssignmentNotFound extends ModuleError {
+  constructor(endUserId: string) {
+    super(
+      "task.assignment_not_found",
+      404,
+      `no active assignment for end user: ${endUserId}`,
+    );
+    this.name = "TaskAssignmentNotFound";
+  }
+}
+
+export class TaskAssignmentBatchTooLarge extends ModuleError {
+  constructor(size: number, max: number) {
+    super(
+      "task.assignment_batch_too_large",
+      400,
+      `assignment batch too large: ${size} > max ${max}`,
+    );
+    this.name = "TaskAssignmentBatchTooLarge";
+  }
+}

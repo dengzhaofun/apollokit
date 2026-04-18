@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
 import type {
+  AssignBatchResponse,
+  AssignTaskInput,
+  AssignmentListResponse,
   CategoryListResponse,
   CreateCategoryInput,
   CreateDefinitionInput,
@@ -133,5 +136,66 @@ export function useDeleteTaskDefinition() {
   return useMutation({
     mutationFn: (key: string) => api.delete(`/api/task/definitions/${key}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
+  })
+}
+
+// ─── Assignments (定向分配) ──────────────────────────────────────
+
+const assignmentsKey = (
+  taskKey: string,
+  filter?: { endUserId?: string; activeOnly?: boolean },
+) =>
+  [
+    "task-assignments",
+    taskKey,
+    filter?.endUserId ?? null,
+    filter?.activeOnly ?? true,
+  ] as const
+
+export function useTaskAssignments(
+  taskKey: string,
+  filter?: { endUserId?: string; activeOnly?: boolean; limit?: number },
+) {
+  const params = new URLSearchParams()
+  if (filter?.endUserId) params.set("endUserId", filter.endUserId)
+  if (filter?.activeOnly !== undefined) {
+    params.set("activeOnly", filter.activeOnly ? "true" : "false")
+  }
+  if (filter?.limit) params.set("limit", String(filter.limit))
+  const qs = params.toString()
+
+  return useQuery({
+    queryKey: assignmentsKey(taskKey, filter),
+    queryFn: () =>
+      api.get<AssignmentListResponse>(
+        `/api/task/definitions/${taskKey}/assignments${qs ? `?${qs}` : ""}`,
+      ),
+    select: (data) => data.items,
+    enabled: !!taskKey,
+  })
+}
+
+export function useAssignTask(taskKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: AssignTaskInput) =>
+      api.post<AssignBatchResponse>(
+        `/api/task/definitions/${taskKey}/assignments`,
+        input,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["task-assignments", taskKey] }),
+  })
+}
+
+export function useRevokeAssignment(taskKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (endUserId: string) =>
+      api.delete(
+        `/api/task/definitions/${taskKey}/assignments/${encodeURIComponent(endUserId)}`,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["task-assignments", taskKey] }),
   })
 }

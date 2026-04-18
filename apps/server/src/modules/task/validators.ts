@@ -8,7 +8,13 @@
 import { z } from "@hono/zod-openapi";
 
 import { compileTaskFilter, FILTER_MAX_LENGTH } from "./filter";
-import { CATEGORY_SCOPES, COUNTING_METHODS, TASK_PERIODS } from "./types";
+import {
+  CATEGORY_SCOPES,
+  COUNTING_METHODS,
+  TASK_ASSIGNMENT_SOURCES,
+  TASK_PERIODS,
+  TASK_VISIBILITIES,
+} from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
@@ -232,6 +238,20 @@ export const CreateDefinitionSchema = z
         "Soft link to an activity. Null means this is a permanent task.",
     }),
     activityNodeId: z.string().uuid().nullable().optional(),
+    visibility: z.enum(TASK_VISIBILITIES).optional().openapi({
+      description:
+        "'broadcast' (default) → visible to all end users. 'assigned' → only visible to users with an active task_user_assignments row.",
+    }),
+    defaultAssignmentTtlSeconds: z
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional()
+      .openapi({
+        description:
+          "Default TTL applied to assignments that don't specify their own expiry. Null = no default expiry.",
+      }),
     metadata: MetadataSchema,
   })
   .superRefine((val, ctx) => {
@@ -314,6 +334,13 @@ export const UpdateDefinitionSchema = z
     sortOrder: z.number().int().optional(),
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
+    visibility: z.enum(TASK_VISIBILITIES).optional(),
+    defaultAssignmentTtlSeconds: z
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional(),
     metadata: MetadataSchema,
   })
   .superRefine((val, ctx) => {
@@ -491,6 +518,8 @@ export const DefinitionResponseSchema = z
       .nullable(),
     isActive: z.boolean(),
     isHidden: z.boolean(),
+    visibility: z.string(),
+    defaultAssignmentTtlSeconds: z.number().int().nullable(),
     sortOrder: z.number().int(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -539,6 +568,19 @@ export const ClientTaskViewSchema = z
     }),
     // Prerequisite status
     prerequisitesMet: z.boolean(),
+    // Assignment info (null for broadcast tasks; non-null only for
+    // assigned-visibility tasks that are active for this user).
+    assignment: z
+      .object({
+        assignedAt: z.string(),
+        expiresAt: z.string().nullable(),
+        source: z.string(),
+      })
+      .nullable()
+      .openapi({
+        description:
+          "Present when the task has visibility='assigned' and the user has an active assignment. Null otherwise.",
+      }),
   })
   .openapi("TaskClientView");
 
@@ -579,9 +621,111 @@ export const ErrorResponseSchema = z
   })
   .openapi("TaskErrorResponse");
 
+// ─── Assignment bodies ────────────────────────────────────────────
+
+/**
+ * Soft cap on batch assignment size. Neon HTTP has no transactions and
+ * each request is a single round-trip — the cap keeps latency bounded
+ * and gives backpressure to accidental "assign to everyone" scripts.
+ * Callers with larger cohorts must chunk.
+ */
+export const ASSIGNMENT_BATCH_MAX = 1000;
+
+const EndUserIdSchema = z.string().min(1).max(256);
+
+export const AssignTaskBodySchema = z
+  .object({
+    endUserIds: z
+      .array(EndUserIdSchema)
+      .min(1)
+      .max(ASSIGNMENT_BATCH_MAX)
+      .openapi({
+        description: `Target end-user ids. 1..${ASSIGNMENT_BATCH_MAX} per call — chunk larger cohorts.`,
+      }),
+    source: z.enum(TASK_ASSIGNMENT_SOURCES).optional().openapi({
+      description:
+        "Who/what is performing the assignment. Defaults to 'manual' when omitted.",
+    }),
+    sourceRef: z.string().min(1).max(256).nullable().optional().openapi({
+      description:
+        "Free-form caller-defined pointer. e.g. a CRM request id, rule alias, admin user id.",
+    }),
+    expiresAt: z.string().datetime().nullable().optional().openapi({
+      description:
+        "Absolute ISO 8601 expiry. Mutually exclusive with ttlSeconds. Null keeps the assignment indefinite.",
+    }),
+    ttlSeconds: z.number().int().positive().optional().openapi({
+      description:
+        "Relative TTL in seconds. Mutually exclusive with expiresAt. Falls back to the definition's defaultAssignmentTtlSeconds when omitted.",
+    }),
+    metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    allowReassign: z.boolean().optional().openapi({
+      description:
+        "If true, refresh assignedAt/expiresAt/source on already-assigned rows. Default false (no-op on existing active rows; revive revoked rows).",
+    }),
+  })
+  .superRefine((val, ctx) => {
+    if (val.expiresAt && val.ttlSeconds) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["ttlSeconds"],
+        message: "expiresAt and ttlSeconds are mutually exclusive",
+      });
+    }
+  })
+  .openapi("TaskAssignBody");
+
+export const RevokeAssignmentParamsSchema = z.object({
+  key: z
+    .string()
+    .min(1)
+    .openapi({
+      param: { name: "key", in: "path" },
+      description: "Task definition id or alias.",
+    }),
+  endUserId: EndUserIdSchema.openapi({
+    param: { name: "endUserId", in: "path" },
+  }),
+});
+
+export const ListAssignmentsQuerySchema = z.object({
+  endUserId: EndUserIdSchema.optional(),
+  activeOnly: z.enum(["true", "false"]).optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+
+export const AssignmentResponseSchema = z
+  .object({
+    taskId: z.string(),
+    endUserId: z.string(),
+    organizationId: z.string(),
+    assignedAt: z.string(),
+    expiresAt: z.string().nullable(),
+    revokedAt: z.string().nullable(),
+    source: z.string(),
+    sourceRef: z.string().nullable(),
+    metadata: z.record(z.string(), z.unknown()).nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .openapi("TaskAssignment");
+
+export const AssignmentListResponseSchema = z
+  .object({ items: z.array(AssignmentResponseSchema) })
+  .openapi("TaskAssignmentList");
+
+export const AssignBatchResponseSchema = z
+  .object({
+    assigned: z.number().int(),
+    skipped: z.number().int(),
+    items: z.array(AssignmentResponseSchema),
+  })
+  .openapi("TaskAssignBatchResponse");
+
 // ─── Input types ──────────────────────────────────────────────────
 
 export type CreateCategoryInput = z.input<typeof CreateCategorySchema>;
 export type UpdateCategoryInput = z.input<typeof UpdateCategorySchema>;
 export type CreateDefinitionInput = z.input<typeof CreateDefinitionSchema>;
 export type UpdateDefinitionInput = z.input<typeof UpdateDefinitionSchema>;
+export type AssignTaskInput = z.input<typeof AssignTaskBodySchema>;

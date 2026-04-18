@@ -5,7 +5,10 @@ import * as m from "#/paraglide/messages.js"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
+import { Badge } from "#/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { DefinitionForm } from "#/components/task/DefinitionForm"
+import { AssignmentPanel } from "#/components/task/AssignmentPanel"
 import {
   useTaskDefinition,
   useUpdateTaskDefinition,
@@ -48,6 +51,11 @@ function TaskDetailPage() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold">{definition.name}</h1>
+        {definition.visibility === "assigned" && (
+          <Badge variant="outline" className="ml-2">
+            {m.task_visibility_assigned_badge()}
+          </Badge>
+        )}
         <div className="ml-auto">
           <Button
             variant="destructive"
@@ -74,28 +82,43 @@ function TaskDetailPage() {
       </header>
 
       <main className="flex-1 p-6">
-        <div className="mx-auto max-w-2xl rounded-xl border bg-card p-6 shadow-sm">
-          <DefinitionForm
-            defaultValues={definition}
-            categories={categories ?? []}
-            submitLabel={m.common_save()}
-            isPending={updateMutation.isPending}
-            onSubmit={async (values) => {
-              try {
-                await updateMutation.mutateAsync({
-                  key: taskId,
-                  input: values,
-                })
-                toast.success("Task updated")
-              } catch (err) {
-                if (err instanceof ApiError) {
-                  toast.error(err.body.error)
-                } else {
-                  toast.error("Failed to update task")
-                }
-              }
-            }}
-          />
+        <div className="mx-auto max-w-3xl">
+          <Tabs defaultValue="config">
+            <TabsList>
+              <TabsTrigger value="config">{m.task_tab_config()}</TabsTrigger>
+              <TabsTrigger value="assignments">
+                {m.task_tab_assignments()}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="config">
+              <div className="rounded-xl border bg-card p-6 shadow-sm">
+                <DefinitionForm
+                  defaultValues={definition}
+                  categories={categories ?? []}
+                  submitLabel={m.common_save()}
+                  isPending={updateMutation.isPending}
+                  onSubmit={async (values) => {
+                    try {
+                      await updateMutation.mutateAsync({
+                        key: taskId,
+                        input: values,
+                      })
+                      toast.success("Task updated")
+                    } catch (err) {
+                      if (err instanceof ApiError) {
+                        toast.error(err.body.error)
+                      } else {
+                        toast.error("Failed to update task")
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="assignments">
+              <AssignmentPanel definition={definition} />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </>
