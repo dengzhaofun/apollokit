@@ -35,6 +35,34 @@ async function request<T>(
   return body as T
 }
 
+/**
+ * Resolve a possibly-relative URL returned by the server into an
+ * absolute URL browsers can load. Assets whose public URL is a CDN
+ * domain come back absolute already; the worker-proxy fallback
+ * returns `/api/media-library/object/...` which needs the server base.
+ */
+export function resolveAssetUrl(url: string): string {
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  return `${BASE_URL}${url.startsWith("/") ? url : `/${url}`}`
+}
+
+async function uploadFormData<T>(
+  path: string,
+  form: FormData,
+): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  })
+  if (res.status === 204) return undefined as T
+  const body = await res.json()
+  if (!res.ok) {
+    throw new ApiError(res.status, body)
+  }
+  return body as T
+}
+
 export const api = {
   get<T>(path: string) {
     return request<T>(path)
@@ -59,5 +87,8 @@ export const api = {
   },
   delete(path: string) {
     return request<void>(path, { method: "DELETE" })
+  },
+  upload<T>(path: string, form: FormData) {
+    return uploadFormData<T>(path, form)
   },
 }

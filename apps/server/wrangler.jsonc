@@ -37,8 +37,13 @@
   //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)
   //   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST API token
   //
-  // Bindings (uncomment as needed):
+  // Bindings:
+  //   MEDIA_R2 — object store for the media library (admin asset drive).
+  //   Bucket name can be overridden per-env; create it first with
+  //   `wrangler r2 bucket create apollokit-media`.
+  "r2_buckets": [
+    { "binding": "MEDIA_R2", "bucket_name": "apollokit-media" }
+  ]
   // "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],
-  // "r2_buckets":    [{ "binding": "MY_R2", "bucket_name": "..." }],
   // "ai":            { "binding": "AI" }
 }

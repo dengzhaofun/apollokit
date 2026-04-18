@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 
 import { db } from "./db";
 import { createEventBus, type EventBus } from "./lib/event-bus";
+import { createObjectStorage, type ObjectStorage } from "./lib/storage";
 import { redis } from "./redis";
 
 /**
@@ -19,6 +20,7 @@ export type AppDeps = {
   redis: typeof redis;
   events: EventBus;
   appSecret: string;
+  storage: ObjectStorage;
   // logger: typeof logger;
   // behaviorLog: typeof behaviorLog;
 };
@@ -33,4 +35,36 @@ export const deps: AppDeps = {
   redis,
   events: createEventBus(),
   appSecret: env.BETTER_AUTH_SECRET,
+  // Storage driver is resolved lazily via a Proxy so the binding
+  // lookup doesn't happen at module load (for imports that never use
+  // storage, e.g. drizzle-kit generate running this file under Node).
+  storage: createLazyStorage(),
 };
+
+/**
+ * Delay the actual `createObjectStorage(env)` call until the first
+ * method call. This keeps env-var-driven validation out of the hot
+ * import path — if a deploy forgets to set STORAGE_DRIVER but never
+ * uses the media-library module, nothing breaks.
+ */
+function createLazyStorage(): ObjectStorage {
+  let instance: ObjectStorage | null = null;
+  function resolve(): ObjectStorage {
+    if (!instance) {
+      instance = createObjectStorage(
+        env as unknown as Parameters<typeof createObjectStorage>[0],
+      );
+    }
+    return instance;
+  }
+  return new Proxy({} as ObjectStorage, {
+    get(_t, prop) {
+      const target = resolve() as unknown as Record<string | symbol, unknown>;
+      const value = target[prop];
+      if (typeof value === "function") {
+        return (value as (...args: unknown[]) => unknown).bind(target);
+      }
+      return value;
+    },
+  });
+}

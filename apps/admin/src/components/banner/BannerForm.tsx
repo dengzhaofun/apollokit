@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { LinkActionEditor } from "#/components/common/LinkActionEditor"
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -135,27 +136,17 @@ export function BannerForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-1">
-          <Label htmlFor="image-mobile">
-            {m.banner_field_image_mobile()}
-          </Label>
-          <Input
-            id="image-mobile"
-            required
-            placeholder="https://..."
-            value={imageUrlMobile}
-            onChange={(e) => setImageUrlMobile(e.target.value)}
+          <Label>{m.banner_field_image_mobile()}</Label>
+          <MediaPickerDialog
+            value={imageUrlMobile || null}
+            onChange={setImageUrlMobile}
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="image-desktop">
-            {m.banner_field_image_desktop()}
-          </Label>
-          <Input
-            id="image-desktop"
-            required
-            placeholder="https://..."
-            value={imageUrlDesktop}
-            onChange={(e) => setImageUrlDesktop(e.target.value)}
+          <Label>{m.banner_field_image_desktop()}</Label>
+          <MediaPickerDialog
+            value={imageUrlDesktop || null}
+            onChange={setImageUrlDesktop}
           />
         </div>
       </div>

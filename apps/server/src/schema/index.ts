@@ -23,3 +23,4 @@ export * from "./task";
 export * from "./leaderboard";
 export * from "./activity";
 export * from "./storage-box";
+export * from "./media-library";

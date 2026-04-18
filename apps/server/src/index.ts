@@ -50,6 +50,7 @@ import {
 } from "./modules/lottery";
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { shopRouter, shopClientRouter } from "./modules/shop";
+import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
 import {
   taskRouter,
@@ -80,7 +81,17 @@ const app = new OpenAPIHono<HonoEnv>();
 app.use("*", requestId());
 app.use("*", logger());
 app.use("*", prettyJSON());
-app.use("*", secureHeaders());
+// `crossOriginResourcePolicy: "cross-origin"` — this worker is
+// intentionally called from different origins (the admin app on a
+// different port/subdomain, tenant frontends on customer domains, the
+// media-library <img> proxy). The default `same-origin` would block
+// those loads despite the CORS config below explicitly allowing them.
+app.use(
+  "*",
+  secureHeaders({
+    crossOriginResourcePolicy: "cross-origin",
+  }),
+);
 app.use(
   "*",
   cors({
@@ -125,6 +136,7 @@ app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
 app.route("/api/shop", shopRouter);
 app.route("/api/storage-box", storageBoxRouter);
+app.route("/api/media-library", mediaLibraryRouter);
 app.route("/api/task", taskRouter);
 app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);
