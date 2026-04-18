@@ -74,8 +74,9 @@ function serializeDefinition(row: {
   stackable: boolean;
   stackLimit: number | null;
   holdLimit: number | null;
-  isCurrency: boolean;
   isActive: boolean;
+  activityId: string | null;
+  activityNodeId: string | null;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -91,8 +92,9 @@ function serializeDefinition(row: {
     stackable: row.stackable,
     stackLimit: row.stackLimit,
     holdLimit: row.holdLimit,
-    isCurrency: row.isCurrency,
     isActive: row.isActive,
+    activityId: row.activityId,
+    activityNodeId: row.activityNodeId,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

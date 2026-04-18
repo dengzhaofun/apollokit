@@ -97,6 +97,8 @@ function serializeBlueprint(row: EntityBlueprint) {
     maxLevel: row.maxLevel,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
+    activityId: row.activityId,
+    activityNodeId: row.activityNodeId,
     metadata: row.metadata,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

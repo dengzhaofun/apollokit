@@ -306,6 +306,8 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
           maxLevel: input.maxLevel ?? null,
           sortOrder: input.sortOrder ?? 0,
           isActive: input.isActive ?? true,
+          activityId: input.activityId ?? null,
+          activityNodeId: input.activityNodeId ?? null,
           metadata: input.metadata ?? null,
         })
         .returning();
@@ -342,6 +344,9 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (input.maxLevel !== undefined) patch.maxLevel = input.maxLevel;
     if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     if (input.isActive !== undefined) patch.isActive = input.isActive;
+    if (input.activityId !== undefined) patch.activityId = input.activityId;
+    if (input.activityNodeId !== undefined)
+      patch.activityNodeId = input.activityNodeId;
     if (input.metadata !== undefined) patch.metadata = input.metadata;
 
     if (Object.keys(patch).length === 0) return existing;
@@ -382,11 +387,18 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
 
   async function listBlueprints(
     organizationId: string,
-    opts?: { schemaId?: string },
+    opts?: { schemaId?: string; activityId?: string | null },
   ): Promise<EntityBlueprint[]> {
     const conditions = [eq(entityBlueprints.organizationId, organizationId)];
     if (opts?.schemaId) {
       conditions.push(eq(entityBlueprints.schemaId, opts.schemaId));
+    }
+    if (opts?.activityId !== undefined) {
+      if (opts.activityId === null) {
+        conditions.push(sql`${entityBlueprints.activityId} IS NULL`);
+      } else {
+        conditions.push(eq(entityBlueprints.activityId, opts.activityId));
+      }
     }
     return db
       .select()
