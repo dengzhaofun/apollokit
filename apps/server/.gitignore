@@ -17,8 +17,12 @@ node_modules/
 
 # env
 .env
+.env.local
 .env.production
 .dev.vars
+
+# tinybird local build artifacts
+.tinybird/
 
 # generated
 worker-configuration.d.ts

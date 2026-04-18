@@ -1,6 +1,10 @@
 import { env } from "cloudflare:workers";
 
 import { db } from "./db";
+import {
+  createAnalyticsService,
+  type AnalyticsService,
+} from "./lib/analytics";
 import { createEventBus, type EventBus } from "./lib/event-bus";
 import { createObjectStorage, type ObjectStorage } from "./lib/storage";
 import { redis } from "./redis";
@@ -21,6 +25,7 @@ export type AppDeps = {
   events: EventBus;
   appSecret: string;
   storage: ObjectStorage;
+  analytics: AnalyticsService;
   // logger: typeof logger;
   // behaviorLog: typeof behaviorLog;
 };
@@ -39,6 +44,9 @@ export const deps: AppDeps = {
   // lookup doesn't happen at module load (for imports that never use
   // storage, e.g. drizzle-kit generate running this file under Node).
   storage: createLazyStorage(),
+  // Same lazy pattern for Tinybird — avoids touching env vars during
+  // drizzle-kit generate under Node, where those bindings don't exist.
+  analytics: createLazyAnalytics(),
 };
 
 /**
@@ -58,6 +66,26 @@ function createLazyStorage(): ObjectStorage {
     return instance;
   }
   return new Proxy({} as ObjectStorage, {
+    get(_t, prop) {
+      const target = resolve() as unknown as Record<string | symbol, unknown>;
+      const value = target[prop];
+      if (typeof value === "function") {
+        return (value as (...args: unknown[]) => unknown).bind(target);
+      }
+      return value;
+    },
+  });
+}
+
+function createLazyAnalytics(): AnalyticsService {
+  let instance: AnalyticsService | null = null;
+  function resolve(): AnalyticsService {
+    if (!instance) {
+      instance = createAnalyticsService();
+    }
+    return instance;
+  }
+  return new Proxy({} as AnalyticsService, {
     get(_t, prop) {
       const target = resolve() as unknown as Record<string | symbol, unknown>;
       const value = target[prop];

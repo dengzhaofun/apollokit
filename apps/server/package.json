@@ -13,7 +13,11 @@
     "db:migrate": "dotenv -e .dev.vars -- drizzle-kit migrate",
     "db:push": "dotenv -e .dev.vars -- drizzle-kit push",
     "db:studio": "dotenv -e .dev.vars -- drizzle-kit studio",
-    "auth:generate": "dotenv -e .dev.vars -- better-auth generate --config ./auth.config.ts --output ./src/schema/auth.ts -y"
+    "auth:generate": "dotenv -e .dev.vars -- better-auth generate --config ./auth.config.ts --output ./src/schema/auth.ts -y",
+    "tb:build": "dotenv -e .env.local -- tinybird build",
+    "tb:deploy": "dotenv -e .env.local -- tinybird deploy",
+    "tb:info": "dotenv -e .env.local -- tinybird info",
+    "secrets:push": "bash scripts/push-secrets.sh"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.2",
@@ -21,6 +25,7 @@
     "@hono/zod-openapi": "^1.2.4",
     "@neondatabase/serverless": "^1.0.2",
     "@scalar/hono-api-reference": "^0.10.7",
+    "@tinybirdco/sdk": "^0.0.66",
     "@upstash/redis": "^1.37.0",
     "better-auth": "^1.6.2",
     "croner": "^10.0.1",

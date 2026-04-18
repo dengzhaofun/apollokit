@@ -8,7 +8,9 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { auth } from "./auth";
 import type { HonoEnv } from "./env";
+import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
+import { analyticsRouter } from "./modules/analytics";
 import { bannerRouter, bannerClientRouter } from "./modules/banner";
 import {
   cdkeyRouter,
@@ -118,12 +120,16 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 // Inject c.var.user / c.var.session for downstream business routes
 app.use("*", session);
+// Auto-ingest every request into Tinybird's http_requests dataset.
+// Must run AFTER session so we know which tenant to tag.
+app.use("*", requestLog);
 
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
 
 // Admin routes — session or admin API key
+app.route("/api/analytics", analyticsRouter);
 app.route("/api/banner", bannerRouter);
 app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
