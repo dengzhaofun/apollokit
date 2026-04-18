@@ -23,6 +23,7 @@ import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
 import type { MailService } from "../mail/service";
 import type { RewardItemSvc } from "../../lib/rewards";
 import { createTaskService } from "./service";
+import { TaskAssignmentNotFound } from "./errors";
 import {
   CreateDefinitionSchema,
   UpdateDefinitionSchema,
@@ -1548,7 +1549,7 @@ describe("task service", () => {
       });
       await expect(
         svc.revokeAssignment(orgId, "never-assigned", def.id),
-      ).rejects.toThrow(/assignment_not_found|not found/i);
+      ).rejects.toBeInstanceOf(TaskAssignmentNotFound);
     });
 
     test("assignTaskToUsers: mixed new + existing counts correctly", async () => {

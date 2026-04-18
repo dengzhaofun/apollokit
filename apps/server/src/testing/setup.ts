@@ -7,9 +7,11 @@
  * `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL` to code that used to read them
  * from the wrangler-only `cloudflare:workers` module.
  *
- * We use `override: false` so that real environment variables (e.g.
- * injected by CI) always win over the file — the file is just a local dev
- * fallback.
+ * `override: true` — tests must be deterministic from `.dev.vars`, never
+ * from an inherited shell env. A stale `DATABASE_URL` in the parent
+ * process would otherwise silently route tests at the wrong database.
+ * CI should write the test DB URL into `.dev.vars` (or a file of the
+ * same name) before invoking vitest, not pass it as a shell env.
  */
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -19,7 +21,7 @@ import { config } from "dotenv";
 const here = dirname(fileURLToPath(import.meta.url));
 config({
   path: resolve(here, "../../.dev.vars"),
-  override: false,
+  override: true,
 });
 
 if (!process.env.DATABASE_URL) {
@@ -30,15 +32,5 @@ if (!process.env.DATABASE_URL) {
 if (!process.env.BETTER_AUTH_SECRET) {
   throw new Error(
     "[vitest setup] BETTER_AUTH_SECRET not set — check apps/server/.dev.vars or CI env",
-  );
-}
-if (!process.env.UPSTASH_REDIS_REST_URL) {
-  throw new Error(
-    "[vitest setup] UPSTASH_REDIS_REST_URL not set — check apps/server/.dev.vars or CI env",
-  );
-}
-if (!process.env.UPSTASH_REDIS_REST_TOKEN) {
-  throw new Error(
-    "[vitest setup] UPSTASH_REDIS_REST_TOKEN not set — check apps/server/.dev.vars or CI env",
   );
 }

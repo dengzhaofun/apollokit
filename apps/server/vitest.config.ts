@@ -35,13 +35,12 @@ export default defineConfig({
         import.meta.url,
       ).pathname,
     },
-    // Neon HTTP cold-starts can take 1–2s; sign-up + org-create flows
-    // stack several round-trips, so give them headroom.
     hookTimeout: 30_000,
     testTimeout: 30_000,
-    // Run test files sequentially so two files can't seed overlapping
-    // test orgs into the same Neon branch. Inside a file, Vitest runs
-    // tests serially by default — that's fine.
-    fileParallelism: false,
+    // Local PG handles parallel connections fine; each test file seeds its
+    // own org with a random UUID via createTestOrg, so no collision risk.
+    fileParallelism: true,
+    // Stop on first failing test to shorten the feedback loop.
+    bail: 1,
   },
 });
