@@ -3,7 +3,7 @@ import { z } from "@hono/zod-openapi";
 import { MAIL_MULTICAST_MAX, MAIL_TARGET_TYPES } from "./types";
 
 const ItemEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });

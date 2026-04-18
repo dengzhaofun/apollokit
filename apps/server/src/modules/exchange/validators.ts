@@ -22,7 +22,7 @@ const MetadataSchema = z
   });
 
 const ExchangeItemEntrySchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int().positive(),
 });
@@ -152,7 +152,7 @@ export const OptionIdParamSchema = z.object({
 // ─── Response schemas ───────────────────────────────────────────
 
 const ExchangeItemResponseSchema = z.object({
-  type: z.enum(["item", "entity"]),
+  type: z.enum(["item", "entity", "currency"]),
   id: z.string(),
   count: z.number().int(),
 });

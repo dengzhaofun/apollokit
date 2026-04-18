@@ -5,21 +5,22 @@
  * Each entry has a `type` discriminator that tells the dispatch
  * function where to send it.
  *
- * Adding a new reward type (points, external goods, etc.) requires:
+ * Adding a new reward type (external goods, etc.) requires:
  *   1. Add the new type to the `RewardType` union
- *   2. Add a `case` in `grantRewards()`
+ *   2. Add a `case` in `grantRewards()` (and `deductCosts()` if deductible)
  *   3. Done — no schema migrations, no new columns
  */
 
 /**
  * Supported reward types. Extend this union to add new types.
  *
- *   - "item"   → dispatched to itemService.grantItems (id = definitionId)
- *   - "entity" → dispatched to entityService.acquireEntity (id = blueprintId)
+ *   - "item"     → dispatched to itemService.grantItems      (id = definitionId)
+ *   - "entity"   → dispatched to entityService.acquireEntity (id = blueprintId)
+ *   - "currency" → dispatched to currencyService.grant       (id = currencyId)
  *
- * Future: "points", "external", "currency", etc.
+ * Future: "external", etc.
  */
-export type RewardType = "item" | "entity";
+export type RewardType = "item" | "entity" | "currency";
 
 /**
  * A single polymorphic reward/cost entry.
@@ -27,8 +28,9 @@ export type RewardType = "item" | "entity";
  * Stored in JSONB arrays across all reward columns. The `type` field
  * determines which service handles the grant/deduction.
  *
- *   { type: "item",   id: "gold-def-uuid",        count: 100 }
- *   { type: "entity", id: "fire-warrior-bp-uuid",  count: 1   }
+ *   { type: "item",     id: "gold-def-uuid",         count: 100 }
+ *   { type: "entity",   id: "fire-warrior-bp-uuid",  count: 1   }
+ *   { type: "currency", id: "gem-cur-uuid",          count: 50  }
  */
 export type RewardEntry = {
   type: RewardType;
@@ -80,8 +82,34 @@ export type RewardEntitySvc = {
   ) => Promise<unknown>;
 };
 
+export type RewardCurrencySvc = {
+  grant: (params: {
+    organizationId: string;
+    endUserId: string;
+    grants: Array<{ currencyId: string; amount: number }>;
+    source: string;
+    sourceId?: string;
+  }) => Promise<unknown>;
+  deduct: (params: {
+    organizationId: string;
+    endUserId: string;
+    deductions: Array<{ currencyId: string; amount: number }>;
+    source: string;
+    sourceId?: string;
+  }) => Promise<unknown>;
+};
+
+/**
+ * Service bundle threaded through `grantRewards` / `deductCosts`.
+ *
+ * `currencySvc` is **required** — making it optional would let a consumer
+ * module silently drop currency rewards if its wiring forgot to inject the
+ * dependency. With a non-optional slot, TypeScript forces every call site
+ * to pass the real `currencyService`.
+ */
 export type RewardServices = {
   itemSvc: RewardItemSvc;
+  currencySvc: RewardCurrencySvc;
   entitySvc?: RewardEntitySvc;
 };
 
@@ -89,7 +117,8 @@ export type RewardServices = {
  * Grant an array of reward entries to an end user.
  *
  * Groups entries by type and dispatches to the appropriate service.
- * Items are batched into a single grantItems call; entities are
+ * Items are batched into a single `grantItems` call; currencies are
+ * batched into a single `currencySvc.grant` call; entities are
  * acquired one-by-one (each is a unique instance).
  */
 export async function grantRewards(
@@ -112,6 +141,18 @@ export async function grantRewards(
     });
   }
 
+  // Batch currencies into one grant call
+  const currencies = filterByType(entries, "currency");
+  if (currencies.length > 0) {
+    await services.currencySvc.grant({
+      organizationId,
+      endUserId,
+      grants: currencies.map((e) => ({ currencyId: e.id, amount: e.count })),
+      source,
+      sourceId,
+    });
+  }
+
   // Acquire entities one-by-one (each is a unique instance)
   const entities = filterByType(entries, "entity");
   if (entities.length > 0 && services.entitySvc) {
@@ -128,13 +169,13 @@ export async function grantRewards(
     }
   }
 
-  // Future: add cases for "points", "external", etc.
+  // Future: add cases for "external", etc.
 }
 
 /**
- * Deduct costs from an end user. Only "item" type is supported
- * for deduction (you can't un-acquire an entity as a cost — use
- * entity synthesis/discard for that).
+ * Deduct costs from an end user. Supports `"item"` and `"currency"` types.
+ *
+ * Entities cannot be used as a cost — use entity synthesis/discard for that.
  */
 export async function deductCosts(
   services: RewardServices,
@@ -158,6 +199,17 @@ export async function deductCosts(
     });
   }
 
-  // Future: add cases for "points" deduction, etc.
+  const currencies = filterByType(entries, "currency");
+  if (currencies.length > 0) {
+    await services.currencySvc.deduct({
+      organizationId,
+      endUserId,
+      deductions: currencies.map((e) => ({
+        currencyId: e.id,
+        amount: e.count,
+      })),
+      source,
+      sourceId,
+    });
+  }
 }
-
