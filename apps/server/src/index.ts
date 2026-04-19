@@ -11,6 +11,10 @@ import type { HonoEnv } from "./env";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
 import { analyticsRouter } from "./modules/analytics";
+import {
+  announcementRouter,
+  announcementClientRouter,
+} from "./modules/announcement";
 import { bannerRouter, bannerClientRouter } from "./modules/banner";
 import {
   cdkeyRouter,
@@ -134,6 +138,7 @@ app.route("/health", health);
 
 // Admin routes — session or admin API key
 app.route("/api/analytics", analyticsRouter);
+app.route("/api/announcement", announcementRouter);
 app.route("/api/banner", bannerRouter);
 app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
@@ -160,6 +165,7 @@ app.route("/api/activity", activityRouter);
 app.route("/api/event-catalog", eventCatalogRouter);
 
 // C-end client routes — client credential + HMAC
+app.route("/api/client/announcement", announcementClientRouter);
 app.route("/api/client/banner", bannerClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
