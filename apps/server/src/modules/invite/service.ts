@@ -404,13 +404,76 @@ export function createInviteService(d: InviteDeps) {
       }
       throw new InviteAlreadyBound();
     },
+
+    /* ── qualify ──────────────────────────────────────────── */
+
+    /**
+     * 客户方在认定"这个邀请算数了"时调用。推进 qualified_at + 发 invite.qualified。
+     *
+     * 原子写：UPDATE ... WHERE qualified_at IS NULL。RETURNING 1 行 → 首次；
+     * 0 行再 SELECT 一次区分"不存在"和"已 qualified"。
+     */
+    async qualify(
+      orgId: string,
+      input: { inviteeEndUserId: string; qualifiedReason?: string | null },
+    ): Promise<{
+      relationship: typeof inviteRelationships.$inferSelect;
+      alreadyQualified: boolean;
+    }> {
+      const settings = await getSettingsOrDefaults(orgId);
+      if (!settings.enabled) throw new InviteDisabled();
+
+      const reason = input.qualifiedReason ?? null;
+      const now = new Date();
+      const updated = await db
+        .update(inviteRelationships)
+        .set({ qualifiedAt: now, qualifiedReason: reason })
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
+            sql`${inviteRelationships.qualifiedAt} IS NULL`,
+          ),
+        )
+        .returning();
+
+      if (updated.length === 1) {
+        const row = updated[0]!;
+        if (events) {
+          await events.emit("invite.qualified", {
+            organizationId: orgId,
+            endUserId: row.inviterEndUserId,
+            inviterEndUserId: row.inviterEndUserId,
+            inviteeEndUserId: row.inviteeEndUserId,
+            qualifiedReason: row.qualifiedReason,
+            qualifiedAt: row.qualifiedAt!,
+            boundAt: row.boundAt,
+          });
+        }
+        return { relationship: row, alreadyQualified: false };
+      }
+
+      // 0 rows — 区分"不存在"和"已 qualified"
+      const [existing] = await db
+        .select()
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
+          ),
+        )
+        .limit(1);
+      if (!existing) throw new InviteeNotBound();
+      return { relationship: existing, alreadyQualified: true };
+    },
   };
 }
 
 export type InviteService = ReturnType<typeof createInviteService>;
 
 // Suppress unused-imports warnings for symbols referenced only by later tasks.
-// They will be used when Tasks 8–9 extend this file.
-void count; void desc; void sql;
-void InviteRelationshipNotFound; void InviteeNotBound;
+// They will be used when Tasks 9+ extend this file.
+void count; void desc;
+void InviteRelationshipNotFound;
 void ({} as InviteSummary);

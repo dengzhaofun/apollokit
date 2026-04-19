@@ -222,3 +222,76 @@ describe("invite service — bind", () => {
     await svc.upsertSettings(orgId, { enabled: true });
   });
 });
+
+describe("invite service — qualify", () => {
+  let events: ReturnType<typeof createEventBus>;
+  let svc: ReturnType<typeof createInviteService>;
+  let orgId: string;
+  const emitted: Array<{ type: string; payload: unknown }> = [];
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("invite-svc-qualify");
+    events = createEventBus();
+    svc = createInviteService({ db, events });
+    events.on("invite.qualified", (p) => {
+      emitted.push({ type: "invite.qualified", payload: p });
+    });
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  test("首次 qualify 成功、事件发射、reason 落库", async () => {
+    emitted.length = 0;
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-q1");
+    await svc.bind(orgId, { code, inviteeEndUserId: "invitee-q1" });
+
+    const result = await svc.qualify(orgId, {
+      inviteeEndUserId: "invitee-q1",
+      qualifiedReason: "first_purchase",
+    });
+    expect(result.alreadyQualified).toBe(false);
+    expect(result.relationship.qualifiedAt).toBeInstanceOf(Date);
+    expect(result.relationship.qualifiedReason).toBe("first_purchase");
+
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0]!.payload).toMatchObject({
+      organizationId: orgId,
+      endUserId: "inviter-q1",
+      inviterEndUserId: "inviter-q1",
+      inviteeEndUserId: "invitee-q1",
+      qualifiedReason: "first_purchase",
+    });
+  });
+
+  test("二次 qualify 幂等、事件不重发", async () => {
+    emitted.length = 0;
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-q2");
+    await svc.bind(orgId, { code, inviteeEndUserId: "invitee-q2" });
+    await svc.qualify(orgId, { inviteeEndUserId: "invitee-q2" });
+    emitted.length = 0;
+    const again = await svc.qualify(orgId, {
+      inviteeEndUserId: "invitee-q2",
+      qualifiedReason: "later-reason-ignored",
+    });
+    expect(again.alreadyQualified).toBe(true);
+    expect(emitted).toHaveLength(0);
+  });
+
+  test("qualify 对未 bind 的 invitee → InviteeNotBound", async () => {
+    await expect(
+      svc.qualify(orgId, { inviteeEndUserId: "never-bound" }),
+    ).rejects.toThrow(/no bound inviter/i);
+  });
+
+  test("qualify 禁用的租户 → InviteDisabled", async () => {
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-q3");
+    await svc.bind(orgId, { code, inviteeEndUserId: "invitee-q3" });
+    await svc.upsertSettings(orgId, { enabled: false });
+    await expect(
+      svc.qualify(orgId, { inviteeEndUserId: "invitee-q3" }),
+    ).rejects.toThrow(/disabled/i);
+    await svc.upsertSettings(orgId, { enabled: true });
+  });
+});
