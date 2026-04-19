@@ -11,8 +11,23 @@
  */
 
 import { deps } from "../../deps";
+import { registerEvent } from "../../lib/event-registry";
 import { mailService } from "../mail";
 import { createLeaderboardService } from "./service";
+
+registerEvent({
+  name: "leaderboard.contributed",
+  owner: "leaderboard",
+  description:
+    "Fired when a user contributes a score to a leaderboard. `applied` is the effective delta after aggregation policy.",
+  fields: [
+    { path: "organizationId", type: "string", required: true },
+    { path: "endUserId", type: "string", required: true },
+    { path: "metricKey", type: "string", required: true },
+    { path: "value", type: "number", required: true },
+    { path: "applied", type: "number", required: true },
+  ],
+});
 
 export { createLeaderboardService };
 export type { LeaderboardService } from "./service";
