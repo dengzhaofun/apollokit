@@ -232,6 +232,13 @@
       "when": 1776558102182,
       "tag": "0032_warm_hawkeye",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1776571316009,
+      "tag": "0033_mute_colonel_america",
+      "breakpoints": true
     }
   ]
 }
