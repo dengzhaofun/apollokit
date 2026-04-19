@@ -24,7 +24,6 @@ import { createClientCredentialService } from "./service";
 import {
   CredentialNotFound,
   CredentialDisabled,
-  CredentialExpired,
   InvalidHmac,
 } from "./errors";
 
@@ -185,4 +184,5 @@ describe("client-credentials service", () => {
     );
     expect(result.valid).toBe(true);
   });
+
 });

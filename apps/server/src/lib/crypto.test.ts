@@ -98,3 +98,4 @@ describe("generateKeyPair", () => {
     expect(a.secret).not.toBe(b.secret);
   });
 });
+

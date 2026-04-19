@@ -235,7 +235,9 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         devMode: false,
       };
     },
+
   };
+
 }
 
 export type ClientCredentialService = ReturnType<

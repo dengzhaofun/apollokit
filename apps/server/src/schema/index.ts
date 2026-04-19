@@ -12,6 +12,7 @@ export * from "./currency";
 export * from "./dialogue";
 export * from "./exchange";
 export * from "./item";
+export * from "./invite";
 export * from "./lottery";
 export * from "./mail";
 export * from "./shop";

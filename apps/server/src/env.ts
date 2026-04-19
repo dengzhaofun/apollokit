@@ -52,5 +52,6 @@ export type HonoEnv = {
     session: InferredSession | null;
     authMethod: AuthMethod | null;
     clientCredential: ClientCredentialContext | null;
+    endUserId?: string;
   };
 };

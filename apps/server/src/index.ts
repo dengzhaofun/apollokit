@@ -45,6 +45,7 @@ import {
   exchangeClientRouter,
 } from "./modules/exchange";
 import { friendRouter, friendClientRouter } from "./modules/friend";
+import { inviteRouter, inviteClientRouter } from "./modules/invite";
 import {
   guildRouter,
   guildClientRouter,
@@ -151,6 +152,7 @@ app.route("/api/item", itemRouter);
 app.route("/api/exchange", exchangeRouter);
 app.route("/api/friend", friendRouter);
 app.route("/api/friend-gift", friendGiftRouter);
+app.route("/api/invite", inviteRouter);
 app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
@@ -177,6 +179,7 @@ app.route("/api/client/item", itemClientRouter);
 app.route("/api/client/exchange", exchangeClientRouter);
 app.route("/api/client/friend", friendClientRouter);
 app.route("/api/client/friend-gift", friendGiftClientRouter);
+app.route("/api/client/invite", inviteClientRouter);
 app.route("/api/client/guild", guildClientRouter);
 app.route("/api/client/lottery", lotteryClientRouter);
 app.route("/api/client/mail", mailClientRouter);
