@@ -25,6 +25,7 @@ import {
   Swords,
   Ticket,
   Trophy,
+  UserPlus,
   Users,
 } from "lucide-react"
 
@@ -63,6 +64,7 @@ function getNavItems() {
     { title: m.nav_collection(), to: "/collection" as const, icon: BookOpen },
     { title: m.nav_level(), to: "/level" as const, icon: Map },
     { title: m.nav_friend(), to: "/friend" as const, icon: Users },
+    { title: m.nav_invite(), to: "/invite" as const, icon: UserPlus },
     { title: m.nav_guild(), to: "/guild" as const, icon: Shield },
     { title: m.nav_team(), to: "/team" as const, icon: Swords },
     { title: m.nav_gift(), to: "/friend-gift" as const, icon: Gift },
