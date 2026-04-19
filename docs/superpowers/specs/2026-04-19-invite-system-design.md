@@ -157,7 +157,7 @@ export function isWellFormedInviteCode(raw: string): boolean;
 ## 5. Service 层（protocol-agnostic）
 
 ```ts
-type InviteDeps = Pick<AppDeps, "db" | "events" | "eventCatalog">;
+type InviteDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 
 export function createInviteService(d: InviteDeps) {
   return {
