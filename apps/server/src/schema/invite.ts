@@ -84,8 +84,9 @@ export const inviteCodes = pgTable(
  * 邀请关系 —— bind 建立、qualify 推进。
  *
  * UNIQUE (org, invitee_end_user_id) 是强约束：一个被邀人全租户内只能被邀一次。
- * 自邀防护完全放 service 层（因为 settings.allowSelfInvite=true 时需要允许
- * inviter === invitee，DB 层 CHECK 会硬挡）。
+ *
+ * 自邀防护在 service 层实现而非 DB CHECK，因为 settings.allowSelfInvite=true
+ * 时需要允许 inviter === invitee 的行合法入库。
  */
 export const inviteRelationships = pgTable(
   "invite_relationships",
@@ -117,7 +118,10 @@ export const inviteRelationships = pgTable(
     index("invite_relationships_org_inviter_bound_idx").on(
       table.organizationId,
       table.inviterEndUserId,
-      table.boundAt,
+      table.boundAt.desc(),
     ),
+    index("invite_relationships_org_qualified_idx")
+      .on(table.organizationId, table.qualifiedAt)
+      .where(sql`${table.qualifiedAt} IS NOT NULL`),
   ],
 );
