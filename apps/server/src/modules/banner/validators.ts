@@ -123,15 +123,6 @@ export const GroupAliasParamSchema = z.object({
   }),
 });
 
-// ─── Client queries ────────────────────────────────────────────
-
-export const ClientGroupQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "Required for multicast visibility evaluation.",
-  }),
-});
-
 // ─── Response shapes (admin) ───────────────────────────────────
 
 export const BannerGroupResponseSchema = z

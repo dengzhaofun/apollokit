@@ -93,24 +93,9 @@ export type UpdateDialogueScriptInput = z.input<
 
 export const AdvanceDialogueSchema = z
   .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     optionId: NodeIdSchema.optional(),
   })
   .openapi("DialogueAdvanceRequest");
-
-export const StartDialogueQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-  }),
-});
-
-export const ResetDialogueSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
-  })
-  .openapi("DialogueResetRequest");
 
 // ─── Params ─────────────────────────────────────────────────────
 

@@ -76,10 +76,6 @@ export const ListMailQuerySchema = z.object({
 });
 
 export const InboxQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The end user whose inbox to load.",
-  }),
   since: z.string().datetime().optional().openapi({
     param: { name: "since", in: "query" },
     description:
@@ -89,24 +85,6 @@ export const InboxQuerySchema = z.object({
   }),
   limit: z.coerce.number().int().min(1).max(200).optional().openapi({
     param: { name: "limit", in: "query" },
-  }),
-});
-
-export const EndUserBodySchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
-    }),
-  })
-  .openapi("MailEndUserRequest");
-
-export const EndUserQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
   }),
 });
 

@@ -142,10 +142,6 @@ export const AdminRedeemSchema = z
 export const ClientRedeemSchema = z
   .object({
     code: z.string().min(1).max(256),
-    endUserId: z.string().min(1).max(256).openapi({ example: "user-42" }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
-    }),
     idempotencyKey: z.string().min(1).max(256),
   })
   .openapi("CdkeyClientRedeemRequest");

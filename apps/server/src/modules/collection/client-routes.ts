@@ -1,9 +1,14 @@
 /**
  * C-end client routes for the collection module.
  *
- * Protected by `requireClientCredential` — requires a valid publishable
- * key (cpk_) in `x-api-key`. Per-endUser HMAC verification is inline via
- * `clientCredentialService.verifyRequest`.
+ * Mounted at /api/client/collection. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
  *   GET  /albums                          → album list + per-user progress
@@ -22,7 +27,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { collectionService } from "./index";
 import {
   ClaimResponseSchema,
@@ -30,12 +35,13 @@ import {
   ClientAlbumKeyParamSchema,
   ClientAlbumListResponseSchema,
   ClientMilestoneIdParamSchema,
-  ClientUserHashBodySchema,
   ErrorResponseSchema,
   SyncResponseSchema,
 } from "./validators";
 
 const TAG = "Collection (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 const errorResponses = {
   400: {
@@ -117,6 +123,7 @@ function serializeGroup(row: {
 export const collectionClientRouter = new OpenAPIHono<HonoEnv>();
 
 collectionClientRouter.use("*", requireClientCredential);
+collectionClientRouter.use("*", requireClientUser);
 
 collectionClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -134,19 +141,15 @@ collectionClientRouter.onError((err, c) => {
 
 // ─── Album list (per-user) ───────────────────────────────────────
 
-const AlbumListQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-  }),
-});
-
 collectionClientRouter.openapi(
   createRoute({
     method: "get",
     path: "/albums",
     tags: [TAG],
     summary: "List albums with per-user progress summary",
-    request: { query: AlbumListQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -158,16 +161,8 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const rows = await collectionService.listAlbumsForUser({
       organizationId: orgId,
       endUserId,
@@ -196,8 +191,8 @@ collectionClientRouter.openapi(
     tags: [TAG],
     summary: "Album detail — entries, milestones, per-user progress",
     request: {
+      headers: authHeaders,
       params: ClientAlbumKeyParamSchema,
-      query: AlbumListQuerySchema,
     },
     responses: {
       200: {
@@ -208,16 +203,8 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { key } = c.req.valid("param");
     const detail = await collectionService.getAlbumDetailForUser({
       organizationId: orgId,
@@ -248,8 +235,8 @@ collectionClientRouter.openapi(
     summary:
       "Reconcile unlocks from the user's current inventory (safety net)",
     request: {
+      headers: authHeaders,
       params: ClientAlbumKeyParamSchema,
-      body: { content: { "application/json": { schema: ClientUserHashBodySchema } } },
     },
     responses: {
       200: {
@@ -260,15 +247,8 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { key } = c.req.valid("param");
     const entries = await collectionService.syncFromInventory({
       organizationId: orgId,
@@ -289,8 +269,8 @@ collectionClientRouter.openapi(
     summary:
       "Claim a milestone reward (manual path — autoClaim milestones arrive via mail)",
     request: {
+      headers: authHeaders,
       params: ClientMilestoneIdParamSchema,
-      body: { content: { "application/json": { schema: ClientUserHashBodySchema } } },
     },
     responses: {
       200: {
@@ -301,15 +281,8 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const result = await collectionService.claimMilestone({
       organizationId: orgId,

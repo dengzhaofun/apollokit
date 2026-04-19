@@ -222,8 +222,6 @@ export const ClientPullSchema = z
     poolId: z.string().uuid().openapi({
       description: "The lottery pool to pull from.",
     }),
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     idempotencyKey: z.string().max(256).optional(),
   })
   .openapi("ClientLotteryPullRequest");
@@ -231,9 +229,7 @@ export const ClientPullSchema = z
 export const ClientMultiPullSchema = z
   .object({
     poolId: z.string().uuid(),
-    endUserId: z.string().min(1).max(256),
     count: z.number().int().min(2).max(100),
-    userHash: z.string().optional(),
     idempotencyKey: z.string().max(256).optional(),
   })
   .openapi("ClientLotteryMultiPullRequest");

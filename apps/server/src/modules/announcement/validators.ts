@@ -87,21 +87,6 @@ export const AliasParamSchema = z.object({
   }),
 });
 
-// ─── Client routes ──────────────────────────────────────────────
-
-export const ClientListQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "Game player id (not the admin user id).",
-  }),
-});
-
-export const ClientAckBodySchema = z.object({
-  endUserId: z.string().min(1).max(256),
-});
-
-export type ClientAckBody = z.input<typeof ClientAckBodySchema>;
-
 // ─── Response shapes ────────────────────────────────────────────
 
 export const AnnouncementResponseSchema = z

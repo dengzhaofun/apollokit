@@ -52,7 +52,7 @@ describe("invite client routes", () => {
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "u1" } },
     );
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(
       /^[23456789A-HJ-NP-Z]{4}-[23456789A-HJ-NP-Z]{4}$/,
     );
@@ -64,7 +64,7 @@ describe("invite client routes", () => {
       "/api/client/invite/my-code",
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "inviter-1" } },
     );
-    const { code } = await codeRes.json();
+    const { code } = (await codeRes.json()) as { code: string };
 
     const bindRes = await app.request("/api/client/invite/bind", {
       method: "POST",
@@ -76,7 +76,10 @@ describe("invite client routes", () => {
       body: JSON.stringify({ code }),
     });
     expect(bindRes.status).toBe(200);
-    const body = await bindRes.json();
+    const body = (await bindRes.json()) as {
+      alreadyBound: boolean;
+      relationship: { inviterEndUserId: string };
+    };
     expect(body.alreadyBound).toBe(false);
     expect(body.relationship.inviterEndUserId).toBe("inviter-1");
   });

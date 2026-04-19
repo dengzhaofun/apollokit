@@ -1,12 +1,14 @@
 /**
  * C-end client routes for the activity module.
  *
- * The admin surface at `/api/activity` already exposes every operation;
- * this file exposes the subset that *end users* trigger directly (list,
- * view, join, claim milestone) protected by client credential + HMAC.
+ * Mounted at /api/client/activity. Auth pattern:
  *
- * Activity state is checked inside the service; these routes are a
- * thin auth + serialization layer.
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
@@ -14,15 +16,18 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { ModuleError } from "./errors";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
+  ClaimMilestoneClientBody,
   ErrorResponseSchema,
 } from "./validators";
 
 const TAG = "Activity (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 const errorResponses = {
   400: {
@@ -46,6 +51,7 @@ const errorResponses = {
 export const activityClientRouter = new OpenAPIHono<HonoEnv>();
 
 activityClientRouter.use("*", requireClientCredential);
+activityClientRouter.use("*", requireClientUser);
 
 activityClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -61,27 +67,6 @@ const AliasParam = z.object({
   alias: z.string().min(1).openapi({ param: { name: "alias", in: "path" } }),
 });
 
-const ClientViewQuery = z.object({
-  endUserId: z
-    .string()
-    .min(1)
-    .max(256)
-    .openapi({ param: { name: "endUserId", in: "query" } }),
-  userHash: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "userHash", in: "query" } }),
-});
-
-const ClientActionBody = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-});
-
-const ClaimMilestoneClientBody = ClientActionBody.extend({
-  milestoneAlias: z.string().min(1).max(64),
-});
-
 // ─── List currently visible activities ─────────────────────────
 
 activityClientRouter.openapi(
@@ -91,7 +76,7 @@ activityClientRouter.openapi(
     tags: [TAG],
     summary:
       "List activities currently visible to the caller (teasing / active / settling / ended).",
-    request: { query: ClientViewQuery },
+    request: { headers: authHeaders },
     responses: {
       200: {
         description: "OK",
@@ -107,14 +92,7 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const now = new Date();
     const rows = await activityService.listActivities(orgId);
     // Only return things the player can see — anything past visible_at
@@ -176,7 +154,7 @@ activityClientRouter.openapi(
     path: "/{alias}",
     tags: [TAG],
     summary: "Single-round-trip view of an activity for the caller.",
-    request: { params: AliasParam, query: ClientViewQuery },
+    request: { headers: authHeaders, params: AliasParam },
     responses: {
       200: {
         description: "OK",
@@ -188,15 +166,9 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const view = await activityService.getActivityForUser({
       organizationId: orgId,
       activityIdOrAlias: alias,
@@ -215,8 +187,8 @@ activityClientRouter.openapi(
     tags: [TAG],
     summary: "Enrol in an activity.",
     request: {
+      headers: authHeaders,
       params: AliasParam,
-      body: { content: { "application/json": { schema: ClientActionBody } } },
     },
     responses: {
       200: {
@@ -229,15 +201,9 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const row = await activityService.join({
       organizationId: orgId,
       activityIdOrAlias: alias,
@@ -256,6 +222,7 @@ activityClientRouter.openapi(
     tags: [TAG],
     summary: "Claim an activity milestone reward.",
     request: {
+      headers: authHeaders,
       params: AliasParam,
       body: {
         content: {
@@ -274,15 +241,10 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, milestoneAlias } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { milestoneAlias } = c.req.valid("json");
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await activityService.claimMilestone({
       organizationId: orgId,
       activityIdOrAlias: alias,

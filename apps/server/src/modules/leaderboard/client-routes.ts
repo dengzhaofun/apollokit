@@ -10,8 +10,15 @@
  *   GET /configs/:alias/neighbors   — ±window around the caller
  *   GET /configs/:alias/snapshots   — past settled cycles
  *
- * All routes require a valid client credential. `endUserId` is supplied
- * as a query param and HMAC-verified via the credential service.
+ * Auth pattern:
+ *   requireClientCredential — validates x-api-key (cpk_...), populates
+ *                             c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers,
+ *                             verifies HMAC, populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and
+ * endUserId from c.var.endUserId!. No inline verifyRequest calls; no auth
+ * fields in body or query.
  */
 
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
@@ -19,7 +26,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { ModuleError } from "./errors";
 import { leaderboardService } from "./index";
 import {
@@ -29,6 +36,8 @@ import {
 } from "./validators";
 
 const TAG = "Leaderboard (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 const errorResponses = {
   400: {
@@ -48,6 +57,7 @@ const errorResponses = {
 export const leaderboardClientRouter = new OpenAPIHono<HonoEnv>();
 
 leaderboardClientRouter.use("*", requireClientCredential);
+leaderboardClientRouter.use("*", requireClientUser);
 
 leaderboardClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -64,15 +74,6 @@ const AliasParam = z.object({
 });
 
 const ClientTopQuery = z.object({
-  endUserId: z
-    .string()
-    .min(1)
-    .max(256)
-    .openapi({ param: { name: "endUserId", in: "query" } }),
-  userHash: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "userHash", in: "query" } }),
   cycleKey: z
     .string()
     .optional()
@@ -90,15 +91,6 @@ const ClientTopQuery = z.object({
 });
 
 const ClientNeighborsQuery = z.object({
-  endUserId: z
-    .string()
-    .min(1)
-    .max(256)
-    .openapi({ param: { name: "endUserId", in: "query" } }),
-  userHash: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "userHash", in: "query" } }),
   cycleKey: z
     .string()
     .optional()
@@ -115,25 +107,13 @@ const ClientNeighborsQuery = z.object({
     .openapi({ param: { name: "window", in: "query" } }),
 });
 
-const ClientSnapshotQuery = z.object({
-  endUserId: z
-    .string()
-    .min(1)
-    .max(256)
-    .openapi({ param: { name: "endUserId", in: "query" } }),
-  userHash: z
-    .string()
-    .optional()
-    .openapi({ param: { name: "userHash", in: "query" } }),
-});
-
 leaderboardClientRouter.openapi(
   createRoute({
     method: "get",
     path: "/configs/{alias}/top",
     tags: [TAG],
     summary: "Top N of the current (or specified) cycle, with self rank.",
-    request: { params: AliasParam, query: ClientTopQuery },
+    request: { headers: authHeaders, params: AliasParam, query: ClientTopQuery },
     responses: {
       200: {
         description: "OK",
@@ -143,16 +123,10 @@ leaderboardClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, cycleKey, scopeKey, limit } =
-      c.req.valid("query");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const { cycleKey, scopeKey, limit } = c.req.valid("query");
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await leaderboardService.getTop({
       organizationId: orgId,
       configKey: alias,
@@ -171,7 +145,11 @@ leaderboardClientRouter.openapi(
     path: "/configs/{alias}/neighbors",
     tags: [TAG],
     summary: "Entries above/below the caller within window.",
-    request: { params: AliasParam, query: ClientNeighborsQuery },
+    request: {
+      headers: authHeaders,
+      params: AliasParam,
+      query: ClientNeighborsQuery,
+    },
     responses: {
       200: {
         description: "OK",
@@ -181,16 +159,10 @@ leaderboardClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, cycleKey, scopeKey, window } =
-      c.req.valid("query");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const { cycleKey, scopeKey, window } = c.req.valid("query");
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await leaderboardService.getNeighbors({
       organizationId: orgId,
       configKey: alias,
@@ -209,7 +181,7 @@ leaderboardClientRouter.openapi(
     path: "/configs/{alias}/snapshots",
     tags: [TAG],
     summary: "Past settled snapshots for this leaderboard.",
-    request: { params: AliasParam, query: ClientSnapshotQuery },
+    request: { headers: authHeaders, params: AliasParam },
     responses: {
       200: {
         description: "OK",
@@ -221,15 +193,8 @@ leaderboardClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
+    const orgId = c.get("clientCredential")!.organizationId;
     const { alias } = c.req.valid("param");
-    const orgId = c.var.session!.activeOrganizationId!;
     const rows = await leaderboardService.listSnapshots({
       organizationId: orgId,
       configKey: alias,

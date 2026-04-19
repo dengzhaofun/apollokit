@@ -185,6 +185,12 @@ export const ClaimMilestoneBody = z
   })
   .openapi("ActivityClaimMilestone");
 
+export const ClaimMilestoneClientBody = z
+  .object({
+    milestoneAlias: z.string().min(1).max(64),
+  })
+  .openapi("ActivityClaimMilestoneClient");
+
 const DurationSpecSchema = z.object({
   teaseSeconds: z.number().int().nonnegative(),
   activeSeconds: z.number().int().positive(),

@@ -108,13 +108,6 @@ export const ClientExecuteExchangeSchema = z
     optionId: z.string().uuid().openapi({
       description: "The exchange option to execute.",
     }),
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
-    }),
     idempotencyKey: z.string().max(256).optional(),
   })
   .openapi("ClientExchangeExecuteRequest");

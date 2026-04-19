@@ -1,16 +1,17 @@
 /**
  * C-end client routes for the check-in module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  * These routes expose only the minimum surface for end users:
  * - Perform a check-in
- * - Query a user's check-in state
+ * - Query the authenticated end user's check-in state
  *
  * No config CRUD is exposed. The organizationId is resolved from the
- * client credential, not from a session.
+ * client credential (middleware), not from a session.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -20,7 +21,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { checkInService } from "./index";
 import {
   CheckInResultSchema,
@@ -77,20 +78,12 @@ const errorResponses = {
   },
 };
 
-// Client check-in request body includes endUserId + userHash for HMAC
+// Client check-in request body — only the config key, endUserId comes from header
 const ClientCheckInBodySchema = z
   .object({
     configKey: z.string().min(1).openapi({
       description: "Config id or alias.",
       example: "daily",
-    }),
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
     }),
   })
   .openapi("ClientCheckInRequest");
@@ -102,16 +95,10 @@ const ClientStateQuerySchema = z.object({
   }),
 });
 
-const ClientStateParamSchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "path" },
-    description: "The end user's business id.",
-  }),
-});
-
 export const checkInClientRouter = new OpenAPIHono<HonoEnv>();
 
 checkInClientRouter.use("*", requireClientCredential);
+checkInClientRouter.use("*", requireClientUser);
 
 checkInClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -133,7 +120,7 @@ checkInClientRouter.openapi(
     method: "post",
     path: "/check-ins",
     tags: [TAG],
-    summary: "Perform a check-in for an end user",
+    summary: "Perform a check-in for the authenticated end user",
     request: {
       body: {
         content: { "application/json": { schema: ClientCheckInBodySchema } },
@@ -148,17 +135,10 @@ checkInClientRouter.openapi(
     },
   }),
   async (c) => {
-    // Verify HMAC via the credential service
-    const publishableKey = c.req.header("x-api-key")!;
-    const { configKey, endUserId, userHash } = c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { configKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await checkInService.checkIn({
       organizationId: orgId,
       configKey,
@@ -179,15 +159,14 @@ checkInClientRouter.openapi(
   },
 );
 
-// GET /users/:endUserId/state?configKey=xxx
+// GET /state?configKey=xxx — current user's check-in state
 checkInClientRouter.openapi(
   createRoute({
     method: "get",
-    path: "/users/{endUserId}/state",
+    path: "/state",
     tags: [TAG],
-    summary: "Get an end user's check-in state",
+    summary: "Get the authenticated end user's check-in state",
     request: {
-      params: ClientStateParamSchema,
       query: ClientStateQuerySchema,
     },
     responses: {
@@ -201,19 +180,10 @@ checkInClientRouter.openapi(
     },
   }),
   async (c) => {
-    // For GET requests, HMAC is passed in x-user-hash header
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("param");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { configKey } = c.req.valid("query");
+
     const view = await checkInService.getUserState({
       organizationId: orgId,
       configKey,

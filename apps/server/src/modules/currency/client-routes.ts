@@ -1,9 +1,14 @@
 /**
  * C-end client routes for the currency module.
  *
- * Protected by `requireClientCredential` — requires a cpk_ publishable
- * key. HMAC verification of `endUserId` is done inline per handler via
- * `clientCredentialService.verifyRequest`.
+ * Mounted at /api/client/currency. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body, query, or path.
  *
  * Exposes read-only wallet / balance queries for end users.
  */
@@ -14,7 +19,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { currencyService } from "./index";
 import {
   BalanceResponseSchema,
@@ -23,6 +28,15 @@ import {
 } from "./validators";
 
 const TAG = "Currency (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
+
+const ClientBalanceParam = z.object({
+  key: z.string().min(1).openapi({
+    param: { name: "key", in: "path" },
+    description: "Currency id or alias.",
+  }),
+});
 
 const errorResponses = {
   400: {
@@ -39,27 +53,10 @@ const errorResponses = {
   },
 };
 
-const ClientEndUserParam = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "path" },
-    description: "The end user's business id.",
-  }),
-});
-
-const ClientBalanceParam = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "path" },
-    description: "The end user's business id.",
-  }),
-  key: z.string().min(1).openapi({
-    param: { name: "key", in: "path" },
-    description: "Currency id or alias.",
-  }),
-});
-
 export const currencyClientRouter = new OpenAPIHono<HonoEnv>();
 
 currencyClientRouter.use("*", requireClientCredential);
+currencyClientRouter.use("*", requireClientUser);
 
 currencyClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -75,14 +72,14 @@ currencyClientRouter.onError((err, c) => {
   throw err;
 });
 
-// GET /users/:endUserId/wallets — all balances
+// GET /wallets — all balances
 currencyClientRouter.openapi(
   createRoute({
     method: "get",
-    path: "/users/{endUserId}/wallets",
+    path: "/wallets",
     tags: [TAG],
     summary: "List all currency balances for a user",
-    request: { params: ClientEndUserParam },
+    request: { headers: authHeaders },
     responses: {
       200: {
         description: "OK",
@@ -92,30 +89,21 @@ currencyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("param");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const wallets = await currencyService.getWallets(orgId, endUserId);
     return c.json({ items: wallets }, 200);
   },
 );
 
-// GET /users/:endUserId/balance/:key — single balance by id or alias
+// GET /balance/:key — single balance by id or alias
 currencyClientRouter.openapi(
   createRoute({
     method: "get",
-    path: "/users/{endUserId}/balance/{key}",
+    path: "/balance/{key}",
     tags: [TAG],
     summary: "Get balance for a specific currency",
-    request: { params: ClientBalanceParam },
+    request: { headers: authHeaders, params: ClientBalanceParam },
     responses: {
       200: {
         description: "OK",
@@ -125,17 +113,9 @@ currencyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, key } = c.req.valid("param");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { key } = c.req.valid("param");
     const def = await currencyService.getDefinition(orgId, key);
     const balance = await currencyService.getBalance(orgId, endUserId, def.id);
     return c.json({ currencyId: def.id, balance }, 200);

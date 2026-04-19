@@ -287,38 +287,10 @@ export const LevelIdParamSchema = z.object({
     .openapi({ param: { name: "id", in: "path" } }),
 });
 
-export const EndUserQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The SaaS tenant's business user id.",
-  }),
-});
-
 // ─── Client body schemas ─────────────────────────────────────────
-
-export const ClientUserHashBodySchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-    }),
-  })
-  .openapi("LevelClientUserHashBody");
 
 export const ReportClearBodySchema = z
   .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-    }),
     stars: z.number().int().min(0).optional().openapi({
       description: "Number of stars earned on this clear (0 if omitted).",
     }),
@@ -330,14 +302,6 @@ export const ReportClearBodySchema = z
 
 export const ClaimRewardsBodySchema = z
   .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-    }),
     type: z.enum(CLAIM_TYPES).openapi({
       description: "What to claim: 'clear' for clear rewards, 'star' for a star reward tier.",
     }),
