@@ -78,6 +78,7 @@ import {
   activityRouter,
   activityClientRouter,
 } from "./modules/activity";
+import { eventCatalogRouter } from "./modules/event-catalog";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
@@ -153,6 +154,7 @@ app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);
 app.route("/api/leaderboard", leaderboardRouter);
 app.route("/api/activity", activityRouter);
+app.route("/api/event-catalog", eventCatalogRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/banner", bannerClientRouter);
