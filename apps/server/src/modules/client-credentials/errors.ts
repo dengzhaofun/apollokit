@@ -44,3 +44,10 @@ export class InvalidHmac extends ModuleError {
     this.name = "InvalidHmac";
   }
 }
+
+export class InvalidSecret extends ModuleError {
+  constructor() {
+    super("client_credential.invalid_secret", 401, "invalid client secret");
+    this.name = "InvalidSecret";
+  }
+}
