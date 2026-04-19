@@ -607,7 +607,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         })
         .returning();
 
-      let state: MailUserState | undefined = upserted[0];
+      const state: MailUserState | undefined = upserted[0];
 
       // Three cases to disambiguate when setWhere yielded 0 rows on conflict:
       //   a) INSERT succeeded (no conflict) AND we're on a non-requireRead

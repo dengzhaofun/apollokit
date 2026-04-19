@@ -25,7 +25,7 @@ import { collectionMilestones } from "../../schema/collection";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
 import { createItemService } from "../item/service";
 import type { MailService } from "../mail/service";
-import type { ItemEntry } from "../item/types";
+import type { RewardEntry } from "../../lib/rewards";
 import { createCollectionService } from "./service";
 
 type CapturedMail = {
@@ -34,7 +34,7 @@ type CapturedMail = {
   input: {
     title: string;
     content: string;
-    rewards: ItemEntry[];
+    rewards: RewardEntry[];
     originSource: string;
     originSourceId: string;
     requireRead?: boolean;

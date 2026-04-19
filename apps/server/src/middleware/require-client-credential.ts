@@ -37,6 +37,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
       .select({
         id: clientCredentials.id,
         organizationId: clientCredentials.organizationId,
+        publishableKey: clientCredentials.publishableKey,
         enabled: clientCredentials.enabled,
         expiresAt: clientCredentials.expiresAt,
         devMode: clientCredentials.devMode,
@@ -69,6 +70,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
     } as NonNullable<typeof c.var.session>);
     c.set("user", null);
     c.set("authMethod", "client-credential");
+    c.set("clientCredential", cred);
 
     return next();
   },

@@ -34,6 +34,14 @@ export const config = [
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
       "react/react-in-jsx-scope": "off",
+      // TypeScript enforces prop validation — runtime PropTypes checks are
+      // redundant (and noisy on components that accept spread-rest props).
+      "react/prop-types": "off",
+      // Re-apply base's no-unused-vars disables: the tseslint preset above
+      // re-enables `@typescript-eslint/no-unused-vars`, so we have to win
+      // the last-writer race by disabling here too.
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
 ];

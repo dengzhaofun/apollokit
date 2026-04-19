@@ -97,7 +97,7 @@ taskClientRouter.openapi(
 
     // Verify HMAC
     await clientCredentialService.verifyRequest(
-      credential,
+      credential.publishableKey,
       body.endUserId,
       body.userHash,
     );
@@ -144,7 +144,7 @@ taskClientRouter.openapi(
     const body = c.req.valid("json");
 
     await clientCredentialService.verifyRequest(
-      credential,
+      credential.publishableKey,
       body.endUserId,
       body.userHash,
     );
@@ -191,7 +191,7 @@ taskClientRouter.openapi(
     const body = c.req.valid("json");
 
     await clientCredentialService.verifyRequest(
-      credential,
+      credential.publishableKey,
       body.endUserId,
       body.userHash,
     );
@@ -232,7 +232,7 @@ taskClientRouter.openapi(
     const body = c.req.valid("json");
 
     await clientCredentialService.verifyRequest(
-      credential,
+      credential.publishableKey,
       body.endUserId,
       body.userHash,
     );

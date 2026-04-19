@@ -297,9 +297,13 @@ export const UseItemSchema = z
   })
   .openapi("UseItemRequest");
 
-const ItemEntryResponseSchema = z.object({
-  definitionId: z.string(),
-  quantity: z.number().int(),
+// Polymorphic reward entry — matches the `RewardEntry` shape in
+// `src/lib/rewards.ts`. Lottery pulls return this shape (rewards may be
+// items, entities, or currencies).
+const RewardEntryResponseSchema = z.object({
+  type: z.enum(["item", "entity", "currency"]),
+  id: z.string(),
+  count: z.number().int(),
 });
 
 const PullResultEntrySchema = z.object({
@@ -308,7 +312,7 @@ const PullResultEntrySchema = z.object({
   prizeName: z.string(),
   tierId: z.string().nullable(),
   tierName: z.string().nullable(),
-  rewardItems: z.array(ItemEntryResponseSchema),
+  rewardItems: z.array(RewardEntryResponseSchema),
   pityTriggered: z.boolean(),
   pityRuleId: z.string().nullable(),
 });
@@ -322,7 +326,7 @@ export const UseItemResponseSchema = z
         batchId: z.string(),
         poolId: z.string(),
         endUserId: z.string(),
-        costItems: z.array(ItemEntryResponseSchema),
+        costItems: z.array(RewardEntryResponseSchema),
         pulls: z.array(PullResultEntrySchema),
       })
       .nullable(),

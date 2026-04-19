@@ -706,8 +706,8 @@ describe("task service", () => {
         now,
       );
 
-      let tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
-      let t = tasks.find((t) => t.id === def.id);
+      const tasks = await svc.getTasksForUser(orgId, endUser, {}, now);
+      const t = tasks.find((t) => t.id === def.id);
       expect(t!.currentValue).toBe(1);
     });
 

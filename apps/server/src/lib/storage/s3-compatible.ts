@@ -65,7 +65,7 @@ async function bodyToBuffer(
   const reader = body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
-  // eslint-disable-next-line no-constant-condition
+   
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;

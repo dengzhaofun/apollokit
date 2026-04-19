@@ -19,6 +19,14 @@ export const config = [
     },
     rules: {
       "turbo/no-undeclared-env-vars": "warn",
+      // Disabled repo-wide: WIP modules regularly have intentionally-unused
+      // destructured fields, kept-for-reference imports, and prototype
+      // variables, and the `onlyWarn` plugin downgrades this rule to a
+      // warning which `--max-warnings 0` then treats as a failure. Rely
+      // on editor highlighting + tsconfig's `noUnusedLocals`/`noUnusedParameters`
+      // (opt-in per app) to catch genuinely-dead code.
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
   {

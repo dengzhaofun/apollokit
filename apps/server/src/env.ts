@@ -30,10 +30,27 @@ type InferredUser = typeof auth.$Infer.Session.user;
 
 export type AuthMethod = "session" | "admin-api-key" | "client-credential";
 
+/**
+ * Client-credential context placed by `require-client-credential` middleware.
+ * Keep this field-for-field compatible with the row selection the middleware
+ * does — adding a column here requires adding it to the `.select()` shape
+ * too, otherwise downstream routes reading `c.var.clientCredential.<field>`
+ * will type-check but be `undefined` at runtime.
+ */
+export type ClientCredentialContext = {
+  id: string;
+  organizationId: string;
+  publishableKey: string;
+  enabled: boolean;
+  expiresAt: Date | null;
+  devMode: boolean;
+};
+
 export type HonoEnv = {
   Variables: RequestIdVariables & {
     user: InferredUser | null;
     session: InferredSession | null;
     authMethod: AuthMethod | null;
+    clientCredential: ClientCredentialContext | null;
   };
 };
