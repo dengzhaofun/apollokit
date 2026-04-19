@@ -56,10 +56,11 @@ import type {
 } from "./validators";
 import { computePeriodKey, isPeriodStale } from "./time";
 
-// `events` is optional so existing tests that pass only { db } keep
-// compiling. In production wiring (barrel index.ts) we always supply
-// the bus from `deps`.
-type TaskDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+// `events` / `eventCatalog` are optional so existing tests that pass only
+// { db } keep compiling. In production wiring (barrel index.ts) we always
+// supply them from `deps`.
+type TaskDeps = Pick<AppDeps, "db"> &
+  Partial<Pick<AppDeps, "events" | "eventCatalog">>;
 
 // Extend the in-runtime event-bus type map with task-domain events.
 // Subscribers (leaderboard, analytics, ...) register handlers on
@@ -143,7 +144,7 @@ export function createTaskService(
   rewardServices: RewardServices,
   mailSvcGetter: () => MailService | undefined,
 ) {
-  const { db, events } = d;
+  const { db, events, eventCatalog } = d;
 
   // ─── Filter expression cache ──────────────────────────────────
   //
@@ -599,6 +600,26 @@ export function createTaskService(
     now?: Date,
   ): Promise<number> {
     const ts = now ?? new Date();
+
+    // 0. Record to event-catalog (auto field inference / sample refresh).
+    //    Awaited but error-swallowing — catalog failures are logged and
+    //    must not abort task dispatch, but we don't want a dangling
+    //    promise outliving this request in Workers runtime (would need
+    //    ctx.waitUntil to be reliable). TTL dedup inside the service makes
+    //    the extra latency cheap for hot events: after the first write in
+    //    a 5-min window every subsequent call is a Map lookup.
+    if (eventCatalog) {
+      try {
+        await eventCatalog.recordExternalEvent(
+          organizationId,
+          eventName,
+          eventData,
+          ts,
+        );
+      } catch (err) {
+        console.error("task: recordExternalEvent failed", err);
+      }
+    }
 
     // 1. Find all active definitions matching this eventName
     const defs = await db

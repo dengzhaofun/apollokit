@@ -51,9 +51,26 @@ export const db: NeonHttpDatabase<typeof schema> = isNeon
       // parameter — set before any query runs, avoiding the pg deprecation
       // warning we'd hit by firing a `SET TIME ZONE` on the `connect` event
       // (that path calls `client.query()` while the client is still mid-startup).
+      // Workers runtime binds every TCP socket to the I/O context of
+      // the request that opened it — idle connections handed back to
+      // a *different* request later will hang forever ("can't access
+      // I/O object from a different request"). This is dev-only: in
+      // production the Neon URL path above goes through the HTTP
+      // driver and never creates a pool at all.
+      //
+      // `maxUses: 1` forces pg to destroy a connection after a single
+      // `connect()/release()` cycle, making every query take a brand
+      // new socket. `idleTimeoutMillis: 0` + `allowExitOnIdle: true`
+      // belt-and-braces: any stragglers go away immediately. Under
+      // wrangler dev the per-query reconnect cost is ~1ms on a
+      // local Postgres, an acceptable trade for not-hanging.
       const pool = new pg.Pool({
         connectionString: url,
         options: "-c TimeZone=UTC",
+        max: 1,
+        maxUses: 1,
+        idleTimeoutMillis: 0,
+        allowExitOnIdle: true,
       });
       const drz = drizzle({ client: pool, schema, cache });
       return drz as unknown as NeonHttpDatabase<typeof schema>;

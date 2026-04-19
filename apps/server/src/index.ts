@@ -59,13 +59,12 @@ import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
 import {
-  taskRouter,
-  taskClientRouter,
-} from "./modules/task";
-import {
   teamRouter,
   teamClientRouter,
 } from "./modules/team";
+// level / leaderboard / activity MUST be imported BEFORE task — the task
+// barrel installs an event forwarder that walks the registry at import
+// time, so every event these modules publish must already be registered.
 import {
   levelRouter,
   levelClientRouter,
@@ -78,6 +77,11 @@ import {
   activityRouter,
   activityClientRouter,
 } from "./modules/activity";
+import {
+  taskRouter,
+  taskClientRouter,
+} from "./modules/task";
+import { eventCatalogRouter } from "./modules/event-catalog";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
@@ -153,6 +157,7 @@ app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);
 app.route("/api/leaderboard", leaderboardRouter);
 app.route("/api/activity", activityRouter);
+app.route("/api/event-catalog", eventCatalogRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/banner", bannerClientRouter);

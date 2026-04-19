@@ -42,7 +42,7 @@ export const requestLog = createMiddleware<HonoEnv>(async (c, next) => {
   // (where `app.request(...)` doesn't inject an ExecutionContext). Skip
   // analytics ingest in that case; tests don't need Tinybird and we don't
   // want to spam the real dataset from test runs anyway.
-  let ec: ExecutionContext;
+  let ec: typeof c.executionCtx;
   try {
     ec = c.executionCtx;
   } catch {

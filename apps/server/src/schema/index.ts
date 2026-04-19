@@ -25,3 +25,4 @@ export * from "./leaderboard";
 export * from "./activity";
 export * from "./storage-box";
 export * from "./media-library";
+export * from "./event-catalog";

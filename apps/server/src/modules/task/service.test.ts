@@ -1686,4 +1686,32 @@ describe("task service", () => {
       expect(def.id).toBeDefined();
     });
   });
+
+  describe("processEvent records to event-catalog", () => {
+    test("first external event writes inferred row with fields", async () => {
+      const { createEventCatalogService } = await import(
+        "../event-catalog/service"
+      );
+      const catalogSvc = createEventCatalogService({ db });
+      const svc = createTaskService(
+        { db, eventCatalog: catalogSvc },
+        { itemSvc: stubItemSvc, currencySvc: stubCurrencySvc },
+        () => undefined,
+      );
+
+      const uniqueName = `catalog_evt_${Date.now()}`;
+      await svc.processEvent(orgId, "user-catalog-1", uniqueName, {
+        foo: "bar",
+        amount: 42,
+      });
+
+      const view = await catalogSvc.getOne(orgId, uniqueName);
+      expect(view.source).toBe("external");
+      expect(view.status).toBe("inferred");
+      expect(view.fields.map((f) => f.path).sort()).toEqual([
+        "amount",
+        "foo",
+      ]);
+    });
+  });
 });
