@@ -295,3 +295,104 @@ describe("invite service — qualify", () => {
     await svc.upsertSettings(orgId, { enabled: true });
   });
 });
+
+describe("invite service — queries", () => {
+  let events: ReturnType<typeof createEventBus>;
+  let svc: ReturnType<typeof createInviteService>;
+  let orgId: string;
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("invite-svc-queries");
+    events = createEventBus();
+    svc = createInviteService({ db, events });
+    // 种子数据：A 邀 X/Y/Z，X 被 qualify，Y 未被 qualify，Z 未被 qualify
+    //           B 邀 M（单一关系）
+    const { code: codeA } = await svc.getOrCreateMyCode(orgId, "A");
+    const { code: codeB } = await svc.getOrCreateMyCode(orgId, "B");
+    await svc.bind(orgId, { code: codeA, inviteeEndUserId: "X" });
+    await svc.bind(orgId, { code: codeA, inviteeEndUserId: "Y" });
+    await svc.bind(orgId, { code: codeA, inviteeEndUserId: "Z" });
+    await svc.qualify(orgId, { inviteeEndUserId: "X", qualifiedReason: "purchase" });
+    await svc.bind(orgId, { code: codeB, inviteeEndUserId: "M" });
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  test("getSummary 返回自己的码 + 邀请统计 + 被邀信息", async () => {
+    const aSummary = await svc.getSummary(orgId, "A");
+    expect(aSummary.boundCount).toBe(3);
+    expect(aSummary.qualifiedCount).toBe(1);
+    expect(aSummary.invitedBy).toBeNull();
+    expect(aSummary.myCode).toMatch(/^[23456789A-HJ-NP-Z]{4}-[23456789A-HJ-NP-Z]{4}$/);
+
+    const xSummary = await svc.getSummary(orgId, "X");
+    expect(xSummary.boundCount).toBe(0);
+    expect(xSummary.qualifiedCount).toBe(0);
+    expect(xSummary.invitedBy).not.toBeNull();
+    expect(xSummary.invitedBy!.inviterEndUserId).toBe("A");
+    expect(xSummary.invitedBy!.qualifiedAt).toBeInstanceOf(Date);
+  });
+
+  test("listMyInvitees 分页返回", async () => {
+    const page1 = await svc.listMyInvitees(orgId, "A", { limit: 2, offset: 0 });
+    expect(page1.total).toBe(3);
+    expect(page1.items).toHaveLength(2);
+    const page2 = await svc.listMyInvitees(orgId, "A", { limit: 2, offset: 2 });
+    expect(page2.items).toHaveLength(1);
+  });
+
+  test("adminListRelationships 全量 + 按 inviter 筛 + qualifiedOnly", async () => {
+    const all = await svc.adminListRelationships(orgId, { limit: 100 });
+    expect(all.total).toBe(4); // A:X,A:Y,A:Z,B:M
+
+    const onlyA = await svc.adminListRelationships(orgId, {
+      inviterEndUserId: "A",
+      limit: 100,
+    });
+    expect(onlyA.total).toBe(3);
+
+    const qualified = await svc.adminListRelationships(orgId, {
+      qualifiedOnly: true,
+      limit: 100,
+    });
+    expect(qualified.total).toBe(1);
+    expect(qualified.items[0]!.inviteeEndUserId).toBe("X");
+  });
+
+  test("adminGetUserStats 与 getSummary 同结构", async () => {
+    const stats = await svc.adminGetUserStats(orgId, "A");
+    expect(stats.boundCount).toBe(3);
+    expect(stats.qualifiedCount).toBe(1);
+  });
+
+  test("adminResetUserCode 轮换", async () => {
+    const before = await svc.getOrCreateMyCode(orgId, "reset-target");
+    const after = await svc.adminResetUserCode(orgId, "reset-target");
+    expect(after.code).not.toBe(before.code);
+  });
+
+  test("adminRevokeRelationship 删行、UNIQUE 释放 → invitee 可重 bind", async () => {
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-rv");
+    const bound = await svc.bind(orgId, {
+      code,
+      inviteeEndUserId: "invitee-rv",
+    });
+    await svc.adminRevokeRelationship(orgId, bound.relationship.id);
+
+    // 可重 bind
+    const { code: code2 } = await svc.getOrCreateMyCode(orgId, "inviter-rv-2");
+    const rebound = await svc.bind(orgId, {
+      code: code2,
+      inviteeEndUserId: "invitee-rv",
+    });
+    expect(rebound.relationship.inviterEndUserId).toBe("inviter-rv-2");
+  });
+
+  test("adminRevokeRelationship 不存在 → InviteRelationshipNotFound", async () => {
+    await expect(
+      svc.adminRevokeRelationship(orgId, "00000000-0000-0000-0000-000000000000"),
+    ).rejects.toThrow(/not found/i);
+  });
+});

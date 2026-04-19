@@ -467,13 +467,174 @@ export function createInviteService(d: InviteDeps) {
       if (!existing) throw new InviteeNotBound();
       return { relationship: existing, alreadyQualified: true };
     },
+
+    /* ── 查询 ─────────────────────────────────────────────── */
+
+    async getSummary(
+      orgId: string,
+      endUserId: string,
+    ): Promise<InviteSummary> {
+      const code = await this.getOrCreateMyCode(orgId, endUserId);
+
+      const [boundResult] = await db
+        .select({ value: count() })
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviterEndUserId, endUserId),
+          ),
+        );
+
+      const [qualifiedResult] = await db
+        .select({ value: count() })
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviterEndUserId, endUserId),
+            sql`${inviteRelationships.qualifiedAt} IS NOT NULL`,
+          ),
+        );
+
+      const [invitedByRow] = await db
+        .select({
+          inviterEndUserId: inviteRelationships.inviterEndUserId,
+          boundAt: inviteRelationships.boundAt,
+          qualifiedAt: inviteRelationships.qualifiedAt,
+        })
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviteeEndUserId, endUserId),
+          ),
+        )
+        .limit(1);
+
+      return {
+        myCode: code.code,
+        myCodeRotatedAt: code.rotatedAt,
+        boundCount: boundResult?.value ?? 0,
+        qualifiedCount: qualifiedResult?.value ?? 0,
+        invitedBy: invitedByRow ?? null,
+      };
+    },
+
+    async listMyInvitees(
+      orgId: string,
+      endUserId: string,
+      opts?: { limit?: number; offset?: number },
+    ) {
+      const limit = opts?.limit ?? 20;
+      const offset = opts?.offset ?? 0;
+
+      const items = await db
+        .select()
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviterEndUserId, endUserId),
+          ),
+        )
+        .orderBy(desc(inviteRelationships.boundAt))
+        .limit(limit)
+        .offset(offset);
+
+      const [totalResult] = await db
+        .select({ value: count() })
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviterEndUserId, endUserId),
+          ),
+        );
+
+      return { items, total: totalResult?.value ?? 0 };
+    },
+
+    async adminListRelationships(
+      orgId: string,
+      opts?: {
+        limit?: number;
+        offset?: number;
+        inviterEndUserId?: string;
+        qualifiedOnly?: boolean;
+      },
+    ) {
+      const limit = opts?.limit ?? 20;
+      const offset = opts?.offset ?? 0;
+
+      const filters = [eq(inviteRelationships.organizationId, orgId)];
+      if (opts?.inviterEndUserId) {
+        filters.push(
+          eq(inviteRelationships.inviterEndUserId, opts.inviterEndUserId),
+        );
+      }
+      if (opts?.qualifiedOnly) {
+        filters.push(sql`${inviteRelationships.qualifiedAt} IS NOT NULL`);
+      }
+
+      const items = await db
+        .select()
+        .from(inviteRelationships)
+        .where(and(...filters))
+        .orderBy(desc(inviteRelationships.boundAt))
+        .limit(limit)
+        .offset(offset);
+
+      const [totalResult] = await db
+        .select({ value: count() })
+        .from(inviteRelationships)
+        .where(and(...filters));
+
+      return { items, total: totalResult?.value ?? 0 };
+    },
+
+    async adminGetUserStats(
+      orgId: string,
+      endUserId: string,
+    ): Promise<InviteSummary> {
+      // 与 client getSummary 同结构。如果将来要暴露更多字段再分叉。
+      return this.getSummary(orgId, endUserId);
+    },
+
+    async adminResetUserCode(orgId: string, endUserId: string) {
+      return this.resetCode(orgId, endUserId);
+    },
+
+    async adminRevokeRelationship(orgId: string, relationshipId: string) {
+      let deleted: { id: string }[];
+      try {
+        deleted = await db
+          .delete(inviteRelationships)
+          .where(
+            and(
+              eq(inviteRelationships.id, relationshipId),
+              eq(inviteRelationships.organizationId, orgId),
+            ),
+          )
+          .returning({ id: inviteRelationships.id });
+      } catch (err) {
+        // id 列是 uuid —— 格式非法时 Postgres 抛 22P02
+        if (isInvalidUuid(err)) throw new InviteRelationshipNotFound(relationshipId);
+        throw err;
+      }
+      if (deleted.length === 0) {
+        throw new InviteRelationshipNotFound(relationshipId);
+      }
+    },
   };
 }
 
-export type InviteService = ReturnType<typeof createInviteService>;
+function isInvalidUuid(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { cause?: { code?: unknown } };
+  if (e.cause && typeof e.cause === "object" && e.cause.code === "22P02") return true;
+  const msg = (err as { message?: unknown }).message;
+  return typeof msg === "string" && msg.includes("22P02");
+}
 
-// Suppress unused-imports warnings for symbols referenced only by later tasks.
-// They will be used when Tasks 9+ extend this file.
-void count; void desc;
-void InviteRelationshipNotFound;
-void ({} as InviteSummary);
+export type InviteService = ReturnType<typeof createInviteService>;
