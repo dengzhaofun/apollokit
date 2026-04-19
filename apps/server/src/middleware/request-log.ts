@@ -38,7 +38,18 @@ export const requestLog = createMiddleware<HonoEnv>(async (c, next) => {
 
   const path = new URL(c.req.url).pathname;
 
-  c.executionCtx.waitUntil(
+  // `c.executionCtx` is a workerd-only API — it THROWS under vitest/Node
+  // (where `app.request(...)` doesn't inject an ExecutionContext). Skip
+  // analytics ingest in that case; tests don't need Tinybird and we don't
+  // want to spam the real dataset from test runs anyway.
+  let ec: ExecutionContext;
+  try {
+    ec = c.executionCtx;
+  } catch {
+    return;
+  }
+
+  ec.waitUntil(
     deps.analytics.writer.logHttp({
       ts: new Date(start),
       orgId,

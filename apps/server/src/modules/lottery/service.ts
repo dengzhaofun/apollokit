@@ -735,7 +735,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       );
 
       // 6. Selection with stock fallback
-      let pityCounters = { ...userState.pityCounters };
+      const pityCounters = { ...userState.pityCounters };
       const excludeIds = new Set<string>();
       let selection = executeSingleSelection(
         tiers,

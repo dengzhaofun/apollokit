@@ -679,7 +679,7 @@ export function createItemService(d: ItemDeps) {
         try {
           await grantHook(params);
         } catch (err) {
-          // eslint-disable-next-line no-console
+           
           console.error("[item] grant hook failed", { err, source: params.source });
         }
       }

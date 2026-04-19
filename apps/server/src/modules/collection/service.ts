@@ -1095,7 +1095,7 @@ export function createCollectionService(
       }
     } catch (err) {
       // Never let the collection hook break the main grantItems.
-      // eslint-disable-next-line no-console
+       
       console.error("[collection] onItemGranted failed", {
         err,
         source: params.source,

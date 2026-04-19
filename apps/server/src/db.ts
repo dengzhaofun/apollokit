@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { neon } from "@neondatabase/serverless";
 import { upstashCache } from "drizzle-orm/cache/upstash";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
+import { drizzle as drizzleNeon, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 
 import * as schema from "./schema";
 
@@ -17,53 +17,44 @@ const cache =
       })
     : undefined;
 
-export const db = isNeon
+// `db` is typed as `NeonHttpDatabase` — the production driver, and the
+// shape the entire codebase was written against (`.execute(...).rows`,
+// `.returning(...)`, no multi-statement transactions). Typing this as the
+// true `NeonHttp | NodePg` union would degrade every `.returning()` and
+// `.execute().rows` callsite via builder-chain signature intersection, so
+// we cast the local-Postgres branch to the neon-http type.
+//
+// The local branch uses `drizzle-orm/node-postgres` (not `postgres.js`)
+// because `pg`'s wire result is already `{ rows, fields, rowCount }` —
+// the same shape as `NeonHttpQueryResult`. `postgres.js` would need a
+// `.rows` shim over `RowList`, prepared-statement Bind tweaks, and
+// per-OID timestamp serializers to match.
+//
+// Narrowing to `NeonHttpDatabase` also enforces the codebase's
+// no-transaction rule at compile time — neon-http rejects
+// `db.transaction(cb)` at runtime, and all writes go through single
+// atomic `INSERT ... ON CONFLICT DO UPDATE WHERE ... RETURNING`
+// statements (see apps/server/CLAUDE.md → "`neon-http` has no
+// transactions", and modules/check-in/service.ts for the canonical
+// pattern).
+export const db: NeonHttpDatabase<typeof schema> = isNeon
   ? drizzleNeon({ client: neon(url), schema, cache })
   : await (async () => {
-      const { drizzle } = await import("drizzle-orm/postgres-js");
-      const { default: postgres } = await import("postgres");
-      const client = postgres(url, {
-        // prepare: false → avoid the prepared-statement Bind codec that
-        // chokes on Date → timestamptz. With prepare:false Drizzle sends
-        // ISO strings that Postgres parses natively.
-        prepare: false,
-        // Pin the session to UTC so `timestamp`-without-tz columns behave
-        // the same on local PG as on Neon (Neon's server runs UTC by
-        // default, but a local Postgres.app on +08 would otherwise store
-        // NOW() as local time and break any `col >= ${jsDate}` filter —
-        // the ::timestamp cast of an ISO-with-Z string *strips* the Z
-        // instead of converting.
-        connection: { TimeZone: "UTC" },
+      const { drizzle } = await import("drizzle-orm/node-postgres");
+      const { default: pg } = await import("pg");
+      // Pin every new physical connection to UTC so `timestamp`-without-tz
+      // columns behave the same as on Neon (which defaults to UTC server-side).
+      // Without this, a local Postgres on +08 stores NOW() as local time and
+      // `col >= ${jsDate}` filters drift by the TZ offset.
+      //
+      // `options: "-c TimeZone=UTC"` passes the setting as a libpq startup
+      // parameter — set before any query runs, avoiding the pg deprecation
+      // warning we'd hit by firing a `SET TIME ZONE` on the `connect` event
+      // (that path calls `client.query()` while the client is still mid-startup).
+      const pool = new pg.Pool({
+        connectionString: url,
+        options: "-c TimeZone=UTC",
       });
-      const drz = drizzle({ client, schema, cache });
-      // Drizzle's postgres-js driver installs a `val => val` serializer
-      // for all timestamp OIDs (see drizzle-orm/postgres-js/driver.js)
-      // so it can format Dates itself. That works for `gte(col, date)`
-      // where Drizzle pre-stringifies, but breaks `sql\`${col} <= ${date}\``
-      // raw templates — the Date slips through to postgres-js's `b.str()`
-      // and throws `ERR_INVALID_ARG_TYPE`. Reinstall a Date→ISO fallback.
-      const toIso = (v: unknown) =>
-        v instanceof Date ? v.toISOString() : v;
-      for (const oid of ["1184", "1114", "1082", "1083", "1182", "1185", "1115", "1231"]) {
-        (client as unknown as { options: { serializers: Record<string, (v: unknown) => unknown> } })
-          .options.serializers[oid] = toIso;
-      }
-      // Shape compat: `db.execute(sql\`...\`)` returns `{ rows }` on neon-http
-      // and a bare array on postgres-js. The codebase reads `.rows.length`
-      // (e.g. friend-gift, check-in's ON CONFLICT ... RETURNING). Attach a
-      // non-enumerable `rows` pointing back to the result array so both
-      // drivers quack the same.
-      const origExecute = drz.execute.bind(drz);
-      drz.execute = (async (query: Parameters<typeof origExecute>[0]) => {
-        const result = await origExecute(query);
-        if (Array.isArray(result) && !("rows" in result)) {
-          Object.defineProperty(result, "rows", {
-            value: result,
-            enumerable: false,
-            configurable: true,
-          });
-        }
-        return result;
-      }) as typeof drz.execute;
-      return drz;
+      const drz = drizzle({ client: pool, schema, cache });
+      return drz as unknown as NeonHttpDatabase<typeof schema>;
     })();
