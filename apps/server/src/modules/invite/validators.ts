@@ -84,13 +84,33 @@ export const InviteSummaryViewSchema = z
 /* ─── Pagination / param / query ──────────────────────────────── */
 
 export const PaginationQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
-  offset: z.coerce.number().int().min(0).default(0).optional(),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(20)
+    .optional()
+    .openapi({
+      param: { name: "limit", in: "query" },
+      description: "Page size, 1-100 (default 20).",
+    }),
+  offset: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .optional()
+    .openapi({
+      param: { name: "offset", in: "query" },
+      description: "Items to skip (default 0).",
+    }),
 });
 
 export const EndUserIdParamSchema = z.object({
   endUserId: z.string().min(1).max(256).openapi({
     param: { name: "endUserId", in: "path" },
+    description: "The end user's opaque id from the customer's system.",
   }),
 });
 
