@@ -5,3 +5,4 @@ export { createInviteService };
 export type { InviteService } from "./service";
 export const inviteService = createInviteService(deps);
 export { inviteRouter } from "./routes";
+export { inviteClientRouter } from "./client-routes";

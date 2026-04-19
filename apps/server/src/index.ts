@@ -45,7 +45,7 @@ import {
   exchangeClientRouter,
 } from "./modules/exchange";
 import { friendRouter, friendClientRouter } from "./modules/friend";
-import { inviteRouter } from "./modules/invite";
+import { inviteRouter, inviteClientRouter } from "./modules/invite";
 import {
   guildRouter,
   guildClientRouter,
@@ -153,6 +153,7 @@ app.route("/api/exchange", exchangeRouter);
 app.route("/api/friend", friendRouter);
 app.route("/api/friend-gift", friendGiftRouter);
 app.route("/api/invite", inviteRouter);
+app.route("/api/invite/client", inviteClientRouter);
 app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
