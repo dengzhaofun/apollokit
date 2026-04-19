@@ -16,6 +16,7 @@ import { registerEvent } from "../../lib/event-registry";
 import { currencyService } from "../currency";
 import { itemService } from "../item";
 import { mailService } from "../mail";
+import { installTaskEventForwarder } from "./event-forwarder";
 import { createTaskService } from "./service";
 
 // 自己发的事件不要桥接回自己，避免自反循环 —— 全部 forwardToTask: false。
@@ -82,6 +83,12 @@ export const taskService = createTaskService(
   { itemSvc: itemService, currencySvc: currencyService },
   () => mailService,
 );
+
+// 桥接：订阅 registry 里标 forwardToTask=true 的内部事件，自动调用
+// processEvent。依赖 level / leaderboard / activity 等 module 的
+// registerEvent 先于本 barrel 执行 —— import 顺序由 src/index.ts 保证
+// （它们比 task 更早被 import）。
+installTaskEventForwarder(deps.events, taskService);
 
 export { taskRouter } from "./routes";
 export { taskClientRouter } from "./client-routes";
