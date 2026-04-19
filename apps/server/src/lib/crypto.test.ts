@@ -99,27 +99,3 @@ describe("generateKeyPair", () => {
   });
 });
 
-import { constantTimeEqual } from "./crypto";
-
-describe("constantTimeEqual", () => {
-  test("equal strings return true", () => {
-    expect(constantTimeEqual("hello", "hello")).toBe(true);
-    expect(constantTimeEqual("", "")).toBe(true);
-    expect(constantTimeEqual("csk_abc123XYZ", "csk_abc123XYZ")).toBe(true);
-  });
-
-  test("different strings return false", () => {
-    expect(constantTimeEqual("hello", "world")).toBe(false);
-    expect(constantTimeEqual("abc", "abd")).toBe(false);
-  });
-
-  test("different-length strings return false without crashing", () => {
-    expect(constantTimeEqual("short", "a-bit-longer")).toBe(false);
-    expect(constantTimeEqual("", "x")).toBe(false);
-  });
-
-  test("unicode-safe (utf-8 bytes)", () => {
-    expect(constantTimeEqual("你好", "你好")).toBe(true);
-    expect(constantTimeEqual("你好", "你不好")).toBe(false);
-  });
-});

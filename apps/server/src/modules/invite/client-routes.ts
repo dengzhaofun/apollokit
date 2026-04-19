@@ -1,30 +1,25 @@
 /**
  * C-end client routes for the invite module.
  *
- * Mounted at /api/invite/client. Two auth flavors share the same
- * requireClientCredential middleware (which only validates publishable
- * key existence / enabled / expired) — each handler then calls the
- * appropriate verification method:
+ * Mounted at /api/client/invite. All handlers use HMAC flow:
  *
- *   - HMAC flow  (my-code, summary, invitees, reset-my-code):
- *     handler calls clientCredentialService.verifyRequest(pk, endUserId, userHash).
- *     Used by the end user's client (browser / game client) proving its
- *     identity = endUserId via HMAC(endUserId, clientSecret).
+ *   handler calls clientCredentialService.verifyRequest(pk, endUserId, userHash).
  *
- *   - Server flow (bind, qualify):
- *     handler reads x-api-secret header and calls
- *     clientCredentialService.verifyServerRequest(pk, providedSecret).
- *     Used by the customer's own game server (it has the secret).
+ * For my-code / summary / invitees / reset-my-code:
+ *   endUserId is the calling user's own id; userHash = HMAC(endUserId, secret).
+ *
+ * For bind / qualify:
+ *   endUserId is the invitee's id; userHash = HMAC(inviteeEndUserId, secret).
+ *   These calls originate from the customer's game server (which has the secret).
+ *   devMode bypasses HMAC for all routes.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { z } from "@hono/zod-openapi";
-import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
-import { InvalidSecret } from "../client-credentials/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { clientCredentialService } from "../client-credentials";
 import { inviteService } from "./index";
@@ -129,14 +124,6 @@ inviteClientRouter.onError((err, c) => {
   }
   throw err;
 });
-
-async function requireServerSecret(c: Context<HonoEnv>): Promise<string> {
-  const cred = c.get("clientCredential")!;
-  const providedSecret = c.req.header("x-api-secret");
-  if (!providedSecret) throw new InvalidSecret();
-  await clientCredentialService.verifyServerRequest(cred.publishableKey, providedSecret);
-  return cred.organizationId;
-}
 
 /* ── GET /my-code (HMAC flow) ─────────────────────────────── */
 
@@ -261,7 +248,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /bind (Server flow) ─────────────────────────────── */
+/* ── POST /bind (HMAC flow) ───────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -269,11 +256,6 @@ inviteClientRouter.openapi(
     path: "/bind",
     tags: [TAG],
     request: {
-      headers: z.object({
-        "x-api-secret": z.string().openapi({
-          description: "Client secret (csk_...). Required for server-to-server calls.",
-        }),
-      }),
       body: {
         content: { "application/json": { schema: ClientBindBodySchema } },
       },
@@ -296,9 +278,17 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = await requireServerSecret(c);
+    const cred = c.get("clientCredential")!;
     const body = c.req.valid("json");
-    const { relationship, alreadyBound } = await inviteService.bind(orgId, body);
+    await clientCredentialService.verifyRequest(
+      cred.publishableKey,
+      body.inviteeEndUserId,
+      body.userHash,
+    );
+    const { relationship, alreadyBound } = await inviteService.bind(cred.organizationId, {
+      code: body.code,
+      inviteeEndUserId: body.inviteeEndUserId,
+    });
     return c.json(
       { relationship: serializeRelationship(relationship), alreadyBound },
       200,
@@ -306,7 +296,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /qualify (Server flow) ──────────────────────────── */
+/* ── POST /qualify (HMAC flow) ────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -314,11 +304,6 @@ inviteClientRouter.openapi(
     path: "/qualify",
     tags: [TAG],
     request: {
-      headers: z.object({
-        "x-api-secret": z.string().openapi({
-          description: "Client secret (csk_...). Required for server-to-server calls.",
-        }),
-      }),
       body: {
         content: { "application/json": { schema: ClientQualifyBodySchema } },
       },
@@ -341,9 +326,17 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = await requireServerSecret(c);
+    const cred = c.get("clientCredential")!;
     const body = c.req.valid("json");
-    const { relationship, alreadyQualified } = await inviteService.qualify(orgId, body);
+    await clientCredentialService.verifyRequest(
+      cred.publishableKey,
+      body.inviteeEndUserId,
+      body.userHash,
+    );
+    const { relationship, alreadyQualified } = await inviteService.qualify(cred.organizationId, {
+      inviteeEndUserId: body.inviteeEndUserId,
+      qualifiedReason: body.qualifiedReason ?? null,
+    });
     return c.json(
       { relationship: serializeRelationship(relationship), alreadyQualified },
       200,

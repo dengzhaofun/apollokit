@@ -21,7 +21,6 @@ import {
   decrypt,
   generateKeyPair,
   verifyHmac,
-  constantTimeEqual,
 } from "../../lib/crypto";
 import { clientCredentials } from "../../schema/client-credential";
 
@@ -30,7 +29,6 @@ import {
   CredentialDisabled,
   CredentialExpired,
   InvalidHmac,
-  InvalidSecret,
 } from "./errors";
 import type { VerifyResult } from "./types";
 
@@ -238,52 +236,8 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
       };
     },
 
-    /**
-     * Server-to-server variant: caller sends the plaintext secret directly
-     * (via a trusted header from its own backend, e.g. x-api-secret).
-     * We decrypt the stored secret and constant-time compare.
-     *
-     * Use case: invite bind / qualify — the call originates from the
-     * customer's game server, not from the end user's browser, so HMAC
-     * over endUserId is not meaningful here.
-     */
-    async verifyServerRequest(
-      publishableKey: string,
-      providedSecret: string,
-    ): Promise<VerifyResult> {
-      const [cred] = await db
-        .select()
-        .from(clientCredentials)
-        .where(eq(clientCredentials.publishableKey, publishableKey));
-
-      if (!cred) throw new CredentialNotFound(publishableKey);
-      if (!cred.enabled) throw new CredentialDisabled(publishableKey);
-      if (cred.expiresAt && cred.expiresAt < new Date()) {
-        throw new CredentialExpired(publishableKey);
-      }
-
-      if (cred.devMode) {
-        return {
-          valid: true,
-          organizationId: cred.organizationId,
-          credentialId: cred.id,
-          devMode: true,
-        };
-      }
-
-      const stored = await decrypt(cred.encryptedSecret, appSecret);
-      if (!constantTimeEqual(stored, providedSecret)) {
-        throw new InvalidSecret();
-      }
-
-      return {
-        valid: true,
-        organizationId: cred.organizationId,
-        credentialId: cred.id,
-        devMode: false,
-      };
-    },
   };
+
 }
 
 export type ClientCredentialService = ReturnType<

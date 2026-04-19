@@ -19,14 +19,7 @@ apps/server/src/
 ├── schema/
 │   ├── invite.ts                 (create)  3 张表 + 约束 + 索引
 │   └── index.ts                  (modify)  re-export invite 表
-├── lib/
-│   ├── crypto.ts                 (modify)  加 constantTimeEqual
-│   └── crypto.test.ts            (modify)  测新函数
 ├── modules/
-│   ├── client-credentials/
-│   │   ├── errors.ts             (modify)  加 InvalidSecret
-│   │   ├── service.ts            (modify)  加 verifyServerRequest
-│   │   └── service.test.ts       (modify)  测 verifyServerRequest
 │   └── invite/                   (create dir)
 │       ├── code.ts               (create)  邀请码 32 字符字母表生成器
 │       ├── code.test.ts          (create)
@@ -37,10 +30,10 @@ apps/server/src/
 │       ├── service.test.ts       (create)
 │       ├── routes.ts             (create)  admin router
 │       ├── routes.test.ts        (create)
-│       ├── client-routes.ts      (create)  client router (HMAC + server 混合)
+│       ├── client-routes.ts      (create)  client router (HMAC 统一)
 │       ├── client-routes.test.ts (create)
 │       └── index.ts              (create)  barrel + singleton + registerEvent
-└── index.ts                      (modify)  mount /api/invite 和 /api/invite/client
+└── index.ts                      (modify)  mount /api/invite 和 /api/client/invite
 ```
 
 ---
@@ -681,11 +674,14 @@ export const ClientResetCodeBodySchema = z.object({
   userHash: z.string().optional(),
 });
 
-// Server 流 —— 客户方游戏服务器直连
+// HMAC 流（bind/qualify）—— 客户方游戏服务器代 invitee 发起，userHash = HMAC(inviteeEndUserId, secret)
 export const ClientBindBodySchema = z
   .object({
     code: z.string().min(1).max(64).openapi({ description: "Inviter's code; case / dash-insensitive" }),
     inviteeEndUserId: z.string().min(1).max(256),
+    userHash: z.string().optional().openapi({
+      description: "HMAC-SHA256(inviteeEndUserId, clientSecret). Required unless dev mode is enabled.",
+    }),
   })
   .openapi("ClientBindBody");
 
@@ -693,6 +689,9 @@ export const ClientQualifyBodySchema = z
   .object({
     inviteeEndUserId: z.string().min(1).max(256),
     qualifiedReason: z.string().max(128).nullable().optional(),
+    userHash: z.string().optional().openapi({
+      description: "HMAC-SHA256(inviteeEndUserId, clientSecret). Required unless dev mode is enabled.",
+    }),
   })
   .openapi("ClientQualifyBody");
 
@@ -724,269 +723,11 @@ git commit -m "feat(invite): errors + types + validators 骨架"
 
 ---
 
-## Task 4: client-credentials 扩展（crypto + errors + service）
+## Task 4: ~~client-credentials 扩展~~ (已移除)
 
-引入 `verifyServerRequest(publishableKey, providedSecret)` 给 invite 的 bind/qualify 用。
-
-**Files:**
-- Modify: `apps/server/src/lib/crypto.ts`
-- Modify: `apps/server/src/lib/crypto.test.ts`
-- Modify: `apps/server/src/modules/client-credentials/errors.ts`
-- Modify: `apps/server/src/modules/client-credentials/service.ts`
-- Modify: `apps/server/src/modules/client-credentials/service.test.ts`
-
-- [ ] **Step 4.1: 先写 crypto 失败测试**
-
-打开 `apps/server/src/lib/crypto.test.ts`，在文件末尾追加：
-
-```ts
-import { constantTimeEqual } from "./crypto";
-
-describe("constantTimeEqual", () => {
-  test("equal strings return true", () => {
-    expect(constantTimeEqual("hello", "hello")).toBe(true);
-    expect(constantTimeEqual("", "")).toBe(true);
-    expect(constantTimeEqual("csk_abc123XYZ", "csk_abc123XYZ")).toBe(true);
-  });
-
-  test("different strings return false", () => {
-    expect(constantTimeEqual("hello", "world")).toBe(false);
-    expect(constantTimeEqual("abc", "abd")).toBe(false);
-  });
-
-  test("different-length strings return false without crashing", () => {
-    expect(constantTimeEqual("short", "a-bit-longer")).toBe(false);
-    expect(constantTimeEqual("", "x")).toBe(false);
-  });
-
-  test("unicode-safe (utf-8 bytes)", () => {
-    expect(constantTimeEqual("你好", "你好")).toBe(true);
-    expect(constantTimeEqual("你好", "你不好")).toBe(false);
-  });
-});
-```
-
-（如果该文件顶部没 `import { describe, test, expect } from "vitest"`，对照现有 import 补上。）
-
-- [ ] **Step 4.2: 跑测试确认失败**
-
-```bash
-pnpm --filter=server test src/lib/crypto.test.ts
-```
-
-Expected: FAIL — `constantTimeEqual is not a function`
-
-- [ ] **Step 4.3: 实现 constantTimeEqual**
-
-编辑 `apps/server/src/lib/crypto.ts`，在文件末尾追加：
-
-```ts
-/**
- * Constant-time string equality.
- *
- * Encodes both strings as UTF-8 and compares byte-by-byte without early
- * return. Different-length inputs always return false (but still traverse
- * the longer buffer to keep timing consistent with the length check).
- */
-export function constantTimeEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const ba = enc.encode(a);
-  const bb = enc.encode(b);
-  const len = Math.max(ba.length, bb.length);
-  let diff = ba.length === bb.length ? 0 : 1;
-  for (let i = 0; i < len; i++) {
-    const x = ba[i] ?? 0;
-    const y = bb[i] ?? 0;
-    diff |= x ^ y;
-  }
-  return diff === 0;
-}
-```
-
-- [ ] **Step 4.4: 跑测试确认通过**
-
-```bash
-pnpm --filter=server test src/lib/crypto.test.ts
-```
-
-Expected: PASS
-
-- [ ] **Step 4.5: 加 InvalidSecret error**
-
-编辑 `apps/server/src/modules/client-credentials/errors.ts`，在文件末尾追加：
-
-```ts
-export class InvalidSecret extends ModuleError {
-  constructor() {
-    super("client_credential.invalid_secret", 401, "invalid client secret");
-    this.name = "InvalidSecret";
-  }
-}
-```
-
-- [ ] **Step 4.6: 先写 verifyServerRequest 失败测试**
-
-打开 `apps/server/src/modules/client-credentials/service.test.ts`，在最后一个 `describe` 前追加一个新 describe 块：
-
-```ts
-describe("verifyServerRequest", () => {
-  // 假设该文件已有 svc 变量 / orgId beforeAll 机制。复用同 pattern：
-  // 每个 test 新建一个 cred，行末 revoke 或让 afterAll 级联清。
-  test("accepts correct publishable key + secret", async () => {
-    const created = await svc.create(orgId, { name: "server-test-1" });
-    const result = await svc.verifyServerRequest(
-      created.publishableKey,
-      created.secret,
-    );
-    expect(result.valid).toBe(true);
-    expect(result.organizationId).toBe(orgId);
-    expect(result.credentialId).toBe(created.id);
-  });
-
-  test("rejects wrong secret with InvalidSecret", async () => {
-    const created = await svc.create(orgId, { name: "server-test-2" });
-    await expect(
-      svc.verifyServerRequest(created.publishableKey, "csk_wrong_secret_value"),
-    ).rejects.toThrow(/invalid client secret/i);
-  });
-
-  test("rejects disabled credential", async () => {
-    const created = await svc.create(orgId, { name: "server-test-3" });
-    await svc.revoke(orgId, created.id);
-    await expect(
-      svc.verifyServerRequest(created.publishableKey, created.secret),
-    ).rejects.toThrow(/disabled/i);
-  });
-
-  test("rejects unknown publishable key", async () => {
-    await expect(
-      svc.verifyServerRequest("cpk_does_not_exist", "csk_whatever"),
-    ).rejects.toThrow(/not found/i);
-  });
-
-  test("devMode bypasses secret check", async () => {
-    const created = await svc.create(orgId, { name: "server-test-4" });
-    await svc.updateDevMode(orgId, created.id, true);
-    const result = await svc.verifyServerRequest(
-      created.publishableKey,
-      "csk_any_garbage",
-    );
-    expect(result.valid).toBe(true);
-    expect(result.devMode).toBe(true);
-  });
-});
-```
-
-（先看 service.test.ts 文件顶部的 `svc` / `orgId` / imports 现状；上面 `describe` 块假设了和 `verifyRequest` test 同一套 fixtures。如果 svc 变量名不同，对照调整。）
-
-- [ ] **Step 4.7: 跑测试确认失败**
-
-```bash
-pnpm --filter=server test src/modules/client-credentials/service.test.ts
-```
-
-Expected: FAIL — `verifyServerRequest is not a function`
-
-- [ ] **Step 4.8: 实现 verifyServerRequest**
-
-编辑 `apps/server/src/modules/client-credentials/service.ts`：
-
-1. 顶部 import 区加入 `constantTimeEqual`：
-
-```ts
-import {
-  encrypt,
-  decrypt,
-  generateKeyPair,
-  verifyHmac,
-  constantTimeEqual,
-} from "../../lib/crypto";
-```
-
-2. 顶部 error import 加入 `InvalidSecret`：
-
-```ts
-import {
-  CredentialNotFound,
-  CredentialDisabled,
-  CredentialExpired,
-  InvalidHmac,
-  InvalidSecret,
-} from "./errors";
-```
-
-3. 在 service return 对象里，`verifyRequest` 方法之后追加：
-
-```ts
-    /**
-     * Server-to-server variant: caller sends the plaintext secret directly
-     * (via a trusted header from its own backend, e.g. x-api-secret).
-     * We decrypt the stored secret and constant-time compare.
-     *
-     * Use case: invite bind / qualify — the call originates from the
-     * customer's game server, not from the end user's browser, so HMAC
-     * over endUserId is not meaningful here.
-     */
-    async verifyServerRequest(
-      publishableKey: string,
-      providedSecret: string,
-    ): Promise<VerifyResult> {
-      const [cred] = await db
-        .select()
-        .from(clientCredentials)
-        .where(eq(clientCredentials.publishableKey, publishableKey));
-
-      if (!cred) throw new CredentialNotFound(publishableKey);
-      if (!cred.enabled) throw new CredentialDisabled(publishableKey);
-      if (cred.expiresAt && cred.expiresAt < new Date()) {
-        throw new CredentialExpired(publishableKey);
-      }
-
-      if (cred.devMode) {
-        return {
-          valid: true,
-          organizationId: cred.organizationId,
-          credentialId: cred.id,
-          devMode: true,
-        };
-      }
-
-      const stored = await decrypt(cred.encryptedSecret, appSecret);
-      if (!constantTimeEqual(stored, providedSecret)) {
-        throw new InvalidSecret();
-      }
-
-      return {
-        valid: true,
-        organizationId: cred.organizationId,
-        credentialId: cred.id,
-        devMode: false,
-      };
-    },
-```
-
-- [ ] **Step 4.9: 跑测试确认通过**
-
-```bash
-pnpm --filter=server test src/modules/client-credentials/service.test.ts
-```
-
-Expected: PASS — 新增 5 个 test 全绿，原有 test 不受影响
-
-- [ ] **Step 4.10: lint + typecheck**
-
-```bash
-pnpm --filter=server lint && pnpm --filter=server check-types
-```
-
-Expected: 0 error
-
-- [ ] **Step 4.11: Commit**
-
-```bash
-git add apps/server/src/lib/crypto.ts apps/server/src/lib/crypto.test.ts apps/server/src/modules/client-credentials/
-git commit -m "feat(client-credentials): verifyServerRequest + constantTimeEqual"
-```
+> **注**：原 Task 4 计划引入 `verifyServerRequest` / `constantTimeEqual` / `InvalidSecret`，已在重构中移除。  
+> bind / qualify 改为复用现有 `verifyRequest(pk, inviteeEndUserId, userHash)` HMAC 流，无需额外方法。  
+> 路由挂载路径也从 `/api/invite/client` 更正为 `/api/client/invite`（对齐现有 client 路由约定）。
 
 ---
 
@@ -2805,20 +2546,12 @@ git commit -m "feat(invite): admin router + minimal barrel + mount /api/invite"
 /**
  * C-end client routes for the invite module.
  *
- * Mounted at /api/invite/client. Two auth flavors share the same
- * requireClientCredential middleware (which only validates publishable
- * key existence / enabled / expired) — each handler then calls the
- * appropriate verification method:
+ * Mounted at /api/client/invite. All handlers use HMAC flow:
+ *   handler calls clientCredentialService.verifyRequest(pk, endUserId, userHash).
  *
- *   - HMAC flow  (my-code, summary, invitees, reset-my-code):
- *     handler calls clientCredentialService.verifyRequest(pk, endUserId, userHash).
- *     Used by the end user's client (browser / game client) proving its
- *     identity = endUserId via HMAC(endUserId, clientSecret).
- *
- *   - Server flow (bind, qualify):
- *     handler reads x-api-secret header and calls
- *     clientCredentialService.verifyServerRequest(pk, providedSecret).
- *     Used by the customer's own game server (it has the secret).
+ * For my-code / summary / invitees / reset-my-code: endUserId is the caller's own id.
+ * For bind / qualify: endUserId is the invitee's id; called by the game server (has secret).
+ * devMode bypasses HMAC for all routes.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -2827,7 +2560,6 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
-import { InvalidSecret } from "../client-credentials/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { clientCredentialService } from "../client-credentials";
 import { inviteService } from "./index";
@@ -3056,15 +2788,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /bind (Server flow) ─────────────────────────────── */
-
-async function requireServerSecret(c: Parameters<Parameters<typeof inviteClientRouter.openapi>[1]>[0]) {
-  const cred = c.get("clientCredential")!;
-  const providedSecret = c.req.header("x-api-secret");
-  if (!providedSecret) throw new InvalidSecret();
-  await clientCredentialService.verifyServerRequest(cred.publishableKey, providedSecret);
-  return cred.organizationId;
-}
+/* ── POST /bind (HMAC flow) ───────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -3072,11 +2796,6 @@ inviteClientRouter.openapi(
     path: "/bind",
     tags: [TAG],
     request: {
-      headers: z.object({
-        "x-api-secret": z.string().openapi({
-          description: "Client secret (csk_...). Required for server-to-server calls.",
-        }),
-      }),
       body: {
         content: { "application/json": { schema: ClientBindBodySchema } },
       },
@@ -3099,9 +2818,17 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = await requireServerSecret(c);
+    const cred = c.get("clientCredential")!;
     const body = c.req.valid("json");
-    const { relationship, alreadyBound } = await inviteService.bind(orgId, body);
+    await clientCredentialService.verifyRequest(
+      cred.publishableKey,
+      body.inviteeEndUserId,
+      body.userHash,
+    );
+    const { relationship, alreadyBound } = await inviteService.bind(cred.organizationId, {
+      code: body.code,
+      inviteeEndUserId: body.inviteeEndUserId,
+    });
     return c.json(
       { relationship: serializeRelationship(relationship), alreadyBound },
       200,
@@ -3109,7 +2836,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /qualify (Server flow) ──────────────────────────── */
+/* ── POST /qualify (HMAC flow) ────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -3117,11 +2844,6 @@ inviteClientRouter.openapi(
     path: "/qualify",
     tags: [TAG],
     request: {
-      headers: z.object({
-        "x-api-secret": z.string().openapi({
-          description: "Client secret (csk_...). Required for server-to-server calls.",
-        }),
-      }),
       body: {
         content: { "application/json": { schema: ClientQualifyBodySchema } },
       },
@@ -3144,9 +2866,17 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = await requireServerSecret(c);
+    const cred = c.get("clientCredential")!;
     const body = c.req.valid("json");
-    const { relationship, alreadyQualified } = await inviteService.qualify(orgId, body);
+    await clientCredentialService.verifyRequest(
+      cred.publishableKey,
+      body.inviteeEndUserId,
+      body.userHash,
+    );
+    const { relationship, alreadyQualified } = await inviteService.qualify(cred.organizationId, {
+      inviteeEndUserId: body.inviteeEndUserId,
+      qualifiedReason: body.qualifiedReason ?? null,
+    });
     return c.json(
       { relationship: serializeRelationship(relationship), alreadyQualified },
       200,
@@ -3178,9 +2908,9 @@ export { inviteClientRouter } from "./client-routes";
 // 顶部 import 区（或合并到 Task 10 那行）
 import { inviteRouter, inviteClientRouter } from "./modules/invite";
 
-// app.route 堆里增加
+// app.route 堆里增加（admin 路由保持 /api/invite，client 路由对齐 /api/client/* 约定）
 app.route("/api/invite", inviteRouter);
-app.route("/api/invite/client", inviteClientRouter);
+app.route("/api/client/invite", inviteClientRouter);
 ```
 
 > 如果 Task 10 已经写了 `import { inviteRouter } from "./modules/invite"` 和 `app.route("/api/invite", ...)`，这里改成 **合并 import** + **新增一行** mount client。
@@ -3209,7 +2939,6 @@ import { clientCredentialService } from "../client-credentials";
 describe("invite client routes", () => {
   let orgId: string;
   let publishableKey: string;
-  let secret: string;
 
   beforeAll(async () => {
     orgId = await createTestOrg("invite-client-routes");
@@ -3218,7 +2947,6 @@ describe("invite client routes", () => {
       name: "invite-client-test",
     });
     publishableKey = created.publishableKey;
-    secret = created.secret;
     await clientCredentialService.updateDevMode(orgId, created.id, true);
   });
 
@@ -3228,14 +2956,14 @@ describe("invite client routes", () => {
 
   test("401 without x-api-key", async () => {
     const res = await app.request(
-      "/api/invite/client/my-code?endUserId=u1",
+      "/api/client/invite/my-code?endUserId=u1",
     );
     expect(res.status).toBe(401);
   });
 
   test("GET /my-code in devMode returns code", async () => {
     const res = await app.request(
-      "/api/invite/client/my-code?endUserId=u1",
+      "/api/client/invite/my-code?endUserId=u1",
       { headers: { "x-api-key": publishableKey } },
     );
     expect(res.status).toBe(200);
@@ -3245,19 +2973,18 @@ describe("invite client routes", () => {
     );
   });
 
-  test("POST /bind with correct secret returns relationship", async () => {
+  test("POST /bind in devMode returns relationship", async () => {
     // Get an inviter code first
     const codeRes = await app.request(
-      "/api/invite/client/my-code?endUserId=inviter-1",
+      "/api/client/invite/my-code?endUserId=inviter-1",
       { headers: { "x-api-key": publishableKey } },
     );
     const { code } = await codeRes.json();
 
-    const bindRes = await app.request("/api/invite/client/bind", {
+    const bindRes = await app.request("/api/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
-        "x-api-secret": secret,
         "content-type": "application/json",
       },
       body: JSON.stringify({ code, inviteeEndUserId: "invitee-1" }),
@@ -3269,11 +2996,10 @@ describe("invite client routes", () => {
   });
 
   test("POST /bind 400 on missing code", async () => {
-    const res = await app.request("/api/invite/client/bind", {
+    const res = await app.request("/api/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
-        "x-api-secret": secret,
         "content-type": "application/json",
       },
       body: JSON.stringify({ inviteeEndUserId: "invitee-2" }),
@@ -3281,9 +3007,9 @@ describe("invite client routes", () => {
     expect(res.status).toBe(400);
   });
 
-  // Note: devMode bypasses HMAC and server-secret both. Testing the real
-  // verification paths (HMAC mismatch → 401, secret mismatch → 401) is
-  // covered in service-layer tests. Here we only care about HTTP wiring.
+  // Note: devMode bypasses HMAC. Testing the real verification paths
+  // (HMAC mismatch → 401) is covered in service-layer tests. Here we only
+  // care about HTTP wiring.
 });
 
 // Suppress unused-import warning if we don't need db directly.
@@ -3411,12 +3137,12 @@ curl -s http://localhost:8787/openapi.json | grep -o '"/api/invite[^"]*"' | sort
 Expected: 看到以下路径（顺序不重要）：
 
 ```
-"/api/invite/client/bind"
-"/api/invite/client/invitees"
-"/api/invite/client/my-code"
-"/api/invite/client/qualify"
-"/api/invite/client/reset-my-code"
-"/api/invite/client/summary"
+"/api/client/invite/bind"
+"/api/client/invite/invitees"
+"/api/client/invite/my-code"
+"/api/client/invite/qualify"
+"/api/client/invite/reset-my-code"
+"/api/client/invite/summary"
 "/api/invite/relationships"
 "/api/invite/relationships/{id}"
 "/api/invite/settings"
@@ -3481,8 +3207,7 @@ git commit -m "feat(invite): 完整 barrel + registerEvent invite.bound/qualifie
 | §6.1 invite.bound 事件 | Task 7 (emit) + Task 12 (register) |
 | §6.2 invite.qualified 事件 | Task 8 (emit) + Task 12 (register) |
 | §7.1 Admin Router | Task 10 |
-| §7.2 Client Router (HMAC + Server 双模式) | Task 11 |
-| §7.3 client-credentials 扩展 verifyServerRequest | Task 4 |
+| §7.2 Client Router (HMAC 统一) | Task 11 |
 | §8 Zod validators | Task 3 |
 | §9 错误矩阵 | Task 3 (errors.ts) |
 | §10 测试策略 | 各 Task 内的 test step |

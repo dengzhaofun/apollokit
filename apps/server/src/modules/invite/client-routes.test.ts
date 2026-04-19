@@ -4,7 +4,7 @@
  * Covers:
  *  - 401 missing x-api-key
  *  - HMAC happy path for /my-code
- *  - Server-secret happy path for /bind
+ *  - devMode happy path for /bind
  *  - 400 Zod for /bind
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -17,7 +17,6 @@ import { clientCredentialService } from "../client-credentials";
 describe("invite client routes", () => {
   let orgId: string;
   let publishableKey: string;
-  let secret: string;
 
   beforeAll(async () => {
     orgId = await createTestOrg("invite-client-routes");
@@ -26,7 +25,6 @@ describe("invite client routes", () => {
       name: "invite-client-test",
     });
     publishableKey = created.publishableKey;
-    secret = created.secret;
     await clientCredentialService.updateDevMode(orgId, created.id, true);
   });
 
@@ -36,14 +34,14 @@ describe("invite client routes", () => {
 
   test("401 without x-api-key", async () => {
     const res = await app.request(
-      "/api/invite/client/my-code?endUserId=u1",
+      "/api/client/invite/my-code?endUserId=u1",
     );
     expect(res.status).toBe(401);
   });
 
   test("GET /my-code in devMode returns code", async () => {
     const res = await app.request(
-      "/api/invite/client/my-code?endUserId=u1",
+      "/api/client/invite/my-code?endUserId=u1",
       { headers: { "x-api-key": publishableKey } },
     );
     expect(res.status).toBe(200);
@@ -53,19 +51,18 @@ describe("invite client routes", () => {
     );
   });
 
-  test("POST /bind with correct secret returns relationship", async () => {
+  test("POST /bind in devMode returns relationship", async () => {
     // Get an inviter code first
     const codeRes = await app.request(
-      "/api/invite/client/my-code?endUserId=inviter-1",
+      "/api/client/invite/my-code?endUserId=inviter-1",
       { headers: { "x-api-key": publishableKey } },
     );
     const { code } = await codeRes.json();
 
-    const bindRes = await app.request("/api/invite/client/bind", {
+    const bindRes = await app.request("/api/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
-        "x-api-secret": secret,
         "content-type": "application/json",
       },
       body: JSON.stringify({ code, inviteeEndUserId: "invitee-1" }),
@@ -77,11 +74,10 @@ describe("invite client routes", () => {
   });
 
   test("POST /bind 400 on missing code", async () => {
-    const res = await app.request("/api/invite/client/bind", {
+    const res = await app.request("/api/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
-        "x-api-secret": secret,
         "content-type": "application/json",
       },
       body: JSON.stringify({ inviteeEndUserId: "invitee-2" }),
@@ -89,9 +85,9 @@ describe("invite client routes", () => {
     expect(res.status).toBe(400);
   });
 
-  // Note: devMode bypasses HMAC and server-secret both. Testing the real
-  // verification paths (HMAC mismatch → 401, secret mismatch → 401) is
-  // covered in service-layer tests. Here we only care about HTTP wiring.
+  // Note: devMode bypasses HMAC. Testing the real verification paths
+  // (HMAC mismatch → 401) is covered in service-layer tests. Here we only
+  // care about HTTP wiring.
 });
 
 // Suppress unused-import warning if we don't need db directly.

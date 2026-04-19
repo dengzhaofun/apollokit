@@ -138,11 +138,14 @@ export const ClientResetCodeBodySchema = z.object({
   userHash: z.string().optional(),
 });
 
-// Server 流 —— 客户方游戏服务器直连
+// HMAC 流（bind/qualify） —— 客户方游戏服务器代 invitee 发起，userHash = HMAC(inviteeEndUserId, secret)
 export const ClientBindBodySchema = z
   .object({
     code: z.string().min(1).max(64).openapi({ description: "Inviter's code; case / dash-insensitive" }),
     inviteeEndUserId: z.string().min(1).max(256),
+    userHash: z.string().optional().openapi({
+      description: "HMAC-SHA256(inviteeEndUserId, clientSecret). Required unless dev mode is enabled.",
+    }),
   })
   .openapi("ClientBindBody");
 
@@ -150,6 +153,9 @@ export const ClientQualifyBodySchema = z
   .object({
     inviteeEndUserId: z.string().min(1).max(256),
     qualifiedReason: z.string().max(128).nullable().optional(),
+    userHash: z.string().optional().openapi({
+      description: "HMAC-SHA256(inviteeEndUserId, clientSecret). Required unless dev mode is enabled.",
+    }),
   })
   .openapi("ClientQualifyBody");
 

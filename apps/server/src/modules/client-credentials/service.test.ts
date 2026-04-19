@@ -24,7 +24,6 @@ import { createClientCredentialService } from "./service";
 import {
   CredentialNotFound,
   CredentialDisabled,
-  CredentialExpired,
   InvalidHmac,
 } from "./errors";
 
@@ -186,52 +185,4 @@ describe("client-credentials service", () => {
     expect(result.valid).toBe(true);
   });
 
-  // -------------------------------------------------------------------------
-  // Server-to-server verification
-  // -------------------------------------------------------------------------
-
-  describe("verifyServerRequest", () => {
-    test("accepts correct publishable key + secret", async () => {
-      const created = await svc.create(orgId, { name: "server-test-1" });
-      const result = await svc.verifyServerRequest(
-        created.publishableKey,
-        created.secret,
-      );
-      expect(result.valid).toBe(true);
-      expect(result.organizationId).toBe(orgId);
-      expect(result.credentialId).toBe(created.id);
-    });
-
-    test("rejects wrong secret with InvalidSecret", async () => {
-      const created = await svc.create(orgId, { name: "server-test-2" });
-      await expect(
-        svc.verifyServerRequest(created.publishableKey, "csk_wrong_secret_value"),
-      ).rejects.toThrow(/invalid client secret/i);
-    });
-
-    test("rejects disabled credential", async () => {
-      const created = await svc.create(orgId, { name: "server-test-3" });
-      await svc.revoke(orgId, created.id);
-      await expect(
-        svc.verifyServerRequest(created.publishableKey, created.secret),
-      ).rejects.toThrow(/disabled/i);
-    });
-
-    test("rejects unknown publishable key", async () => {
-      await expect(
-        svc.verifyServerRequest("cpk_does_not_exist", "csk_whatever"),
-      ).rejects.toThrow(/not found/i);
-    });
-
-    test("devMode bypasses secret check", async () => {
-      const created = await svc.create(orgId, { name: "server-test-4" });
-      await svc.updateDevMode(orgId, created.id, true);
-      const result = await svc.verifyServerRequest(
-        created.publishableKey,
-        "csk_any_garbage",
-      );
-      expect(result.valid).toBe(true);
-      expect(result.devMode).toBe(true);
-    });
-  });
 });

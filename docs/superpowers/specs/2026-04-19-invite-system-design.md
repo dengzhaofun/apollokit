@@ -33,18 +33,18 @@
     │ 显示 A 的码
     │
     ▼
-客户方游戏服务器 ──(x-api-key + x-api-secret, server-to-server)──►  POST /api/invite/client/bind
-                                                                      POST /api/invite/client/qualify
+客户方游戏服务器 ──(x-api-key + userHash(inviteeEndUserId, secret))─►  POST /api/client/invite/bind
+                                                                        POST /api/client/invite/qualify
 
-B 的游戏客户端  ──(x-api-key + userHash(endUserId, secret))────────►  GET  /api/invite/client/my-code
-                                                                      GET  /api/invite/client/summary
-                                                                      POST /api/invite/client/reset-my-code
+B 的游戏客户端  ──(x-api-key + userHash(endUserId, secret))──────────►  GET  /api/client/invite/my-code
+                                                                         GET  /api/client/invite/summary
+                                                                         POST /api/client/invite/reset-my-code
 
-apollokit admin ──(session cookie + org)────────────────────────────►  /api/invite/settings
-                                                                       /api/invite/relationships
-                                                                       /api/invite/users/:id/stats
-                                                                       /api/invite/users/:id/reset-code
-                                                                       DELETE /api/invite/relationships/:id
+apollokit admin ──(session cookie + org)──────────────────────────────►  /api/invite/settings
+                                                                          /api/invite/relationships
+                                                                          /api/invite/users/:id/stats
+                                                                          /api/invite/users/:id/reset-code
+                                                                          DELETE /api/invite/relationships/:id
 ```
 
 **依赖关系（单向 pub/sub）**：
@@ -331,12 +331,12 @@ registerEvent({
 | GET | `/users/:endUserId/stats` | `svc.adminGetUserStats(orgId, endUserId)` |
 | POST | `/users/:endUserId/reset-code` | `svc.adminResetUserCode(orgId, endUserId)` |
 
-### 7.2 Client Router（`/api/invite/client`，`requireClientCredential`）
+### 7.2 Client Router（`/api/client/invite`，`requireClientCredential`）
 
-两种 handler-level 验证模式共存（参照 client-credential service 已有能力）：
+所有 handler 统一使用 **HMAC 流**：`await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash)`。devMode 绕过 HMAC。
 
-- **HMAC 模式**（client-to-server，B 的浏览器 / 游戏客户端直接调）：handler 里 `await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash)` → devMode 绕过。
-- **Server 模式**（client-to-server 真的是客户方游戏服务器调）：handler 要求额外 header `x-api-secret: csk_...`，通过一个新增的 `clientCredentialService.verifyServerRequest(publishableKey, providedSecret)` 做 constant-time 明文比对。devMode 同样绕过。
+- `my-code / summary / invitees / reset-my-code`：`endUserId` 是调用者自身的 id，`userHash = HMAC(endUserId, secret)`，由游戏客户端发起。
+- `bind / qualify`：`endUserId` 是 invitee 的 id，`userHash = HMAC(inviteeEndUserId, secret)`，由客户方游戏服务器发起（服务器持有 secret）。
 
 | Method | Path | 认证 | Handler |
 |---|---|---|---|
@@ -344,39 +344,19 @@ registerEvent({
 | POST | `/reset-my-code` body `{endUserId, userHash}` | HMAC | `svc.resetCode(orgId, endUserId)` |
 | GET | `/summary?endUserId&userHash` | HMAC | `svc.getSummary(orgId, endUserId)` |
 | GET | `/invitees?endUserId&userHash&limit&offset` | HMAC | `svc.listMyInvitees(...)` |
-| POST | `/bind` body `{code, inviteeEndUserId}` + header `x-api-secret` | Server | `svc.bind(orgId, body)` |
-| POST | `/qualify` body `{inviteeEndUserId, qualifiedReason?}` + header `x-api-secret` | Server | `svc.qualify(orgId, body)` |
+| POST | `/bind` body `{code, inviteeEndUserId, userHash?}` | HMAC(inviteeEndUserId) | `svc.bind(orgId, body)` |
+| POST | `/qualify` body `{inviteeEndUserId, qualifiedReason?, userHash?}` | HMAC(inviteeEndUserId) | `svc.qualify(orgId, body)` |
 
-> **为什么 bind / qualify 用 secret 而不是 HMAC？**  
-> HMAC 的身份含义是 "我证明我就是 endUserId 这个终端用户"，需要 endUserId + secret 混算。但 bind 调用时 **B 还没有任何与我们的上下文**，他的游戏客户端不知道 secret；而 bind 的事实发起方是**客户方游戏服务器**（它既有 secret，也是整个邀请关系的信任锚）。对"服务器级"调用要求明文 secret 比"伪装成某个 endUserId 的 HMAC"语义清晰。
+> **为什么 bind / qualify 也走 HMAC？**  
+> `verifyRequest(pk, inviteeEndUserId, userHash)` 已经覆盖了服务器侧调用：客户方游戏服务器持有 secret，可以计算 `HMAC(inviteeEndUserId, secret)`，与终端用户身份验证使用完全相同的路径。无需额外的 `verifyServerRequest` 方法或明文 secret 传输。
 
-### 7.3 需要扩展 `clientCredentialService`
-
-在 `modules/client-credentials/service.ts` 加一个方法（不是 invite 模块内的，是给 invite 复用）：
-
-```ts
-async verifyServerRequest(
-  publishableKey: string,
-  providedSecret: string,
-): Promise<VerifyResult> {
-  // 查 cred、检查 enabled/expired
-  // devMode → return ok
-  // decrypt stored secret → timingSafeEqual(stored, providedSecret)
-  // 不等 → throw InvalidSecret
-}
-```
-
-`lib/crypto.ts` 现有 `verifyHmac`；加一个 `constantTimeEqual(a: string, b: string): boolean`。
-
-这是 invite 带出来的一个跨模块小改动——不是 invite 内部的事，但是 invite 设计决策要求的配套工作，放在本 spec 范围内声明。
-
-### 7.4 Mount
+### 7.3 Mount
 
 `apps/server/src/index.ts`：
 
 ```ts
 app.route("/api/invite", inviteAdminRouter);
-app.route("/api/invite/client", inviteClientRouter);
+app.route("/api/client/invite", inviteClientRouter);
 ```
 
 ---
@@ -401,7 +381,6 @@ app.route("/api/invite/client", inviteClientRouter);
 | `InviteeNotBound` | 404 | `qualify` 时 relationship 不存在 |
 | `InviteRelationshipNotFound` | 404 | admin revoke 时 id 不存在 |
 | `InviteCodeConflict` | 500 | 连续 3 次码冲突（不可能发生；真发生了说明有 bug） |
-| `InvalidSecret` | 401 | `verifyServerRequest` 里 secret 不等（client-credentials 模块新增） |
 
 **幂等不是错误**：`bind` 同 inviter 再调 → 200 `{ alreadyBound: true }`；`qualify` 再调 → 200 `{ alreadyQualified: true }`。都不发重复事件。
 
@@ -432,7 +411,7 @@ app.route("/api/invite/client", inviteClientRouter);
 - `getSummary` / `listMyInvitees` / admin list 的分页与过滤
 
 ### 10.2 `routes.test.ts`（薄）
-- 401：client-routes 缺 `x-api-key` / HMAC 不对 / secret 不对（bind / qualify 走 secret 路径）
+- 401：client-routes 缺 `x-api-key` / HMAC 不对（devMode 时跳过，服务层测试覆盖真实路径）
 - 400：Zod 校验失败
 - 409：`bind` 冲突映射
 - admin 走 session cookie 的一个 happy path（参照 check-in / friend 的模式）
@@ -468,10 +447,7 @@ apps/server/src/
 
 跨模块改动（spec 内范围）：
 
-- `apps/server/src/modules/client-credentials/service.ts` — 加 `verifyServerRequest`
-- `apps/server/src/modules/client-credentials/errors.ts` — 加 `InvalidSecret`
-- `apps/server/src/lib/crypto.ts` — 加 `constantTimeEqual`
-- `apps/server/src/index.ts` — mount 两个 router
+- `apps/server/src/index.ts` — mount 两个 router（admin `/api/invite`，client `/api/client/invite`）
 - `apps/server/src/lib/event-bus.ts` — 通过 `declare module` 扩展 `EventMap`（在 `service.ts` 头部就地扩，参考 task 模块做法）
 
 ---
