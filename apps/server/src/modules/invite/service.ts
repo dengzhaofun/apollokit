@@ -158,20 +158,181 @@ export function createInviteService(d: InviteDeps) {
       if (!row) throw new Error("upsertSettings: returning no row");
       return row;
     },
+
+    /* ── 邀请码 ───────────────────────────────────────────── */
+
+    /**
+     * 返回 endUser 的当前 active 码，首次调用时生成。
+     * 并发/码冲突时最多重试 CODE_RETRIES 次。
+     */
+    async getOrCreateMyCode(orgId: string, endUserId: string) {
+      // Fast path: 已有码直接返回
+      const existing = await db
+        .select({
+          code: inviteCodes.code,
+          rotatedAt: inviteCodes.rotatedAt,
+        })
+        .from(inviteCodes)
+        .where(
+          and(
+            eq(inviteCodes.organizationId, orgId),
+            eq(inviteCodes.endUserId, endUserId),
+          ),
+        )
+        .limit(1);
+      if (existing[0]) {
+        return {
+          code: formatInviteCode(existing[0].code),
+          rotatedAt: existing[0].rotatedAt,
+        };
+      }
+
+      // Slow path: 生成 + retry
+      const settings = await getSettingsOrDefaults(orgId);
+      for (let attempt = 0; attempt < CODE_RETRIES; attempt++) {
+        const candidate = generateInviteCode(settings.codeLength);
+        try {
+          const [row] = await db
+            .insert(inviteCodes)
+            .values({
+              organizationId: orgId,
+              endUserId,
+              code: candidate,
+            })
+            .onConflictDoNothing()
+            .returning();
+          if (row) {
+            return {
+              code: formatInviteCode(row.code),
+              rotatedAt: row.rotatedAt,
+            };
+          }
+          // onConflictDoNothing returned 0 rows — can mean:
+          //   (a) (org, endUserId) unique violation → 别人刚给 endUserId 插了一条
+          //       → 重新走 fast path 读出来
+          //   (b) (org, code) unique violation → 码撞了 → retry 下一个 candidate
+          // 先重读看是否是 (a)
+          const reread = await db
+            .select({
+              code: inviteCodes.code,
+              rotatedAt: inviteCodes.rotatedAt,
+            })
+            .from(inviteCodes)
+            .where(
+              and(
+                eq(inviteCodes.organizationId, orgId),
+                eq(inviteCodes.endUserId, endUserId),
+              ),
+            )
+            .limit(1);
+          if (reread[0]) {
+            return {
+              code: formatInviteCode(reread[0].code),
+              rotatedAt: reread[0].rotatedAt,
+            };
+          }
+          // 不是 (a)，肯定是 (b)——继续 retry
+        } catch (err) {
+          if (!isUniqueViolation(err)) throw err;
+          // 同上：重读或 retry
+          const reread = await db
+            .select({
+              code: inviteCodes.code,
+              rotatedAt: inviteCodes.rotatedAt,
+            })
+            .from(inviteCodes)
+            .where(
+              and(
+                eq(inviteCodes.organizationId, orgId),
+                eq(inviteCodes.endUserId, endUserId),
+              ),
+            )
+            .limit(1);
+          if (reread[0]) {
+            return {
+              code: formatInviteCode(reread[0].code),
+              rotatedAt: reread[0].rotatedAt,
+            };
+          }
+        }
+      }
+      throw new InviteCodeConflict();
+    },
+
+    /**
+     * 轮换 endUser 的码。返回新码 + 设置 rotatedAt = now。
+     * endUser 必须已经有码——如果没码，先调 getOrCreateMyCode 再 reset
+     * 更符合常识，这里按"没码就先生成再立即 reset"的保守实现。
+     */
+    async resetCode(orgId: string, endUserId: string) {
+      const settings = await getSettingsOrDefaults(orgId);
+      for (let attempt = 0; attempt < CODE_RETRIES; attempt++) {
+        const candidate = generateInviteCode(settings.codeLength);
+        try {
+          const [row] = await db
+            .insert(inviteCodes)
+            .values({
+              organizationId: orgId,
+              endUserId,
+              code: candidate,
+              rotatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [inviteCodes.organizationId, inviteCodes.endUserId],
+              set: {
+                code: candidate,
+                rotatedAt: new Date(),
+              },
+            })
+            .returning();
+          if (row) {
+            return {
+              code: formatInviteCode(row.code),
+              rotatedAt: row.rotatedAt!,
+            };
+          }
+        } catch (err) {
+          if (!isUniqueViolation(err)) throw err;
+          // 码碰撞——retry 下一个 candidate
+        }
+      }
+      throw new InviteCodeConflict();
+    },
+
+    /**
+     * 根据码查 endUserId。接收归一化或带 "-" 的形式。
+     * 码不合法或不存在都返回 null——调用方统一抛 InviteCodeNotFound。
+     */
+    async lookupByCode(orgId: string, rawCode: string) {
+      const normalized = normalizeInviteCode(rawCode);
+      if (normalized.length === 0) return null;
+      // 基本字符集检查：凡归一化后非字母表字符就直接返回 null
+      if (!/^[23456789A-HJ-NP-Z]+$/.test(normalized)) return null;
+
+      const rows = await db
+        .select({ endUserId: inviteCodes.endUserId })
+        .from(inviteCodes)
+        .where(
+          and(
+            eq(inviteCodes.organizationId, orgId),
+            eq(inviteCodes.code, normalized),
+          ),
+        )
+        .limit(1);
+      return rows[0] ?? null;
+    },
   };
 
   // Suppress unused-variable warnings for closure symbols referenced only by later tasks.
-  void events; void getSettingsOrDefaults; void isUniqueViolation;
+  void events;
 }
 
 export type InviteService = ReturnType<typeof createInviteService>;
 
 // Suppress unused-imports warnings for symbols referenced only by later tasks.
-// They will be used when Tasks 6–9 extend this file.
-void and; void count; void desc; void sql;
-void inviteCodes; void inviteRelationships;
-void formatInviteCode; void generateInviteCode; void normalizeInviteCode;
-void InviteAlreadyBound; void InviteCodeConflict; void InviteCodeNotFound;
+// They will be used when Tasks 7–9 extend this file.
+void count; void desc; void sql;
+void inviteRelationships;
+void InviteAlreadyBound; void InviteCodeNotFound;
 void InviteDisabled; void InviteRelationshipNotFound; void InviteSelfInviteForbidden; void InviteeNotBound;
-void formatInviteCode;
 void ({} as InviteSummary);
