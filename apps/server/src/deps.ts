@@ -7,6 +7,10 @@ import {
 } from "./lib/analytics";
 import { createEventBus, type EventBus } from "./lib/event-bus";
 import { createObjectStorage, type ObjectStorage } from "./lib/storage";
+import {
+  createEventCatalogService,
+  type EventCatalogService,
+} from "./modules/event-catalog/service";
 import { redis } from "./redis";
 
 /**
@@ -26,6 +30,7 @@ export type AppDeps = {
   appSecret: string;
   storage: ObjectStorage;
   analytics: AnalyticsService;
+  eventCatalog: EventCatalogService;
   // logger: typeof logger;
   // behaviorLog: typeof behaviorLog;
 };
@@ -47,6 +52,8 @@ export const deps: AppDeps = {
   // Same lazy pattern for Tinybird — avoids touching env vars during
   // drizzle-kit generate under Node, where those bindings don't exist.
   analytics: createLazyAnalytics(),
+  // Event catalog only depends on `db` — safe to construct eagerly.
+  eventCatalog: createEventCatalogService({ db }),
 };
 
 /**
