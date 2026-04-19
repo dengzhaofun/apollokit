@@ -321,18 +321,96 @@ export function createInviteService(d: InviteDeps) {
         .limit(1);
       return rows[0] ?? null;
     },
-  };
 
-  // Suppress unused-variable warnings for closure symbols referenced only by later tasks.
-  void events;
+    /* ── bind ─────────────────────────────────────────────── */
+
+    /**
+     * 客户方游戏服务器在 B 注册时调用。落关系、发 invite.bound 事件。
+     *
+     * 幂等规则：
+     *   - invitee 已被**同** inviter 绑 → 200, alreadyBound=true, 不发事件
+     *   - invitee 已被**不同** inviter 绑 → throw InviteAlreadyBound (409)
+     */
+    async bind(
+      orgId: string,
+      input: { code: string; inviteeEndUserId: string },
+    ): Promise<{
+      relationship: typeof inviteRelationships.$inferSelect;
+      alreadyBound: boolean;
+    }> {
+      const settings = await getSettingsOrDefaults(orgId);
+      if (!settings.enabled) throw new InviteDisabled();
+
+      const lookup = await this.lookupByCode(orgId, input.code);
+      if (!lookup) throw new InviteCodeNotFound();
+      const inviterEndUserId = lookup.endUserId;
+
+      if (
+        inviterEndUserId === input.inviteeEndUserId &&
+        !settings.allowSelfInvite
+      ) {
+        throw new InviteSelfInviteForbidden();
+      }
+
+      const normalized = normalizeInviteCode(input.code);
+
+      // 原子插入：INSERT ... ON CONFLICT DO NOTHING RETURNING
+      const inserted = await db
+        .insert(inviteRelationships)
+        .values({
+          organizationId: orgId,
+          inviterEndUserId,
+          inviteeEndUserId: input.inviteeEndUserId,
+          inviterCodeSnapshot: normalized,
+        })
+        .onConflictDoNothing()
+        .returning();
+
+      if (inserted.length === 1) {
+        // 新建成功
+        const row = inserted[0]!;
+        if (events) {
+          await events.emit("invite.bound", {
+            organizationId: orgId,
+            endUserId: inviterEndUserId,
+            inviterEndUserId,
+            inviteeEndUserId: input.inviteeEndUserId,
+            code: formatInviteCode(normalized),
+            boundAt: row.boundAt,
+          });
+        }
+        return { relationship: row, alreadyBound: false };
+      }
+
+      // 冲突 —— 查已有行
+      const [existing] = await db
+        .select()
+        .from(inviteRelationships)
+        .where(
+          and(
+            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
+          ),
+        )
+        .limit(1);
+      if (!existing) {
+        // 理论上不可能 —— UNIQUE 冲突意味着行存在
+        throw new Error(
+          "invite.bind: conflict reported but existing row not found",
+        );
+      }
+      if (existing.inviterEndUserId === inviterEndUserId) {
+        return { relationship: existing, alreadyBound: true };
+      }
+      throw new InviteAlreadyBound();
+    },
+  };
 }
 
 export type InviteService = ReturnType<typeof createInviteService>;
 
 // Suppress unused-imports warnings for symbols referenced only by later tasks.
-// They will be used when Tasks 7–9 extend this file.
+// They will be used when Tasks 8–9 extend this file.
 void count; void desc; void sql;
-void inviteRelationships;
-void InviteAlreadyBound; void InviteCodeNotFound;
-void InviteDisabled; void InviteRelationshipNotFound; void InviteSelfInviteForbidden; void InviteeNotBound;
+void InviteRelationshipNotFound; void InviteeNotBound;
 void ({} as InviteSummary);

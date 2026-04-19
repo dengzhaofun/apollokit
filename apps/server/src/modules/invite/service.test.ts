@@ -118,3 +118,107 @@ describe("invite service — codes", () => {
     expect(hit).toBeNull();
   });
 });
+
+describe("invite service — bind", () => {
+  let events: ReturnType<typeof createEventBus>;
+  let svc: ReturnType<typeof createInviteService>;
+  let orgId: string;
+  // 全局订阅收集器：每个 test 开头清空
+  const emitted: Array<{ type: string; payload: unknown }> = [];
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("invite-svc-bind");
+    events = createEventBus();
+    svc = createInviteService({ db, events });
+    events.on("invite.bound", (p) => {
+      emitted.push({ type: "invite.bound", payload: p });
+    });
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  test("bind落关系、发 invite.bound 一次", async () => {
+    emitted.length = 0;
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-1");
+    const result = await svc.bind(orgId, {
+      code,
+      inviteeEndUserId: "invitee-1",
+    });
+    expect(result.alreadyBound).toBe(false);
+    expect(result.relationship.inviterEndUserId).toBe("inviter-1");
+    expect(result.relationship.inviteeEndUserId).toBe("invitee-1");
+    expect(result.relationship.inviterCodeSnapshot).toBe(
+      code.replace("-", ""),
+    );
+
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0]!.type).toBe("invite.bound");
+    expect(emitted[0]!.payload).toMatchObject({
+      organizationId: orgId,
+      endUserId: "inviter-1", // task 归属
+      inviterEndUserId: "inviter-1",
+      inviteeEndUserId: "invitee-1",
+      code: code, // 带 "-" 的人类可读形式
+    });
+  });
+
+  test("bind 幂等：相同 inviter 再 bind → alreadyBound=true，事件不重复", async () => {
+    emitted.length = 0;
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-2");
+    await svc.bind(orgId, { code, inviteeEndUserId: "invitee-2" });
+    emitted.length = 0; // 清前一次
+    const again = await svc.bind(orgId, { code, inviteeEndUserId: "invitee-2" });
+    expect(again.alreadyBound).toBe(true);
+    expect(again.relationship.inviterEndUserId).toBe("inviter-2");
+    expect(emitted).toHaveLength(0);
+  });
+
+  test("bind 冲突：换个 inviter 再 bind 同 invitee → InviteAlreadyBound", async () => {
+    const { code: codeA } = await svc.getOrCreateMyCode(orgId, "inviter-3a");
+    const { code: codeB } = await svc.getOrCreateMyCode(orgId, "inviter-3b");
+    await svc.bind(orgId, { code: codeA, inviteeEndUserId: "invitee-3" });
+    await expect(
+      svc.bind(orgId, { code: codeB, inviteeEndUserId: "invitee-3" }),
+    ).rejects.toThrow(/already.*bound/i);
+  });
+
+  test("bind 自邀默认被禁 → InviteSelfInviteForbidden", async () => {
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-4");
+    await expect(
+      svc.bind(orgId, { code, inviteeEndUserId: "inviter-4" }),
+    ).rejects.toThrow(/cannot invite yourself/i);
+  });
+
+  test("bind 自邀在 allowSelfInvite=true 下通过", async () => {
+    await svc.upsertSettings(orgId, { allowSelfInvite: true });
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-5");
+    const result = await svc.bind(orgId, {
+      code,
+      inviteeEndUserId: "inviter-5",
+    });
+    expect(result.relationship.inviterEndUserId).toBe("inviter-5");
+    expect(result.relationship.inviteeEndUserId).toBe("inviter-5");
+    // 恢复 — 否则污染后续 test
+    await svc.upsertSettings(orgId, { allowSelfInvite: false });
+  });
+
+  test("bind 用不存在的码 → InviteCodeNotFound", async () => {
+    await expect(
+      svc.bind(orgId, {
+        code: "ZZZZZZZZ",
+        inviteeEndUserId: "invitee-noop",
+      }),
+    ).rejects.toThrow(/not found|has been reset/i);
+  });
+
+  test("bind 被禁用的租户 → InviteDisabled", async () => {
+    await svc.upsertSettings(orgId, { enabled: false });
+    const { code } = await svc.getOrCreateMyCode(orgId, "inviter-6");
+    await expect(
+      svc.bind(orgId, { code, inviteeEndUserId: "invitee-6" }),
+    ).rejects.toThrow(/disabled/i);
+    await svc.upsertSettings(orgId, { enabled: true });
+  });
+});
