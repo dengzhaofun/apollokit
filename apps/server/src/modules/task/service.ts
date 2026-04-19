@@ -602,14 +602,23 @@ export function createTaskService(
     const ts = now ?? new Date();
 
     // 0. Record to event-catalog (auto field inference / sample refresh).
-    //    Fire-and-forget — failures are logged but do not block the main
-    //    progress update. TTL dedup lives inside recordExternalEvent itself.
+    //    Awaited but error-swallowing — catalog failures are logged and
+    //    must not abort task dispatch, but we don't want a dangling
+    //    promise outliving this request in Workers runtime (would need
+    //    ctx.waitUntil to be reliable). TTL dedup inside the service makes
+    //    the extra latency cheap for hot events: after the first write in
+    //    a 5-min window every subsequent call is a Map lookup.
     if (eventCatalog) {
-      void eventCatalog
-        .recordExternalEvent(organizationId, eventName, eventData, ts)
-        .catch((err) => {
-          console.error("task: recordExternalEvent failed", err);
-        });
+      try {
+        await eventCatalog.recordExternalEvent(
+          organizationId,
+          eventName,
+          eventData,
+          ts,
+        );
+      } catch (err) {
+        console.error("task: recordExternalEvent failed", err);
+      }
     }
 
     // 1. Find all active definitions matching this eventName

@@ -1705,9 +1705,6 @@ describe("task service", () => {
         amount: 42,
       });
 
-      // fire-and-forget — give the microtask queue a tick to flush.
-      await new Promise((r) => setTimeout(r, 50));
-
       const view = await catalogSvc.getOne(orgId, uniqueName);
       expect(view.source).toBe("external");
       expect(view.status).toBe("inferred");
