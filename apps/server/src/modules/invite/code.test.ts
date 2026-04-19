@@ -49,12 +49,23 @@ describe("invite code", () => {
     expect(isWellFormedInviteCode("2345")).toBe(true);
   });
 
-  test("isWellFormedInviteCode rejects ambiguous chars 0/1/I/L/O", () => {
+  test("isWellFormedInviteCode rejects ambiguous chars 0/1/I/O", () => {
     expect(isWellFormedInviteCode("ABCD0EFG")).toBe(false);
     expect(isWellFormedInviteCode("ABCD1EFG")).toBe(false);
     expect(isWellFormedInviteCode("ABCDIEFG")).toBe(false);
-    expect(isWellFormedInviteCode("ABCDLEFG")).toBe(false);
     expect(isWellFormedInviteCode("ABCDOEFG")).toBe(false);
+  });
+
+  test("isWellFormedInviteCode accepts all 32 alphabet characters", () => {
+    // Full alphabet 23456789ABCDEFGHJKLMNPQRSTUVWXYZ split into 4-char groups
+    expect(isWellFormedInviteCode("2345")).toBe(true);
+    expect(isWellFormedInviteCode("6789")).toBe(true);
+    expect(isWellFormedInviteCode("ABCD")).toBe(true);
+    expect(isWellFormedInviteCode("EFGH")).toBe(true);
+    expect(isWellFormedInviteCode("JKLM")).toBe(true);
+    expect(isWellFormedInviteCode("NPQR")).toBe(true);
+    expect(isWellFormedInviteCode("STUV")).toBe(true);
+    expect(isWellFormedInviteCode("WXYZ")).toBe(true);
   });
 
   test("isWellFormedInviteCode rejects empty and non-multiple-of-4", () => {

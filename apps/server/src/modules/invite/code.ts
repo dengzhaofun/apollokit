@@ -10,9 +10,9 @@
  * 思路与 lib/cdkey-code.ts 一致但不复用——两模块未来演进方向可能分化。
  */
 
-// 32 字符字母表，去掉歧义字符 0 / 1 / I / L / O
+// 32 字符字母表，去掉 0 / 1 / I / O（与 cdkey-code.ts 一致；L 保留以便均匀采样 5 位）
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-const ALPHABET_REGEX = /^[23456789A-HJ-KM-NP-Z]+$/;
+const ALPHABET_REGEX = /^[23456789A-HJ-NP-Z]+$/;
 
 /** 生成 length 位归一化邀请码。length 必须是 4 的倍数。 */
 export function generateInviteCode(length = 8): string {
