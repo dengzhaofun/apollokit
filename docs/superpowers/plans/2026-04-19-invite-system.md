@@ -1,5 +1,10 @@
 # 邀请系统 实施计划 (Invite System)
 
+> **后续重构说明（2026-04-19）**：invite client routes 已完成 body/query 认证字段 → header 迁移。
+> `endUserId` / `userHash` 不再出现在请求 body 或 query 中；统一走 `x-end-user-id` / `x-user-hash` headers，
+> 由新中间件 `requireClientUser`（`apps/server/src/middleware/require-client-user.ts`）集中验证并写入 `c.var.endUserId`。
+> 详见 spec §7.2–7.3 及对应 commit。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在 `apps/server` 新增 `invite` 模块，支持推广拉新（referral）场景：老玩家拿邀请码、客户方游戏服务器调 `/bind` 落关系、调 `/qualify` 触发阶梯奖励事件。

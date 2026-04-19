@@ -3,9 +3,10 @@
  *
  * Covers:
  *  - 401 missing x-api-key
- *  - HMAC happy path for /my-code
+ *  - 400 missing x-end-user-id header (requireClientUser middleware)
+ *  - devMode happy path for /my-code
  *  - devMode happy path for /bind
- *  - 400 Zod for /bind
+ *  - 400 Zod for /bind (missing code in body)
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
@@ -33,16 +34,22 @@ describe("invite client routes", () => {
   });
 
   test("401 without x-api-key", async () => {
-    const res = await app.request(
-      "/api/client/invite/my-code?endUserId=u1",
-    );
+    const res = await app.request("/api/client/invite/my-code");
     expect(res.status).toBe(401);
+  });
+
+  test("400 on missing x-end-user-id header", async () => {
+    const res = await app.request(
+      "/api/client/invite/my-code",
+      { headers: { "x-api-key": publishableKey } }, // no x-end-user-id
+    );
+    expect(res.status).toBe(400);
   });
 
   test("GET /my-code in devMode returns code", async () => {
     const res = await app.request(
-      "/api/client/invite/my-code?endUserId=u1",
-      { headers: { "x-api-key": publishableKey } },
+      "/api/client/invite/my-code",
+      { headers: { "x-api-key": publishableKey, "x-end-user-id": "u1" } },
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -54,8 +61,8 @@ describe("invite client routes", () => {
   test("POST /bind in devMode returns relationship", async () => {
     // Get an inviter code first
     const codeRes = await app.request(
-      "/api/client/invite/my-code?endUserId=inviter-1",
-      { headers: { "x-api-key": publishableKey } },
+      "/api/client/invite/my-code",
+      { headers: { "x-api-key": publishableKey, "x-end-user-id": "inviter-1" } },
     );
     const { code } = await codeRes.json();
 
@@ -63,9 +70,10 @@ describe("invite client routes", () => {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
+        "x-end-user-id": "invitee-1",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ code, inviteeEndUserId: "invitee-1" }),
+      body: JSON.stringify({ code }),
     });
     expect(bindRes.status).toBe(200);
     const body = await bindRes.json();
@@ -78,9 +86,10 @@ describe("invite client routes", () => {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
+        "x-end-user-id": "invitee-2",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ inviteeEndUserId: "invitee-2" }),
+      body: JSON.stringify({}),
     });
     expect(res.status).toBe(400);
   });

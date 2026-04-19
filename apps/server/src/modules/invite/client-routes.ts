@@ -1,17 +1,14 @@
 /**
  * C-end client routes for the invite module.
  *
- * Mounted at /api/client/invite. All handlers use HMAC flow:
+ * Mounted at /api/client/invite. Auth pattern:
  *
- *   handler calls clientCredentialService.verifyRequest(pk, endUserId, userHash).
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
- * For my-code / summary / invitees / reset-my-code:
- *   endUserId is the calling user's own id; userHash = HMAC(endUserId, secret).
- *
- * For bind / qualify:
- *   endUserId is the invitee's id; userHash = HMAC(inviteeEndUserId, secret).
- *   These calls originate from the customer's game server (which has the secret).
- *   devMode bypasses HMAC for all routes.
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -21,13 +18,11 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { inviteService } from "./index";
 import {
   ClientBindBodySchema,
-  ClientMyCodeQuerySchema,
   ClientQualifyBodySchema,
-  ClientResetCodeBodySchema,
   ErrorResponseSchema,
   InviteCodeViewSchema,
   InviteRelationshipListSchema,
@@ -37,6 +32,16 @@ import {
 } from "./validators";
 
 const TAG = "Invite (Client)";
+
+// Shared auth header declarations for OpenAPI docs
+const authHeaders = z.object({
+  "x-api-key": z.string().openapi({ description: "Publishable key (cpk_...)" }),
+  "x-end-user-id": z.string().openapi({ description: "End user's opaque id" }),
+  "x-user-hash": z.string().optional().openapi({
+    description:
+      "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
+  }),
+});
 
 function serializeRelationship(row: {
   id: string;
@@ -110,6 +115,7 @@ const errorResponses = {
 export const inviteClientRouter = new OpenAPIHono<HonoEnv>();
 
 inviteClientRouter.use("*", requireClientCredential);
+inviteClientRouter.use("*", requireClientUser);
 
 inviteClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -125,14 +131,16 @@ inviteClientRouter.onError((err, c) => {
   throw err;
 });
 
-/* ── GET /my-code (HMAC flow) ─────────────────────────────── */
+/* ── GET /my-code ─────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
     method: "get",
     path: "/my-code",
     tags: [TAG],
-    request: { query: ClientMyCodeQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "Current invite code (generated on first call).",
@@ -142,10 +150,8 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
-    const { endUserId, userHash } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(cred.publishableKey, endUserId, userHash);
-    const orgId = cred.organizationId;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const result = await inviteService.getOrCreateMyCode(orgId, endUserId);
     return c.json(
       {
@@ -157,7 +163,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /reset-my-code (HMAC flow) ─────────────────────── */
+/* ── POST /reset-my-code ──────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -165,9 +171,7 @@ inviteClientRouter.openapi(
     path: "/reset-my-code",
     tags: [TAG],
     request: {
-      body: {
-        content: { "application/json": { schema: ClientResetCodeBodySchema } },
-      },
+      headers: authHeaders,
     },
     responses: {
       200: {
@@ -178,10 +182,9 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
-    const body = c.req.valid("json");
-    await clientCredentialService.verifyRequest(cred.publishableKey, body.endUserId, body.userHash);
-    const result = await inviteService.resetCode(cred.organizationId, body.endUserId);
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const result = await inviteService.resetCode(orgId, endUserId);
     return c.json(
       {
         code: result.code,
@@ -192,14 +195,16 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── GET /summary (HMAC flow) ─────────────────────────────── */
+/* ── GET /summary ─────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
     method: "get",
     path: "/summary",
     tags: [TAG],
-    request: { query: ClientMyCodeQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "Summary for the end user.",
@@ -209,24 +214,24 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
-    const { endUserId, userHash } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(cred.publishableKey, endUserId, userHash);
-    const summary = await inviteService.getSummary(cred.organizationId, endUserId);
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const summary = await inviteService.getSummary(orgId, endUserId);
     return c.json(serializeSummary(summary), 200);
   },
 );
 
-/* ── GET /invitees (HMAC flow) ────────────────────────────── */
-
-const InviteesQuerySchema = ClientMyCodeQuerySchema.merge(PaginationQuerySchema);
+/* ── GET /invitees ────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
     method: "get",
     path: "/invitees",
     tags: [TAG],
-    request: { query: InviteesQuerySchema },
+    request: {
+      headers: authHeaders,
+      query: PaginationQuerySchema,
+    },
     responses: {
       200: {
         description: "Paged list of users this end user has invited.",
@@ -236,19 +241,18 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
-    const { endUserId, userHash, limit, offset } = c.req.valid("query");
-    await clientCredentialService.verifyRequest(cred.publishableKey, endUserId, userHash);
-    const { items, total } = await inviteService.listMyInvitees(
-      cred.organizationId,
-      endUserId,
-      { limit, offset },
-    );
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { limit, offset } = c.req.valid("query");
+    const { items, total } = await inviteService.listMyInvitees(orgId, endUserId, {
+      limit,
+      offset,
+    });
     return c.json({ items: items.map(serializeRelationship), total }, 200);
   },
 );
 
-/* ── POST /bind (HMAC flow) ───────────────────────────────── */
+/* ── POST /bind ───────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -256,6 +260,7 @@ inviteClientRouter.openapi(
     path: "/bind",
     tags: [TAG],
     request: {
+      headers: authHeaders,
       body: {
         content: { "application/json": { schema: ClientBindBodySchema } },
       },
@@ -278,16 +283,11 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const body = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      cred.publishableKey,
-      body.inviteeEndUserId,
-      body.userHash,
-    );
-    const { relationship, alreadyBound } = await inviteService.bind(cred.organizationId, {
+    const { relationship, alreadyBound } = await inviteService.bind(orgId, {
       code: body.code,
-      inviteeEndUserId: body.inviteeEndUserId,
+      inviteeEndUserId: c.var.endUserId!,
     });
     return c.json(
       { relationship: serializeRelationship(relationship), alreadyBound },
@@ -296,7 +296,7 @@ inviteClientRouter.openapi(
   },
 );
 
-/* ── POST /qualify (HMAC flow) ────────────────────────────── */
+/* ── POST /qualify ────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
   createRoute({
@@ -304,6 +304,7 @@ inviteClientRouter.openapi(
     path: "/qualify",
     tags: [TAG],
     request: {
+      headers: authHeaders,
       body: {
         content: { "application/json": { schema: ClientQualifyBodySchema } },
       },
@@ -326,15 +327,10 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const cred = c.get("clientCredential")!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const body = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      cred.publishableKey,
-      body.inviteeEndUserId,
-      body.userHash,
-    );
-    const { relationship, alreadyQualified } = await inviteService.qualify(cred.organizationId, {
-      inviteeEndUserId: body.inviteeEndUserId,
+    const { relationship, alreadyQualified } = await inviteService.qualify(orgId, {
+      inviteeEndUserId: c.var.endUserId!,
       qualifiedReason: body.qualifiedReason ?? null,
     });
     return c.json(

@@ -331,26 +331,38 @@ registerEvent({
 | GET | `/users/:endUserId/stats` | `svc.adminGetUserStats(orgId, endUserId)` |
 | POST | `/users/:endUserId/reset-code` | `svc.adminResetUserCode(orgId, endUserId)` |
 
-### 7.2 Client Router（`/api/client/invite`，`requireClientCredential`）
+### 7.2 Client Router（`/api/client/invite`，`requireClientCredential` + `requireClientUser`）
 
-所有 handler 统一使用 **HMAC 流**：`await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash)`。devMode 绕过 HMAC。
+认证走 **header 流**（2026-04-19 重构后）：
 
-- `my-code / summary / invitees / reset-my-code`：`endUserId` 是调用者自身的 id，`userHash = HMAC(endUserId, secret)`，由游戏客户端发起。
-- `bind / qualify`：`endUserId` 是 invitee 的 id，`userHash = HMAC(inviteeEndUserId, secret)`，由客户方游戏服务器发起（服务器持有 secret）。
+- `x-api-key`：publishable key（`cpk_...`），由 `requireClientCredential` 验证，写入 `c.var.clientCredential`。
+- `x-end-user-id`：终端用户的 opaque id，长度 1–256。
+- `x-user-hash`（可选）：`HMAC-SHA256(endUserId, clientSecret)`；devMode 绕过，production 必传。
 
-| Method | Path | 认证 | Handler |
-|---|---|---|---|
-| GET | `/my-code?endUserId&userHash` | HMAC | `svc.getOrCreateMyCode(orgId, endUserId)` |
-| POST | `/reset-my-code` body `{endUserId, userHash}` | HMAC | `svc.resetCode(orgId, endUserId)` |
-| GET | `/summary?endUserId&userHash` | HMAC | `svc.getSummary(orgId, endUserId)` |
-| GET | `/invitees?endUserId&userHash&limit&offset` | HMAC | `svc.listMyInvitees(...)` |
-| POST | `/bind` body `{code, inviteeEndUserId, userHash?}` | HMAC(inviteeEndUserId) | `svc.bind(orgId, body)` |
-| POST | `/qualify` body `{inviteeEndUserId, qualifiedReason?, userHash?}` | HMAC(inviteeEndUserId) | `svc.qualify(orgId, body)` |
+`requireClientUser` 中间件统一完成 `clientCredentialService.verifyRequest` 验证并写入 `c.var.endUserId`。handler 直接读 `c.var.endUserId!`，不再内联 verifyRequest。
 
-> **为什么 bind / qualify 也走 HMAC？**  
-> `verifyRequest(pk, inviteeEndUserId, userHash)` 已经覆盖了服务器侧调用：客户方游戏服务器持有 secret，可以计算 `HMAC(inviteeEndUserId, secret)`，与终端用户身份验证使用完全相同的路径。无需额外的 `verifyServerRequest` 方法或明文 secret 传输。
+| Method | Path | 请求 header（auth） | 请求 body / query | Handler |
+|---|---|---|---|---|
+| GET | `/my-code` | `x-end-user-id` + `x-user-hash?` | — | `svc.getOrCreateMyCode(orgId, endUserId)` |
+| POST | `/reset-my-code` | `x-end-user-id` + `x-user-hash?` | — | `svc.resetCode(orgId, endUserId)` |
+| GET | `/summary` | `x-end-user-id` + `x-user-hash?` | — | `svc.getSummary(orgId, endUserId)` |
+| GET | `/invitees` | `x-end-user-id` + `x-user-hash?` | `?limit&offset` | `svc.listMyInvitees(...)` |
+| POST | `/bind` | `x-end-user-id` + `x-user-hash?` | `{ code }` | `svc.bind(orgId, { code, inviteeEndUserId })` |
+| POST | `/qualify` | `x-end-user-id` + `x-user-hash?` | `{ qualifiedReason? }` | `svc.qualify(orgId, { inviteeEndUserId, qualifiedReason })` |
 
-### 7.3 Mount
+> **注意（bind / qualify）**：`x-end-user-id` 填 invitee 的 id，`x-user-hash = HMAC(inviteeEndUserId, secret)`。客户方游戏服务器持有 secret，代 invitee 发起调用——与 my-code / summary 使用完全相同的验证路径，无需额外的 `verifyServerRequest` 方法。
+
+### 7.3 Middleware 模式说明
+
+`requireClientUser`（`apps/server/src/middleware/require-client-user.ts`）是本次重构引入的新中间件，定义了"C 端 end-user 认证"的标准模式：
+
+1. **依赖 `requireClientCredential` 在前**：先验 publishable key（`c.var.clientCredential`），再读 `x-end-user-id` / `x-user-hash`。
+2. **HMAC 验证集中一处**：不再在每个 handler 内联 `verifyRequest`——中间件处理成功后，handler 只需读 `c.var.endUserId!`。
+3. **body / query 只含业务数据**：auth 信息从请求参数中彻底移除，降低日志/审计时的误读风险，也让 OpenAPI schema 更清晰。
+4. **可选挂载**：不需要 end-user 上下文的路由（如未来的"公开租户配置读"）只挂 `requireClientCredential`，不挂 `requireClientUser`。
+5. **invite 是 reference implementation**：其他模块（check-in / friend / currency 等）将按相同模式在后续 follow-up 中迁移。
+
+### 7.5 Mount
 
 `apps/server/src/index.ts`：
 
