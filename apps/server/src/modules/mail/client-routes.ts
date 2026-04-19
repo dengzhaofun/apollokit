@@ -1,13 +1,14 @@
 /**
  * C-end client routes for the mail module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  * Exposes the inbox surface:
- *   - GET /messages          — list inbox, optional `since` to filter broadcasts
- *   - GET /messages/:id      — single mail detail (does NOT auto-mark read)
+ *   - GET /messages            — list inbox, optional `since` to filter broadcasts
+ *   - GET /messages/:id        — single mail detail (does NOT auto-mark read)
  *   - POST /messages/:id/read  — idempotent read mark
  *   - POST /messages/:id/claim — atomic reward claim
  *
@@ -21,12 +22,11 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import type { InboxMessage, MailUserState } from "./types";
 import { mailService } from "./index";
 import {
   ClaimResultResponseSchema,
-  EndUserBodySchema,
   ErrorResponseSchema,
   IdParamSchema,
   InboxItemResponseSchema,
@@ -86,6 +86,7 @@ const errorResponses = {
 export const mailClientRouter = new OpenAPIHono<HonoEnv>();
 
 mailClientRouter.use("*", requireClientCredential);
+mailClientRouter.use("*", requireClientUser);
 
 mailClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -118,17 +119,9 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, since, limit } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { since, limit } = c.req.valid("query");
     const { items } = await mailService.listInbox(orgId, endUserId, {
       since: since ? new Date(since) : undefined,
       limit,
@@ -146,7 +139,6 @@ mailClientRouter.openapi(
     summary: "Get a single inbox message (does not auto-mark read)",
     request: {
       params: IdParamSchema,
-      query: InboxQuerySchema.pick({ endUserId: true }),
     },
     responses: {
       200: {
@@ -157,18 +149,9 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const row = await mailService.getInboxMessage(orgId, endUserId, id);
     return c.json(serializeInbox(row), 200);
   },
@@ -183,7 +166,6 @@ mailClientRouter.openapi(
     summary: "Mark a mail message as read (idempotent)",
     request: {
       params: IdParamSchema,
-      body: { content: { "application/json": { schema: EndUserBodySchema } } },
     },
     responses: {
       200: {
@@ -196,17 +178,9 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const state = await mailService.markRead(orgId, endUserId, id);
     return c.json(serializeUserState(state), 200);
   },
@@ -221,7 +195,6 @@ mailClientRouter.openapi(
     summary: "Claim rewards attached to a mail message",
     request: {
       params: IdParamSchema,
-      body: { content: { "application/json": { schema: EndUserBodySchema } } },
     },
     responses: {
       200: {
@@ -232,17 +205,9 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await mailService.claim(orgId, endUserId, id);
     return c.json(
       {

@@ -394,23 +394,8 @@ export const TaskIdParamSchema = z.object({
 
 // ─── Client body schemas ──────────────────────────────────────────
 
-export const ClientUserHashBodySchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode.",
-    }),
-  })
-  .openapi("TaskClientUserHashBody");
-
 export const EventBodySchema = z
   .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     eventName: z.string().min(1).max(128).openapi({
       description: "Business event name, e.g. 'purchase', 'login', 'battle_win'.",
       example: "purchase",
@@ -427,8 +412,6 @@ export const EventBodySchema = z
 
 export const TaskListBodySchema = z
   .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     categoryId: z.string().uuid().optional().openapi({
       description: "Filter by category.",
     }),
@@ -441,17 +424,8 @@ export const TaskListBodySchema = z
   })
   .openapi("TaskListBody");
 
-export const ClaimBodySchema = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
-  })
-  .openapi("TaskClaimBody");
-
 export const ClaimTierBodySchema = z
   .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     taskId: z.string().uuid().openapi({
       description: "Task definition id whose tier is being claimed.",
     }),

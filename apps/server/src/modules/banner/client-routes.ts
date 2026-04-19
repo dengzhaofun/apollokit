@@ -1,33 +1,37 @@
 /**
  * C-end client routes for the banner module.
  *
- * Protected by `requireClientCredential` (cpk_ publishable key in
- * x-api-key). HMAC verification of endUserId is done inline via the
- * client credential service — same pattern as mail/shop client routes.
+ * Mounted at /api/client/banner. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  * Surface:
- *   GET /groups/{alias}?endUserId=...
+ *   GET /groups/{alias}
  *     Returns the group metadata + currently-visible banners for the
  *     given end user. Groups without an alias are unreachable here —
  *     this is the "publish gate" documented in the module header.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { bannerService } from "./index";
 import {
   ClientBannerGroupResponseSchema,
-  ClientGroupQuerySchema,
   ErrorResponseSchema,
   GroupAliasParamSchema,
 } from "./validators";
 
 const TAG = "Banner (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 const errorResponses = {
   400: {
@@ -47,6 +51,7 @@ const errorResponses = {
 export const bannerClientRouter = new OpenAPIHono<HonoEnv>();
 
 bannerClientRouter.use("*", requireClientCredential);
+bannerClientRouter.use("*", requireClientUser);
 
 bannerClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -69,8 +74,8 @@ bannerClientRouter.openapi(
     tags: [TAG],
     summary: "Resolve a banner group by alias for an end user",
     request: {
+      headers: authHeaders,
       params: GroupAliasParamSchema,
-      query: ClientGroupQuerySchema,
     },
     responses: {
       200: {
@@ -83,18 +88,9 @@ bannerClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { alias } = c.req.valid("param");
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const group = await bannerService.getClientGroupByAlias(
       orgId,
       alias,

@@ -1,10 +1,14 @@
 /**
  * C-end client routes for the item module.
  *
- * Protected by `requireClientCredential` — requires cpk_ publishable key.
- * HMAC verification of endUserId is done inline.
+ * Mounted at /api/client/item. Auth pattern:
  *
- * Exposes read-only inventory queries for end users.
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -14,7 +18,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { lotteryService } from "../lottery";
 import { itemService } from "./index";
 import {
@@ -42,18 +46,7 @@ const errorResponses = {
   },
 };
 
-const ClientEndUserParam = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "path" },
-    description: "The end user's business id.",
-  }),
-});
-
-const ClientBalanceParam = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "path" },
-    description: "The end user's business id.",
-  }),
+const BalanceKeyParam = z.object({
   key: z.string().min(1).openapi({
     param: { name: "key", in: "path" },
     description: "Definition id or alias.",
@@ -70,6 +63,7 @@ const DefinitionIdQuery = z.object({
 export const itemClientRouter = new OpenAPIHono<HonoEnv>();
 
 itemClientRouter.use("*", requireClientCredential);
+itemClientRouter.use("*", requireClientUser);
 
 itemClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -85,15 +79,14 @@ itemClientRouter.onError((err, c) => {
   throw err;
 });
 
-// GET /users/:endUserId/inventory
+// GET /inventory
 itemClientRouter.openapi(
   createRoute({
     method: "get",
-    path: "/users/{endUserId}/inventory",
+    path: "/inventory",
     tags: [TAG],
-    summary: "Get an end user's inventory",
+    summary: "Get the caller's inventory",
     request: {
-      params: ClientEndUserParam,
       query: DefinitionIdQuery,
     },
     responses: {
@@ -105,17 +98,8 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("param");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { definitionId } = c.req.valid("query");
     const items = await itemService.getInventory({
       organizationId: orgId,
@@ -126,15 +110,15 @@ itemClientRouter.openapi(
   },
 );
 
-// GET /users/:endUserId/balance/:key
+// GET /balance/:key
 itemClientRouter.openapi(
   createRoute({
     method: "get",
-    path: "/users/{endUserId}/balance/{key}",
+    path: "/balance/{key}",
     tags: [TAG],
-    summary: "Get an end user's balance for a specific item",
+    summary: "Get the caller's balance for a specific item",
     request: {
-      params: ClientBalanceParam,
+      params: BalanceKeyParam,
     },
     responses: {
       200: {
@@ -145,17 +129,9 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, key } = c.req.valid("param");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { key } = c.req.valid("param");
     const def = await itemService.getDefinition(orgId, key);
     const balance = await itemService.getBalance({
       organizationId: orgId,
@@ -187,17 +163,9 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { definitionId, endUserId, userHash, idempotencyKey } =
-      c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { definitionId, idempotencyKey } = c.req.valid("json");
 
     // 1. Look up the item definition
     const def = await itemService.getDefinition(orgId, definitionId);

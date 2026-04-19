@@ -1,12 +1,14 @@
 /**
  * C-end client routes for the guild module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Mounted at /api/client/guild. Auth pattern:
  *
- * End users identify themselves via x-end-user-id and x-user-hash headers
- * (for GET) or endUserId/userHash body fields (for POST/PUT).
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -16,7 +18,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { guildService } from "./index";
 import {
   ContributeSchema,
@@ -37,9 +39,14 @@ import {
   MemberUserIdParamSchema,
   RequestIdParamSchema,
   UpdateGuildSchema,
+  ApplyToJoinSchema,
+  InviteUserSchema,
+  TransferLeaderSchema,
 } from "./validators";
 
 const TAG = "Guild (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 // ─── Serializers ─────────────────────────────────────────────────
 
@@ -184,96 +191,33 @@ const errorResponses = {
   },
 };
 
-// ─── HMAC helper ─────────────────────────────────────────────────
+// ─── Composed body schemas (no auth fields) ──────────────────────
 
-/**
- * Extract endUserId + userHash from request. POST/PUT reads from body,
- * GET reads from headers.
- */
-async function verifyEndUser(c: { req: { header: (name: string) => string | undefined } }, publishableKey: string, endUserId: string, userHash?: string) {
-  await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-}
+const ClientCreateGuildSchema = CreateGuildSchema.openapi("ClientCreateGuild");
+const ClientUpdateGuildSchema = UpdateGuildSchema.openapi("ClientUpdateGuild");
+const ClientContributeSchema = ContributeSchema.openapi("ClientContribute");
 
-// ─── Client body schemas with endUserId/userHash ─────────────────
+const MyGuildResponseSchema = z
+  .object({
+    guild: GuildResponseSchema,
+    member: GuildMemberResponseSchema,
+  })
+  .nullable()
+  .openapi("MyGuildResponse");
 
-const ClientCreateGuildSchema = CreateGuildSchema.extend({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientCreateGuild");
-
-const ClientApplySchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-  message: z.string().max(500).nullable().optional(),
-}).openapi("ClientApplyToJoin");
-
-const ClientLeaveSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientLeaveGuild");
-
-const ClientDisbandSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientDisbandGuild");
-
-const ClientAcceptRejectRequestSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientAcceptRejectRequest");
-
-const ClientInviteSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-  targetUserId: z.string().min(1).max(256),
-}).openapi("ClientInviteUser");
-
-const ClientAcceptInvitationSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientAcceptInvitation");
-
-const ClientRejectInvitationSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientRejectInvitation");
-
-const ClientMemberActionSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientMemberAction");
-
-const ClientTransferLeaderSchema = z.object({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-  newLeaderUserId: z.string().min(1).max(256),
-}).openapi("ClientTransferLeader");
-
-const ClientUpdateGuildSchema = UpdateGuildSchema.extend({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientUpdateGuild");
-
-const ClientContributeSchema = ContributeSchema.extend({
-  endUserId: z.string().min(1).max(256),
-  userHash: z.string().optional(),
-}).openapi("ClientContribute");
-
-const MyGuildResponseSchema = z.object({
-  guild: GuildResponseSchema,
-  member: GuildMemberResponseSchema,
-}).nullable().openapi("MyGuildResponse");
-
-const CreateGuildResponseSchema = z.object({
-  guild: GuildResponseSchema,
-  member: GuildMemberResponseSchema,
-}).openapi("CreateGuildResponse");
+const CreateGuildResponseSchema = z
+  .object({
+    guild: GuildResponseSchema,
+    member: GuildMemberResponseSchema,
+  })
+  .openapi("CreateGuildResponse");
 
 // ─── Router ──────────────────────────────────────────────────────
 
 export const guildClientRouter = new OpenAPIHono<HonoEnv>();
 
 guildClientRouter.use("*", requireClientCredential);
+guildClientRouter.use("*", requireClientUser);
 
 guildClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -297,6 +241,7 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Create a guild",
     request: {
+      headers: authHeaders,
       body: {
         content: { "application/json": { schema: ClientCreateGuildSchema } },
       },
@@ -310,12 +255,10 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const body = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, body.endUserId, body.userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
-    const { guild, member } = await guildService.createGuild(orgId, body.endUserId, {
+    const { guild, member } = await guildService.createGuild(orgId, endUserId, {
       name: body.name,
       description: body.description,
       icon: body.icon,
@@ -336,7 +279,10 @@ guildClientRouter.openapi(
     path: "/guilds",
     tags: [TAG],
     summary: "List active guilds",
-    request: { query: GuildListQuerySchema },
+    request: {
+      headers: authHeaders,
+      query: GuildListQuerySchema,
+    },
     responses: {
       200: {
         description: "OK",
@@ -346,7 +292,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { search, limit, offset } = c.req.valid("query");
     const result = await guildService.listGuilds(orgId, { search, limit, offset });
     return c.json(
@@ -363,7 +309,10 @@ guildClientRouter.openapi(
     path: "/guilds/{id}",
     tags: [TAG],
     summary: "Get guild details",
-    request: { params: GuildIdParamSchema },
+    request: {
+      headers: authHeaders,
+      params: GuildIdParamSchema,
+    },
     responses: {
       200: {
         description: "OK",
@@ -373,7 +322,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const row = await guildService.getGuild(orgId, id);
     return c.json(serializeGuild(row), 200);
@@ -387,6 +336,9 @@ guildClientRouter.openapi(
     path: "/my-guild",
     tags: [TAG],
     summary: "Get the current user's guild",
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -396,16 +348,8 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const endUserId = c.req.header("x-end-user-id");
-    const userHash = c.req.header("x-user-hash");
-
-    if (!endUserId) {
-      return c.json({ error: "x-end-user-id header required", requestId: c.get("requestId") }, 400);
-    }
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const result = await guildService.getMyGuild(orgId, endUserId);
     if (!result) {
       return c.json(null, 200);
@@ -425,9 +369,10 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Apply to join a guild",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       body: {
-        content: { "application/json": { schema: ClientApplySchema } },
+        content: { "application/json": { schema: ApplyToJoinSchema } },
       },
     },
     responses: {
@@ -439,12 +384,10 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash, message } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { message } = c.req.valid("json");
     const req = await guildService.applyToJoin(orgId, id, endUserId, message);
     return c.json(serializeJoinRequest(req), 200);
   },
@@ -458,10 +401,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Leave a guild",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientLeaveSchema } },
-      },
     },
     responses: {
       200: {
@@ -472,12 +413,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     await guildService.leaveGuild(orgId, id, endUserId);
     return c.json({ success: true }, 200);
   },
@@ -491,10 +429,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Disband a guild (leader only)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientDisbandSchema } },
-      },
     },
     responses: {
       200: {
@@ -505,12 +441,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     // Verify the user is the leader before allowing disband
     const myGuild = await guildService.getMyGuild(orgId, endUserId);
     if (!myGuild || myGuild.guild.id !== id || myGuild.member.role !== "leader") {
@@ -529,6 +462,7 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "List join requests for a guild (officer+)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       query: JoinRequestListQuerySchema,
     },
@@ -541,10 +475,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const { status, limit, offset } = c.req.valid("query");
-    // No HMAC for list operations — the publishable key scopes to the org
     const rows = await guildService.listJoinRequests(orgId, id, { status, limit, offset });
     return c.json({ items: rows.map(serializeJoinRequest) }, 200);
   },
@@ -558,10 +491,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Accept a join request (officer+)",
     request: {
+      headers: authHeaders,
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientAcceptRejectRequestSchema } },
-      },
     },
     responses: {
       200: {
@@ -572,12 +503,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const { request } = await guildService.acceptJoinRequest(orgId, id, endUserId);
     return c.json(serializeJoinRequest(request), 200);
   },
@@ -591,10 +519,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Reject a join request (officer+)",
     request: {
+      headers: authHeaders,
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientAcceptRejectRequestSchema } },
-      },
     },
     responses: {
       200: {
@@ -605,12 +531,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const req = await guildService.rejectJoinRequest(orgId, id, endUserId);
     return c.json(serializeJoinRequest(req), 200);
   },
@@ -624,9 +547,10 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Invite a user to the guild (officer+)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       body: {
-        content: { "application/json": { schema: ClientInviteSchema } },
+        content: { "application/json": { schema: InviteUserSchema } },
       },
     },
     responses: {
@@ -638,12 +562,10 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash, targetUserId } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { targetUserId } = c.req.valid("json");
     const req = await guildService.inviteUser(orgId, id, endUserId, targetUserId);
     return c.json(serializeJoinRequest(req), 200);
   },
@@ -657,10 +579,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Accept a guild invitation",
     request: {
+      headers: authHeaders,
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientAcceptInvitationSchema } },
-      },
     },
     responses: {
       200: {
@@ -671,12 +591,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const { request } = await guildService.acceptInvitation(orgId, id, endUserId);
     return c.json(serializeJoinRequest(request), 200);
   },
@@ -690,10 +607,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Reject a guild invitation",
     request: {
+      headers: authHeaders,
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientRejectInvitationSchema } },
-      },
     },
     responses: {
       200: {
@@ -704,12 +619,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const req = await guildService.rejectInvitation(orgId, id, endUserId);
     return c.json(serializeJoinRequest(req), 200);
   },
@@ -723,10 +635,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Promote a member to officer (leader only)",
     request: {
+      headers: authHeaders,
       params: MemberUserIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientMemberActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -737,12 +647,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const member = await guildService.promoteMember(orgId, id, endUserId, userId);
     return c.json(serializeMember(member), 200);
   },
@@ -756,10 +663,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Demote an officer to member (leader only)",
     request: {
+      headers: authHeaders,
       params: MemberUserIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientMemberActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -770,12 +675,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const member = await guildService.demoteMember(orgId, id, endUserId, userId);
     return c.json(serializeMember(member), 200);
   },
@@ -789,10 +691,8 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Kick a member from the guild (officer+)",
     request: {
+      headers: authHeaders,
       params: MemberUserIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientMemberActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -803,12 +703,9 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     await guildService.kickMember(orgId, id, endUserId, userId);
     return c.json({ success: true }, 200);
   },
@@ -822,9 +719,10 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Transfer guild leadership (leader only)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       body: {
-        content: { "application/json": { schema: ClientTransferLeaderSchema } },
+        content: { "application/json": { schema: TransferLeaderSchema } },
       },
     },
     responses: {
@@ -836,12 +734,10 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash, newLeaderUserId } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { newLeaderUserId } = c.req.valid("json");
     await guildService.transferLeader(orgId, id, endUserId, newLeaderUserId);
     return c.json({ success: true }, 200);
   },
@@ -855,6 +751,7 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Update guild info (leader/officer)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       body: {
         content: { "application/json": { schema: ClientUpdateGuildSchema } },
@@ -869,14 +766,12 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, body.endUserId, body.userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     // Verify the user is officer+ in this guild
-    const myGuild = await guildService.getMyGuild(orgId, body.endUserId);
+    const myGuild = await guildService.getMyGuild(orgId, endUserId);
     if (!myGuild || myGuild.guild.id !== id) {
       return c.json({ error: "not a member of this guild", code: "guild.not_member", requestId: c.get("requestId") }, 403);
     }
@@ -904,6 +799,7 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "Contribute to the guild (member)",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       body: {
         content: { "application/json": { schema: ClientContributeSchema } },
@@ -918,12 +814,10 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash, delta, source, sourceId } = c.req.valid("json");
-    await verifyEndUser(c, publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { delta, source, sourceId } = c.req.valid("json");
     const log = await guildService.contribute(orgId, id, endUserId, delta, source, sourceId);
     return c.json(serializeContributionLog(log), 200);
   },
@@ -937,6 +831,7 @@ guildClientRouter.openapi(
     tags: [TAG],
     summary: "List contribution logs for a guild",
     request: {
+      headers: authHeaders,
       params: GuildIdParamSchema,
       query: ContributionListQuerySchema,
     },
@@ -949,7 +844,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await guildService.listContributions(orgId, id, { limit, offset });
@@ -964,7 +859,10 @@ guildClientRouter.openapi(
     path: "/guilds/{id}/members",
     tags: [TAG],
     summary: "List members of a guild",
-    request: { params: GuildIdParamSchema },
+    request: {
+      headers: authHeaders,
+      params: GuildIdParamSchema,
+    },
     responses: {
       200: {
         description: "OK",
@@ -974,7 +872,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const rows = await guildService.listMembers(orgId, id);
     return c.json({ items: rows.map(serializeMember) }, 200);

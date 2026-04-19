@@ -1,9 +1,14 @@
 /**
  * C-end client routes for the friend module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Mounted at /api/client/friend. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -12,15 +17,12 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { friendService } from "./index";
 import {
-  ClientActionSchema,
   ClientBlockSchema,
   ClientSendRequestSchema,
-  ClientUnblockSchema,
   BlockedUserIdParamSchema,
-  EndUserQuerySchema,
   ErrorResponseSchema,
   FriendBlockListSchema,
   FriendRelationshipListSchema,
@@ -116,6 +118,7 @@ const errorResponses = {
 export const friendClientRouter = new OpenAPIHono<HonoEnv>();
 
 friendClientRouter.use("*", requireClientCredential);
+friendClientRouter.use("*", requireClientUser);
 
 friendClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -156,12 +159,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, toUserId, userHash, message } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { toUserId, message } = c.req.valid("json");
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.sendRequest(orgId, endUserId, toUserId, message);
     return c.json(serializeRequest(row), 201);
   },
@@ -174,7 +174,7 @@ friendClientRouter.openapi(
     path: "/requests/incoming",
     tags: [TAG],
     summary: "List incoming pending friend requests",
-    request: { query: EndUserQuerySchema },
+    request: {},
     responses: {
       200: {
         description: "OK",
@@ -184,13 +184,8 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listIncomingRequests(orgId, endUserId);
     return c.json({ items: rows.map(serializeRequest) }, 200);
   },
@@ -203,7 +198,7 @@ friendClientRouter.openapi(
     path: "/requests/outgoing",
     tags: [TAG],
     summary: "List outgoing pending friend requests",
-    request: { query: EndUserQuerySchema },
+    request: {},
     responses: {
       200: {
         description: "OK",
@@ -213,13 +208,8 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listOutgoingRequests(orgId, endUserId);
     return c.json({ items: rows.map(serializeRequest) }, 200);
   },
@@ -234,9 +224,6 @@ friendClientRouter.openapi(
     summary: "Accept a friend request",
     request: {
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -249,13 +236,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.acceptRequest(orgId, id, endUserId);
     return c.json(serializeRequest(row), 200);
   },
@@ -270,9 +253,6 @@ friendClientRouter.openapi(
     summary: "Reject a friend request",
     request: {
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -285,13 +265,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.rejectRequest(orgId, id, endUserId);
     return c.json(serializeRequest(row), 200);
   },
@@ -306,9 +282,6 @@ friendClientRouter.openapi(
     summary: "Cancel a friend request (sender only)",
     request: {
       params: RequestIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientActionSchema } },
-      },
     },
     responses: {
       200: {
@@ -321,13 +294,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.cancelRequest(orgId, id, endUserId);
     return c.json(serializeRequest(row), 200);
   },
@@ -343,7 +312,7 @@ friendClientRouter.openapi(
     tags: [TAG],
     summary: "List friends for an end user",
     request: {
-      query: EndUserQuerySchema.merge(PaginationQuerySchema),
+      query: PaginationQuerySchema,
     },
     responses: {
       200: {
@@ -358,13 +327,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, limit, offset } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { limit, offset } = c.req.valid("query");
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listFriends(orgId, endUserId, { limit, offset });
     return c.json({ items: rows.map(serializeRelationship), total: rows.length }, 200);
   },
@@ -379,9 +344,6 @@ friendClientRouter.openapi(
     summary: "Remove a friend",
     request: {
       params: RelationshipIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientActionSchema } },
-      },
     },
     responses: {
       204: { description: "Deleted" },
@@ -389,13 +351,8 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     await friendService.removeFriend(orgId, id);
     return c.body(null, 204);
   },
@@ -422,13 +379,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, withUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { withUserId } = c.req.valid("query");
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.getMutualFriends(orgId, endUserId, withUserId);
     // Raw SQL returns snake_case — map to camelCase
     const items = rows.map((r) => ({
@@ -463,12 +416,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, blockedUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { blockedUserId } = c.req.valid("json");
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     await friendService.blockUser(orgId, endUserId, blockedUserId);
     return c.body(null, 204);
   },
@@ -483,9 +433,6 @@ friendClientRouter.openapi(
     summary: "Unblock a user",
     request: {
       params: BlockedUserIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClientUnblockSchema } },
-      },
     },
     responses: {
       204: { description: "Unblocked" },
@@ -493,13 +440,9 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { blockedUserId } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     await friendService.unblockUser(orgId, endUserId, blockedUserId);
     return c.body(null, 204);
   },
@@ -512,7 +455,7 @@ friendClientRouter.openapi(
     path: "/blocks",
     tags: [TAG],
     summary: "List blocked users",
-    request: { query: EndUserQuerySchema },
+    request: {},
     responses: {
       200: {
         description: "OK",
@@ -522,13 +465,8 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const endUserId = c.var.endUserId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listBlocks(orgId, endUserId);
     return c.json({ items: rows.map(serializeBlock) }, 200);
   },

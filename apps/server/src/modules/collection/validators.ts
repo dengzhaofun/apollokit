@@ -297,13 +297,6 @@ export const MilestoneIdParamSchema = z.object({
     .openapi({ param: { name: "id", in: "path" } }),
 });
 
-export const EndUserQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The SaaS tenant's business user id.",
-  }),
-});
-
 export const ClientAlbumKeyParamSchema = z.object({
   key: z.string().min(1).openapi({ param: { name: "key", in: "path" } }),
 });
@@ -314,21 +307,6 @@ export const ClientMilestoneIdParamSchema = z.object({
     .uuid()
     .openapi({ param: { name: "id", in: "path" } }),
 });
-
-// ─── Client body schemas ──────────────────────────────────────────
-
-export const ClientUserHashBodySchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description:
-        "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-    }),
-  })
-  .openapi("CollectionClientUserHashBody");
 
 // ─── Response schemas ─────────────────────────────────────────────
 

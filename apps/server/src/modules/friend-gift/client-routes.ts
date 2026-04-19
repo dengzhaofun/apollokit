@@ -1,9 +1,15 @@
 /**
  * C-end client routes for the friend gift module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Mounted at /api/client/friend-gift. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
+ * (the caller / sender) from c.var.endUserId!. Receiver fields (receiverUserId) stay
+ * in the request body/query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -13,7 +19,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { friendGiftService } from "./index";
 import {
   ClientClaimGiftSchema,
@@ -27,6 +33,8 @@ import {
 } from "./validators";
 
 const TAG = "Friend Gift (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 function serializePackage(row: {
   id: string;
@@ -109,16 +117,10 @@ const errorResponses = {
   },
 };
 
-const EndUserQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The end user's business id.",
-  }),
-});
-
 export const friendGiftClientRouter = new OpenAPIHono<HonoEnv>();
 
 friendGiftClientRouter.use("*", requireClientCredential);
+friendGiftClientRouter.use("*", requireClientUser);
 
 friendGiftClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -141,6 +143,9 @@ friendGiftClientRouter.openapi(
     path: "/packages",
     tags: [TAG],
     summary: "List available gift packages",
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -150,7 +155,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendGiftService.listPackages(orgId, {
       activeOnly: true,
     });
@@ -166,6 +171,7 @@ friendGiftClientRouter.openapi(
     tags: [TAG],
     summary: "Send a gift to a friend",
     request: {
+      headers: authHeaders,
       body: {
         content: { "application/json": { schema: ClientSendGiftSchema } },
       },
@@ -179,17 +185,9 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, packageId, receiverUserId, message } =
-      c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { packageId, receiverUserId, message } = c.req.valid("json");
     const send = await friendGiftService.sendGift(orgId, endUserId, {
       packageId,
       receiverUserId,
@@ -206,7 +204,9 @@ friendGiftClientRouter.openapi(
     path: "/inbox",
     tags: [TAG],
     summary: "List pending received gifts",
-    request: { query: EndUserQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -216,17 +216,8 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listInbox(orgId, endUserId);
     return c.json({ items: rows.map(serializeSend) }, 200);
   },
@@ -239,7 +230,9 @@ friendGiftClientRouter.openapi(
     path: "/sent",
     tags: [TAG],
     summary: "List sent gift history",
-    request: { query: EndUserQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -249,17 +242,8 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listSent(orgId, endUserId);
     return c.json({ items: rows.map(serializeSend) }, 200);
   },
@@ -273,6 +257,7 @@ friendGiftClientRouter.openapi(
     tags: [TAG],
     summary: "Claim a received gift",
     request: {
+      headers: authHeaders,
       params: SendIdParamSchema,
       body: {
         content: { "application/json": { schema: ClientClaimGiftSchema } },
@@ -287,17 +272,9 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const claimed = await friendGiftService.claimGift(orgId, id, endUserId);
     return c.json(serializeSend(claimed), 200);
   },
@@ -310,7 +287,9 @@ friendGiftClientRouter.openapi(
     path: "/daily-status",
     tags: [TAG],
     summary: "Get today's gift send/receive counts",
-    request: { query: EndUserQuerySchema },
+    request: {
+      headers: authHeaders,
+    },
     responses: {
       200: {
         description: "OK",
@@ -322,17 +301,8 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const status = await friendGiftService.getDailyStatus(orgId, endUserId);
     return c.json(status, 200);
   },

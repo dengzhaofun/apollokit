@@ -13,7 +13,7 @@ export const UpsertInviteSettingsSchema = z
       .refine((n) => n % 4 === 0, { message: "codeLength must be a multiple of 4" })
       .optional(),
     allowSelfInvite: z.boolean().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi("UpsertInviteSettingsInput");
 
@@ -25,7 +25,7 @@ export const InviteSettingsViewSchema = z
     enabled: z.boolean(),
     codeLength: z.number().int(),
     allowSelfInvite: z.boolean(),
-    metadata: z.record(z.unknown()).nullable(),
+    metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
   })
@@ -52,7 +52,7 @@ export const InviteRelationshipViewSchema = z
     boundAt: z.string(),
     qualifiedAt: z.string().nullable(),
     qualifiedReason: z.string().nullable(),
-    metadata: z.record(z.unknown()).nullable(),
+    metadata: z.record(z.string(), z.unknown()).nullable(),
   })
   .openapi("InviteRelationshipView");
 

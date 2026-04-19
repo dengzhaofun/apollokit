@@ -1,17 +1,20 @@
 /**
  * C-end client routes for the cdkey module.
  *
- * Protected by `requireClientCredential`. HMAC verification of the endUserId
- * is delegated to clientCredentialService.verifyRequest() inline.
+ * Protected by `requireClientCredential` + `requireClientUser`. The end user
+ * identity (x-end-user-id + x-user-hash HMAC) is verified by middleware, so
+ * handlers read orgId from c.get("clientCredential")!.organizationId and
+ * endUserId from c.var.endUserId!. No inline verifyRequest calls.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { cdkeyService } from "./index";
 import {
   ClientRedeemSchema,
@@ -20,6 +23,8 @@ import {
 } from "./validators";
 
 const TAG = "CDKey (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 const errorResponses = {
   400: {
@@ -43,6 +48,7 @@ const errorResponses = {
 export const cdkeyClientRouter = new OpenAPIHono<HonoEnv>();
 
 cdkeyClientRouter.use("*", requireClientCredential);
+cdkeyClientRouter.use("*", requireClientUser);
 
 cdkeyClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -65,6 +71,7 @@ cdkeyClientRouter.openapi(
     tags: [TAG],
     summary: "Redeem a code for an end user",
     request: {
+      headers: authHeaders,
       body: {
         content: { "application/json": { schema: ClientRedeemSchema } },
       },
@@ -78,16 +85,10 @@ cdkeyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { code, endUserId, userHash, idempotencyKey } = c.req.valid("json");
+    const endUserId = c.var.endUserId!;
+    const { code, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const result = await cdkeyService.redeem({
       organizationId: orgId,
       endUserId,

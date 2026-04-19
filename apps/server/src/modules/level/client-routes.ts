@@ -1,9 +1,13 @@
 /**
  * C-end client routes for the level module.
  *
- * Protected by `requireClientCredential` — requires a valid publishable
- * key (cpk_) in `x-api-key`. Per-endUser HMAC verification is inline via
- * `clientCredentialService.verifyRequest`.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
+ * from c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
  *   POST /configs                          → config list + per-user summary
@@ -23,12 +27,11 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { levelService } from "./index";
 import {
   ClientConfigListResponseSchema,
   ClientConfigOverviewSchema,
-  ClientUserHashBodySchema,
   ClaimRewardsBodySchema,
   ClaimRewardsResponseSchema,
   ConfigKeyParamSchema,
@@ -207,6 +210,7 @@ const ClientLevelDetailSchema = z
 export const levelClientRouter = new OpenAPIHono<HonoEnv>();
 
 levelClientRouter.use("*", requireClientCredential);
+levelClientRouter.use("*", requireClientUser);
 
 levelClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -230,13 +234,6 @@ levelClientRouter.openapi(
     path: "/configs",
     tags: [TAG],
     summary: "List configs with per-user progress summary",
-    request: {
-      body: {
-        content: {
-          "application/json": { schema: ClientUserHashBodySchema },
-        },
-      },
-    },
     responses: {
       200: {
         description: "OK",
@@ -248,15 +245,8 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const configs = await levelService.listConfigs(orgId);
 
     // Build per-user summaries by fetching overview for each config
@@ -292,11 +282,6 @@ levelClientRouter.openapi(
     summary: "Full config detail — levels, stages, per-user progress",
     request: {
       params: ConfigKeyParamSchema,
-      body: {
-        content: {
-          "application/json": { schema: ClientUserHashBodySchema },
-        },
-      },
     },
     responses: {
       200: {
@@ -309,15 +294,8 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { key } = c.req.valid("param");
     const overview = await levelService.getConfigOverview(
       orgId,
@@ -384,11 +362,6 @@ levelClientRouter.openapi(
     summary: "Single level detail with unlock status and progress",
     request: {
       params: LevelIdParamSchema,
-      body: {
-        content: {
-          "application/json": { schema: ClientUserHashBodySchema },
-        },
-      },
     },
     responses: {
       200: {
@@ -401,15 +374,8 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const detail = await levelService.getLevelDetail(orgId, endUserId, id);
 
@@ -479,15 +445,9 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, stars, score } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { stars, score } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const result = await levelService.reportClear(orgId, endUserId, id, {
       stars: stars ?? 0,
@@ -534,15 +494,9 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, type, starTier } = c.req.valid("json");
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { type, starTier } = c.req.valid("json");
     const { id } = c.req.valid("param");
 
     const input =

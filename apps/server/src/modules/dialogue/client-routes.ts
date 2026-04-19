@@ -1,9 +1,11 @@
 /**
  * C-end client routes for the dialogue module.
  *
- * Protected by `requireClientCredential`. HMAC verification of endUserId
- * is done inline via the client credential service — mirroring mail and
- * shop client routers.
+ * Mounted at /api/client/dialogue. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  *   GET  /scripts/{alias}/start        — begin or resume
  *   POST /scripts/{alias}/advance      — pick an option / step forward
@@ -19,7 +21,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { dialogueService } from "./index";
 import type { DialogueSessionView } from "./types";
 import {
@@ -27,8 +29,6 @@ import {
   AliasParamSchema,
   DialogueSessionResponseSchema,
   ErrorResponseSchema,
-  ResetDialogueSchema,
-  StartDialogueQuerySchema,
 } from "./validators";
 
 const TAG = "Dialogue (Client)";
@@ -66,6 +66,7 @@ const errorResponses = {
 export const dialogueClientRouter = new OpenAPIHono<HonoEnv>();
 
 dialogueClientRouter.use("*", requireClientCredential);
+dialogueClientRouter.use("*", requireClientUser);
 
 dialogueClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -89,7 +90,6 @@ dialogueClientRouter.openapi(
     summary: "Begin or resume a dialogue script",
     request: {
       params: AliasParamSchema,
-      query: StartDialogueQuerySchema,
     },
     responses: {
       200: {
@@ -102,18 +102,9 @@ dialogueClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { alias } = c.req.valid("param");
-    const { endUserId } = c.req.valid("query");
-    const userHash = c.req.header("x-user-hash");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const view = await dialogueService.start(orgId, endUserId, alias);
     return c.json(serializeSession(view), 200);
   },
@@ -142,17 +133,10 @@ dialogueClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { alias } = c.req.valid("param");
-    const { endUserId, userHash, optionId } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const { optionId } = c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const view = await dialogueService.advance(
       orgId,
       endUserId,
@@ -171,9 +155,6 @@ dialogueClientRouter.openapi(
     summary: "Reset a repeatable dialogue script",
     request: {
       params: AliasParamSchema,
-      body: {
-        content: { "application/json": { schema: ResetDialogueSchema } },
-      },
     },
     responses: {
       200: {
@@ -186,17 +167,9 @@ dialogueClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
     const { alias } = c.req.valid("param");
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const view = await dialogueService.reset(orgId, endUserId, alias);
     return c.json(serializeSession(view), 200);
   },

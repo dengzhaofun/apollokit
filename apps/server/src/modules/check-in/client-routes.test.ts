@@ -3,10 +3,10 @@
  *
  * These exercise the HTTP surface under `/api/client/check-in/*`:
  * - requireClientCredential middleware (cpk_ validation, 401 rejection)
- * - HMAC verification in route handlers
+ * - requireClientUser middleware (header HMAC verification)
  * - Cross-auth rejection (session cookie or admin key on client route → 401)
  * - devMode bypass
- * - Happy path: check-in + state query with valid HMAC
+ * - Happy path: check-in + state query with valid HMAC in headers
  *
  * Setup: creates a test org, user/session (for cross-auth tests), a check-in
  * config, and a client credential. Cleanup via org delete cascade.
@@ -94,8 +94,6 @@ describe("client check-in routes", () => {
 
   beforeAll(async () => {
     fx = await setupFixture();
-    // Extract alias from the fixture timestamp
-    const stamp = fx.publishableKey; // just need the config alias
     // Fetch configs to find our alias
     const cfgListRes = await app.request("/api/check-in/configs", {
       headers: { cookie: fx.cookie },
@@ -117,7 +115,7 @@ describe("client check-in routes", () => {
     const res = await app.request("/api/client/check-in/check-ins", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ configKey: "x", endUserId: "u", userHash: "h" }),
+      body: JSON.stringify({ configKey: "x" }),
     });
     expect(res.status).toBe(401);
   });
@@ -126,7 +124,7 @@ describe("client check-in routes", () => {
     const res = await app.request("/api/client/check-in/check-ins", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
-      body: JSON.stringify({ configKey: "x", endUserId: "u", userHash: "h" }),
+      body: JSON.stringify({ configKey: "x" }),
     });
     expect(res.status).toBe(401);
   });
@@ -138,16 +136,28 @@ describe("client check-in routes", () => {
         "content-type": "application/json",
         "x-api-key": "ak_not_a_client_key",
       },
-      body: JSON.stringify({ configKey: "x", endUserId: "u", userHash: "h" }),
+      body: JSON.stringify({ configKey: "x" }),
     });
     expect(res.status).toBe(401);
   });
 
   // -------------------------------------------------------------------
-  // HMAC verification in route handlers
+  // Middleware: requireClientUser
   // -------------------------------------------------------------------
 
-  test("valid cpk_ + correct HMAC → check-in succeeds", async () => {
+  test("missing x-end-user-id header → 400", async () => {
+    const res = await app.request("/api/client/check-in/check-ins", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": fx.publishableKey,
+      },
+      body: JSON.stringify({ configKey: configAlias }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("valid cpk_ + correct HMAC header → check-in succeeds", async () => {
     const endUserId = "client-user-1";
     const hash = await computeHmac(endUserId, fx.secret);
 
@@ -156,8 +166,10 @@ describe("client check-in routes", () => {
       headers: {
         "content-type": "application/json",
         "x-api-key": fx.publishableKey,
+        "x-end-user-id": endUserId,
+        "x-user-hash": hash,
       },
-      body: JSON.stringify({ configKey: configAlias, endUserId, userHash: hash }),
+      body: JSON.stringify({ configKey: configAlias }),
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { alreadyCheckedIn: boolean; state: { totalDays: number } };
@@ -165,39 +177,35 @@ describe("client check-in routes", () => {
     expect(body.state.totalDays).toBe(1);
   });
 
-  test("valid cpk_ + wrong HMAC → 401", async () => {
+  test("valid cpk_ + wrong HMAC header → 401", async () => {
     const res = await app.request("/api/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-api-key": fx.publishableKey,
+        "x-end-user-id": "user-wrong",
+        "x-user-hash": "a".repeat(64),
       },
-      body: JSON.stringify({
-        configKey: configAlias,
-        endUserId: "user-wrong",
-        userHash: "a".repeat(64),
-      }),
+      body: JSON.stringify({ configKey: configAlias }),
     });
     expect(res.status).toBe(401);
   });
 
-  test("valid cpk_ + missing HMAC → 401", async () => {
+  test("valid cpk_ + missing HMAC header → 401", async () => {
     const res = await app.request("/api/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-api-key": fx.publishableKey,
+        "x-end-user-id": "user-no-hash",
       },
-      body: JSON.stringify({
-        configKey: configAlias,
-        endUserId: "user-no-hash",
-      }),
+      body: JSON.stringify({ configKey: configAlias }),
     });
     expect(res.status).toBe(401);
   });
 
   // -------------------------------------------------------------------
-  // GET state with HMAC in x-user-hash header
+  // GET state
   // -------------------------------------------------------------------
 
   test("GET state with correct HMAC → 200", async () => {
@@ -205,10 +213,11 @@ describe("client check-in routes", () => {
     const hash = await computeHmac(endUserId, fx.secret);
 
     const res = await app.request(
-      `/api/client/check-in/users/${endUserId}/state?configKey=${configAlias}`,
+      `/api/client/check-in/state?configKey=${configAlias}`,
       {
         headers: {
           "x-api-key": fx.publishableKey,
+          "x-end-user-id": endUserId,
           "x-user-hash": hash,
         },
       },
@@ -220,10 +229,11 @@ describe("client check-in routes", () => {
 
   test("GET state without HMAC → 401", async () => {
     const res = await app.request(
-      `/api/client/check-in/users/some-user/state?configKey=${configAlias}`,
+      `/api/client/check-in/state?configKey=${configAlias}`,
       {
         headers: {
           "x-api-key": fx.publishableKey,
+          "x-end-user-id": "some-user",
         },
       },
     );
@@ -235,9 +245,7 @@ describe("client check-in routes", () => {
   // -------------------------------------------------------------------
 
   test("devMode=true allows check-in without HMAC", async () => {
-    // Enable devMode
     const credSvc = createClientCredentialService({ db, appSecret: APP_SECRET });
-    // Find the credential by publishableKey to get its ID
     const creds = await credSvc.list(fx.orgId);
     const cred = creds.find((c) => c.publishableKey === fx.publishableKey)!;
     await credSvc.updateDevMode(fx.orgId, cred.id, true);
@@ -247,15 +255,12 @@ describe("client check-in routes", () => {
       headers: {
         "content-type": "application/json",
         "x-api-key": fx.publishableKey,
+        "x-end-user-id": "dev-mode-user",
       },
-      body: JSON.stringify({
-        configKey: configAlias,
-        endUserId: "dev-mode-user",
-      }),
+      body: JSON.stringify({ configKey: configAlias }),
     });
     expect(res.status).toBe(200);
 
-    // Restore devMode
     await credSvc.updateDevMode(fx.orgId, cred.id, false);
   });
 

@@ -474,21 +474,14 @@ export type ClaimStageInput = z.input<typeof ClaimStageSchema>;
 
 // ─── Client-credentials (C-end) requests ─────────────────────────
 //
-// HMAC userHash is verified inside the route handler against the
-// publishable key found in the `x-api-key` header — see exchange's
-// `ClientExecuteExchangeSchema` for prior art.
+// The caller's `endUserId` is populated by the `requireClientUser`
+// middleware from the `x-end-user-id` header (HMAC verified there).
+// Request bodies and query strings only carry action-specific payloads.
 
 export const ClientPurchaseSchema = z
   .object({
     productKey: z.string().min(1).openapi({
       description: "Product id or alias.",
-    }),
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "Tenant's business user id.",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
     }),
     idempotencyKey: z.string().max(256).optional(),
   })
@@ -499,21 +492,12 @@ export const ClientClaimStageSchema = z
     stageId: z.string().uuid().openapi({
       description: "Growth stage to claim.",
     }),
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
     idempotencyKey: z.string().max(256).optional(),
   })
   .openapi("ShopClientClaimStageRequest");
 
 export const ClientListUserProductsQuerySchema = z
   .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      param: { name: "endUserId", in: "query" },
-      description: "Tenant's business user id.",
-    }),
-    userHash: z.string().optional().openapi({
-      param: { name: "userHash", in: "query" },
-    }),
     categoryId: z.string().uuid().optional(),
     tagId: z.string().uuid().optional(),
     productType: ProductTypeSchema.optional(),

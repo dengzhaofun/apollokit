@@ -150,13 +150,6 @@ export const CreateTeamSchema = z
       description: "Config id or alias.",
       example: "5v5-ranked",
     }),
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id (becomes the team leader).",
-      example: "user-42",
-    }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
-    }),
     metadata: MetadataSchema,
   })
   .openapi("TeamCreateTeam");
@@ -166,90 +159,16 @@ export const UpdateTeamStatusSchema = z
     status: z.enum(["open", "closed", "in_game"]).openapi({
       description: "New team status. Cannot set to 'dissolved' — use dissolve endpoint.",
     }),
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The leader's end user id.",
-    }),
-    userHash: z.string().optional(),
   })
   .openapi("TeamUpdateStatus");
 
 export const InviteSchema = z
   .object({
-    fromUserId: z.string().min(1).max(256).openapi({
-      description: "Inviter end user id.",
-    }),
     toUserId: z.string().min(1).max(256).openapi({
       description: "Invitee end user id.",
     }),
-    userHash: z.string().optional(),
   })
   .openapi("TeamInvite");
-
-export const JoinTeamSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamJoinRequest");
-
-export const LeaveTeamSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamLeaveRequest");
-
-export const DissolveTeamSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The leader's end user id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamDissolveRequest");
-
-export const KickMemberSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The leader's (kicker's) end user id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamKickRequest");
-
-export const TransferLeaderSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The current leader's end user id.",
-    }),
-    newLeaderUserId: z.string().min(1).max(256).openapi({
-      description: "The new leader's end user id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamTransferLeader");
-
-export const AcceptInvitationSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The invitee's end user id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamAcceptInvitation");
-
-export const RejectInvitationSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The invitee's end user id.",
-    }),
-    userHash: z.string().optional(),
-  })
-  .openapi("TeamRejectInvitation");
 
 export const QuickMatchQuerySchema = z.object({
   configAlias: z.string().min(1).openapi({
@@ -258,14 +177,13 @@ export const QuickMatchQuerySchema = z.object({
   }),
 });
 
-export const QuickMatchSchema = z
+export const TransferLeaderSchema = z
   .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The end user's business id.",
+    newLeaderUserId: z.string().min(1).max(256).openapi({
+      description: "The new leader's end user id.",
     }),
-    userHash: z.string().optional(),
   })
-  .openapi("TeamQuickMatchRequest");
+  .openapi("TeamTransferLeader");
 
 // ─── Response schemas ────────────────────────────────────────────
 

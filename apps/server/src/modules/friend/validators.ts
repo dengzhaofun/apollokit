@@ -87,21 +87,10 @@ export const PaginationQuerySchema = z.object({
   }),
 });
 
-export const EndUserQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The end user's business id.",
-  }),
-});
-
 export const MutualFriendsQuerySchema = z.object({
-  endUserId: z.string().min(1).max(256).openapi({
-    param: { name: "endUserId", in: "query" },
-    description: "The first end user.",
-  }),
   withUserId: z.string().min(1).max(256).openapi({
     param: { name: "withUserId", in: "query" },
-    description: "The second end user.",
+    description: "The other end user to compare against.",
   }),
 });
 
@@ -187,37 +176,15 @@ export const ErrorResponseSchema = z
 
 export const ClientSendRequestSchema = z
   .object({
-    endUserId: z.string().min(1).max(256).openapi({
-      description: "The sender's end user id.",
-    }),
     toUserId: z.string().min(1).max(256).openapi({
       description: "The target end user id.",
-    }),
-    userHash: z.string().optional().openapi({
-      description: "HMAC-SHA256(endUserId, clientSecret).",
     }),
     message: z.string().max(500).nullable().optional(),
   })
   .openapi("ClientFriendSendRequest");
 
-export const ClientActionSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
-  })
-  .openapi("ClientFriendAction");
-
 export const ClientBlockSchema = z
   .object({
-    endUserId: z.string().min(1).max(256),
     blockedUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
   })
   .openapi("ClientFriendBlock");
-
-export const ClientUnblockSchema = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    userHash: z.string().optional(),
-  })
-  .openapi("ClientFriendUnblock");

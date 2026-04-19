@@ -1,9 +1,14 @@
 /**
  * C-end client routes for the team module.
  *
- * Protected by `requireClientCredential` — requires a valid client
- * credential (cpk_ publishable key) in the x-api-key header. HMAC
- * verification of endUserId is done inline via the credential service.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and the caller's
+ * endUserId from c.var.endUserId!. No inline verifyRequest calls; no auth fields in
+ * body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -12,23 +17,16 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { teamService } from "./index";
 import {
-  AcceptInvitationSchema,
   ConfigAliasQuerySchema,
   CreateTeamSchema,
-  DissolveTeamSchema,
   ErrorResponseSchema,
   InvitationIdParamSchema,
   InvitationResponseSchema,
   InviteSchema,
-  JoinTeamSchema,
-  KickMemberSchema,
-  LeaveTeamSchema,
   QuickMatchQuerySchema,
-  QuickMatchSchema,
-  RejectInvitationSchema,
   TeamIdAndUserParamSchema,
   TeamIdParamSchema,
   TeamResponseSchema,
@@ -144,6 +142,7 @@ const errorResponses = {
 export const teamClientRouter = new OpenAPIHono<HonoEnv>();
 
 teamClientRouter.use("*", requireClientCredential);
+teamClientRouter.use("*", requireClientUser);
 
 teamClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -180,12 +179,10 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { configKey, endUserId, userHash, metadata } = c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { configKey, metadata } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const team = await teamService.createTeam(orgId, configKey, endUserId, metadata);
     return c.json(serializeTeam(team), 201);
   },
@@ -214,20 +211,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const endUserId = c.req.header("x-end-user-id");
-    const userHash = c.req.header("x-user-hash");
-
-    if (!endUserId) {
-      return c.json(
-        { error: "x-end-user-id header required", requestId: c.get("requestId") },
-        400,
-      );
-    }
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { configAlias } = c.req.valid("query");
     const team = await teamService.getMyTeam(orgId, configAlias, endUserId);
     return c.json(team ? serializeTeam(team) : null, 200);
@@ -251,20 +236,7 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const endUserId = c.req.header("x-end-user-id");
-    const userHash = c.req.header("x-user-hash");
-
-    if (!endUserId) {
-      return c.json(
-        { error: "x-end-user-id header required", requestId: c.get("requestId") },
-        400,
-      );
-    }
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const team = await teamService.getTeam(orgId, id);
     return c.json(serializeTeam(team), 200);
@@ -280,9 +252,6 @@ teamClientRouter.openapi(
     summary: "Join an open team",
     request: {
       params: TeamIdParamSchema,
-      body: {
-        content: { "application/json": { schema: JoinTeamSchema } },
-      },
     },
     responses: {
       200: {
@@ -293,12 +262,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.joinTeam(orgId, id, endUserId);
     return c.json(serializeTeam(team), 200);
@@ -314,9 +279,6 @@ teamClientRouter.openapi(
     summary: "Leave a team",
     request: {
       params: TeamIdParamSchema,
-      body: {
-        content: { "application/json": { schema: LeaveTeamSchema } },
-      },
     },
     responses: {
       200: {
@@ -327,12 +289,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.leaveTeam(orgId, id, endUserId);
     return c.json(serializeTeam(team), 200);
@@ -348,9 +306,6 @@ teamClientRouter.openapi(
     summary: "Dissolve a team (leader only)",
     request: {
       params: TeamIdParamSchema,
-      body: {
-        content: { "application/json": { schema: DissolveTeamSchema } },
-      },
     },
     responses: {
       200: {
@@ -361,12 +316,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.dissolveTeam(orgId, id, endUserId);
     return c.json(serializeTeam(team), 200);
@@ -382,9 +333,6 @@ teamClientRouter.openapi(
     summary: "Kick a member from the team (leader only)",
     request: {
       params: TeamIdAndUserParamSchema,
-      body: {
-        content: { "application/json": { schema: KickMemberSchema } },
-      },
     },
     responses: {
       200: {
@@ -395,12 +343,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
     const team = await teamService.kickMember(orgId, id, endUserId, userId);
     return c.json(serializeTeam(team), 200);
@@ -429,12 +373,9 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, newLeaderUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { newLeaderUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.transferLeader(orgId, id, endUserId, newLeaderUserId);
     return c.json(serializeTeam(team), 200);
@@ -463,12 +404,9 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, status, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { status } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.updateTeamStatus(orgId, id, endUserId, status);
     return c.json(serializeTeam(team), 200);
@@ -499,14 +437,11 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { fromUserId, toUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, fromUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { toUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
-    const inv = await teamService.inviteUser(orgId, id, fromUserId, toUserId);
+    const inv = await teamService.inviteUser(orgId, id, endUserId, toUserId);
     return c.json(serializeInvitation(inv), 201);
   },
 );
@@ -520,9 +455,6 @@ teamClientRouter.openapi(
     summary: "Accept a team invitation",
     request: {
       params: InvitationIdParamSchema,
-      body: {
-        content: { "application/json": { schema: AcceptInvitationSchema } },
-      },
     },
     responses: {
       200: {
@@ -533,12 +465,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.acceptInvitation(orgId, id, endUserId);
     return c.json(serializeTeam(team), 200);
@@ -554,9 +482,6 @@ teamClientRouter.openapi(
     summary: "Reject a team invitation",
     request: {
       params: InvitationIdParamSchema,
-      body: {
-        content: { "application/json": { schema: RejectInvitationSchema } },
-      },
     },
     responses: {
       200: {
@@ -569,19 +494,15 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const inv = await teamService.rejectInvitation(orgId, id, endUserId);
     return c.json(serializeInvitation(inv), 200);
   },
 );
 
-// GET /quick-match?configAlias=
+// POST /quick-match?configAlias=
 teamClientRouter.openapi(
   createRoute({
     method: "post",
@@ -590,9 +511,6 @@ teamClientRouter.openapi(
     summary: "Quick match — join the fullest open team or create a new one",
     request: {
       query: QuickMatchQuerySchema,
-      body: {
-        content: { "application/json": { schema: QuickMatchSchema } },
-      },
     },
     responses: {
       200: {
@@ -603,12 +521,8 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash } = c.req.valid("json");
-
-    await clientCredentialService.verifyRequest(publishableKey, endUserId, userHash);
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { configAlias } = c.req.valid("query");
     const team = await teamService.quickMatch(orgId, configAlias, endUserId);
     return c.json(serializeTeam(team), 200);

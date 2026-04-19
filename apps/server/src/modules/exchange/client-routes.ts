@@ -1,8 +1,14 @@
 /**
  * C-end client routes for the exchange module.
  *
- * Protected by `requireClientCredential`. HMAC verification inline.
- * Exposes: list available options, execute exchange, check user state.
+ * Mounted at /api/client/exchange. Auth pattern:
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
+ * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -11,7 +17,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { exchangeService } from "./index";
 import {
   ClientExecuteExchangeSchema,
@@ -43,6 +49,7 @@ const errorResponses = {
 export const exchangeClientRouter = new OpenAPIHono<HonoEnv>();
 
 exchangeClientRouter.use("*", requireClientCredential);
+exchangeClientRouter.use("*", requireClientUser);
 
 exchangeClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -81,17 +88,10 @@ exchangeClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { optionId, endUserId, userHash, idempotencyKey } =
-      c.req.valid("json");
+    const endUserId = c.var.endUserId!;
+    const { optionId, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
     const result = await exchangeService.execute({
       organizationId: orgId,
       endUserId,

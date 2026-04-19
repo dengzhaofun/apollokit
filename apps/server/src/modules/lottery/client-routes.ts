@@ -1,7 +1,11 @@
 /**
  * C-end client routes for the lottery module.
  *
- * Protected by `requireClientCredential`. HMAC verification inline.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
+ *
  * Exposes: pull, multi-pull, user state, pull history.
  */
 
@@ -11,7 +15,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { lotteryService } from "./index";
 import {
   ClientPullSchema,
@@ -47,6 +51,7 @@ const errorResponses = {
 export const lotteryClientRouter = new OpenAPIHono<HonoEnv>();
 
 lotteryClientRouter.use("*", requireClientCredential);
+lotteryClientRouter.use("*", requireClientUser);
 
 lotteryClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -83,17 +88,10 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { poolId, endUserId, userHash, idempotencyKey } =
-      c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { poolId, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await lotteryService.pull({
       organizationId: orgId,
       endUserId,
@@ -125,17 +123,10 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { poolId, endUserId, count, userHash, idempotencyKey } =
-      c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { poolId, count, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await lotteryService.multiPull({
       organizationId: orgId,
       endUserId,
@@ -166,14 +157,9 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { poolKey } = c.req.valid("param");
-    // For client routes, endUserId comes from a query param or header
-    // Following exchange pattern: the client sends endUserId in query
-    const endUserId = c.req.query("endUserId");
-    if (!endUserId) {
-      return c.json({ error: "endUserId query parameter required" }, 400);
-    }
     const state = await lotteryService.getUserState({
       organizationId: orgId,
       endUserId,
@@ -200,12 +186,9 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { poolKey } = c.req.valid("param");
-    const endUserId = c.req.query("endUserId");
-    if (!endUserId) {
-      return c.json({ error: "endUserId query parameter required" }, 400);
-    }
     const rows = await lotteryService.getPullHistory({
       organizationId: orgId,
       endUserId,

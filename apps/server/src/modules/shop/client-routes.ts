@@ -1,10 +1,10 @@
 /**
  * C-end client routes for the shop module.
  *
- * Protected by `requireClientCredential` (publishable-key gate). HMAC of
- * `endUserId` is verified inline in each handler against the secret bound
- * to the publishable key — we can't do it in middleware because the
- * `endUserId` lives in the body / query, not the headers.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  * Mirror surface of admin routes is intentionally narrow: only the three
  * actions a tenant frontend actually needs — list, purchase, claim.
@@ -17,7 +17,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { shopService } from "./index";
 import {
   ClaimStageResultSchema,
@@ -51,9 +51,6 @@ const errorResponses = {
   },
 };
 
-// Re-implement the user-product serializer locally — keeping `routes.ts`
-// and `client-routes.ts` independently importable means we don't rely on
-// the admin file's internals.
 function serializeUserProduct(row: UserProductView) {
   return {
     id: row.id,
@@ -132,6 +129,7 @@ function serializeUserProduct(row: UserProductView) {
 export const shopClientRouter = new OpenAPIHono<HonoEnv>();
 
 shopClientRouter.use("*", requireClientCredential);
+shopClientRouter.use("*", requireClientUser);
 
 shopClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -168,17 +166,10 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { productKey, endUserId, userHash, idempotencyKey } =
-      c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { productKey, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await shopService.purchase({
       organizationId: orgId,
       endUserId,
@@ -210,17 +201,10 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { stageId, endUserId, userHash, idempotencyKey } =
-      c.req.valid("json");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { stageId, idempotencyKey } = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const result = await shopService.claimGrowthStage({
       organizationId: orgId,
       endUserId,
@@ -250,17 +234,10 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const publishableKey = c.req.header("x-api-key")!;
-    const { endUserId, userHash, categoryId, tagId, productType } =
-      c.req.valid("query");
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { categoryId, tagId, productType } = c.req.valid("query");
 
-    await clientCredentialService.verifyRequest(
-      publishableKey,
-      endUserId,
-      userHash,
-    );
-
-    const orgId = c.var.session!.activeOrganizationId!;
     const views = await shopService.listUserProducts({
       organizationId: orgId,
       endUserId,

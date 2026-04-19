@@ -33,15 +33,7 @@ import {
 
 const TAG = "Invite (Client)";
 
-// Shared auth header declarations for OpenAPI docs
-const authHeaders = z.object({
-  "x-api-key": z.string().openapi({ description: "Publishable key (cpk_...)" }),
-  "x-end-user-id": z.string().openapi({ description: "End user's opaque id" }),
-  "x-user-hash": z.string().optional().openapi({
-    description:
-      "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-  }),
-});
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 function serializeRelationship(row: {
   id: string;

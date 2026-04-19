@@ -1,13 +1,16 @@
 /**
  * C-end client routes for the task module.
  *
- * Protected by `requireClientCredential` — requires a valid publishable
- * key (cpk_) in `x-api-key`. Per-endUser HMAC verification is inline.
+ * Auth pattern (matches the invite module):
+ *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
+ *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
+ *                             populates c.var.endUserId
  *
  * Exposed surface:
  *   POST /events            → business event ingestion
  *   POST /list              → task list with per-user progress
  *   POST /claim/:taskId     → manual reward claim
+ *   POST /claim-tier        → manual staged-reward tier claim
  */
 
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -16,10 +19,9 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HonoEnv } from "../../env";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
-import { clientCredentialService } from "../client-credentials";
+import { requireClientUser } from "../../middleware/require-client-user";
 import { taskService } from "./index";
 import {
-  ClaimBodySchema,
   ClaimResponseSchema,
   ClaimTierBodySchema,
   ClaimTierResponseSchema,
@@ -55,6 +57,7 @@ const errorResponses = {
 export const taskClientRouter = new OpenAPIHono<HonoEnv>();
 
 taskClientRouter.use("*", requireClientCredential);
+taskClientRouter.use("*", requireClientUser);
 
 taskClientRouter.onError((err, c) => {
   if (err instanceof ModuleError) {
@@ -92,21 +95,15 @@ taskClientRouter.openapi(
     },
   }),
   async (c) => {
-    const credential = c.var.clientCredential!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const body = c.req.valid("json");
-
-    // Verify HMAC
-    await clientCredentialService.verifyRequest(
-      credential.publishableKey,
-      body.endUserId,
-      body.userHash,
-    );
 
     const now = body.timestamp ? new Date(body.timestamp) : undefined;
 
     const processed = await taskService.processEvent(
-      credential.organizationId,
-      body.endUserId,
+      orgId,
+      endUserId,
       body.eventName,
       body.eventData,
       now,
@@ -140,18 +137,13 @@ taskClientRouter.openapi(
     },
   }),
   async (c) => {
-    const credential = c.var.clientCredential!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const body = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      credential.publishableKey,
-      body.endUserId,
-      body.userHash,
-    );
-
     const items = await taskService.getTasksForUser(
-      credential.organizationId,
-      body.endUserId,
+      orgId,
+      endUserId,
       {
         categoryId: body.categoryId,
         period: body.period,
@@ -173,9 +165,6 @@ taskClientRouter.openapi(
     summary: "Manually claim task reward",
     request: {
       params: TaskIdParamSchema,
-      body: {
-        content: { "application/json": { schema: ClaimBodySchema } },
-      },
     },
     responses: {
       200: {
@@ -186,21 +175,11 @@ taskClientRouter.openapi(
     },
   }),
   async (c) => {
-    const credential = c.var.clientCredential!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const { taskId } = c.req.valid("param");
-    const body = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      credential.publishableKey,
-      body.endUserId,
-      body.userHash,
-    );
-
-    const result = await taskService.claimReward(
-      credential.organizationId,
-      body.endUserId,
-      taskId,
-    );
+    const result = await taskService.claimReward(orgId, endUserId, taskId);
 
     return c.json(result, 200);
   },
@@ -228,18 +207,13 @@ taskClientRouter.openapi(
     },
   }),
   async (c) => {
-    const credential = c.var.clientCredential!;
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
     const body = c.req.valid("json");
 
-    await clientCredentialService.verifyRequest(
-      credential.publishableKey,
-      body.endUserId,
-      body.userHash,
-    );
-
     const result = await taskService.claimTier(
-      credential.organizationId,
-      body.endUserId,
+      orgId,
+      endUserId,
       body.taskId,
       body.tierAlias,
     );
