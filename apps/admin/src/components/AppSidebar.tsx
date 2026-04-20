@@ -52,6 +52,7 @@ import {
   SidebarSeparator,
 } from "#/components/ui/sidebar"
 import { LanguageSwitcher } from "./LanguageSwitcher"
+import ThemeToggle from "./ThemeToggle"
 import * as m from "../paraglide/messages.js"
 
 type NavItem = {
@@ -172,7 +173,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-[var(--lagoon)] text-white">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <span className="text-sm font-bold">A</span>
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
@@ -238,8 +239,9 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="px-1 py-1">
+            <div className="flex items-center gap-1 px-1 py-1">
               <LanguageSwitcher />
+              <ThemeToggle />
             </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
