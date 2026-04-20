@@ -2,8 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
+import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
@@ -47,10 +46,7 @@ function TaskDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{definition.name}</h1>
+      <PageHeaderActions>
         {definition.visibility === "assigned" && (
           <Badge variant="outline" className="ml-2">
             {m.task_visibility_assigned_badge()}
@@ -79,7 +75,7 @@ function TaskDetailPage() {
             {m.common_delete()}
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl">

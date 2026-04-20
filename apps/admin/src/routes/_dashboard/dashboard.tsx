@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { SidebarTrigger } from "../../components/ui/sidebar"
-import { Separator } from "../../components/ui/separator"
 
 import { authClient } from "../../lib/auth-client"
 import * as m from "../../paraglide/messages.js"
@@ -14,12 +12,6 @@ function Dashboard() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.dashboard_title()}</h1>
-      </header>
-
       <main className="flex-1 p-6">
         <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
           <h2 className="mb-2 text-2xl font-bold tracking-tight">

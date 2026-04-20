@@ -11,8 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   ActivityScopeFilter,
   scopeToFilter,
@@ -26,6 +24,7 @@ import {
 import type { ShopProductType } from "#/lib/types/shop"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/shop/")({
   component: ShopProductsPage,
 })
@@ -54,10 +53,7 @@ function ShopProductsPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.shop_title()}</h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
             <Link to="/shop/categories">
@@ -78,7 +74,7 @@ function ShopProductsPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 space-y-4 p-6">
         <div className="flex flex-wrap items-end gap-3">

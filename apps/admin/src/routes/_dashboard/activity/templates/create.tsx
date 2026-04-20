@@ -12,8 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Textarea } from "#/components/ui/textarea"
 import { useCreateActivityTemplate } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
@@ -152,12 +150,6 @@ function CreateActivityTemplatePage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">新建活动模板</h1>
-      </header>
-
       <main className="flex-1 p-6">
         <form
           onSubmit={handleSubmit}

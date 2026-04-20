@@ -2,8 +2,6 @@ import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Copy, KeyRound, Plus, Trash2 } from "lucide-react"
 
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
@@ -48,6 +46,7 @@ import {
 import { authClient } from "#/lib/auth-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/api-keys/")({
   component: ApiKeysPage,
 })
@@ -55,12 +54,9 @@ export const Route = createFileRoute("/_dashboard/api-keys/")({
 function ApiKeysPage() {
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <KeyRound className="size-4" />
-        <h1 className="text-sm font-semibold">{m.apikeys_title()}</h1>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="admin">

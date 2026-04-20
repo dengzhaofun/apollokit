@@ -16,8 +16,6 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useActivateRankSeason,
   useFinalizeRankSeason,
@@ -27,6 +25,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/rank/seasons/")({
   component: RankSeasonsListPage,
 })
@@ -45,15 +44,7 @@ function RankSeasonsListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {m.rank_title()}
-          <span className="ml-2 text-muted-foreground">
-            / {m.rank_tab_seasons()}
-          </span>
-        </h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
             <Link to="/rank">{m.rank_tab_configs()}</Link>
@@ -65,7 +56,7 @@ function RankSeasonsListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

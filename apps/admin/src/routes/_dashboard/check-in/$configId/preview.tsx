@@ -6,8 +6,7 @@ import { toast } from "sonner"
 import { Link } from "@tanstack/react-router"
 
 import * as m from "#/paraglide/messages.js"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
+import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import {
@@ -59,7 +58,7 @@ function CheckInPreviewPage() {
   if (isPending) {
     return (
       <>
-        <Header configName={m.common_loading()} configId="" />
+        <Header configId="" />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
           {m.common_loading()}
         </main>
@@ -70,7 +69,7 @@ function CheckInPreviewPage() {
   if (error || !config) {
     return (
       <>
-        <Header configName="Error" configId="" />
+        <Header configId="" />
         <main className="flex h-40 items-center justify-center text-destructive">
           {error?.message ?? "Config not found"}
         </main>
@@ -82,7 +81,7 @@ function CheckInPreviewPage() {
 
   return (
     <>
-      <Header configName={config.name} configId={configId} />
+      <Header configId={configId} />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-6">
@@ -271,18 +270,15 @@ function getResetModeLabels(): Record<string, string> {
   }
 }
 
-function Header({ configName, configId }: { configName: string; configId: string }) {
+function Header({ configId }: { configId: string }) {
   return (
-    <header className="flex h-14 items-center gap-2 border-b px-4">
-      <SidebarTrigger />
-      <Separator orientation="vertical" className="mx-2 h-4" />
+    <PageHeaderActions>
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link to="/check-in/$configId" params={{ configId }}>
           <ArrowLeft className="size-4" />
         </Link>
       </Button>
-      <h1 className="text-sm font-semibold">Preview: {configName}</h1>
-    </header>
+    </PageHeaderActions>
   )
 }
 

@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
+import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { ExchangeConfigTable } from "#/components/exchange/ConfigTable"
 import { useExchangeConfigs } from "#/hooks/use-exchange"
@@ -17,10 +16,7 @@ function ExchangeListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.exchange_title()}</h1>
+      <PageHeaderActions>
         <div className="ml-auto">
           <Button asChild size="sm">
             <Link to="/exchange/create">
@@ -29,7 +25,7 @@ function ExchangeListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

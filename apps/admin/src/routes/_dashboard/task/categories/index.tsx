@@ -4,8 +4,7 @@ import { toast } from "sonner"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
+import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Input } from "#/components/ui/input"
@@ -52,10 +51,7 @@ function CategoriesPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">Task Categories</h1>
+      <PageHeaderActions>
         <div className="ml-auto">
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null) }}>
             <DialogTrigger asChild>
@@ -75,7 +71,7 @@ function CategoriesPage() {
             </DialogContent>
           </Dialog>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

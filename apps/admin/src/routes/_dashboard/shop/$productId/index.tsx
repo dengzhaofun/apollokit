@@ -5,8 +5,6 @@ import { toast } from "sonner"
 import { ShopDeleteDialog } from "#/components/shop/DeleteDialog"
 import { ProductForm } from "#/components/shop/ProductForm"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useDeleteShopProduct,
   useShopProduct,
@@ -15,6 +13,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/shop/$productId/")({
   component: ShopProductEditPage,
 })
@@ -28,12 +27,7 @@ function ShopProductEditPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {product ? product.name : m.shop_edit_product()}
-        </h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           {product?.productType === "growth_pack" ? (
             <Button asChild variant="outline" size="sm">
@@ -67,7 +61,7 @@ function ShopProductEditPage() {
             />
           ) : null}
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-4">

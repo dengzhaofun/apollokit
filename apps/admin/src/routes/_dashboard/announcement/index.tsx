@@ -3,11 +3,10 @@ import { Plus } from "lucide-react"
 
 import { AnnouncementTable } from "#/components/announcement/AnnouncementTable"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useAnnouncements } from "#/hooks/use-announcement"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/announcement/")({
   component: AnnouncementListPage,
 })
@@ -17,10 +16,7 @@ function AnnouncementListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.announcement_title()}</h1>
+      <PageHeaderActions>
         <div className="ml-auto">
           <Button asChild size="sm">
             <Link to="/announcement/create">
@@ -29,7 +25,7 @@ function AnnouncementListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

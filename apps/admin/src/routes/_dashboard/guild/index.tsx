@@ -3,8 +3,6 @@ import { createFileRoute } from "@tanstack/react-router"
 import * as m from "#/paraglide/messages.js"
 import { Badge } from "#/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   Table,
   TableBody,
@@ -25,12 +23,6 @@ function GuildPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.guild_title()}</h1>
-      </header>
-
       <main className="flex-1 space-y-6 p-6">
         {/* Settings card */}
         <Card>

@@ -48,30 +48,48 @@ export const db: NeonHttpDatabase<typeof schema> = isNeon
       // `col >= ${jsDate}` filters drift by the TZ offset.
       //
       // `options: "-c TimeZone=UTC"` passes the setting as a libpq startup
-      // parameter — set before any query runs, avoiding the pg deprecation
-      // warning we'd hit by firing a `SET TIME ZONE` on the `connect` event
-      // (that path calls `client.query()` while the client is still mid-startup).
-      // Workers runtime binds every TCP socket to the I/O context of
-      // the request that opened it — idle connections handed back to
-      // a *different* request later will hang forever ("can't access
-      // I/O object from a different request"). This is dev-only: in
-      // production the Neon URL path above goes through the HTTP
-      // driver and never creates a pool at all.
+      // parameter — set before any query runs.
       //
-      // `maxUses: 1` forces pg to destroy a connection after a single
-      // `connect()/release()` cycle, making every query take a brand
-      // new socket. `idleTimeoutMillis: 0` + `allowExitOnIdle: true`
-      // belt-and-braces: any stragglers go away immediately. Under
-      // wrangler dev the per-query reconnect cost is ~1ms on a
-      // local Postgres, an acceptable trade for not-hanging.
-      const pool = new pg.Pool({
-        connectionString: url,
-        options: "-c TimeZone=UTC",
-        max: 1,
-        maxUses: 1,
-        idleTimeoutMillis: 0,
-        allowExitOnIdle: true,
+      // Why not `pg.Pool`? Workers runtime binds every TCP socket to the
+      // I/O context of the request that opened it. `pg.Pool` hands out
+      // idle sockets to later requests; those sockets belong to an ended
+      // I/O context and hang forever ("can't access I/O object from a
+      // different request"). We tried `max: 1, maxUses: 1` to force
+      // destroy-on-release, but concurrent callers race in the release
+      // window: request B queues on `max: 1`, request A releases, and
+      // B picks up the half-torn-down socket before pg finishes
+      // destroying it → hang → workerd cancels after a few ms.
+      //
+      // Instead we open a fresh `pg.Client`, run one query, and call
+      // `end()`. Every query gets its own socket that lives entirely
+      // inside the opening request's I/O context. Local-Postgres connect
+      // cost is ~1–2 ms, an acceptable trade for reliability. This is
+      // dev-only; prod uses Neon HTTP and never creates a socket pool.
+      const poolShim = {
+        async query(
+          text: string | { text: string; values?: unknown[] },
+          values?: unknown[],
+        ) {
+          const client = new pg.Client({
+            connectionString: url,
+            options: "-c TimeZone=UTC",
+          });
+          await client.connect();
+          try {
+            return await client.query(
+              text as string,
+              values as unknown[],
+            );
+          } finally {
+            await client.end();
+          }
+        },
+        async end() {},
+      };
+      const drz = drizzle({
+        client: poolShim as unknown as pg.Pool,
+        schema,
+        cache,
       });
-      const drz = drizzle({ client: pool, schema, cache });
       return drz as unknown as NeonHttpDatabase<typeof schema>;
     })();

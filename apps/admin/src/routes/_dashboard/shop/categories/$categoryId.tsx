@@ -5,8 +5,6 @@ import { toast } from "sonner"
 import { CategoryForm } from "#/components/shop/CategoryForm"
 import { ShopDeleteDialog } from "#/components/shop/DeleteDialog"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useDeleteShopCategory,
   useShopCategories,
@@ -16,6 +14,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/shop/categories/$categoryId")(
   {
     component: ShopCategoryEditPage,
@@ -32,12 +31,7 @@ function ShopCategoryEditPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {category ? category.name : m.shop_edit_category()}
-        </h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           {category ? (
             <ShopDeleteDialog
@@ -60,7 +54,7 @@ function ShopCategoryEditPage() {
             />
           ) : null}
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl space-y-4">

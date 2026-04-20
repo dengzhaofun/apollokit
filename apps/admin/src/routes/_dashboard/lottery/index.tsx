@@ -7,11 +7,10 @@ import {
   scopeToFilter,
   type ActivityScope,
 } from "#/components/activity/ActivityScopeFilter"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { LotteryPoolTable } from "#/components/lottery/PoolTable"
 import { useLotteryPools } from "#/hooks/use-lottery"
+import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute("/_dashboard/lottery/")({
   component: LotteryListPage,
@@ -25,10 +24,7 @@ function LotteryListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">Lottery Pools</h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-3">
           <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm">
@@ -38,7 +34,7 @@ function LotteryListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

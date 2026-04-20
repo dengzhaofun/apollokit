@@ -16,8 +16,6 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useAnnouncement,
   useDeleteAnnouncement,
@@ -26,6 +24,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/announcement/$alias/")({
   component: AnnouncementDetailPage,
 })
@@ -40,18 +39,13 @@ function AnnouncementDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/announcement">
             <ChevronLeft className="size-4" />
             {m.announcement_back_to_list()}
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">
-          {m.announcement_title()} / <code className="text-xs">{alias}</code>
-        </h1>
         <div className="ml-auto">
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <AlertDialogTrigger asChild>
@@ -91,7 +85,7 @@ function AnnouncementDetailPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (
