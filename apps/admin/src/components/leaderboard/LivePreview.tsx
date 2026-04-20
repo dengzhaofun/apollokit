@@ -7,47 +7,48 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import * as m from "#/paraglide/messages.js"
 
 export function LeaderboardLivePreview({ alias }: { alias: string }) {
   const { data, isPending, error } = useLeaderboardTop(alias, { limit: 20 })
 
   if (isPending)
-    return <div className="text-sm text-muted-foreground">读取中…</div>
+    return <div className="text-sm text-muted-foreground">{m.common_loading()}</div>
   if (error)
     return (
       <div className="text-sm text-destructive">
-        预览失败：{error.message}
+        {m.leaderboard_preview_failed({ error: error.message })}
       </div>
     )
   if (!data)
-    return <div className="text-sm text-muted-foreground">暂无数据</div>
+    return <div className="text-sm text-muted-foreground">{m.leaderboard_no_data()}</div>
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-4 text-xs text-muted-foreground">
         <span>
-          当前周期:{" "}
+          {m.leaderboard_current_period()}:{" "}
           <code className="rounded bg-muted px-1">{data.cycleKey}</code>
         </span>
         <span>
-          作用域 key:{" "}
+          {m.leaderboard_scope_key()}:{" "}
           <code className="rounded bg-muted px-1">{data.scopeKey}</code>
         </span>
-        <span>共 {data.rankings.length} 条</span>
+        <span>{m.leaderboard_total_count({ count: data.rankings.length })}</span>
       </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16">排名</TableHead>
-            <TableHead>玩家 ID</TableHead>
-            <TableHead className="text-right">分数</TableHead>
+            <TableHead className="w-16">{m.leaderboard_col_rank()}</TableHead>
+            <TableHead>{m.leaderboard_col_player_id()}</TableHead>
+            <TableHead className="text-right">{m.leaderboard_col_score()}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.rankings.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} className="h-20 text-center">
-                当前周期暂无上榜数据
+                {m.leaderboard_no_entries()}
               </TableCell>
             </TableRow>
           ) : (

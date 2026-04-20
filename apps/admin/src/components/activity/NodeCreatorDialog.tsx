@@ -28,24 +28,19 @@ import { useCreateLotteryPool } from "#/hooks/use-lottery"
 import { useCreateActivityNode } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import type { NodeType } from "#/lib/types/activity"
+import * as m from "#/paraglide/messages.js"
 
 type Mode = "inline" | "redirect"
 
-const SUPPORTED_TYPES: { value: NodeType; label: string; mode: Mode }[] = [
-  { value: "check_in", label: "check_in 签到", mode: "inline" },
-  { value: "banner", label: "banner 轮播图", mode: "inline" },
-  { value: "lottery", label: "lottery 抽奖池", mode: "inline" },
-  {
-    value: "task_group",
-    label: "task_group 任务组 (跳转任务后台)",
-    mode: "redirect",
-  },
-  {
-    value: "exchange",
-    label: "exchange 兑换商店 (跳转商店后台)",
-    mode: "redirect",
-  },
-]
+function supportedTypes(): { value: NodeType; label: string; mode: Mode }[] {
+  return [
+    { value: "check_in", label: m.activity_node_type_check_in(), mode: "inline" },
+    { value: "banner", label: m.activity_node_type_banner(), mode: "inline" },
+    { value: "lottery", label: m.activity_node_type_lottery(), mode: "inline" },
+    { value: "task_group", label: m.activity_node_type_task_group(), mode: "redirect" },
+    { value: "exchange", label: m.activity_node_type_exchange(), mode: "redirect" },
+  ]
+}
 
 interface Props {
   activityKey: string
@@ -99,24 +94,26 @@ export function NodeCreatorDialog({
       refId,
       orderIndex,
     })
-    toast.success("节点已创建并挂载")
+    toast.success(m.activity_node_mounted_success())
     reset()
     onOpenChange(false)
   }
+
+  const types = supportedTypes()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>新建并挂载子配置</DialogTitle>
+          <DialogTitle>{m.activity_node_create_title()}</DialogTitle>
           <DialogDescription>
-            一步完成：创建底层配置 → 自动挂成活动节点。activityId 会被自动填入对应配置。
+            {m.activity_node_create_description()}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-3 gap-3 py-2">
           <div className="flex flex-col gap-1.5">
-            <Label>节点类型</Label>
+            <Label>{m.activity_node_field_type()}</Label>
             <Select
               value={nodeType}
               onValueChange={(v) => setNodeType(v as NodeType)}
@@ -125,7 +122,7 @@ export function NodeCreatorDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {SUPPORTED_TYPES.map((t) => (
+                {types.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
                   </SelectItem>
@@ -134,7 +131,7 @@ export function NodeCreatorDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>节点 alias</Label>
+            <Label>{m.activity_node_field_alias()}</Label>
             <Input
               value={alias}
               onChange={(e) => setAlias(e.target.value.toLowerCase())}
@@ -142,7 +139,7 @@ export function NodeCreatorDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>排序</Label>
+            <Label>{m.activity_node_field_order()}</Label>
             <Input
               type="number"
               value={orderIndex}
@@ -156,10 +153,10 @@ export function NodeCreatorDialog({
             <CheckInConfigForm
               defaultValues={{ activityId }}
               isPending={anyPending}
-              submitLabel="创建签到 + 挂成节点"
+              submitLabel={m.activity_node_submit_check_in()}
               onSubmit={async (values) => {
                 if (!alias) {
-                  toast.error("请先填写节点 alias")
+                  toast.error(m.activity_node_alias_required())
                   return
                 }
                 try {
@@ -170,17 +167,17 @@ export function NodeCreatorDialog({
                   await mountAfterCreate(config.id)
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error("创建失败")
+                  else toast.error(m.activity_node_create_failed())
                 }
               }}
             />
           ) : nodeType === "banner" ? (
             <BannerGroupForm
-              submitLabel="创建轮播图组 + 挂成节点"
+              submitLabel={m.activity_node_submit_banner()}
               isPending={anyPending}
               onSubmit={async (values) => {
                 if (!alias) {
-                  toast.error("请先填写节点 alias")
+                  toast.error(m.activity_node_alias_required())
                   return
                 }
                 try {
@@ -191,7 +188,7 @@ export function NodeCreatorDialog({
                   await mountAfterCreate(group.id)
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error("创建失败")
+                  else toast.error(m.activity_node_create_failed())
                 }
               }}
             />
@@ -199,10 +196,10 @@ export function NodeCreatorDialog({
             <LotteryPoolForm
               defaultValues={{ activityId }}
               isPending={anyPending}
-              submitLabel="创建抽奖池 + 挂成节点"
+              submitLabel={m.activity_node_submit_lottery()}
               onSubmit={async (values) => {
                 if (!alias) {
-                  toast.error("请先填写节点 alias")
+                  toast.error(m.activity_node_alias_required())
                   return
                 }
                 try {
@@ -213,7 +210,7 @@ export function NodeCreatorDialog({
                   await mountAfterCreate(pool.id)
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error("创建失败")
+                  else toast.error(m.activity_node_create_failed())
                 }
               }}
             />
@@ -234,7 +231,7 @@ export function NodeCreatorDialog({
             onClick={() => onOpenChange(false)}
             disabled={anyPending}
           >
-            取消
+            {m.common_cancel()}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -265,7 +262,10 @@ function RedirectFlow({
   orderIndex: number
 }) {
   const targetPath = nodeType === "task_group" ? "/task/create" : "/shop/create"
-  const moduleName = nodeType === "task_group" ? "任务" : "商店商品"
+  const moduleName =
+    nodeType === "task_group"
+      ? m.activity_node_redirect_module_task()
+      : m.activity_node_redirect_module_shop()
   const canJump = alias.length > 0
 
   function jump() {
@@ -278,20 +278,17 @@ function RedirectFlow({
 
   return (
     <div className="space-y-3 text-sm">
-      <p>
-        <strong>{moduleName}</strong>{" "}
-        的表单比较复杂（类别/事件/奖励/时间窗等），这里不内嵌。点下面按钮：
-      </p>
+      <p>{m.activity_node_redirect_intro({ module: moduleName })}</p>
       <ol className="ml-5 list-decimal space-y-1 text-muted-foreground">
-        <li>跳转到 {moduleName}后台的创建页（activityId 已自动预填）</li>
-        <li>填完正常提交</li>
-        <li>创建成功后自动回到活动节点挂载页，把新建的配置挂成节点</li>
+        <li>{m.activity_node_redirect_step1({ module: moduleName })}</li>
+        <li>{m.activity_node_redirect_step2()}</li>
+        <li>{m.activity_node_redirect_step3()}</li>
       </ol>
       <Button onClick={jump} disabled={!canJump}>
-        去 {moduleName}后台新建 + 自动回挂
+        {m.activity_node_redirect_button({ module: moduleName })}
       </Button>
       {!canJump ? (
-        <p className="text-xs text-destructive">请先填写节点 alias</p>
+        <p className="text-xs text-destructive">{m.activity_node_alias_required()}</p>
       ) : null}
     </div>
   )

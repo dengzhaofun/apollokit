@@ -1,6 +1,8 @@
 import { useState } from "react"
 
 import { ActivityPicker } from "#/components/activity/ActivityPicker"
+import { ImageListField } from "#/components/forms/ImageListField"
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -72,8 +74,8 @@ export function ProductForm({
     defaultValues?.description ?? "",
   )
   const [coverImage, setCoverImage] = useState(defaultValues?.coverImage ?? "")
-  const [galleryText, setGalleryText] = useState(
-    (defaultValues?.galleryImages ?? []).join("\n"),
+  const [galleryImages, setGalleryImages] = useState<string[]>(
+    defaultValues?.galleryImages ?? [],
   )
   const [productType, setProductType] = useState<ShopProductType>(
     defaultValues?.productType ?? "regular",
@@ -132,18 +134,13 @@ export function ProductForm({
     }
     const validCosts = costItems.filter((e) => e.id && e.count > 0)
     const validRewards = rewardItems.filter((e) => e.id && e.count > 0)
-    const gallery = galleryText
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean)
-
     const input: CreateShopProductInput = {
       name: name.trim(),
       alias: alias || null,
       categoryId: categoryId === "__none__" ? null : categoryId,
       description: description || null,
       coverImage: coverImage || null,
-      galleryImages: gallery.length > 0 ? gallery : null,
+      galleryImages: galleryImages.length > 0 ? galleryImages : null,
       productType,
       costItems: validCosts,
       rewardItems: validRewards,
@@ -225,23 +222,15 @@ export function ProductForm({
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="prod-cover">{m.shop_cover_image()}</Label>
-            <Input
-              id="prod-cover"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              placeholder="https://..."
+            <Label>{m.shop_cover_image()}</Label>
+            <MediaPickerDialog
+              value={coverImage || null}
+              onChange={setCoverImage}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="prod-gallery">{m.shop_gallery_images()}</Label>
-            <Textarea
-              id="prod-gallery"
-              value={galleryText}
-              onChange={(e) => setGalleryText(e.target.value)}
-              rows={3}
-              placeholder="https://...&#10;https://..."
-            />
+            <Label>{m.shop_gallery_images()}</Label>
+            <ImageListField value={galleryImages} onChange={setGalleryImages} />
             <p className="text-xs text-muted-foreground">
               {m.shop_gallery_hint()}
             </p>
@@ -514,10 +503,10 @@ export function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="prod-activity">关联活动（可选）</Label>
+        <Label htmlFor="prod-activity">{m.shop_field_link_activity()}</Label>
         <ActivityPicker value={activityId} onChange={setActivityId} />
         <p className="text-xs text-muted-foreground">
-          选择活动后，该商品只在对应活动节点里展示；不选即常驻商店商品。
+          {m.shop_field_link_activity_hint()}
         </p>
       </div>
 

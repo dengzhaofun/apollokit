@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { ActivityPicker } from "#/components/activity/ActivityPicker"
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -73,7 +74,7 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. 钻石 / Gem"
+              placeholder={m.currency_field_name_placeholder()}
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">
@@ -121,13 +122,10 @@ export function DefinitionForm({
       <form.Field name="icon">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Icon URL</Label>
-            <Input
-              id={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="https://..."
+            <Label>{m.common_icon()}</Label>
+            <MediaPickerDialog
+              value={field.state.value || null}
+              onChange={(url) => field.handleChange(url)}
             />
           </div>
         )}

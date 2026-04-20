@@ -38,7 +38,7 @@ function ShopCreatePage() {
           {m.shop_new_product()}
           {activityId ? (
             <span className="ml-2 text-xs text-muted-foreground">
-              (将关联到活动)
+              {m.shop_link_to_activity_hint()}
             </span>
           ) : null}
         </h1>

@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -173,15 +174,10 @@ export function AnnouncementForm({
         </h2>
 
         <div className="space-y-1">
-          <Label htmlFor="coverImageUrl">
-            {m.announcement_field_cover()}
-          </Label>
-          <Input
-            id="coverImageUrl"
-            type="url"
-            value={coverImageUrl}
-            onChange={(e) => setCoverImageUrl(e.target.value)}
-            placeholder="https://cdn.example.com/cover.png"
+          <Label>{m.announcement_field_cover()}</Label>
+          <MediaPickerDialog
+            value={coverImageUrl || null}
+            onChange={setCoverImageUrl}
           />
         </div>
 

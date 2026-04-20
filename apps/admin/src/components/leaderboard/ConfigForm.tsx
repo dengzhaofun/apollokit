@@ -3,6 +3,7 @@ import { useForm } from "@tanstack/react-form"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
+import * as m from "#/paraglide/messages.js"
 import {
   Select,
   SelectContent,
@@ -32,7 +33,7 @@ export function LeaderboardConfigForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "创建",
+  submitLabel,
 }: Props) {
   const form = useForm({
     defaultValues: {
@@ -92,7 +93,7 @@ export function LeaderboardConfigForm({
       <form.Field name="alias">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>别名 (唯一 key)</Label>
+            <Label htmlFor={field.name}>{m.leaderboard_field_alias_label()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -109,7 +110,7 @@ export function LeaderboardConfigForm({
       <form.Field name="name">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>名称</Label>
+            <Label htmlFor={field.name}>{m.common_name()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -123,7 +124,7 @@ export function LeaderboardConfigForm({
       <form.Field name="description">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>描述</Label>
+            <Label htmlFor={field.name}>{m.common_description()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value ?? ""}
@@ -136,7 +137,7 @@ export function LeaderboardConfigForm({
       <form.Field name="metricKey">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>指标 key (metricKey)</Label>
+            <Label htmlFor={field.name}>{m.leaderboard_field_metric_key_label()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -145,7 +146,7 @@ export function LeaderboardConfigForm({
               required
             />
             <p className="text-xs text-muted-foreground">
-              其他模块调用 contribute 时匹配此 key；可被多个 config 订阅。
+              {m.leaderboard_field_metric_key_hint()}
             </p>
           </div>
         )}
@@ -155,7 +156,7 @@ export function LeaderboardConfigForm({
         <form.Field name="cycle">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>周期</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_period()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as CycleMode)}
@@ -164,10 +165,10 @@ export function LeaderboardConfigForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">daily 日榜</SelectItem>
-                  <SelectItem value="weekly">weekly 周榜</SelectItem>
-                  <SelectItem value="monthly">monthly 月榜</SelectItem>
-                  <SelectItem value="all_time">all_time 总榜</SelectItem>
+                  <SelectItem value="daily">{m.leaderboard_period_daily()}</SelectItem>
+                  <SelectItem value="weekly">{m.leaderboard_period_weekly()}</SelectItem>
+                  <SelectItem value="monthly">{m.leaderboard_period_monthly()}</SelectItem>
+                  <SelectItem value="all_time">{m.leaderboard_period_all_time()}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -177,7 +178,7 @@ export function LeaderboardConfigForm({
         <form.Field name="scope">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>作用域</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_scope()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as ScopeMode)}
@@ -186,10 +187,10 @@ export function LeaderboardConfigForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="global">global 全局</SelectItem>
-                  <SelectItem value="guild">guild 公会</SelectItem>
-                  <SelectItem value="team">team 战队</SelectItem>
-                  <SelectItem value="friend">friend 好友</SelectItem>
+                  <SelectItem value="global">{m.leaderboard_scope_global()}</SelectItem>
+                  <SelectItem value="guild">{m.leaderboard_scope_guild()}</SelectItem>
+                  <SelectItem value="team">{m.leaderboard_scope_team()}</SelectItem>
+                  <SelectItem value="friend">{m.leaderboard_scope_friend()}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,7 +200,7 @@ export function LeaderboardConfigForm({
         <form.Field name="aggregation">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>聚合方式</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_aggregation()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) =>
@@ -210,9 +211,9 @@ export function LeaderboardConfigForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sum">sum 累加</SelectItem>
-                  <SelectItem value="max">max 取最大</SelectItem>
-                  <SelectItem value="latest">latest 覆盖</SelectItem>
+                  <SelectItem value="sum">{m.leaderboard_aggregation_sum()}</SelectItem>
+                  <SelectItem value="max">{m.leaderboard_aggregation_max()}</SelectItem>
+                  <SelectItem value="latest">{m.leaderboard_aggregation_latest()}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -222,7 +223,7 @@ export function LeaderboardConfigForm({
         <form.Field name="tieBreaker">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>并列规则</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_tie_breaker()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as TieBreaker)}
@@ -231,8 +232,8 @@ export function LeaderboardConfigForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="earliest">earliest 先达到者</SelectItem>
-                  <SelectItem value="latest">latest 后达到者</SelectItem>
+                  <SelectItem value="earliest">{m.leaderboard_tie_earliest()}</SelectItem>
+                  <SelectItem value="latest">{m.leaderboard_tie_latest()}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,7 +243,7 @@ export function LeaderboardConfigForm({
         <form.Field name="maxEntries">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>最大保留条数</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_max_entries()}</Label>
               <Input
                 id={field.name}
                 type="number"
@@ -258,7 +259,7 @@ export function LeaderboardConfigForm({
         <form.Field name="timezone">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>时区</Label>
+              <Label htmlFor={field.name}>{m.leaderboard_field_timezone()}</Label>
               <Input
                 id={field.name}
                 value={field.state.value}
@@ -271,7 +272,7 @@ export function LeaderboardConfigForm({
         <form.Field name="status">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>状态</Label>
+              <Label htmlFor={field.name}>{m.common_status()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as ConfigStatus)}
@@ -280,10 +281,10 @@ export function LeaderboardConfigForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">draft 草稿</SelectItem>
-                  <SelectItem value="active">active 活跃</SelectItem>
-                  <SelectItem value="paused">paused 暂停</SelectItem>
-                  <SelectItem value="archived">archived 已归档</SelectItem>
+                  <SelectItem value="draft">{m.leaderboard_status_draft()}</SelectItem>
+                  <SelectItem value="active">{m.leaderboard_status_active()}</SelectItem>
+                  <SelectItem value="paused">{m.leaderboard_status_paused()}</SelectItem>
+                  <SelectItem value="archived">{m.leaderboard_status_archived()}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -295,8 +296,7 @@ export function LeaderboardConfigForm({
         {(field) => (
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={field.name}>
-              奖励阶梯 (JSON,
-              可选)
+              {m.leaderboard_field_reward_tiers_label()}
             </Label>
             <Textarea
               id={field.name}
@@ -307,7 +307,7 @@ export function LeaderboardConfigForm({
               placeholder='[{"from":1,"to":1,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
             />
             <p className="text-xs text-muted-foreground">
-              周期结算时按排名区间发奖，走 mail 幂等投递
+              {m.leaderboard_field_reward_tiers_hint()}
             </p>
           </div>
         )}
@@ -315,7 +315,7 @@ export function LeaderboardConfigForm({
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isPending}>
-          {isPending ? "提交中…" : submitLabel}
+          {isPending ? m.leaderboard_submitting() : (submitLabel ?? m.common_create())}
         </Button>
       </div>
     </form>

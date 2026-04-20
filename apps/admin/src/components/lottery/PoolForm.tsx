@@ -7,6 +7,7 @@ import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
 import type { CreatePoolInput } from "#/lib/types/lottery"
+import * as m from "#/paraglide/messages.js"
 
 interface PoolFormProps {
   defaultValues?: Partial<CreatePoolInput>
@@ -148,13 +149,13 @@ export function LotteryPoolForm({
       <form.Field name="activityId">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
             <ActivityPicker
               value={field.state.value}
               onChange={(v) => field.handleChange(v)}
             />
             <p className="text-xs text-muted-foreground">
-              选活动后此抽奖池仅在活动节点可用；不选即常驻抽奖池。
+              {m.lottery_field_activity_hint()}
             </p>
           </div>
         )}

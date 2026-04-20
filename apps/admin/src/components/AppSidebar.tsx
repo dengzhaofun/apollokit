@@ -1,10 +1,12 @@
 import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
-import { Link } from "@tanstack/react-router"
+import { Link, useLocation } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
   BookOpen,
   CalendarCheck,
+  ChevronRight,
   Coins,
+  Dices,
   FolderOpen,
   GalleryHorizontal,
   Gift,
@@ -28,8 +30,14 @@ import {
   Trophy,
   UserPlus,
   Users,
+  type LucideIcon,
 } from "lucide-react"
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "#/components/ui/collapsible"
 import {
   Sidebar,
   SidebarContent,
@@ -46,43 +54,119 @@ import {
 import { LanguageSwitcher } from "./LanguageSwitcher"
 import * as m from "../paraglide/messages.js"
 
-function getNavItems() {
+type NavItem = {
+  title: () => string
+  to:
+    | "/dashboard"
+    | "/check-in"
+    | "/item"
+    | "/currency"
+    | "/entity"
+    | "/exchange"
+    | "/cdkey"
+    | "/shop"
+    | "/storage-box"
+    | "/mail"
+    | "/banner"
+    | "/announcement"
+    | "/activity"
+    | "/lottery"
+    | "/friend-gift"
+    | "/task"
+    | "/media-library"
+    | "/dialogue"
+    | "/collection"
+    | "/level"
+    | "/event-catalog"
+    | "/friend"
+    | "/invite"
+    | "/guild"
+    | "/team"
+    | "/leaderboard"
+    | "/rank"
+    | "/api-keys"
+  icon: LucideIcon
+}
+
+type NavGroup = {
+  key: "overview" | "economy" | "operations" | "content" | "social" | "system"
+  label: () => string
+  items: NavItem[]
+}
+
+function getNavGroups(): NavGroup[] {
   return [
-    { title: m.nav_dashboard(), to: "/dashboard" as const, icon: LayoutDashboard },
-    { title: m.nav_checkin(), to: "/check-in" as const, icon: CalendarCheck },
-    { title: m.nav_item(), to: "/item" as const, icon: Package },
-    { title: m.nav_currency(), to: "/currency" as const, icon: Coins },
-    { title: m.nav_entity(), to: "/entity" as const, icon: Sparkles },
-    { title: m.nav_exchange(), to: "/exchange" as const, icon: ArrowLeftRight },
-    { title: m.nav_cdkey(), to: "/cdkey" as const, icon: Ticket },
-    { title: m.nav_shop(), to: "/shop" as const, icon: ShoppingCart },
-    { title: "存储箱", to: "/storage-box" as const, icon: PiggyBank },
-    { title: m.nav_mail(), to: "/mail" as const, icon: Mail },
-    { title: m.nav_banner(), to: "/banner" as const, icon: GalleryHorizontal },
-    { title: m.nav_announcement(), to: "/announcement" as const, icon: Megaphone },
-    { title: m.nav_media_library(), to: "/media-library" as const, icon: FolderOpen },
-    { title: m.nav_dialogue(), to: "/dialogue" as const, icon: MessagesSquare },
-    { title: m.nav_collection(), to: "/collection" as const, icon: BookOpen },
-    { title: m.nav_level(), to: "/level" as const, icon: Map },
-    { title: m.nav_friend(), to: "/friend" as const, icon: Users },
-    { title: m.nav_invite(), to: "/invite" as const, icon: UserPlus },
-    { title: m.nav_guild(), to: "/guild" as const, icon: Shield },
-    { title: m.nav_team(), to: "/team" as const, icon: Swords },
-    { title: m.nav_gift(), to: "/friend-gift" as const, icon: Gift },
-    { title: m.nav_task(), to: "/task" as const, icon: ListTodo },
-    { title: m.nav_activity(), to: "/activity" as const, icon: PartyPopper },
-    { title: m.nav_leaderboard(), to: "/leaderboard" as const, icon: Trophy },
-    { title: m.nav_rank(), to: "/rank" as const, icon: Medal },
-    { title: m.nav_event_catalog(), to: "/event-catalog" as const, icon: Radio },
-    { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
+    {
+      key: "overview",
+      label: m.nav_group_overview,
+      items: [
+        { title: m.nav_dashboard, to: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      key: "economy",
+      label: m.nav_group_economy,
+      items: [
+        { title: m.nav_item, to: "/item", icon: Package },
+        { title: m.nav_currency, to: "/currency", icon: Coins },
+        { title: m.nav_entity, to: "/entity", icon: Sparkles },
+        { title: m.nav_exchange, to: "/exchange", icon: ArrowLeftRight },
+        { title: m.nav_cdkey, to: "/cdkey", icon: Ticket },
+        { title: m.nav_shop, to: "/shop", icon: ShoppingCart },
+        { title: m.nav_storage_box, to: "/storage-box", icon: PiggyBank },
+        { title: m.nav_mail, to: "/mail", icon: Mail },
+      ],
+    },
+    {
+      key: "operations",
+      label: m.nav_group_operations,
+      items: [
+        { title: m.nav_checkin, to: "/check-in", icon: CalendarCheck },
+        { title: m.nav_banner, to: "/banner", icon: GalleryHorizontal },
+        { title: m.nav_announcement, to: "/announcement", icon: Megaphone },
+        { title: m.nav_activity, to: "/activity", icon: PartyPopper },
+        { title: m.nav_lottery, to: "/lottery", icon: Dices },
+        { title: m.nav_gift, to: "/friend-gift", icon: Gift },
+        { title: m.nav_task, to: "/task", icon: ListTodo },
+      ],
+    },
+    {
+      key: "content",
+      label: m.nav_group_content,
+      items: [
+        { title: m.nav_media_library, to: "/media-library", icon: FolderOpen },
+        { title: m.nav_dialogue, to: "/dialogue", icon: MessagesSquare },
+        { title: m.nav_collection, to: "/collection", icon: BookOpen },
+        { title: m.nav_level, to: "/level", icon: Map },
+        { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
+      ],
+    },
+    {
+      key: "social",
+      label: m.nav_group_social,
+      items: [
+        { title: m.nav_friend, to: "/friend", icon: Users },
+        { title: m.nav_invite, to: "/invite", icon: UserPlus },
+        { title: m.nav_guild, to: "/guild", icon: Shield },
+        { title: m.nav_team, to: "/team", icon: Swords },
+        { title: m.nav_leaderboard, to: "/leaderboard", icon: Trophy },
+        { title: m.nav_rank, to: "/rank", icon: Medal },
+      ],
+    },
+    {
+      key: "system",
+      label: m.nav_group_system,
+      items: [{ title: m.nav_api_keys, to: "/api-keys", icon: KeyRound }],
+    },
   ]
 }
 
 export function AppSidebar() {
-  const navItems = getNavItems()
+  const groups = getNavGroups()
+  const { pathname } = useLocation()
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -108,23 +192,47 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{m.nav_navigation()}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.to}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {groups.map((group) => {
+          const isActiveGroup = group.items.some((item) =>
+            pathname === item.to || pathname.startsWith(`${item.to}/`),
+          )
+          return (
+            <Collapsible
+              key={group.key}
+              defaultOpen={isActiveGroup || group.key === "overview"}
+              className="group/collapsible"
+            >
+              <SidebarGroup>
+                <SidebarGroupLabel asChild>
+                  <CollapsibleTrigger className="flex w-full items-center justify-between text-sidebar-foreground/70 hover:text-sidebar-foreground">
+                    {group.label()}
+                    <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </CollapsibleTrigger>
+                </SidebarGroupLabel>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {group.items.map((item) => {
+                        const isActive =
+                          pathname === item.to || pathname.startsWith(`${item.to}/`)
+                        return (
+                          <SidebarMenuItem key={item.to}>
+                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title()}>
+                              <Link to={item.to}>
+                                <item.icon className="size-4" />
+                                <span>{item.title()}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+          )
+        })}
       </SidebarContent>
 
       <SidebarFooter>
@@ -144,3 +252,6 @@ export function AppSidebar() {
     </Sidebar>
   )
 }
+
+export { getNavGroups }
+export type { NavGroup, NavItem }

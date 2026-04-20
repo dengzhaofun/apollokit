@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -117,22 +118,15 @@ export function CategoryForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="cat-cover">{m.shop_cover_image()}</Label>
-          <Input
-            id="cat-cover"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
-            placeholder="https://..."
+          <Label>{m.shop_cover_image()}</Label>
+          <MediaPickerDialog
+            value={coverImage || null}
+            onChange={setCoverImage}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="cat-icon">{m.common_icon()}</Label>
-          <Input
-            id="cat-icon"
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-            placeholder="https://..."
-          />
+          <Label>{m.common_icon()}</Label>
+          <MediaPickerDialog value={icon || null} onChange={setIcon} />
         </div>
       </div>
 

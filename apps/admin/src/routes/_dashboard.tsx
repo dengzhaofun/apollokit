@@ -2,10 +2,14 @@ import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 
 import { AppSidebar } from "../components/AppSidebar"
+import { CommandPalette } from "../components/CommandPalette"
+import { RouteBreadcrumb } from "../components/RouteBreadcrumb"
 import { authClient } from "../lib/auth-client"
+import { Separator } from "../components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
+  SidebarTrigger,
 } from "../components/ui/sidebar"
 
 export const Route = createFileRoute("/_dashboard")({
@@ -63,8 +67,14 @@ function DashboardLayoutClient() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <RouteBreadcrumb />
+        </header>
         <Outlet />
       </SidebarInset>
+      <CommandPalette />
     </SidebarProvider>
   )
 }

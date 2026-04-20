@@ -20,6 +20,7 @@ import {
   useWithdraw,
 } from "#/hooks/use-storage-box"
 import type { StorageBoxDepositView } from "#/lib/types/storage-box"
+import * as m from "#/paraglide/messages.js"
 
 export function StorageBoxDepositLookup() {
   const [input, setInput] = useState("")
@@ -37,7 +38,7 @@ export function StorageBoxDepositLookup() {
     if (!cfg) return
     const isFixed = cfg.type === "fixed"
     if (isFixed && !d.isMatured && !cfg.allowEarlyWithdraw) {
-      window.alert("定期未到期且配置不允许提前取款")
+      window.alert(m.storage_box_deposit_early_blocked())
       return
     }
     withdraw.mutate(
@@ -51,7 +52,9 @@ export function StorageBoxDepositLookup() {
       {
         onError: (err: unknown) => {
           window.alert(
-            err instanceof Error ? err.message : "取款失败",
+            err instanceof Error
+              ? err.message
+              : m.storage_box_deposit_withdraw_failed(),
           )
         },
       },
@@ -73,39 +76,39 @@ export function StorageBoxDepositLookup() {
             id="endUserId"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="例如：user-42"
+            placeholder={m.storage_box_deposit_lookup_placeholder()}
           />
         </div>
-        <Button type="submit">查询</Button>
+        <Button type="submit">{m.storage_box_deposit_lookup_search()}</Button>
       </form>
 
       {endUserId ? (
         isPending ? (
-          <div className="text-sm text-muted-foreground">加载中...</div>
+          <div className="text-sm text-muted-foreground">{m.common_loading()}</div>
         ) : error ? (
           <div className="text-sm text-destructive">
-            加载失败：{error.message}
+            {m.common_failed_to_load({ resource: m.storage_box_page_title(), error: error.message })}
           </div>
         ) : (
           <div className="rounded-xl border bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>存储箱</TableHead>
-                  <TableHead>类型</TableHead>
-                  <TableHead>货币</TableHead>
-                  <TableHead>本金</TableHead>
-                  <TableHead>利息（投射）</TableHead>
-                  <TableHead>到期</TableHead>
-                  <TableHead>存入时间</TableHead>
-                  <TableHead>操作</TableHead>
+                  <TableHead>{m.storage_box_deposit_col_box()}</TableHead>
+                  <TableHead>{m.common_type()}</TableHead>
+                  <TableHead>{m.storage_box_field_currencies()}</TableHead>
+                  <TableHead>{m.storage_box_deposit_col_principal()}</TableHead>
+                  <TableHead>{m.storage_box_deposit_col_interest()}</TableHead>
+                  <TableHead>{m.storage_box_deposit_col_maturity()}</TableHead>
+                  <TableHead>{m.storage_box_deposit_col_deposited_at()}</TableHead>
+                  <TableHead>{m.common_actions()}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(deposits ?? []).length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
-                      该用户没有活跃存款。
+                      {m.storage_box_deposit_no_active()}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -119,12 +122,12 @@ export function StorageBoxDepositLookup() {
                         </TableCell>
                         <TableCell>
                           {cfg?.type === "fixed" ? (
-                            <Badge variant="default">定期</Badge>
+                            <Badge variant="default">{m.storage_box_type_fixed()}</Badge>
                           ) : (
-                            <Badge variant="secondary">活期</Badge>
+                            <Badge variant="secondary">{m.storage_box_type_demand()}</Badge>
                           )}
                         </TableCell>
-                        <TableCell>{def?.name ?? "—"}</TableCell>
+                        <TableCell>{def?.name ?? m.common_dash()}</TableCell>
                         <TableCell>{d.principal}</TableCell>
                         <TableCell>{d.projectedInterest}</TableCell>
                         <TableCell>
@@ -133,12 +136,12 @@ export function StorageBoxDepositLookup() {
                               {format(new Date(d.maturesAt), "yyyy-MM-dd HH:mm")}
                               {d.isMatured && (
                                 <Badge variant="default" className="ml-2">
-                                  已到期
+                                  {m.storage_box_deposit_already_matured()}
                                 </Badge>
                               )}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="text-muted-foreground">{m.common_dash()}</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -151,7 +154,7 @@ export function StorageBoxDepositLookup() {
                             disabled={withdraw.isPending}
                             onClick={() => handleWithdraw(d)}
                           >
-                            取款
+                            {m.storage_box_deposit_action_withdraw()}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -164,7 +167,7 @@ export function StorageBoxDepositLookup() {
         )
       ) : (
         <p className="text-sm text-muted-foreground">
-          输入 endUserId 查询其全部存款。
+          {m.storage_box_deposit_lookup_hint()}
         </p>
       )}
     </div>

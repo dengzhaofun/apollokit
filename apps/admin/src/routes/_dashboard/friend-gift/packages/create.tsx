@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
@@ -118,13 +119,8 @@ function GiftPackageCreatePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="icon">{m.common_icon()}</Label>
-              <Input
-                id="icon"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="https://..."
-              />
+              <Label>{m.common_icon()}</Label>
+              <MediaPickerDialog value={icon || null} onChange={setIcon} />
             </div>
 
             {/* Gift Items */}

@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "#/components/ui/table"
 import type { Activity, ActivityState } from "#/lib/types/activity"
+import * as m from "#/paraglide/messages.js"
 
 const STATE_VARIANT: Record<ActivityState, "default" | "outline" | "secondary"> = {
   draft: "outline",
@@ -28,21 +29,21 @@ const STATE_VARIANT: Record<ActivityState, "default" | "outline" | "secondary"> 
   archived: "outline",
 }
 
-const STATE_LABELS: Record<ActivityState, string> = {
-  draft: "草稿",
-  scheduled: "已排期",
-  teasing: "预热中",
-  active: "进行中",
-  settling: "结算中",
-  ended: "已结束",
-  archived: "已归档",
+const STATE_LABELS: Record<ActivityState, () => string> = {
+  draft: m.activity_state_draft,
+  scheduled: m.activity_state_scheduled,
+  teasing: m.activity_state_teasing,
+  active: m.activity_state_active,
+  settling: m.activity_state_settling,
+  ended: m.activity_state_ended,
+  archived: m.activity_state_archived,
 }
 
 const columnHelper = createColumnHelper<Activity>()
 
 const columns = [
   columnHelper.accessor("name", {
-    header: () => "名称",
+    header: () => m.common_name(),
     cell: (info) => (
       <Link
         to="/activity/$alias"
@@ -54,7 +55,7 @@ const columns = [
     ),
   }),
   columnHelper.accessor("alias", {
-    header: () => "别名",
+    header: () => m.common_alias(),
     cell: (info) => (
       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
         {info.getValue()}
@@ -62,22 +63,22 @@ const columns = [
     ),
   }),
   columnHelper.accessor("kind", {
-    header: () => "类型",
+    header: () => m.common_type(),
     cell: (info) => <Badge variant="outline">{info.getValue()}</Badge>,
   }),
   columnHelper.accessor("status", {
-    header: () => "状态",
+    header: () => m.common_status(),
     cell: (info) => {
       const s = info.getValue()
       return (
         <Badge variant={STATE_VARIANT[s]}>
-          {STATE_LABELS[s] ?? s}
+          {STATE_LABELS[s] ? STATE_LABELS[s]() : s}
         </Badge>
       )
     },
   }),
   columnHelper.accessor("visibleAt", {
-    header: () => "可见时间",
+    header: () => m.activity_col_visible_at(),
     cell: (info) => (
       <span className="text-xs text-muted-foreground">
         {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
@@ -85,7 +86,7 @@ const columns = [
     ),
   }),
   columnHelper.accessor("startAt", {
-    header: () => "开始时间",
+    header: () => m.activity_col_start_at(),
     cell: (info) => (
       <span className="text-xs text-muted-foreground">
         {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
@@ -93,7 +94,7 @@ const columns = [
     ),
   }),
   columnHelper.accessor("endAt", {
-    header: () => "结束时间",
+    header: () => m.activity_col_end_at(),
     cell: (info) => (
       <span className="text-xs text-muted-foreground">
         {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
@@ -137,7 +138,7 @@ export function ActivityTable({ data }: { data: Activity[] }) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              暂无活动
+              {m.activity_table_empty()}
             </TableCell>
           </TableRow>
         )}

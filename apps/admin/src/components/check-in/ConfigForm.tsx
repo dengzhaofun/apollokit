@@ -266,13 +266,13 @@ export function ConfigForm({
       <form.Field name="activityId">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
             <ActivityPicker
               value={field.state.value}
               onChange={(v) => field.handleChange(v)}
             />
             <p className="text-xs text-muted-foreground">
-              选择一个活动把这个签到挂成活动节点；不选即作为常驻签到。
+              {m.check_in_field_activity_hint()}
             </p>
           </div>
         )}

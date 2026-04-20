@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Checkbox } from "#/components/ui/checkbox"
@@ -19,6 +20,7 @@ import type {
   CreateStorageBoxConfigInput,
   StorageBoxType,
 } from "#/lib/types/storage-box"
+import * as m from "#/paraglide/messages.js"
 
 interface Props {
   defaultValues?: Partial<CreateStorageBoxConfigInput>
@@ -91,21 +93,21 @@ export function StorageBoxConfigForm({
         validators={{
           onChange: ({ value }) =>
             !value
-              ? "名称必填"
+              ? m.storage_box_validation_name_required()
               : value.length > 200
-              ? "最多 200 个字符"
+              ? m.storage_box_validation_name_max()
               : undefined,
         }}
       >
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>名称 *</Label>
+            <Label htmlFor={field.name}>{m.common_name()} *</Label>
             <Input
               id={field.name}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="例如：金币活期"
+              placeholder={m.storage_box_field_name_placeholder()}
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">
@@ -119,16 +121,16 @@ export function StorageBoxConfigForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>别名</Label>
+            <Label htmlFor={field.name}>{m.common_alias()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="例如：gold-savings"
+              placeholder={m.storage_box_field_alias_placeholder()}
             />
             <p className="text-xs text-muted-foreground">
-              可选的 URL 友好 key，小写字母/数字/连字符/下划线。
+              {m.storage_box_field_alias_hint()}
             </p>
           </div>
         )}
@@ -137,7 +139,7 @@ export function StorageBoxConfigForm({
       <form.Field name="description">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>描述</Label>
+            <Label htmlFor={field.name}>{m.common_description()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -152,13 +154,10 @@ export function StorageBoxConfigForm({
       <form.Field name="icon">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Icon URL</Label>
-            <Input
-              id={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="https://..."
+            <Label>{m.common_icon()}</Label>
+            <MediaPickerDialog
+              value={field.state.value || null}
+              onChange={(url) => field.handleChange(url)}
             />
           </div>
         )}
@@ -167,7 +166,7 @@ export function StorageBoxConfigForm({
       <form.Field name="type">
         {(field) => (
           <div className="space-y-2">
-            <Label>类型 *</Label>
+            <Label>{m.common_type()} *</Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v as StorageBoxType)}
@@ -176,8 +175,8 @@ export function StorageBoxConfigForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="demand">活期（随存随取）</SelectItem>
-                <SelectItem value="fixed">定期（锁仓）</SelectItem>
+                <SelectItem value="demand">{m.storage_box_type_demand_long()}</SelectItem>
+                <SelectItem value="fixed">{m.storage_box_type_fixed_long()}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -193,13 +192,13 @@ export function StorageBoxConfigForm({
                 validators={{
                   onChange: ({ value }) =>
                     value == null || value <= 0
-                      ? "定期必须设置锁仓天数"
+                      ? m.storage_box_validation_lock_days_required()
                       : undefined,
                 }}
               >
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>锁仓天数 *</Label>
+                    <Label htmlFor={field.name}>{m.storage_box_field_lock_days()} *</Label>
                     <Input
                       id={field.name}
                       type="number"
@@ -231,7 +230,7 @@ export function StorageBoxConfigForm({
                         field.handleChange(checked === true)
                       }
                     />
-                    <Label htmlFor={field.name}>允许提前取款（没收利息）</Label>
+                    <Label htmlFor={field.name}>{m.storage_box_field_early_withdraw_label()}</Label>
                   </div>
                 )}
               </form.Field>
@@ -244,7 +243,7 @@ export function StorageBoxConfigForm({
         <form.Field name="ratePercent">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>利率 (%)</Label>
+              <Label htmlFor={field.name}>{m.storage_box_field_interest_rate_label()}</Label>
               <Input
                 id={field.name}
                 type="number"
@@ -255,7 +254,7 @@ export function StorageBoxConfigForm({
                 onChange={(e) => field.handleChange(Number(e.target.value))}
               />
               <p className="text-xs text-muted-foreground">
-                按「周期天数」适用。例如 3% / 365 天 = 年化 3%。
+                {m.storage_box_field_interest_hint()}
               </p>
             </div>
           )}
@@ -264,7 +263,7 @@ export function StorageBoxConfigForm({
         <form.Field name="interestPeriodDays">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>利率周期（天）</Label>
+              <Label htmlFor={field.name}>{m.storage_box_field_interest_period()}</Label>
               <Input
                 id={field.name}
                 type="number"
@@ -282,12 +281,14 @@ export function StorageBoxConfigForm({
         name="acceptedCurrencyIds"
         validators={{
           onChange: ({ value }) =>
-            !value || value.length === 0 ? "至少选择 1 种货币" : undefined,
+            !value || value.length === 0
+              ? m.storage_box_validation_currency_required()
+              : undefined,
         }}
       >
         {(field) => (
           <div className="space-y-2">
-            <Label>接收的货币 *</Label>
+            <Label>{m.storage_box_field_currencies()} *</Label>
             <div className="space-y-1 rounded-md border p-3">
               {currencies && currencies.length > 0 ? (
                 currencies.map((c) => {
@@ -317,7 +318,7 @@ export function StorageBoxConfigForm({
                 })
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  暂无货币。先到「物品」页把某个定义标记为「货币」。
+                  {m.storage_box_no_currencies_hint()}
                 </p>
               )}
             </div>
@@ -334,7 +335,7 @@ export function StorageBoxConfigForm({
         <form.Field name="minDeposit">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>单笔最小金额</Label>
+              <Label htmlFor={field.name}>{m.storage_box_field_min_amount()}</Label>
               <Input
                 id={field.name}
                 type="number"
@@ -346,7 +347,7 @@ export function StorageBoxConfigForm({
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
-                placeholder="不限"
+                placeholder={m.common_unlimited()}
               />
             </div>
           )}
@@ -354,7 +355,7 @@ export function StorageBoxConfigForm({
         <form.Field name="maxDeposit">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>单笔最大金额</Label>
+              <Label htmlFor={field.name}>{m.storage_box_field_max_amount()}</Label>
               <Input
                 id={field.name}
                 type="number"
@@ -366,7 +367,7 @@ export function StorageBoxConfigForm({
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
-                placeholder="不限"
+                placeholder={m.common_unlimited()}
               />
             </div>
           )}
@@ -376,7 +377,7 @@ export function StorageBoxConfigForm({
       <form.Field name="sortOrder">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>排序</Label>
+            <Label htmlFor={field.name}>{m.common_sort_order()}</Label>
             <Input
               id={field.name}
               type="number"
@@ -396,7 +397,7 @@ export function StorageBoxConfigForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>激活</Label>
+            <Label htmlFor={field.name}>{m.storage_box_field_active()}</Label>
           </div>
         )}
       </form.Field>
@@ -404,7 +405,7 @@ export function StorageBoxConfigForm({
       <form.Subscribe selector={(s) => s.canSubmit}>
         {(canSubmit) => (
           <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "保存中..." : (submitLabel ?? "创建")}
+            {isPending ? m.common_saving() : (submitLabel ?? m.common_create())}
           </Button>
         )}
       </form.Subscribe>
