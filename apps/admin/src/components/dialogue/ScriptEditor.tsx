@@ -2,6 +2,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { LinkActionEditor } from "#/components/common/LinkActionEditor"
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -305,14 +306,13 @@ function NodeCard({
           <Label className="text-xs">
             {m.dialogue_node_speaker_avatar()}
           </Label>
-          <Input
-            placeholder="https://..."
-            value={node.speaker.avatarUrl ?? ""}
-            onChange={(e) =>
+          <MediaPickerDialog
+            value={node.speaker.avatarUrl ?? null}
+            onChange={(url) =>
               onChange({
                 speaker: {
                   ...node.speaker,
-                  avatarUrl: e.target.value || undefined,
+                  avatarUrl: url || undefined,
                 },
               })
             }

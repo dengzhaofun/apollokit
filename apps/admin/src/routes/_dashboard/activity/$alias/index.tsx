@@ -99,7 +99,7 @@ function ActivityDetailPage() {
           {activity.alias}
         </code>
         <Badge variant={STATE_VARIANT[activity.status]} className="ml-2">
-          {STATE_LABELS[activity.status] ?? activity.status}
+          {STATE_LABELS[activity.status] ? STATE_LABELS[activity.status]() : activity.status}
         </Badge>
 
         <div className="ml-auto flex gap-2">

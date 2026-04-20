@@ -25,12 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
 import type { StorageBoxConfig } from "#/lib/types/storage-box"
+import * as m from "#/paraglide/messages.js"
 
 const columnHelper = createColumnHelper<StorageBoxConfig>()
 
 const columns = [
   columnHelper.accessor("name", {
-    header: () => "名称",
+    header: () => m.common_name(),
     cell: (info) => (
       <Link
         to="/storage-box/configs/$configId"
@@ -42,38 +43,38 @@ const columns = [
     ),
   }),
   columnHelper.accessor("alias", {
-    header: () => "别名",
+    header: () => m.common_alias(),
     cell: (info) => {
       const alias = info.getValue()
       return alias ? (
         <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">{m.common_dash()}</span>
       )
     },
   }),
   columnHelper.accessor("type", {
-    header: () => "类型",
+    header: () => m.common_type(),
     cell: (info) => {
       const t = info.getValue()
       return t === "fixed" ? (
-        <Badge variant="default">定期</Badge>
+        <Badge variant="default">{m.storage_box_type_fixed()}</Badge>
       ) : (
-        <Badge variant="secondary">活期</Badge>
+        <Badge variant="secondary">{m.storage_box_type_demand()}</Badge>
       )
     },
   }),
   columnHelper.accessor("lockupDays", {
-    header: () => "锁仓天数",
+    header: () => m.storage_box_field_lock_days(),
     cell: (info) =>
       info.getValue() != null ? (
         info.getValue()
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">{m.common_dash()}</span>
       ),
   }),
   columnHelper.accessor("interestRateBps", {
-    header: () => "利率",
+    header: () => m.storage_box_field_interest_rate(),
     cell: (info) => {
       const row = info.row.original
       const pct = row.interestRateBps / 100
@@ -85,21 +86,21 @@ const columns = [
     },
   }),
   columnHelper.accessor("acceptedCurrencyIds", {
-    header: () => "货币",
+    header: () => m.storage_box_deposit_col_box(),
     cell: (info) => (
       <Badge variant="outline">{info.getValue().length}</Badge>
     ),
   }),
   columnHelper.accessor("isActive", {
-    header: () => "状态",
+    header: () => m.common_status(),
     cell: (info) => (
       <Badge variant={info.getValue() ? "default" : "outline"}>
-        {info.getValue() ? "激活" : "禁用"}
+        {info.getValue() ? m.common_active() : m.common_inactive()}
       </Badge>
     ),
   }),
   columnHelper.accessor("createdAt", {
-    header: () => "创建时间",
+    header: () => m.common_created(),
     cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
   }),
   columnHelper.display({
@@ -115,7 +116,7 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">操作</span>
+          <span className="sr-only">{m.common_actions()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -125,7 +126,7 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
             params={{ configId: config.id }}
           >
             <Pencil className="size-4" />
-            编辑
+            {m.common_edit()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -135,7 +136,7 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
             search={{ delete: true }}
           >
             <Trash2 className="size-4" />
-            删除
+            {m.common_delete()}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -186,7 +187,7 @@ export function StorageBoxConfigTable({ data }: Props) {
         ) : (
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              还没有存储箱配置。
+              {m.storage_box_table_empty()}
             </TableCell>
           </TableRow>
         )}

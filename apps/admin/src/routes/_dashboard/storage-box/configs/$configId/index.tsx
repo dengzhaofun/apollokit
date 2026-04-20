@@ -17,6 +17,7 @@ import {
 } from "#/hooks/use-storage-box"
 import { useItemDefinitions } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute(
   "/_dashboard/storage-box/configs/$configId/",
@@ -37,9 +38,9 @@ function StorageBoxConfigDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="加载中..." />
+        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
-          加载中...
+          {m.common_loading()}
         </main>
       </>
     )
@@ -48,9 +49,9 @@ function StorageBoxConfigDetailPage() {
   if (error || !config) {
     return (
       <>
-        <Header title="错误" />
+        <Header title={m.common_error()} />
         <main className="flex h-40 items-center justify-center text-destructive">
-          {error?.message ?? "存储箱不存在"}
+          {error?.message ?? m.storage_box_detail_not_found()}
         </main>
       </>
     )
@@ -68,7 +69,7 @@ function StorageBoxConfigDetailPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/storage-box">
                 <ArrowLeft className="size-4" />
-                返回
+                {m.common_back()}
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
@@ -78,7 +79,7 @@ function StorageBoxConfigDetailPage() {
                 onClick={() => setEditing(!editing)}
               >
                 <Pencil className="size-4" />
-                {editing ? "取消" : "编辑"}
+                {editing ? m.common_cancel() : m.common_edit()}
               </Button>
               <DeleteStorageBoxDialog
                 name={config.name}
@@ -86,11 +87,13 @@ function StorageBoxConfigDetailPage() {
                 onConfirm={async () => {
                   try {
                     await deleteMutation.mutateAsync(config.id)
-                    toast.success("存储箱已删除")
+                    toast.success(m.storage_box_toast_delete_success())
                     navigate({ to: "/storage-box" })
                   } catch (err) {
                     toast.error(
-                      err instanceof ApiError ? err.body.error : "删除失败",
+                      err instanceof ApiError
+                        ? err.body.error
+                        : m.storage_box_toast_delete_failed(),
                     )
                   }
                 }}
@@ -117,7 +120,7 @@ function StorageBoxConfigDetailPage() {
                   sortOrder: config.sortOrder,
                   isActive: config.isActive,
                 }}
-                submitLabel="保存修改"
+                submitLabel={m.common_save_changes()}
                 isPending={updateMutation.isPending}
                 onSubmit={async (values) => {
                   try {
@@ -125,11 +128,13 @@ function StorageBoxConfigDetailPage() {
                       id: config.id,
                       ...values,
                     })
-                    toast.success("修改已保存")
+                    toast.success(m.storage_box_toast_save_success())
                     setEditing(false)
                   } catch (err) {
                     toast.error(
-                      err instanceof ApiError ? err.body.error : "保存失败",
+                      err instanceof ApiError
+                        ? err.body.error
+                        : m.storage_box_toast_save_failed(),
                     )
                   }
                 }}
@@ -138,66 +143,74 @@ function StorageBoxConfigDetailPage() {
           ) : (
             <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Detail label="名称" value={config.name} />
+                <Detail label={m.common_name()} value={config.name} />
                 <Detail
-                  label="别名"
+                  label={m.common_alias()}
                   value={
                     config.alias ? (
                       <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                         {config.alias}
                       </code>
                     ) : (
-                      "—"
+                      m.common_dash()
                     )
                   }
                 />
                 <Detail
-                  label="类型"
+                  label={m.common_type()}
                   value={
                     config.type === "fixed" ? (
-                      <Badge variant="default">定期</Badge>
+                      <Badge variant="default">{m.storage_box_type_fixed()}</Badge>
                     ) : (
-                      <Badge variant="secondary">活期</Badge>
+                      <Badge variant="secondary">{m.storage_box_type_demand()}</Badge>
                     )
                   }
                 />
                 <Detail
-                  label="锁仓天数"
-                  value={config.lockupDays ?? "—"}
+                  label={m.storage_box_field_lock_days()}
+                  value={config.lockupDays ?? m.common_dash()}
                 />
                 <Detail
-                  label="利率"
-                  value={`${(config.interestRateBps / 100).toFixed(2)}% / ${config.interestPeriodDays} 天`}
+                  label={m.storage_box_field_interest_rate()}
+                  value={`${(config.interestRateBps / 100).toFixed(2)}% / ${config.interestPeriodDays} d`}
                 />
                 <Detail
-                  label="提前取款"
+                  label={m.storage_box_field_early_withdraw()}
                   value={
-                    config.allowEarlyWithdraw ? "允许（没收利息）" : "不允许"
+                    config.allowEarlyWithdraw
+                      ? m.storage_box_detail_early_allowed()
+                      : m.storage_box_detail_early_disallowed()
                   }
                 />
-                <Detail label="最小金额" value={config.minDeposit ?? "—"} />
-                <Detail label="最大金额" value={config.maxDeposit ?? "—"} />
                 <Detail
-                  label="状态"
+                  label={m.storage_box_field_min_amount_short()}
+                  value={config.minDeposit ?? m.common_dash()}
+                />
+                <Detail
+                  label={m.storage_box_field_max_amount_short()}
+                  value={config.maxDeposit ?? m.common_dash()}
+                />
+                <Detail
+                  label={m.common_status()}
                   value={
                     <Badge variant={config.isActive ? "default" : "outline"}>
-                      {config.isActive ? "激活" : "禁用"}
+                      {config.isActive ? m.common_active() : m.common_inactive()}
                     </Badge>
                   }
                 />
                 <Detail
-                  label="创建时间"
+                  label={m.common_created()}
                   value={format(new Date(config.createdAt), "yyyy-MM-dd HH:mm")}
                 />
                 {config.description && (
                   <div className="sm:col-span-2">
-                    <Detail label="描述" value={config.description} />
+                    <Detail label={m.common_description()} value={config.description} />
                   </div>
                 )}
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">
-                  接收的货币
+                  {m.storage_box_field_currencies()}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {config.acceptedCurrencyIds.length === 0 ? (

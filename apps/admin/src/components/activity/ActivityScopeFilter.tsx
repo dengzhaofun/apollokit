@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { useActivities } from "#/hooks/use-activity"
+import * as m from "#/paraglide/messages.js"
 
 export type ActivityScope =
   | { kind: "standalone" }
@@ -28,7 +29,7 @@ const ALL = "__all__"
 export function ActivityScopeFilter({
   value,
   onChange,
-  label = "显示范围",
+  label,
 }: {
   value: ActivityScope
   onChange: (scope: ActivityScope) => void
@@ -44,7 +45,7 @@ export function ActivityScopeFilter({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label ?? m.activity_scope_label()}</span>
       <Select
         value={selectValue}
         onValueChange={(v) => {
@@ -57,11 +58,11 @@ export function ActivityScopeFilter({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={STANDALONE}>仅常驻配置 (默认)</SelectItem>
-          <SelectItem value={ALL}>全部 (含活动专属)</SelectItem>
+          <SelectItem value={STANDALONE}>{m.activity_scope_standalone()}</SelectItem>
+          <SelectItem value={ALL}>{m.activity_scope_all()}</SelectItem>
           {(activities ?? []).map((a) => (
             <SelectItem key={a.id} value={a.id}>
-              活动: {a.name}
+              {m.activity_scope_prefix({ name: a.name })}
               <code className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs">
                 {a.alias}
               </code>

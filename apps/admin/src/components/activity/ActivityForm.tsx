@@ -17,6 +17,7 @@ import type {
   CreateActivityInput,
   RewardEntry,
 } from "#/lib/types/activity"
+import * as m from "#/paraglide/messages.js"
 
 /** Convert ISO to the `<input type="datetime-local">` value format (no tz). */
 function toLocalInput(iso: string | undefined): string {
@@ -44,7 +45,7 @@ export function ActivityForm({
   defaultValues,
   onSubmit,
   isPending,
-  submitLabel = "创建",
+  submitLabel,
   disableAliasEdit = false,
 }: Props) {
   const form = useForm({
@@ -137,7 +138,7 @@ export function ActivityForm({
       <form.Field name="alias">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>活动别名 (唯一 key)</Label>
+            <Label htmlFor={field.name}>{m.activity_field_alias_label()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -155,7 +156,7 @@ export function ActivityForm({
       <form.Field name="name">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>活动名称</Label>
+            <Label htmlFor={field.name}>{m.activity_field_name()}</Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -169,7 +170,7 @@ export function ActivityForm({
       <form.Field name="description">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>描述</Label>
+            <Label htmlFor={field.name}>{m.common_description()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value ?? ""}
@@ -183,7 +184,7 @@ export function ActivityForm({
         <form.Field name="kind">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>活动类型 (kind)</Label>
+              <Label htmlFor={field.name}>{m.activity_field_kind_label()}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as ActivityKind)}
@@ -192,7 +193,7 @@ export function ActivityForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="generic">generic 通用</SelectItem>
+                  <SelectItem value="generic">{m.activity_kind_generic()}</SelectItem>
                   <SelectItem value="check_in_only">check_in_only</SelectItem>
                   <SelectItem value="board_game">board_game</SelectItem>
                   <SelectItem value="gacha">gacha</SelectItem>
@@ -207,7 +208,7 @@ export function ActivityForm({
         <form.Field name="timezone">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>时区 (IANA)</Label>
+              <Label htmlFor={field.name}>{m.activity_field_timezone_label()}</Label>
               <Input
                 id={field.name}
                 value={field.state.value}
@@ -220,13 +221,13 @@ export function ActivityForm({
 
       <fieldset className="rounded-lg border p-4">
         <legend className="px-2 text-sm font-medium">
-          时间生命周期 (本地时间, 自动转 ISO)
+          {m.activity_lifecycle_legend()}
         </legend>
         <div className="grid grid-cols-2 gap-4">
           <form.Field name="visibleAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>可见时间 visibleAt</Label>
+                <Label htmlFor={field.name}>{m.activity_field_visible_at()}</Label>
                 <Input
                   id={field.name}
                   type="datetime-local"
@@ -240,7 +241,7 @@ export function ActivityForm({
           <form.Field name="startAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>开始时间 startAt</Label>
+                <Label htmlFor={field.name}>{m.activity_field_start_at()}</Label>
                 <Input
                   id={field.name}
                   type="datetime-local"
@@ -254,7 +255,7 @@ export function ActivityForm({
           <form.Field name="endAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>结束时间 endAt</Label>
+                <Label htmlFor={field.name}>{m.activity_field_end_at()}</Label>
                 <Input
                   id={field.name}
                   type="datetime-local"
@@ -268,7 +269,7 @@ export function ActivityForm({
           <form.Field name="rewardEndAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>领奖截止 rewardEndAt</Label>
+                <Label htmlFor={field.name}>{m.activity_field_reward_end_at()}</Label>
                 <Input
                   id={field.name}
                   type="datetime-local"
@@ -282,7 +283,7 @@ export function ActivityForm({
           <form.Field name="hiddenAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>彻底隐藏 hiddenAt</Label>
+                <Label htmlFor={field.name}>{m.activity_field_hidden_at()}</Label>
                 <Input
                   id={field.name}
                   type="datetime-local"
@@ -295,14 +296,14 @@ export function ActivityForm({
           </form.Field>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          必须满足: visibleAt ≤ startAt &lt; endAt ≤ rewardEndAt ≤ hiddenAt
+          {m.activity_lifecycle_invariant()}
         </p>
       </fieldset>
 
       <form.Field name="currencyJson">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>活动专属货币 (JSON, 可留空)</Label>
+            <Label htmlFor={field.name}>{m.activity_field_currency_json()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -318,7 +319,7 @@ export function ActivityForm({
       <form.Field name="milestoneTiersJson">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>里程碑 (JSON)</Label>
+            <Label htmlFor={field.name}>{m.activity_field_milestones_json()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -334,7 +335,7 @@ export function ActivityForm({
       <form.Field name="globalRewardsJson">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>通关总奖励 (JSON)</Label>
+            <Label htmlFor={field.name}>{m.activity_field_global_rewards_json()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -350,7 +351,7 @@ export function ActivityForm({
       <form.Field name="cleanupMode">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>归档清理策略</Label>
+            <Label htmlFor={field.name}>{m.activity_field_cleanup_mode()}</Label>
             <Select
               value={field.state.value}
               onValueChange={(v) =>
@@ -361,9 +362,9 @@ export function ActivityForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="purge">purge 清除活动数据</SelectItem>
-                <SelectItem value="convert">convert 兑换为通用货币</SelectItem>
-                <SelectItem value="keep">keep 保留为纪念</SelectItem>
+                <SelectItem value="purge">{m.activity_cleanup_purge()}</SelectItem>
+                <SelectItem value="convert">{m.activity_cleanup_convert()}</SelectItem>
+                <SelectItem value="keep">{m.activity_cleanup_keep()}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -372,7 +373,7 @@ export function ActivityForm({
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isPending}>
-          {isPending ? "提交中…" : submitLabel}
+          {isPending ? m.activity_submitting() : (submitLabel ?? m.common_create())}
         </Button>
       </div>
     </form>

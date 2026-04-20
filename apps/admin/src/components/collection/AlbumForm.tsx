@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -92,21 +93,16 @@ export function AlbumForm({
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <Label htmlFor="coverImage">{m.collection_field_cover()}</Label>
-          <Input
-            id="coverImage"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
+        <div className="space-y-2">
+          <Label>{m.collection_field_cover()}</Label>
+          <MediaPickerDialog
+            value={coverImage || null}
+            onChange={setCoverImage}
           />
         </div>
-        <div>
-          <Label htmlFor="icon">{m.collection_field_icon()}</Label>
-          <Input
-            id="icon"
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-          />
+        <div className="space-y-2">
+          <Label>{m.collection_field_icon()}</Label>
+          <MediaPickerDialog value={icon || null} onChange={setIcon} />
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-3">

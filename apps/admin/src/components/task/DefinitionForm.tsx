@@ -80,7 +80,9 @@ export function DefinitionForm({
           rewardTiers = parsed as TaskRewardTier[]
         } catch (err) {
           throw new Error(
-            `阶段性奖励 JSON 解析失败: ${err instanceof Error ? err.message : String(err)}`,
+            m.task_reward_tiers_parse_failed({
+              error: err instanceof Error ? err.message : String(err),
+            }),
           )
         }
       }
@@ -322,9 +324,9 @@ export function DefinitionForm({
                     placeholder={'monsterId == "dragon" and stats.level >= 10'}
                   />
                   <p className="text-xs text-muted-foreground">
-                    可选。针对事件数据做过滤，只有表达式求值为真时才计入进度。
-                    使用 filtrex 语法：<code>==</code>、<code>!=</code>、<code>and</code>、<code>or</code>、<code>not</code>、<code>in</code>、<code>{"x >= y"}</code>、<code>{"x of obj"}</code>；
-                    嵌套字段用点号，例如 <code>stats.level</code>。字符串用双引号。
+                    {m.task_field_filter_hint()}
+                    {" "}
+                    {m.task_field_filter_syntax_hint()}
                   </p>
                 </div>
               )}
@@ -411,13 +413,13 @@ export function DefinitionForm({
       <form.Field name="activityId">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>关联活动（可选）</Label>
+            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
             <ActivityPicker
               value={field.state.value}
               onChange={(v) => field.handleChange(v)}
             />
             <p className="text-xs text-muted-foreground">
-              选活动后这个任务会自动出现在活动任务池；不选即常驻任务。
+              {m.task_field_activity_hint()}
             </p>
           </div>
         )}
@@ -490,7 +492,7 @@ export function DefinitionForm({
       <form.Field name="rewardTiersJson">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>阶段性奖励 (JSON, 可留空)</Label>
+            <Label htmlFor={field.name}>{m.task_field_reward_tiers_label()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -501,8 +503,7 @@ export function DefinitionForm({
               placeholder='[{"alias":"tier-1","threshold":3,"rewards":[{"type":"item","id":"gold-uuid","count":100}]}]'
             />
             <p className="text-xs text-muted-foreground">
-              到达 threshold 后，该阶段奖励独立结算（autoClaim 任务走邮件自动发放，否则走手动领取）。
-              alias 必须唯一，threshold 必须严格递增且不超过 targetValue。
+              {m.task_field_reward_tiers_hint()}
             </p>
           </div>
         )}

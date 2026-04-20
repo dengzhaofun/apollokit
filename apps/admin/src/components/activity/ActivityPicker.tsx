@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { useActivities } from "#/hooks/use-activity"
+import * as m from "#/paraglide/messages.js"
 
 const UNBOUND = "__none__"
 
@@ -31,7 +32,7 @@ export function ActivityPicker({
   value,
   onChange,
   disabled,
-  placeholder = "不关联活动（常驻配置）",
+  placeholder,
   hideArchived = true,
 }: Props) {
   const { data: activities, isPending } = useActivities()
@@ -39,6 +40,7 @@ export function ActivityPicker({
     hideArchived ? a.status !== "archived" : true,
   )
   const selected = value ?? UNBOUND
+  const placeholderText = placeholder ?? m.activity_picker_unbound()
 
   return (
     <Select
@@ -47,10 +49,10 @@ export function ActivityPicker({
       disabled={disabled || isPending}
     >
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholderText} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={UNBOUND}>{placeholder}</SelectItem>
+        <SelectItem value={UNBOUND}>{placeholderText}</SelectItem>
         {items.map((a) => (
           <SelectItem key={a.id} value={a.id}>
             {a.name}

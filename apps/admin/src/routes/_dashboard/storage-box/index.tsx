@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { StorageBoxConfigTable } from "#/components/storage-box/StorageBoxConfigTable"
 import { StorageBoxDepositLookup } from "#/components/storage-box/StorageBoxDepositLookup"
 import { useStorageBoxConfigs } from "#/hooks/use-storage-box"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/storage-box/")({
   component: StorageBoxListPage,
@@ -21,20 +22,20 @@ function StorageBoxListPage() {
       <header className="flex h-14 items-center gap-2 border-b px-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">存储箱</h1>
+        <h1 className="text-sm font-semibold">{m.storage_box_page_title()}</h1>
       </header>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="configs">
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="configs">配置列表</TabsTrigger>
-              <TabsTrigger value="deposits">用户存款查询</TabsTrigger>
+              <TabsTrigger value="configs">{m.storage_box_tab_configs()}</TabsTrigger>
+              <TabsTrigger value="deposits">{m.storage_box_tab_deposits()}</TabsTrigger>
             </TabsList>
             <Button asChild size="sm">
               <Link to="/storage-box/configs/create">
                 <Plus className="size-4" />
-                新建存储箱
+                {m.storage_box_action_create()}
               </Link>
             </Button>
           </div>
@@ -42,11 +43,11 @@ function StorageBoxListPage() {
           <TabsContent value="configs" className="mt-4">
             {isPending ? (
               <div className="flex h-40 items-center justify-center text-muted-foreground">
-                加载中...
+                {m.common_loading()}
               </div>
             ) : error ? (
               <div className="flex h-40 items-center justify-center text-destructive">
-                加载失败：{error.message}
+                {m.common_failed_to_load({ resource: m.storage_box_page_title(), error: error.message })}
               </div>
             ) : (
               <div className="rounded-xl border bg-card shadow-sm">
