@@ -34,8 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Switch } from "#/components/ui/switch"
 import {
   Table,
@@ -120,12 +118,6 @@ function InvitePage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.invite_title()}</h1>
-      </header>
-
       <main className="flex-1 space-y-6 p-6">
         {/* Settings card */}
         <Card>

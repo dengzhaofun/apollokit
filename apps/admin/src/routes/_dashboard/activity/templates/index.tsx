@@ -5,8 +5,6 @@ import { toast } from "sonner"
 
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   Table,
   TableBody,
@@ -21,6 +19,7 @@ import {
   useInstantiateActivityTemplate,
 } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
+import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute("/_dashboard/activity/templates/")({
   component: ActivityTemplatesPage,
@@ -33,16 +32,13 @@ function ActivityTemplatesPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/activity">
             <ArrowLeft className="size-4" />
             返回活动列表
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">活动模板 (周期性活动)</h1>
         <div className="ml-auto">
           <Button asChild size="sm">
             <Link to="/activity/templates/create">
@@ -51,7 +47,7 @@ function ActivityTemplatesPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-5xl">

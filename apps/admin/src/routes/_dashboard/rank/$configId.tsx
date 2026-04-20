@@ -15,8 +15,6 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useDeleteRankTierConfig,
   useRankTierConfig,
@@ -25,6 +23,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/rank/$configId")({
   component: RankConfigDetailPage,
 })
@@ -38,59 +37,46 @@ function RankConfigDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {m.rank_edit_config()}
-          {data ? (
-            <span className="ml-2 text-muted-foreground">
-              · {data.name}{" "}
-              <code className="rounded bg-muted px-1 text-xs">{data.alias}</code>
-            </span>
-          ) : null}
-        </h1>
-        <div className="ml-auto">
-          {data ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-destructive">
-                  <Trash2 className="size-4" />
-                  {m.rank_delete_config()}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {m.rank_delete_config_title()}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {m.rank_delete_config_desc()}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      try {
-                        await deleteMutation.mutateAsync(data.id)
-                        toast.success(m.rank_config_deleted())
-                        navigate({ to: "/rank" })
-                      } catch (err) {
-                        if (err instanceof ApiError)
-                          toast.error(err.body.error)
-                        else toast.error((err as Error).message)
-                      }
-                    }}
-                  >
-                    {m.rank_delete_confirm()}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
-        </div>
-      </header>
+      {data ? (
+        <PageHeaderActions>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-destructive">
+                <Trash2 className="size-4" />
+                {m.rank_delete_config()}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {m.rank_delete_config_title()}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {m.rank_delete_config_desc()}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    try {
+                      await deleteMutation.mutateAsync(data.id)
+                      toast.success(m.rank_config_deleted())
+                      navigate({ to: "/rank" })
+                    } catch (err) {
+                      if (err instanceof ApiError)
+                        toast.error(err.body.error)
+                      else toast.error((err as Error).message)
+                    }
+                  }}
+                >
+                  {m.rank_delete_confirm()}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </PageHeaderActions>
+      ) : null}
 
       <main className="flex-1 p-6">
         {isPending ? (

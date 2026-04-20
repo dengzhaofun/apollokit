@@ -9,8 +9,6 @@ import { Alert, AlertDescription } from "#/components/ui/alert"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Label } from "#/components/ui/label"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Textarea } from "#/components/ui/textarea"
 import {
   useEventCatalogEntry,
@@ -20,6 +18,7 @@ import { ApiError } from "#/lib/api-client"
 import type { EventFieldRow } from "#/lib/types/event-catalog"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/event-catalog/$name/")({
   component: EventCatalogDetailPage,
 })
@@ -63,18 +62,15 @@ function EventCatalogDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/event-catalog">
             <ArrowLeft className="size-4" />
             {m.common_back()}
           </Link>
         </Button>
-        <Separator orientation="vertical" className="mx-2 h-4" />
         <h1 className="text-sm font-semibold font-mono">{name}</h1>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 space-y-6 p-6">
         {isPending ? (

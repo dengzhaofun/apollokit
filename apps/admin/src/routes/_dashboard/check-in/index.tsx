@@ -3,8 +3,7 @@ import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import * as m from "#/paraglide/messages.js"
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
+import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { ConfigTable } from "#/components/check-in/ConfigTable"
 import {
@@ -26,10 +25,7 @@ function CheckInListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.checkin_title()}</h1>
+      <PageHeaderActions>
         <div className="ml-auto flex items-center gap-3">
           <ActivityScopeFilter value={scope} onChange={setScope} />
           <Button asChild size="sm">
@@ -39,7 +35,7 @@ function CheckInListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

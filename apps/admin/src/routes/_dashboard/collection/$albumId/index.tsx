@@ -20,8 +20,6 @@ import {
 } from "#/components/ui/dialog"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   Table,
   TableBody,
@@ -60,6 +58,7 @@ import type {
 import type { ItemDefinition } from "#/lib/types/item"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/collection/$albumId/")({
   component: CollectionAlbumDetailPage,
 })
@@ -105,15 +104,12 @@ function CollectionAlbumDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
           <Link to="/collection">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">{album.name}</h1>
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.collection_delete_album()}
@@ -132,7 +128,7 @@ function CollectionAlbumDetailPage() {
             triggerLabel={m.collection_delete_album()}
           />
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="info">

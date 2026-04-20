@@ -6,8 +6,6 @@ import { toast } from "sonner"
 
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { StorageBoxConfigForm } from "#/components/storage-box/StorageBoxConfigForm"
 import { DeleteStorageBoxDialog } from "#/components/storage-box/DeleteStorageBoxDialog"
 import {
@@ -38,7 +36,6 @@ function StorageBoxConfigDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title={m.common_loading()} />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
           {m.common_loading()}
         </main>
@@ -49,7 +46,6 @@ function StorageBoxConfigDetailPage() {
   if (error || !config) {
     return (
       <>
-        <Header title={m.common_error()} />
         <main className="flex h-40 items-center justify-center text-destructive">
           {error?.message ?? m.storage_box_detail_not_found()}
         </main>
@@ -61,8 +57,6 @@ function StorageBoxConfigDetailPage() {
 
   return (
     <>
-      <Header title={config.name} />
-
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="flex items-center gap-2">
@@ -232,16 +226,6 @@ function StorageBoxConfigDetailPage() {
         </div>
       </main>
     </>
-  )
-}
-
-function Header({ title }: { title: string }) {
-  return (
-    <header className="flex h-14 items-center gap-2 border-b px-4">
-      <SidebarTrigger />
-      <Separator orientation="vertical" className="mx-2 h-4" />
-      <h1 className="text-sm font-semibold">{title}</h1>
-    </header>
   )
 }
 

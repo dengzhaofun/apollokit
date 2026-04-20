@@ -4,9 +4,8 @@ import { ArrowLeft } from "lucide-react"
 
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useActivityForUser } from "#/hooks/use-activity"
+import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute(
   "/_dashboard/activity/$alias/users/$endUserId/",
@@ -39,23 +38,15 @@ function ActivityUserDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/activity/$alias/users" params={{ alias }}>
             <ArrowLeft className="size-4" />
             返回
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">
-          {activity.name} · 玩家{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            {endUserId}
-          </code>
-        </h1>
         <Badge className="ml-2">{activity.derivedState}</Badge>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 space-y-4 p-6">
         <div className="mx-auto grid max-w-4xl gap-4">

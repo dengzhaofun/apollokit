@@ -4,8 +4,6 @@ import { format } from "date-fns"
 import { Pencil, ArrowLeft, Plus } from "lucide-react"
 import { toast } from "sonner"
 
-import { SidebarTrigger } from "#/components/ui/sidebar"
-import { Separator } from "#/components/ui/separator"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
@@ -77,7 +75,6 @@ function LotteryPoolDetailPage() {
   if (isPending) {
     return (
       <>
-        <Header title="Loading..." />
         <main className="flex h-40 items-center justify-center text-muted-foreground">
           Loading...
         </main>
@@ -88,7 +85,6 @@ function LotteryPoolDetailPage() {
   if (error || !pool) {
     return (
       <>
-        <Header title="Error" />
         <main className="flex h-40 items-center justify-center text-destructive">
           {error?.message ?? "Pool not found"}
         </main>
@@ -98,8 +94,6 @@ function LotteryPoolDetailPage() {
 
   return (
     <>
-      <Header title={pool.name} />
-
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           {/* Pool header actions */}
@@ -505,16 +499,6 @@ function LotteryPoolDetailPage() {
         </div>
       </main>
     </>
-  )
-}
-
-function Header({ title }: { title: string }) {
-  return (
-    <header className="flex h-14 items-center gap-2 border-b px-4">
-      <SidebarTrigger />
-      <Separator orientation="vertical" className="mx-2 h-4" />
-      <h1 className="text-sm font-semibold">{title}</h1>
-    </header>
   )
 }
 

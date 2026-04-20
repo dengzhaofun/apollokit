@@ -14,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
 import {
@@ -28,6 +26,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/level/$configId/levels/$levelId",
 )({
@@ -60,18 +59,12 @@ function LevelDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
           <Link to="/level/$configId" params={{ configId }}>
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">
-          {level.name}
-          {config ? ` - ${config.name}` : ""}
-        </h1>
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.level_edit_level()}
@@ -89,7 +82,7 @@ function LevelDetailPage() {
             isPending={deleteMutation.isPending}
           />
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <LevelEditForm

@@ -21,8 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Switch } from "#/components/ui/switch"
 import {
   Table,
@@ -49,6 +47,7 @@ import { ApiError } from "#/lib/api-client"
 import type { LevelStage, UnlockRule } from "#/lib/types/level"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/level/$configId/")({
   component: LevelConfigDetailPage,
 })
@@ -80,15 +79,12 @@ function LevelConfigDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
           <Link to="/level">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">{config.name}</h1>
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.level_delete_config()}
@@ -107,7 +103,7 @@ function LevelConfigDetailPage() {
             triggerLabel={m.level_delete_config()}
           />
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="info">

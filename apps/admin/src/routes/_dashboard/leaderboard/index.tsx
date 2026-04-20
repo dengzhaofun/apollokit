@@ -4,13 +4,12 @@ import { toast } from "sonner"
 
 import { LeaderboardConfigTable } from "#/components/leaderboard/ConfigTable"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useLeaderboardConfigs,
   useRunLeaderboardSettle,
 } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
+import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute("/_dashboard/leaderboard/")({
   component: LeaderboardListPage,
@@ -22,10 +21,7 @@ function LeaderboardListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">排行榜</h1>
+      <PageHeaderActions>
         <div className="ml-auto flex gap-2">
           <Button
             variant="outline"
@@ -53,7 +49,7 @@ function LeaderboardListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

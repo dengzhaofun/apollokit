@@ -16,8 +16,6 @@ import {
 } from "#/components/ui/alert-dialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import {
   useDeleteDialogueScript,
   useDialogueScript,
@@ -26,6 +24,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/dialogue/$scriptId")({
   component: DialogueDetailPage,
 })
@@ -51,18 +50,13 @@ function DialogueDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/dialogue">
             <ArrowLeft className="size-4" />
             {m.dialogue_back_to_scripts()}
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">
-          {script?.name ?? m.common_loading()}
-        </h1>
         {script && !script.alias ? (
           <Badge variant="outline">{m.dialogue_draft_badge()}</Badge>
         ) : null}
@@ -77,7 +71,7 @@ function DialogueDetailPage() {
             {m.common_delete()}
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-4xl">

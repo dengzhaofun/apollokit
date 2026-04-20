@@ -4,8 +4,6 @@ import { toast } from "sonner"
 
 import { StageForm } from "#/components/shop/StageForm"
 import { StageList } from "#/components/shop/StageList"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Button } from "#/components/ui/button"
 import {
   useCreateShopStage,
@@ -27,14 +25,6 @@ function ShopStagesPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {product ? `${product.name} · ${m.shop_stages()}` : m.shop_stages()}
-        </h1>
-      </header>
-
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <Button variant="outline" size="sm" asChild>

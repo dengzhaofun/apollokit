@@ -3,11 +3,10 @@ import { Plus } from "lucide-react"
 
 import { AlbumTable } from "#/components/collection/AlbumTable"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useCollectionAlbums } from "#/hooks/use-collection"
 import * as m from "#/paraglide/messages.js"
 
+import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/collection/")({
   component: CollectionListPage,
 })
@@ -17,10 +16,7 @@ function CollectionListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.collection_title()}</h1>
+      <PageHeaderActions>
         <div className="ml-auto">
           <Button asChild size="sm">
             <Link to="/collection/create">
@@ -29,7 +25,7 @@ function CollectionListPage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         {isPending ? (

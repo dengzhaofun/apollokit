@@ -11,8 +11,6 @@ import {
 import { NodeCreatorDialog } from "#/components/activity/NodeCreatorDialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { Switch } from "#/components/ui/switch"
 import {
   Tooltip,
@@ -55,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
+import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute("/_dashboard/activity/$alias/")({
   component: ActivityDetailPage,
@@ -85,16 +84,13 @@ function ActivityDetailPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
+      <PageHeaderActions>
         <Button asChild variant="ghost" size="sm">
           <Link to="/activity">
             <ArrowLeft className="size-4" />
             返回
           </Link>
         </Button>
-        <h1 className="text-sm font-semibold">{activity.name}</h1>
         <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
           {activity.alias}
         </code>
@@ -176,7 +172,7 @@ function ActivityDetailPage() {
             删除
           </Button>
         </div>
-      </header>
+      </PageHeaderActions>
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="overview" className="mx-auto max-w-4xl">

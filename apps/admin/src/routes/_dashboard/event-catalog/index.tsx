@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { EventTable } from "#/components/event-catalog/EventTable"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useEventCatalog } from "#/hooks/use-event-catalog"
 import * as m from "#/paraglide/messages.js"
 
@@ -15,12 +13,6 @@ function EventCatalogListPage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">{m.event_catalog_title()}</h1>
-      </header>
-
       <main className="flex-1 p-6">
         <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
           {m.event_catalog_description()}

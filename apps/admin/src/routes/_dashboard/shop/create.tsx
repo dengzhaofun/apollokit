@@ -4,8 +4,6 @@ import { toast } from "sonner"
 
 import { ProductForm } from "#/components/shop/ProductForm"
 import { Button } from "#/components/ui/button"
-import { Separator } from "#/components/ui/separator"
-import { SidebarTrigger } from "#/components/ui/sidebar"
 import { useCreateShopProduct } from "#/hooks/use-shop"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
@@ -31,19 +29,6 @@ function ShopCreatePage() {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <h1 className="text-sm font-semibold">
-          {m.shop_new_product()}
-          {activityId ? (
-            <span className="ml-2 text-xs text-muted-foreground">
-              {m.shop_link_to_activity_hint()}
-            </span>
-          ) : null}
-        </h1>
-      </header>
-
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-4">
           <Button variant="outline" size="sm" asChild>
