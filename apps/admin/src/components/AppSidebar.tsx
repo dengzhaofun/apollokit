@@ -11,6 +11,7 @@ import {
   KeyRound,
   LayoutDashboard,
   ListTodo,
+  Medal,
   Megaphone,
   Radio,
   Mail,
@@ -71,6 +72,7 @@ function getNavItems() {
     { title: m.nav_task(), to: "/task" as const, icon: ListTodo },
     { title: m.nav_activity(), to: "/activity" as const, icon: PartyPopper },
     { title: m.nav_leaderboard(), to: "/leaderboard" as const, icon: Trophy },
+    { title: m.nav_rank(), to: "/rank" as const, icon: Medal },
     { title: m.nav_event_catalog(), to: "/event-catalog" as const, icon: Radio },
     { title: m.nav_api_keys(), to: "/api-keys" as const, icon: KeyRound },
   ]
