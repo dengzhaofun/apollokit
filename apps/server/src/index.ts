@@ -87,6 +87,7 @@ import {
   taskClientRouter,
 } from "./modules/task";
 import { eventCatalogRouter } from "./modules/event-catalog";
+import { rankClientRouter, rankRouter } from "./modules/rank";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
@@ -165,6 +166,7 @@ app.route("/api/level", levelRouter);
 app.route("/api/leaderboard", leaderboardRouter);
 app.route("/api/activity", activityRouter);
 app.route("/api/event-catalog", eventCatalogRouter);
+app.route("/api/rank", rankRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);
@@ -188,6 +190,7 @@ app.route("/api/client/task", taskClientRouter);
 app.route("/api/client/team", teamClientRouter);
 app.route("/api/client/level", levelClientRouter);
 app.route("/api/client/leaderboard", leaderboardClientRouter);
+app.route("/api/client/rank", rankClientRouter);
 app.route("/api/client/activity", activityClientRouter);
 
 // OpenAPI document + Scalar UI

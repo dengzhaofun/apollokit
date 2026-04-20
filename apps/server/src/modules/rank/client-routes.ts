@@ -1,0 +1,284 @@
+/**
+ * C-end client routes for the rank module.
+ *
+ * Mounted at /api/client/rank. These are consumed directly by the tenant's
+ * END USERS (game clients), not by their backend server.
+ *
+ *   requireClientCredential — validates x-api-key (cpk_...)
+ *   requireClientUser       — verifies x-end-user-id + x-user-hash HMAC
+ *
+ * READ-ONLY by design. Match settlement happens server-to-server via the
+ * admin `POST /api/rank/settle` endpoint, because letting a game client
+ * self-report a match result opens an obvious "claim every match as a win"
+ * cheat path. The endpoints here only let a player:
+ *   - query their own current standing (`/state`)
+ *   - query their own recent match history (`/history`)
+ *   - read the global / tier-filtered leaderboard (`/leaderboard`)
+ */
+
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { ModuleError } from "../../lib/errors";
+import { clientAuthHeaders } from "../../middleware/client-auth-headers";
+import { requireClientCredential } from "../../middleware/require-client-credential";
+import { requireClientUser } from "../../middleware/require-client-user";
+import { rankService } from "./index";
+import type { RankMatchParticipant } from "./types";
+import {
+  ErrorResponseSchema,
+  HistoryQuerySchema,
+  LadderLocatorQuerySchema,
+  LeaderboardQuerySchema,
+  ParticipantDeltaResponseSchema,
+  PlayerRankViewListResponseSchema,
+  PlayerRankViewResponseSchema,
+} from "./validators";
+
+const TAG = "Rank (Client)";
+
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+function serializeParticipant(row: RankMatchParticipant) {
+  return {
+    id: row.id,
+    matchId: row.matchId,
+    endUserId: row.endUserId,
+    teamId: row.teamId,
+    placement: row.placement,
+    win: row.win,
+    mmrBefore: row.mmrBefore,
+    mmrAfter: row.mmrAfter,
+    rankScoreBefore: row.rankScoreBefore,
+    rankScoreAfter: row.rankScoreAfter,
+    starsDelta: row.starsDelta,
+    subtierBefore: row.subtierBefore,
+    subtierAfter: row.subtierAfter,
+    starsBefore: row.starsBefore,
+    starsAfter: row.starsAfter,
+    tierBeforeId: row.tierBeforeId,
+    tierAfterId: row.tierAfterId,
+    promoted: row.promoted,
+    demoted: row.demoted,
+    protectionApplied:
+      (row.protectionApplied ?? null) as Record<string, unknown> | null,
+  };
+}
+
+export const rankClientRouter = new OpenAPIHono<HonoEnv>();
+
+rankClientRouter.use("*", requireClientCredential);
+rankClientRouter.use("*", requireClientUser);
+
+rankClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      { error: err.message, code: err.code, requestId: c.get("requestId") },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
+/* ── GET /state — current player's standing ─────────────────── */
+
+rankClientRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/state",
+    tags: [TAG],
+    summary:
+      "Get the caller's current standing in a ladder. " +
+      "Resolves the season by `seasonId` or the active season of `tierConfigAlias`.",
+    request: {
+      headers: clientAuthHeaders,
+      query: LadderLocatorQuerySchema,
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: PlayerRankViewResponseSchema },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { seasonId, tierConfigAlias } = c.req.valid("query");
+    const view = await rankService.getPlayerState({
+      organizationId: orgId,
+      seasonId,
+      tierConfigAlias,
+      endUserId,
+    });
+    return c.json(view, 200);
+  },
+);
+
+/* ── GET /history — caller's recent match deltas ─────────────── */
+
+rankClientRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/history",
+    tags: [TAG],
+    summary: "List the caller's recent match participant rows (desc by id).",
+    request: {
+      headers: clientAuthHeaders,
+      query: HistoryQuerySchema,
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: z.object({
+              items: z.array(ParticipantDeltaResponseSchema),
+              nextCursor: z.string().optional(),
+            }),
+          },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const { seasonId, tierConfigAlias, limit, cursor } = c.req.valid("query");
+    // If only tierConfigAlias is provided, resolve the active season first.
+    const effectiveSeasonId =
+      seasonId ??
+      (
+        await rankService.getPlayerState({
+          organizationId: orgId,
+          tierConfigAlias,
+          endUserId,
+        }).catch(() => null)
+      )?.seasonId;
+    const { items, nextCursor } = await rankService.getPlayerHistory({
+      organizationId: orgId,
+      endUserId,
+      seasonId: effectiveSeasonId,
+      limit,
+      cursor,
+    });
+    return c.json(
+      {
+        items: items.map(serializeParticipant),
+        nextCursor: nextCursor ?? undefined,
+      },
+      200,
+    );
+  },
+);
+
+/* ── GET /leaderboard — global or tier-filtered board ────────── */
+
+rankClientRouter.openapi(
+  createRoute({
+    method: "get",
+    path: "/leaderboard",
+    tags: [TAG],
+    summary:
+      "Read the season leaderboard. Global (no tierId) delegates to the " +
+      "leaderboard module; tier-filtered goes through PG directly.",
+    request: {
+      headers: clientAuthHeaders,
+      query: LeaderboardQuerySchema,
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: z.object({
+              tier: z
+                .object({
+                  id: z.string(),
+                  alias: z.string(),
+                })
+                .optional(),
+              rankings: z.array(
+                z.object({
+                  rank: z.number().int().optional(),
+                  endUserId: z.string(),
+                  score: z.number().optional(),
+                  displaySnapshot: z
+                    .record(z.string(), z.unknown())
+                    .nullable()
+                    .optional(),
+                }),
+              ),
+              self: z
+                .object({
+                  rank: z.number().int().nullable(),
+                  score: z.number().nullable(),
+                })
+                .optional(),
+              items: z.array(PlayerRankViewResponseSchema).optional(),
+            }),
+          },
+        },
+      },
+      ...errorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.get("clientCredential")!.organizationId;
+    const endUserId = c.var.endUserId!;
+    const {
+      seasonId,
+      tierConfigAlias,
+      tierId,
+      limit,
+      around,
+    } = c.req.valid("query");
+
+    if (tierId) {
+      // Tier-internal board via PG.
+      const items = await rankService.getTierLeaderboard({
+        organizationId: orgId,
+        seasonId,
+        tierConfigAlias,
+        tierId,
+        limit,
+      });
+      return c.json({ rankings: [], items }, 200);
+    }
+
+    // Global season board, delegate to leaderboard.
+    const top = await rankService.getGlobalLeaderboard({
+      organizationId: orgId,
+      seasonId,
+      tierConfigAlias,
+      limit,
+      endUserId: around === "self" ? endUserId : undefined,
+    });
+    return c.json(
+      {
+        rankings: top.rankings,
+        self: top.self,
+        items: [],
+      },
+      200,
+    );
+  },
+);

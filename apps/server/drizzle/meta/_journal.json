@@ -253,6 +253,13 @@
       "when": 1776596554381,
       "tag": "0035_modern_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1776655949718,
+      "tag": "0036_grey_grim_reaper",
+      "breakpoints": true
     }
   ]
 }
