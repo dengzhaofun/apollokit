@@ -1,0 +1,31 @@
+{
+  "title": "ApolloKit 开发者文档",
+  "root": true,
+  "pages": [
+    "index",
+    "---入门---",
+    "quickstart",
+    "authentication",
+    "organizations",
+    "errors",
+    "---经济---",
+    "item",
+    "currency",
+    "exchange",
+    "shop",
+    "mail",
+    "cdkey",
+    "storage-box",
+    "---运营---",
+    "check-in",
+    "activity",
+    "lottery",
+    "task",
+    "announcement",
+    "banner",
+    "---集成---",
+    "webhooks",
+    "client-sdk",
+    "sdk"
+  ]
+}

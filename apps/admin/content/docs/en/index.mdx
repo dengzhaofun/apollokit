@@ -1,0 +1,36 @@
+---
+title: ApolloKit Developer Docs
+description: API integration guide for the game SaaS platform
+---
+
+ApolloKit is a game-oriented SaaS platform that exposes common modules (check-in, exchange, item, …) as HTTP APIs. This doc site targets **integrators**.
+
+> English docs are still being translated. For the most up-to-date content, see the [Chinese version](/docs/zh).
+
+## Architecture overview
+
+- **API**: Hono + Zod OpenAPI on Cloudflare Workers
+- **Database**: Neon Postgres (via Drizzle ORM)
+- **Auth**: Better Auth (admin console) + Client Credentials (game client)
+- **OpenAPI**: served at `/docs` (Scalar UI) and `/openapi.json`
+
+## Two user identities
+
+ApolloKit distinguishes two user concepts:
+
+- **Admin user** — authenticated via Better Auth, owns an Organization context.
+- **End user** — the integrator's own business user, identified by an opaque `endUserId`. ApolloKit does not manage their identity.
+
+All data is isolated by `organizationId`; end-user operations authenticate via Client Credentials.
+
+## Error response shape
+
+```json
+{
+  "error": "description",
+  "code": "ERROR_CODE",
+  "requestId": "trace id"
+}
+```
+
+Common codes: `NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`, `CONFLICT`, `INVALID_INPUT`, `LIMIT_EXCEEDED`.
