@@ -17,6 +17,7 @@
  * will surface via Cloudflare Workers observability.
  */
 
+import { requestContext } from "./lib/request-context";
 import { activityService } from "./modules/activity";
 import { assistPoolService } from "./modules/assist-pool";
 import { leaderboardService } from "./modules/leaderboard";
@@ -32,22 +33,30 @@ export async function scheduled(
   ctx: { waitUntil: (p: Promise<unknown>) => void },
 ): Promise<void> {
   const now = new Date(event.scheduledTime);
-  console.log(`[scheduled] tick cron=${event.cron} at=${now.toISOString()}`);
+  // One synthetic trace id per tick — every domain event fired inside this
+  // tick tags Tinybird rows with the same id, so the cron run shows up as
+  // a single `tenant_trace` waterfall just like a fetch request does.
+  const traceId = `cron-${crypto.randomUUID()}`;
+  console.log(
+    `[scheduled] tick cron=${event.cron} at=${now.toISOString()} trace=${traceId}`,
+  );
 
-  // Each task is independent — one failure shouldn't block the others.
-  ctx.waitUntil(
-    runTask("leaderboard.settleDue", () =>
-      leaderboardService.settleDue({ now }),
-    ),
-  );
-  ctx.waitUntil(
-    runTask("activity.tickDue", () => activityService.tickDue({ now })),
-  );
-  ctx.waitUntil(
-    runTask("assist_pool.expireOverdue", () =>
-      assistPoolService.expireOverdue({ now }),
-    ),
-  );
+  await requestContext.run({ traceId }, async () => {
+    // Each task is independent — one failure shouldn't block the others.
+    ctx.waitUntil(
+      runTask("leaderboard.settleDue", () =>
+        leaderboardService.settleDue({ now }),
+      ),
+    );
+    ctx.waitUntil(
+      runTask("activity.tickDue", () => activityService.tickDue({ now })),
+    );
+    ctx.waitUntil(
+      runTask("assist_pool.expireOverdue", () =>
+        assistPoolService.expireOverdue({ now }),
+      ),
+    );
+  });
 }
 
 async function runTask(

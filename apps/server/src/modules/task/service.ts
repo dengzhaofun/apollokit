@@ -775,6 +775,26 @@ export function createTaskService(
           }
         }
       }
+
+      // Domain event: fire `task.completed` on the first-reach-target
+      // transition only. `row.completedAt === ts` means this write is
+      // the one that flipped `isCompleted` to true (the CASE expression
+      // above preserves the original completedAt on subsequent writes
+      // in the same period).
+      if (
+        events &&
+        row.isCompleted &&
+        row.completedAt?.getTime() === ts.getTime()
+      ) {
+        await events.emit("task.completed", {
+          organizationId,
+          endUserId,
+          taskId: def.id,
+          taskAlias: def.alias,
+          progressValue: row.currentValue,
+          completedAt: row.completedAt,
+        });
+      }
     }
 
     return processed;
@@ -975,6 +995,22 @@ export function createTaskService(
       } catch (err) {
         console.error("task: parent handleAutoClaim failed", err);
       }
+    }
+
+    // Domain event on the parent's own first-reach-target transition.
+    if (
+      events &&
+      row.isCompleted &&
+      row.completedAt?.getTime() === now.getTime()
+    ) {
+      await events.emit("task.completed", {
+        organizationId,
+        endUserId,
+        taskId: parentDef.id,
+        taskAlias: parentDef.alias,
+        progressValue: row.currentValue,
+        completedAt: row.completedAt,
+      });
     }
   }
 
