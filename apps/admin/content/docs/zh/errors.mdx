@@ -4,9 +4,94 @@ description: 统一错误响应、错误码清单、requestId 的排查用法
 icon: AlertTriangle
 ---
 
-占位:详细内容将在下一次提交里补上。本页最终会覆盖:
+ApolloKit 所有业务模块都抛出 `ModuleError`,HTTP 层自动映射成统一的 JSON 响应。调试时先看 `code`,再看 `requestId`。
 
-- 统一响应体 `{ error, code, requestId }` 的每个字段语义
-- `ModuleError` 到 HTTP status code 的映射表
-- 各模块常见错误码汇总
-- 如何用 `requestId` 在 Worker 日志里定位问题
+## 统一响应体
+
+失败时返回:
+
+```json
+{
+  "error": "人类可读的描述",
+  "code": "module.reason",
+  "requestId": "req_01hx..."
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `error` | string | 人读的错误信息,可能含当事 id。**不要拿它做程序分支。** |
+| `code` | string | 程序可读的错误码,格式 `<module>.<reason>`,稳定不变。用这个来路由 UI / 重试策略。 |
+| `requestId` | string | 每个请求的追踪 id。Worker 日志按 `requestId` 搜得到完整链路。 |
+
+## HTTP status 映射
+
+`ModuleError` 的 `httpStatus` 字段直接落到响应码上:
+
+| status | 含义 | 典型 code 前缀 |
+|---|---|---|
+| 400 | 输入格式错误 | `<module>.invalid_input`,或 Zod 校验失败产生的通用 400 |
+| 401 | 未认证 / 凭证失效 | `client_credentials.invalid_hmac`、`client_credentials.disabled`、`client_credentials.expired` |
+| 403 | 权限不足 / 跨租户 | `session_tenant_mismatch`、`end_user_disabled` |
+| 404 | 目标不存在 | `check_in.config_not_found`、`item.definition_not_found` |
+| 409 | 业务规则冲突(并发 / 已达上限 / 状态不匹配) | `item.hold_limit_reached`、`exchange.user_limit_reached`、`check_in.alias_conflict` |
+| 500 | 服务端未预期错误 | 不走 `ModuleError`;`error` 字段会是通用提示,但日志里的 `requestId` 仍可用 |
+
+## 常见错误码
+
+抽样列几个高频模块。完整清单见 `/openapi.json` 或各模块的 `errors.ts`。
+
+### 客户端凭证(认证层)
+
+| code | status | 何时发生 |
+|---|---|---|
+| `client_credentials.not_found` | 404 | 用未登记的 `x-api-key` 调用 |
+| `client_credentials.disabled` | 401 | 凭证被 revoke 掉了 |
+| `client_credentials.expired` | 401 | 凭证过了 `expiresAt` |
+| `client_credentials.invalid_hmac` | 401 | `x-user-hash` 不匹配 `endUserId` + secret |
+
+### 签到
+
+| code | status | 何时发生 |
+|---|---|---|
+| `check_in.config_not_found` | 404 | `configKey` 找不到对应配置 |
+| `check_in.config_inactive` | 409 | 配置被禁用 |
+| `check_in.alias_conflict` | 409 | 创建配置时 alias 在当前 org 已被占用 |
+| `check_in.invalid_input` | 400 | 时区 / 日期字段不合法 |
+
+### 兑换
+
+| code | status | 何时发生 |
+|---|---|---|
+| `exchange.option_not_found` | 404 | 兑换选项不存在 |
+| `exchange.user_limit_reached` | 409 | 该用户对该选项已达上限 |
+| `exchange.global_limit_reached` | 409 | 全局限量耗尽 |
+
+### 物品
+
+| code | status | 何时发生 |
+|---|---|---|
+| `item.definition_not_found` | 404 | 物品定义不存在 |
+| `item.insufficient_balance` | 409 | 用户背包不足以扣减 |
+| `item.hold_limit_reached` | 409 | 该物品的持有上限已到 |
+| `item.concurrency_conflict` | 409 | 并发写入撞车,**需要重试一次** |
+
+## 用 requestId 定位问题
+
+每个请求都会拿到一个 `requestId`,响应体里有,Worker 日志里也有。本地联调时:
+
+```bash
+wrangler tail --format=pretty | grep req_01hx...
+```
+
+把 `requestId` 粘到 Worker tail 里,就能看到这次请求在服务端完整的链路(中间件 / service 层 / DB 语句)。客户上报问题时,让他们把 `requestId` 贴过来能把定位时间从「小时」压到「秒」。
+
+## 重试策略建议
+
+| code | 是否重试 |
+|---|---|
+| `item.concurrency_conflict` | **应该重试**(一次即可),这是 Postgres `ON CONFLICT` 写入丢失的信号 |
+| 网络超时 / 502 / 504 | 可以带指数退避重试,最多 3 次 |
+| `*.invalid_input` | 绝不重试,改请求 |
+| `*.user_limit_reached` / `*.hold_limit_reached` | 不重试,给用户看提示 |
+| `client_credentials.*` | 不重试,先修凭证 |

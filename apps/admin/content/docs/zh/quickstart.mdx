@@ -4,20 +4,99 @@ description: 5 分钟完成第一次端到端调用
 icon: Rocket
 ---
 
-本文档会带你在 5 分钟内走完「注册 → 建组织 → 签发客户端凭证 → 调通第一个端点」的完整路径,随后再跳去各模块详细文档。
+本章带你从零到第一个可以工作的 API 调用。预计 5 分钟。
 
-占位:详细内容将在下一次提交里补上。当前先介绍目录骨架。
+## 你需要准备
 
-## 流程
+- 一个 ApolloKit 管理端账号(管理台自行注册)
+- 一个要接入的**终端用户 ID**,也就是你游戏 / 业务系统里的玩家标识。这个 id 的形式由你决定,ApolloKit 对它是不透明的
+- `curl`
 
-1. 注册管理端账号并登录。
-2. 在控制台创建一个 organization。
-3. 进入「API Keys」为该 org 签发一把管理端 API key。
-4. 进入「Client Credentials」签发一对 clientId + secret 给游戏客户端。
-5. 用 cURL 调一次 `/api/check-in` 验证链路。
+## 1. 创建 organization
 
-## 下一步
+管理台登录后,第一次会让你创建一个 organization。这是多租户隔离的边界——所有数据、凭证、事件都归属到一个 org 下。
 
-- 认证与多租户细节 → [authentication](./authentication) 与 [organizations](./organizations)。
-- 调用客户端 SDK → [client-sdk](./client-sdk)。
-- 遇到错误 → [errors](./errors)。
+详情见 [organizations](./organizations)。
+
+## 2. 签发客户端凭证
+
+在管理台 → 「Client Credentials」页面新建一组凭证,会得到:
+
+- `publishableKey`:形如 `cpk_xxx`,**可以出现在客户端**,用作 `x-api-key`
+- `secret`:形如 `csk_xxx`,**只在创建那一刻返回一次**,用于在服务端签名 HMAC
+
+> **Dev 模式**:凭证支持 `devMode: true`,打开后请求不校验 HMAC,便于联调。上线前记得关闭。
+
+## 3. 签发一个签到配置(可选)
+
+要让第一次调用有东西可打,先在管理台 → 「签到」新建一个配置,随手给它一个 `alias`,比如 `daily`。详细能力见 [check-in](./check-in)。
+
+## 4. 调通第一次请求
+
+假设你的玩家 id 是 `player_42`,HMAC 签名是从服务端用 `secret` 算出来的十六进制串。两种选择:
+
+### 方式 A:后端代签,直接 cURL
+
+```bash
+# 先用任意 HMAC-SHA256 工具把 endUserId 按 secret 签一下,结果记为 $USER_HASH
+# 例如 Node.js 一行:
+#   node -e 'require("crypto").createHmac("sha256","csk_XXX").update("player_42").digest("hex")' \
+#   → 例如 3f2b... 之类的 hex
+
+curl -X POST https://your-server.example.com/api/client/check-in/check-ins \
+  -H "x-api-key: cpk_XXX" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"configKey":"daily"}'
+```
+
+成功响应形如:
+
+```json
+{
+  "alreadyCheckedIn": false,
+  "justCompleted": false,
+  "state": {
+    "configId": "...",
+    "endUserId": "player_42",
+    "currentStreak": 1,
+    "totalDays": 1,
+    "currentCycleDays": 1
+  },
+  "target": 7,
+  "isCompleted": false,
+  "remaining": 6
+}
+```
+
+### 方式 B:走 TypeScript 客户端 SDK
+
+```ts
+import { createClient, signEndUser, postCheckIns } from '@apollokit/client';
+
+const client = createClient({
+  baseUrl: 'https://your-server.example.com',
+  publishableKey: 'cpk_XXX',
+  secret: 'csk_XXX', // ⚠️ 仅服务端,绝不进浏览器 bundle
+});
+
+const userHash = await signEndUser('player_42', 'csk_XXX');
+
+const { data } = await postCheckIns({
+  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': userHash },
+  body: { configKey: 'daily' },
+});
+
+console.log(data);
+```
+
+更多 SDK 细节见 [client-sdk](./client-sdk)。
+
+## 5. 下一步
+
+- 了解认证体系与三种调用身份(session / 管理端 API key / client credentials)→ [authentication](./authentication)
+- 把调用分发给多个游戏项目/环境 → [organizations](./organizations)
+- 处理错误与 `requestId` → [errors](./errors)
+- 订阅业务事件做埋点与外部集成 → [webhooks](./webhooks)
+- 浏览完整端点字段 → [`/openapi.json`](/openapi.json) 或 [`/docs`](/docs) 上的 Scalar UI
