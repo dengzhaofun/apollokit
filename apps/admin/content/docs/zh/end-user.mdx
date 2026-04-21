@@ -1,0 +1,45 @@
+---
+title: 终端玩家
+description: 玩家元数据档案 · 不是认证身份
+icon: User
+---
+
+终端玩家(end-user)模块是一个「玩家档案元信息存储」,仅此而已。它**不是**玩家登录系统——ApolloKit 对玩家身份完全透明,`endUserId` 来自你自己的游戏账号体系。
+
+<Callout type="warn">
+  `endUserId` 是不透明字符串(opaque text),ApolloKit 不校验其格式,也不管你的玩家怎么登录。如果你试图把 Better Auth 的 `userId` 塞成 `endUserId`,请立刻停——那个是 SaaS 管理员的 id,不是玩家。详见 [authentication](./authentication)。
+</Callout>
+
+## 数据模型
+
+- **end_user_profiles**:`(orgId, endUserId)` 联合唯一,含 displayName / avatarUrl / metadata(JSONB)。
+
+## 管理端 API
+
+```http
+GET    /api/end-user/profiles
+GET    /api/end-user/profiles/{endUserId}
+PATCH  /api/end-user/profiles/{endUserId}
+DELETE /api/end-user/profiles/{endUserId}   连带 cascade 清该玩家在所有模块的数据
+```
+
+## 客户端 API
+
+```http
+GET /api/end-user/profile
+PUT /api/end-user/profile                   body: { displayName, avatarUrl, metadata }
+```
+
+## 为什么要有这个模块
+
+- **统一展示信息**:公会列表、好友列表、聊天消息要展示玩家昵称/头像时,有一个标准来源。
+- **Cascade 点**:删除玩家时,`ON DELETE CASCADE` 会清空他所有模块的数据(签到、背包、好友关系、排行榜记录...),避免孤儿数据。这也是集成测试用来清环境的主开关。
+- **自由 metadata**:JSONB 字段随便塞——游戏账号 id、游戏服、绑定邮箱等,ApolloKit 不解读只存。
+
+## 与其他模块组合
+
+所有面向玩家的模块都假设 `endUserId` 是你提供的字符串,不依赖 profile 存在。profile 只是「给展示层一个昵称」。
+
+## 事件
+
+`end-user.profile_updated` / `end-user.deleted`(后者 cascade 前触发,下游可清缓存)。

@@ -1,0 +1,46 @@
+---
+title: 对话
+description: 分支剧情、选项、节点奖励
+icon: MessageSquare
+---
+
+对话模块提供「剧情树编排 + 运行时推进」:策划在控制台画节点和选项,玩家在客户端按选项走分支,每进一个节点可配奖励。
+
+## 数据模型
+
+- **dialogue_scripts**:一棵对话树的完整数据——名称、起始节点、所有节点(含文本、options 列表、reward 配置)。
+- **dialogue_progress**:玩家 × 剧本的推进状态,含 `currentNodeId` / `visitedNodeIds` / `claimedRewards`。
+
+## 管理端 API
+
+```http
+POST   /api/dialogue/scripts
+GET    /api/dialogue/scripts
+PATCH  /api/dialogue/scripts/{id}
+DELETE /api/dialogue/scripts/{id}
+```
+
+## 客户端 API
+
+```http
+POST /api/dialogue/end-user/{userId}/start        body: { scriptId }      开始或重置
+POST /api/dialogue/end-user/{userId}/choose       body: { optionId }      选一条分支
+GET  /api/dialogue/end-user/{userId}/progress/{scriptId}
+```
+
+## 业务规则
+
+- **树结构**:每个节点有 text + N 个 options,option 可以指向下一个 nodeId,或带 action(如 link 跳外链、触发另一脚本、结束)。
+- **节点进入奖励**:node.onEnter.reward 配了就在进入时发奖,服务层用 `item_grant_logs` 的 `ON CONFLICT` 保证同一 (user, script, node) 只发一次。
+- **选项条件**:option 可配 `condition`(玩家等级 / 曾解锁某条目 / 持有某 item),不满足时灰掉不可点。
+- **重置**:`start` 对同一 script 再次调用就是回到起始节点,之前的奖励记录不清(防重发)。
+
+## 与其他模块组合
+
+- [item](./item):节点奖励走 item 服务。
+- [level](./level):选项条件可以引用玩家在 level 模块的进度。
+- [link](./link):option 的 action 用 link 协议值对象表达跳转目标。
+
+## 事件
+
+`dialogue.started` / `dialogue.node_entered` / `dialogue.reward_granted` / `dialogue.finished`。

@@ -1,0 +1,41 @@
+---
+title: 跳转
+description: 统一的「跳转动作」值对象 · 无存储、无路由
+icon: Link
+---
+
+跳转模块是一个**纯值对象**(value object)——不是一张表,也没有 HTTP 端点。它定义「一个可执行的跳转动作」的类型与校验规则,被多个其他模块(banner / dialogue / mail / announcement)内嵌使用。
+
+## 核心类型
+
+```ts
+type LinkAction =
+  | { kind: 'none' }                                       // 不跳
+  | { kind: 'external'; url: string }                      // 跳外链
+  | { kind: 'internal'; route: string; params?: object }   // 跳站内路由
+```
+
+## 内部路由注册表
+
+`internal` 的 `route` 不是任意字符串——必须是预先注册到 `link-registry.ts` 的合法路由 key,并且 params 的形状要和注册表声明的一致。试图填一个未注册的 route 时校验直接拒。
+
+这保证了「跳转目标」的契约在编译期可检查,也保证前端能用 exhaustive switch 处理。
+
+## 典型嵌入点
+
+| 出现位置 | 作用 |
+|---|---|
+| [banner](./banner) 的 `action` | 玩家点轮播图跳哪里 |
+| [dialogue](./dialogue) 的 option.action | 对话选项跳目标 |
+| [mail](./mail) 的附件 | 邮件里按钮跳 |
+| [announcement](./announcement) 的 cta | 公告的「行动召唤」按钮 |
+
+## 为什么独立成一个模块
+
+- **一处改,多处跟**:新增一条 internal route 只在 registry 改一次,所有嵌入点的校验自动更新。
+- **避免字符串漂移**:各模块都自己定义「跳转」的话,很容易出现三份定义结构略有差别,前端难写统一处理。
+- **类型安全**:整个前后端共享 `LinkAction` 类型,客户端拿到 banner/dialogue 的 action 就能 exhaustive match。
+
+## 没有 API
+
+这个模块不对外暴露 HTTP 端点。想新增一条 internal route 时,在 `link-registry.ts` 里加一条常量,然后前端去实现对应跳转行为。

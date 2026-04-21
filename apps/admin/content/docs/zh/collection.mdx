@@ -1,0 +1,53 @@
+---
+title: 图鉴
+description: 收集册 · 条目解锁 · 阶段里程碑奖励
+icon: Library
+---
+
+图鉴模块做「宝可梦图鉴 / 武器图鉴 / 怪物图鉴」这种「收集式解锁进度」的玩法:配置一整本图鉴,玩家通过各种途径解锁条目,解锁到阈值触发里程碑奖励。
+
+## 数据模型
+
+- **collection_albums**:一本图鉴的元信息——别名、分组定义、总条目数。
+- **collection_entries**:图鉴里的条目(每张卡 / 每只怪),含解锁条件 key。
+- **collection_milestones**:里程碑——scope 是 `entry` / `group` / `album`,达到 threshold 触发奖励。
+- **collection_user_entries**:玩家 × 条目的解锁状态。
+
+## 管理端 API
+
+```http
+POST   /api/collection/albums
+GET    /api/collection/albums
+PATCH  /api/collection/albums/{key}
+DELETE /api/collection/albums/{key}
+POST   /api/collection/albums/{key}/entries
+POST   /api/collection/albums/{key}/milestones
+```
+
+## 客户端 API
+
+```http
+POST /api/collection/end-user/{userId}/album/{key}/unlock      body: { entryKey }
+POST /api/collection/end-user/{userId}/album/{key}/claim       body: { milestoneKey }
+GET  /api/collection/end-user/{userId}/album/{key}
+```
+
+## 业务规则
+
+- **幂等解锁**:同一 `(userId, entryKey)` 重复 unlock 只算一次,`ON CONFLICT DO NOTHING`。
+- **里程碑 scope**:
+  - `entry`:特定条目被解锁(例:解锁「传说宝可梦」触发奖励)。
+  - `group`:某个 group 解锁 X 个。
+  - `album`:整本图鉴解锁 Y 个。
+- **自动领取**:milestone 配置 `autoClaim=true` 时,达成瞬间直接发奖(走 [item](./item) + [mail](./mail)),玩家无需主动领。
+- **奖励链路**:`claim` 原子地校验达成条件 + 调 itemService.grantItems + 标已领。
+
+## 与其他模块组合
+
+- [item](./item):解锁奖励从这里出。
+- [mail](./mail):autoClaim 时奖励通过邮件落库。
+- [activity](./activity):活动期间特殊图鉴,活动结束归档。
+
+## 事件
+
+`collection.unlocked` / `collection.milestone_claimed`。

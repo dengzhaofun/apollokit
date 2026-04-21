@@ -1,0 +1,57 @@
+---
+title: 公会
+description: 公会创建、成员管理、等级经验、贡献记录
+icon: Shield
+---
+
+公会模块实现「大厅型社交组织」:玩家可创建或加入公会,分会长 / 官员 / 普通,公会可升级、设审核、查成员贡献。
+
+## 数据模型
+
+- **guild_settings**(每 org 一行):创建公会的条件、最大成员数基线、升级规则、加入模式默认。
+- **guild_guilds**:一个公会的基础信息——name / tag / leader / level / exp / joinMode。
+- **guild_members**:`(guildId, endUserId)` 联合唯一,含 role(leader / officer / member)、贡献分、加入时间。
+- **guild_join_requests**:申请加入的流转(仅 `joinMode=request` 时产生)。
+- **guild_contribution_logs**:成员贡献的原子日志(打怪、送礼、活动),升级经验的真理来源。
+
+## 管理端 API
+
+```http
+PUT    /api/guild/settings
+POST   /api/guild/guilds                   管理员直接建公会
+GET    /api/guild/guilds
+PATCH  /api/guild/guilds/{id}
+DELETE /api/guild/guilds/{id}
+POST   /api/guild/guilds/{id}/transfer-leader
+```
+
+## 客户端 API
+
+```http
+POST   /api/guild/end-user/create          玩家自建
+POST   /api/guild/end-user/{id}/join
+POST   /api/guild/end-user/{id}/request
+POST   /api/guild/end-user/{id}/approve/{requestId}
+POST   /api/guild/end-user/{id}/leave
+POST   /api/guild/end-user/{id}/contribute body: { amount, reason }
+GET    /api/guild/end-user/{id}/members
+```
+
+## 业务规则
+
+- **joinMode**:`open`(直接加)/ `request`(需审批)/ `closed`(仅邀请)。
+- **成员上限**:基础上限来自 settings,公会等级加成在 `level_rules` 里逐级累加。
+- **等级 / 经验**:`contribute` 原子语句同时更新 `member.contribution` + `guild.exp` + 检查升级阈值,用 `xmax=0` 模式串行化并发贡献。
+- **转让会长**:`transfer-leader` 是原子双写,丢失一边的情况不可能。
+- **离开 / 踢人**:leader 离开触发规则——要么转让,要么公会解散(看 settings)。
+
+## 与其他模块组合
+
+- [leaderboard](./leaderboard):`scope=guild` 做公会内贡献榜。
+- [activity](./activity):公会限定活动,guild 服务提供 membership 判断。
+- [mail](./mail):公会邮件群发,guild 的 member 名单做收件人源。
+- [chat]:公会频道(未来的 chat 模块)。
+
+## 事件
+
+`guild.created` / `guild.joined` / `guild.left` / `guild.level_up` / `guild.disbanded`。
