@@ -1,13 +1,196 @@
 ---
 title: Authentication & Credentials
-description: Session auth, admin API keys, client credentials and HMAC
+description: Admin auth, API keys, client credentials, and HMAC signing
 icon: KeyRound
 ---
 
-English translation in progress. Please refer to the [Chinese version](/docs/zh/authentication) for the complete guide.
+<Callout type="info">
+  Haven't made a first call yet? Read [Quickstart](./quickstart) first. Want to understand why organizations are mandatory? See [Organizations](./organizations). This page focuses on **the three call identities**.
+</Callout>
 
-## At a glance
+ApolloKit has two auth systems: **admin authentication** (for SaaS operators) and **client credentials** (for end-user-originated requests).
 
-- **Admin console** → Better Auth email/password session cookies.
-- **Admin API** → per-organization API keys (`x-api-key`).
-- **Game client** → Client Credentials with HMAC signed requests.
+## Admin authentication
+
+### Session auth
+
+The admin dashboard uses Better Auth session cookies. After login each request automatically carries `Cookie: auth-token=...`.
+
+The session contains `activeOrganizationId`; every business operation is scoped to the current org.
+
+### Admin API Key
+
+An organization can issue Admin API Keys (prefix `ak_`) for programmatic access to admin APIs.
+
+```http
+GET /api/check-in/configs
+Authorization: Bearer ak_your_api_key_here
+```
+
+Admin API Keys grant the same privileges as session auth. Use them for CI/CD, scripts, or back-end integrations.
+
+---
+
+## Client Credentials
+
+Client credentials authenticate end-user requests (check-in, redemption, inventory queries…). Each pair contains:
+
+- **Publishable Key** (`cpk_*`): the public identifier, sent in `x-api-key`.
+- **Secret** (`csk_*`): returned **once** at creation/rotation, used to compute HMAC.
+
+### Auth flow
+
+Every client API (`/api/client/*`) needs:
+
+```http
+POST /api/client/check-in/check-ins
+x-api-key: cpk_your_publishable_key
+Content-Type: application/json
+
+{
+  "configKey": "daily_login",
+  "endUserId": "user-42",
+  "userHash": "hmac_sha256_hex_string"
+}
+```
+
+### HMAC identity verification
+
+To prevent end-users from spoofing identity, client requests must include an HMAC signature:
+
+```
+userHash = HMAC-SHA256(endUserId, secret)
+```
+
+- **POST requests**: `userHash` in the body.
+- **GET requests**: `x-user-hash` in the header.
+
+```http
+GET /api/client/item/users/user-42/inventory
+x-api-key: cpk_your_publishable_key
+x-user-hash: a1b2c3d4e5f6...
+```
+
+### Dev mode
+
+Credentials with `devMode: true` skip HMAC verification, useful for local development. **Always turn it off in production.**
+
+---
+
+## Credential management API
+
+### Create
+
+```http
+POST /api/client-credentials/
+Authorization: Bearer ak_...
+Content-Type: application/json
+
+{
+  "name": "Production Keys",
+  "expiresAt": "2027-01-01T00:00:00.000Z",
+  "metadata": {}
+}
+```
+
+**Response** (201):
+
+```json
+{
+  "id": "uuid",
+  "name": "Production Keys",
+  "publishableKey": "cpk_abc123...",
+  "secret": "csk_xyz789...",
+  "devMode": false,
+  "enabled": true,
+  "expiresAt": "2027-01-01T00:00:00.000Z",
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+> **The secret is returned only once.** Store it safely.
+
+### List
+
+```http
+GET /api/client-credentials/
+```
+
+The response never includes the secret.
+
+### Rotate
+
+```http
+POST /api/client-credentials/{id}/rotate
+```
+
+Generates a new `publishableKey` + `secret` pair; the old pair is revoked immediately.
+
+### Revoke
+
+```http
+POST /api/client-credentials/{id}/revoke
+```
+
+Soft revoke — sets `enabled` to `false`. Requests with that key return 401.
+
+### Toggle dev mode
+
+```http
+PATCH /api/client-credentials/{id}/dev-mode
+Content-Type: application/json
+
+{
+  "devMode": true
+}
+```
+
+### Delete
+
+```http
+DELETE /api/client-credentials/{id}
+```
+
+Permanent deletion, no undo.
+
+---
+
+## HMAC computation examples
+
+### Node.js
+
+```typescript
+import { createHmac } from 'crypto';
+
+const secret = 'csk_your_secret';
+const endUserId = 'user-42';
+const userHash = createHmac('sha256', secret)
+  .update(endUserId)
+  .digest('hex');
+```
+
+### Python
+
+```python
+import hmac, hashlib
+
+secret = b'csk_your_secret'
+end_user_id = b'user-42'
+user_hash = hmac.new(secret, end_user_id, hashlib.sha256).hexdigest()
+```
+
+### Go
+
+```go
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+)
+
+func computeHash(secret, endUserId string) string {
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write([]byte(endUserId))
+    return hex.EncodeToString(mac.Sum(nil))
+}
+```

@@ -1,7 +1,81 @@
 ---
 title: Banner
-description: Home screen banners with routing
+description: Home / lobby banner slots, groups, ordering, routing
 icon: Images
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/banner).
+The banner module manages "the row of scrolling banner images at the top of the lobby". Use **groups** to separate banner slots for different scenes (login page, lobby header, activity center entry); banners inside each group rotate by weight.
+
+## Data model
+
+- **group**: a specific "banner slot" — alias, positional semantics, scene. The client fetches a group by alias.
+- **banner**: one image + CTA jump + time window + weight + owning group.
+- **user_state**: banners the player has dismissed (if you model a close button) — stored here so they don't reappear.
+
+## Admin API
+
+```http
+# groups
+GET    /api/banner/groups
+POST   /api/banner/groups
+GET    /api/banner/groups/{id}
+PATCH  /api/banner/groups/{id}
+DELETE /api/banner/groups/{id}      cascades banners
+
+# banners within a group
+GET    /api/banner/groups/{groupId}/banners
+POST   /api/banner/groups/{groupId}/banners
+POST   /api/banner/groups/{groupId}/banners/reorder    pass an ordered id list in one call
+
+# single banner
+GET    /api/banner/banners/{id}
+PATCH  /api/banner/banners/{id}
+DELETE /api/banner/banners/{id}
+```
+
+## Client API
+
+```http
+GET /api/client/banner/groups/{alias}
+```
+
+Fetch a group by alias → returns banners currently in-window, visible to this player, sorted by weight. The client just cycles through the list.
+
+## Ordering
+
+Two ways:
+
+- **Fixed order**: `/reorder` with the full ordered id list.
+- **Weight**: each banner has a `weight`; server sorts stably by weight (creation time as tiebreaker).
+
+Most teams use weight — ops don't want manual ordering; a 0–100 slider is plenty.
+
+## Time window
+
+Each banner has `startAt` + `endAt`. Outside that range: hidden. Typical uses:
+
+- Pre-warm an activity: create banner at T-7, `startAt = T-3`, `endAt = T+14` — auto appears/disappears.
+- Double-11 banner: open 11.01 00:00, close 11.11 24:00. Ops doesn't need to manually unschedule at midnight.
+
+## CTA routing
+
+`ctaUrl` is a relative path or absolute URL. In-game, typically:
+
+- `apollokit://activity/{alias}` → jump to an activity
+- `apollokit://shop/product/{alias}` → jump to a product
+- `https://...` → external link (new-version announcement / community forum)
+
+The scheme is resolved by the client's router; the banner module doesn't validate it.
+
+## Tracking
+
+Reuse the shared event stream — recommend the client report `banner.impression` and `banner.click` explicitly, so you can analyze CTR per slot.
+
+## Targeting (optional)
+
+Similar to [announcement](./announcement), banners can filter by player attributes (level, tags, activity state). If unset, visible to all.
+
+## Combining with other modules
+
+- [announcement](./announcement): banner is a "poster", announcement is the "details page". Common pairing: banner attracts click → CTA → announcement body → a button in the body jumps to the actual activity.
+- [shop](./shop): the shop first screen is usually several banners + a recommendation list.

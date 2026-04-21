@@ -1,7 +1,97 @@
 ---
 title: Errors & Troubleshooting
-description: Error response shape, error codes, using requestId
+description: Unified error response, error code listing, using requestId to diagnose
 icon: AlertTriangle
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/errors).
+Every ApolloKit business module throws `ModuleError`, and the HTTP layer maps those to a unified JSON response. When debugging, look at `code` first, then `requestId`.
+
+## Unified response body
+
+On failure:
+
+```json
+{
+  "error": "Human-readable description",
+  "code": "module.reason",
+  "requestId": "req_01hx..."
+}
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `error` | string | Human-readable message, may contain the offending id. **Do not branch on this programmatically.** |
+| `code` | string | Machine-readable code, shape `<module>.<reason>`, stable across versions. Use this for UI routing / retry decisions. |
+| `requestId` | string | Per-request trace id. Worker logs are searchable by it. |
+
+## HTTP status mapping
+
+`ModuleError`'s `httpStatus` lands on the response status code directly:
+
+| Status | Meaning | Typical code prefix |
+|---|---|---|
+| 400 | Malformed input | `<module>.invalid_input`, or a generic 400 from Zod validation |
+| 401 | Unauthenticated / invalid credential | `client_credentials.invalid_hmac`, `client_credentials.disabled`, `client_credentials.expired` |
+| 403 | Forbidden / cross-tenant | `session_tenant_mismatch`, `end_user_disabled` |
+| 404 | Target does not exist | `check_in.config_not_found`, `item.definition_not_found` |
+| 409 | Business rule conflict (concurrency, limit, state mismatch) | `item.hold_limit_reached`, `exchange.user_limit_reached`, `check_in.alias_conflict` |
+| 500 | Unexpected server error | Not a `ModuleError`; `error` is a generic message, but `requestId` is still valid |
+
+## Common error codes
+
+A sample across high-traffic modules. Full listing lives in `/openapi.json` and each module's `errors.ts`.
+
+### Client credentials (auth layer)
+
+| code | status | When |
+|---|---|---|
+| `client_credentials.not_found` | 404 | Calling with an unregistered `x-api-key` |
+| `client_credentials.disabled` | 401 | Credential was revoked |
+| `client_credentials.expired` | 401 | Passed the credential's `expiresAt` |
+| `client_credentials.invalid_hmac` | 401 | `x-user-hash` doesn't match `endUserId` + secret |
+
+### Check-in
+
+| code | status | When |
+|---|---|---|
+| `check_in.config_not_found` | 404 | `configKey` not found |
+| `check_in.config_inactive` | 409 | Config was disabled |
+| `check_in.alias_conflict` | 409 | Alias already taken in current org |
+| `check_in.invalid_input` | 400 | Invalid timezone / date fields |
+
+### Exchange
+
+| code | status | When |
+|---|---|---|
+| `exchange.option_not_found` | 404 | Exchange option doesn't exist |
+| `exchange.user_limit_reached` | 409 | User hit per-option cap |
+| `exchange.global_limit_reached` | 409 | Global stock exhausted |
+
+### Item
+
+| code | status | When |
+|---|---|---|
+| `item.definition_not_found` | 404 | Item definition doesn't exist |
+| `item.insufficient_balance` | 409 | Inventory too low for deduction |
+| `item.hold_limit_reached` | 409 | Per-item hold cap reached |
+| `item.concurrency_conflict` | 409 | Concurrent write collision — **retry once** |
+
+## Using requestId to pinpoint issues
+
+Every request carries a `requestId`, in the response body and in Worker logs. During local development:
+
+```bash
+wrangler tail --format=pretty | grep req_01hx...
+```
+
+Paste the `requestId` into `wrangler tail` and you see the entire server-side trace (middleware → service layer → DB statements). When customers report an issue, asking for the `requestId` shrinks diagnosis from hours to seconds.
+
+## Retry strategy cheatsheet
+
+| code | Retry? |
+|---|---|
+| `item.concurrency_conflict` | **Yes** (once). Signals a Postgres `ON CONFLICT` losing write. |
+| Network timeout / 502 / 504 | With exponential backoff, at most 3 attempts |
+| `*.invalid_input` | Never. Fix the request. |
+| `*.user_limit_reached` / `*.hold_limit_reached` | Never. Surface to user. |
+| `client_credentials.*` | Never. Fix the credential. |

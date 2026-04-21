@@ -4,4 +4,99 @@ description: End-to-end integration in 5 minutes
 icon: Rocket
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/quickstart).
+This chapter walks you from zero to your first working API call. Budget: 5 minutes.
+
+## What you need
+
+- An ApolloKit admin account (sign up on the dashboard)
+- An **end-user ID** to integrate — your player/business identifier. The shape is up to you; ApolloKit treats it as opaque.
+- `curl`
+
+## 1. Create an organization
+
+After your first admin login the dashboard asks you to create an organization. This is the multi-tenant isolation boundary — all data, credentials and events belong to exactly one org.
+
+See [organizations](./organizations) for details.
+
+## 2. Issue client credentials
+
+In Dashboard → "Client Credentials", create a new credential pair. You get:
+
+- `publishableKey` — looks like `cpk_xxx`. **Can appear on the client**, used as the `x-api-key` header.
+- `secret` — looks like `csk_xxx`. **Returned only once at creation time**, used server-side to sign HMAC.
+
+> **Dev mode**: credentials support `devMode: true` which skips HMAC verification. Turn it **off** before going live.
+
+## 3. Create a check-in config (optional)
+
+To have something to call, create a check-in config in Dashboard → "Check-in" and give it an `alias` like `daily`. Capabilities covered in [check-in](./check-in).
+
+## 4. Make your first call
+
+Assume your player id is `player_42` and the HMAC signature is computed server-side with `secret`. Two options:
+
+### Option A — back-end pre-signs, then cURL
+
+```bash
+# Use any HMAC-SHA256 tool to sign endUserId with secret. Record the result as $USER_HASH.
+# For example, one-line Node.js:
+#   node -e 'require("crypto").createHmac("sha256","csk_XXX").update("player_42").digest("hex")'
+#   → e.g. 3f2b...
+
+curl -X POST https://your-server.example.com/api/client/check-in/check-ins \
+  -H "x-api-key: cpk_XXX" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"configKey":"daily"}'
+```
+
+A successful response looks like:
+
+```json
+{
+  "alreadyCheckedIn": false,
+  "justCompleted": false,
+  "state": {
+    "configId": "...",
+    "endUserId": "player_42",
+    "currentStreak": 1,
+    "totalDays": 1,
+    "currentCycleDays": 1
+  },
+  "target": 7,
+  "isCompleted": false,
+  "remaining": 6
+}
+```
+
+### Option B — use the TypeScript client SDK
+
+```ts
+import { createClient, signEndUser, postCheckIns } from '@apollokit/client';
+
+const client = createClient({
+  baseUrl: 'https://your-server.example.com',
+  publishableKey: 'cpk_XXX',
+  secret: 'csk_XXX', // ⚠️ server-side only. Never ship this in a browser bundle.
+});
+
+const userHash = await signEndUser('player_42', 'csk_XXX');
+
+const { data } = await postCheckIns({
+  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': userHash },
+  body: { configKey: 'daily' },
+});
+
+console.log(data);
+```
+
+More SDK details in [client-sdk](./client-sdk).
+
+## 5. Next steps
+
+- Understand the auth system and the three call identities (session / admin API key / client credentials) → [authentication](./authentication)
+- Split traffic across multiple game projects/environments → [organizations](./organizations)
+- Handle errors and `requestId` → [errors](./errors)
+- Subscribe to events for analytics and external integrations → [webhooks](./webhooks)
+- Browse full endpoint fields → [`/openapi.json`](/openapi.json) or the Scalar UI at [`/docs`](/docs)
