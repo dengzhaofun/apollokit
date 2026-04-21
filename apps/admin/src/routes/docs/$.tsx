@@ -2,6 +2,7 @@ import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { DocsPage, DocsBody } from 'fumadocs-ui/page'
+import defaultMdxComponents from 'fumadocs-ui/mdx'
 import type { Root as PageTreeRoot } from 'fumadocs-core/page-tree'
 import { source, i18n } from '#/lib/source'
 import { baseOptions } from '#/lib/layout.shared'
@@ -37,7 +38,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
     return (
       <DocsBody>
         <h1>{frontmatter.title}</h1>
-        <MDX />
+        <MDX components={defaultMdxComponents} />
       </DocsBody>
     )
   },
