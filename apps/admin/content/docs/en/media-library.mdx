@@ -1,0 +1,53 @@
+---
+title: Media Library
+description: Folder tree + R2/S3 assets · upload · public proxy
+icon: FolderOpen
+---
+
+Media Library is the dashboard's built-in "upload images / audio / JSON config files" general-purpose resource library. Backed by Cloudflare R2 (or an S3-compatible service), uploads use presigned URLs, max 10 MB per file.
+
+## Data model
+
+- **media_folders**: folder tree (with parent/child, path cache).
+- **media_assets**: a single asset — name, object key, size, MIME, checksum, folderId.
+
+## Admin API
+
+```http
+POST   /api/media-library/folders          body: { name, parentId? }
+GET    /api/media-library/folders/{id}/children
+PATCH  /api/media-library/folders/{id}
+DELETE /api/media-library/folders/{id}
+
+POST   /api/media-library/upload/presign   body: { filename, mimeType, size, folderId }
+                                             → { uploadUrl, objectKey, assetId }
+POST   /api/media-library/upload/complete  body: { assetId, checksum }
+GET    /api/media-library/assets
+DELETE /api/media-library/assets/{id}
+```
+
+## Public proxy
+
+```http
+GET /api/media-library/object/{objectKey}    public-read, 5-minute cache
+```
+
+Lets game clients access assets at `apollokit-server/api/media-library/object/<key>` directly, no presign needed.
+
+## Business rules
+
+- **Two-step upload**: front-end calls `presign` → gets a direct URL → PUTs to R2 → calls `complete` with the checksum → server validates and marks active.
+- **Per-org namespace**: `objectKey` is always prefixed with `<orgId>/...`. Tenant assets are physically isolated.
+- **10 MB cap**: `MAX_UPLOAD_SIZE` is config-controlled; oversized requests are rejected at `presign`.
+- **Delete semantics**: `DELETE` removes both the DB record and the R2 object. Under neon-http's no-transaction constraint, this uses "delete R2 first, then DB with retry" compensation.
+
+## Combining with other modules
+
+- [banner](./banner): banner image URLs point here.
+- [entity](./entity): entity icons / model assets.
+- [mail](./mail): inline images attached to mail.
+- [collection](./collection): collection entry illustrations.
+
+## Events
+
+`media-library.uploaded` / `media-library.deleted`.

@@ -1,0 +1,46 @@
+---
+title: Analytics
+description: Tinybird integration · scoped JWT tokens
+icon: BarChart3
+---
+
+The analytics module is the bridge between ApolloKit and [Tinybird](https://tinybird.co/). ApolloKit itself does no OLAP; event data flows out via [webhooks](./webhooks) to your downstream (or gets pushed directly to Tinybird's Events API). This module's job is to **issue scoped tokens that let a tenant's dashboard query Tinybird directly**, without proxying through your own back-end.
+
+## Data model
+
+No module-owned tables — all config lives in `wrangler.jsonc` env vars (`TINYBIRD_ADMIN_TOKEN`, `TINYBIRD_PIPE_PREFIX`, …). Multi-tenant isolation is enforced by `org_id` baked into each issued token.
+
+## Admin API
+
+```http
+POST /api/analytics/token                  body: { ttlSeconds? }
+                                            → { token, expiresAt }
+```
+
+- Default TTL is **600 seconds** (10 minutes).
+- The returned token can only query this org's data — Tinybird pipes use `{{ String(org_id, required=True) }}` parameters pinned at the backend, so holders of the token cannot bypass scope.
+
+No client API — players do not query analytics directly.
+
+## Business rules
+
+- **Non-repudiability**: `org_id` is stamped into the token at issue time by the server (HMAC-SHA256 signed). The client cannot alter it.
+- **Short TTL**: don't extend unnecessarily. For long-running dashboards, refresh the token periodically from the front-end.
+- **No fan-out data loss**: ApolloKit first writes events into the Postgres `event_history` table, then asynchronously pushes to Tinybird. Tinybird outages don't drop events.
+
+## Combining with other modules
+
+- [webhooks](./webhooks): analytics events are event-hub events too, just routed to Tinybird (or a generic webhook receiver).
+- `event-catalog`: the event catalog defines what events are consumable; all Tinybird pipes are built around these.
+
+## Front-end usage
+
+```ts
+// The front-end asks ApolloKit for a token first
+const { token } = await fetch('/api/analytics/token', { method: 'POST' }).then(r => r.json())
+
+// Then the front-end queries Tinybird directly with that token
+const res = await fetch('https://api.tinybird.co/v0/pipes/daily_active_users.json', {
+  headers: { Authorization: `Bearer ${token}` },
+})
+```

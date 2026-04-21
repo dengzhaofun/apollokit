@@ -1,0 +1,41 @@
+---
+title: Link
+description: Unified "jump action" value object · no storage · no routes
+icon: Link
+---
+
+The link module is a **pure value object** (value object) — not a table, not an HTTP endpoint. It defines the type and validation rules for "an executable jump action", embedded inline by many other modules (banner / dialogue / mail / announcement).
+
+## Core type
+
+```ts
+type LinkAction =
+  | { kind: 'none' }                                       // no jump
+  | { kind: 'external'; url: string }                      // external URL
+  | { kind: 'internal'; route: string; params?: object }   // in-app route
+```
+
+## Internal route registry
+
+For `internal`, `route` is not an arbitrary string — it must be a route key pre-registered in `link-registry.ts`, and `params` must match the registered shape. Passing an unregistered route fails validation.
+
+This keeps the "jump target" contract checkable at compile time and lets the front-end use exhaustive `switch` to handle all cases.
+
+## Typical embedding points
+
+| Location | Role |
+|---|---|
+| [banner](./banner) `action` | Where tapping a banner jumps |
+| [dialogue](./dialogue) option.action | Where a dialogue option jumps |
+| [mail](./mail) attachment | "Jump" buttons inside mail |
+| [announcement](./announcement) cta | The CTA button in an announcement |
+
+## Why this is its own module
+
+- **Change once, everywhere**: adding a new internal route updates the registry in one place; every embedding point's validation auto-updates.
+- **Prevents string drift**: without this, each module would reinvent "jump" slightly differently — three subtly different shapes making front-end handling hard.
+- **Type safety**: the shared `LinkAction` type lives on both ends; the client can exhaustive-match on banner/dialogue `action`s.
+
+## No API
+
+This module exposes no HTTP endpoints. To add a new internal route, edit the `link-registry.ts` constant, then implement the corresponding jump behavior on the front-end.

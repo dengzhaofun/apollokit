@@ -41,7 +41,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere]">
-        <RootProvider>
+        <RootProvider
+          search={{
+            options: { api: '/api/search' },
+          }}
+        >
           <Providers>
             {children}
           </Providers>

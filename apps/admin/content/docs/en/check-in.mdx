@@ -1,0 +1,212 @@
+---
+title: Check-in
+description: Daily check-in, streak tracking, cycle resets, per-day rewards
+icon: CalendarCheck
+---
+
+The check-in module manages daily check-in behavior, including streak tracking, weekly/monthly cycle resets, and per-day reward items.
+
+## Core concepts
+
+### CheckInConfig
+
+Each config defines one set of check-in rules:
+
+| Field | Type | Meaning |
+|------|------|---------|
+| `name` | string | Config display name |
+| `alias` | string? | Org-unique alias, usable in place of the UUID |
+| `resetMode` | enum | `none` (never), `week`, or `month` |
+| `weekStartsOn` | 0-6 | Start-of-week (0=Sunday), applies when `resetMode=week` |
+| `target` | number? | Target days per cycle (1–7 for weekly, 1–31 for monthly) |
+| `timezone` | string | Timezone (defaults UTC), controls "today" |
+| `isActive` | boolean | Enable flag |
+| `metadata` | object? | Custom extension data |
+
+### CheckInUserState
+
+One record per `(configId, endUserId)`:
+
+| Field | Meaning |
+|------|---------|
+| `totalDays` | Cumulative days checked in |
+| `currentStreak` | Current streak |
+| `longestStreak` | Historical longest streak |
+| `currentCycleKey` | Current cycle identifier (e.g. `week-2026-15`, `month-2026-04`) |
+| `currentCycleDays` | Days checked in within the current cycle |
+| `lastCheckInDate` | Last check-in date |
+
+### CheckInReward
+
+Binds reward items to a specific day within the cycle:
+
+| Field | Meaning |
+|------|---------|
+| `dayNumber` | Cycle day that triggers the reward |
+| `rewardItems` | `[{definitionId, quantity}]` |
+| `metadata` | Custom extension data |
+
+After a successful check-in, if `currentCycleDays` matches a `dayNumber`, the system grants the reward via the item module.
+
+---
+
+## Admin API
+
+### Create config
+
+```http
+POST /api/check-in/configs
+Authorization: Bearer ak_...
+Content-Type: application/json
+
+{
+  "name": "Daily Check-in",
+  "alias": "daily",
+  "resetMode": "week",
+  "weekStartsOn": 1,
+  "target": 7,
+  "timezone": "Asia/Shanghai",
+  "isActive": true
+}
+```
+
+### Query configs
+
+```http
+GET /api/check-in/configs              # list all
+GET /api/check-in/configs/{key}        # UUID or alias
+```
+
+`key` accepts both UUID and alias.
+
+### Update
+
+```http
+PATCH /api/check-in/configs/{id}
+Content-Type: application/json
+
+{
+  "name": "New name",
+  "target": 5,
+  "isActive": false
+}
+```
+
+> `resetMode` is immutable after creation.
+
+### Delete
+
+```http
+DELETE /api/check-in/configs/{id}
+```
+
+### Rewards
+
+```http
+POST /api/check-in/configs/{key}/rewards
+GET  /api/check-in/configs/{key}/rewards
+PATCH  /api/check-in/rewards/{rewardId}
+DELETE /api/check-in/rewards/{rewardId}
+```
+
+Reward example:
+
+```json
+{
+  "dayNumber": 3,
+  "rewardItems": [
+    { "definitionId": "gold-uuid", "quantity": 100 },
+    { "definitionId": "gem-uuid", "quantity": 5 }
+  ]
+}
+```
+
+### Admin-side check-in
+
+```http
+POST /api/check-in/configs/{key}/check-ins
+Content-Type: application/json
+
+{
+  "endUserId": "user-42"
+}
+```
+
+### Query user state
+
+```http
+GET /api/check-in/configs/{key}/users/{endUserId}/state
+GET /api/check-in/configs/{key}/users     # all users under this config
+```
+
+---
+
+## Client API
+
+### Check in
+
+```http
+POST /api/client/check-in/check-ins
+x-api-key: cpk_...
+Content-Type: application/json
+
+{
+  "configKey": "daily",
+  "endUserId": "user-42",
+  "userHash": "hmac_hex_string"
+}
+```
+
+**Response**:
+
+```json
+{
+  "alreadyCheckedIn": false,
+  "justCompleted": false,
+  "state": {
+    "totalDays": 15,
+    "currentStreak": 3,
+    "longestStreak": 10,
+    "currentCycleKey": "week-2026-15",
+    "currentCycleDays": 3,
+    "lastCheckInDate": "2026-04-13"
+  },
+  "target": 7,
+  "isCompleted": false,
+  "remaining": 4,
+  "rewards": [
+    { "definitionId": "gold-uuid", "quantity": 100 }
+  ]
+}
+```
+
+| Field | Meaning |
+|------|---------|
+| `alreadyCheckedIn` | Whether today was already checked in (second call returns `true`, not an error) |
+| `justCompleted` | Whether this check-in just completed the cycle target |
+| `isCompleted` | Whether the cycle is already complete |
+| `remaining` | Days left in the cycle |
+| `rewards` | Rewards earned (already credited to inventory) |
+
+### Query state
+
+```http
+GET /api/client/check-in/users/{endUserId}/state?configKey=daily
+x-api-key: cpk_...
+x-user-hash: hmac_hex_string
+```
+
+---
+
+## Flow example
+
+```
+1. Admin creates config (resetMode=week, target=7)
+2. Admin configures rewards for days 1, 3, 5, 7
+3. End-user calls POST /api/client/check-in/check-ins
+4. Server verifies today is not checked in yet, then:
+   ├─ updates currentStreak, currentCycleDays
+   ├─ if currentCycleDays matches dayNumber 3 → grants day-3 reward
+   └─ reward lands in inventory via itemService.grantItems()
+5. Returns check-in result, including rewards
+```

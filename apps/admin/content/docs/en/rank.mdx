@@ -1,0 +1,49 @@
+---
+title: Rank
+description: Competitive match settlement, Elo, tiers, seasons
+icon: Medal
+---
+
+The rank module powers "has matches, needs ladders" competitive modes: report match results, the server maintains player Elo / win rate / tier, cross-season resets, with tier protection and win-streak bonuses.
+
+## Data model
+
+- **rank_tier_configs**: tier-ladder templates — how many tiers, subtiers, promotion/demotion rules.
+- **rank_tiers**: concrete tier nodes (Bronze I / II / III, Silver…).
+- **rank_seasons**: season window + which tier_config it uses.
+- **rank_player_states**: player's current rating, tier, win streak, protection shield.
+- **rank_matches + rank_match_participants**: raw match records and per-participant results.
+
+## Admin API
+
+```http
+POST   /api/rank/tier-configs
+POST   /api/rank/seasons                   start/end a season
+POST   /api/rank/settle                    settle a match (multiple participants)
+GET    /api/rank/matches
+```
+
+## Client API
+
+```http
+GET /api/rank/end-user/{userId}/season/{seasonId}    current season info
+GET /api/rank/end-user/{userId}/history
+```
+
+## Business rules
+
+- **Settle idempotency**: `settle` must carry `externalMatchId`. Duplicate submissions with the same `(orgId, externalMatchId)` do not double-score.
+- **Elo / Glicko2**: configurable in the config. Settlement computes all participants' new scores atomically.
+- **Promotion/demotion**: score crosses a tier threshold → promote; drops to floor → demote, **unless** protection shield (win streak / new tier) absorbs one.
+- **Win-streak bonus**: consecutive N wins grant extra score, or "first daily win" bonus.
+- **End-of-season**: snapshot `rank_player_states`, squash tiers per rule, then enter new season.
+
+## Combining with other modules
+
+- [leaderboard](./leaderboard): rank is the ladder logic itself. For "season win-count board", build a separate leaderboard config on top.
+- [mail](./mail): deliver end-of-season rewards via mail.
+- [item](./item) / [currency](./currency): tier rewards flow through these.
+
+## Events
+
+`rank.match_settled` / `rank.tier_changed` / `rank.season_ended`.

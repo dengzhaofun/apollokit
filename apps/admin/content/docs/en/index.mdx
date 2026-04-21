@@ -1,0 +1,73 @@
+---
+title: ApolloKit Developer Docs
+description: API integration guide — check-in · currency · items · activity · lottery · mail · tasks · multi-tenancy
+icon: BookOpen
+---
+
+ApolloKit is a **game SaaS backend platform** that turns the common "every game rewrites this" logic — economy, live ops, social, analytics — into configurable modules + a type-safe SDK. This doc site targets **integrators**.
+
+> English docs are still being translated. For the most up-to-date pages, the [Chinese version](/docs/zh) is authoritative. Cards below link to English stubs that point back to the Chinese originals.
+
+## Getting started
+
+<Cards>
+  <Card href="./quickstart" title="Quickstart" description="End-to-end integration in 5 minutes" />
+  <Card href="./authentication" title="Authentication" description="Session / admin API key / client credentials + HMAC" />
+  <Card href="./organizations" title="Organizations" description="Multi-tenancy, members, roles, credential scoping" />
+  <Card href="./errors" title="Errors & Troubleshooting" description="Response shape, codes, requestId lookup" />
+</Cards>
+
+## Economy
+
+<Cards>
+  <Card href="./currency" title="Currency" description="In-game currencies, balance, ledger" />
+  <Card href="./item" title="Items" description="Definitions, categories, inventory, audits" />
+  <Card href="./exchange" title="Exchange" description="Point/item exchange with limits and idempotency" />
+  <Card href="./shop" title="Shop" description="Categories, tags, growth stages, purchase limits" />
+  <Card href="./mail" title="Mail" description="System mails with attachments and rewards" />
+  <Card href="./cdkey" title="CDKEY" description="Bulk-generated redemption codes" />
+  <Card href="./storage-box" title="Storage Box" description="Currency deposits + interest mechanics" />
+</Cards>
+
+## Live Ops
+
+<Cards>
+  <Card href="./check-in" title="Check-in" description="Daily streaks, cycle resets, rewards" />
+  <Card href="./activity" title="Activity" description="Timed events, nodes, scheduler, points, milestones" />
+  <Card href="./lottery" title="Lottery" description="Pools, tiers, prizes, pity system" />
+  <Card href="./task" title="Task" description="Categories, event-driven progress, tiered rewards" />
+  <Card href="./announcement" title="Announcement" description="Popup/list formats, targeting, impression tracking" />
+  <Card href="./banner" title="Banner" description="Groups, carousel, CTA routing, time windows" />
+</Cards>
+
+## Integration
+
+<Cards>
+  <Card href="./client-sdk" title="Client SDK" description="@apollokit/client with HMAC signing" />
+  <Card href="./sdk" title="Admin SDK" description="@apollokit/admin for internal tools / scripts" />
+  <Card href="./webhooks" title="Webhooks & Events" description="Event catalog, subscription, signing, retries" />
+  <Card href="/openapi.json" title="OpenAPI Spec" description="Full field contracts for openapi-ts / code-gen" />
+  <Card href="/llms.txt" title="llms.txt index" description="LLM-discoverable index per llmstxt.org convention" />
+  <Card href="/llms-full.txt" title="llms-full.txt" description="Full-site markdown for LLM Q&A" />
+</Cards>
+
+## Two user identities
+
+- **Admin user** — authenticated via Better Auth, owns an Organization context.
+- **End user** — the integrator's own business user, identified by an opaque `endUserId`. ApolloKit does not manage their identity system.
+
+See [organizations](./organizations) and [authentication](./authentication).
+
+## Error envelope
+
+All failures return:
+
+```json
+{
+  "error": "human readable",
+  "code": "module.reason",
+  "requestId": "req_01hx..."
+}
+```
+
+Branch on `code`; look up logs by `requestId`. Full list at [errors](./errors).

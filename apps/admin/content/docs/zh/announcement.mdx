@@ -1,0 +1,70 @@
+---
+title: 公告
+description: 首页 / 大厅公告、定向、展示与点击埋点
+icon: Megaphone
+---
+
+公告模块用于在游戏里给玩家展示**橱窗式**长文信息——停服预告、大版本介绍、活动预热、CTA 跳转。与[邮件](./mail)(inbox 式、带附件)互补。
+
+## 数据模型
+
+- **announcement**:标题、正文(支持 Markdown / 富文本)、CTA(按钮文案 + 跳转)、展示形式(弹窗 / 列表)、定向条件、时间窗。
+
+## 管理端 API
+
+```http
+GET    /api/announcement                列出
+POST   /api/announcement                创建
+GET    /api/announcement/{alias}        按 alias 查
+PATCH  /api/announcement/{alias}        更新
+DELETE /api/announcement/{alias}        删
+```
+
+## 客户端 API
+
+```http
+GET  /api/client/announcement/active                 玩家当前可见的所有公告
+POST /api/client/announcement/{alias}/impression     曝光埋点(幂等)
+POST /api/client/announcement/{alias}/click          CTA 点击埋点
+```
+
+## 展示形式
+
+`kind` 字段:
+
+- `popup`:首次登录或回到大厅时弹窗。玩家可以「本次会话不再提醒」或「永久不再提醒」。
+- `list`:大厅公告列表条目。玩家主动点才展开正文。
+
+常见配合:同一条公告设为 `popup`,用一两天后改成 `list`,从强提示退化为可查。
+
+## 定向
+
+公告对哪些玩家可见,可挂条件:
+
+- 等级区间、创角时间、特定标签
+- 玩家是否完成某任务 / 加入某活动
+- 国家 / 语言(从 end-user 扩展字段读)
+
+未命中条件的玩家不会在 `/active` 里看到这条。
+
+## 事件(埋点)
+
+模块声明了四种事件(见 `modules/announcement/index.ts`):
+
+- `announcement.published`
+- `announcement.unpublished`
+- `announcement.expired`
+- `announcement.impression`(玩家看到)
+- `announcement.click`(玩家点 CTA)
+
+impression / click 事件带 `endUserId`、`announcementId`、`alias`、`ctaUrl`,可接 [webhook](./webhooks) 做分析,或喂到你自己的数据平台算转化率。
+
+## 与其他模块
+
+- [banner](./banner):公告位**不是**轮播图,那是 banner 模块的职责。两者通常一起用——banner 做滚动背景图 + CTA,公告做详情页。
+- [mail](./mail):公告无附件。要发奖给看到的玩家用邮件,不要用公告。
+- [activity](./activity):活动预热阶段发公告,开启后发邮件或弹窗。
+
+## 编辑与预览
+
+管理台提供富文本编辑 + 实时预览。发送前一律走一份草稿,确认无错别字再 publish。

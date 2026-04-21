@@ -1,0 +1,78 @@
+---
+title: 兑换码
+description: 批次、码生成、兑换、审计
+icon: Ticket
+---
+
+CDKEY 模块支持「一批一批签发,一次性或多次兑换」的码分发流程。适合做渠道礼包、主播码、用户补偿、投放活动。
+
+## 数据模型
+
+- **batch(批次)**:一批码的元数据——有效期、每码奖励(或按码差异化)、单人单次限制、全局兑换上限、允许重复等。
+- **code(码)**:具体的一串字符。属于某个 batch,可独立失效。
+- **log(审计)**:每次兑换记录(用户、时间、结果、关联物品/货币/邮件 id)。
+
+## 管理端 API
+
+```http
+# 批次
+POST   /api/cdkey/batches                  创建批次(不自动生码)
+GET    /api/cdkey/batches                  列出
+GET    /api/cdkey/batches/{key}            查(id 或 alias)
+PATCH  /api/cdkey/batches/{key}            更新
+DELETE /api/cdkey/batches/{key}            删批次(级联码、状态、日志)
+
+# 码
+POST   /api/cdkey/batches/{batchId}/codes/generate   追加生成(可多次,不去重已存在 batch 外的码)
+GET    /api/cdkey/batches/{batchId}/codes            列出
+PATCH  /api/cdkey/codes/{codeId}/revoke              吊销单个码
+
+# 审计
+GET    /api/cdkey/batches/{batchId}/logs             本批兑换流水
+
+# 代兑换(运营代操作)
+POST   /api/cdkey/redeem                             body: { code, endUserId }
+```
+
+## 客户端 API
+
+```http
+POST /api/client/cdkey/redeem   玩家本人兑换: { code }
+```
+
+返回 `{ rewards: [...], alreadyRedeemed: false }`。
+
+## 生码规则
+
+`/codes/generate` 支持一次生 N 条:
+
+- `prefix`:前缀(例如 `LAUNCH-`)
+- `length`:总长度
+- `charset`:字符集(默认大写字母+数字,去掉易混淆的 O/0、I/1)
+- `count`:生成数量
+
+Append 模式意味着同一 batch 多次 generate,码会累积。已在 batch 内的码保持不变,新生成的保证和已有不冲突。
+
+## 兑换规则(可在 batch 上配置)
+
+- `perCodeLimit`: 单个码能被兑换多少次(礼包码可 1 次,通用码可 N 次)。
+- `perUserLimit`: 单个用户在本批次内最多能兑几次(防一人薅多码)。
+- `globalLimit`: 本批次累计兑换上限。
+- `startAt` / `expireAt`: 时间窗。
+- `rewards`: 本批次统一奖励。或者每码不同奖励(`codes/generate` 时带 rewardOverride)。
+
+违反规则时 409,错误码形如 `cdkey.expired / cdkey.revoked / cdkey.user_limit_reached / cdkey.global_limit_reached / cdkey.already_redeemed`。
+
+## 发奖路径
+
+兑换成功后,奖励会通过[邮件](./mail)投递给玩家(带附件),而不是直接塞进背包——玩家有感知(收件箱提示),且可审计。
+
+## 常见场景
+
+- **主播码**:`perUserLimit: 1`、`perCodeLimit: 无限`、`globalLimit: 10000`、统一奖励。
+- **CDKEY 卡**:一张实体卡对应一个码,`perCodeLimit: 1`。大批量生码后把码写入卡面。
+- **投放活动**:一人发一个独立码,`perCodeLimit: 1`、`rewardOverride` 按用户定制。
+
+## 防暴刷
+
+客户端的 `/redeem` 接口走标准 client-credentials + HMAC,再叠加 Upstash(如启用)的频率限制。服务端单日同一玩家超过 N 次 `cdkey.invalid` 会临时拉黑。

@@ -1,0 +1,89 @@
+---
+title: 商店
+description: 商品、分类、标签、购买、成长包阶段
+icon: ShoppingBag
+---
+
+商店模块是玩家花钱(用 [currency](./currency) 计价)换东西(发 [item](./item) 或其他货币)的统一管道。支持多级分类、标签、阶段化成长包、限购。
+
+## 数据模型
+
+- **分类(category)**:支持树形结构(`/categories/tree`)。一个商品可挂在一个分类下。
+- **标签(tag)**:扁平,一个商品可以打多个。用于筛选 / 推荐。
+- **商品(product)**:核心实体。绑定分类、标签、上下架时间、价格(货币 + 数量)、产出(物品 / 货币 / 组合)、限购(单人 + 全局)。
+- **成长包阶段(stage)**:同一个商品下可以挂多段奖励。玩家先一次性购买,再分阶段领取(battle pass / 成长基金都是这样)。
+
+## 管理端 API
+
+```http
+# 分类
+POST   /api/shop/categories
+GET    /api/shop/categories
+GET    /api/shop/categories/tree
+GET    /api/shop/categories/{key}
+PATCH  /api/shop/categories/{id}
+DELETE /api/shop/categories/{id}
+
+# 标签
+POST   /api/shop/tags
+GET    /api/shop/tags
+GET    /api/shop/tags/{key}
+PATCH  /api/shop/tags/{id}
+DELETE /api/shop/tags/{id}
+
+# 商品
+POST   /api/shop/products
+GET    /api/shop/products
+GET    /api/shop/products/{key}
+PATCH  /api/shop/products/{id}
+DELETE /api/shop/products/{id}
+
+# 成长包阶段
+GET    /api/shop/products/{productId}/stages
+POST   /api/shop/products/{productId}/stages
+PUT    /api/shop/products/{productId}/stages    # 一次性替换全部
+PATCH  /api/shop/stages/{stageId}
+DELETE /api/shop/stages/{stageId}
+
+# 代购 / 代领(管理侧给用户补偿或运营行为)
+POST   /api/shop/products/{id}/purchase
+POST   /api/shop/users/{endUserId}/stages/{stageId}/claim
+GET    /api/shop/users/{endUserId}/products     # 带限购 / 已购状态的列表
+```
+
+## 客户端 API
+
+```http
+GET  /api/client/shop/products       列出玩家可见商品(含可购状态)
+POST /api/client/shop/purchase       玩家本人发起购买
+POST /api/client/shop/claim-stage    领取成长包下一阶段
+```
+
+## 购买链路
+
+1. 前端调 `/products` 拿可见商品 + 每个的 `canPurchase`(库存 / 已购 / 时间窗)。
+2. 玩家点购买,前端调 `/purchase { productId }`。
+3. 服务端原子地:校验库存 + 扣 [currency](./currency) 余额 + 发产出([item](./item) / 新货币 / 开成长包 stage)→ 返回结果。
+4. 事件 `shop.purchased` 写入事件中心,可触发 [webhook](./webhooks)。
+
+成长包:
+
+1. 玩家购买一次性商品时,如果该商品有 stages,则「解锁」而非立刻发奖。
+2. 后续玩家每次点「领取阶段 N」→ `/claim-stage` → 发对应 stage 奖励。
+3. stage 可以挂条件(等级、任务完成),未满足时 `canClaim = false`。
+
+## 限购
+
+两层:
+
+- **单人限购**:`product.perUserLimit` —— 该玩家在整个商品生命期内的购买上限。
+- **全局限购**:`product.globalLimit` —— 全服共享库存。
+
+限购到顶返回 409 `shop.limit_reached`。扩展限购时直接改 `product.perUserLimit`,不需要清账(已购数继续累计)。
+
+## 常见场景
+
+- **直购礼包**:无 stages,`grants` 里写完整奖励。
+- **战令 / 成长基金**:一次购买价 + 多段 stages,每段解锁条件 = 任务完成数 / 等级。
+- **每日特惠**:上下架时间窗 + `perUserLimit: 1` + 低价。
+- **首充**:`perUserLimit: 1` + 特殊奖励。

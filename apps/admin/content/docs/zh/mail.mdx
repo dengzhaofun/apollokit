@@ -1,0 +1,66 @@
+---
+title: 邮件
+description: 系统邮件的发放、阅读、附件领取
+icon: Mail
+---
+
+邮件模块承担「向玩家发消息 + 附带奖励」。支持定向给单人、多人、广播全服,支持附件(物品 / 货币),支持撤回、过期、硬删除。
+
+## 数据模型
+
+- **message(邮件)**:标题、正文、附件、发送目标、发送时间、过期时间。
+- **user_state(玩家邮件状态)**:每个(message, endUserId)对会有一条,记录 read / claimed 时间。广播邮件时,这条会在玩家第一次拉取 inbox 时惰性创建(避免千万行爆炸)。
+
+## 管理端 API
+
+```http
+POST   /api/mail/messages          发邮件(broadcast / 指定用户列表)
+GET    /api/mail/messages          列出本 org 所有邮件(含送达/阅读/领取统计)
+GET    /api/mail/messages/{id}     单封详情
+POST   /api/mail/messages/{id}/revoke   撤回(软删,玩家看不到但数据保留)
+DELETE /api/mail/messages/{id}     硬删(级联清用户状态)
+```
+
+## 客户端 API
+
+```http
+GET  /api/client/mail/messages            玩家收件箱(含未读数)
+GET  /api/client/mail/messages/{id}       单封(不自动标已读)
+POST /api/client/mail/messages/{id}/read  显式标已读,幂等
+POST /api/client/mail/messages/{id}/claim 领取附件,幂等
+```
+
+## 发送策略
+
+- **广播(broadcast)**:`targetType: 'all'`,所有本 org 玩家都能看到。user_state 行在玩家第一次拉收件箱时才生成,按需惰性。
+- **多播(multicast)**:`targetType: 'list'` + `endUserIds: [...]`,直接插一批 user_state。
+- **单播**:多播 with 1 个 endUserId。
+
+## 领取幂等
+
+`POST /messages/{id}/claim` 内部走 `UPDATE ... WHERE claimed_at IS NULL ... RETURNING`。第二次调不会重发奖励,返回 `alreadyClaimed: true`。附件支持多类:
+
+- 物品(走 [item](./item) grant)
+- 货币(走 [currency](./currency) grant)
+- 多附件组合
+
+领取成功会触发 `mail.claimed` 事件,可接 [webhook](./webhooks)。
+
+## 过期
+
+`expiresAt` 之后,客户端 `/claim` 会返回 409 `mail.expired`。邮件本身不会被自动清,只是不让领。如果要清,用 `DELETE /messages/{id}`。
+
+## 撤回 vs 硬删
+
+| 操作 | 玩家端 | 数据 |
+|---|---|---|
+| revoke(撤回) | 消失 | 保留(含已阅已领统计) |
+| DELETE(硬删) | 消失 | 清掉(含级联的 user_state) |
+
+运营误发用撤回,跑了一段时间再彻底清理用硬删。
+
+## 与其他模块的组合
+
+- 发奖:活动 / 兑换 / 抽奖结果直接发邮件,附件走 item / currency。
+- 客户支持:出现故障给玩家补偿,管理台手动发邮件带附件是最省事的路径。
+- 公告对比:[announcement](./announcement) 是橱窗式,邮件是 inbox 式;公告没附件,邮件有。

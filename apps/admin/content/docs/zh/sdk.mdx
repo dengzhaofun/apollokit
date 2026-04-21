@@ -1,0 +1,207 @@
+---
+title: 管理端 SDK (TypeScript)
+description: "@apollokit/admin — 类型安全的管理端 SDK,从 OpenAPI 规范自动生成"
+icon: Settings2
+---
+
+<Callout type="warn">
+  本页是**管理端 SDK** `@apollokit/admin`,用于构建内部工具 / 脚本 / CI。
+  游戏客户端(玩家端)请看 [客户端 SDK](./client-sdk),用 `@apollokit/client` + HMAC 签名。
+</Callout>
+
+`@apollokit/admin` 是从 OpenAPI 规范自动生成的 TypeScript SDK,提供完整类型安全的管理端 API 调用。
+
+## 安装
+
+```bash
+npm install @apollokit/admin
+# 或
+pnpm add @apollokit/admin
+```
+
+> SDK 目前尚未发布到 npm，可通过 workspace 引用或直接从源码构建。
+
+## 初始化
+
+```typescript
+import { createAdminClient } from '@apollokit/admin';
+
+const client = createAdminClient({
+  baseUrl: 'https://api.your-domain.com',
+  apiKey: 'ak_your_admin_api_key',
+});
+```
+
+`createAdminClient` 会自动在所有请求中注入 `x-api-key` 头。
+
+## 使用示例
+
+### 签到模块
+
+```typescript
+// 创建签到配置
+const config = await postApiCheckInConfigs({
+  body: {
+    name: '每日签到',
+    alias: 'daily',
+    resetMode: 'week',
+    weekStartsOn: 1,
+    target: 7,
+    timezone: 'Asia/Shanghai',
+    isActive: true,
+  },
+});
+
+// 列出所有签到配置
+const configs = await getApiCheckInConfigs();
+
+// 查询签到配置（支持 UUID 或 alias）
+const daily = await getApiCheckInConfigsByKey({
+  path: { key: 'daily' },
+});
+
+// 为第 3 天配置奖励
+await postApiCheckInConfigsByKeyRewards({
+  path: { key: 'daily' },
+  body: {
+    dayNumber: 3,
+    rewardItems: [
+      { definitionId: 'gold-uuid', quantity: 100 },
+    ],
+  },
+});
+
+// 执行签到
+const result = await postApiCheckInConfigsByKeyCheckIns({
+  path: { key: 'daily' },
+  body: { endUserId: 'user-42' },
+});
+```
+
+### 物品模块
+
+```typescript
+// 创建物品定义
+await postApiItemDefinitions({
+  body: {
+    name: '金币',
+    alias: 'gold',
+    stackable: true,
+    isActive: true,
+  },
+});
+
+// 发放物品
+const grant = await postApiItemGrant({
+  body: {
+    endUserId: 'user-42',
+    grants: [
+      { definitionId: 'gold-uuid', quantity: 1000 },
+    ],
+    source: 'admin_grant',
+  },
+});
+
+// 查询余额
+const balance = await getApiItemUsersByEndUserIdBalanceByKey({
+  path: { endUserId: 'user-42', key: 'gold' },
+});
+
+// 查询完整背包
+const inventory = await getApiItemUsersByEndUserIdInventory({
+  path: { endUserId: 'user-42' },
+});
+```
+
+### 兑换模块
+
+```typescript
+// 创建兑换配置和选项
+const exchangeConfig = await postApiExchangeConfigs({
+  body: {
+    name: '宝石兑换',
+    alias: 'gem_exchange',
+    isActive: true,
+  },
+});
+
+await postApiExchangeConfigsByConfigKeyOptions({
+  path: { configKey: 'gem_exchange' },
+  body: {
+    name: '100 金币 → 10 宝石',
+    costItems: [{ definitionId: 'gold-uuid', quantity: 100 }],
+    rewardItems: [{ definitionId: 'gem-uuid', quantity: 10 }],
+    userLimit: 5,
+    globalLimit: 1000,
+    sortOrder: 1,
+    isActive: true,
+  },
+});
+
+// 执行兑换
+const exchangeResult = await postApiExchangeOptionsByOptionIdExecute({
+  path: { optionId: 'option-uuid' },
+  body: {
+    endUserId: 'user-42',
+    idempotencyKey: 'unique-id',
+  },
+});
+```
+
+### 客户端凭证
+
+```typescript
+// 创建凭证
+const cred = await postApiClientCredentials({
+  body: {
+    name: 'Production Keys',
+    expiresAt: '2027-01-01T00:00:00.000Z',
+  },
+});
+// cred.data.secret 仅此处可见，请妥善保存
+
+// 列出凭证
+const creds = await getApiClientCredentials();
+
+// 轮换密钥
+const rotated = await postApiClientCredentialsByIdRotate({
+  path: { id: cred.data.id },
+});
+```
+
+## API 函数命名规则
+
+SDK 函数名由 HTTP 方法 + 路径生成：
+
+| HTTP 请求 | SDK 函数 |
+|-----------|---------|
+| `GET /api/check-in/configs` | `getApiCheckInConfigs()` |
+| `POST /api/check-in/configs` | `postApiCheckInConfigs()` |
+| `GET /api/check-in/configs/{key}` | `getApiCheckInConfigsByKey()` |
+| `PATCH /api/check-in/configs/{id}` | `patchApiCheckInConfigsById()` |
+| `DELETE /api/check-in/configs/{id}` | `deleteApiCheckInConfigsById()` |
+| `POST /api/item/grant` | `postApiItemGrant()` |
+| `GET /api/item/users/{endUserId}/balance/{key}` | `getApiItemUsersByEndUserIdBalanceByKey()` |
+
+## 参数结构
+
+所有函数接受统一的 `options` 对象：
+
+```typescript
+await someEndpoint({
+  path: { key: 'value' },         // 路径参数
+  query: { definitionId: 'uuid' }, // 查询参数
+  body: { ... },                   // 请求体
+  headers: { ... },                // 自定义头
+});
+```
+
+## OpenAPI 规范
+
+完整的 OpenAPI 3.1.0 规范文件位于：
+
+```
+packages/sdk-core/specs/openapi-admin.json
+```
+
+运行中的服务也可通过 `GET /openapi.json` 获取，或访问 `GET /docs` 查看 Scalar UI 交互文档。

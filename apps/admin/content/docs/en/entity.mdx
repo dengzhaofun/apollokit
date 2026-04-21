@@ -1,0 +1,50 @@
+---
+title: Entity
+description: Universal data model for characters / creatures / equipment · blueprints · skins · formations
+icon: Boxes
+---
+
+The entity module is a "modeling layer for character / creature / equipment-generic data". Everything with attributes, levels, skins, and formations in a game folds into `entity` — use schema for attribute fields, blueprint for concrete templates, skins to layer bonuses, and formations to constrain party composition.
+
+## Data model
+
+- **entity_schemas**: defines attribute fields (HP / ATK / DEF …), tags (e.g. `flying`, `undead`), resource slots. A schema is "the shape of a class of units".
+- **entity_blueprints**: concrete templates — e.g. a `pikachu` blueprint references the `creature` schema and fills values.
+- **entity_blueprint_skins**: skins layered on a blueprint; skins can stack attribute bonuses.
+- **entity_instances**: player-owned entity instances (with level, equipped state).
+- **entity_formations**: formation config — N slots, each slot's accepted type, duplicate policy.
+
+## Admin API
+
+```http
+POST   /api/entity/schemas
+POST   /api/entity/blueprints
+POST   /api/entity/blueprints/{id}/skins
+POST   /api/entity/formations              define a formation template
+```
+
+## Client API
+
+```http
+POST /api/entity/end-user/acquire          body: { blueprintId }    acquire an instance
+POST /api/entity/end-user/equip-skin       body: { instanceId, skinId }
+POST /api/entity/end-user/formation/save   body: { formationId, slots }
+GET  /api/entity/end-user/instances
+```
+
+## Business rules
+
+- **Inheritance**: blueprint attributes = schema defaults + blueprint overrides; instance attributes = blueprint + level bonuses + equipped skin bonuses. Layered in application code, not SQL joins.
+- **Formation validation**: on `formation/save`, each slot validates the entity type match and duplicate cap.
+- **Delete protection**: blueprints with active instances cannot be hard-deleted — archive only.
+
+## Combining with other modules
+
+- [level](./level): the leveling curve can be managed by level, or directly inside entity experience fields.
+- [item](./item): "acquire an entity" = grant an item, whose post-processor calls `entity/end-user/acquire`.
+- [collection](./collection): acquiring a new blueprint instance → unlocks a codex entry.
+- [rank](./rank): formation has no bearing on rank settlement — rank only reads match results, the client reports formations.
+
+## Events
+
+`entity.acquired` / `entity.skin_equipped` / `entity.formation_saved`.

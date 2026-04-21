@@ -1,0 +1,53 @@
+---
+title: 排行榜
+description: 多维度积分榜、周期结算、快照留存
+icon: Trophy
+---
+
+排行榜模块把「按某个指标排名」抽象成通用组件:指标自定义、聚合方式可选(sum / max / latest)、周期可切(日 / 周 / 月 / 全时)、可按范围(全局 / 公会 / 队伍 / 好友)分榜,到期自动结算留快照。
+
+## 数据模型
+
+- **leaderboard_configs**:一个榜的元数据——指标名、周期 key、聚合方式、最大展示条数。
+- **leaderboard_entries**:当前周期 + 玩家 + 榜配置的分数,`(orgId, configId, cycleKey, endUserId)` 联合唯一。
+- **leaderboard_snapshots**:周期结束时对 entries 做的只读快照,历史赛季查询走这里。
+
+## 管理端 API
+
+```http
+POST   /api/leaderboard/configs
+GET    /api/leaderboard/configs
+PATCH  /api/leaderboard/configs/{id}
+DELETE /api/leaderboard/configs/{id}
+
+POST   /api/leaderboard/contribute         手动投分(通常业务代码触发,不是管理员点)
+POST   /api/leaderboard/settle             强制结算当前周期,产出 snapshot
+```
+
+## 客户端 API
+
+```http
+GET /api/leaderboard/end-user/entries?configId=&cycleKey=&scope=
+GET /api/leaderboard/end-user/my-rank?configId=&cycleKey=
+```
+
+## 业务规则
+
+- **扇出投分**:一次 `contribute(metric, value, endUserId)` 会命中**所有**匹配该 metric 的 config,一次性更新多个榜(全局 + 公会 + 好友同时记一份)。
+- **幂等**:调用方带 `idempotencyKey`,同 key 的重复投分按一次算。
+- **周期推进**:`cycleKey`(如 `2026-W17`)由 config 的周期类型 + now 计算;跨周期的第一次 contribute 自动把上一周期 entries 滚为 snapshot。
+- **聚合语义**:
+  - `sum`:累加(消费金额榜)
+  - `max`:取最高(最高伤害榜)
+  - `latest`:取最新值(等级榜)
+
+## 与其他模块组合
+
+- [task](./task):任务完成事件投到榜,做「本周任务积分榜」。
+- [activity](./activity):活动 scope 的榜,`cycleKey` 用活动 id。
+- [guild](./guild):按公会分榜,`scope=guild`。
+- [rank](./rank):竞技天梯用 [rank](./rank) 不用这个——rank 有 Elo / 段位 / 赛季完整机制。
+
+## 事件
+
+`leaderboard.contributed` / `leaderboard.settled` 落 [webhook](./webhooks)。

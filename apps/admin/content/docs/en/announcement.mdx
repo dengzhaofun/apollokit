@@ -1,0 +1,70 @@
+---
+title: Announcement
+description: Home / lobby announcements, targeting, impression and click tracking
+icon: Megaphone
+---
+
+The announcement module shows **storefront-style** long-form info in your game — maintenance notices, major version updates, activity teasers, CTAs. Complements [mail](./mail) (inbox-style, with attachments).
+
+## Data model
+
+- **announcement**: title, body (Markdown / rich text), CTA (button label + jump), display kind (popup / list), targeting, time window.
+
+## Admin API
+
+```http
+GET    /api/announcement                list
+POST   /api/announcement                create
+GET    /api/announcement/{alias}        by alias
+PATCH  /api/announcement/{alias}        update
+DELETE /api/announcement/{alias}        delete
+```
+
+## Client API
+
+```http
+GET  /api/client/announcement/active                 all announcements visible to this player right now
+POST /api/client/announcement/{alias}/impression     impression tracking (idempotent)
+POST /api/client/announcement/{alias}/click          CTA click tracking
+```
+
+## Display kinds
+
+The `kind` field:
+
+- `popup`: pops on first login or when returning to the lobby. The player can "mute this session" or "mute forever".
+- `list`: an entry in the lobby announcement list. Only expands when the player taps.
+
+Common pattern: publish as `popup` for a day or two, then switch to `list` — demote from "loud" to "lookup-able".
+
+## Targeting
+
+Visibility conditions:
+
+- Level range, registration cohort, specific tags
+- Completed a task / joined an activity
+- Country / language (read from end-user extension fields)
+
+Players failing the conditions won't see this in `/active`.
+
+## Events (tracking)
+
+The module declares four events (see `modules/announcement/index.ts`):
+
+- `announcement.published`
+- `announcement.unpublished`
+- `announcement.expired`
+- `announcement.impression` (player saw it)
+- `announcement.click` (player tapped CTA)
+
+Impression/click events carry `endUserId`, `announcementId`, `alias`, `ctaUrl`. Pipe via [webhook](./webhooks) for analytics, or to your own data platform to compute conversion rates.
+
+## Combining with other modules
+
+- [banner](./banner): announcements are **not** carousel images (that's banner). They're usually paired — banner as the "marquee image + CTA", announcement as the "details page".
+- [mail](./mail): announcements have no attachments. For rewards-on-read, use mail, not announcement.
+- [activity](./activity): tease with announcements, then switch to mail/popup once it starts.
+
+## Editing & preview
+
+Dashboard offers rich-text editing with live preview. Always go through draft → review → publish.

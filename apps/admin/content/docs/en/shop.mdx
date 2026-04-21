@@ -1,0 +1,89 @@
+---
+title: Shop
+description: Products, categories, tags, purchase, staged passes
+icon: ShoppingBag
+---
+
+The shop module is the unified pipeline for players spending [currency](./currency) to get [item](./item)s or other currencies. It supports multi-level categories, tags, staged growth packs, and purchase limits.
+
+## Data model
+
+- **category**: tree-structured (`/categories/tree`). A product belongs to one category.
+- **tag**: flat, a product can have multiple. Used for filtering / recommendations.
+- **product**: the core entity. Bound to a category, tags, publish window, price (currency + quantity), output (items / currency / combo), limits (per-user + global).
+- **stage**: a staged growth pack — a product can have multiple reward segments. The player buys once and claims stages over time (battle pass / growth funds do this).
+
+## Admin API
+
+```http
+# Categories
+POST   /api/shop/categories
+GET    /api/shop/categories
+GET    /api/shop/categories/tree
+GET    /api/shop/categories/{key}
+PATCH  /api/shop/categories/{id}
+DELETE /api/shop/categories/{id}
+
+# Tags
+POST   /api/shop/tags
+GET    /api/shop/tags
+GET    /api/shop/tags/{key}
+PATCH  /api/shop/tags/{id}
+DELETE /api/shop/tags/{id}
+
+# Products
+POST   /api/shop/products
+GET    /api/shop/products
+GET    /api/shop/products/{key}
+PATCH  /api/shop/products/{id}
+DELETE /api/shop/products/{id}
+
+# Stages
+GET    /api/shop/products/{productId}/stages
+POST   /api/shop/products/{productId}/stages
+PUT    /api/shop/products/{productId}/stages    # replace all at once
+PATCH  /api/shop/stages/{stageId}
+DELETE /api/shop/stages/{stageId}
+
+# Admin-side purchase / claim (compensation or ops actions)
+POST   /api/shop/products/{id}/purchase
+POST   /api/shop/users/{endUserId}/stages/{stageId}/claim
+GET    /api/shop/users/{endUserId}/products     # list with purchase-limit / purchased state
+```
+
+## Client API
+
+```http
+GET  /api/client/shop/products       list products visible to the player (with canPurchase state)
+POST /api/client/shop/purchase       player initiates a purchase
+POST /api/client/shop/claim-stage    claim the next stage of a growth pack
+```
+
+## Purchase flow
+
+1. Front-end calls `/products` for visible products + each one's `canPurchase` (stock / purchased count / time window).
+2. Player taps purchase → front-end calls `/purchase { productId }`.
+3. Server atomically: validates stock + deducts [currency](./currency) + grants outputs ([item](./item) / new currency / unlocks stages) → returns result.
+4. `shop.purchased` event written to the event hub; optionally triggers [webhook](./webhooks).
+
+Growth packs:
+
+1. When buying a one-shot product with stages, purchase **unlocks** the pack instead of immediately granting all rewards.
+2. Later the player claims stage N via `/claim-stage`.
+3. Each stage can require conditions (level, task completion); if unmet, `canClaim = false`.
+
+## Purchase limits
+
+Two layers:
+
+- **Per-user limit**: `product.perUserLimit` — lifetime purchases per player.
+- **Global limit**: `product.globalLimit` — server-wide shared stock.
+
+Hitting the cap returns 409 `shop.limit_reached`. Raising the cap just updates `product.perUserLimit` — counts keep accumulating, no reset needed.
+
+## Common scenarios
+
+- **Direct pack**: no stages, full rewards in `grants`.
+- **Battle pass / growth fund**: one-time price + multiple stages; each stage unlocks via task completion / level.
+- **Daily deal**: time window + `perUserLimit: 1` + low price.
+- **First purchase**: `perUserLimit: 1` + special reward.

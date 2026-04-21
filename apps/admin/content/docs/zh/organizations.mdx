@@ -1,0 +1,90 @@
+---
+title: 组织与多租户
+description: organization 作为隔离边界、成员与角色、API Key 与客户端凭证的作用域
+icon: Building2
+---
+
+ApolloKit 的多租户模型基于 **Better Auth 的 organization 插件**。整个数据平面都按 `organizationId` 切片:物品、配置、订单、事件流、凭证——全部归属某一个 org,跨 org 的读写都会被服务端拒绝。
+
+## 心智模型
+
+一个 ApolloKit 管理端账号(admin user)可以:
+
+- 创建多个 organization(一家公司 / 一个游戏项目 / 一个环境就是一个 org)
+- 在每个 org 下邀请其他管理员,指定角色
+- 在每个 org 下签发:
+  - 管理端 **API Key**(用脚本调管理端 API)
+  - **Client Credentials**(游戏客户端用)
+
+「当前操作哪个 org」来自 session 里的 `activeOrganizationId`——切换 org 即切换上下文,所有业务 API 都会隐式带上这个 id。
+
+## 适合做 org 切分的颗粒
+
+| 颗粒 | 适用 | 不适合 |
+|---|---|---|
+| 每个游戏项目 1 个 org | ✅ 推荐。不同游戏配置/经济完全隔离 | — |
+| 同一游戏的 staging / prod 分成 2 个 org | ✅ 推荐。两份数据不会互相串 | — |
+| 大区 / 服务器分 org | ❌ 用 [end-user](/docs/zh) 的业务字段切分即可 | |
+| 不同玩家分 org | ❌ 这是 end-user 的职责,不是 org |
+
+## 成员与角色
+
+Better Auth organization 提供标准角色:
+
+| 角色 | 能做什么 |
+|---|---|
+| `owner` | 全部能力,含解散 org、转让所有权 |
+| `admin` | 成员管理、所有业务模块 CRUD、签发凭证 |
+| `member` | 读配置、运营动作(发邮件、上下架商品等),但不能改基础设施 |
+
+邀请链路:管理台「团队」页面 → 填邮箱 + 选角色 → 系统发邀请邮件 → 被邀人点链接后自动加入。
+
+## 切换 active organization
+
+管理台顶部切换器切换 → Better Auth 在 session 表上写 `activeOrganizationId`。切换后所有 admin API 自动作用到新 org。
+
+API 侧:
+
+```http
+POST /api/auth/organization/set-active
+Content-Type: application/json
+
+{ "organizationId": "org_..." }
+```
+
+## 凭证与作用域
+
+两类凭证都**严格绑定单个 org**:
+
+| 凭证 | 用于 | 作用域 |
+|---|---|---|
+| 管理端 API Key(`ak_*`) | 脚本 / CI / 你的后台调 ApolloKit admin API | 签发时绑定的 org,之后不可变 |
+| Client Credentials(`cpk_*` + `csk_*`) | 游戏客户端调 `/api/client/*` | 签发时绑定的 org |
+
+一条 cpk 永远只能操作它绑定的那个 org 下的数据。要给另一个 org 接入?签一把新的。
+
+### 避免的误区
+
+- **别把 prod cpk 放到测试环境**。用两套 org(或同 org 下两把凭证 + devMode 区分)。
+- **别让同一把 cpk 跨项目**。事件流、leaderboard、邮件全搅在一起以后分不开。
+
+## 跨租户安全
+
+服务端在 `requireClientUser` 中间件里做了一次保护:如果 end-user 用 Channel A(Better Auth session)登录,session 里带的 `organizationId` 必须匹配 cpk 解出来的 org,否则返回 `session_tenant_mismatch` (403)。这是防止攻击者拿一个 org 的 session cookie 去调另一个 org 的 cpk。
+
+## 删除与归档
+
+- 禁用成员 → Better Auth 的 `disable`(保留 audit,但无法登录)
+- 删除成员 → 从 `member` 表移除
+- 删除 org → 当前不提供一键删除(cascade 规模大)。联系维护者做数据导出 + 删除。
+
+## 常见问题
+
+**同一个管理员账号怎么加入多个 org?**
+Better Auth 的 `user` 是跨 org 的。一个 user 可以在多个 `member` 行里,每行对应一个 org 的角色。
+
+**换人接手一个 org 怎么办?**
+现任 owner 把新人邀请为 admin → 验证后,现任 owner 用「转让」把 owner 交给新人 → 自降为 admin 或退出。
+
+**限额是按 user 还是按 org?**
+按 org(包括 API 速率、存储、事件量)。Upstash 的限流 key 里就包含 `organizationId`。

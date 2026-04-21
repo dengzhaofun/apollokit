@@ -1,0 +1,151 @@
+---
+title: Client SDK
+description: Game-client @apollokit/client — type generation, HMAC signing, end-to-end example
+icon: Gamepad2
+---
+
+> ⚠️ This page covers the **game client SDK** `@apollokit/client` — what your game / app uses to call `/api/client/*`.
+>
+> Building an **admin tool** (internal back-office / scripts / CI) instead? See [sdk](./sdk) (`@apollokit/admin`).
+
+`@apollokit/client` is a TypeScript SDK generated from ApolloKit's OpenAPI spec. It wraps:
+
+- `cpk_` publishable key injection into the `x-api-key` header
+- Optional HMAC-SHA256 signing (server mode)
+- Type-safe call methods for every `/api/client/*` endpoint
+
+It uses `@hey-api/client-fetch` under the hood and only depends on Web Standards (`fetch` + Web Crypto). Works in **browsers, Node 18+, Workers, Deno, and Cocos Creator**.
+
+## Install
+
+```bash
+pnpm add @apollokit/client
+```
+
+## Initialize
+
+### Server mode (recommended for all non-browser environments)
+
+The server holds `secret`; the SDK signs HMAC automatically.
+
+```ts
+import { createClient } from '@apollokit/client';
+
+const client = createClient({
+  baseUrl: 'https://api.yourgame.com',
+  publishableKey: 'cpk_XXXXXXXX',
+  secret: process.env.APOLLOKIT_SECRET, // csk_XXXX
+});
+```
+
+### Browser mode (signatures must be precomputed server-side)
+
+```ts
+// Your server returns a pre-signed userHash
+async function getUserHash(endUserId: string): Promise<string> {
+  const res = await fetch('/my-server/apollokit-sign', {
+    method: 'POST',
+    body: JSON.stringify({ endUserId }),
+  });
+  return (await res.json()).userHash;
+}
+
+// Client holds only the publishableKey
+import { createClient } from '@apollokit/client';
+const client = createClient({
+  baseUrl: 'https://api.yourgame.com',
+  publishableKey: 'cpk_XXXXXXXX',
+  // note: no `secret`
+});
+```
+
+> Never bundle `csk_*` into a front-end build. The entire point of HMAC is to keep the secret out of the client.
+
+## End-to-end example: check-in
+
+```ts
+import { createClient, signEndUser, postCheckIns } from '@apollokit/client';
+
+const client = createClient({
+  baseUrl: 'https://api.yourgame.com',
+  publishableKey: 'cpk_XXXXXXXX',
+  secret: process.env.APOLLOKIT_SECRET,
+});
+
+async function dailyCheckIn(playerId: string) {
+  // In server mode the SDK does not auto-inject user-hash (it differs per user);
+  // compute it yourself.
+  const userHash = await signEndUser(playerId, process.env.APOLLOKIT_SECRET!);
+
+  const { data, error } = await postCheckIns({
+    headers: {
+      'x-end-user-id': playerId,
+      'x-user-hash': userHash,
+    },
+    body: { configKey: 'daily' },
+  });
+
+  if (error) {
+    console.error('check-in failed', error.code, error.requestId);
+    return;
+  }
+  return data; // { alreadyCheckedIn, state, target, remaining, ... }
+}
+```
+
+## Signing helpers
+
+`signEndUser` is a thin wrapper around HMAC-SHA256:
+
+```ts
+import { signEndUser, computeHmac } from '@apollokit/client';
+
+// Semantic alias
+const hash = await signEndUser('player_42', 'csk_XXX');
+// Equivalent to
+const hash2 = await computeHmac('player_42', 'csk_XXX');
+```
+
+Both return the same result — pick whichever reads better.
+
+## Regenerate types
+
+The SDK ships with a generate script. After the server's `/openapi.json` changes, inside the monorepo:
+
+```bash
+pnpm --filter=@apollokit/client generate
+```
+
+This re-pulls the OpenAPI spec and regenerates `src/generated/*.gen.ts`. We recommend a CI step that verifies the generated output matches the committed source.
+
+## Built-in error shape
+
+SDK responses look like `{ data, error }`, where `error` is the unified error object from [errors](./errors): `{ error, code, requestId }`. Branch on `error.code` for logic, correlate on `error.requestId` for logs.
+
+## Dev mode
+
+When a credential has `devMode: true`, the SDK can skip HMAC — you can omit `x-user-hash`. **Always turn this off before production**, or anyone with the `cpk` can impersonate arbitrary end-users.
+
+## Other languages
+
+TypeScript is published. C# / Go / Python are planned, priorities:
+
+1. **C#** (Unity clients)
+2. **Go** (self-hosted signing proxies)
+3. **Python** (analytics / tooling)
+
+Until then, for other languages:
+
+- Use any standard OpenAPI codegen (`openapi-generator`, `openapi-typescript`, etc.) against `/openapi.json`.
+- HMAC-SHA256 is a one-liner in every major language — see cross-language examples in [authentication](./authentication#hmac).
+
+## FAQ
+
+**The SDK drifted from `/openapi.json`. What do I do?**
+Rerun the `generate` script. The SDK only checks in generated output; manual edits get overwritten on the next pull.
+
+**Does it run in Cocos Creator / Unity WebGL?**
+TypeScript SDK: yes (requires Web Crypto). C# SDK: planned, will ship as a Unity Package Manager package.
+
+**Request concurrency limits?**
+No hard cap. Per-org rate limits (if Upstash is enabled) default to ~400 QPS soft; bump as needed.
