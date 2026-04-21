@@ -16,6 +16,7 @@ import { and, count, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import type { EventBus } from "../../lib/event-bus";
+import { getTraceId } from "../../lib/request-context";
 import {
   inviteCodes,
   inviteRelationships,
@@ -64,7 +65,9 @@ declare module "../../lib/event-bus" {
   }
 }
 
-type InviteDeps = Pick<AppDeps, "db"> & { events?: EventBus };
+type InviteDeps = Pick<AppDeps, "db"> & {
+  events?: EventBus;
+} & Partial<Pick<AppDeps, "analytics">>;
 
 const DEFAULT_SETTINGS: ResolvedInviteSettings = {
   enabled: true,
@@ -84,7 +87,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 
 export function createInviteService(d: InviteDeps) {
-  const { db, events } = d;
+  const { db, events, analytics } = d;
 
   async function getSettingsOrDefaults(orgId: string): Promise<ResolvedInviteSettings> {
     const rows = await db
@@ -202,6 +205,21 @@ export function createInviteService(d: InviteDeps) {
             .onConflictDoNothing()
             .returning();
           if (row) {
+            // Pure observational: only the first-time creation path
+            // lands here. The fast path and the reread branches both
+            // correspond to "code already existed", so we don't tag those.
+            if (analytics) {
+              void analytics.writer.logEvent({
+                ts: new Date(),
+                orgId,
+                endUserId,
+                traceId: getTraceId(),
+                event: "invite.code_generated",
+                source: "invite",
+                amount: 1,
+                eventData: { rotatedAt: row.rotatedAt },
+              });
+            }
             return {
               code: formatInviteCode(row.code),
               rotatedAt: row.rotatedAt,

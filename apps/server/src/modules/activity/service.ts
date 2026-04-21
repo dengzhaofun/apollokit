@@ -131,6 +131,16 @@ declare module "../../lib/event-bus" {
       endUserId: string;
       milestoneAlias: string;
     };
+    "activity.joined": {
+      organizationId: string;
+      activityId: string;
+      activityAlias: string | null;
+      endUserId: string;
+      // True when this call was the first-ever join (upsert inserted);
+      // false when the user was re-marking `lastActiveAt`. Downstream
+      // analytics can filter to first-time participation.
+      firstTime: boolean;
+    };
   }
 }
 
@@ -650,6 +660,23 @@ export function createActivityService(
           set: { lastActiveAt: now },
         })
         .returning();
+
+      // Insert vs update discrimination: the upsert's `set` only touches
+      // `lastActiveAt`, so an existing row retains its original
+      // `joinedAt`. A fresh insert stamps `joinedAt` to `now`, so
+      // equality against `now` reliably marks the first-time join.
+      const firstTime = row!.joinedAt.getTime() === now.getTime();
+
+      if (events) {
+        await events.emit("activity.joined", {
+          organizationId: params.organizationId,
+          activityId: activity.id,
+          activityAlias: activity.alias,
+          endUserId: params.endUserId,
+          firstTime,
+        });
+      }
+
       return row!;
     },
 

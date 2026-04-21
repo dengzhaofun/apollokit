@@ -12,6 +12,7 @@
 import { and, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { getTraceId } from "../../lib/request-context";
 import {
   taskCategories,
   taskDefinitions,
@@ -60,7 +61,7 @@ import { computePeriodKey, isPeriodStale } from "./time";
 // { db } keep compiling. In production wiring (barrel index.ts) we always
 // supply them from `deps`.
 type TaskDeps = Pick<AppDeps, "db"> &
-  Partial<Pick<AppDeps, "events" | "eventCatalog">>;
+  Partial<Pick<AppDeps, "events" | "eventCatalog" | "analytics">>;
 
 // Extend the in-runtime event-bus type map with task-domain events.
 // Subscribers (leaderboard, analytics, ...) register handlers on
@@ -144,7 +145,7 @@ export function createTaskService(
   rewardServices: RewardServices,
   mailSvcGetter: () => MailService | undefined,
 ) {
-  const { db, events, eventCatalog } = d;
+  const { db, events, eventCatalog, analytics } = d;
 
   // ─── Filter expression cache ──────────────────────────────────
   //
@@ -740,6 +741,30 @@ export function createTaskService(
       if (!row) continue;
 
       processed++;
+
+      // Pure observational analytics: every progress tick landed is a
+      // `task.progress_reported` row in Tinybird. No business module
+      // subscribes — routing through the event bus would be pure
+      // overhead — so we write directly via the analytics writer.
+      if (analytics) {
+        void analytics.writer.logEvent({
+          ts,
+          orgId: organizationId,
+          endUserId,
+          traceId: getTraceId(),
+          event: "task.progress_reported",
+          source: "task",
+          amount: increment,
+          eventData: {
+            taskId: def.id,
+            taskAlias: def.alias,
+            progressValue: row.currentValue,
+            targetValue: def.targetValue,
+            isCompleted: row.isCompleted,
+            periodKey: currentPeriodKey,
+          },
+        });
+      }
 
       // 6a. Tier (阶段) rewards fire on every progress bump — a tier
       // can be crossed before the task as a whole is completed, and

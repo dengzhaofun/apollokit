@@ -193,6 +193,16 @@ declare module "../../lib/event-bus" {
       bestScore: number | null;
       firstClear: boolean;
     };
+    "level.rewards_claimed": {
+      organizationId: string;
+      endUserId: string;
+      levelId: string;
+      // "clear" = first-pass completion rewards; "star" = star-tier rewards.
+      type: "clear" | "star";
+      // For type="star", the newly-reached tier; always 0 for "clear".
+      starTier: number;
+      grantedRewards: RewardEntry[];
+    };
   }
 }
 
@@ -1080,6 +1090,17 @@ export function createLevelService(
         );
       }
 
+      if (events) {
+        await events.emit("level.rewards_claimed", {
+          organizationId,
+          endUserId,
+          levelId,
+          type: "clear",
+          starTier: 0,
+          grantedRewards: clearRewards,
+        });
+      }
+
       return {
         levelId,
         type: "clear" as const,
@@ -1140,6 +1161,17 @@ export function createLevelService(
         "level.star",
         `${levelId}:star${starTier}:${endUserId}`,
       );
+    }
+
+    if (events) {
+      await events.emit("level.rewards_claimed", {
+        organizationId,
+        endUserId,
+        levelId,
+        type: "star",
+        starTier,
+        grantedRewards,
+      });
     }
 
     return {

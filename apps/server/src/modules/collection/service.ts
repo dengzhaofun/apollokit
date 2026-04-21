@@ -112,7 +112,30 @@ import type {
   UpdateMilestoneInput,
 } from "./validators";
 
-type CollectionDeps = Pick<AppDeps, "db">;
+// `events` optional to keep `createCollectionService({ db }, ...)` test
+// sites compiling.
+type CollectionDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with collection-domain events.
+// Task / achievement systems can subscribe to react to new unlocks /
+// milestone claims.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "collection.entry_unlocked": {
+      organizationId: string;
+      endUserId: string;
+      albumId: string;
+      entryIds: string[];
+      source: string;
+    };
+    "collection.milestone_claimed": {
+      organizationId: string;
+      endUserId: string;
+      albumId: string;
+      milestoneId: string;
+    };
+  }
+}
 
 export type ItemSvc = {
   grantItems: (params: {
@@ -157,6 +180,7 @@ export function createCollectionService(
   itemSvc: ItemSvc,
   mailSvcGetter: () => MailService | undefined,
 ) {
+  const { events } = d;
   const { db } = d;
 
   // ─── Load helpers ─────────────────────────────────────────────
@@ -1051,6 +1075,16 @@ export function createCollectionService(
         );
         if (newlyUnlocked.length === 0) continue;
 
+        if (events) {
+          await events.emit("collection.entry_unlocked", {
+            organizationId: params.organizationId,
+            endUserId: params.endUserId,
+            albumId,
+            entryIds: newlyUnlocked.map((e) => e.id),
+            source: params.source,
+          });
+        }
+
         const affected = await loadAffectedMilestones(
           params.organizationId,
           albumId,
@@ -1223,6 +1257,15 @@ export function createCollectionService(
       source: MILESTONE_SOURCE,
       sourceId: `${m.id}:${params.endUserId}`,
     });
+
+    if (events) {
+      await events.emit("collection.milestone_claimed", {
+        organizationId: params.organizationId,
+        endUserId: params.endUserId,
+        albumId: m.albumId,
+        milestoneId: m.id,
+      });
+    }
 
     return { grantedItems: items, claimedAt: now };
   }

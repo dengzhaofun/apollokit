@@ -24,4 +24,20 @@ export function registerLevelSubscribers(
       },
     });
   });
+
+  events.on("level.rewards_claimed", (p) => {
+    write({
+      orgId: p.organizationId,
+      endUserId: p.endUserId,
+      event: "level.rewards_claimed",
+      source: "level",
+      amount: 1,
+      eventData: {
+        levelId: p.levelId,
+        type: p.type,
+        starTier: p.starTier,
+        grantedRewards: p.grantedRewards,
+      },
+    });
+  });
 }

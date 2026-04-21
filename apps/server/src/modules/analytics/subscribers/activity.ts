@@ -50,4 +50,22 @@ export function registerActivitySubscribers(
       },
     });
   });
+
+  events.on("activity.joined", (p) => {
+    write({
+      orgId: p.organizationId,
+      endUserId: p.endUserId,
+      event: "activity.joined",
+      source: "activity",
+      // amount = 1 if this is a first-time join, 0 if it was just a
+      // lastActiveAt refresh. Sum(amount) gives unique participants;
+      // count(*) gives all touches.
+      amount: p.firstTime ? 1 : 0,
+      eventData: {
+        activityId: p.activityId,
+        activityAlias: p.activityAlias,
+        firstTime: p.firstTime,
+      },
+    });
+  });
 }
