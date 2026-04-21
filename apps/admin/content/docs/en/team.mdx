@@ -1,7 +1,55 @@
 ---
 title: Team
-description: Short-lived teams, quick-match, auto-dissolve
+description: Short-lived parties · quick-match · leader-left auto-dissolve
 icon: UsersRound
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/team).
+The team module handles "match-length parties" — groups formed, play together, disbanded. Unlike the long-lived organization that [guild](./guild) models.
+
+## Data model
+
+- **team_configs** (one row per org): team size, invite TTL, quick-match pool params, `autoDissolveOnLeaderLeave` etc.
+- **team_teams**: a team instance, with status (`open` / `closed` / `in_game` / `dissolved`) and `version` (concurrency conflict detection).
+- **team_members**: member rows with role (leader / member) and join time.
+- **team_invitations**: pending invites.
+
+## Admin API
+
+```http
+PUT  /api/team/configs
+GET  /api/team/configs
+```
+
+## Client API
+
+```http
+POST /api/team/end-user/create             create team, creator becomes leader
+POST /api/team/end-user/{id}/invite        body: { inviteeId }
+POST /api/team/end-user/invitations/{id}/accept
+POST /api/team/end-user/invitations/{id}/reject
+
+POST /api/team/end-user/{id}/leave         member leaves
+POST /api/team/end-user/{id}/kick          leader kicks
+POST /api/team/end-user/{id}/close         close recruitment
+POST /api/team/end-user/{id}/start-game    enter in_game
+POST /api/team/end-user/{id}/dissolve      leader dissolves
+
+POST /api/team/end-user/quick-match        quick-match (if enabled)
+```
+
+## Business rules
+
+- **Version field**: every write passes `version`; conflicts return `CONFLICT`, preventing dirty writes under concurrency.
+- **Leader leave**: `autoDissolveOnLeaderLeave=true` dissolves on leader leave; otherwise the earliest-join member is promoted.
+- **Invite expiry**: pending invites past TTL auto-expire (cron every minute).
+- **Enter game**: after `start-game`, status=in_game; no more invite / kick. Business code treats this as the "entering combat" signal.
+
+## Combining with other modules
+
+- [guild](./guild): guild-internal quick-matching — filter by guild membership before entering the pool.
+- [leaderboard](./leaderboard): `scope=team` boards (e.g. team kill count).
+- [rank](./rank): pre-form teams before entering the ladder matchmaking pool.
+
+## Events
+
+`team.created` / `team.joined` / `team.left` / `team.started_game` / `team.dissolved`.

@@ -1,7 +1,54 @@
 ---
-title: FriendGift
-description: Daily friend gifting with pre-built packages
+title: Friend Gift
+description: Daily friend gifting · per-day limit · preset packages
 icon: Gift
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/friend-gift).
+The friend-gift module implements "friends exchange daily tokens" — like early Honor of Kings: ops pre-config gift packages, players exchange under per-day limits, recipients one-click claim.
+
+## Data model
+
+- **friend_gift_settings** (one row per org): daily send / claim caps, TTL, timezone.
+- **friend_gift_packages**: available package templates — name, contents, cooldown.
+- **friend_gift_sends**: single send record (sender → receiver + package + status).
+- **friend_gift_daily_states**: per-player daily send/claim counters, keyed by `(endUserId, date)`.
+
+## Admin API
+
+```http
+PUT  /api/friend-gift/settings
+POST /api/friend-gift/packages
+GET  /api/friend-gift/packages
+PATCH /api/friend-gift/packages/{id}
+DELETE /api/friend-gift/packages/{id}
+```
+
+## Client API
+
+```http
+POST /api/friend-gift/end-user/send        body: { receiverId, packageId }
+POST /api/friend-gift/end-user/claim/{sendId}
+POST /api/friend-gift/end-user/cancel/{sendId}
+
+GET  /api/friend-gift/end-user/inbox       received
+GET  /api/friend-gift/end-user/outbox      sent
+GET  /api/friend-gift/end-user/daily-state today's remaining counts
+```
+
+## Business rules
+
+- **Two-way daily limit**: sender has "N gifts/day, 1 per recipient"; receiver has "M claims/day". Either side maxed out rejects.
+- **Status flow**: `pending` → `claimed` / `expired` (TTL without claim) / `cancelled` (sender recalled).
+- **Auto-expiry**: cron every minute marks overdue pending sends as `expired`.
+- **Claim delivery**: `claim` atomically reads the package contents, calls [item](./item) to grant, then marks the send `claimed`.
+- **Timezone**: "daily" boundaries use the settings timezone, not UTC.
+
+## Combining with other modules
+
+- [friend](./friend): optional settings requirement that both parties are friends.
+- [item](./item): package contents ship through item grants.
+- [mail](./mail): unclaimed gifts can convert to mail when the receiver is offline (optional).
+
+## Events
+
+`friend-gift.sent` / `friend-gift.claimed` / `friend-gift.expired`.

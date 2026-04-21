@@ -1,7 +1,53 @@
 ---
 title: Level
-description: Stage → level → star progression with unlock rules
+description: Stages · levels · stars · unlock rules · clear rewards
 icon: Mountain
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/level).
+The level module powers "chapter → level → stars" structured level systems: levels have unlock rules, clears earn stars, and full-star achievements give extra rewards.
+
+## Data model
+
+- **level_configs** (one per org): overall parameters (default max stars, global unlock strategy).
+- **level_stages**: chapters (Chapter 1, 2, …), with icon, description, unlock condition.
+- **levels**: a single level inside a chapter — max stars, per-star rewards, unlock rule (`auto` / `level_clear` / `stars_total` / `stage_clear`).
+- **level_user_progress**: per-player × per-level progress — cleared / starsEarned / lastClearedAt.
+
+## Admin API
+
+```http
+POST   /api/level/configs
+POST   /api/level/stages
+POST   /api/level/stages/{id}/levels
+PATCH  /api/level/levels/{id}
+DELETE /api/level/levels/{id}
+```
+
+## Client API
+
+```http
+POST /api/level/end-user/progress          body: { levelId, stars }    report clear
+GET  /api/level/end-user/stages            stages + levels + progress in one call
+POST /api/level/end-user/claim-star-reward body: { levelId, starIndex }
+```
+
+## Business rules
+
+- **Unlock rules (discriminated union)**:
+  - `auto`: always open.
+  - `level_clear`: unlocks after clearing levelId.
+  - `stars`: unlocks at N cumulative stars.
+  - `stage_clear`: unlocks when the previous chapter is fully cleared.
+- **Star ceiling**: once a level has earned 3 stars, subsequent 2-star clears won't reduce it (MAX semantics).
+- **Reward claim**: each star's reward is independent. `claim-star-reward` is idempotent per `(userId, levelId, starIndex)` — re-claim doesn't double-reward.
+
+## Combining with other modules
+
+- [item](./item): clear / full-star rewards flow from here.
+- [entity](./entity): clearing unlocks new entity blueprints.
+- [leaderboard](./leaderboard): "cumulative stars across all chapters" board.
+- [task](./task): turn "clear N levels" into a task.
+
+## Events
+
+`level.cleared` / `level.stars_earned` / `level.unlocked`.

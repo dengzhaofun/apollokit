@@ -1,7 +1,53 @@
 ---
 title: Leaderboard
-description: Metric-based rankings with cycles, scopes, and snapshot settlement
+description: Multi-dimensional score boards with cycle settlement and snapshots
 icon: Trophy
 ---
 
-English translation pending. See the [Chinese version](/docs/zh/leaderboard).
+The leaderboard module abstracts "rank by some metric" into a reusable component: metric is customizable, aggregation is configurable (`sum` / `max` / `latest`), cycle is switchable (daily / weekly / monthly / all-time), and scopes (global / guild / team / friend) can split sub-boards. On cycle close the top entries snapshot for history.
+
+## Data model
+
+- **leaderboard_configs**: a board's metadata — metric name, cycle key, aggregation, display cap.
+- **leaderboard_entries**: current-cycle + player + config score, unique on `(orgId, configId, cycleKey, endUserId)`.
+- **leaderboard_snapshots**: immutable snapshot of entries when a cycle closes. Historical-season queries use this.
+
+## Admin API
+
+```http
+POST   /api/leaderboard/configs
+GET    /api/leaderboard/configs
+PATCH  /api/leaderboard/configs/{id}
+DELETE /api/leaderboard/configs/{id}
+
+POST   /api/leaderboard/contribute         manual score contribution (usually business-triggered)
+POST   /api/leaderboard/settle             force-settle current cycle, producing a snapshot
+```
+
+## Client API
+
+```http
+GET /api/leaderboard/end-user/entries?configId=&cycleKey=&scope=
+GET /api/leaderboard/end-user/my-rank?configId=&cycleKey=
+```
+
+## Business rules
+
+- **Fan-out contribute**: a single `contribute(metric, value, endUserId)` hits **all** configs matching that metric, updating multiple boards at once (global + guild + friend in one call).
+- **Idempotency**: pass an `idempotencyKey`; repeat contributions with the same key count once.
+- **Cycle rollover**: `cycleKey` (e.g. `2026-W17`) is derived from the config's cycle type + `now`. The first contribute of a new cycle automatically snapshots the previous cycle.
+- **Aggregation semantics**:
+  - `sum`: additive (total spend)
+  - `max`: maximum (highest damage)
+  - `latest`: latest value (current level)
+
+## Combining with other modules
+
+- [task](./task): wire task-completion events to boards → "weekly task score board".
+- [activity](./activity): activity-scoped boards with `cycleKey` set to the activity id.
+- [guild](./guild): `scope=guild` for intra-guild boards.
+- [rank](./rank): use [rank](./rank) for competitive ladders — it has Elo / tiers / seasons built-in.
+
+## Events
+
+`leaderboard.contributed` / `leaderboard.settled` land in [webhook](./webhooks).
