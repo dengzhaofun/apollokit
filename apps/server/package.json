@@ -17,8 +17,7 @@
     "tb:build": "dotenv -e .env.local -- tinybird build",
     "tb:deploy": "dotenv -e .env.local -- tinybird deploy",
     "tb:info": "dotenv -e .env.local -- tinybird info",
-    "secrets:push": "bash scripts/push-secrets.sh",
-    "openapi:dump": "tsx scripts/dump-openapi.ts"
+    "secrets:push": "bash scripts/push-secrets.sh"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.2",
@@ -45,9 +44,7 @@
     "dotenv": "^17.4.1",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
-    "esbuild": "^0.25.0",
     "eslint": "^9.39.1",
-    "tsx": "^4.19.0",
     "typescript": "5.9.2",
     "vitest": "^4.1.4",
     "wrangler": "^4.4.0"

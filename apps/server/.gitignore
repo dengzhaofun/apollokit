@@ -38,4 +38,3 @@ lerna-debug.log*
 
 # misc
 .DS_Store
-.openapi-dump/
