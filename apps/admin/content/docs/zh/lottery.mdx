@@ -1,17 +1,100 @@
 ---
 title: 抽奖
-description: 奖池、概率、保底、每日限次
+description: 奖池、档位、奖品、保底、单抽与多抽
 icon: Dices
 ---
 
-占位:详细内容将在下一次提交里补上。
+抽奖模块覆盖从「转盘」「宝箱」到「抽卡」的各种随机发奖场景。设计上把**档位(tier)** 与 **奖品(prize)** 分开,支持保底(pity)与多种玩法变体。
 
-## 解决什么问题
+## 数据模型
 
-抽奖模块覆盖:
+```
+pool (奖池)
+├─ tier (档位: SSR / SR / R)
+│   ├─ prize (奖品: 某把武器、某张角色卡)
+│   └─ prize
+├─ tier
+│   ├─ prize
+└─ pity_rule (保底规则)
+```
 
-- 奖池定义(道具 + 概率权重)
-- 保底机制(N 抽必出 / 累计计数)
-- 每日 / 每期次数限制
-- 抽奖结果与 [storage-box](./storage-box) 的衔接
-- 与 [currency](./currency) 的扣费闭环
+或者扁平模式(无档位):
+
+```
+pool (奖池)
+├─ prize (直接挂奖品,概率加在 prize 上)
+└─ prize
+```
+
+- **pool**:奖池元信息(币种、单抽价、多抽价、是否保底、重复奖品策略)。
+- **tier**:档位(概率组),可给整档统一概率。
+- **prize**:具体奖品(物品 / 货币)+ 数量 + 在档内的权重。
+- **pity_rule**:保底规则(例:连续 89 抽未出 SSR,第 90 抽必出 SSR)。
+
+## 管理端 API
+
+```http
+# 奖池
+POST   /api/lottery/pools
+GET    /api/lottery/pools
+GET    /api/lottery/pools/{key}
+PATCH  /api/lottery/pools/{id}
+DELETE /api/lottery/pools/{id}
+
+# 档位(可选)
+POST   /api/lottery/pools/{poolKey}/tiers
+GET    /api/lottery/pools/{poolKey}/tiers
+PATCH  /api/lottery/tiers/{tierId}
+DELETE /api/lottery/tiers/{tierId}
+
+# 奖品(挂在 tier 下,或直接挂在 pool 下)
+POST   /api/lottery/pools/{poolKey}/tiers/{tierId}/prizes
+POST   /api/lottery/pools/{poolKey}/prizes            # 扁平模式
+GET    /api/lottery/pools/{poolKey}/prizes
+PATCH  /api/lottery/prizes/{prizeId}
+DELETE /api/lottery/prizes/{prizeId}
+
+# 保底
+POST   /api/lottery/pools/{poolKey}/pity-rules
+GET    /api/lottery/pools/{poolKey}/pity-rules
+PATCH  /api/lottery/pity-rules/{ruleId}
+DELETE /api/lottery/pity-rules/{ruleId}
+
+# 执行(admin 代玩家)
+POST   /api/lottery/pools/{poolKey}/pull             单抽
+POST   /api/lottery/pools/{poolKey}/multi-pull       多抽
+```
+
+## 客户端 API
+
+```http
+POST /api/client/lottery/{poolKey}/pull
+POST /api/client/lottery/{poolKey}/multi-pull
+GET  /api/client/lottery/{poolKey}/state/me         当前保底计数等状态
+```
+
+## 随机算法
+
+见 `modules/lottery/rng.ts`。核心:
+
+- 每次 pull 在服务端用 `crypto.getRandomValues` 取熵
+- 带档位时:先按档位概率选档,再按档位内奖品权重选具体 prize
+- 保底:每次 pull 累加计数,达到阈值时下一次必走「保底档」
+
+随机种子不暴露,玩家无法预测或复现。
+
+## 事件与审计
+
+每次 pull 会写:
+
+- 一条 `lottery.pulled` 事件(含 poolKey、prize、tier、pityCounter、cost)
+- 对应的 currency / item 发放流水
+
+运营可以在管理台按池子过滤所有 pull 记录,查玄学争议。
+
+## 与其他模块
+
+- 消耗:pull 扣 [currency](./currency);多抽可有折扣配置。
+- 产出:prize 的 reward 字段走 [item](./item) grant / [currency](./currency) grant / [mail](./mail)。
+- 活动:作为 [activity](./activity) 的 node 挂上去,活动专属奖池。
+- 保底跨活动:`pityCounter` 可以配置为「一池一计数」或「一活动一计数」。

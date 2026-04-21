@@ -1,18 +1,74 @@
 ---
 title: 存储箱
-description: 跨玩家 / 跨设备的临时物品寄存
+description: 让玩家「存钱」进一个箱子,按规则计息、按规则取出
 icon: Archive
 ---
 
-占位:详细内容将在下一次提交里补上。
+存储箱是一个**货币存款 + 利息**的模块——不是物品临时寄存。玩家把 [currency](./currency) 存进一个箱子,按箱子的规则计息;到期或提前取出时按规则扣 / 加成,结算回钱包。
 
-## 解决什么问题
+典型用途:
 
-存储箱用来承接「先不发给玩家、等条件满足再领取」的场景:
+- 「定期储蓄」式的长线留存活动
+- 「本金 × 倍数」风险投资玩法
+- 「存一天多返 5%」类小活动
 
-- 邮件附件暂存
-- 兑换奖励排队
-- 抽奖结果分发
-- 背包满时的溢出承接
+## 数据模型
 
-与 [item](./item) 紧密配合,所有入箱 / 出箱都会走物品系统的审计流水。
+- **config(箱子配置)**:币种、最小/最大存入、周期、利率(或分段利率)、提前支取罚金。
+- **deposit(存款)**:一笔存入,记录本金、起始时间、到期时间、当前已计利息。
+- **withdrawal(支取)**:提取记录,记本金 + 利息 + 罚金。
+
+## 管理端 API
+
+```http
+POST   /api/storage-box/configs             创建配置
+GET    /api/storage-box/configs
+GET    /api/storage-box/configs/{id}
+PATCH  /api/storage-box/configs/{id}
+DELETE /api/storage-box/configs/{id}        级联删本箱所有存款
+
+POST   /api/storage-box/deposits            代玩家存入(运营 / 客服)
+POST   /api/storage-box/withdrawals         代玩家支取
+GET    /api/storage-box/deposits/{endUserId}   列出用户活跃存款(带推算利息)
+```
+
+当前客户端 API(`/api/client/storage-box/*`)的公开形态随产品形态在演进,建议读最新 `/openapi.json` 确认。
+
+## 利息计算
+
+底层有一个纯函数 `computeInterest`(见 `modules/storage-box/interest.ts`)基于存入时间、当前时间、配置的年化/周期率、是否提前支取,给出:
+
+```ts
+{
+  principal: number;  // 本金
+  interest: number;   // 应计利息(可为负——提前取出罚金)
+  penalty: number;    // 罚金(如有)
+  payout: number;     // 最终到账 = principal + interest - penalty
+}
+```
+
+该函数是纯函数,服务端读取时和支取时都用它,所以 `GET /deposits/{endUserId}` 返回的 `projectedInterest` 跟真正支取时一致(只要时间未变)。
+
+## 原子结算
+
+支取走单条 SQL 完成:
+
+1. 校验存款存在、未被支取过
+2. 计算 payout
+3. 把 deposit 标 withdrawn
+4. 往玩家钱包 grant payout
+5. 写 withdrawal 行
+
+一条 SQL 里做完,避免并发分摊错。
+
+## 与其他模块的组合
+
+- 存入资金来源:直接玩家钱包扣减,或由 [shop](./shop) 购买「存款凭证」自动触发存入。
+- 到期提醒:监控系统看 `deposits` 的 maturity,到期前给玩家发 [mail](./mail) 或 [announcement](./announcement)。
+- 事件:`storage_box.deposited` / `storage_box.withdrawn` 进事件中心,可接 [webhook](./webhooks)。
+
+## 注意
+
+- 不同 config 之间不能转存——想「换箱子」要先取出再存入。
+- 利率在 deposit 之后改,对已有存款**不生效**(deposit 行里快照了当时利率)。
+- 不提供「部分支取」。要部分提现就存两笔。

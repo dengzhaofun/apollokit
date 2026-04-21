@@ -1,18 +1,56 @@
 ---
 title: 货币
-description: 游戏内货币的发放、消耗、余额查询与变更流水
+description: 游戏内代币的发放、扣减、余额与流水
 icon: Coins
 ---
 
-占位:详细内容将在下一次提交里补上。
+货币模块是整个经济闭环的底账。所有涉及「扣几个金币 / 发几个钻石」的操作最终都记在这里。支持在同一个 org 下定义任意多种货币(金币、钻石、体力、赛季币……),每种独立记账。
 
-## 解决什么问题
+## 数据模型
 
-每款游戏都要一套「金币 / 钻石 / 体力 / 能量」式的内部代币账本。货币模块提供:
+- **货币定义**(`/definitions`):每种货币的元数据(id、alias、显示名、图标、精度)。
+- **钱包**(`/wallets`):按 `(endUserId, currencyId)` 切分的余额记录。用户首次被发放时惰性创建。
+- **流水**(`/ledger`):每一次增减都会追加一条记录(who、amount、reason、relatedId),永不更新。
 
-- 多种货币类型定义(允许同一组织配置多种代币)
-- 发放与扣减的原子操作(并发安全)
-- 变更流水与余额查询
-- 与 [shop](./shop)、[exchange](./exchange)、[mail](./mail) 等模块配合形成完整经济闭环
+## 管理端 API
 
-更详细的字段、API 形态请参考 `/openapi.json` 中 `currency` 相关端点,或等待本页补齐。
+```http
+POST   /api/currency/definitions          创建货币
+GET    /api/currency/definitions          列出货币
+GET    /api/currency/definitions/{key}    按 id 或 alias 查
+PATCH  /api/currency/definitions/{id}     更新
+DELETE /api/currency/definitions/{id}     删除
+
+GET    /api/currency/wallets?endUserId=   列出某用户所有钱包
+GET    /api/currency/wallets/{endUserId}/{currencyId}
+POST   /api/currency/wallets/grant        发放
+POST   /api/currency/wallets/deduct       扣减
+GET    /api/currency/ledger               查询流水(过滤按时间/用户/货币/reason)
+```
+
+## 客户端 API
+
+```http
+GET /api/client/currency/wallets
+GET /api/client/currency/balance/{key}
+```
+
+客户端只能**读**自己的余额,**不能**发放或扣减——所有变动必须由服务端(业务侧或 ApolloKit 其他模块如 shop / cdkey / exchange)发起,杜绝前端篡改。
+
+## 发放的原子性
+
+底层用 `INSERT ... ON CONFLICT ... DO UPDATE ... WHERE` 的 upsert 语义,并发 grant 不会互相覆盖。读写分离:写不加锁,读从主库实时查。
+
+## 与其他模块的组合
+
+- [shop](./shop) 购买时从钱包扣钱,商品产出另一种货币或物品时再发放。
+- [exchange](./exchange) 定价用货币,结算走钱包。
+- [cdkey](./cdkey) 兑换码奖励可以直接配货币发放。
+- [mail](./mail) 邮件附件发的「金币 × 1000」就是一次 grant。
+- [storage-box](./storage-box) 的存款 / 取款也走钱包。
+
+## 注意事项
+
+- 精度在 `definition.precision` 字段指定,默认整数。不要把小数货币和整数货币混用。
+- 不存在「负向发放」的语义——想扣就用 `/deduct`,不要用 `grant` 传负数,否则流水里 reason 会对不上。
+- ledger 只追加,不提供「修改历史」API。如果真的要冲正,走 `deduct` + `grant` 两条对冲记录,reason 标 `correction`。

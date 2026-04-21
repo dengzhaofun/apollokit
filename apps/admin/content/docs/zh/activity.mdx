@@ -1,17 +1,83 @@
 ---
 title: 活动
-description: 时段性运营活动的编排、挂载与状态机
+description: 活动生命周期、节点、时间调度、积分与里程碑
 icon: CalendarDays
 ---
 
-占位:详细内容将在下一次提交里补上。
+活动模块提供一整套「运营活动的结构化编排」:每个活动是一个状态机,可以挂子节点(小活动)、时间触发、玩家积分、阶段性奖励(里程碑)。
 
-## 解决什么问题
+## 数据模型
 
-活动模块是运营排期表的底层骨架。覆盖:
+- **activity(活动)**:alias、时间窗、状态(draft / published / archived)、元信息。
+- **node(子节点)**:挂在活动上的子玩法(小任务、小挑战),每个 node 自己有类型与参数。
+- **schedule(时间触发器)**:基于 cron 或绝对时间,推进活动状态机(开始、切换阶段、结束、结算)。
+- **participant(参与者)**:玩家加入后的状态,含 activity-scoped 积分、已领里程碑。
+- **milestone(里程碑)**:达到阈值积分时解锁,奖励可以是 item / currency / 其他。
 
-- 活动模板与实例化(可复用 + 个性化)
-- 时间窗口(开始/结束时间 + 多阶段)
-- 挂载对玩家的可见性规则
-- 与 [check-in](./check-in) / [lottery](./lottery) / [task](./task) 的组合
-- 每分钟 cron 推进状态机(如活动结算、排行榜快照)
+## 管理端 API
+
+```http
+POST   /api/activity                       创建(draft)
+GET    /api/activity
+GET    /api/activity/{key}                 id 或 alias
+PATCH  /api/activity/{id}
+DELETE /api/activity/{id}
+POST   /api/activity/{key}/publish         body: { status: 'published'|'archived' }
+
+POST   /api/activity/{key}/nodes           挂子节点
+GET    /api/activity/{key}/nodes
+PATCH  /api/activity/nodes/{id}
+DELETE /api/activity/nodes/{id}
+
+POST   /api/activity/{key}/schedules       挂时间触发器
+GET    /api/activity/{key}/schedules
+DELETE /api/activity/schedules/{id}
+
+POST   /api/activity/{key}/join            代玩家加入
+POST   /api/activity/{key}/add-points      调整积分
+POST   /api/activity/{key}/claim-milestone 领里程碑
+GET    /api/activity/{key}/view/{endUserId}  玩家视角视图
+```
+
+## 状态机
+
+```
+draft  ─ publish ─▶  published
+  ▲                      │
+  └──── unpublish ◀──────┘
+                         │ archive
+                         ▼
+                     archived
+```
+
+- `draft`:只能在管理台看,玩家看不到。
+- `published`:对玩家可见 + 在时间窗内可玩。
+- `archived`:玩家不可见,历史数据保留。
+
+每分钟 cron 扫 activities,按 schedule 推进状态。
+
+## 积分与里程碑
+
+玩家做任意「任务完成 / 付费 / 击败 boss」→ 触发事件 → 通过 [task](./task) 或业务代码调用 `add-points` 累计 activity-scoped 积分 → 达到阈值时解锁 milestone。milestone 不自动发奖,需要玩家主动 `claim-milestone`(或前端自动替玩家领),发奖走 [item](./item) / [currency](./currency) / [mail](./mail)。
+
+## 与其他模块组合
+
+- [check-in](./check-in) 挂成 node:签到一天,活动积分 +10。
+- [lottery](./lottery) 挂成 node:消耗活动积分换抽奖次数。
+- [task](./task) 的 `event-forwarder` 可以把任务进度直接转成活动积分。
+- [shop](./shop) 的「活动限定商品」用活动别名做 guard,活动未开时商品不可购。
+
+## 玩家视角:`/view/{endUserId}`
+
+一把拉当前玩家在这个活动里的:已加入?当前积分?各 milestone 状态?哪些 node 可玩?——减少前端多次请求。
+
+## 事件
+
+活动推进会产出:
+
+- `activity.published / unpublished / archived`
+- `activity.joined`
+- `activity.points_added`
+- `activity.milestone_claimed`
+
+全部进事件中心,可接 [webhook](./webhooks)。
