@@ -1,4 +1,5 @@
 import { defineDocs, frontmatterSchema, metaSchema } from 'fumadocs-mdx/config';
+import { remarkLLMs } from 'fumadocs-core/mdx-plugins/remark-llms';
 import { z } from 'zod';
 
 export const docs = defineDocs({
@@ -14,6 +15,11 @@ export const docs = defineDocs({
       // full:true 时不显示右侧 TOC(用于 landing 类页面)
       full: z.boolean().optional(),
     }),
+    // remarkLLMs 把编译后的 MDX 转成 plain markdown 导出到 page.data._markdown,
+    // 驱动 /llms.txt 与 /llms-full.txt 两个 LLM 可消费的端点。
+    mdxOptions: {
+      remarkPlugins: [remarkLLMs],
+    },
   },
   meta: {
     schema: metaSchema.extend({
