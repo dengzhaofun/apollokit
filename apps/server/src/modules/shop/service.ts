@@ -103,7 +103,38 @@ import type {
   UpsertStagesInput,
 } from "./validators";
 
-type ShopDeps = Pick<AppDeps, "db">;
+// `events` is optional: production wiring hands it in from `deps`, but
+// `service.test.ts` currently builds a service with only `{ db }`.
+// `Partial<Pick<...>>` matches the pattern used by task/announcement.
+type ShopDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with shop-domain events.
+// Analytics subscribers (see `modules/analytics/subscribers/shop.ts`)
+// forward these to Tinybird; other modules (task progress, badge, …)
+// may subscribe independently.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "shop.purchased": {
+      organizationId: string;
+      endUserId: string;
+      purchaseId: string;
+      productId: string;
+      productAlias: string | null;
+      productType: ProductType;
+      costItems: RewardEntry[];
+      rewardItems: RewardEntry[];
+    };
+    "shop.stage_claimed": {
+      organizationId: string;
+      endUserId: string;
+      claimId: string;
+      stageId: string;
+      productId: string;
+      stageIndex: number;
+      rewardItems: RewardEntry[];
+    };
+  }
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -123,7 +154,7 @@ function parseDateOrNull(v: string | null | undefined): Date | null {
 }
 
 export function createShopService(d: ShopDeps, itemSvc: ItemService) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Helpers ─────────────────────────────────────────────────────
 
@@ -1256,13 +1287,29 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       });
     }
 
+    const rewardItems: RewardEntry[] =
+      product.productType === "regular" ? product.rewardItems : [];
+
+    if (events) {
+      await events.emit("shop.purchased", {
+        organizationId: params.organizationId,
+        endUserId: params.endUserId,
+        purchaseId,
+        productId: product.id,
+        productAlias: product.alias,
+        productType: product.productType as ProductType,
+        costItems: product.costItems,
+        rewardItems,
+      });
+    }
+
     return {
       success: true,
       purchaseId,
       productId: product.id,
       productType: product.productType as ProductType,
       costItems: product.costItems,
-      rewardItems: product.productType === "regular" ? product.rewardItems : [],
+      rewardItems,
     };
   }
 
@@ -1350,6 +1397,18 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         grants: [reward],
         source: "shop.claim",
         sourceId: stage.id,
+      });
+    }
+
+    if (events) {
+      await events.emit("shop.stage_claimed", {
+        organizationId: params.organizationId,
+        endUserId: params.endUserId,
+        claimId,
+        stageId: stage.id,
+        productId: stage.productId,
+        stageIndex: stage.stageIndex,
+        rewardItems: stage.rewardItems,
       });
     }
 

@@ -28,10 +28,13 @@ import type { EventBus } from "../../../lib/event-bus";
 import { registerActivitySubscribers } from "./activity";
 import { registerAnnouncementSubscribers } from "./announcement";
 import { registerAssistPoolSubscribers } from "./assist-pool";
+import { registerExchangeSubscribers } from "./exchange";
 import { registerInviteSubscribers } from "./invite";
 import { registerLeaderboardSubscribers } from "./leaderboard";
 import { registerLevelSubscribers } from "./level";
+import { registerLotterySubscribers } from "./lottery";
 import { registerRankSubscribers } from "./rank";
+import { registerShopSubscribers } from "./shop";
 import { registerTaskSubscribers } from "./task";
 
 export function registerAnalyticsSubscribers(
@@ -46,4 +49,8 @@ export function registerAnalyticsSubscribers(
   registerAnnouncementSubscribers(events, analytics);
   registerInviteSubscribers(events, analytics);
   registerAssistPoolSubscribers(events, analytics);
+  // Phase 2a — commerce domain
+  registerShopSubscribers(events, analytics);
+  registerLotterySubscribers(events, analytics);
+  registerExchangeSubscribers(events, analytics);
 }

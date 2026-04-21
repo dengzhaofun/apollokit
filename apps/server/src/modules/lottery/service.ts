@@ -64,7 +64,29 @@ import type {
   UpdatePityRuleInput,
 } from "./validators";
 
-type LotteryDeps = Pick<AppDeps, "db">;
+// `events` stays optional so existing `createLotteryService({ db }, ...)`
+// test sites keep compiling. Production wiring hands it in via `deps`.
+type LotteryDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with lottery-domain events.
+// A single `pull` and a multi-pull both emit one `lottery.pulled` event
+// with `count` — emitting N events for a 10-pull would blow up both the
+// bus and Tinybird for low analytical gain.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "lottery.pulled": {
+      organizationId: string;
+      endUserId: string;
+      batchId: string;
+      poolId: string;
+      poolAlias: string | null;
+      count: number;
+      pulls: PullResultEntry[];
+      costItems: RewardEntry[];
+      pityTriggeredCount: number;
+    };
+  }
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -74,7 +96,7 @@ function looksLikeId(key: string): boolean {
 }
 
 export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Internal helpers ────────────────────────────────────────
 
@@ -855,6 +877,20 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         costItems,
       });
 
+      if (events) {
+        await events.emit("lottery.pulled", {
+          organizationId: params.organizationId,
+          endUserId: params.endUserId,
+          batchId,
+          poolId: pool.id,
+          poolAlias: pool.alias,
+          count: 1,
+          pulls: [pullEntry],
+          costItems,
+          pityTriggeredCount: selection.pityTriggered ? 1 : 0,
+        });
+      }
+
       return {
         batchId,
         poolId: pool.id,
@@ -1119,11 +1155,34 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         })),
       );
 
+      const totalCostItems = pool.costPerPull.map((c) => ({
+        ...c,
+        count: c.count * params.count,
+      }));
+      const pityTriggeredCount = pullEntries.reduce(
+        (n, e) => (e.pityTriggered ? n + 1 : n),
+        0,
+      );
+
+      if (events) {
+        await events.emit("lottery.pulled", {
+          organizationId: params.organizationId,
+          endUserId: params.endUserId,
+          batchId,
+          poolId: pool.id,
+          poolAlias: pool.alias,
+          count: params.count,
+          pulls: pullEntries,
+          costItems: totalCostItems,
+          pityTriggeredCount,
+        });
+      }
+
       return {
         batchId,
         poolId: pool.id,
         endUserId: params.endUserId,
-        costItems: pool.costPerPull.map((c) => ({ ...c, count: c.count * params.count })),
+        costItems: totalCostItems,
         pulls: pullEntries,
       };
     },
