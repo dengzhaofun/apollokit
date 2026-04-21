@@ -21,6 +21,7 @@ import type {
   AssistPoolMode,
   CreateAssistPoolConfigInput,
 } from "#/lib/types/assist-pool"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/assist-pool/create")({
   component: AssistPoolCreatePage,
@@ -77,11 +78,11 @@ function AssistPoolCreatePage() {
     }
     try {
       await createMutation.mutateAsync(input)
-      toast.success("Assist-pool config created")
+      toast.success(m.assistpool_created())
       navigate({ to: "/assist-pool" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
-      else toast.error("Failed to create assist-pool config")
+      else toast.error(m.assistpool_failed_create())
     }
   }
 
@@ -92,31 +93,31 @@ function AssistPoolCreatePage() {
         className="mx-auto max-w-2xl space-y-6 rounded-xl border bg-card p-6 shadow-sm"
       >
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{m.assistpool_name()}</Label>
           <Input
             id="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Cut a Slice"
+            placeholder={m.assistpool_name_placeholder()}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="alias">Alias (optional)</Label>
+          <Label htmlFor="alias">{m.assistpool_alias_optional()}</Label>
           <Input
             id="alias"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
-            placeholder="cut-a-slice"
+            placeholder={m.assistpool_alias_placeholder()}
           />
           <p className="text-xs text-muted-foreground">
-            Human-readable key, unique within your organization.
+            {m.assistpool_alias_help()}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{m.assistpool_description()}</Label>
           <Textarea
             id="description"
             value={description}
@@ -127,7 +128,7 @@ function AssistPoolCreatePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Mode</Label>
+            <Label>{m.assistpool_mode()}</Label>
             <Select
               value={mode}
               onValueChange={(v) => setMode(v as AssistPoolMode)}
@@ -136,14 +137,18 @@ function AssistPoolCreatePage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="decrement">decrement (砍价)</SelectItem>
-                <SelectItem value="accumulate">accumulate (集气)</SelectItem>
+                <SelectItem value="decrement">
+                  {m.assistpool_mode_decrement()}
+                </SelectItem>
+                <SelectItem value="accumulate">
+                  {m.assistpool_mode_accumulate()}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target">Target amount</Label>
+            <Label htmlFor="target">{m.assistpool_target_amount()}</Label>
             <Input
               id="target"
               type="number"
@@ -156,7 +161,7 @@ function AssistPoolCreatePage() {
         </div>
 
         <div className="space-y-3 rounded-lg border p-4">
-          <Label>Contribution policy</Label>
+          <Label>{m.assistpool_policy()}</Label>
           <Select
             value={policyKind}
             onValueChange={(v) => setPolicyKind(v as PolicyKind)}
@@ -165,15 +170,21 @@ function AssistPoolCreatePage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fixed">fixed — each assist = N</SelectItem>
-              <SelectItem value="uniform">uniform — random [min, max]</SelectItem>
-              <SelectItem value="decaying">decaying — 砍一刀 tail throttle</SelectItem>
+              <SelectItem value="fixed">{m.assistpool_policy_fixed()}</SelectItem>
+              <SelectItem value="uniform">
+                {m.assistpool_policy_uniform()}
+              </SelectItem>
+              <SelectItem value="decaying">
+                {m.assistpool_policy_decaying()}
+              </SelectItem>
             </SelectContent>
           </Select>
 
           {policyKind === "fixed" && (
             <div className="space-y-2">
-              <Label htmlFor="fixed-amount">Amount per assist</Label>
+              <Label htmlFor="fixed-amount">
+                {m.assistpool_amount_per_assist()}
+              </Label>
               <Input
                 id="fixed-amount"
                 type="number"
@@ -187,7 +198,7 @@ function AssistPoolCreatePage() {
           {policyKind === "uniform" && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="uniform-min">Min</Label>
+                <Label htmlFor="uniform-min">{m.assistpool_min()}</Label>
                 <Input
                   id="uniform-min"
                   type="number"
@@ -197,7 +208,7 @@ function AssistPoolCreatePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="uniform-max">Max</Label>
+                <Label htmlFor="uniform-max">{m.assistpool_max()}</Label>
                 <Input
                   id="uniform-max"
                   type="number"
@@ -212,7 +223,7 @@ function AssistPoolCreatePage() {
           {policyKind === "decaying" && (
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="decay-base">Base</Label>
+                <Label htmlFor="decay-base">{m.assistpool_base()}</Label>
                 <Input
                   id="decay-base"
                   type="number"
@@ -222,7 +233,9 @@ function AssistPoolCreatePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="decay-tail-ratio">Tail ratio</Label>
+                <Label htmlFor="decay-tail-ratio">
+                  {m.assistpool_tail_ratio()}
+                </Label>
                 <Input
                   id="decay-tail-ratio"
                   type="number"
@@ -234,7 +247,7 @@ function AssistPoolCreatePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="decay-floor">Tail floor</Label>
+                <Label htmlFor="decay-floor">{m.assistpool_tail_floor()}</Label>
                 <Input
                   id="decay-floor"
                   type="number"
@@ -249,7 +262,9 @@ function AssistPoolCreatePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="per-assister">Per-assister limit</Label>
+            <Label htmlFor="per-assister">
+              {m.assistpool_per_assister_limit()}
+            </Label>
             <Input
               id="per-assister"
               type="number"
@@ -259,7 +274,7 @@ function AssistPoolCreatePage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ttl">Expires in (seconds)</Label>
+            <Label htmlFor="ttl">{m.assistpool_expires_in_seconds()}</Label>
             <Input
               id="ttl"
               type="number"
@@ -272,9 +287,11 @@ function AssistPoolCreatePage() {
 
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <Label htmlFor="initiator-can-assist">Initiator can assist</Label>
+            <Label htmlFor="initiator-can-assist">
+              {m.assistpool_initiator_can_assist()}
+            </Label>
             <p className="text-xs text-muted-foreground">
-              Allow the initiator to contribute to their own pool.
+              {m.assistpool_initiator_can_assist_help()}
             </p>
           </div>
           <Switch
@@ -286,9 +303,9 @@ function AssistPoolCreatePage() {
 
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <Label htmlFor="active">Active</Label>
+            <Label htmlFor="active">{m.assistpool_active()}</Label>
             <p className="text-xs text-muted-foreground">
-              Inactive configs reject new instance creation.
+              {m.assistpool_active_help()}
             </p>
           </div>
           <Switch
@@ -304,10 +321,12 @@ function AssistPoolCreatePage() {
             variant="outline"
             onClick={() => navigate({ to: "/assist-pool" })}
           >
-            Cancel
+            {m.assistpool_cancel()}
           </Button>
           <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? "Creating…" : "Create"}
+            {createMutation.isPending
+              ? m.assistpool_creating()
+              : m.assistpool_create()}
           </Button>
         </div>
       </form>

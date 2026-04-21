@@ -13,6 +13,7 @@ import {
 } from "#/components/ui/table"
 import { useAssistPoolConfigs } from "#/hooks/use-assist-pool"
 import type { AssistContributionPolicy } from "#/lib/types/assist-pool"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/assist-pool/")({
   component: AssistPoolListPage,
@@ -39,7 +40,7 @@ function AssistPoolListPage() {
           <Button asChild size="sm">
             <Link to="/assist-pool/create">
               <Plus className="size-4" />
-              New assist pool
+              {m.assistpool_new_config()}
             </Link>
           </Button>
         </div>
@@ -48,28 +49,28 @@ function AssistPoolListPage() {
       <main className="flex-1 p-6">
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
-            Loading…
+            {m.common_loading()}
           </div>
         ) : error ? (
           <div className="flex h-40 items-center justify-center text-destructive">
-            Failed to load configs: {error.message}
+            {m.assistpool_failed_load_configs()} {error.message}
           </div>
         ) : (configs?.length ?? 0) === 0 ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
-            No assist-pool configs yet. Create one to get started.
+            {m.assistpool_no_configs()}
           </div>
         ) : (
           <div className="rounded-xl border bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Alias</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Policy</TableHead>
-                  <TableHead>TTL (s)</TableHead>
-                  <TableHead>Active</TableHead>
+                  <TableHead>{m.assistpool_col_name()}</TableHead>
+                  <TableHead>{m.assistpool_col_alias()}</TableHead>
+                  <TableHead>{m.assistpool_col_mode()}</TableHead>
+                  <TableHead>{m.assistpool_col_target()}</TableHead>
+                  <TableHead>{m.assistpool_col_policy()}</TableHead>
+                  <TableHead>{m.assistpool_col_ttl()}</TableHead>
+                  <TableHead>{m.assistpool_col_active()}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -85,7 +86,9 @@ function AssistPoolListPage() {
                       {formatPolicy(c.contributionPolicy)}
                     </TableCell>
                     <TableCell>{c.expiresInSeconds}</TableCell>
-                    <TableCell>{c.isActive ? "yes" : "no"}</TableCell>
+                    <TableCell>
+                      {c.isActive ? m.assistpool_yes() : m.assistpool_no()}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
