@@ -1,49 +1,27 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
-import { authClient } from "../lib/auth-client"
+import Landing from "#/components/landing/Landing"
+import { authClient } from "#/lib/auth-client"
 
 export const Route = createFileRoute("/")({
-  component: IndexRedirect,
+  component: IndexPage,
 })
 
-function IndexRedirect() {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
-
-  return <IndexRedirectClient />
-}
-
-function IndexRedirectClient() {
+function IndexPage() {
   const navigate = useNavigate()
   const { data: session, isPending } = authClient.useSession()
 
+  // Redirect logged-in users straight into the dashboard. We don't block the
+  // initial paint on the session probe — anonymous visitors (the audience of
+  // the marketing page) see the landing immediately, which also keeps the
+  // route SEO-friendly. Logged-in users briefly see the landing, then bounce.
   useEffect(() => {
     if (isPending) return
     if (session) {
       navigate({ to: "/dashboard", replace: true })
-    } else {
-      navigate({
-        to: "/auth/$authView",
-        params: { authView: "sign-in" },
-        replace: true,
-      })
     }
   }, [isPending, session, navigate])
 
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">Loading...</p>
-    </div>
-  )
+  return <Landing />
 }

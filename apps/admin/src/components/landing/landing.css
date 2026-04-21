@@ -1,0 +1,184 @@
+/* Landing-page-only effects. Scoped via the `.ak-landing` root class. */
+
+.ak-landing {
+  --ak-accent: oklch(0.72 0.18 258);
+  --ak-accent-2: oklch(0.78 0.17 198);
+  --ak-accent-3: oklch(0.74 0.2 310);
+  --ak-grid: color-mix(in oklch, var(--foreground) 9%, transparent);
+  --ak-glow-1: color-mix(in oklch, var(--ak-accent) 30%, transparent);
+  --ak-glow-2: color-mix(in oklch, var(--ak-accent-2) 24%, transparent);
+  --ak-glow-3: color-mix(in oklch, var(--ak-accent-3) 22%, transparent);
+}
+
+:is(.dark) .ak-landing {
+  --ak-grid: color-mix(in oklch, var(--foreground) 14%, transparent);
+  --ak-glow-1: color-mix(in oklch, var(--ak-accent) 42%, transparent);
+  --ak-glow-2: color-mix(in oklch, var(--ak-accent-2) 34%, transparent);
+  --ak-glow-3: color-mix(in oklch, var(--ak-accent-3) 30%, transparent);
+}
+
+/* Graph-paper grid background used behind hero + key sections. */
+.ak-grid-bg {
+  background-image:
+    linear-gradient(to right, var(--ak-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ak-grid) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 40%,
+    #000 55%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 40%,
+    #000 55%,
+    transparent 100%
+  );
+}
+
+/* Dotted field for secondary sections. */
+.ak-dots-bg {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--ak-grid) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 50%,
+    #000 55%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 50%,
+    #000 55%,
+    transparent 100%
+  );
+}
+
+/* Large soft color blobs. */
+.ak-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  pointer-events: none;
+}
+
+/* Shine sweep on module tiles. */
+@keyframes ak-shine {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(320%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+.ak-tile {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ak-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in oklch, var(--ak-accent-2) 55%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%) skewX(-12deg);
+  opacity: 0;
+}
+
+.ak-tile:hover::after,
+.ak-tile:focus-visible::after {
+  animation: ak-shine 900ms ease-out;
+}
+
+/* Orbit ring inside hero constellation. */
+@keyframes ak-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ak-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.ak-orbit {
+  animation: ak-spin var(--orbit-duration, 60s) linear infinite;
+}
+
+.ak-orbit-reverse {
+  animation: ak-spin-reverse var(--orbit-duration, 60s) linear infinite;
+}
+
+/* Counter-rotate icons so they stay upright while the ring rotates. */
+.ak-orbit-item {
+  animation: ak-spin-reverse var(--orbit-duration, 60s) linear infinite;
+}
+
+.ak-orbit-reverse > .ak-orbit-item {
+  animation: ak-spin var(--orbit-duration, 60s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-orbit,
+  .ak-orbit-reverse,
+  .ak-orbit-item,
+  .ak-tile:hover::after {
+    animation: none !important;
+  }
+}
+
+/* Pulse dot used in workflow. */
+@keyframes ak-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+.ak-pulse {
+  animation: ak-pulse 2.4s ease-in-out infinite;
+}
+
+/* Subtle fade + lift on mount for each section. */
+@keyframes ak-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ak-rise {
+  animation: ak-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
