@@ -29,6 +29,9 @@ import { registerActivitySubscribers } from "./activity";
 import { registerAnnouncementSubscribers } from "./announcement";
 import { registerAssistPoolSubscribers } from "./assist-pool";
 import { registerExchangeSubscribers } from "./exchange";
+import { registerFriendSubscribers } from "./friend";
+import { registerFriendGiftSubscribers } from "./friend-gift";
+import { registerGuildSubscribers } from "./guild";
 import { registerInviteSubscribers } from "./invite";
 import { registerLeaderboardSubscribers } from "./leaderboard";
 import { registerLevelSubscribers } from "./level";
@@ -53,4 +56,8 @@ export function registerAnalyticsSubscribers(
   registerShopSubscribers(events, analytics);
   registerLotterySubscribers(events, analytics);
   registerExchangeSubscribers(events, analytics);
+  // Phase 2b — social domain
+  registerGuildSubscribers(events, analytics);
+  registerFriendSubscribers(events, analytics);
+  registerFriendGiftSubscribers(events, analytics);
 }

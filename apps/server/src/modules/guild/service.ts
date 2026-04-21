@@ -58,10 +58,46 @@ import type {
 } from "./types";
 import type { CreateGuildInput, UpdateGuildInput, UpsertSettingsInput } from "./validators";
 
-type GuildDeps = Pick<AppDeps, "db">;
+// `events` optional so `createGuildService({ db })` test sites keep
+// compiling. Production wiring hands it in via `deps`.
+type GuildDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with guild-domain events.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "guild.created": {
+      organizationId: string;
+      endUserId: string;
+      guildId: string;
+      guildName: string;
+      joinMode: string;
+    };
+    "guild.joined": {
+      organizationId: string;
+      endUserId: string;
+      guildId: string;
+      // "open" (applyToJoin auto-admits) or "request" (acceptJoinRequest path).
+      via: "open" | "request";
+      approverUserId: string | null;
+    };
+    "guild.left": {
+      organizationId: string;
+      endUserId: string;
+      guildId: string;
+    };
+    "guild.contributed": {
+      organizationId: string;
+      endUserId: string;
+      guildId: string;
+      delta: number;
+      guildExpDelta: number;
+      source: string;
+    };
+  }
+}
 
 export function createGuildService(d: GuildDeps) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Internal helpers ──────────────────────────────────────────
 
@@ -372,6 +408,24 @@ export function createGuildService(d: GuildDeps) {
       // Insert creator as leader
       const member = await insertMember(orgId, guild.id, endUserId, "leader");
 
+      if (events) {
+        await events.emit("guild.created", {
+          organizationId: orgId,
+          endUserId,
+          guildId: guild.id,
+          guildName: guild.name,
+          joinMode: guild.joinMode,
+        });
+        // A newly created guild has its creator implicitly joined as leader.
+        await events.emit("guild.joined", {
+          organizationId: orgId,
+          endUserId,
+          guildId: guild.id,
+          via: "open",
+          approverUserId: null,
+        });
+      }
+
       return { guild, member };
     },
 
@@ -523,6 +577,17 @@ export function createGuildService(d: GuildDeps) {
           })
           .returning();
         if (!req) throw new Error("insert join request returned no row");
+
+        if (events) {
+          await events.emit("guild.joined", {
+            organizationId: orgId,
+            endUserId,
+            guildId,
+            via: "open",
+            approverUserId: null,
+          });
+        }
+
         return req;
       }
 
@@ -606,6 +671,16 @@ export function createGuildService(d: GuildDeps) {
         )
         .returning();
       if (!updatedReq) throw new GuildJoinRequestNotFound(requestId);
+
+      if (events) {
+        await events.emit("guild.joined", {
+          organizationId: orgId,
+          endUserId: req.endUserId,
+          guildId: req.guildId,
+          via: "request",
+          approverUserId,
+        });
+      }
 
       return { request: updatedReq, member };
     },
@@ -738,6 +813,20 @@ export function createGuildService(d: GuildDeps) {
         .returning();
       if (!updatedReq) throw new GuildJoinRequestNotFound(requestId);
 
+      if (events) {
+        // Invitation flow: the invitee is the end-user actor; the inviter
+        // may have been an officer+, but we don't surface them as
+        // approverUserId here (for invitations, the "approver" is the
+        // invitee themselves).
+        await events.emit("guild.joined", {
+          organizationId: orgId,
+          endUserId,
+          guildId: req.guildId,
+          via: "request",
+          approverUserId: null,
+        });
+      }
+
       return { request: updatedReq, member };
     },
 
@@ -807,6 +896,14 @@ export function createGuildService(d: GuildDeps) {
 
       // Decrement member count
       await decrementMemberCount(guild);
+
+      if (events) {
+        await events.emit("guild.left", {
+          organizationId: orgId,
+          endUserId,
+          guildId,
+        });
+      }
     },
 
     async kickMember(
@@ -1013,6 +1110,17 @@ export function createGuildService(d: GuildDeps) {
 
       // Check level up
       await maybeApplyLevelUp(guild, orgId);
+
+      if (events) {
+        await events.emit("guild.contributed", {
+          organizationId: orgId,
+          endUserId,
+          guildId,
+          delta,
+          guildExpDelta: delta,
+          source,
+        });
+      }
 
       return log;
     },
