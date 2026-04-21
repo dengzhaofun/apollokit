@@ -28,6 +28,7 @@ import type { EventBus } from "../../../lib/event-bus";
 import { registerActivitySubscribers } from "./activity";
 import { registerAnnouncementSubscribers } from "./announcement";
 import { registerAssistPoolSubscribers } from "./assist-pool";
+import { registerCheckInSubscribers } from "./check-in";
 import { registerExchangeSubscribers } from "./exchange";
 import { registerFriendSubscribers } from "./friend";
 import { registerFriendGiftSubscribers } from "./friend-gift";
@@ -36,6 +37,7 @@ import { registerInviteSubscribers } from "./invite";
 import { registerLeaderboardSubscribers } from "./leaderboard";
 import { registerLevelSubscribers } from "./level";
 import { registerLotterySubscribers } from "./lottery";
+import { registerMailSubscribers } from "./mail";
 import { registerRankSubscribers } from "./rank";
 import { registerShopSubscribers } from "./shop";
 import { registerTaskSubscribers } from "./task";
@@ -60,4 +62,7 @@ export function registerAnalyticsSubscribers(
   registerGuildSubscribers(events, analytics);
   registerFriendSubscribers(events, analytics);
   registerFriendGiftSubscribers(events, analytics);
+  // Phase 2c — basic interactions
+  registerCheckInSubscribers(events, analytics);
+  registerMailSubscribers(events, analytics);
 }
