@@ -260,6 +260,20 @@
       "when": 1776655949718,
       "tag": "0036_grey_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1776737274403,
+      "tag": "0037_friendly_loa",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1776739219025,
+      "tag": "0038_tearful_jasper_sitwell",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   ChevronRight,
   Coins,
+  Contact,
   Dices,
   FolderOpen,
   GalleryHorizontal,
@@ -85,6 +86,7 @@ type NavItem = {
     | "/team"
     | "/leaderboard"
     | "/rank"
+    | "/end-user"
     | "/api-keys"
   icon: LucideIcon
 }
@@ -152,6 +154,7 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_team, to: "/team", icon: Swords },
         { title: m.nav_leaderboard, to: "/leaderboard", icon: Trophy },
         { title: m.nav_rank, to: "/rank", icon: Medal },
+        { title: m.nav_end_user, to: "/end-user", icon: Contact },
       ],
     },
     {
