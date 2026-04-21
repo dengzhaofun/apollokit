@@ -59,6 +59,7 @@ export const NODE_TYPES = [
   "leaderboard",
   "lottery",
   "banner",
+  "assist_pool",
   "game_board",
   "custom",
 ] as const;

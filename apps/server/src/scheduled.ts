@@ -18,6 +18,7 @@
  */
 
 import { activityService } from "./modules/activity";
+import { assistPoolService } from "./modules/assist-pool";
 import { leaderboardService } from "./modules/leaderboard";
 
 export type ScheduledEvent = {
@@ -41,6 +42,11 @@ export async function scheduled(
   );
   ctx.waitUntil(
     runTask("activity.tickDue", () => activityService.tickDue({ now })),
+  );
+  ctx.waitUntil(
+    runTask("assist_pool.expireOverdue", () =>
+      assistPoolService.expireOverdue({ now }),
+    ),
   );
 }
 

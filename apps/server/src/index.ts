@@ -86,6 +86,10 @@ import {
   activityClientRouter,
 } from "./modules/activity";
 import {
+  assistPoolRouter,
+  assistPoolClientRouter,
+} from "./modules/assist-pool";
+import {
   taskRouter,
   taskClientRouter,
 } from "./modules/task";
@@ -203,6 +207,7 @@ app.route("/api/team", teamRouter);
 app.route("/api/level", levelRouter);
 app.route("/api/leaderboard", leaderboardRouter);
 app.route("/api/activity", activityRouter);
+app.route("/api/assist-pool", assistPoolRouter);
 app.route("/api/event-catalog", eventCatalogRouter);
 app.route("/api/rank", rankRouter);
 
@@ -230,6 +235,7 @@ app.route("/api/client/level", levelClientRouter);
 app.route("/api/client/leaderboard", leaderboardClientRouter);
 app.route("/api/client/rank", rankClientRouter);
 app.route("/api/client/activity", activityClientRouter);
+app.route("/api/client/assist-pool", assistPoolClientRouter);
 
 // OpenAPI document + Scalar UI
 app.doc31("/openapi.json", {

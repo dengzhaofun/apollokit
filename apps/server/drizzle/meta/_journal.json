@@ -274,6 +274,13 @@
       "when": 1776739219025,
       "tag": "0038_tearful_jasper_sitwell",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1776808333501,
+      "tag": "0039_huge_shockwave",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import {
   Contact,
   Dices,
   FolderOpen,
+  HeartHandshake,
   GalleryHorizontal,
   Gift,
   KeyRound,
@@ -73,6 +74,7 @@ type NavItem = {
     | "/announcement"
     | "/activity"
     | "/lottery"
+    | "/assist-pool"
     | "/friend-gift"
     | "/task"
     | "/media-library"
@@ -129,6 +131,7 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_announcement, to: "/announcement", icon: Megaphone },
         { title: m.nav_activity, to: "/activity", icon: PartyPopper },
         { title: m.nav_lottery, to: "/lottery", icon: Dices },
+        { title: m.nav_assist_pool, to: "/assist-pool", icon: HeartHandshake },
         { title: m.nav_gift, to: "/friend-gift", icon: Gift },
         { title: m.nav_task, to: "/task", icon: ListTodo },
       ],

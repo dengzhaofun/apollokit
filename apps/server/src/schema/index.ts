@@ -26,6 +26,7 @@ export * from "./level";
 export * from "./task";
 export * from "./leaderboard";
 export * from "./activity";
+export * from "./assist-pool";
 export * from "./storage-box";
 export * from "./media-library";
 export * from "./event-catalog";

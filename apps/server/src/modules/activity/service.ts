@@ -51,6 +51,7 @@
 
 import { and, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 
+import { assistPoolConfigs } from "../../schema/assist-pool";
 import { bannerGroups } from "../../schema/banner";
 import { checkInConfigs } from "../../schema/check-in";
 import { leaderboardConfigs } from "../../schema/leaderboard";
@@ -2056,6 +2057,17 @@ async function resolveRefActivity(
           .from(leaderboardConfigs)
           .where(inArray(leaderboardConfigs.id, ids));
         for (const r of rows) map.set(r.id, r.status === "active");
+        break;
+      }
+      case "assist_pool": {
+        const rows = await db
+          .select({
+            id: assistPoolConfigs.id,
+            isActive: assistPoolConfigs.isActive,
+          })
+          .from(assistPoolConfigs)
+          .where(inArray(assistPoolConfigs.id, ids));
+        for (const r of rows) map.set(r.id, r.isActive);
         break;
       }
       // Virtual nodes (game_board / custom / lottery-other) with no
