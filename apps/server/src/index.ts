@@ -7,7 +7,9 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { auth } from "./auth";
+import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
+import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
 import { analyticsRouter } from "./modules/analytics";
@@ -24,6 +26,7 @@ import { checkInRouter, checkInClientRouter } from "./modules/check-in";
 import {
   clientCredentialRouter,
 } from "./modules/client-credentials";
+import { endUserRouter } from "./modules/end-user";
 import {
   collectionRouter,
   collectionClientRouter,
@@ -128,6 +131,40 @@ app.onError((err, c) => {
 // Better Auth — handle all /api/auth/* routes (uses module-level auth instance)
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
+// End-user Better Auth — serves game players, not SaaS operators.
+// requireClientCredential runs first to resolve the `cpk_` into an
+// `organizationId`. We then rebuild the request with a private header
+// carrying that org id, so `end-user-auth.ts` hooks can tenant-scope
+// every sign-up/sign-in.
+//
+// `EU_ORG_ID_HEADER` is stripped from the incoming request before we
+// set it ourselves — if a client forges that header, we wipe it here.
+// Any other route in this file that forwards requests to
+// `endUserAuth.handler` without going through this middleware MUST
+// also strip the header.
+app.use("/api/client/auth/*", requireClientCredential);
+app.on(["POST", "GET"], "/api/client/auth/*", (c) => {
+  const orgId = c.var.clientCredential!.organizationId;
+  const scopedHeaders = new Headers(c.req.raw.headers);
+  scopedHeaders.delete(EU_ORG_ID_HEADER);
+  scopedHeaders.set(EU_ORG_ID_HEADER, orgId);
+  const scopedRequest = new Request(c.req.raw.url, {
+    method: c.req.raw.method,
+    headers: scopedHeaders,
+    body:
+      c.req.raw.method === "GET" || c.req.raw.method === "HEAD"
+        ? undefined
+        : c.req.raw.body,
+    redirect: c.req.raw.redirect,
+    signal: c.req.raw.signal,
+    // `duplex: "half"` is required by the fetch spec when the body is a
+    // stream. Workers runtime accepts it; TS lib types don't have the
+    // field yet.
+    ...({ duplex: "half" } as { duplex: "half" }),
+  });
+  return endUserAuth.handler(scopedRequest);
+});
+
 // Inject c.var.user / c.var.session for downstream business routes
 app.use("*", session);
 // Auto-ingest every request into Tinybird's http_requests dataset.
@@ -145,6 +182,7 @@ app.route("/api/banner", bannerRouter);
 app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
+app.route("/api/end-user", endUserRouter);
 app.route("/api/collection", collectionRouter);
 app.route("/api/currency", currencyRouter);
 app.route("/api/dialogue", dialogueRouter);

@@ -46,6 +46,20 @@ export type ClientCredentialContext = {
   devMode: boolean;
 };
 
+/**
+ * How `requireClientUser` resolved the end-user identity on this request.
+ *
+ * - `session` — the player is logged in via the end-user Better Auth
+ *   instance; `c.var.endUserId` came from the cookie/bearer session.
+ * - `hmac` — the player was synced in via `POST /api/users/sync` (or is
+ *   still pre-sync) and the game client signs `endUserId` with the
+ *   tenant's `csk_`.
+ *
+ * Most handlers don't need to care. Sync-only handlers that want to
+ * refuse managed players (or vice versa) can branch on this.
+ */
+export type EndUserAuthMethod = "session" | "hmac";
+
 export type HonoEnv = {
   Variables: RequestIdVariables & {
     user: InferredUser | null;
@@ -53,5 +67,6 @@ export type HonoEnv = {
     authMethod: AuthMethod | null;
     clientCredential: ClientCredentialContext | null;
     endUserId?: string;
+    endUserAuthMethod?: EndUserAuthMethod;
   };
 };
