@@ -4,8 +4,10 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { DocsPage, DocsBody } from 'fumadocs-ui/page'
 import { MarkdownCopyButton } from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
-import type { Root as PageTreeRoot } from 'fumadocs-core/page-tree'
-import { source, i18n } from '#/lib/source'
+import { useFumadocsLoader } from 'fumadocs-core/source/client'
+import type { TOCItemType } from 'fumadocs-core/toc'
+import { i18n } from '#/lib/source'
+import { source } from '#/lib/source-server'
 import { baseOptions } from '#/lib/layout.shared'
 import browserCollections from 'collections/browser'
 
@@ -13,6 +15,20 @@ const REPO_OWNER = 'dengzhaofun'
 const REPO_NAME = 'apollokit'
 const REPO_BRANCH = 'main'
 const CONTENT_ROOT = 'apps/admin/content/docs'
+
+// 递归把 ReactNode 拍扁成纯字符串,专用于 loader 序列化前把 toc.title 处理成
+// seroval 吃得下的形状。MDX heading 里混入 `<code>` / emoji 等 JSX 时,这里
+// 会保留文字丢弃标签——对右侧 "On this page" 列表的视觉损失可以忽略。
+function reactNodeToText(node: unknown): string {
+  if (node == null || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(reactNodeToText).join('')
+  if (typeof node === 'object' && 'props' in (node as object)) {
+    const props = (node as { props?: { children?: unknown } }).props
+    return reactNodeToText(props?.children)
+  }
+  return ''
+}
 
 const getPageData = createServerFn({ method: 'GET' })
   .inputValidator((slugs: string[]) => slugs)
@@ -35,14 +51,33 @@ const getPageData = createServerFn({ method: 'GET' })
     const data = page.data as {
       title?: string
       lastModified?: Date | string | number
+      // fumadocs-mdx 编译期从 MDX headings 生成 toc,挂在 page.data.toc;
+      // DocsPage 拿到后渲染右侧 "On this page"。
+      toc?: TOCItemType[]
     }
+
+    // page tree 含 React 元素图标,直接返回会让 seroval 炸;走 fumadocs
+      // 官方的 serializePageTree(server) + useFumadocsLoader(client) 组合,
+      // 客户端 hook 会把 SerializedPageTree 再 deserialize 成可渲染的 tree。
+    const tree = await source.serializePageTree(source.getPageTree(locale))
+
+    // toc 项里 `title` 的类型是 ReactNode(MDX heading 可能夹 inline code 等
+    // JSX),直接回传又会让 seroval 炸 Symbol(react.element)。文档 heading
+    // 99% 是纯文本,这里把 title 展平成字符串再走过去,丢失一点格式能换整
+    // 条 loader 不崩——DocsPage 拿到 string title 照样渲染。
+    const tocFlat = (data.toc ?? []).map((item) => ({
+      url: item.url,
+      depth: item.depth,
+      title: reactNodeToText(item.title),
+    }))
 
     return {
       kind: 'page' as const,
       path: page.path,
-      tree: source.getPageTree(locale) as object,
+      tree,
       locale,
       title: data.title ?? '',
+      toc: tocFlat,
       // page.url 形如 /docs/zh/quickstart;同路径的 plain markdown 走
       // /docs-md/zh/quickstart(由 routes/docs-md/$.tsx 提供)。
       markdownUrl: page.url.replace(/^\/docs\//, '/docs-md/'),
@@ -82,11 +117,18 @@ export const Route = createFileRoute('/docs/$')({
 })
 
 function Page() {
-  const data = Route.useLoaderData()
-  if (!('tree' in data)) return null
+  // useFumadocsLoader 会扫 loader 返回值,把 SerializedPageTree 字段
+  // 自动 deserialize 成 PageTree。客户端就不需要再跑 source.getPageTree,
+  // 从而也避开 node:path 被 Vite externalize 的浏览器告警。
+  const data = useFumadocsLoader(Route.useLoaderData())
+  if (!('locale' in data)) return null
   return (
-    <DocsLayout {...baseOptions} tree={data.tree as PageTreeRoot}>
+    <DocsLayout {...baseOptions} tree={data.tree}>
       <DocsPage
+        // toc 驱动右侧 "On this page";footer(prev/next)默认 enabled=true,
+        // 它读 DocsLayout 的 pageTree 再匹配当前 pathname 自动算邻居,不需要
+        // 显式传 items。
+        toc={data.toc as TOCItemType[]}
         editOnGithub={{
           owner: REPO_OWNER,
           repo: REPO_NAME,

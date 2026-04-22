@@ -6,35 +6,29 @@
 @import "@daveyplate/better-auth-ui/css";
 
 @custom-variant dark (&:is(.dark *));
-@plugin "@tailwindcss/typography";
 
-/* fumadocs 代码块在浅色模式下也是深色背景，强制使用 dark shiki 配色 */
-.shiki:not(.not-fumadocs-codeblock *) code span {
-  color: var(--shiki-dark, var(--shiki-light)) !important;
-  font-style: var(--shiki-dark-font-style, var(--shiki-light-font-style)) !important;
-}
+/*
+ * 不装 @tailwindcss/typography —— fumadocs-ui/css/preset.css 里自带一份
+ * fork 自 tailwindcss-typography 的 `.prose` 样式(表格 padding、链接下划线、
+ * 标题节奏、dark mode 颜色用 --color-fd-* token)。两份 .prose 同时挂会
+ * 覆盖冲突,典型表现是表头贴到边框、heading anchor 下划线贴字等。
+ *
+ * 如果以后非文档页也要富文本排版,按官方做法改用自定义 class(例如
+ *   @plugin "@tailwindcss/typography" { className: wysiwyg; }
+ * )再在那些页面写 <div class="wysiwyg">,不要再占 .prose 这个名字。
+ */
+
+/*
+ * 不要全局强制 shiki 用 dark 配色(之前这里写过
+ * `.shiki code span { color: var(--shiki-dark) !important }`,给浅色模式下
+ * 的代码块带来"浅灰字贴浅灰底"的撞色,inline code 和表格里的 `...` 全看不清)。
+ * fumadocs 默认给每个 token 预置了 --shiki-light / --shiki-dark 两套,会按
+ * html.dark 自动切换,保持默认即可。
+ */
 
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Manrope", ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Override @tailwindcss/typography prose colors in dark mode to use fumadocs variables */
-:is(.dark *):where(.prose) {
-  --tw-prose-body: var(--color-fd-foreground);
-  --tw-prose-headings: var(--color-fd-foreground);
-  --tw-prose-lead: var(--color-fd-muted-foreground);
-  --tw-prose-links: var(--color-fd-primary);
-  --tw-prose-bold: var(--color-fd-foreground);
-  --tw-prose-counters: var(--color-fd-muted-foreground);
-  --tw-prose-bullets: var(--color-fd-muted-foreground);
-  --tw-prose-hr: var(--color-fd-border);
-  --tw-prose-quotes: var(--color-fd-foreground);
-  --tw-prose-quote-borders: var(--color-fd-border);
-  --tw-prose-captions: var(--color-fd-muted-foreground);
-  --tw-prose-th-borders: var(--color-fd-border);
-  --tw-prose-td-borders: var(--color-fd-border);
-  --tw-prose-code: var(--color-fd-foreground);
 }
 
 :root {
