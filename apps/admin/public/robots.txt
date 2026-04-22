@@ -1,3 +1,8 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /auth/
+Disallow: /dashboard/
+
+# TODO: 替换为生产域名(需和 VITE_PUBLIC_SITE_URL 一致)
+Sitemap: https://apollokit.example.com/sitemap.xml

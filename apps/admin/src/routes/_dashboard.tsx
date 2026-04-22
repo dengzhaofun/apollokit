@@ -6,6 +6,7 @@ import { CommandPalette } from "../components/CommandPalette"
 import { PAGE_HEADER_SLOT_ID } from "../components/PageHeader"
 import { RouteBreadcrumb } from "../components/RouteBreadcrumb"
 import { authClient } from "../lib/auth-client"
+import { seo } from "../lib/seo"
 import { Separator } from "../components/ui/separator"
 import {
   SidebarInset,
@@ -14,6 +15,9 @@ import {
 } from "../components/ui/sidebar"
 
 export const Route = createFileRoute("/_dashboard")({
+  // 后台登录后内容不面向搜索引擎。布局路由打 noindex,所有 `/dashboard/*`
+  // 子路由继承;需要更细 tab title 的子路由再各自覆盖 title 即可。
+  head: () => seo({ title: "Dashboard", noindex: true }),
   component: DashboardLayout,
 })
 
