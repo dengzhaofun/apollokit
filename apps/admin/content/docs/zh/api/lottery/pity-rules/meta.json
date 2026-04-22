@@ -1,0 +1,9 @@
+{
+  "title": "Pity Rules",
+  "pages": [
+    "lottery_pity_rules_get_pools_by_poolkey_pity_rules",
+    "lottery_pity_rules_post_pools_by_poolkey_pity_rules",
+    "lottery_pity_rules_patch_pity_rules_by_ruleid",
+    "lottery_pity_rules_delete_pity_rules_by_ruleid"
+  ]
+}

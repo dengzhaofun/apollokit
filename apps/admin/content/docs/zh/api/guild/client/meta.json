@@ -1,0 +1,26 @@
+{
+  "title": "Client",
+  "pages": [
+    "guild_client_get_guilds",
+    "guild_client_post_guilds",
+    "guild_client_get_guilds_by_id",
+    "guild_client_put_guilds_by_id",
+    "guild_client_get_my_guild",
+    "guild_client_post_guilds_by_id_join",
+    "guild_client_post_guilds_by_id_leave",
+    "guild_client_post_guilds_by_id_disband",
+    "guild_client_get_guilds_by_id_requests",
+    "guild_client_post_requests_by_id_accept",
+    "guild_client_post_requests_by_id_reject",
+    "guild_client_post_guilds_by_id_invite",
+    "guild_client_post_invitations_by_id_accept",
+    "guild_client_post_invitations_by_id_reject",
+    "guild_client_post_guilds_by_id_members_by_userid_promote",
+    "guild_client_post_guilds_by_id_members_by_userid_demote",
+    "guild_client_post_guilds_by_id_members_by_userid_kick",
+    "guild_client_post_guilds_by_id_transfer_leader",
+    "guild_client_post_guilds_by_id_contribute",
+    "guild_client_get_guilds_by_id_contributions",
+    "guild_client_get_guilds_by_id_members"
+  ]
+}

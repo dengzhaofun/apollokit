@@ -14,11 +14,12 @@
  *     this is the "publish gate" documented in the module header.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -48,7 +49,7 @@ const errorResponses = {
   },
 };
 
-export const bannerClientRouter = new OpenAPIHono<HonoEnv>();
+export const bannerClientRouter = createClientRouter();
 
 bannerClientRouter.use("*", requireClientCredential);
 bannerClientRouter.use("*", requireClientUser);
@@ -68,7 +69,7 @@ bannerClientRouter.onError((err, c) => {
 });
 
 bannerClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/groups/{alias}",
     tags: [TAG],

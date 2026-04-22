@@ -11,11 +11,12 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -214,7 +215,7 @@ const CreateGuildResponseSchema = z
 
 // ─── Router ──────────────────────────────────────────────────────
 
-export const guildClientRouter = new OpenAPIHono<HonoEnv>();
+export const guildClientRouter = createClientRouter();
 
 guildClientRouter.use("*", requireClientCredential);
 guildClientRouter.use("*", requireClientUser);
@@ -235,7 +236,7 @@ guildClientRouter.onError((err, c) => {
 
 // POST /guilds — create guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds",
     tags: [TAG],
@@ -274,7 +275,7 @@ guildClientRouter.openapi(
 
 // GET /guilds — list guilds
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds",
     tags: [TAG],
@@ -304,7 +305,7 @@ guildClientRouter.openapi(
 
 // GET /guilds/:id — guild detail
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -331,7 +332,7 @@ guildClientRouter.openapi(
 
 // GET /my-guild — get current user's guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/my-guild",
     tags: [TAG],
@@ -363,7 +364,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/join — apply to join
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/join",
     tags: [TAG],
@@ -395,7 +396,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/leave — leave guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/leave",
     tags: [TAG],
@@ -423,7 +424,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/disband — disband guild (client: leader only via service check)
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/disband",
     tags: [TAG],
@@ -456,7 +457,7 @@ guildClientRouter.openapi(
 
 // GET /guilds/:id/requests — list join requests
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/requests",
     tags: [TAG],
@@ -485,7 +486,7 @@ guildClientRouter.openapi(
 
 // POST /requests/:id/accept — accept a join request
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/accept",
     tags: [TAG],
@@ -513,7 +514,7 @@ guildClientRouter.openapi(
 
 // POST /requests/:id/reject — reject a join request
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/reject",
     tags: [TAG],
@@ -541,7 +542,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/invite — invite a user
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/invite",
     tags: [TAG],
@@ -573,7 +574,7 @@ guildClientRouter.openapi(
 
 // POST /invitations/:id/accept — accept an invitation
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/accept",
     tags: [TAG],
@@ -601,7 +602,7 @@ guildClientRouter.openapi(
 
 // POST /invitations/:id/reject — reject an invitation
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/reject",
     tags: [TAG],
@@ -629,7 +630,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/members/:userId/promote
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/promote",
     tags: [TAG],
@@ -657,7 +658,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/members/:userId/demote
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/demote",
     tags: [TAG],
@@ -685,7 +686,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/members/:userId/kick
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/kick",
     tags: [TAG],
@@ -713,7 +714,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/transfer-leader
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/transfer-leader",
     tags: [TAG],
@@ -745,7 +746,7 @@ guildClientRouter.openapi(
 
 // PUT /guilds/:id — client update (leader/officer)
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "put",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -793,7 +794,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/contribute — member contribution
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/contribute",
     tags: [TAG],
@@ -825,7 +826,7 @@ guildClientRouter.openapi(
 
 // GET /guilds/:id/contributions — contribution leaderboard
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/contributions",
     tags: [TAG],
@@ -854,7 +855,7 @@ guildClientRouter.openapi(
 
 // GET /guilds/:id/members — list guild members
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/members",
     tags: [TAG],

@@ -1,0 +1,10 @@
+{
+  "title": "Assist Pool",
+  "pages": [
+    "assist_pool_get_configs",
+    "assist_pool_post_configs",
+    "assist_pool_get_configs_by_key",
+    "assist_pool_patch_configs_by_id",
+    "assist_pool_delete_configs_by_id"
+  ]
+}

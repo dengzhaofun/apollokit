@@ -11,10 +11,11 @@
  * c.var.endUserId!. No inline verifyRequest calls; no endUserId path segment for the caller.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -50,7 +51,7 @@ const InstanceIdParam = z.object({
   }),
 });
 
-export const entityClientRouter = new OpenAPIHono<HonoEnv>();
+export const entityClientRouter = createClientRouter();
 
 entityClientRouter.use("*", requireClientCredential);
 entityClientRouter.use("*", requireClientUser);
@@ -72,7 +73,7 @@ entityClientRouter.onError((err, c) => {
 // ─── Read ─────────────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances",
     tags: [TAG],
@@ -102,7 +103,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG],
@@ -125,7 +126,7 @@ entityClientRouter.openapi(
 // ─── Acquire / Discard ────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/acquire",
     tags: [TAG],
@@ -165,7 +166,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/discard",
     tags: [TAG],
@@ -188,7 +189,7 @@ entityClientRouter.openapi(
 // ─── Lock ─────────────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/lock",
     tags: [TAG],
@@ -227,7 +228,7 @@ entityClientRouter.openapi(
 // ─── Progression ──────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/add-exp",
     tags: [TAG],
@@ -259,7 +260,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/level-up",
     tags: [TAG],
@@ -298,7 +299,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/rank-up",
     tags: [TAG],
@@ -319,7 +320,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/synthesize",
     tags: [TAG],
@@ -360,7 +361,7 @@ entityClientRouter.openapi(
 // ─── Slot System ──────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/equip",
     tags: [TAG],
@@ -403,7 +404,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/unequip",
     tags: [TAG],
@@ -438,7 +439,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/change-skin",
     tags: [TAG],
@@ -479,7 +480,7 @@ entityClientRouter.openapi(
 // ─── Formations ───────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/formations/{configId}",
     tags: [TAG],
@@ -507,7 +508,7 @@ entityClientRouter.openapi(
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "put",
     path: "/formations/{configId}/{formationIndex}",
     tags: [TAG],

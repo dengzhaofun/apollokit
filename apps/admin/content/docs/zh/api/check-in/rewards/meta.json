@@ -1,0 +1,9 @@
+{
+  "title": "Rewards",
+  "pages": [
+    "check_in_rewards_get_configs_by_key_rewards",
+    "check_in_rewards_post_configs_by_key_rewards",
+    "check_in_rewards_patch_rewards_by_rewardid",
+    "check_in_rewards_delete_rewards_by_rewardid"
+  ]
+}

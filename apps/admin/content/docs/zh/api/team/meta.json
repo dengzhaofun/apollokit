@@ -1,0 +1,13 @@
+{
+  "title": "Team",
+  "pages": [
+    "team_get_configs",
+    "team_post_configs",
+    "team_get_configs_by_key",
+    "team_delete_configs_by_key",
+    "team_put_configs_by_key",
+    "team_get_teams",
+    "team_get_teams_by_id",
+    "team_post_teams_by_id_dissolve"
+  ]
+}

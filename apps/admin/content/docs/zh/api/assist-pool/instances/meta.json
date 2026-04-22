@@ -1,0 +1,11 @@
+{
+  "title": "Instances",
+  "pages": [
+    "assist_pool_instances_get_instances",
+    "assist_pool_instances_post_instances",
+    "assist_pool_instances_get_instances_by_instanceid",
+    "assist_pool_instances_get_instances_by_instanceid_contributions",
+    "assist_pool_instances_post_instances_by_instanceid_contribute",
+    "assist_pool_instances_post_instances_by_instanceid_force_expire"
+  ]
+}

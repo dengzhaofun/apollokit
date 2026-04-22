@@ -1,0 +1,10 @@
+{
+  "title": "Admin",
+  "pages": [
+    "announcement_admin_get_root",
+    "announcement_admin_post_root",
+    "announcement_admin_get_by_alias",
+    "announcement_admin_patch_by_alias",
+    "announcement_admin_delete_by_alias"
+  ]
+}

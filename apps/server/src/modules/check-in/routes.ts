@@ -13,10 +13,11 @@
  * path with client credential + HMAC auth.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
@@ -132,7 +133,7 @@ const errorResponses = {
   },
 };
 
-export const checkInRouter = new OpenAPIHono<HonoEnv>();
+export const checkInRouter = createAdminRouter();
 
 checkInRouter.use("*", requireAdminOrApiKey);
 
@@ -152,7 +153,7 @@ checkInRouter.onError((err, c) => {
 
 // POST /check-in/configs — create
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -181,7 +182,7 @@ checkInRouter.openapi(
 
 // GET /check-in/configs — list
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -221,7 +222,7 @@ checkInRouter.openapi(
 
 // GET /check-in/configs/:key — by id or alias
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -247,7 +248,7 @@ checkInRouter.openapi(
 
 // PATCH /check-in/configs/:id — update
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG],
@@ -282,7 +283,7 @@ checkInRouter.openapi(
 
 // DELETE /check-in/configs/:id
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
@@ -303,7 +304,7 @@ checkInRouter.openapi(
 
 // GET /check-in/configs/:key/users — list user states
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/users",
     tags: [TAG],
@@ -332,7 +333,7 @@ checkInRouter.openapi(
 
 // POST /check-in/configs/:key/check-ins — perform a check-in
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{key}/check-ins",
     tags: [TAG],
@@ -377,7 +378,7 @@ checkInRouter.openapi(
 
 // GET /check-in/configs/:key/users/:endUserId/state
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/users/{endUserId}/state",
     tags: [TAG],
@@ -441,7 +442,7 @@ function serializeReward(row: {
 
 // POST /check-in/configs/:key/rewards
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{key}/rewards",
     tags: [TAG_REWARD],
@@ -473,7 +474,7 @@ checkInRouter.openapi(
 
 // GET /check-in/configs/:key/rewards
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/rewards",
     tags: [TAG_REWARD],
@@ -499,7 +500,7 @@ checkInRouter.openapi(
 
 // PATCH /check-in/rewards/:rewardId
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/rewards/{rewardId}",
     tags: [TAG_REWARD],
@@ -534,7 +535,7 @@ checkInRouter.openapi(
 
 // DELETE /check-in/rewards/:rewardId
 checkInRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/rewards/{rewardId}",
     tags: [TAG_REWARD],

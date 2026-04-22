@@ -48,6 +48,10 @@ const RewardItemSchema = z.object({
   count: z.number().int().positive(),
 });
 
+// `.openapi("LevelUnlockRule")` registers this lazy schema as a named
+// component so zod-to-openapi emits a `$ref` at recursion sites instead
+// of re-walking the schema. Without it, `isOptionalSchema` recurses
+// forever on the self-reference and the whole `/openapi.json` 500s.
 const UnlockRuleSchema: z.ZodType = z.lazy(() =>
   z.discriminatedUnion("type", [
     z.object({ type: z.literal("auto") }),
@@ -71,7 +75,7 @@ const UnlockRuleSchema: z.ZodType = z.lazy(() =>
       rules: z.array(UnlockRuleSchema).min(1),
     }),
   ]),
-);
+).openapi("LevelUnlockRule");
 
 const StarRewardTierSchema = z.object({
   stars: z.number().int().min(1),

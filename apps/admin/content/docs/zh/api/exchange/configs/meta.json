@@ -1,0 +1,10 @@
+{
+  "title": "Configs",
+  "pages": [
+    "exchange_configs_get_configs",
+    "exchange_configs_post_configs",
+    "exchange_configs_get_configs_by_key",
+    "exchange_configs_patch_configs_by_id",
+    "exchange_configs_delete_configs_by_id"
+  ]
+}

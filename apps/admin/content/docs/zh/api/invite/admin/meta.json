@@ -1,0 +1,11 @@
+{
+  "title": "Admin",
+  "pages": [
+    "invite_admin_get_settings",
+    "invite_admin_put_settings",
+    "invite_admin_get_relationships",
+    "invite_admin_delete_relationships_by_id",
+    "invite_admin_get_users_by_enduserid_stats",
+    "invite_admin_post_users_by_enduserid_reset_code"
+  ]
+}

@@ -8,10 +8,11 @@
  * (per apps/server/CLAUDE.md — "No public routes yet").
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { storageBoxService } from "./index";
@@ -130,7 +131,7 @@ const errorResponses = {
   },
 };
 
-export const storageBoxRouter = new OpenAPIHono<HonoEnv>();
+export const storageBoxRouter = createAdminRouter();
 
 storageBoxRouter.use("*", requireAdminOrApiKey);
 
@@ -151,7 +152,7 @@ storageBoxRouter.onError((err, c) => {
 // ─── Config routes ──────────────────────────────────────────────────
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG_CFG],
@@ -175,7 +176,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG_CFG],
@@ -196,7 +197,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -219,7 +220,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -249,7 +250,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -271,7 +272,7 @@ storageBoxRouter.openapi(
 // ─── Transaction routes ─────────────────────────────────────────────
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/deposits",
     tags: [TAG_TXN],
@@ -310,7 +311,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/withdrawals",
     tags: [TAG_TXN],
@@ -354,7 +355,7 @@ storageBoxRouter.openapi(
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/deposits/{endUserId}",
     tags: [TAG_TXN],

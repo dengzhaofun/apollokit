@@ -5,10 +5,11 @@
  * serialize → call service → onError maps ModuleError to JSON.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { announcementService } from "./index";
@@ -70,7 +71,7 @@ const errorResponses = {
   },
 };
 
-export const announcementRouter = new OpenAPIHono<HonoEnv>();
+export const announcementRouter = createAdminRouter();
 
 announcementRouter.use("*", requireAdminOrApiKey);
 
@@ -89,7 +90,7 @@ announcementRouter.onError((err, c) => {
 });
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -114,7 +115,7 @@ announcementRouter.openapi(
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/",
     tags: [TAG],
@@ -147,7 +148,7 @@ announcementRouter.openapi(
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{alias}",
     tags: [TAG],
@@ -172,7 +173,7 @@ announcementRouter.openapi(
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{alias}",
     tags: [TAG],
@@ -203,7 +204,7 @@ announcementRouter.openapi(
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{alias}",
     tags: [TAG],

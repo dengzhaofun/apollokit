@@ -1,0 +1,9 @@
+{
+  "title": "Milestones",
+  "pages": [
+    "collection_milestones_get_albums_by_key_milestones",
+    "collection_milestones_post_albums_by_key_milestones",
+    "collection_milestones_patch_milestones_by_id",
+    "collection_milestones_delete_milestones_by_id"
+  ]
+}

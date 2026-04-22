@@ -20,11 +20,12 @@
  * admin routes only.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -120,7 +121,7 @@ function serializeGroup(row: {
   };
 }
 
-export const collectionClientRouter = new OpenAPIHono<HonoEnv>();
+export const collectionClientRouter = createClientRouter();
 
 collectionClientRouter.use("*", requireClientCredential);
 collectionClientRouter.use("*", requireClientUser);
@@ -142,7 +143,7 @@ collectionClientRouter.onError((err, c) => {
 // ─── Album list (per-user) ───────────────────────────────────────
 
 collectionClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/albums",
     tags: [TAG],
@@ -185,7 +186,7 @@ collectionClientRouter.openapi(
 // ─── Album detail (per-user) ─────────────────────────────────────
 
 collectionClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/albums/{key}",
     tags: [TAG],
@@ -228,7 +229,7 @@ collectionClientRouter.openapi(
 // ─── Sync (fallback) ─────────────────────────────────────────────
 
 collectionClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/albums/{key}/sync",
     tags: [TAG],
@@ -262,7 +263,7 @@ collectionClientRouter.openapi(
 // ─── Milestone claim ─────────────────────────────────────────────
 
 collectionClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/milestones/{id}/claim",
     tags: [TAG],

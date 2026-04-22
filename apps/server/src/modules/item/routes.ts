@@ -4,10 +4,11 @@
  * Covers: category CRUD, definition CRUD, grant/deduct, inventory queries.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { itemService } from "./index";
@@ -120,7 +121,7 @@ const errorResponses = {
   },
 };
 
-export const itemRouter = new OpenAPIHono<HonoEnv>();
+export const itemRouter = createAdminRouter();
 
 itemRouter.use("*", requireAdminOrApiKey);
 
@@ -141,7 +142,7 @@ itemRouter.onError((err, c) => {
 // ─── Category routes ──────────────────────────────────────────────
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/categories",
     tags: [TAG_CAT],
@@ -165,7 +166,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories",
     tags: [TAG_CAT],
@@ -186,7 +187,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories/{key}",
     tags: [TAG_CAT],
@@ -209,7 +210,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -235,7 +236,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -257,7 +258,7 @@ itemRouter.openapi(
 // ─── Definition routes ────────────────────────────────────────────
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -285,7 +286,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -308,7 +309,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions/{key}",
     tags: [TAG_DEF],
@@ -333,7 +334,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/definitions/{id}",
     tags: [TAG_DEF],
@@ -367,7 +368,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/definitions/{id}",
     tags: [TAG_DEF],
@@ -389,7 +390,7 @@ itemRouter.openapi(
 // ─── Inventory / Grant / Deduct routes ────────────────────────────
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/grant",
     tags: [TAG_INV],
@@ -420,7 +421,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/deduct",
     tags: [TAG_INV],
@@ -451,7 +452,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/users/{endUserId}/inventory",
     tags: [TAG_INV],
@@ -482,7 +483,7 @@ itemRouter.openapi(
 );
 
 itemRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/users/{endUserId}/balance/{key}",
     tags: [TAG_INV],

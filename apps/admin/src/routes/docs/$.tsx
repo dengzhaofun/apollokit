@@ -8,8 +8,15 @@ import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import type { TOCItemType } from 'fumadocs-core/toc'
 import { i18n } from '#/lib/source'
 import { source } from '#/lib/source-server'
-import { baseOptions } from '#/lib/layout.shared'
+import { getBaseOptions } from '#/lib/layout.shared'
+import { APIPage } from '#/lib/openapi'
 import browserCollections from 'collections/browser'
+
+// Generated API-reference MDX (under content/docs/{locale}/api/) embeds
+// `<APIPage document="apollokit" operations={[...]} />`. We ship our
+// configured `APIPage` factory through the MDX `components` map so the
+// generated pages render with our shiki theme + our schema registry.
+const mdxComponents = { ...defaultMdxComponents, APIPage }
 
 const REPO_OWNER = 'dengzhaofun'
 const REPO_NAME = 'apollokit'
@@ -99,7 +106,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
   // 只渲染 MDX 主体,标题与页头操作交给 Page 组件统一布置,
   // 方便把 MarkdownCopyButton 摆在标题右侧。
   component({ default: MDX }) {
-    return <MDX components={defaultMdxComponents} />
+    return <MDX components={mdxComponents} />
   },
 })
 
@@ -122,8 +129,11 @@ function Page() {
   // 从而也避开 node:path 被 Vite externalize 的浏览器告警。
   const data = useFumadocsLoader(Route.useLoaderData())
   if (!('locale' in data)) return null
+  // 顶部 nav 链接(OpenAPI / 控制台 / 首页)按当前 locale 渲染,
+  // 避免英文站点击 OpenAPI 跳到中文目录。
+  const layoutOptions = getBaseOptions(data.locale as 'zh' | 'en')
   return (
-    <DocsLayout {...baseOptions} tree={data.tree}>
+    <DocsLayout {...layoutOptions} tree={data.tree}>
       <DocsPage
         // toc 驱动右侧 "On this page";footer(prev/next)默认 enabled=true,
         // 它读 DocsLayout 的 pageTree 再匹配当前 pathname 自动算邻居,不需要

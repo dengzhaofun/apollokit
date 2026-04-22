@@ -1,0 +1,19 @@
+{
+  "title": "Client",
+  "pages": [
+    "entity_client_get_instances",
+    "entity_client_get_instances_by_instanceid",
+    "entity_client_post_acquire",
+    "entity_client_post_instances_by_instanceid_discard",
+    "entity_client_post_instances_by_instanceid_lock",
+    "entity_client_post_instances_by_instanceid_add_exp",
+    "entity_client_post_instances_by_instanceid_level_up",
+    "entity_client_post_instances_by_instanceid_rank_up",
+    "entity_client_post_instances_by_instanceid_synthesize",
+    "entity_client_post_instances_by_instanceid_equip",
+    "entity_client_post_instances_by_instanceid_unequip",
+    "entity_client_post_instances_by_instanceid_change_skin",
+    "entity_client_get_formations_by_configid",
+    "entity_client_put_formations_by_configid_by_formationindex"
+  ]
+}

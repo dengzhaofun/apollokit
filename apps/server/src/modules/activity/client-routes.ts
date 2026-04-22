@@ -11,10 +11,11 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { ModuleError } from "./errors";
@@ -48,7 +49,7 @@ const errorResponses = {
   },
 };
 
-export const activityClientRouter = new OpenAPIHono<HonoEnv>();
+export const activityClientRouter = createClientRouter();
 
 activityClientRouter.use("*", requireClientCredential);
 activityClientRouter.use("*", requireClientUser);
@@ -70,7 +71,7 @@ const AliasParam = z.object({
 // ─── List currently visible activities ─────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/list",
     tags: [TAG],
@@ -149,7 +150,7 @@ activityClientRouter.openapi(
 // ─── Aggregated view for a player ──────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/{alias}",
     tags: [TAG],
@@ -181,7 +182,7 @@ activityClientRouter.openapi(
 // ─── Join ─────────────────────────────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/join",
     tags: [TAG],
@@ -216,7 +217,7 @@ activityClientRouter.openapi(
 // ─── Claim milestone ──────────────────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/claim-milestone",
     tags: [TAG],

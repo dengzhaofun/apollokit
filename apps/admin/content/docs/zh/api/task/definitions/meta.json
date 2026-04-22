@@ -1,0 +1,10 @@
+{
+  "title": "Definitions",
+  "pages": [
+    "task_definitions_get_definitions",
+    "task_definitions_post_definitions",
+    "task_definitions_get_definitions_by_key",
+    "task_definitions_patch_definitions_by_key",
+    "task_definitions_delete_definitions_by_key"
+  ]
+}

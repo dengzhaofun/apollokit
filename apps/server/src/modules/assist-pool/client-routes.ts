@@ -12,10 +12,11 @@
  *   - POST /instances/:instanceId/contribute — assist someone else's instance
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -89,7 +90,7 @@ const ClientListQuerySchema = z.object({
   }),
 });
 
-export const assistPoolClientRouter = new OpenAPIHono<HonoEnv>();
+export const assistPoolClientRouter = createClientRouter();
 
 assistPoolClientRouter.use("*", requireClientCredential);
 assistPoolClientRouter.use("*", requireClientUser);
@@ -110,7 +111,7 @@ assistPoolClientRouter.onError((err, c) => {
 
 // POST /instances
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances",
     tags: [TAG],
@@ -146,7 +147,7 @@ assistPoolClientRouter.openapi(
 
 // GET /instances (mine)
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances",
     tags: [TAG],
@@ -178,7 +179,7 @@ assistPoolClientRouter.openapi(
 
 // GET /instances/:instanceId
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG],
@@ -205,7 +206,7 @@ assistPoolClientRouter.openapi(
 
 // POST /instances/:instanceId/contribute
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/contribute",
     tags: [TAG],

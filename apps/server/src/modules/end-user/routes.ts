@@ -15,10 +15,11 @@
  * these with their admin API key, never with the cpk_ publishable key.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 
@@ -37,7 +38,7 @@ import {
 
 const TAG = "End User";
 
-export const endUserRouter = new OpenAPIHono<HonoEnv>();
+export const endUserRouter = createAdminRouter();
 
 endUserRouter.use("*", requireAdminOrApiKey);
 
@@ -68,7 +69,7 @@ const commonErrorResponses = {
 
 // POST /sync — upsert from tenant identity
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/sync",
     tags: [TAG],
@@ -112,7 +113,7 @@ endUserRouter.openapi(
 
 // GET / — list
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -138,7 +139,7 @@ endUserRouter.openapi(
 
 // GET /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{id}",
     tags: [TAG],
@@ -161,7 +162,7 @@ endUserRouter.openapi(
 
 // PATCH /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{id}",
     tags: [TAG],
@@ -188,7 +189,7 @@ endUserRouter.openapi(
 
 // POST /:id/disable
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/disable",
     tags: [TAG],
@@ -211,7 +212,7 @@ endUserRouter.openapi(
 
 // POST /:id/enable
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/enable",
     tags: [TAG],
@@ -234,7 +235,7 @@ endUserRouter.openapi(
 
 // POST /:id/sign-out-all
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/sign-out-all",
     tags: [TAG],
@@ -257,7 +258,7 @@ endUserRouter.openapi(
 
 // DELETE /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{id}",
     tags: [TAG],

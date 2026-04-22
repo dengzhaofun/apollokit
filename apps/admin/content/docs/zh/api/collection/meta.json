@@ -1,0 +1,10 @@
+{
+  "title": "Collection",
+  "pages": [
+    "collection_get_albums",
+    "collection_post_albums",
+    "collection_get_albums_by_key",
+    "collection_patch_albums_by_id",
+    "collection_delete_albums_by_id"
+  ]
+}

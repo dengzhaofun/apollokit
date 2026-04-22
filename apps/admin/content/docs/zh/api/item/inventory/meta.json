@@ -1,0 +1,9 @@
+{
+  "title": "Inventory",
+  "pages": [
+    "item_inventory_post_grant",
+    "item_inventory_post_deduct",
+    "item_inventory_get_users_by_enduserid_inventory",
+    "item_inventory_get_users_by_enduserid_balance_by_key"
+  ]
+}

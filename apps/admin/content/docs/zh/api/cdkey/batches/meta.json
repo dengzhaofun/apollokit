@@ -1,0 +1,10 @@
+{
+  "title": "Batches",
+  "pages": [
+    "cdkey_batches_get_batches",
+    "cdkey_batches_post_batches",
+    "cdkey_batches_get_batches_by_key",
+    "cdkey_batches_patch_batches_by_key",
+    "cdkey_batches_delete_batches_by_key"
+  ]
+}

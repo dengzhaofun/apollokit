@@ -11,10 +11,11 @@
  * body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -139,7 +140,7 @@ const errorResponses = {
   },
 };
 
-export const teamClientRouter = new OpenAPIHono<HonoEnv>();
+export const teamClientRouter = createClientRouter();
 
 teamClientRouter.use("*", requireClientCredential);
 teamClientRouter.use("*", requireClientUser);
@@ -160,7 +161,7 @@ teamClientRouter.onError((err, c) => {
 
 // POST /teams — create a new team
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams",
     tags: [TAG],
@@ -190,7 +191,7 @@ teamClientRouter.openapi(
 
 // GET /my-team?configAlias=
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/my-team",
     tags: [TAG],
@@ -221,7 +222,7 @@ teamClientRouter.openapi(
 
 // GET /teams/:id
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/teams/{id}",
     tags: [TAG],
@@ -245,7 +246,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/join
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/join",
     tags: [TAG],
@@ -272,7 +273,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/leave
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/leave",
     tags: [TAG],
@@ -299,7 +300,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/dissolve
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/dissolve",
     tags: [TAG],
@@ -326,7 +327,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/kick/:userId
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/kick/{userId}",
     tags: [TAG],
@@ -353,7 +354,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/transfer-leader
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/transfer-leader",
     tags: [TAG],
@@ -384,7 +385,7 @@ teamClientRouter.openapi(
 
 // PUT /teams/:id/status
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "put",
     path: "/teams/{id}/status",
     tags: [TAG],
@@ -415,7 +416,7 @@ teamClientRouter.openapi(
 
 // POST /teams/:id/invite
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/teams/{id}/invite",
     tags: [TAG],
@@ -448,7 +449,7 @@ teamClientRouter.openapi(
 
 // POST /invitations/:id/accept
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/accept",
     tags: [TAG],
@@ -475,7 +476,7 @@ teamClientRouter.openapi(
 
 // POST /invitations/:id/reject
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/reject",
     tags: [TAG],
@@ -504,7 +505,7 @@ teamClientRouter.openapi(
 
 // POST /quick-match?configAlias=
 teamClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/quick-match",
     tags: [TAG],

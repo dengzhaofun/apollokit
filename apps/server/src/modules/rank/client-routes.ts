@@ -16,10 +16,11 @@
  *   - read the global / tier-filtered leaderboard (`/leaderboard`)
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { clientAuthHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -79,7 +80,7 @@ function serializeParticipant(row: RankMatchParticipant) {
   };
 }
 
-export const rankClientRouter = new OpenAPIHono<HonoEnv>();
+export const rankClientRouter = createClientRouter();
 
 rankClientRouter.use("*", requireClientCredential);
 rankClientRouter.use("*", requireClientUser);
@@ -97,7 +98,7 @@ rankClientRouter.onError((err, c) => {
 /* ── GET /state — current player's standing ─────────────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/state",
     tags: [TAG],
@@ -135,7 +136,7 @@ rankClientRouter.openapi(
 /* ── GET /history — caller's recent match deltas ─────────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/history",
     tags: [TAG],
@@ -193,7 +194,7 @@ rankClientRouter.openapi(
 /* ── GET /leaderboard — global or tier-filtered board ────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/leaderboard",
     tags: [TAG],

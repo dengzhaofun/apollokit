@@ -5,10 +5,11 @@
  * and admin-level team dissolution.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { teamService } from "./index";
@@ -118,7 +119,7 @@ const errorResponses = {
   },
 };
 
-export const teamRouter = new OpenAPIHono<HonoEnv>();
+export const teamRouter = createAdminRouter();
 
 teamRouter.use("*", requireAdminOrApiKey);
 
@@ -140,7 +141,7 @@ teamRouter.onError((err, c) => {
 
 // POST /team/configs
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -169,7 +170,7 @@ teamRouter.openapi(
 
 // GET /team/configs
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -191,7 +192,7 @@ teamRouter.openapi(
 
 // GET /team/configs/:key
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -217,7 +218,7 @@ teamRouter.openapi(
 
 // PUT /team/configs/:key
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/configs/{key}",
     tags: [TAG],
@@ -248,7 +249,7 @@ teamRouter.openapi(
 
 // DELETE /team/configs/:key
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{key}",
     tags: [TAG],
@@ -271,7 +272,7 @@ teamRouter.openapi(
 
 // GET /team/teams
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/teams",
     tags: [TAG],
@@ -303,7 +304,7 @@ teamRouter.openapi(
 
 // GET /team/teams/:id
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/teams/{id}",
     tags: [TAG],
@@ -329,7 +330,7 @@ teamRouter.openapi(
 
 // POST /team/teams/:id/dissolve — admin force dissolve
 teamRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/teams/{id}/dissolve",
     tags: [TAG],

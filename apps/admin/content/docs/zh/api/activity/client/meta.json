@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "activity_client_get_list",
+    "activity_client_get_by_alias",
+    "activity_client_post_by_alias_join",
+    "activity_client_post_by_alias_claim_milestone"
+  ]
+}

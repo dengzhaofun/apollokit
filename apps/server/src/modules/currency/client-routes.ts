@@ -13,10 +13,11 @@
  * Exposes read-only wallet / balance queries for end users.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -53,7 +54,7 @@ const errorResponses = {
   },
 };
 
-export const currencyClientRouter = new OpenAPIHono<HonoEnv>();
+export const currencyClientRouter = createClientRouter();
 
 currencyClientRouter.use("*", requireClientCredential);
 currencyClientRouter.use("*", requireClientUser);
@@ -74,7 +75,7 @@ currencyClientRouter.onError((err, c) => {
 
 // GET /wallets — all balances
 currencyClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/wallets",
     tags: [TAG],
@@ -98,7 +99,7 @@ currencyClientRouter.openapi(
 
 // GET /balance/:key — single balance by id or alias
 currencyClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/balance/{key}",
     tags: [TAG],

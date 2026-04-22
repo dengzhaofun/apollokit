@@ -5,10 +5,11 @@
  * relationship browsing/deletion.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { FriendSettingsNotFound, ModuleError } from "./errors";
 import { friendService } from "./index";
@@ -82,7 +83,7 @@ const errorResponses = {
   },
 };
 
-export const friendRouter = new OpenAPIHono<HonoEnv>();
+export const friendRouter = createAdminRouter();
 
 friendRouter.use("*", requireAdminOrApiKey);
 
@@ -102,7 +103,7 @@ friendRouter.onError((err, c) => {
 
 // GET /friend/settings
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -127,7 +128,7 @@ friendRouter.openapi(
 
 // PUT /friend/settings
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -156,7 +157,7 @@ friendRouter.openapi(
 
 // GET /friend/relationships — admin: list all (paginated)
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/relationships",
     tags: [TAG],
@@ -188,7 +189,7 @@ friendRouter.openapi(
 
 // DELETE /friend/relationships/:id — admin: force remove
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/relationships/{id}",
     tags: [TAG],

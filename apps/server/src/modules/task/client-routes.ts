@@ -13,10 +13,11 @@
  *   POST /claim-tier        → manual staged-reward tier claim
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -54,7 +55,7 @@ const errorResponses = {
   },
 };
 
-export const taskClientRouter = new OpenAPIHono<HonoEnv>();
+export const taskClientRouter = createClientRouter();
 
 taskClientRouter.use("*", requireClientCredential);
 taskClientRouter.use("*", requireClientUser);
@@ -76,7 +77,7 @@ taskClientRouter.onError((err, c) => {
 // ─── Event ingestion ────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/events",
     tags: [TAG],
@@ -116,7 +117,7 @@ taskClientRouter.openapi(
 // ─── Task list ──────────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/list",
     tags: [TAG],
@@ -158,7 +159,7 @@ taskClientRouter.openapi(
 // ─── Claim ──────────────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim/{taskId}",
     tags: [TAG],
@@ -188,7 +189,7 @@ taskClientRouter.openapi(
 // ─── Claim Tier (阶段性奖励) ───────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim-tier",
     tags: [TAG],

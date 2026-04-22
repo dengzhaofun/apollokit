@@ -8,10 +8,11 @@
  * Client-facing routes live in `client-routes.ts`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { entityService } from "./index";
@@ -159,7 +160,7 @@ const errorResponses = {
   },
 };
 
-export const entityRouter = new OpenAPIHono<HonoEnv>();
+export const entityRouter = createAdminRouter();
 
 entityRouter.use("*", requireAdminOrApiKey);
 
@@ -182,7 +183,7 @@ entityRouter.onError((err, c) => {
 // ═══════════════════════════════════════════════════════════════
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/schemas",
     tags: [TAG_SCHEMA],
@@ -205,7 +206,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/schemas",
     tags: [TAG_SCHEMA],
@@ -232,7 +233,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/schemas/{key}",
     tags: [TAG_SCHEMA],
@@ -255,7 +256,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/schemas/{id}",
     tags: [TAG_SCHEMA],
@@ -284,7 +285,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/schemas/{id}",
     tags: [TAG_SCHEMA],
@@ -308,7 +309,7 @@ entityRouter.openapi(
 // ═══════════════════════════════════════════════════════════════
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/blueprints",
     tags: [TAG_BLUEPRINT],
@@ -337,7 +338,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/blueprints",
     tags: [TAG_BLUEPRINT],
@@ -366,7 +367,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/blueprints/{key}",
     tags: [TAG_BLUEPRINT],
@@ -391,7 +392,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/blueprints/{id}",
     tags: [TAG_BLUEPRINT],
@@ -422,7 +423,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/blueprints/{id}",
     tags: [TAG_BLUEPRINT],
@@ -446,7 +447,7 @@ entityRouter.openapi(
 // ═══════════════════════════════════════════════════════════════
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/blueprints/{id}/skins",
     tags: [TAG_SKIN],
@@ -471,7 +472,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/blueprints/{id}/skins",
     tags: [TAG_SKIN],
@@ -500,7 +501,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/skins/{skinId}",
     tags: [TAG_SKIN],
@@ -529,7 +530,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/skins/{skinId}",
     tags: [TAG_SKIN],
@@ -553,7 +554,7 @@ entityRouter.openapi(
 // ═══════════════════════════════════════════════════════════════
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/formation-configs",
     tags: [TAG_FORMATION],
@@ -578,7 +579,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/formation-configs",
     tags: [TAG_FORMATION],
@@ -609,7 +610,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/formation-configs/{key}",
     tags: [TAG_FORMATION],
@@ -634,7 +635,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/formation-configs/{id}",
     tags: [TAG_FORMATION],
@@ -667,7 +668,7 @@ entityRouter.openapi(
 );
 
 entityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/formation-configs/{id}",
     tags: [TAG_FORMATION],

@@ -1,0 +1,10 @@
+{
+  "title": "Admin",
+  "pages": [
+    "dialogue_admin_get_scripts",
+    "dialogue_admin_post_scripts",
+    "dialogue_admin_get_scripts_by_id",
+    "dialogue_admin_patch_scripts_by_id",
+    "dialogue_admin_delete_scripts_by_id"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Client",
+  "pages": [
+    "currency_client_get_wallets",
+    "currency_client_get_balance_by_key"
+  ]
+}

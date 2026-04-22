@@ -9,10 +9,11 @@
  * `client-routes.ts`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { levelService } from "./index";
@@ -167,7 +168,7 @@ const errorResponses = {
   },
 };
 
-export const levelRouter = new OpenAPIHono<HonoEnv>();
+export const levelRouter = createAdminRouter();
 
 levelRouter.use("*", requireAdminOrApiKey);
 
@@ -188,7 +189,7 @@ levelRouter.onError((err, c) => {
 // ─── Configs ────────────────────────────────────────────────────
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -209,7 +210,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -233,7 +234,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -256,7 +257,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/configs/{id}",
     tags: [TAG],
@@ -282,7 +283,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
@@ -301,7 +302,7 @@ levelRouter.openapi(
 // ─── Stages ─────────────────────────────────────────────────────
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}/stages",
     tags: [TAG_STAGE],
@@ -324,7 +325,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{id}/stages",
     tags: [TAG_STAGE],
@@ -350,7 +351,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/stages/{id}",
     tags: [TAG_STAGE],
@@ -376,7 +377,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/stages/{id}",
     tags: [TAG_STAGE],
@@ -406,7 +407,7 @@ const StageIdQuerySchema = z.object({
 });
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}/levels",
     tags: [TAG_LEVEL],
@@ -433,7 +434,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{id}/levels",
     tags: [TAG_LEVEL],
@@ -459,7 +460,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],
@@ -482,7 +483,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],
@@ -508,7 +509,7 @@ levelRouter.openapi(
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],

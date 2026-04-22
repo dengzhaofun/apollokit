@@ -1,8 +1,9 @@
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { env } from "cloudflare:workers";
 
 import { deps } from "../../deps";
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { TenantPipeName } from "../../lib/analytics";
 import { requireAuth } from "../../middleware/require-auth";
 
@@ -11,10 +12,10 @@ import {
   issueTokenResponseSchema,
 } from "./validators";
 
-export const analyticsRouter = new OpenAPIHono<HonoEnv>();
+export const analyticsRouter = createAdminRouter();
 analyticsRouter.use("*", requireAuth);
 
-const issueTokenRoute = createRoute({
+const issueTokenRoute = createAdminRoute({
   method: "post",
   path: "/token",
   tags: ["analytics"],

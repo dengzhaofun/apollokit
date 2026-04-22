@@ -8,10 +8,11 @@
  * Guard: `requireAdminOrApiKey` — Better Auth session OR admin API key.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { assistPoolService } from "./index";
@@ -117,7 +118,7 @@ const errorResponses = {
   },
 };
 
-export const assistPoolRouter = new OpenAPIHono<HonoEnv>();
+export const assistPoolRouter = createAdminRouter();
 
 assistPoolRouter.use("*", requireAdminOrApiKey);
 
@@ -137,7 +138,7 @@ assistPoolRouter.onError((err, c) => {
 
 // POST /configs
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -169,7 +170,7 @@ assistPoolRouter.openapi(
 
 // GET /configs
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -199,7 +200,7 @@ assistPoolRouter.openapi(
 
 // GET /configs/:key
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -225,7 +226,7 @@ assistPoolRouter.openapi(
 
 // PATCH /configs/:id
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG],
@@ -260,7 +261,7 @@ assistPoolRouter.openapi(
 
 // DELETE /configs/:id
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
@@ -281,7 +282,7 @@ assistPoolRouter.openapi(
 
 // POST /instances — admin initiates on behalf of an end user
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances",
     tags: [TAG_INSTANCES],
@@ -315,7 +316,7 @@ assistPoolRouter.openapi(
 
 // GET /instances — list / filter
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances",
     tags: [TAG_INSTANCES],
@@ -347,7 +348,7 @@ assistPoolRouter.openapi(
 
 // GET /instances/:instanceId
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG_INSTANCES],
@@ -373,7 +374,7 @@ assistPoolRouter.openapi(
 
 // GET /instances/:instanceId/contributions
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances/{instanceId}/contributions",
     tags: [TAG_INSTANCES],
@@ -399,7 +400,7 @@ assistPoolRouter.openapi(
 
 // POST /instances/:instanceId/contribute — admin drives a contribution on behalf of another user
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances/{instanceId}/contribute",
     tags: [TAG_INSTANCES],
@@ -443,7 +444,7 @@ assistPoolRouter.openapi(
 
 // POST /instances/:instanceId/force-expire
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances/{instanceId}/force-expire",
     tags: [TAG_INSTANCES],

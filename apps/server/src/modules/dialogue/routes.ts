@@ -5,10 +5,11 @@
  * player progress is managed via the client router, not here.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { dialogueService } from "./index";
@@ -61,7 +62,7 @@ const errorResponses = {
   },
 };
 
-export const dialogueRouter = new OpenAPIHono<HonoEnv>();
+export const dialogueRouter = createAdminRouter();
 
 dialogueRouter.use("*", requireAdminOrApiKey);
 
@@ -80,7 +81,7 @@ dialogueRouter.onError((err, c) => {
 });
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/scripts",
     tags: [TAG],
@@ -103,7 +104,7 @@ dialogueRouter.openapi(
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/scripts",
     tags: [TAG],
@@ -132,7 +133,7 @@ dialogueRouter.openapi(
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/scripts/{id}",
     tags: [TAG],
@@ -157,7 +158,7 @@ dialogueRouter.openapi(
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/scripts/{id}",
     tags: [TAG],
@@ -188,7 +189,7 @@ dialogueRouter.openapi(
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/scripts/{id}",
     tags: [TAG],

@@ -2,10 +2,11 @@
  * Admin-facing HTTP routes for the lottery module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import { ModuleError } from "./errors";
@@ -243,7 +244,7 @@ const errorResponses = {
 
 // ─── Router ───────────────────────────────────────────────────
 
-export const lotteryRouter = new OpenAPIHono<HonoEnv>();
+export const lotteryRouter = createAdminRouter();
 
 lotteryRouter.use("*", requireAdminOrApiKey);
 
@@ -264,7 +265,7 @@ lotteryRouter.onError((err, c) => {
 // ─── Pool routes ──────────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools",
     tags: [TAG_POOL],
@@ -288,7 +289,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools",
     tags: [TAG_POOL],
@@ -314,7 +315,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{key}",
     tags: [TAG_POOL],
@@ -337,7 +338,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/pools/{id}",
     tags: [TAG_POOL],
@@ -363,7 +364,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/pools/{id}",
     tags: [TAG_POOL],
@@ -385,7 +386,7 @@ lotteryRouter.openapi(
 // ─── Tier routes ──────────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/tiers",
     tags: [TAG_TIER],
@@ -415,7 +416,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{poolKey}/tiers",
     tags: [TAG_TIER],
@@ -438,7 +439,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/tiers/{tierId}",
     tags: [TAG_TIER],
@@ -468,7 +469,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/tiers/{tierId}",
     tags: [TAG_TIER],
@@ -490,7 +491,7 @@ lotteryRouter.openapi(
 // ─── Prize routes ─────────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/tiers/{tierId}/prizes",
     tags: [TAG_PRIZE],
@@ -521,7 +522,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/prizes",
     tags: [TAG_PRIZE],
@@ -552,7 +553,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{poolKey}/prizes",
     tags: [TAG_PRIZE],
@@ -575,7 +576,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/prizes/{prizeId}",
     tags: [TAG_PRIZE],
@@ -605,7 +606,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/prizes/{prizeId}",
     tags: [TAG_PRIZE],
@@ -627,7 +628,7 @@ lotteryRouter.openapi(
 // ─── Pity Rule routes ─────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/pity-rules",
     tags: [TAG_PITY],
@@ -661,7 +662,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{poolKey}/pity-rules",
     tags: [TAG_PITY],
@@ -686,7 +687,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/pity-rules/{ruleId}",
     tags: [TAG_PITY],
@@ -720,7 +721,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/pity-rules/{ruleId}",
     tags: [TAG_PITY],
@@ -742,7 +743,7 @@ lotteryRouter.openapi(
 // ─── Pull execution ───────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/pull",
     tags: [TAG_PULL],
@@ -774,7 +775,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/pools/{poolKey}/multi-pull",
     tags: [TAG_PULL],
@@ -809,7 +810,7 @@ lotteryRouter.openapi(
 // ─── Query helpers ────────────────────────────────────────────
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{poolKey}/users/{endUserId}/state",
     tags: [TAG_PULL],
@@ -841,7 +842,7 @@ lotteryRouter.openapi(
 );
 
 lotteryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/pools/{poolKey}/users/{endUserId}/history",
     tags: [TAG_PULL],

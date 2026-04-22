@@ -20,11 +20,12 @@
  * admin routes only.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -207,7 +208,7 @@ const ClientLevelDetailSchema = z
 
 // ─── Router ─────────────────────────────────────────────────────
 
-export const levelClientRouter = new OpenAPIHono<HonoEnv>();
+export const levelClientRouter = createClientRouter();
 
 levelClientRouter.use("*", requireClientCredential);
 levelClientRouter.use("*", requireClientUser);
@@ -229,7 +230,7 @@ levelClientRouter.onError((err, c) => {
 // ─── Config list (per-user summary) ─────────────────────────────
 
 levelClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -275,7 +276,7 @@ levelClientRouter.openapi(
 // ─── Config overview (full detail with progress) ────────────────
 
 levelClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/configs/{key}/overview",
     tags: [TAG],
@@ -355,7 +356,7 @@ levelClientRouter.openapi(
 // ─── Level detail ───────────────────────────────────────────────
 
 levelClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/levels/{id}/detail",
     tags: [TAG],
@@ -421,7 +422,7 @@ levelClientRouter.openapi(
 // ─── Report level clear ─────────────────────────────────────────
 
 levelClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/levels/{id}/clear",
     tags: [TAG],
@@ -470,7 +471,7 @@ levelClientRouter.openapi(
 // ─── Claim rewards ──────────────────────────────────────────────
 
 levelClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/levels/{id}/claim",
     tags: [TAG],

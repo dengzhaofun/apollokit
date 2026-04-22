@@ -11,10 +11,11 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -115,7 +116,7 @@ const errorResponses = {
   },
 };
 
-export const friendClientRouter = new OpenAPIHono<HonoEnv>();
+export const friendClientRouter = createClientRouter();
 
 friendClientRouter.use("*", requireClientCredential);
 friendClientRouter.use("*", requireClientUser);
@@ -138,7 +139,7 @@ friendClientRouter.onError((err, c) => {
 
 // POST /requests — send friend request
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests",
     tags: [TAG],
@@ -169,7 +170,7 @@ friendClientRouter.openapi(
 
 // GET /requests/incoming — list incoming pending requests
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/requests/incoming",
     tags: [TAG],
@@ -193,7 +194,7 @@ friendClientRouter.openapi(
 
 // GET /requests/outgoing — list outgoing pending requests
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/requests/outgoing",
     tags: [TAG],
@@ -217,7 +218,7 @@ friendClientRouter.openapi(
 
 // POST /requests/:id/accept
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/accept",
     tags: [TAG],
@@ -246,7 +247,7 @@ friendClientRouter.openapi(
 
 // POST /requests/:id/reject
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/reject",
     tags: [TAG],
@@ -275,7 +276,7 @@ friendClientRouter.openapi(
 
 // POST /requests/:id/cancel
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/cancel",
     tags: [TAG],
@@ -306,7 +307,7 @@ friendClientRouter.openapi(
 
 // GET /friends — list friends
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/friends",
     tags: [TAG],
@@ -337,7 +338,7 @@ friendClientRouter.openapi(
 
 // DELETE /friends/:id — remove friend
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "delete",
     path: "/friends/{id}",
     tags: [TAG],
@@ -360,7 +361,7 @@ friendClientRouter.openapi(
 
 // GET /friends/mutual — mutual friends
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/friends/mutual",
     tags: [TAG],
@@ -400,7 +401,7 @@ friendClientRouter.openapi(
 
 // POST /blocks — block user
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/blocks",
     tags: [TAG],
@@ -426,7 +427,7 @@ friendClientRouter.openapi(
 
 // DELETE /blocks/:blockedUserId — unblock user
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "delete",
     path: "/blocks/{blockedUserId}",
     tags: [TAG],
@@ -450,7 +451,7 @@ friendClientRouter.openapi(
 
 // GET /blocks — list blocked users
 friendClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/blocks",
     tags: [TAG],

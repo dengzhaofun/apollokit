@@ -1,0 +1,7 @@
+{
+  "title": "Client",
+  "pages": [
+    "check_in_client_post_check_ins",
+    "check_in_client_get_state"
+  ]
+}

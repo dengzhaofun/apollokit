@@ -44,6 +44,8 @@
     "---集成---",
     "webhooks",
     "client-sdk",
-    "sdk"
+    "sdk",
+    "---API 参考---",
+    "api"
   ]
 }

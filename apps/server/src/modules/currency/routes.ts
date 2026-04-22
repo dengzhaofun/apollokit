@@ -5,10 +5,11 @@
  * Auth: mounted with `requireAdminOrApiKey` — same as the item module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { currencyService } from "./index";
 import { ModuleError } from "./errors";
@@ -115,7 +116,7 @@ const errorResponses = {
   },
 };
 
-export const currencyRouter = new OpenAPIHono<HonoEnv>();
+export const currencyRouter = createAdminRouter();
 
 currencyRouter.use("*", requireAdminOrApiKey);
 
@@ -136,7 +137,7 @@ currencyRouter.onError((err, c) => {
 // ─── Definition CRUD ─────────────────────────────────────────────
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -167,7 +168,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -196,7 +197,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions/{key}",
     tags: [TAG_DEF],
@@ -221,7 +222,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/definitions/{id}",
     tags: [TAG_DEF],
@@ -255,7 +256,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/definitions/{id}",
     tags: [TAG_DEF],
@@ -277,7 +278,7 @@ currencyRouter.openapi(
 // ─── Wallet / Balance ─────────────────────────────────────────────
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/wallets",
     tags: [TAG_WALLET],
@@ -302,7 +303,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/wallets/{endUserId}/{currencyId}",
     tags: [TAG_WALLET],
@@ -331,7 +332,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/wallets/grant",
     tags: [TAG_WALLET],
@@ -364,7 +365,7 @@ currencyRouter.openapi(
 );
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/wallets/deduct",
     tags: [TAG_WALLET],
@@ -399,7 +400,7 @@ currencyRouter.openapi(
 // ─── Ledger ─────────────────────────────────────────────────────
 
 currencyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/ledger",
     tags: [TAG_LEDGER],

@@ -1,0 +1,14 @@
+{
+  "title": "Friend Gift",
+  "pages": [
+    "friend_gift_get_settings",
+    "friend_gift_put_settings",
+    "friend_gift_get_packages",
+    "friend_gift_post_packages",
+    "friend_gift_get_packages_by_id",
+    "friend_gift_delete_packages_by_id",
+    "friend_gift_put_packages_by_id",
+    "friend_gift_get_sends",
+    "friend_gift_get_sends_by_id"
+  ]
+}

@@ -8,10 +8,11 @@
  * through `mailService.createMessage` / `sendUnicast` directly.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import type { MailMessage, MailMessageWithStats } from "./types";
@@ -82,7 +83,7 @@ const errorResponses = {
   },
 };
 
-export const mailRouter = new OpenAPIHono<HonoEnv>();
+export const mailRouter = createAdminRouter();
 
 mailRouter.use("*", requireAdminOrApiKey);
 
@@ -102,7 +103,7 @@ mailRouter.onError((err, c) => {
 
 // POST /messages — send a broadcast or multicast mail
 mailRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/messages",
     tags: [TAG],
@@ -132,7 +133,7 @@ mailRouter.openapi(
 
 // GET /messages — list mail messages with cursor pagination
 mailRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/messages",
     tags: [TAG],
@@ -163,7 +164,7 @@ mailRouter.openapi(
 
 // GET /messages/:id — detail + aggregate stats
 mailRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/messages/{id}",
     tags: [TAG],
@@ -189,7 +190,7 @@ mailRouter.openapi(
 
 // POST /messages/:id/revoke — soft delete
 mailRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/messages/{id}/revoke",
     tags: [TAG],
@@ -210,7 +211,7 @@ mailRouter.openapi(
 
 // DELETE /messages/:id — hard delete (cascades to mail_user_states)
 mailRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/messages/{id}",
     tags: [TAG],

@@ -1,0 +1,9 @@
+{
+  "title": "Assignments",
+  "pages": [
+    "task_assignments_get_definitions_by_key_assignments",
+    "task_assignments_post_definitions_by_key_assignments",
+    "task_assignments_delete_definitions_by_key_assignments_by_enduserid",
+    "task_assignments_get_assignments"
+  ]
+}

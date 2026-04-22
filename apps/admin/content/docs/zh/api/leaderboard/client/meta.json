@@ -1,0 +1,8 @@
+{
+  "title": "Client",
+  "pages": [
+    "leaderboard_client_get_configs_by_alias_top",
+    "leaderboard_client_get_configs_by_alias_neighbors",
+    "leaderboard_client_get_configs_by_alias_snapshots"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "title": "Check-In",
+  "pages": [
+    "check_in_get_configs",
+    "check_in_post_configs",
+    "check_in_get_configs_by_key",
+    "check_in_patch_configs_by_id",
+    "check_in_delete_configs_by_id",
+    "check_in_get_configs_by_key_users",
+    "check_in_post_configs_by_key_check_ins",
+    "check_in_get_configs_by_key_users_by_enduserid_state"
+  ]
+}
