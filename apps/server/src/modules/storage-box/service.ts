@@ -34,6 +34,7 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { getTraceId } from "../../lib/request-context";
 import { currencies } from "../../schema/currency";
 import {
   storageBoxConfigs,
@@ -69,7 +70,11 @@ import type {
   WithdrawInput,
 } from "./validators";
 
-type StorageBoxDeps = Pick<AppDeps, "db">;
+// `analytics` optional — used to write pure observational events
+// (`storage_box.deposited` / `storage_box.withdrawn`) direct-to-writer,
+// bypassing event-bus because no business module consumes them.
+type StorageBoxDeps = Pick<AppDeps, "db"> &
+  Partial<Pick<AppDeps, "analytics">>;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -102,7 +107,7 @@ export function createStorageBoxService(
   d: StorageBoxDeps,
   currencySvc: CurrencyService,
 ) {
-  const { db } = d;
+  const { db, analytics } = d;
 
   async function loadConfigByKey(
     organizationId: string,
@@ -476,6 +481,24 @@ export function createStorageBoxService(
         metadata: { idempotencyKey },
       });
 
+      if (analytics) {
+        void analytics.writer.logEvent({
+          ts: new Date(),
+          orgId: organizationId,
+          endUserId: input.endUserId,
+          traceId: getTraceId(),
+          event: "storage_box.deposited",
+          source: "storage-box",
+          amount: input.amount,
+          eventData: {
+            depositId: deposit.id,
+            boxConfigId: config.id,
+            currencyDefinitionId: input.currencyDefinitionId,
+            principalAfter: deposit.principal,
+          },
+        });
+      }
+
       return { deposit, currencyDeducted: input.amount };
     },
 
@@ -643,6 +666,25 @@ export function createStorageBoxService(
         principalAfter: updatedDeposit.principal,
         interestAfter: updatedDeposit.accruedInterest,
       });
+
+      if (analytics) {
+        void analytics.writer.logEvent({
+          ts: new Date(),
+          orgId: organizationId,
+          endUserId: input.endUserId,
+          traceId: getTraceId(),
+          event: "storage_box.withdrawn",
+          source: "storage-box",
+          amount: totalPayout,
+          eventData: {
+            depositId: deposit.id,
+            boxConfigId: config.id,
+            currencyDefinitionId: deposit.currencyDefinitionId,
+            principalPaid,
+            interestPaid,
+          },
+        });
+      }
 
       return {
         deposit: updatedDeposit,

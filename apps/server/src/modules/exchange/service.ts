@@ -51,7 +51,25 @@ import type {
   UpdateOptionInput,
 } from "./validators";
 
-type ExchangeDeps = Pick<AppDeps, "db">;
+// `events` optional to keep `createExchangeService({ db }, ...)` test
+// sites compiling. Production wiring hands it in via `deps`.
+type ExchangeDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with exchange-domain events.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "exchange.executed": {
+      organizationId: string;
+      endUserId: string;
+      exchangeId: string;
+      optionId: string;
+      configId: string;
+      configAlias: string | null;
+      costItems: RewardEntry[];
+      rewardItems: RewardEntry[];
+    };
+  }
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,7 +83,7 @@ export function createExchangeService(
   itemSvc: ItemService,
   currencySvc: CurrencyService,
 ) {
-  const { db } = d;
+  const { db, events } = d;
 
   /**
    * Deduct one RewardEntry, routed by type.
@@ -535,6 +553,19 @@ export function createExchangeService(
           "exchange",
           exchangeId,
         );
+      }
+
+      if (events) {
+        await events.emit("exchange.executed", {
+          organizationId: params.organizationId,
+          endUserId: params.endUserId,
+          exchangeId,
+          optionId: option.id,
+          configId: config.id,
+          configAlias: config.alias,
+          costItems,
+          rewardItems,
+        });
       }
 
       return {

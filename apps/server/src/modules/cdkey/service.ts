@@ -34,6 +34,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { getTraceId } from "../../lib/request-context";
 import {
   generateCdkeyCode,
   isWellFormedCdkeyCode,
@@ -74,7 +75,10 @@ import type {
   UpdateBatchInput,
 } from "./validators";
 
-type CdkeyDeps = Pick<AppDeps, "db">;
+// `analytics` optional — used to emit the pure observational
+// `cdkey.redeemed` event direct-to-writer (no business module consumes
+// cdkey redemptions).
+type CdkeyDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "analytics">>;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -111,7 +115,7 @@ function assertBatchWindow(batch: CdkeyBatch, now: Date): void {
 }
 
 export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
-  const { db } = d;
+  const { db, analytics } = d;
 
   async function loadBatchByKey(
     organizationId: string,
@@ -662,6 +666,25 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
             reward: batch.reward,
           })
           .where(eq(cdkeyRedemptionLogs.id, pendingLogId));
+
+        if (analytics) {
+          void analytics.writer.logEvent({
+            ts: new Date(),
+            orgId: params.organizationId,
+            endUserId: params.endUserId,
+            traceId: getTraceId(),
+            event: "cdkey.redeemed",
+            source: "cdkey",
+            amount: 1,
+            eventData: {
+              batchId: batch.id,
+              codeId: codeRow.id,
+              code: codeRow.code,
+              codeType: batch.codeType,
+              logId: pendingLogId,
+            },
+          });
+        }
 
         return {
           status: "success",

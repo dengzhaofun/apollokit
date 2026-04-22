@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
+import { requestContext } from "./lib/request-context";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
@@ -171,6 +172,13 @@ app.on(["POST", "GET"], "/api/client/auth/*", (c) => {
 
 // Inject c.var.user / c.var.session for downstream business routes
 app.use("*", session);
+// Put the per-request AsyncLocalStorage store in place so domain-event
+// subscribers can stamp Tinybird rows with the same `traceId` that
+// `http_requests` records. Must wrap everything AFTER `requestId()` has
+// run but BEFORE any handler may emit events.
+app.use("*", (c, next) =>
+  requestContext.run({ traceId: c.get("requestId") }, next),
+);
 // Auto-ingest every request into Tinybird's http_requests dataset.
 // Must run AFTER session so we know which tenant to tag.
 app.use("*", requestLog);

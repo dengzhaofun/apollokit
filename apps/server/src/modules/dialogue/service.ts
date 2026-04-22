@@ -69,6 +69,7 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { getTraceId } from "../../lib/request-context";
 import { itemDefinitions, itemGrantLogs } from "../../schema/item";
 import {
   dialogueProgress,
@@ -102,7 +103,10 @@ import type {
   UpdateDialogueScriptInput,
 } from "./validators";
 
-type DialogueDeps = Pick<AppDeps, "db">;
+// `analytics` optional: used to emit purely observational events
+// (dialogue.started / advanced / reset) direct-to-writer, bypassing the
+// event bus — no business module subscribes to these.
+type DialogueDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "analytics">>;
 
 const SOURCE_ENTER = "dialogue_enter";
 const SOURCE_OPTION = "dialogue_option";
@@ -194,7 +198,32 @@ function collectRewardDefinitionIds(nodes: DialogueNode[]): string[] {
 }
 
 export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
-  const { db } = d;
+  const { db, analytics } = d;
+
+  /**
+   * Pure-observational Tinybird write. Used by `start`/`advance`/`reset`
+   * below — none of those have business subscribers, so event-bus would
+   * just add overhead for no gain. Fire-and-forget; writer swallows
+   * errors so a Tinybird outage can't break dialogue flow.
+   */
+  function trackDialogue(
+    event: "dialogue.started" | "dialogue.advanced" | "dialogue.reset",
+    orgId: string,
+    endUserId: string,
+    eventData: Record<string, unknown>,
+  ): void {
+    if (!analytics) return;
+    void analytics.writer.logEvent({
+      ts: new Date(),
+      orgId,
+      endUserId,
+      traceId: getTraceId(),
+      event,
+      source: "dialogue",
+      amount: 1,
+      eventData,
+    });
+  }
   // itemSvc is retained on closure only for parity with mail/shop wiring;
   // grantItems is called through it so future cross-cutting concerns (logs,
   // metrics) hit one funnel.
@@ -537,6 +566,13 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
           });
         }
 
+        trackDialogue("dialogue.started", organizationId, endUserId, {
+          scriptId: script.id,
+          scriptAlias: script.alias,
+          startNodeId: startNode.id,
+          grantedCount: granted.length,
+        });
+
         return buildSessionView(script, row, granted);
       } catch (err) {
         if (!isUniqueViolation(err)) throw err;
@@ -699,6 +735,14 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         }
       }
 
+      trackDialogue("dialogue.advanced", organizationId, endUserId, {
+        scriptId: script.id,
+        scriptAlias: script.alias,
+        fromNodeId: fromNode.id,
+        toNodeId: nextNodeId,
+        grantedCount: granted.length,
+      });
+
       return buildSessionView(script, effectiveProgress, granted);
     },
 
@@ -739,6 +783,11 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       if (!row) {
         throw new DialogueProgressNotFound(alias, endUserId);
       }
+
+      trackDialogue("dialogue.reset", organizationId, endUserId, {
+        scriptId: script.id,
+        scriptAlias: script.alias,
+      });
 
       return buildSessionView(script, row, []);
     },

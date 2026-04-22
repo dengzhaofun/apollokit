@@ -57,6 +57,7 @@ import { mailMessages, mailUserStates } from "../../schema/mail";
 import { itemGrantLogs } from "../../schema/item";
 import type { ItemService } from "../item";
 import type { RewardEntry } from "../../lib/rewards";
+import { getTraceId } from "../../lib/request-context";
 import {
   MailAlreadyClaimed,
   MailExpired,
@@ -83,7 +84,28 @@ import type {
   UnicastInput,
 } from "./validators";
 
-type MailDeps = Pick<AppDeps, "db">;
+// `events` optional: test sites build with `{ db }` only. `analytics`
+// is used for the pure-observational `mail.read` data-analytics event
+// (plan's "direct writer" path — no business module subscribes, so
+// skipping the event-bus trip saves a round of indirection and type
+// map churn). `mail.claimed` goes via event-bus because task / growth
+// systems can subscribe to it.
+type MailDeps = Pick<AppDeps, "db"> &
+  Partial<Pick<AppDeps, "events" | "analytics">>;
+
+// Extend the in-runtime event-bus type map with mail-domain events that
+// go via the bus. `mail.read` is NOT listed here — it's written directly
+// to the analytics writer below.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "mail.claimed": {
+      organizationId: string;
+      endUserId: string;
+      messageId: string;
+      rewards: RewardEntry[];
+    };
+  }
+}
 
 const CLAIM_SOURCE = "mail_claim";
 
@@ -129,7 +151,7 @@ function validateOriginPair(input: {
 }
 
 export function createMailService(d: MailDeps, itemSvc: ItemService) {
-  const { db } = d;
+  const { db, events, analytics } = d;
 
   async function loadMessageById(
     organizationId: string,
@@ -506,7 +528,26 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         })
         .returning();
 
-      if (upserted[0]) return upserted[0];
+      if (upserted[0]) {
+        // `mail.read` is a pure observational event — no business module
+        // subscribes to it. Skip event-bus and write to Tinybird
+        // directly. `traceId` comes from the per-request ALS store, and
+        // the writer is fire-and-forget: a Tinybird outage never breaks
+        // the markRead call.
+        if (analytics) {
+          void analytics.writer.logEvent({
+            ts: now,
+            orgId: organizationId,
+            endUserId,
+            traceId: getTraceId(),
+            event: "mail.read",
+            source: "mail",
+            amount: 1,
+            eventData: { messageId },
+          });
+        }
+        return upserted[0];
+      }
 
       // setWhere failed (already read). Re-read to return current state.
       const rows = await db
@@ -657,6 +698,15 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
           grants: msg.rewards,
           source: CLAIM_SOURCE,
           sourceId,
+        });
+      }
+
+      if (events) {
+        await events.emit("mail.claimed", {
+          organizationId,
+          endUserId,
+          messageId,
+          rewards: msg.rewards,
         });
       }
 

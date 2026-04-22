@@ -76,7 +76,28 @@ import type {
 import { RESET_MODES } from "./types";
 import type { CreateConfigInput, UpdateConfigInput } from "./validators";
 
-type CheckInDeps = Pick<AppDeps, "db">;
+// `events` optional to keep `createCheckInService({ db })` test sites
+// compiling. Production wiring hands it in via `deps`.
+type CheckInDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with check-in-domain events.
+// Task / achievement systems will subscribe to this downstream for
+// "check in N days in a row" style progression.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "check_in.completed": {
+      organizationId: string;
+      endUserId: string;
+      configId: string;
+      cycleKey: string;
+      dateKey: string;
+      streak: number;
+      cycleDays: number;
+      justCompletedCycle: boolean;
+      rewards: RewardEntry[] | null;
+    };
+  }
+}
 
 /** Treat strings that look like UUIDs as ids; everything else is an alias. */
 const UUID_RE =
@@ -115,7 +136,7 @@ function computeCompletion(
 }
 
 export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
-  const { db } = d;
+  const { db, events } = d;
 
   async function loadConfigByKey(
     organizationId: string,
@@ -527,6 +548,20 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
             rewards = items;
           }
         }
+      }
+
+      if (events) {
+        await events.emit("check_in.completed", {
+          organizationId: params.organizationId,
+          endUserId: params.endUserId,
+          configId: config.id,
+          cycleKey: newCycleKey,
+          dateKey: today,
+          streak: state.currentStreak,
+          cycleDays: state.currentCycleDays,
+          justCompletedCycle: justCompleted,
+          rewards,
+        });
       }
 
       return {

@@ -48,14 +48,36 @@ import {
 } from "./errors";
 import type { UpsertSettingsInput } from "./validators";
 
-type FriendDeps = Pick<AppDeps, "db">;
+// `events` optional to keep `createFriendService({ db })` test sites
+// compiling. Production wiring hands it in via `deps`.
+type FriendDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with friend-domain events.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "friend.request_sent": {
+      organizationId: string;
+      // `endUserId` = acting session user (the sender).
+      endUserId: string;
+      requestId: string;
+      toUserId: string;
+    };
+    "friend.request_accepted": {
+      organizationId: string;
+      // `endUserId` = acting session user (the accepter).
+      endUserId: string;
+      requestId: string;
+      fromUserId: string;
+    };
+  }
+}
 
 function orderPair(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
 }
 
 export function createFriendService(d: FriendDeps) {
-  const { db } = d;
+  const { db, events } = d;
 
   async function getSettingsOrDefaults(orgId: string) {
     const rows = await db
@@ -222,6 +244,16 @@ export function createFriendService(d: FriendDeps) {
           })
           .returning();
         if (!row) throw new Error("insert returned no row");
+
+        if (events) {
+          await events.emit("friend.request_sent", {
+            organizationId: orgId,
+            endUserId: fromUserId,
+            requestId: row.id,
+            toUserId,
+          });
+        }
+
         return row;
       } catch (err) {
         if (isUniqueViolation(err)) {
@@ -290,6 +322,15 @@ export function createFriendService(d: FriendDeps) {
           .onConflictDoNothing();
       } catch {
         // If somehow both exist, the friendship is still created — no-op is fine
+      }
+
+      if (events) {
+        await events.emit("friend.request_accepted", {
+          organizationId: orgId,
+          endUserId,
+          requestId,
+          fromUserId: req.fromUserId,
+        });
       }
 
       return updated[0]!;

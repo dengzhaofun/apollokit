@@ -73,7 +73,30 @@ import type {
   UpsertSettingsInput,
 } from "./validators";
 
-type FriendGiftDeps = Pick<AppDeps, "db">;
+// `events` optional to keep `createFriendGiftService({ db }, ...)` test
+// sites compiling. Production wiring hands it in via `deps`.
+type FriendGiftDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
+
+// Extend the in-runtime event-bus type map with friend-gift-domain events.
+declare module "../../lib/event-bus" {
+  interface EventMap {
+    "friend_gift.sent": {
+      organizationId: string;
+      // `endUserId` = sender (the acting session user).
+      endUserId: string;
+      sendId: string;
+      receiverUserId: string;
+      packageId: string;
+    };
+    "friend_gift.claimed": {
+      organizationId: string;
+      // `endUserId` = claimer (receiver acting in-session).
+      endUserId: string;
+      sendId: string;
+      senderUserId: string;
+    };
+  }
+}
 
 /**
  * Minimal interface for the friend service methods this module needs.
@@ -144,7 +167,7 @@ export function createFriendGiftService(
   friendSvc: FriendServiceDep,
   itemSvc: ItemServiceDep,
 ) {
-  const { db } = d;
+  const { db, events } = d;
 
   // ─── Settings ──────────────────────────────────────────────────
 
@@ -474,6 +497,17 @@ export function createFriendGiftService(
         })
         .returning();
       if (!send) throw new Error("insert returned no row");
+
+      if (events) {
+        await events.emit("friend_gift.sent", {
+          organizationId,
+          endUserId: senderUserId,
+          sendId: send.id,
+          receiverUserId: input.receiverUserId,
+          packageId: pkg.id,
+        });
+      }
+
       return send;
     },
 
@@ -530,6 +564,15 @@ export function createFriendGiftService(
         source: "friend_gift_claim",
         sourceId: giftId,
       });
+
+      if (events) {
+        await events.emit("friend_gift.claimed", {
+          organizationId,
+          endUserId,
+          sendId: claimed.id,
+          senderUserId: claimed.senderUserId,
+        });
+      }
 
       return claimed;
     },
