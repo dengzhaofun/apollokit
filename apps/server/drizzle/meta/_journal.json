@@ -281,6 +281,13 @@
       "when": 1776808333501,
       "tag": "0039_huge_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1776852808313,
+      "tag": "0040_natural_gateway",
+      "breakpoints": true
     }
   ]
 }
