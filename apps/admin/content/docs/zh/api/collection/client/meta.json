@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "collection_client_get_albums",
+    "collection_client_get_albums_by_key",
+    "collection_client_post_albums_by_key_sync",
+    "collection_client_post_milestones_by_id_claim"
+  ]
+}

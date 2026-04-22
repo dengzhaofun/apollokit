@@ -1,0 +1,8 @@
+{
+  "title": "Transactions",
+  "pages": [
+    "storage_box_transactions_post_deposits",
+    "storage_box_transactions_post_withdrawals",
+    "storage_box_transactions_get_deposits_by_enduserid"
+  ]
+}

@@ -5,10 +5,11 @@
  * read `c.var.session!.activeOrganizationId!` without null checks.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
 import { guildService } from "./index";
@@ -201,7 +202,7 @@ const errorResponses = {
   },
 };
 
-export const guildRouter = new OpenAPIHono<HonoEnv>();
+export const guildRouter = createAdminRouter();
 
 guildRouter.use("*", requireAdminOrApiKey);
 
@@ -223,7 +224,7 @@ guildRouter.onError((err, c) => {
 
 // GET /guild/settings
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -245,7 +246,7 @@ guildRouter.openapi(
 
 // PUT /guild/settings
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -274,7 +275,7 @@ guildRouter.openapi(
 
 // GET /guild/guilds
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/guilds",
     tags: [TAG],
@@ -301,7 +302,7 @@ guildRouter.openapi(
 
 // GET /guild/guilds/:id
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -325,7 +326,7 @@ guildRouter.openapi(
 
 // PUT /guild/guilds/:id
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -354,7 +355,7 @@ guildRouter.openapi(
 
 // DELETE /guild/guilds/:id (disband)
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -380,7 +381,7 @@ guildRouter.openapi(
 
 // POST /guild/guilds/:id/grant-exp
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/guilds/{id}/grant-exp",
     tags: [TAG],
@@ -412,7 +413,7 @@ guildRouter.openapi(
 
 // GET /guild/guilds/:id/members
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/guilds/{id}/members",
     tags: [TAG],
@@ -436,7 +437,7 @@ guildRouter.openapi(
 
 // GET /guild/guilds/:id/requests
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/guilds/{id}/requests",
     tags: [TAG],
@@ -464,7 +465,7 @@ guildRouter.openapi(
 
 // GET /guild/guilds/:id/contributions
 guildRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/guilds/{id}/contributions",
     tags: [TAG],

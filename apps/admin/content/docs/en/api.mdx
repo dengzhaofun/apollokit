@@ -1,0 +1,18 @@
+---
+title: API Reference
+description: Auto-generated OpenAPI reference (currently Chinese-only).
+---
+
+The full API reference is auto-generated from `apps/server/openapi.json` and currently lives under the **Chinese** locale only. Operation summaries / descriptions in the spec are not yet translated into English, so we ship a single source of truth.
+
+→ [Open the API reference (中文)](/docs/zh/api)
+
+## What's there
+
+- **459 operations** across 86 tags (Lottery, Shop, Check-In, Storage Box, …)
+- Per-operation playground (Send button) wired to your local server
+- `Authorization` block per route showing which credential the route accepts (Session cookie / `ak_…` / `cpk_…` + HMAC)
+- 6-language code samples (cURL / JavaScript / Go / Python / Java / C#)
+- Full response schemas for every declared status code (200/400/401/404/409)
+
+When the spec gains real bilingual descriptions, the generator (see `apps/admin/scripts/generate-api-docs.ts`) will emit `content/docs/en/api/` and this stub will be deleted.

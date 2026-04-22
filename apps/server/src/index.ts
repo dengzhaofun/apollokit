@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
+import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
 import { requestContext } from "./lib/request-context";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
@@ -99,7 +100,9 @@ import { rankClientRouter, rankRouter } from "./modules/rank";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
-const app = new OpenAPIHono<HonoEnv>();
+const app = new OpenAPIHono<HonoEnv>({
+  defaultHook: validationDefaultHook,
+});
 
 // Base middleware
 app.use("*", requestId());
@@ -246,11 +249,23 @@ app.route("/api/client/activity", activityClientRouter);
 app.route("/api/client/assist-pool", assistPoolClientRouter);
 
 // OpenAPI document + Scalar UI
+//
+// `registerSecuritySchemes` adds Session / AdminApiKey / ClientCredential
+// to `components.securitySchemes`. The `security` array on each route is
+// stamped per-router by `createAdminRoute` / `createClientRoute` /
+// `createPublicRoute` from `./lib/openapi`.
+registerSecuritySchemes(app);
+
 app.doc31("/openapi.json", {
   openapi: "3.1.0",
   info: {
     title: "apollokit API",
     version: "0.1.0",
+    description:
+      "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n" +
+      "- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`Authorization: Bearer ak_…`).\n" +
+      "- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client public key (`X-Client-Public-Key: cpk_…`) plus HMAC headers (`X-Client-Signature`, `X-Client-Timestamp`, `X-Client-Nonce`).\n\n" +
+      "Validation errors return HTTP 400 with `{ error, code: \"VALIDATION_ERROR\", issues, requestId }`. Domain errors return their declared status with `{ error, code, requestId }`.",
   },
   servers: [{ url: "http://localhost:8787", description: "Dev" }],
 });

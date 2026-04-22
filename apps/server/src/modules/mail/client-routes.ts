@@ -16,10 +16,11 @@
  * middleware), not from a session.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -83,7 +84,7 @@ const errorResponses = {
   },
 };
 
-export const mailClientRouter = new OpenAPIHono<HonoEnv>();
+export const mailClientRouter = createClientRouter();
 
 mailClientRouter.use("*", requireClientCredential);
 mailClientRouter.use("*", requireClientUser);
@@ -104,7 +105,7 @@ mailClientRouter.onError((err, c) => {
 
 // GET /messages — inbox
 mailClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/messages",
     tags: [TAG],
@@ -132,7 +133,7 @@ mailClientRouter.openapi(
 
 // GET /messages/:id — detail
 mailClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/messages/{id}",
     tags: [TAG],
@@ -159,7 +160,7 @@ mailClientRouter.openapi(
 
 // POST /messages/:id/read — mark as read
 mailClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/messages/{id}/read",
     tags: [TAG],
@@ -188,7 +189,7 @@ mailClientRouter.openapi(
 
 // POST /messages/:id/claim — claim rewards
 mailClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/messages/{id}/claim",
     tags: [TAG],

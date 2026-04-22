@@ -7,11 +7,12 @@
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { mediaLibraryService } from "./index";
@@ -87,7 +88,7 @@ const errorResponses = {
   },
 };
 
-export const mediaLibraryRouter = new OpenAPIHono<HonoEnv>();
+export const mediaLibraryRouter = createAdminRouter();
 
 // ─── Public-ish proxy route (no auth) ──────────────────────────
 //
@@ -134,7 +135,7 @@ mediaLibraryRouter.onError((err, c) => {
 // ─── Folders ───────────────────────────────────────────────────
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/folders",
     tags: [TAG],
@@ -165,7 +166,7 @@ mediaLibraryRouter.openapi(
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/folders",
     tags: [TAG],
@@ -193,7 +194,7 @@ mediaLibraryRouter.openapi(
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/folders/{id}",
     tags: [TAG],
@@ -222,7 +223,7 @@ mediaLibraryRouter.openapi(
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/folders/{id}",
     tags: [TAG],
@@ -241,7 +242,7 @@ mediaLibraryRouter.openapi(
 // ─── Assets ────────────────────────────────────────────────────
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/assets",
     tags: [TAG],
@@ -311,7 +312,7 @@ mediaLibraryRouter.post("/assets/upload", async (c) => {
 });
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/presign",
     tags: [TAG],
@@ -356,7 +357,7 @@ mediaLibraryRouter.openapi(
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/confirm",
     tags: [TAG],
@@ -383,7 +384,7 @@ mediaLibraryRouter.openapi(
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/assets/{id}",
     tags: [TAG],
@@ -402,7 +403,7 @@ mediaLibraryRouter.openapi(
 // OpenAPI doc — hand-register the multipart route so it shows up in
 // `/openapi.json` without going through zod-openapi's multipart machinery.
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/upload",
     tags: [TAG],

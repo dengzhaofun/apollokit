@@ -1,6 +1,6 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../env";
+import { createPublicRoute, createPublicRouter } from "../lib/openapi";
 
 const HealthResponse = z
   .object({
@@ -9,7 +9,7 @@ const HealthResponse = z
   })
   .openapi("HealthResponse");
 
-const route = createRoute({
+const route = createPublicRoute({
   method: "get",
   path: "/",
   tags: ["Meta"],
@@ -26,6 +26,6 @@ const route = createRoute({
   },
 });
 
-export const health = new OpenAPIHono<HonoEnv>().openapi(route, (c) => {
+export const health = createPublicRouter().openapi(route, (c) => {
   return c.json({ status: "ok" as const, requestId: c.get("requestId") });
 });

@@ -5,10 +5,11 @@
  * session cookie or an admin API key (ak_).
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
@@ -157,7 +158,7 @@ const errorResponses = {
   },
 };
 
-export const taskRouter = new OpenAPIHono<HonoEnv>();
+export const taskRouter = createAdminRouter();
 
 taskRouter.use("*", requireAdminOrApiKey);
 
@@ -178,7 +179,7 @@ taskRouter.onError((err, c) => {
 // ─── Categories ─────────────────────────────────────────────────
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/categories",
     tags: [TAG_CAT],
@@ -204,7 +205,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories",
     tags: [TAG_CAT],
@@ -227,7 +228,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -250,7 +251,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -282,7 +283,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -301,7 +302,7 @@ taskRouter.openapi(
 // ─── Definitions ────────────────────────────────────────────────
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -332,7 +333,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions",
     tags: [TAG_DEF],
@@ -366,7 +367,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions/{key}",
     tags: [TAG_DEF],
@@ -391,7 +392,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/definitions/{key}",
     tags: [TAG_DEF],
@@ -425,7 +426,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/definitions/{key}",
     tags: [TAG_DEF],
@@ -460,7 +461,7 @@ function serializeAssignment(row: TaskUserAssignment) {
 }
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/definitions/{key}/assignments",
     tags: [TAG_ASSIGN],
@@ -512,7 +513,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/definitions/{key}/assignments/{endUserId}",
     tags: [TAG_ASSIGN],
@@ -529,7 +530,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/definitions/{key}/assignments",
     tags: [TAG_ASSIGN],
@@ -567,7 +568,7 @@ taskRouter.openapi(
 );
 
 taskRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/assignments",
     tags: [TAG_ASSIGN],

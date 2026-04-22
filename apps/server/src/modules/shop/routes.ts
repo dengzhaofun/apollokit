@@ -5,10 +5,11 @@
  * OpenAPI-declared → body shape pattern as `exchange/routes.ts`.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
@@ -227,7 +228,7 @@ const errorResponses = {
   },
 };
 
-export const shopRouter = new OpenAPIHono<HonoEnv>();
+export const shopRouter = createAdminRouter();
 
 shopRouter.use("*", requireAdminOrApiKey);
 
@@ -248,7 +249,7 @@ shopRouter.onError((err, c) => {
 // ─── Categories ──────────────────────────────────────────────────
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/categories",
     tags: [TAG_CAT],
@@ -274,7 +275,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories",
     tags: [TAG_CAT],
@@ -295,7 +296,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories/tree",
     tags: [TAG_CAT],
@@ -316,7 +317,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/categories/{key}",
     tags: [TAG_CAT],
@@ -338,7 +339,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -369,7 +370,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -387,7 +388,7 @@ shopRouter.openapi(
 // ─── Tags ────────────────────────────────────────────────────────
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/tags",
     tags: [TAG_TAG],
@@ -411,7 +412,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/tags",
     tags: [TAG_TAG],
@@ -432,7 +433,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/tags/{key}",
     tags: [TAG_TAG],
@@ -454,7 +455,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/tags/{id}",
     tags: [TAG_TAG],
@@ -483,7 +484,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/tags/{id}",
     tags: [TAG_TAG],
@@ -501,7 +502,7 @@ shopRouter.openapi(
 // ─── Products ────────────────────────────────────────────────────
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/products",
     tags: [TAG_PROD],
@@ -527,7 +528,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/products",
     tags: [TAG_PROD],
@@ -549,7 +550,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/products/{key}",
     tags: [TAG_PROD],
@@ -571,7 +572,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/products/{id}",
     tags: [TAG_PROD],
@@ -602,7 +603,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/products/{id}",
     tags: [TAG_PROD],
@@ -620,7 +621,7 @@ shopRouter.openapi(
 // ─── Growth stages ───────────────────────────────────────────────
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/products/{productId}/stages",
     tags: [TAG_STG],
@@ -647,7 +648,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/products/{productId}/stages",
     tags: [TAG_STG],
@@ -680,7 +681,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/products/{productId}/stages",
     tags: [TAG_STG],
@@ -713,7 +714,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/stages/{stageId}",
     tags: [TAG_STG],
@@ -746,7 +747,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/stages/{stageId}",
     tags: [TAG_STG],
@@ -764,7 +765,7 @@ shopRouter.openapi(
 // ─── Purchase / claim (admin "acts on behalf of endUser") ───────
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/products/{id}/purchase",
     tags: [TAG_EXEC],
@@ -796,7 +797,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/users/{endUserId}/stages/{stageId}/claim",
     tags: [TAG_EXEC],
@@ -828,7 +829,7 @@ shopRouter.openapi(
 );
 
 shopRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/users/{endUserId}/products",
     tags: [TAG_EXEC],

@@ -9,10 +9,11 @@
  * Exposes: pull, multi-pull, user state, pull history.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -48,7 +49,7 @@ const errorResponses = {
   },
 };
 
-export const lotteryClientRouter = new OpenAPIHono<HonoEnv>();
+export const lotteryClientRouter = createClientRouter();
 
 lotteryClientRouter.use("*", requireClientCredential);
 lotteryClientRouter.use("*", requireClientUser);
@@ -69,7 +70,7 @@ lotteryClientRouter.onError((err, c) => {
 
 // POST /pull — single pull
 lotteryClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/pull",
     tags: [TAG],
@@ -104,7 +105,7 @@ lotteryClientRouter.openapi(
 
 // POST /multi-pull — batch pull
 lotteryClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/multi-pull",
     tags: [TAG],
@@ -140,7 +141,7 @@ lotteryClientRouter.openapi(
 
 // GET /pools/{poolKey}/state — user's pity state
 lotteryClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/pools/{poolKey}/state",
     tags: [TAG],
@@ -171,7 +172,7 @@ lotteryClientRouter.openapi(
 
 // GET /pools/{poolKey}/history — user's pull history
 lotteryClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/pools/{poolKey}/history",
     tags: [TAG],

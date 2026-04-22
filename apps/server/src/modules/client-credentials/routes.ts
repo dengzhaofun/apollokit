@@ -9,10 +9,11 @@
  * endpoints never expose it.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { clientCredentialService } from "./index";
@@ -66,7 +67,7 @@ const errorResponses = {
   },
 };
 
-export const clientCredentialRouter = new OpenAPIHono<HonoEnv>();
+export const clientCredentialRouter = createAdminRouter();
 
 clientCredentialRouter.use("*", requireAdminOrApiKey);
 
@@ -86,7 +87,7 @@ clientCredentialRouter.onError((err, c) => {
 
 // POST /client-credentials — create
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/",
     tags: [TAG],
@@ -130,7 +131,7 @@ clientCredentialRouter.openapi(
 
 // GET /client-credentials — list
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -154,7 +155,7 @@ clientCredentialRouter.openapi(
 
 // GET /client-credentials/:id
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{id}",
     tags: [TAG],
@@ -178,7 +179,7 @@ clientCredentialRouter.openapi(
 
 // POST /client-credentials/:id/revoke
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/revoke",
     tags: [TAG],
@@ -202,7 +203,7 @@ clientCredentialRouter.openapi(
 
 // POST /client-credentials/:id/rotate
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/rotate",
     tags: [TAG],
@@ -226,7 +227,7 @@ clientCredentialRouter.openapi(
 
 // PATCH /client-credentials/:id/dev-mode
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{id}/dev-mode",
     tags: [TAG],
@@ -256,7 +257,7 @@ clientCredentialRouter.openapi(
 
 // DELETE /client-credentials/:id
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{id}",
     tags: [TAG],

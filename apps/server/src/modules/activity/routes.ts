@@ -8,10 +8,11 @@
  * re-exposed behind `requireClientCredential`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { ActivityConfig } from "../../schema/activity";
 import { ModuleError } from "./errors";
@@ -96,7 +97,7 @@ const errorResponses = {
   },
 };
 
-export const activityRouter = new OpenAPIHono<HonoEnv>();
+export const activityRouter = createAdminRouter();
 
 activityRouter.use("*", requireAdminOrApiKey);
 
@@ -113,7 +114,7 @@ activityRouter.onError((err, c) => {
 // ─── Activity CRUD ──────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/",
     tags: [TAG],
@@ -139,7 +140,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -164,7 +165,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{key}",
     tags: [TAG],
@@ -189,7 +190,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{id}",
     tags: [TAG],
@@ -217,7 +218,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{id}",
     tags: [TAG],
@@ -236,7 +237,7 @@ activityRouter.openapi(
 // ─── Lifecycle ──────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/publish",
     tags: [TAG],
@@ -278,7 +279,7 @@ activityRouter.openapi(
 // ─── Nodes ──────────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/nodes",
     tags: [TAG],
@@ -308,7 +309,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{key}/nodes",
     tags: [TAG],
@@ -335,7 +336,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/nodes/{id}",
     tags: [TAG],
@@ -363,7 +364,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/nodes/{id}",
     tags: [TAG],
@@ -382,7 +383,7 @@ activityRouter.openapi(
 // ─── Schedules ──────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/schedules",
     tags: [TAG],
@@ -416,7 +417,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{key}/schedules",
     tags: [TAG],
@@ -443,7 +444,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/schedules/{id}",
     tags: [TAG],
@@ -462,7 +463,7 @@ activityRouter.openapi(
 // ─── Player-facing (proxied through admin auth for MVP) ────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/join",
     tags: [TAG],
@@ -495,7 +496,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/add-points",
     tags: [TAG],
@@ -536,7 +537,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{key}/claim-milestone",
     tags: [TAG],
@@ -570,7 +571,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{key}/view/{endUserId}",
     tags: [TAG],
@@ -608,7 +609,7 @@ activityRouter.openapi(
 // ─── Ops ────────────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/tick/run",
     tags: [TAG],
@@ -641,7 +642,7 @@ activityRouter.openapi(
 // ─── Webhook endpoints ──────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/webhook-endpoints",
     tags: [TAG],
@@ -670,7 +671,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/webhook-endpoints",
     tags: [TAG],
@@ -699,7 +700,7 @@ activityRouter.openapi(
 // ─── Analytics ──────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{key}/analytics",
     tags: [TAG],
@@ -752,7 +753,7 @@ activityRouter.openapi(
 // ─── Templates ──────────────────────────────────────────────────
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/templates",
     tags: [TAG],
@@ -781,7 +782,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/templates",
     tags: [TAG],
@@ -808,7 +809,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/templates/{id}",
     tags: [TAG],
@@ -825,7 +826,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/templates/{id}/instantiate",
     tags: [TAG],
@@ -861,7 +862,7 @@ activityRouter.openapi(
 );
 
 activityRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/webhook-endpoints/{id}",
     tags: [TAG],

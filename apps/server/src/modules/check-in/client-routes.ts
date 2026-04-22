@@ -14,11 +14,12 @@
  * client credential (middleware), not from a session.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -95,7 +96,7 @@ const ClientStateQuerySchema = z.object({
   }),
 });
 
-export const checkInClientRouter = new OpenAPIHono<HonoEnv>();
+export const checkInClientRouter = createClientRouter();
 
 checkInClientRouter.use("*", requireClientCredential);
 checkInClientRouter.use("*", requireClientUser);
@@ -116,7 +117,7 @@ checkInClientRouter.onError((err, c) => {
 
 // POST /check-ins — perform a check-in
 checkInClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/check-ins",
     tags: [TAG],
@@ -161,7 +162,7 @@ checkInClientRouter.openapi(
 
 // GET /state?configKey=xxx — current user's check-in state
 checkInClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/state",
     tags: [TAG],

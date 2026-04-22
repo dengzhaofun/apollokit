@@ -11,10 +11,11 @@
  * onError maps `ModuleError` to JSON with `{ error, code, requestId }`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { rankService } from "./index";
@@ -160,7 +161,7 @@ const errorResponses = {
   },
 };
 
-export const rankRouter = new OpenAPIHono<HonoEnv>();
+export const rankRouter = createAdminRouter();
 
 rankRouter.use("*", requireAdminOrApiKey);
 
@@ -177,7 +178,7 @@ rankRouter.onError((err, c) => {
 // ─── Settle match (server-to-server ingest) ─────────────────────
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/settle",
     tags: [TAG],
@@ -215,7 +216,7 @@ rankRouter.openapi(
 // ─── Tier configs ───────────────────────────────────────────────
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/tier-configs",
     tags: [TAG],
@@ -244,7 +245,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/tier-configs",
     tags: [TAG],
@@ -267,7 +268,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/tier-configs/{key}",
     tags: [TAG],
@@ -292,7 +293,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/tier-configs/{key}",
     tags: [TAG],
@@ -323,7 +324,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/tier-configs/{id}",
     tags: [TAG],
@@ -342,7 +343,7 @@ rankRouter.openapi(
 // ─── Seasons ────────────────────────────────────────────────────
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/seasons",
     tags: [TAG],
@@ -369,7 +370,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/seasons",
     tags: [TAG],
@@ -394,7 +395,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/seasons/{id}",
     tags: [TAG],
@@ -417,7 +418,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/seasons/{id}",
     tags: [TAG],
@@ -446,7 +447,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/seasons/{id}/activate",
     tags: [TAG],
@@ -469,7 +470,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/seasons/{id}/finalize",
     tags: [TAG],
@@ -496,7 +497,7 @@ rankRouter.openapi(
 // ─── Player states ──────────────────────────────────────────────
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/seasons/{id}/players",
     tags: [TAG],
@@ -531,7 +532,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/seasons/{seasonId}/players/{endUserId}",
     tags: [TAG],
@@ -564,7 +565,7 @@ rankRouter.openapi(
 // ─── Matches (audit) ────────────────────────────────────────────
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/seasons/{id}/matches",
     tags: [TAG],
@@ -617,7 +618,7 @@ rankRouter.openapi(
 );
 
 rankRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/matches/{id}",
     tags: [TAG],

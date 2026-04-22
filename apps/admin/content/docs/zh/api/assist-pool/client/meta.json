@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "assist_pool_client_get_instances",
+    "assist_pool_client_post_instances",
+    "assist_pool_client_get_instances_by_instanceid",
+    "assist_pool_client_post_instances_by_instanceid_contribute"
+  ]
+}

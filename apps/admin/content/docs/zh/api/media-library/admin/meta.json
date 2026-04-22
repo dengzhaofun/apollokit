@@ -1,0 +1,14 @@
+{
+  "title": "Admin",
+  "pages": [
+    "media_library_admin_get_folders",
+    "media_library_admin_post_folders",
+    "media_library_admin_patch_folders_by_id",
+    "media_library_admin_delete_folders_by_id",
+    "media_library_admin_get_assets",
+    "media_library_admin_post_assets_presign",
+    "media_library_admin_post_assets_confirm",
+    "media_library_admin_delete_assets_by_id",
+    "media_library_admin_post_assets_upload"
+  ]
+}

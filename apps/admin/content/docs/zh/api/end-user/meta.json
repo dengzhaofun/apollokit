@@ -1,0 +1,13 @@
+{
+  "title": "End User",
+  "pages": [
+    "end_user_post_sync",
+    "end_user_get_root",
+    "end_user_get_by_id",
+    "end_user_patch_by_id",
+    "end_user_delete_by_id",
+    "end_user_post_by_id_disable",
+    "end_user_post_by_id_enable",
+    "end_user_post_by_id_sign_out_all"
+  ]
+}

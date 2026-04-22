@@ -7,10 +7,11 @@
  * external event to canonical.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 
@@ -40,7 +41,7 @@ const errorResponses = {
   },
 };
 
-export const eventCatalogRouter = new OpenAPIHono<HonoEnv>();
+export const eventCatalogRouter = createAdminRouter();
 
 eventCatalogRouter.use("*", requireAdminOrApiKey);
 
@@ -59,7 +60,7 @@ eventCatalogRouter.onError((err, c) => {
 });
 
 eventCatalogRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -82,7 +83,7 @@ eventCatalogRouter.openapi(
 );
 
 eventCatalogRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{name}",
     tags: [TAG],
@@ -105,7 +106,7 @@ eventCatalogRouter.openapi(
 );
 
 eventCatalogRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{name}",
     tags: [TAG],

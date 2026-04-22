@@ -15,10 +15,11 @@
  * documented on the module's service.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -63,7 +64,7 @@ const errorResponses = {
   },
 };
 
-export const dialogueClientRouter = new OpenAPIHono<HonoEnv>();
+export const dialogueClientRouter = createClientRouter();
 
 dialogueClientRouter.use("*", requireClientCredential);
 dialogueClientRouter.use("*", requireClientUser);
@@ -83,7 +84,7 @@ dialogueClientRouter.onError((err, c) => {
 });
 
 dialogueClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/scripts/{alias}/start",
     tags: [TAG],
@@ -111,7 +112,7 @@ dialogueClientRouter.openapi(
 );
 
 dialogueClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/scripts/{alias}/advance",
     tags: [TAG],
@@ -148,7 +149,7 @@ dialogueClientRouter.openapi(
 );
 
 dialogueClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/scripts/{alias}/reset",
     tags: [TAG],

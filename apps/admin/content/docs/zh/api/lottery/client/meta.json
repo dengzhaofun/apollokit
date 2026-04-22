@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "lottery_client_post_pull",
+    "lottery_client_post_multi_pull",
+    "lottery_client_get_pools_by_poolkey_state",
+    "lottery_client_get_pools_by_poolkey_history"
+  ]
+}

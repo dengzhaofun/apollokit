@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "task_client_post_events",
+    "task_client_post_list",
+    "task_client_post_claim_by_taskid",
+    "task_client_post_claim_tier"
+  ]
+}

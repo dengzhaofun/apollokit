@@ -21,10 +21,11 @@
  * fields in body or query.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { ModuleError } from "./errors";
@@ -54,7 +55,7 @@ const errorResponses = {
   },
 };
 
-export const leaderboardClientRouter = new OpenAPIHono<HonoEnv>();
+export const leaderboardClientRouter = createClientRouter();
 
 leaderboardClientRouter.use("*", requireClientCredential);
 leaderboardClientRouter.use("*", requireClientUser);
@@ -108,7 +109,7 @@ const ClientNeighborsQuery = z.object({
 });
 
 leaderboardClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/configs/{alias}/top",
     tags: [TAG],
@@ -140,7 +141,7 @@ leaderboardClientRouter.openapi(
 );
 
 leaderboardClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/configs/{alias}/neighbors",
     tags: [TAG],
@@ -176,7 +177,7 @@ leaderboardClientRouter.openapi(
 );
 
 leaderboardClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/configs/{alias}/snapshots",
     tags: [TAG],

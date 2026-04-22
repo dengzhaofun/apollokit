@@ -5,11 +5,12 @@
  * organizationId is read from session.activeOrganizationId.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAuth } from "../../middleware/require-auth";
 import { inviteService } from "./index";
@@ -113,7 +114,7 @@ const errorResponses = {
   },
 };
 
-export const inviteRouter = new OpenAPIHono<HonoEnv>();
+export const inviteRouter = createAdminRouter();
 
 inviteRouter.use("*", requireAuth);
 
@@ -134,7 +135,7 @@ inviteRouter.onError((err, c) => {
 /* ── GET /settings ────────────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -160,7 +161,7 @@ inviteRouter.openapi(
 /* ── PUT /settings ────────────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -190,7 +191,7 @@ inviteRouter.openapi(
 /* ── GET /relationships ──────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/relationships",
     tags: [TAG],
@@ -224,7 +225,7 @@ inviteRouter.openapi(
 /* ── DELETE /relationships/:id ───────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/relationships/{id}",
     tags: [TAG],
@@ -245,7 +246,7 @@ inviteRouter.openapi(
 /* ── GET /users/:endUserId/stats ─────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/users/{endUserId}/stats",
     tags: [TAG],
@@ -269,7 +270,7 @@ inviteRouter.openapi(
 /* ── POST /users/:endUserId/reset-code ───────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/users/{endUserId}/reset-code",
     tags: [TAG],

@@ -1,0 +1,10 @@
+{
+  "title": "Admin",
+  "pages": [
+    "mail_admin_get_messages",
+    "mail_admin_post_messages",
+    "mail_admin_get_messages_by_id",
+    "mail_admin_delete_messages_by_id",
+    "mail_admin_post_messages_by_id_revoke"
+  ]
+}

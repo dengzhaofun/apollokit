@@ -16,11 +16,12 @@
  *   POST /{alias}/click       → fire-and-forget event
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -50,7 +51,7 @@ const errorResponses = {
   },
 };
 
-export const announcementClientRouter = new OpenAPIHono<HonoEnv>();
+export const announcementClientRouter = createClientRouter();
 
 announcementClientRouter.use("*", requireClientCredential);
 announcementClientRouter.use("*", requireClientUser);
@@ -70,7 +71,7 @@ announcementClientRouter.onError((err, c) => {
 });
 
 announcementClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/active",
     tags: [TAG],
@@ -102,7 +103,7 @@ announcementClientRouter.openapi(
 );
 
 announcementClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/impression",
     tags: [TAG],
@@ -126,7 +127,7 @@ announcementClientRouter.openapi(
 );
 
 announcementClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/click",
     tags: [TAG],

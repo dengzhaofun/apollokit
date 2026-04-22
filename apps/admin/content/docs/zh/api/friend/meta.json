@@ -1,0 +1,9 @@
+{
+  "title": "Friend",
+  "pages": [
+    "friend_get_settings",
+    "friend_put_settings",
+    "friend_get_relationships",
+    "friend_delete_relationships_by_id"
+  ]
+}

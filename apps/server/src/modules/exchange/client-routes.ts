@@ -11,10 +11,11 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -46,7 +47,7 @@ const errorResponses = {
   },
 };
 
-export const exchangeClientRouter = new OpenAPIHono<HonoEnv>();
+export const exchangeClientRouter = createClientRouter();
 
 exchangeClientRouter.use("*", requireClientCredential);
 exchangeClientRouter.use("*", requireClientUser);
@@ -67,7 +68,7 @@ exchangeClientRouter.onError((err, c) => {
 
 // POST /execute — execute an exchange
 exchangeClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/execute",
     tags: [TAG],

@@ -8,10 +8,11 @@
  * routes.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type {
   LeaderboardConfig,
@@ -82,7 +83,7 @@ const errorResponses = {
   },
 };
 
-export const leaderboardRouter = new OpenAPIHono<HonoEnv>();
+export const leaderboardRouter = createAdminRouter();
 
 leaderboardRouter.use("*", requireAdminOrApiKey);
 
@@ -102,7 +103,7 @@ leaderboardRouter.onError((err, c) => {
 
 // POST /leaderboard/configs
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -131,7 +132,7 @@ leaderboardRouter.openapi(
 
 // GET /leaderboard/configs
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -153,7 +154,7 @@ leaderboardRouter.openapi(
 
 // GET /leaderboard/configs/:key
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -179,7 +180,7 @@ leaderboardRouter.openapi(
 
 // PATCH /leaderboard/configs/:id
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG],
@@ -214,7 +215,7 @@ leaderboardRouter.openapi(
 
 // DELETE /leaderboard/configs/:id
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
@@ -236,7 +237,7 @@ leaderboardRouter.openapi(
 
 // POST /leaderboard/contribute — fan-out score update
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/contribute",
     tags: [TAG],
@@ -277,7 +278,7 @@ leaderboardRouter.openapi(
 
 // GET /leaderboard/configs/:key/top
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/top",
     tags: [TAG],
@@ -312,7 +313,7 @@ leaderboardRouter.openapi(
 
 // GET /leaderboard/configs/:key/neighbors
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/neighbors",
     tags: [TAG],
@@ -348,7 +349,7 @@ leaderboardRouter.openapi(
 
 // GET /leaderboard/configs/:key/snapshots
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}/snapshots",
     tags: [TAG],
@@ -391,7 +392,7 @@ leaderboardRouter.openapi(
 
 // POST /leaderboard/settle/run — manual trigger for ops/backfill
 leaderboardRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/settle/run",
     tags: [TAG],

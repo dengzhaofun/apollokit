@@ -2,10 +2,11 @@
  * Admin-facing HTTP routes for the exchange module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { ModuleError } from "./errors";
@@ -112,7 +113,7 @@ const errorResponses = {
   },
 };
 
-export const exchangeRouter = new OpenAPIHono<HonoEnv>();
+export const exchangeRouter = createAdminRouter();
 
 exchangeRouter.use("*", requireAdminOrApiKey);
 
@@ -133,7 +134,7 @@ exchangeRouter.onError((err, c) => {
 // ─── Config routes ────────────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG_CFG],
@@ -157,7 +158,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG_CFG],
@@ -178,7 +179,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG_CFG],
@@ -201,7 +202,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -227,7 +228,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -249,7 +250,7 @@ exchangeRouter.openapi(
 // ─── Option routes ────────────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{configKey}/options",
     tags: [TAG_OPT],
@@ -279,7 +280,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{configKey}/options",
     tags: [TAG_OPT],
@@ -302,7 +303,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/options/{optionId}",
     tags: [TAG_OPT],
@@ -332,7 +333,7 @@ exchangeRouter.openapi(
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/options/{optionId}",
     tags: [TAG_OPT],
@@ -354,7 +355,7 @@ exchangeRouter.openapi(
 // ─── Exchange execution ───────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/options/{optionId}/execute",
     tags: [TAG_EXEC],
@@ -387,7 +388,7 @@ exchangeRouter.openapi(
 
 // GET user exchange state for an option
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/options/{optionId}/users/{endUserId}/state",
     tags: [TAG_EXEC],

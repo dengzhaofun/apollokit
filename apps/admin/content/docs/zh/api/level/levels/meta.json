@@ -1,0 +1,10 @@
+{
+  "title": "Levels",
+  "pages": [
+    "level_levels_get_configs_by_id_levels",
+    "level_levels_post_configs_by_id_levels",
+    "level_levels_get_levels_by_id",
+    "level_levels_delete_levels_by_id",
+    "level_levels_put_levels_by_id"
+  ]
+}

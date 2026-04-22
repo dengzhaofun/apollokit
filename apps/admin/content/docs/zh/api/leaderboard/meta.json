@@ -1,0 +1,15 @@
+{
+  "title": "Leaderboard",
+  "pages": [
+    "leaderboard_get_configs",
+    "leaderboard_post_configs",
+    "leaderboard_get_configs_by_key",
+    "leaderboard_patch_configs_by_id",
+    "leaderboard_delete_configs_by_id",
+    "leaderboard_post_contribute",
+    "leaderboard_get_configs_by_key_top",
+    "leaderboard_get_configs_by_key_neighbors",
+    "leaderboard_get_configs_by_key_snapshots",
+    "leaderboard_post_settle_run"
+  ]
+}

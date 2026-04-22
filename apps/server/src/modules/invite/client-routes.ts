@@ -11,11 +11,12 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -104,7 +105,7 @@ const errorResponses = {
   },
 };
 
-export const inviteClientRouter = new OpenAPIHono<HonoEnv>();
+export const inviteClientRouter = createClientRouter();
 
 inviteClientRouter.use("*", requireClientCredential);
 inviteClientRouter.use("*", requireClientUser);
@@ -126,7 +127,7 @@ inviteClientRouter.onError((err, c) => {
 /* ── GET /my-code ─────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/my-code",
     tags: [TAG],
@@ -158,7 +159,7 @@ inviteClientRouter.openapi(
 /* ── POST /reset-my-code ──────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/reset-my-code",
     tags: [TAG],
@@ -190,7 +191,7 @@ inviteClientRouter.openapi(
 /* ── GET /summary ─────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/summary",
     tags: [TAG],
@@ -216,7 +217,7 @@ inviteClientRouter.openapi(
 /* ── GET /invitees ────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/invitees",
     tags: [TAG],
@@ -247,7 +248,7 @@ inviteClientRouter.openapi(
 /* ── POST /bind ───────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/bind",
     tags: [TAG],
@@ -291,7 +292,7 @@ inviteClientRouter.openapi(
 /* ── POST /qualify ────────────────────────────────────────────── */
 
 inviteClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/qualify",
     tags: [TAG],

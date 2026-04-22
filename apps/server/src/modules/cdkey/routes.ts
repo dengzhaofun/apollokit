@@ -2,10 +2,11 @@
  * Admin-facing HTTP routes for the cdkey module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import { ModuleError } from "./errors";
@@ -110,7 +111,7 @@ const errorResponses = {
   },
 };
 
-export const cdkeyRouter = new OpenAPIHono<HonoEnv>();
+export const cdkeyRouter = createAdminRouter();
 
 cdkeyRouter.use("*", requireAdminOrApiKey);
 
@@ -131,7 +132,7 @@ cdkeyRouter.onError((err, c) => {
 // ─── Batch CRUD ────────────────────────────────────────────────────
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/batches",
     tags: [TAG_BATCH],
@@ -157,7 +158,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/batches",
     tags: [TAG_BATCH],
@@ -178,7 +179,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/batches/{key}",
     tags: [TAG_BATCH],
@@ -201,7 +202,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/batches/{key}",
     tags: [TAG_BATCH],
@@ -227,7 +228,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/batches/{key}",
     tags: [TAG_BATCH],
@@ -249,7 +250,7 @@ cdkeyRouter.openapi(
 // ─── Code management ──────────────────────────────────────────────
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/batches/{batchId}/codes/generate",
     tags: [TAG_CODES],
@@ -283,7 +284,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/batches/{batchId}/codes",
     tags: [TAG_CODES],
@@ -317,7 +318,7 @@ cdkeyRouter.openapi(
 );
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/codes/{codeId}/revoke",
     tags: [TAG_CODES],
@@ -373,7 +374,7 @@ cdkeyRouter.get("/batches/:batchId/codes.csv", async (c) => {
 // ─── Logs ─────────────────────────────────────────────────────────
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/batches/{batchId}/logs",
     tags: [TAG_LOGS],
@@ -409,7 +410,7 @@ cdkeyRouter.openapi(
 // ─── Admin redeem (service tools / manual grants) ─────────────────
 
 cdkeyRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/redeem",
     tags: [TAG_REDEEM],

@@ -9,10 +9,11 @@
  * `client-routes.ts`.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import { collectionService } from "./index";
@@ -207,7 +208,7 @@ const errorResponses = {
   },
 };
 
-export const collectionRouter = new OpenAPIHono<HonoEnv>();
+export const collectionRouter = createAdminRouter();
 
 collectionRouter.use("*", requireAdminOrApiKey);
 
@@ -228,7 +229,7 @@ collectionRouter.onError((err, c) => {
 // ─── Albums ──────────────────────────────────────────────────────
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums",
     tags: [TAG],
@@ -252,7 +253,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums",
     tags: [TAG],
@@ -273,7 +274,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums/{key}",
     tags: [TAG],
@@ -296,7 +297,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/albums/{id}",
     tags: [TAG],
@@ -326,7 +327,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/albums/{id}",
     tags: [TAG],
@@ -345,7 +346,7 @@ collectionRouter.openapi(
 // ─── Groups ──────────────────────────────────────────────────────
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums/{key}/groups",
     tags: [TAG_GROUP],
@@ -375,7 +376,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums/{key}/groups",
     tags: [TAG_GROUP],
@@ -398,7 +399,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/groups/{id}",
     tags: [TAG_GROUP],
@@ -428,7 +429,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/groups/{id}",
     tags: [TAG_GROUP],
@@ -447,7 +448,7 @@ collectionRouter.openapi(
 // ─── Entries ─────────────────────────────────────────────────────
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums/{key}/entries",
     tags: [TAG_ENTRY],
@@ -477,7 +478,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums/{key}/entries:bulk",
     tags: [TAG_ENTRY],
@@ -510,7 +511,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums/{key}/entries",
     tags: [TAG_ENTRY],
@@ -533,7 +534,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/entries/{id}",
     tags: [TAG_ENTRY],
@@ -563,7 +564,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/entries/{id}",
     tags: [TAG_ENTRY],
@@ -582,7 +583,7 @@ collectionRouter.openapi(
 // ─── Milestones ──────────────────────────────────────────────────
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums/{key}/milestones",
     tags: [TAG_MILESTONE],
@@ -614,7 +615,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums/{key}/milestones",
     tags: [TAG_MILESTONE],
@@ -639,7 +640,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/milestones/{id}",
     tags: [TAG_MILESTONE],
@@ -671,7 +672,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/milestones/{id}",
     tags: [TAG_MILESTONE],
@@ -690,7 +691,7 @@ collectionRouter.openapi(
 // ─── Stats + rescan (ops) ────────────────────────────────────────
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/albums/{key}/stats",
     tags: [TAG_OPS],
@@ -713,7 +714,7 @@ collectionRouter.openapi(
 );
 
 collectionRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/albums/{key}/rescan",
     tags: [TAG_OPS],

@@ -1,0 +1,9 @@
+{
+  "title": "Wallet",
+  "pages": [
+    "currency_wallet_get_wallets",
+    "currency_wallet_get_wallets_by_enduserid_by_currencyid",
+    "currency_wallet_post_wallets_grant",
+    "currency_wallet_post_wallets_deduct"
+  ]
+}

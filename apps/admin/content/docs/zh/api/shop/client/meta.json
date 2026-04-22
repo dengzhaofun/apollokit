@@ -1,0 +1,8 @@
+{
+  "title": "Client",
+  "pages": [
+    "shop_client_post_purchase",
+    "shop_client_post_claim_stage",
+    "shop_client_get_products"
+  ]
+}

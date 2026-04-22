@@ -1,0 +1,7 @@
+{
+  "title": "Ops",
+  "pages": [
+    "collection_ops_get_albums_by_key_stats",
+    "collection_ops_post_albums_by_key_rescan"
+  ]
+}

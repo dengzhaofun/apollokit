@@ -1,0 +1,10 @@
+{
+  "title": "Categories",
+  "pages": [
+    "item_categories_get_categories",
+    "item_categories_post_categories",
+    "item_categories_get_categories_by_key",
+    "item_categories_patch_categories_by_id",
+    "item_categories_delete_categories_by_id"
+  ]
+}

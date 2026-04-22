@@ -11,11 +11,12 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -60,7 +61,7 @@ const DefinitionIdQuery = z.object({
   }),
 });
 
-export const itemClientRouter = new OpenAPIHono<HonoEnv>();
+export const itemClientRouter = createClientRouter();
 
 itemClientRouter.use("*", requireClientCredential);
 itemClientRouter.use("*", requireClientUser);
@@ -81,7 +82,7 @@ itemClientRouter.onError((err, c) => {
 
 // GET /inventory
 itemClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/inventory",
     tags: [TAG],
@@ -112,7 +113,7 @@ itemClientRouter.openapi(
 
 // GET /balance/:key
 itemClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/balance/{key}",
     tags: [TAG],
@@ -144,7 +145,7 @@ itemClientRouter.openapi(
 
 // POST /use — use an item (deduct + trigger lottery if linked)
 itemClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/use",
     tags: [TAG],

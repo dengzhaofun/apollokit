@@ -1,0 +1,18 @@
+{
+  "title": "Client",
+  "pages": [
+    "team_client_post_teams",
+    "team_client_get_my_team",
+    "team_client_get_teams_by_id",
+    "team_client_post_teams_by_id_join",
+    "team_client_post_teams_by_id_leave",
+    "team_client_post_teams_by_id_dissolve",
+    "team_client_post_teams_by_id_kick_by_userid",
+    "team_client_post_teams_by_id_transfer_leader",
+    "team_client_put_teams_by_id_status",
+    "team_client_post_teams_by_id_invite",
+    "team_client_post_invitations_by_id_accept",
+    "team_client_post_invitations_by_id_reject",
+    "team_client_post_quick_match"
+  ]
+}

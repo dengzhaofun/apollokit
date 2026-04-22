@@ -1,0 +1,17 @@
+{
+  "title": "Client",
+  "pages": [
+    "friend_client_post_requests",
+    "friend_client_get_requests_incoming",
+    "friend_client_get_requests_outgoing",
+    "friend_client_post_requests_by_id_accept",
+    "friend_client_post_requests_by_id_reject",
+    "friend_client_post_requests_by_id_cancel",
+    "friend_client_get_friends",
+    "friend_client_delete_friends_by_id",
+    "friend_client_get_friends_mutual",
+    "friend_client_get_blocks",
+    "friend_client_post_blocks",
+    "friend_client_delete_blocks_by_blockeduserid"
+  ]
+}

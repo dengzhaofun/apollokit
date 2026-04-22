@@ -1,0 +1,30 @@
+---
+title: API Overview
+description: apollokit API v0.1.0
+---
+
+本节由 `pnpm --filter=admin gen:api-docs` 从 `apps/server/openapi.json` 自动生成 — 请勿手动编辑这些 MDX。
+
+| 指标 | 数量 |
+| --- | ---: |
+| Operations | 459 |
+| Tags（左侧分组） | 86 |
+| Schemas | 427 |
+
+> apollokit API v0.1.0
+
+## 鉴权速览
+
+- **Admin** 路由（`/api/<module>/...`）：Better Auth session cookie 或 `Authorization: Bearer ak_…`
+- **Client** 路由（`/api/client/<module>/...`）：`X-Client-Public-Key: cpk_…` + HMAC（`X-Client-Signature` / `X-Client-Timestamp` / `X-Client-Nonce`）
+
+## 怎么用
+
+1. 在左侧 sidebar 找到对应模块（每个 `tag` 一个分组）。
+2. 进入具体 operation：
+   - 顶部 playground 输入参数，点击 **Send** 直接试调；
+   - **Authorization** 区显示需要哪种凭证；
+   - 下方 **Response Body** 列出每个状态码（200/400/401/404/409）的 schema 与示例；
+   - 多语言代码示例（cURL/JavaScript/Go/Python/Java/C#）随选随复制。
+
+> 想要原始 spec？`pnpm --filter=server openapi:dump` 后看 [apps/server/openapi.json](https://github.com/dengzhaofun/apollokit/blob/main/apps/server/openapi.json)。

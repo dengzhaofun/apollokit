@@ -1,0 +1,9 @@
+{
+  "title": "Client",
+  "pages": [
+    "mail_client_get_messages",
+    "mail_client_get_messages_by_id",
+    "mail_client_post_messages_by_id_read",
+    "mail_client_post_messages_by_id_claim"
+  ]
+}

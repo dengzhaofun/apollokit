@@ -1,0 +1,11 @@
+{
+  "title": "Categories",
+  "pages": [
+    "shop_categories_get_categories",
+    "shop_categories_post_categories",
+    "shop_categories_get_categories_tree",
+    "shop_categories_get_categories_by_key",
+    "shop_categories_patch_categories_by_id",
+    "shop_categories_delete_categories_by_id"
+  ]
+}

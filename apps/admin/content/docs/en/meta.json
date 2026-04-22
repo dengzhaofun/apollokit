@@ -44,6 +44,8 @@
     "---Integration---",
     "webhooks",
     "client-sdk",
-    "sdk"
+    "sdk",
+    "---API Reference---",
+    "api"
   ]
 }

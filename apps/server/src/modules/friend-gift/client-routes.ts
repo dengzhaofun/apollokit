@@ -12,11 +12,12 @@
  * in the request body/query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import { z } from "@hono/zod-openapi";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -117,7 +118,7 @@ const errorResponses = {
   },
 };
 
-export const friendGiftClientRouter = new OpenAPIHono<HonoEnv>();
+export const friendGiftClientRouter = createClientRouter();
 
 friendGiftClientRouter.use("*", requireClientCredential);
 friendGiftClientRouter.use("*", requireClientUser);
@@ -138,7 +139,7 @@ friendGiftClientRouter.onError((err, c) => {
 
 // GET /packages — list available (active) gift packages
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/packages",
     tags: [TAG],
@@ -165,7 +166,7 @@ friendGiftClientRouter.openapi(
 
 // POST /send — send a gift
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/send",
     tags: [TAG],
@@ -199,7 +200,7 @@ friendGiftClientRouter.openapi(
 
 // GET /inbox — pending received gifts
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/inbox",
     tags: [TAG],
@@ -225,7 +226,7 @@ friendGiftClientRouter.openapi(
 
 // GET /sent — sent gift history
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/sent",
     tags: [TAG],
@@ -251,7 +252,7 @@ friendGiftClientRouter.openapi(
 
 // POST /sends/:id/claim — claim a gift
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/sends/{id}/claim",
     tags: [TAG],
@@ -282,7 +283,7 @@ friendGiftClientRouter.openapi(
 
 // GET /daily-status — today's send/receive counts
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/daily-status",
     tags: [TAG],

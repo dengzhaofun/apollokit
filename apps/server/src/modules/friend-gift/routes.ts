@@ -5,10 +5,11 @@
  * read `c.var.session!.activeOrganizationId!` uniformly.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { FriendGiftSettingsNotFound, ModuleError } from "./errors";
 import { friendGiftService } from "./index";
@@ -132,7 +133,7 @@ const errorResponses = {
   },
 };
 
-export const friendGiftRouter = new OpenAPIHono<HonoEnv>();
+export const friendGiftRouter = createAdminRouter();
 
 friendGiftRouter.use("*", requireAdminOrApiKey);
 
@@ -154,7 +155,7 @@ friendGiftRouter.onError((err, c) => {
 
 // GET /friend-gift/settings
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -179,7 +180,7 @@ friendGiftRouter.openapi(
 
 // PUT /friend-gift/settings
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -211,7 +212,7 @@ friendGiftRouter.openapi(
 
 // POST /friend-gift/packages
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/packages",
     tags: [TAG],
@@ -241,7 +242,7 @@ friendGiftRouter.openapi(
 
 // GET /friend-gift/packages
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/packages",
     tags: [TAG],
@@ -263,7 +264,7 @@ friendGiftRouter.openapi(
 
 // GET /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/packages/{id}",
     tags: [TAG],
@@ -287,7 +288,7 @@ friendGiftRouter.openapi(
 
 // PUT /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/packages/{id}",
     tags: [TAG],
@@ -320,7 +321,7 @@ friendGiftRouter.openapi(
 
 // DELETE /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/packages/{id}",
     tags: [TAG],
@@ -343,7 +344,7 @@ friendGiftRouter.openapi(
 
 // GET /friend-gift/sends
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/sends",
     tags: [TAG],
@@ -367,7 +368,7 @@ friendGiftRouter.openapi(
 
 // GET /friend-gift/sends/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/sends/{id}",
     tags: [TAG],

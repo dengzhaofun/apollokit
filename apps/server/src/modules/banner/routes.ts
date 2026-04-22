@@ -5,10 +5,11 @@
  * routers — serialize → call service → onError maps ModuleError to JSON.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { LinkAction } from "../link/types";
@@ -93,7 +94,7 @@ const errorResponses = {
   },
 };
 
-export const bannerRouter = new OpenAPIHono<HonoEnv>();
+export const bannerRouter = createAdminRouter();
 
 bannerRouter.use("*", requireAdminOrApiKey);
 
@@ -114,7 +115,7 @@ bannerRouter.onError((err, c) => {
 // ─── Groups ────────────────────────────────────────────────────
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups",
     tags: [TAG],
@@ -142,7 +143,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups",
     tags: [TAG],
@@ -169,7 +170,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups/{id}",
     tags: [TAG],
@@ -192,7 +193,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/groups/{id}",
     tags: [TAG],
@@ -221,7 +222,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/groups/{id}",
     tags: [TAG],
@@ -243,7 +244,7 @@ bannerRouter.openapi(
 // ─── Banners within a group ────────────────────────────────────
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups/{groupId}/banners",
     tags: [TAG],
@@ -266,7 +267,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups/{groupId}/banners",
     tags: [TAG],
@@ -295,7 +296,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups/{groupId}/banners/reorder",
     tags: [TAG],
@@ -324,7 +325,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/banners/{id}",
     tags: [TAG],
@@ -347,7 +348,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/banners/{id}",
     tags: [TAG],
@@ -376,7 +377,7 @@ bannerRouter.openapi(
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/banners/{id}",
     tags: [TAG],

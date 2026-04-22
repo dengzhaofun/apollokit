@@ -17,7 +17,8 @@
     "tb:build": "dotenv -e .env.local -- tinybird build",
     "tb:deploy": "dotenv -e .env.local -- tinybird deploy",
     "tb:info": "dotenv -e .env.local -- tinybird info",
-    "secrets:push": "bash scripts/push-secrets.sh"
+    "secrets:push": "bash scripts/push-secrets.sh",
+    "openapi:dump": "bash scripts/dump-openapi.sh"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.2",

@@ -11,10 +11,11 @@
  * Catalog management stays admin-only.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -126,7 +127,7 @@ function serializeUserProduct(row: UserProductView) {
   };
 }
 
-export const shopClientRouter = new OpenAPIHono<HonoEnv>();
+export const shopClientRouter = createClientRouter();
 
 shopClientRouter.use("*", requireClientCredential);
 shopClientRouter.use("*", requireClientUser);
@@ -147,7 +148,7 @@ shopClientRouter.onError((err, c) => {
 
 // POST /purchase — execute a purchase on behalf of the calling end user
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/purchase",
     tags: [TAG],
@@ -182,7 +183,7 @@ shopClientRouter.openapi(
 
 // POST /claim-stage — claim a growth-pack stage reward
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim-stage",
     tags: [TAG],
@@ -217,7 +218,7 @@ shopClientRouter.openapi(
 
 // GET /products — list products with the calling end user's eligibility
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/products",
     tags: [TAG],

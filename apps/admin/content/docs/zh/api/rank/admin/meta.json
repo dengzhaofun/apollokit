@@ -1,0 +1,21 @@
+{
+  "title": "Admin",
+  "pages": [
+    "rank_admin_post_settle",
+    "rank_admin_get_tier_configs",
+    "rank_admin_post_tier_configs",
+    "rank_admin_get_tier_configs_by_key",
+    "rank_admin_patch_tier_configs_by_key",
+    "rank_admin_delete_tier_configs_by_id",
+    "rank_admin_get_seasons",
+    "rank_admin_post_seasons",
+    "rank_admin_get_seasons_by_id",
+    "rank_admin_patch_seasons_by_id",
+    "rank_admin_post_seasons_by_id_activate",
+    "rank_admin_post_seasons_by_id_finalize",
+    "rank_admin_get_seasons_by_id_players",
+    "rank_admin_patch_seasons_by_seasonid_players_by_enduserid",
+    "rank_admin_get_seasons_by_id_matches",
+    "rank_admin_get_matches_by_id"
+  ]
+}

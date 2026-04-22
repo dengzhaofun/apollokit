@@ -1,0 +1,11 @@
+{
+  "title": "Client",
+  "pages": [
+    "invite_client_get_my_code",
+    "invite_client_post_reset_my_code",
+    "invite_client_get_summary",
+    "invite_client_get_invitees",
+    "invite_client_post_bind",
+    "invite_client_post_qualify"
+  ]
+}

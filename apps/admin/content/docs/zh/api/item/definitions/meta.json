@@ -1,0 +1,10 @@
+{
+  "title": "Definitions",
+  "pages": [
+    "item_definitions_get_definitions",
+    "item_definitions_post_definitions",
+    "item_definitions_get_definitions_by_key",
+    "item_definitions_patch_definitions_by_id",
+    "item_definitions_delete_definitions_by_id"
+  ]
+}
