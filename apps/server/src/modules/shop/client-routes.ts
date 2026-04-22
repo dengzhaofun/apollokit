@@ -11,10 +11,12 @@
  * Catalog management stays admin-only.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { shopService } from "./index";
@@ -23,12 +25,32 @@ import {
   ClientClaimStageSchema,
   ClientListUserProductsQuerySchema,
   ClientPurchaseSchema,
+  ErrorResponseSchema,
   PurchaseResultSchema,
   UserProductListResponseSchema,
 } from "./validators";
 import type { UserProductView } from "./types";
 
 const TAG = "Shop (Client)";
+
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
 
 function serializeUserProduct(row: UserProductView) {
   return {
@@ -105,14 +127,28 @@ function serializeUserProduct(row: UserProductView) {
   };
 }
 
-export const shopClientRouter = makeApiRouter();
+export const shopClientRouter = createClientRouter();
 
 shopClientRouter.use("*", requireClientCredential);
 shopClientRouter.use("*", requireClientUser);
 
+shopClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /purchase — execute a purchase on behalf of the calling end user
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/purchase",
     tags: [TAG],
@@ -125,9 +161,9 @@ shopClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(PurchaseResultSchema) } },
+        content: { "application/json": { schema: PurchaseResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -141,13 +177,13 @@ shopClientRouter.openapi(
       productKey,
       idempotencyKey,
     });
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // POST /claim-stage — claim a growth-pack stage reward
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim-stage",
     tags: [TAG],
@@ -160,9 +196,9 @@ shopClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ClaimStageResultSchema) } },
+        content: { "application/json": { schema: ClaimStageResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -176,13 +212,13 @@ shopClientRouter.openapi(
       stageId,
       idempotencyKey,
     });
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // GET /products — list products with the calling end user's eligibility
 shopClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/products",
     tags: [TAG],
@@ -192,10 +228,10 @@ shopClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(UserProductListResponseSchema) },
+          "application/json": { schema: UserProductListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -208,6 +244,6 @@ shopClientRouter.openapi(
       endUserId,
       query: { categoryId, tagId, productType },
     });
-    return c.json(ok({ items: views.map(serializeUserProduct) }), 200);
+    return c.json({ items: views.map(serializeUserProduct) }, 200);
   },
 );

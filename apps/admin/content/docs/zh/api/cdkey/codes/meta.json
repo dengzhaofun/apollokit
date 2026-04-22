@@ -1,0 +1,8 @@
+{
+  "title": "Codes",
+  "pages": [
+    "cdkey_codes_post_batches_by_batchid_codes_generate",
+    "cdkey_codes_get_batches_by_batchid_codes",
+    "cdkey_codes_patch_codes_by_codeid_revoke"
+  ]
+}

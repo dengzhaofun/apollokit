@@ -11,19 +11,15 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
-import { GuildInsufficientPermission, GuildNotMember } from "./errors";
 import { guildService } from "./index";
 import {
   ContributeSchema,
@@ -31,6 +27,7 @@ import {
   ContributionLogListResponseSchema,
   ContributionLogResponseSchema,
   CreateGuildSchema,
+  ErrorResponseSchema,
   GuildIdParamSchema,
   GuildListQuerySchema,
   GuildListResponseSchema,
@@ -49,6 +46,8 @@ import {
 } from "./validators";
 
 const TAG = "Guild (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 // ─── Serializers ─────────────────────────────────────────────────
 
@@ -170,13 +169,36 @@ function serializeContributionLog(row: {
   };
 }
 
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  403: {
+    description: "Forbidden",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
 // ─── Composed body schemas (no auth fields) ──────────────────────
 
 const ClientCreateGuildSchema = CreateGuildSchema.openapi("ClientCreateGuild");
 const ClientUpdateGuildSchema = UpdateGuildSchema.openapi("ClientUpdateGuild");
 const ClientContributeSchema = ContributeSchema.openapi("ClientContribute");
 
-const MyGuildDataSchema = z
+const MyGuildResponseSchema = z
   .object({
     guild: GuildResponseSchema,
     member: GuildMemberResponseSchema,
@@ -193,14 +215,28 @@ const CreateGuildResponseSchema = z
 
 // ─── Router ──────────────────────────────────────────────────────
 
-export const guildClientRouter = makeApiRouter();
+export const guildClientRouter = createClientRouter();
 
 guildClientRouter.use("*", requireClientCredential);
 guildClientRouter.use("*", requireClientUser);
 
+guildClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /guilds — create guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds",
     tags: [TAG],
@@ -214,9 +250,9 @@ guildClientRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(CreateGuildResponseSchema) } },
+        content: { "application/json": { schema: CreateGuildResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -231,7 +267,7 @@ guildClientRouter.openapi(
       metadata: body.metadata,
     });
     return c.json(
-      ok({ guild: serializeGuild(guild), member: serializeMember(member) }),
+      { guild: serializeGuild(guild), member: serializeMember(member) },
       201,
     );
   },
@@ -239,7 +275,7 @@ guildClientRouter.openapi(
 
 // GET /guilds — list guilds
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds",
     tags: [TAG],
@@ -251,9 +287,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildListResponseSchema) } },
+        content: { "application/json": { schema: GuildListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -261,7 +297,7 @@ guildClientRouter.openapi(
     const { search, limit, offset } = c.req.valid("query");
     const result = await guildService.listGuilds(orgId, { search, limit, offset });
     return c.json(
-      ok({ items: result.items.map(serializeGuild), total: result.total }),
+      { items: result.items.map(serializeGuild), total: result.total },
       200,
     );
   },
@@ -269,7 +305,7 @@ guildClientRouter.openapi(
 
 // GET /guilds/:id — guild detail
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -281,22 +317,22 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildResponseSchema) } },
+        content: { "application/json": { schema: GuildResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const row = await guildService.getGuild(orgId, id);
-    return c.json(ok(serializeGuild(row)), 200);
+    return c.json(serializeGuild(row), 200);
   },
 );
 
 // GET /my-guild — get current user's guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/my-guild",
     tags: [TAG],
@@ -307,9 +343,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(MyGuildDataSchema) } },
+        content: { "application/json": { schema: MyGuildResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -317,10 +353,10 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const result = await guildService.getMyGuild(orgId, endUserId);
     if (!result) {
-      return c.json(ok(null), 200);
+      return c.json(null, 200);
     }
     return c.json(
-      ok({ guild: serializeGuild(result.guild), member: serializeMember(result.member) }),
+      { guild: serializeGuild(result.guild), member: serializeMember(result.member) },
       200,
     );
   },
@@ -328,7 +364,7 @@ guildClientRouter.openapi(
 
 // POST /guilds/:id/join — apply to join
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/join",
     tags: [TAG],
@@ -343,9 +379,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -354,13 +390,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { message } = c.req.valid("json");
     const req = await guildService.applyToJoin(orgId, id, endUserId, message);
-    return c.json(ok(serializeJoinRequest(req)), 200);
+    return c.json(serializeJoinRequest(req), 200);
   },
 );
 
 // POST /guilds/:id/leave — leave guild
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/leave",
     tags: [TAG],
@@ -372,9 +408,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+        content: { "application/json": { schema: z.object({ success: z.boolean() }).openapi("SuccessResponse") } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -382,13 +418,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     await guildService.leaveGuild(orgId, id, endUserId);
-    return c.json(ok(null), 200);
+    return c.json({ success: true }, 200);
   },
 );
 
 // POST /guilds/:id/disband — disband guild (client: leader only via service check)
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/disband",
     tags: [TAG],
@@ -400,9 +436,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildResponseSchema) } },
+        content: { "application/json": { schema: GuildResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -412,16 +448,16 @@ guildClientRouter.openapi(
     // Verify the user is the leader before allowing disband
     const myGuild = await guildService.getMyGuild(orgId, endUserId);
     if (!myGuild || myGuild.guild.id !== id || myGuild.member.role !== "leader") {
-      throw new GuildInsufficientPermission("disband");
+      return c.json({ error: "only the guild leader can disband", code: "guild.insufficient_permission", requestId: c.get("requestId") }, 403);
     }
     const row = await guildService.disbandGuild(orgId, id);
-    return c.json(ok(serializeGuild(row)), 200);
+    return c.json(serializeGuild(row), 200);
   },
 );
 
 // GET /guilds/:id/requests — list join requests
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/requests",
     tags: [TAG],
@@ -434,9 +470,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestListResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -444,13 +480,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { status, limit, offset } = c.req.valid("query");
     const rows = await guildService.listJoinRequests(orgId, id, { status, limit, offset });
-    return c.json(ok({ items: rows.map(serializeJoinRequest) }), 200);
+    return c.json({ items: rows.map(serializeJoinRequest) }, 200);
   },
 );
 
 // POST /requests/:id/accept — accept a join request
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/accept",
     tags: [TAG],
@@ -462,9 +498,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -472,13 +508,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptJoinRequest(orgId, id, endUserId);
-    return c.json(ok(serializeJoinRequest(request)), 200);
+    return c.json(serializeJoinRequest(request), 200);
   },
 );
 
 // POST /requests/:id/reject — reject a join request
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/requests/{id}/reject",
     tags: [TAG],
@@ -490,9 +526,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -500,13 +536,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const req = await guildService.rejectJoinRequest(orgId, id, endUserId);
-    return c.json(ok(serializeJoinRequest(req)), 200);
+    return c.json(serializeJoinRequest(req), 200);
   },
 );
 
 // POST /guilds/:id/invite — invite a user
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/invite",
     tags: [TAG],
@@ -521,9 +557,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -532,13 +568,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { targetUserId } = c.req.valid("json");
     const req = await guildService.inviteUser(orgId, id, endUserId, targetUserId);
-    return c.json(ok(serializeJoinRequest(req)), 200);
+    return c.json(serializeJoinRequest(req), 200);
   },
 );
 
 // POST /invitations/:id/accept — accept an invitation
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/accept",
     tags: [TAG],
@@ -550,9 +586,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -560,13 +596,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptInvitation(orgId, id, endUserId);
-    return c.json(ok(serializeJoinRequest(request)), 200);
+    return c.json(serializeJoinRequest(request), 200);
   },
 );
 
 // POST /invitations/:id/reject — reject an invitation
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/invitations/{id}/reject",
     tags: [TAG],
@@ -578,9 +614,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(JoinRequestResponseSchema) } },
+        content: { "application/json": { schema: JoinRequestResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -588,13 +624,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const req = await guildService.rejectInvitation(orgId, id, endUserId);
-    return c.json(ok(serializeJoinRequest(req)), 200);
+    return c.json(serializeJoinRequest(req), 200);
   },
 );
 
 // POST /guilds/:id/members/:userId/promote
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/promote",
     tags: [TAG],
@@ -606,9 +642,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildMemberResponseSchema) } },
+        content: { "application/json": { schema: GuildMemberResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -616,13 +652,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
     const member = await guildService.promoteMember(orgId, id, endUserId, userId);
-    return c.json(ok(serializeMember(member)), 200);
+    return c.json(serializeMember(member), 200);
   },
 );
 
 // POST /guilds/:id/members/:userId/demote
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/demote",
     tags: [TAG],
@@ -634,9 +670,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildMemberResponseSchema) } },
+        content: { "application/json": { schema: GuildMemberResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -644,13 +680,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
     const member = await guildService.demoteMember(orgId, id, endUserId, userId);
-    return c.json(ok(serializeMember(member)), 200);
+    return c.json(serializeMember(member), 200);
   },
 );
 
 // POST /guilds/:id/members/:userId/kick
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/members/{userId}/kick",
     tags: [TAG],
@@ -662,9 +698,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+        content: { "application/json": { schema: z.object({ success: z.boolean() }).openapi("KickSuccessResponse") } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -672,13 +708,13 @@ guildClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
     await guildService.kickMember(orgId, id, endUserId, userId);
-    return c.json(ok(null), 200);
+    return c.json({ success: true }, 200);
   },
 );
 
 // POST /guilds/:id/transfer-leader
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/transfer-leader",
     tags: [TAG],
@@ -693,9 +729,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+        content: { "application/json": { schema: z.object({ success: z.boolean() }).openapi("TransferSuccessResponse") } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -704,13 +740,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { newLeaderUserId } = c.req.valid("json");
     await guildService.transferLeader(orgId, id, endUserId, newLeaderUserId);
-    return c.json(ok(null), 200);
+    return c.json({ success: true }, 200);
   },
 );
 
 // PUT /guilds/:id — client update (leader/officer)
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "put",
     path: "/guilds/{id}",
     tags: [TAG],
@@ -725,9 +761,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildResponseSchema) } },
+        content: { "application/json": { schema: GuildResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -738,10 +774,10 @@ guildClientRouter.openapi(
     // Verify the user is officer+ in this guild
     const myGuild = await guildService.getMyGuild(orgId, endUserId);
     if (!myGuild || myGuild.guild.id !== id) {
-      throw new GuildNotMember(endUserId);
+      return c.json({ error: "not a member of this guild", code: "guild.not_member", requestId: c.get("requestId") }, 403);
     }
     if (myGuild.member.role !== "leader" && myGuild.member.role !== "officer") {
-      throw new GuildInsufficientPermission("update guild");
+      return c.json({ error: "insufficient permission", code: "guild.insufficient_permission", requestId: c.get("requestId") }, 403);
     }
 
     const row = await guildService.updateGuild(orgId, id, {
@@ -752,13 +788,13 @@ guildClientRouter.openapi(
       joinMode: body.joinMode,
       metadata: body.metadata,
     });
-    return c.json(ok(serializeGuild(row)), 200);
+    return c.json(serializeGuild(row), 200);
   },
 );
 
 // POST /guilds/:id/contribute — member contribution
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/guilds/{id}/contribute",
     tags: [TAG],
@@ -773,9 +809,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ContributionLogResponseSchema) } },
+        content: { "application/json": { schema: ContributionLogResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -784,13 +820,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { delta, source, sourceId } = c.req.valid("json");
     const log = await guildService.contribute(orgId, id, endUserId, delta, source, sourceId);
-    return c.json(ok(serializeContributionLog(log)), 200);
+    return c.json(serializeContributionLog(log), 200);
   },
 );
 
 // GET /guilds/:id/contributions — contribution leaderboard
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/contributions",
     tags: [TAG],
@@ -803,9 +839,9 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ContributionLogListResponseSchema) } },
+        content: { "application/json": { schema: ContributionLogListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -813,13 +849,13 @@ guildClientRouter.openapi(
     const { id } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await guildService.listContributions(orgId, id, { limit, offset });
-    return c.json(ok({ items: rows.map(serializeContributionLog) }), 200);
+    return c.json({ items: rows.map(serializeContributionLog) }, 200);
   },
 );
 
 // GET /guilds/:id/members — list guild members
 guildClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/guilds/{id}/members",
     tags: [TAG],
@@ -831,15 +867,15 @@ guildClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GuildMemberListResponseSchema) } },
+        content: { "application/json": { schema: GuildMemberListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const rows = await guildService.listMembers(orgId, id);
-    return c.json(ok({ items: rows.map(serializeMember) }), 200);
+    return c.json({ items: rows.map(serializeMember) }, 200);
   },
 );

@@ -1,0 +1,10 @@
+{
+  "title": "Formations",
+  "pages": [
+    "entity_formations_admin_get_formation_configs",
+    "entity_formations_admin_post_formation_configs",
+    "entity_formations_admin_get_formation_configs_by_key",
+    "entity_formations_admin_patch_formation_configs_by_id",
+    "entity_formations_admin_delete_formation_configs_by_id"
+  ]
+}

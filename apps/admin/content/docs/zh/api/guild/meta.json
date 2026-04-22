@@ -1,0 +1,15 @@
+{
+  "title": "Guild",
+  "pages": [
+    "guild_get_settings",
+    "guild_put_settings",
+    "guild_get_guilds",
+    "guild_get_guilds_by_id",
+    "guild_delete_guilds_by_id",
+    "guild_put_guilds_by_id",
+    "guild_post_guilds_by_id_grant_exp",
+    "guild_get_guilds_by_id_members",
+    "guild_get_guilds_by_id_requests",
+    "guild_get_guilds_by_id_contributions"
+  ]
+}

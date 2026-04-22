@@ -1,0 +1,8 @@
+{
+  "title": "Event Catalog",
+  "pages": [
+    "event_catalog_get_root",
+    "event_catalog_get_by_name",
+    "event_catalog_patch_by_name"
+  ]
+}

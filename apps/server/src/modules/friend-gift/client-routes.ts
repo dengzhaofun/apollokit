@@ -12,11 +12,13 @@
  * in the request body/query.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { friendGiftService } from "./index";
@@ -24,6 +26,7 @@ import {
   ClientClaimGiftSchema,
   ClientSendGiftSchema,
   DailyStatusResponseSchema,
+  ErrorResponseSchema,
   GiftSendListResponseSchema,
   GiftSendResponseSchema,
   PackageListResponseSchema,
@@ -31,6 +34,8 @@ import {
 } from "./validators";
 
 const TAG = "Friend Gift (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 function serializePackage(row: {
   id: string;
@@ -94,14 +99,47 @@ function serializeSend(row: {
   };
 }
 
-export const friendGiftClientRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const friendGiftClientRouter = createClientRouter();
 
 friendGiftClientRouter.use("*", requireClientCredential);
 friendGiftClientRouter.use("*", requireClientUser);
 
+friendGiftClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // GET /packages — list available (active) gift packages
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/packages",
     tags: [TAG],
@@ -112,9 +150,9 @@ friendGiftClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(PackageListResponseSchema) } },
+        content: { "application/json": { schema: PackageListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -122,13 +160,13 @@ friendGiftClientRouter.openapi(
     const rows = await friendGiftService.listPackages(orgId, {
       activeOnly: true,
     });
-    return c.json(ok({ items: rows.map(serializePackage) }), 200);
+    return c.json({ items: rows.map(serializePackage) }, 200);
   },
 );
 
 // POST /send — send a gift
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/send",
     tags: [TAG],
@@ -142,9 +180,9 @@ friendGiftClientRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(GiftSendResponseSchema) } },
+        content: { "application/json": { schema: GiftSendResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -156,13 +194,13 @@ friendGiftClientRouter.openapi(
       receiverUserId,
       message,
     });
-    return c.json(ok(serializeSend(send)), 201);
+    return c.json(serializeSend(send), 201);
   },
 );
 
 // GET /inbox — pending received gifts
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/inbox",
     tags: [TAG],
@@ -173,22 +211,22 @@ friendGiftClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GiftSendListResponseSchema) } },
+        content: { "application/json": { schema: GiftSendListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listInbox(orgId, endUserId);
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    return c.json({ items: rows.map(serializeSend) }, 200);
   },
 );
 
 // GET /sent — sent gift history
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/sent",
     tags: [TAG],
@@ -199,22 +237,22 @@ friendGiftClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GiftSendListResponseSchema) } },
+        content: { "application/json": { schema: GiftSendListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listSent(orgId, endUserId);
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    return c.json({ items: rows.map(serializeSend) }, 200);
   },
 );
 
 // POST /sends/:id/claim — claim a gift
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/sends/{id}/claim",
     tags: [TAG],
@@ -229,9 +267,9 @@ friendGiftClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GiftSendResponseSchema) } },
+        content: { "application/json": { schema: GiftSendResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -239,13 +277,13 @@ friendGiftClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const claimed = await friendGiftService.claimGift(orgId, id, endUserId);
-    return c.json(ok(serializeSend(claimed)), 200);
+    return c.json(serializeSend(claimed), 200);
   },
 );
 
 // GET /daily-status — today's send/receive counts
 friendGiftClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/daily-status",
     tags: [TAG],
@@ -257,16 +295,16 @@ friendGiftClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(DailyStatusResponseSchema) },
+          "application/json": { schema: DailyStatusResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const status = await friendGiftService.getDailyStatus(orgId, endUserId);
-    return c.json(ok(status), 200);
+    return c.json(status, 200);
   },
 );

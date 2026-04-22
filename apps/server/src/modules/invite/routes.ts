@@ -5,20 +5,19 @@
  * organizationId is read from session.activeOrganizationId.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAuth } from "../../middleware/require-auth";
 import { inviteService } from "./index";
 import {
   AdminListRelationshipsQuerySchema,
   EndUserIdParamSchema,
+  ErrorResponseSchema,
   InviteCodeViewSchema,
   InviteRelationshipListSchema,
   InviteRelationshipViewSchema,
@@ -96,14 +95,47 @@ function serializeSummary(s: {
   };
 }
 
-export const inviteRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  403: {
+    description: "Forbidden",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const inviteRouter = createAdminRouter();
 
 inviteRouter.use("*", requireAuth);
+
+inviteRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 /* ── GET /settings ────────────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -112,24 +144,24 @@ inviteRouter.openapi(
         description: "Current invite settings (or defaults if never upserted).",
         content: {
           "application/json": {
-            schema: envelopeOf(InviteSettingsViewSchema.nullable()),
+            schema: InviteSettingsViewSchema.nullable(),
           },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await inviteService.getSettings(orgId);
-    return c.json(ok(row ? serializeSettings(row) : null), 200);
+    return c.json(row ? serializeSettings(row) : null, 200);
   },
 );
 
 /* ── PUT /settings ────────────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -142,24 +174,24 @@ inviteRouter.openapi(
       200: {
         description: "Updated settings row.",
         content: {
-          "application/json": { schema: envelopeOf(InviteSettingsViewSchema) },
+          "application/json": { schema: InviteSettingsViewSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const body = c.req.valid("json");
     const row = await inviteService.upsertSettings(orgId, body);
-    return c.json(ok(serializeSettings(row)), 200);
+    return c.json(serializeSettings(row), 200);
   },
 );
 
 /* ── GET /relationships ──────────────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/relationships",
     tags: [TAG],
@@ -168,10 +200,10 @@ inviteRouter.openapi(
       200: {
         description: "Paged invite relationships.",
         content: {
-          "application/json": { schema: envelopeOf(InviteRelationshipListSchema) },
+          "application/json": { schema: InviteRelationshipListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -184,7 +216,7 @@ inviteRouter.openapi(
       qualifiedOnly: query.qualifiedOnly,
     });
     return c.json(
-      ok({ items: items.map(serializeRelationship), total }),
+      { items: items.map(serializeRelationship), total },
       200,
     );
   },
@@ -193,31 +225,28 @@ inviteRouter.openapi(
 /* ── DELETE /relationships/:id ───────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/relationships/{id}",
     tags: [TAG],
     request: { params: RelationshipIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted.",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted." },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await inviteService.adminRevokeRelationship(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 /* ── GET /users/:endUserId/stats ─────────────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/users/{endUserId}/stats",
     tags: [TAG],
@@ -225,23 +254,23 @@ inviteRouter.openapi(
     responses: {
       200: {
         description: "Summary for an end user.",
-        content: { "application/json": { schema: envelopeOf(InviteSummaryViewSchema) } },
+        content: { "application/json": { schema: InviteSummaryViewSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { endUserId } = c.req.valid("param");
     const summary = await inviteService.adminGetUserStats(orgId, endUserId);
-    return c.json(ok(serializeSummary(summary)), 200);
+    return c.json(serializeSummary(summary), 200);
   },
 );
 
 /* ── POST /users/:endUserId/reset-code ───────────────────── */
 
 inviteRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/users/{endUserId}/reset-code",
     tags: [TAG],
@@ -249,9 +278,9 @@ inviteRouter.openapi(
     responses: {
       200: {
         description: "New code generated.",
-        content: { "application/json": { schema: envelopeOf(InviteCodeViewSchema) } },
+        content: { "application/json": { schema: InviteCodeViewSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -259,14 +288,17 @@ inviteRouter.openapi(
     const { endUserId } = c.req.valid("param");
     const result = await inviteService.adminResetUserCode(orgId, endUserId);
     return c.json(
-      ok({
+      {
         code: result.code,
         rotatedAt: result.rotatedAt.toISOString(),
-      }),
+      },
       200,
     );
   },
 );
+
+// Suppress unused-import warning if `z` ends up not being referenced here.
+void z;
 
 // Suppress unused-import warnings for schemas only used in openapi declarations.
 void InviteRelationshipViewSchema;

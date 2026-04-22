@@ -1,0 +1,11 @@
+{
+  "title": "Lottery",
+  "pages": [
+    "client",
+    "pity-rules",
+    "pools",
+    "prizes",
+    "pull",
+    "tiers"
+  ]
+}

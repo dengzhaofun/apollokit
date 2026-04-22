@@ -1,0 +1,8 @@
+{
+  "title": "Client",
+  "pages": [
+    "item_client_get_inventory",
+    "item_client_get_balance_by_key",
+    "item_client_post_use"
+  ]
+}

@@ -7,23 +7,17 @@
  *
  * Client-facing routes (player progress, clear, claim) live in
  * `client-routes.ts`.
- *
- * Response envelope: every endpoint returns `{ code, data, message,
- * requestId }` — see `apps/server/src/lib/response.ts`.
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
-import { makeApiRouter } from "../../lib/router";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { levelService } from "./index";
+import { ModuleError } from "./errors";
 import type { StarRewardTier } from "./types";
 import {
   ConfigIdParamSchema,
@@ -33,6 +27,7 @@ import {
   CreateConfigSchema,
   CreateLevelSchema,
   CreateStageSchema,
+  ErrorResponseSchema,
   LevelIdParamSchema,
   LevelListResponseSchema,
   LevelResponseSchema,
@@ -154,14 +149,47 @@ function serializeLevel(row: {
 
 // ─── Router scaffold ────────────────────────────────────────────
 
-export const levelRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const levelRouter = createAdminRouter();
 
 levelRouter.use("*", requireAdminOrApiKey);
+
+levelRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 // ─── Configs ────────────────────────────────────────────────────
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -169,22 +197,20 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(ConfigListResponseSchema) },
-        },
+        content: { "application/json": { schema: ConfigListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await levelService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json({ items: rows.map(serializeConfig) }, 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -195,22 +221,20 @@ levelRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: {
-          "application/json": { schema: envelopeOf(ConfigResponseSchema) },
-        },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await levelService.createConfig(orgId, c.req.valid("json"));
-    return c.json(ok(serializeConfig(row)), 201);
+    return c.json(serializeConfig(row), 201);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -219,23 +243,21 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(ConfigResponseSchema) },
-        },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await levelService.getConfig(orgId, key);
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/configs/{id}",
     tags: [TAG],
@@ -247,48 +269,40 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(ConfigResponseSchema) },
-        },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.updateConfig(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
     summary: "Delete a level config (cascades to stages, levels, user progress)",
     request: { params: ConfigIdParamSchema },
-    responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
-    },
+    responses: { 204: { description: "Deleted" }, ...errorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await levelService.deleteConfig(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Stages ─────────────────────────────────────────────────────
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}/stages",
     tags: [TAG_STAGE],
@@ -297,23 +311,21 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(StageListResponseSchema) },
-        },
+        content: { "application/json": { schema: StageListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const rows = await levelService.listStages(orgId, id);
-    return c.json(ok({ items: rows.map(serializeStage) }), 200);
+    return c.json({ items: rows.map(serializeStage) }, 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{id}/stages",
     tags: [TAG_STAGE],
@@ -325,23 +337,21 @@ levelRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: {
-          "application/json": { schema: envelopeOf(StageResponseSchema) },
-        },
+        content: { "application/json": { schema: StageResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.createStage(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeStage(row)), 201);
+    return c.json(serializeStage(row), 201);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/stages/{id}",
     tags: [TAG_STAGE],
@@ -353,41 +363,33 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(StageResponseSchema) },
-        },
+        content: { "application/json": { schema: StageResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.updateStage(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeStage(row)), 200);
+    return c.json(serializeStage(row), 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/stages/{id}",
     tags: [TAG_STAGE],
     summary: "Delete a stage (levels have their stageId set to null)",
     request: { params: StageIdParamSchema },
-    responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
-    },
+    responses: { 204: { description: "Deleted" }, ...errorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await levelService.deleteStage(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
@@ -405,7 +407,7 @@ const StageIdQuerySchema = z.object({
 });
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}/levels",
     tags: [TAG_LEVEL],
@@ -417,11 +419,9 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(LevelListResponseSchema) },
-        },
+        content: { "application/json": { schema: LevelListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -429,12 +429,12 @@ levelRouter.openapi(
     const { id } = c.req.valid("param");
     const { stageId } = c.req.valid("query");
     const rows = await levelService.listLevels(orgId, id, stageId);
-    return c.json(ok({ items: rows.map(serializeLevel) }), 200);
+    return c.json({ items: rows.map(serializeLevel) }, 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{id}/levels",
     tags: [TAG_LEVEL],
@@ -446,23 +446,21 @@ levelRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: {
-          "application/json": { schema: envelopeOf(LevelResponseSchema) },
-        },
+        content: { "application/json": { schema: LevelResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.createLevel(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeLevel(row)), 201);
+    return c.json(serializeLevel(row), 201);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],
@@ -471,23 +469,21 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(LevelResponseSchema) },
-        },
+        content: { "application/json": { schema: LevelResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.loadLevelById(orgId, id);
-    return c.json(ok(serializeLevel(row)), 200);
+    return c.json(serializeLevel(row), 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],
@@ -499,40 +495,32 @@ levelRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(LevelResponseSchema) },
-        },
+        content: { "application/json": { schema: LevelResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await levelService.updateLevel(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeLevel(row)), 200);
+    return c.json(serializeLevel(row), 200);
   },
 );
 
 levelRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/levels/{id}",
     tags: [TAG_LEVEL],
     summary: "Delete a level (cascades to user progress)",
     request: { params: LevelIdParamSchema },
-    responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
-    },
+    responses: { 204: { description: "Deleted" }, ...errorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await levelService.deleteLevel(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

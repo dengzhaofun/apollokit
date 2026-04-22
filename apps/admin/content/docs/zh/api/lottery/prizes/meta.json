@@ -1,0 +1,10 @@
+{
+  "title": "Prizes",
+  "pages": [
+    "lottery_prizes_post_pools_by_poolkey_tiers_by_tierid_prizes",
+    "lottery_prizes_get_pools_by_poolkey_prizes",
+    "lottery_prizes_post_pools_by_poolkey_prizes",
+    "lottery_prizes_patch_prizes_by_prizeid",
+    "lottery_prizes_delete_prizes_by_prizeid"
+  ]
+}

@@ -8,16 +8,13 @@
  * (per apps/server/CLAUDE.md — "No public routes yet").
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { ModuleError } from "./errors";
 import { storageBoxService } from "./index";
 import { projectInterest } from "./interest";
 import type {
@@ -33,6 +30,7 @@ import {
   DepositResultSchema,
   DepositSchema,
   EndUserIdParamSchema,
+  ErrorResponseSchema,
   IdParamSchema,
   UpdateConfigSchema,
   WithdrawResultSchema,
@@ -114,14 +112,47 @@ function viewFromDepositAndConfig(
   };
 }
 
-export const storageBoxRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const storageBoxRouter = createAdminRouter();
 
 storageBoxRouter.use("*", requireAdminOrApiKey);
+
+storageBoxRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 // ─── Config routes ──────────────────────────────────────────────────
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG_CFG],
@@ -132,20 +163,20 @@ storageBoxRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(ConfigResponseSchema) } },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await storageBoxService.createConfig(orgId, c.req.valid("json"));
-    return c.json(ok(serializeConfig(row)), 201);
+    return c.json(serializeConfig(row), 201);
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG_CFG],
@@ -153,20 +184,20 @@ storageBoxRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ConfigListResponseSchema) } },
+        content: { "application/json": { schema: ConfigListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await storageBoxService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json({ items: rows.map(serializeConfig) }, 200);
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -175,21 +206,21 @@ storageBoxRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ConfigResponseSchema) } },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await storageBoxService.getConfig(orgId, id);
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -201,9 +232,9 @@ storageBoxRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ConfigResponseSchema) } },
+        content: { "application/json": { schema: ConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -214,37 +245,34 @@ storageBoxRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG_CFG],
     summary: "Delete a storage box config (cascades to deposits)",
     request: { params: IdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await storageBoxService.deleteConfig(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Transaction routes ─────────────────────────────────────────────
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/deposits",
     tags: [TAG_TXN],
@@ -255,9 +283,9 @@ storageBoxRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(DepositResultSchema) } },
+        content: { "application/json": { schema: DepositResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -271,19 +299,19 @@ storageBoxRouter.openapi(
     });
     const config = await storageBoxService.getConfig(orgId, input.boxConfigId);
     return c.json(
-      ok({
+      {
         deposit: serializeDepositView(
           viewFromDepositAndConfig(result.deposit, config, now),
         ),
         currencyDeducted: result.currencyDeducted,
-      }),
+      },
       201,
     );
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/withdrawals",
     tags: [TAG_TXN],
@@ -294,9 +322,9 @@ storageBoxRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(WithdrawResultSchema) } },
+        content: { "application/json": { schema: WithdrawResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -313,21 +341,21 @@ storageBoxRouter.openapi(
       result.deposit.boxConfigId,
     );
     return c.json(
-      ok({
+      {
         deposit: serializeDepositView(
           viewFromDepositAndConfig(result.deposit, config, now),
         ),
         principalPaid: result.principalPaid,
         interestPaid: result.interestPaid,
         currencyGranted: result.currencyGranted,
-      }),
+      },
       200,
     );
   },
 );
 
 storageBoxRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/deposits/{endUserId}",
     tags: [TAG_TXN],
@@ -336,9 +364,9 @@ storageBoxRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(DepositListResponseSchema) } },
+        content: { "application/json": { schema: DepositListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -348,6 +376,6 @@ storageBoxRouter.openapi(
       organizationId: orgId,
       endUserId,
     });
-    return c.json(ok({ items: rows.map(serializeDepositView) }), 200);
+    return c.json({ items: rows.map(serializeDepositView) }, 200);
   },
 );

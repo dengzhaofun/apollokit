@@ -7,17 +7,13 @@
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.
  */
 
-import { createRoute } from "@hono/zod-openapi";
+
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { mediaLibraryService } from "./index";
 import type { MediaAsset, MediaFolder } from "./types";
@@ -27,6 +23,7 @@ import {
   AssetResponseSchema,
   ConfirmUploadSchema,
   CreateFolderSchema,
+  ErrorResponseSchema,
   FolderListResponseSchema,
   FolderResponseSchema,
   IdParamSchema,
@@ -72,7 +69,26 @@ function serializeAsset(row: MediaAsset) {
   };
 }
 
-export const mediaLibraryRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const mediaLibraryRouter = createAdminRouter();
 
 // ─── Public-ish proxy route (no auth) ──────────────────────────
 //
@@ -80,10 +96,6 @@ export const mediaLibraryRouter = makeApiRouter();
 // browsers can fetch objects without carrying auth cookies. When the
 // deployer configures MEDIA_PUBLIC_URL_BASE (R2 custom domain / r2.dev),
 // asset URLs skip this route entirely.
-//
-// Returns the raw R2 stream — not wrapped in the JSON envelope — because
-// it's served directly to <img> tags. Keep this untouched by the envelope
-// refactor.
 mediaLibraryRouter.get("/object/*", async (c) => {
   const prefix = "/object/";
   const pathname = new URL(c.req.url).pathname;
@@ -106,10 +118,24 @@ mediaLibraryRouter.get("/object/*", async (c) => {
 
 mediaLibraryRouter.use("*", requireAdminOrApiKey);
 
+mediaLibraryRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // ─── Folders ───────────────────────────────────────────────────
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/folders",
     tags: [TAG],
@@ -119,10 +145,10 @@ mediaLibraryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(FolderListResponseSchema) },
+          "application/json": { schema: FolderListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -133,14 +159,14 @@ mediaLibraryRouter.openapi(
       parentId ?? null,
     );
     return c.json(
-      ok({ items: items.map(serializeFolder), breadcrumb }),
+      { items: items.map(serializeFolder), breadcrumb },
       200,
     );
   },
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/folders",
     tags: [TAG],
@@ -153,9 +179,9 @@ mediaLibraryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(FolderResponseSchema) } },
+        content: { "application/json": { schema: FolderResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -163,12 +189,12 @@ mediaLibraryRouter.openapi(
     const input = c.req.valid("json");
     const createdBy = c.var.user?.id ?? null;
     const row = await mediaLibraryService.createFolder(orgId, input, createdBy);
-    return c.json(ok(serializeFolder(row)), 201);
+    return c.json(serializeFolder(row), 201);
   },
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/folders/{id}",
     tags: [TAG],
@@ -182,9 +208,9 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(FolderResponseSchema) } },
+        content: { "application/json": { schema: FolderResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -192,37 +218,31 @@ mediaLibraryRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await mediaLibraryService.updateFolder(orgId, id, input);
-    return c.json(ok(serializeFolder(row)), 200);
+    return c.json(serializeFolder(row), 200);
   },
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/folders/{id}",
     tags: [TAG],
     summary: "Delete an empty folder",
     request: { params: IdParamSchema },
-    responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
-    },
+    responses: { 204: { description: "Deleted" }, ...errorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteFolder(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Assets ────────────────────────────────────────────────────
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/assets",
     tags: [TAG],
@@ -231,9 +251,9 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(AssetListResponseSchema) } },
+        content: { "application/json": { schema: AssetListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -244,7 +264,7 @@ mediaLibraryRouter.openapi(
       folderId ?? null,
       { limit, cursor },
     );
-    return c.json(ok({ items: items.map(serializeAsset), nextCursor }), 200);
+    return c.json({ items: items.map(serializeAsset), nextCursor }, 200);
   },
 );
 
@@ -263,10 +283,9 @@ mediaLibraryRouter.post("/assets/upload", async (c) => {
       : null;
 
   if (!(file instanceof File)) {
-    throw new ModuleError(
-      "media_library.invalid_upload",
+    return c.json(
+      { error: "field 'file' is required and must be a file", requestId: c.get("requestId") },
       400,
-      "field 'file' is required and must be a file",
     );
   }
   if (file.size > MAX_UPLOAD_SIZE) {
@@ -289,11 +308,11 @@ mediaLibraryRouter.post("/assets/upload", async (c) => {
     body: buf,
     uploadedBy,
   });
-  return c.json(ok(serializeAsset(asset)), 201);
+  return c.json(serializeAsset(asset), 201);
 });
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/presign",
     tags: [TAG],
@@ -308,10 +327,10 @@ mediaLibraryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(PresignUploadResponseSchema) },
+          "application/json": { schema: PresignUploadResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -325,20 +344,20 @@ mediaLibraryRouter.openapi(
         request,
       });
     return c.json(
-      ok({
+      {
         assetId: asset.id,
         objectKey,
         uploadUrl,
         publicUrl,
         expiresIn,
-      }),
+      },
       200,
     );
   },
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/confirm",
     tags: [TAG],
@@ -351,46 +370,40 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(AssetResponseSchema) } },
+        content: { "application/json": { schema: AssetResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await mediaLibraryService.confirmUpload(orgId, input);
-    return c.json(ok(serializeAsset(row)), 200);
+    return c.json(serializeAsset(row), 200);
   },
 );
 
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/assets/{id}",
     tags: [TAG],
     summary: "Delete an asset (and its backing object)",
     request: { params: IdParamSchema },
-    responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
-    },
+    responses: { 204: { description: "Deleted" }, ...errorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteAsset(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // OpenAPI doc — hand-register the multipart route so it shows up in
 // `/openapi.json` without going through zod-openapi's multipart machinery.
 mediaLibraryRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/assets/upload",
     tags: [TAG],
@@ -411,9 +424,9 @@ mediaLibraryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(AssetResponseSchema) } },
+        content: { "application/json": { schema: AssetResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   // The above `mediaLibraryRouter.post("/assets/upload", …)` handles the

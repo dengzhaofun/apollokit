@@ -13,10 +13,12 @@
  *   POST /claim-tier        → manual staged-reward tier claim
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { taskService } from "./index";
@@ -25,6 +27,7 @@ import {
   ClaimTierBodySchema,
   ClaimTierResponseSchema,
   ClientTaskListResponseSchema,
+  ErrorResponseSchema,
   EventBodySchema,
   EventResponseSchema,
   TaskIdParamSchema,
@@ -33,15 +36,48 @@ import {
 
 const TAG = "Task (Client)";
 
-export const taskClientRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const taskClientRouter = createClientRouter();
 
 taskClientRouter.use("*", requireClientCredential);
 taskClientRouter.use("*", requireClientUser);
 
+taskClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // ─── Event ingestion ────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/events",
     tags: [TAG],
@@ -54,9 +90,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(EventResponseSchema) } },
+        content: { "application/json": { schema: EventResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -74,14 +110,14 @@ taskClientRouter.openapi(
       now,
     );
 
-    return c.json(ok({ processed }), 200);
+    return c.json({ processed }, 200);
   },
 );
 
 // ─── Task list ──────────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/list",
     tags: [TAG],
@@ -95,10 +131,10 @@ taskClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(ClientTaskListResponseSchema) },
+          "application/json": { schema: ClientTaskListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -116,14 +152,14 @@ taskClientRouter.openapi(
       },
     );
 
-    return c.json(ok({ items }), 200);
+    return c.json({ items }, 200);
   },
 );
 
 // ─── Claim ──────────────────────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim/{taskId}",
     tags: [TAG],
@@ -134,9 +170,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ClaimResponseSchema) } },
+        content: { "application/json": { schema: ClaimResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -146,14 +182,14 @@ taskClientRouter.openapi(
 
     const result = await taskService.claimReward(orgId, endUserId, taskId);
 
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // ─── Claim Tier (阶段性奖励) ───────────────────────────────────────
 
 taskClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/claim-tier",
     tags: [TAG],
@@ -166,9 +202,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ClaimTierResponseSchema) } },
+        content: { "application/json": { schema: ClaimTierResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -183,6 +219,6 @@ taskClientRouter.openapi(
       body.tierAlias,
     );
 
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );

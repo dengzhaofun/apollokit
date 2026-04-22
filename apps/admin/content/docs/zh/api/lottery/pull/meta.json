@@ -1,0 +1,9 @@
+{
+  "title": "Pull",
+  "pages": [
+    "lottery_pull_post_pools_by_poolkey_pull",
+    "lottery_pull_post_pools_by_poolkey_multi_pull",
+    "lottery_pull_get_pools_by_poolkey_users_by_enduserid_state",
+    "lottery_pull_get_pools_by_poolkey_users_by_enduserid_history"
+  ]
+}

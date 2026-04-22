@@ -5,15 +5,12 @@
  * routers — serialize → call service → onError maps ModuleError to JSON.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { LinkAction } from "../link/types";
 import { bannerService } from "./index";
@@ -30,6 +27,7 @@ import {
   BannerResponseSchema,
   CreateBannerGroupSchema,
   CreateBannerSchema,
+  ErrorResponseSchema,
   GroupIdParamSchema,
   IdParamSchema,
   ReorderBannersSchema,
@@ -77,14 +75,47 @@ function serializeBanner(row: Banner) {
   };
 }
 
-export const bannerRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const bannerRouter = createAdminRouter();
 
 bannerRouter.use("*", requireAdminOrApiKey);
+
+bannerRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 // ─── Groups ────────────────────────────────────────────────────
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups",
     tags: [TAG],
@@ -93,10 +124,10 @@ bannerRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(BannerGroupListResponseSchema) },
+          "application/json": { schema: BannerGroupListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -107,12 +138,12 @@ bannerRouter.openapi(
       activityId,
       includeActivity,
     });
-    return c.json(ok({ items: items.map(serializeGroup) }), 200);
+    return c.json({ items: items.map(serializeGroup) }, 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups",
     tags: [TAG],
@@ -125,21 +156,21 @@ bannerRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
+        content: { "application/json": { schema: BannerGroupResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await bannerService.createGroup(orgId, input);
-    return c.json(ok(serializeGroup(row)), 201);
+    return c.json(serializeGroup(row), 201);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups/{id}",
     tags: [TAG],
@@ -148,21 +179,21 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
+        content: { "application/json": { schema: BannerGroupResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await bannerService.getGroup(orgId, id);
-    return c.json(ok(serializeGroup(row)), 200);
+    return c.json(serializeGroup(row), 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/groups/{id}",
     tags: [TAG],
@@ -176,9 +207,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
+        content: { "application/json": { schema: BannerGroupResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -186,37 +217,34 @@ bannerRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateGroup(orgId, id, input);
-    return c.json(ok(serializeGroup(row)), 200);
+    return c.json(serializeGroup(row), 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/groups/{id}",
     tags: [TAG],
     summary: "Delete a banner group (cascades to banners)",
     request: { params: IdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await bannerService.deleteGroup(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Banners within a group ────────────────────────────────────
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/groups/{groupId}/banners",
     tags: [TAG],
@@ -225,21 +253,21 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerListResponseSchema) } },
+        content: { "application/json": { schema: BannerListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { groupId } = c.req.valid("param");
     const rows = await bannerService.listBanners(orgId, groupId);
-    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
+    return c.json({ items: rows.map(serializeBanner) }, 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups/{groupId}/banners",
     tags: [TAG],
@@ -253,9 +281,9 @@ bannerRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
+        content: { "application/json": { schema: BannerResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -263,12 +291,12 @@ bannerRouter.openapi(
     const { groupId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.createBanner(orgId, groupId, input);
-    return c.json(ok(serializeBanner(row)), 201);
+    return c.json(serializeBanner(row), 201);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/groups/{groupId}/banners/reorder",
     tags: [TAG],
@@ -282,9 +310,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerListResponseSchema) } },
+        content: { "application/json": { schema: BannerListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -292,12 +320,12 @@ bannerRouter.openapi(
     const { groupId } = c.req.valid("param");
     const { bannerIds } = c.req.valid("json");
     const rows = await bannerService.reorderBanners(orgId, groupId, bannerIds);
-    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
+    return c.json({ items: rows.map(serializeBanner) }, 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/banners/{id}",
     tags: [TAG],
@@ -306,21 +334,21 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
+        content: { "application/json": { schema: BannerResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await bannerService.getBanner(orgId, id);
-    return c.json(ok(serializeBanner(row)), 200);
+    return c.json(serializeBanner(row), 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/banners/{id}",
     tags: [TAG],
@@ -334,9 +362,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
+        content: { "application/json": { schema: BannerResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -344,29 +372,26 @@ bannerRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateBanner(orgId, id, input);
-    return c.json(ok(serializeBanner(row)), 200);
+    return c.json(serializeBanner(row), 200);
   },
 );
 
 bannerRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/banners/{id}",
     tags: [TAG],
     summary: "Delete a banner",
     request: { params: IdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await bannerService.deleteBanner(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

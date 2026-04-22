@@ -1,0 +1,8 @@
+{
+  "title": "Client",
+  "pages": [
+    "announcement_client_get_active",
+    "announcement_client_post_by_alias_impression",
+    "announcement_client_post_by_alias_click"
+  ]
+}

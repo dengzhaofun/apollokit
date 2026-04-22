@@ -193,14 +193,20 @@ doesn't have to branch on status.
 
 ### How to write a route
 
-1. Build the router with the factory, NOT `new OpenAPIHono<HonoEnv>()`:
+1. Build the router with a factory from `lib/openapi.ts`, NOT
+   `new OpenAPIHono<HonoEnv>()`:
 
    ```ts
-   import { makeApiRouter } from "../../lib/router";
-   export const checkInRouter = makeApiRouter();
+   import { createAdminRouter } from "../../lib/openapi";
+   export const checkInRouter = createAdminRouter();
    ```
 
-   The factory wires two things for you:
+   Three factories exist — pick the one that matches the route's auth:
+   - `createAdminRouter()` — admin dashboard (session or `ak_`).
+   - `createClientRouter()` — end-user `cpk_` + HMAC.
+   - `createPublicRouter()` — unauthenticated (health, etc).
+
+   Each factory wires:
    - `defaultHook` — Zod validation failures become the envelope with
      `code: "validation_error"`, HTTP 400.
    - `onError` — `ModuleError` instances become the envelope with the
@@ -211,23 +217,38 @@ doesn't have to branch on status.
    factory owns that. If you need module-specific error handling,
    extend `ModuleError` with a new subclass.
 
-2. Wrap every success response schema in `envelopeOf(...)`:
+2. Declare each route with the matching `createXxxRoute` wrapper
+   (adds `security` + `operationId`) and wrap every success response
+   schema in `envelopeOf(...)`:
 
    ```ts
+   import { createAdminRoute } from "../../lib/openapi";
    import { envelopeOf, commonErrorResponses, NullDataEnvelopeSchema } from "../../lib/response";
 
-   responses: {
-     200: {
-       description: "OK",
-       content: { "application/json": { schema: envelopeOf(CheckInConfigResponseSchema) } },
+   createAdminRoute({
+     method: "get",
+     path: "/configs/{id}",
+     responses: {
+       200: {
+         description: "OK",
+         content: { "application/json": { schema: envelopeOf(CheckInConfigResponseSchema) } },
+       },
+       ...commonErrorResponses,  // 400 / 401 / 403 / 404 / 409 / 500
      },
-     // delete / ack — 200 + null data (do NOT use 204)
-     200: {
-       description: "Deleted",
-       content: { "application/json": { schema: NullDataEnvelopeSchema } },
+   });
+
+   // For delete / ack — 200 + null data (do NOT use 204)
+   createAdminRoute({
+     method: "delete",
+     path: "/configs/{id}",
+     responses: {
+       200: {
+         description: "Deleted",
+         content: { "application/json": { schema: NullDataEnvelopeSchema } },
+       },
+       ...commonErrorResponses,
      },
-     ...commonErrorResponses,  // 400 / 401 / 403 / 404 / 409 / 500
-   }
+   });
    ```
 
    This keeps the emitted OpenAPI spec honest about the wire format,

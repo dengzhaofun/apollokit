@@ -5,19 +5,16 @@
  * relationship browsing/deletion.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { FriendSettingsNotFound } from "./errors";
+import { FriendSettingsNotFound, ModuleError } from "./errors";
 import { friendService } from "./index";
 import {
+  ErrorResponseSchema,
   FriendRelationshipListSchema,
   FriendSettingsResponseSchema,
   PaginationQuerySchema,
@@ -67,13 +64,46 @@ function serializeRelationship(row: {
   };
 }
 
-export const friendRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const friendRouter = createAdminRouter();
 
 friendRouter.use("*", requireAdminOrApiKey);
 
+friendRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // GET /friend/settings
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -82,23 +112,23 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(FriendSettingsResponseSchema) },
+          "application/json": { schema: FriendSettingsResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await friendService.getSettings(orgId);
     if (!row) throw new FriendSettingsNotFound();
-    return c.json(ok(serializeSettings(row)), 200);
+    return c.json(serializeSettings(row), 200);
   },
 );
 
 // PUT /friend/settings
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -112,22 +142,22 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(FriendSettingsResponseSchema) },
+          "application/json": { schema: FriendSettingsResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await friendService.upsertSettings(orgId, c.req.valid("json"));
-    return c.json(ok(serializeSettings(row)), 200);
+    return c.json(serializeSettings(row), 200);
   },
 );
 
 // GET /friend/relationships — admin: list all (paginated)
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/relationships",
     tags: [TAG],
@@ -137,10 +167,10 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(FriendRelationshipListSchema) },
+          "application/json": { schema: FriendRelationshipListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -148,10 +178,10 @@ friendRouter.openapi(
     const { limit, offset } = c.req.valid("query");
     const result = await friendService.listRelationships(orgId, { limit, offset });
     return c.json(
-      ok({
+      {
         items: result.items.map(serializeRelationship),
         total: result.total,
-      }),
+      },
       200,
     );
   },
@@ -159,24 +189,21 @@ friendRouter.openapi(
 
 // DELETE /friend/relationships/:id — admin: force remove
 friendRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/relationships/{id}",
     tags: [TAG],
     summary: "Force-remove a friend relationship (admin)",
     request: { params: RelationshipIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await friendService.deleteRelationship(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

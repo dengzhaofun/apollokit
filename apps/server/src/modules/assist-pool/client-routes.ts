@@ -12,14 +12,12 @@
  *   - POST /instances/:instanceId/contribute — assist someone else's instance
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { assistPoolService } from "./index";
@@ -29,6 +27,7 @@ import {
   AssistPoolInstanceListSchema,
   AssistPoolInstanceResponseSchema,
   ClientInitiateBodySchema,
+  ErrorResponseSchema,
   InstanceIdParamSchema,
 } from "./validators";
 
@@ -66,20 +65,53 @@ function serializeContribution(row: AssistPoolContribution) {
   };
 }
 
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
 const ClientListQuerySchema = z.object({
   configKey: z.string().optional().openapi({
     param: { name: "configKey", in: "query" },
   }),
 });
 
-export const assistPoolClientRouter = makeApiRouter();
+export const assistPoolClientRouter = createClientRouter();
 
 assistPoolClientRouter.use("*", requireClientCredential);
 assistPoolClientRouter.use("*", requireClientUser);
 
+assistPoolClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /instances
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances",
     tags: [TAG],
@@ -93,10 +125,10 @@ assistPoolClientRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
+          "application/json": { schema: AssistPoolInstanceResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -109,13 +141,13 @@ assistPoolClientRouter.openapi(
       configKey,
       initiatorEndUserId: endUserId,
     });
-    return c.json(ok(serializeInstance(row)), 201);
+    return c.json(serializeInstance(row), 201);
   },
 );
 
 // GET /instances (mine)
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances",
     tags: [TAG],
@@ -125,10 +157,10 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceListSchema) },
+          "application/json": { schema: AssistPoolInstanceListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -141,13 +173,13 @@ assistPoolClientRouter.openapi(
       configKey,
       initiatorEndUserId: endUserId,
     });
-    return c.json(ok({ items: rows.map(serializeInstance) }), 200);
+    return c.json({ items: rows.map(serializeInstance) }, 200);
   },
 );
 
 // GET /instances/:instanceId
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG],
@@ -158,23 +190,23 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
+          "application/json": { schema: AssistPoolInstanceResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
-    return c.json(ok(serializeInstance(row)), 200);
+    return c.json(serializeInstance(row), 200);
   },
 );
 
 // POST /instances/:instanceId/contribute
 assistPoolClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/contribute",
     tags: [TAG],
@@ -185,10 +217,10 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolContributeResultSchema) },
+          "application/json": { schema: AssistPoolContributeResultSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -201,12 +233,12 @@ assistPoolClientRouter.openapi(
       assisterEndUserId: endUserId,
     });
     return c.json(
-      ok({
+      {
         instance: serializeInstance(res.instance),
         contribution: serializeContribution(res.contribution),
         completed: res.completed,
         rewards: res.rewards ? res.rewards.rewards : null,
-      }),
+      },
       200,
     );
   },

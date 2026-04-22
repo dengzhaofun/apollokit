@@ -1,0 +1,31 @@
+{
+  "title": "Activity",
+  "pages": [
+    "activity_get_root",
+    "activity_post_root",
+    "activity_get_by_key",
+    "activity_patch_by_id",
+    "activity_delete_by_id",
+    "activity_post_by_key_publish",
+    "activity_get_by_key_nodes",
+    "activity_post_by_key_nodes",
+    "activity_patch_nodes_by_id",
+    "activity_delete_nodes_by_id",
+    "activity_get_by_key_schedules",
+    "activity_post_by_key_schedules",
+    "activity_delete_schedules_by_id",
+    "activity_post_by_key_join",
+    "activity_post_by_key_add_points",
+    "activity_post_by_key_claim_milestone",
+    "activity_get_by_key_view_by_enduserid",
+    "activity_post_tick_run",
+    "activity_get_webhook_endpoints",
+    "activity_post_webhook_endpoints",
+    "activity_get_by_key_analytics",
+    "activity_get_templates",
+    "activity_post_templates",
+    "activity_delete_templates_by_id",
+    "activity_post_templates_by_id_instantiate",
+    "activity_delete_webhook_endpoints_by_id"
+  ]
+}

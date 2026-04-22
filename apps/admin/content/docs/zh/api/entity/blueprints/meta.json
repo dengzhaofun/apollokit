@@ -1,0 +1,10 @@
+{
+  "title": "Blueprints",
+  "pages": [
+    "entity_blueprints_admin_get_blueprints",
+    "entity_blueprints_admin_post_blueprints",
+    "entity_blueprints_admin_get_blueprints_by_key",
+    "entity_blueprints_admin_patch_blueprints_by_id",
+    "entity_blueprints_admin_delete_blueprints_by_id"
+  ]
+}

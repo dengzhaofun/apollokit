@@ -5,16 +5,12 @@
  * player progress is managed via the client router, not here.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { dialogueService } from "./index";
 import type { DialogueScript } from "./types";
@@ -22,6 +18,7 @@ import {
   CreateDialogueScriptSchema,
   DialogueScriptListResponseSchema,
   DialogueScriptResponseSchema,
+  ErrorResponseSchema,
   IdParamSchema,
   UpdateDialogueScriptSchema,
 } from "./validators";
@@ -46,12 +43,45 @@ function serializeScript(row: DialogueScript) {
   };
 }
 
-export const dialogueRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const dialogueRouter = createAdminRouter();
 
 dialogueRouter.use("*", requireAdminOrApiKey);
 
+dialogueRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/scripts",
     tags: [TAG],
@@ -60,21 +90,21 @@ dialogueRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(DialogueScriptListResponseSchema) },
+          "application/json": { schema: DialogueScriptListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const items = await dialogueService.listScripts(orgId);
-    return c.json(ok({ items: items.map(serializeScript) }), 200);
+    return c.json({ items: items.map(serializeScript) }, 200);
   },
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/scripts",
     tags: [TAG],
@@ -88,22 +118,22 @@ dialogueRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: envelopeOf(DialogueScriptResponseSchema) },
+          "application/json": { schema: DialogueScriptResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await dialogueService.createScript(orgId, input);
-    return c.json(ok(serializeScript(row)), 201);
+    return c.json(serializeScript(row), 201);
   },
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/scripts/{id}",
     tags: [TAG],
@@ -113,22 +143,22 @@ dialogueRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(DialogueScriptResponseSchema) },
+          "application/json": { schema: DialogueScriptResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await dialogueService.getScript(orgId, id);
-    return c.json(ok(serializeScript(row)), 200);
+    return c.json(serializeScript(row), 200);
   },
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/scripts/{id}",
     tags: [TAG],
@@ -143,10 +173,10 @@ dialogueRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(DialogueScriptResponseSchema) },
+          "application/json": { schema: DialogueScriptResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -154,29 +184,26 @@ dialogueRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await dialogueService.updateScript(orgId, id, input);
-    return c.json(ok(serializeScript(row)), 200);
+    return c.json(serializeScript(row), 200);
   },
 );
 
 dialogueRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/scripts/{id}",
     tags: [TAG],
     summary: "Delete a dialogue script (cascades to progress rows)",
     request: { params: IdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await dialogueService.deleteScript(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

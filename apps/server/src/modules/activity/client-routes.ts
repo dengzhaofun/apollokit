@@ -11,30 +11,58 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
+import { ModuleError } from "./errors";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
   ClaimMilestoneClientBody,
+  ErrorResponseSchema,
 } from "./validators";
 
 const TAG = "Activity (Client)";
 
 import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
-export const activityClientRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const activityClientRouter = createClientRouter();
 
 activityClientRouter.use("*", requireClientCredential);
 activityClientRouter.use("*", requireClientUser);
+
+activityClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      { error: err.message, code: err.code, requestId: c.get("requestId") },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 const AliasParam = z.object({
   alias: z.string().min(1).openapi({ param: { name: "alias", in: "path" } }),
@@ -43,7 +71,7 @@ const AliasParam = z.object({
 // ─── List currently visible activities ─────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/list",
     tags: [TAG],
@@ -55,15 +83,13 @@ activityClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: envelopeOf(
-              z.object({
-                items: z.array(ActivityConfigResponseSchema),
-              }),
-            ),
+            schema: z.object({
+              items: z.array(ActivityConfigResponseSchema),
+            }),
           },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -80,7 +106,7 @@ activityClientRouter.openapi(
         r.hiddenAt.getTime() > now.getTime(),
     );
     return c.json(
-      ok({
+      {
         items: visible.map((r) => ({
           id: r.id,
           organizationId: r.organizationId,
@@ -115,7 +141,7 @@ activityClientRouter.openapi(
           createdAt: r.createdAt.toISOString(),
           updatedAt: r.updatedAt.toISOString(),
         })),
-      }),
+      },
       200,
     );
   },
@@ -124,7 +150,7 @@ activityClientRouter.openapi(
 // ─── Aggregated view for a player ──────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/{alias}",
     tags: [TAG],
@@ -134,12 +160,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": {
-            schema: envelopeOf(z.record(z.string(), z.unknown())),
-          },
+          "application/json": { schema: z.record(z.string(), z.unknown()) },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -151,14 +175,14 @@ activityClientRouter.openapi(
       activityIdOrAlias: alias,
       endUserId,
     });
-    return c.json(ok(view), 200);
+    return c.json(view, 200);
   },
 );
 
 // ─── Join ─────────────────────────────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/join",
     tags: [TAG],
@@ -171,12 +195,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": {
-            schema: envelopeOf(z.record(z.string(), z.unknown())),
-          },
+          "application/json": { schema: z.record(z.string(), z.unknown()) },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -188,14 +210,14 @@ activityClientRouter.openapi(
       activityIdOrAlias: alias,
       endUserId,
     });
-    return c.json(ok(row), 200);
+    return c.json(row, 200);
   },
 );
 
 // ─── Claim milestone ──────────────────────────────────────────
 
 activityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/{alias}/claim-milestone",
     tags: [TAG],
@@ -213,12 +235,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": {
-            schema: envelopeOf(z.record(z.string(), z.unknown())),
-          },
+          "application/json": { schema: z.record(z.string(), z.unknown()) },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -232,6 +252,6 @@ activityClientRouter.openapi(
       endUserId,
       milestoneAlias,
     });
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );

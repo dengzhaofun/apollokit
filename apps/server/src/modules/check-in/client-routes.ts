@@ -12,25 +12,22 @@
  *
  * No config CRUD is exposed. The organizationId is resolved from the
  * client credential (middleware), not from a session.
- *
- * Response envelope: same as admin routes. See `apps/server/src/lib/response.ts`.
  */
 
-import { createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { checkInService } from "./index";
 import {
   CheckInResultSchema,
   CheckInUserStateViewSchema,
+  ErrorResponseSchema,
 } from "./validators";
 
 const TAG = "Check-In (Client)";
@@ -67,6 +64,21 @@ function serializeState(row: {
   };
 }
 
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
 // Client check-in request body — only the config key, endUserId comes from header
 const ClientCheckInBodySchema = z
   .object({
@@ -84,14 +96,28 @@ const ClientStateQuerySchema = z.object({
   }),
 });
 
-export const checkInClientRouter = makeApiRouter();
+export const checkInClientRouter = createClientRouter();
 
 checkInClientRouter.use("*", requireClientCredential);
 checkInClientRouter.use("*", requireClientUser);
 
+checkInClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /check-ins — perform a check-in
 checkInClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/check-ins",
     tags: [TAG],
@@ -104,11 +130,9 @@ checkInClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(CheckInResultSchema) },
-        },
+        content: { "application/json": { schema: CheckInResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -123,14 +147,14 @@ checkInClientRouter.openapi(
     });
 
     return c.json(
-      ok({
+      {
         alreadyCheckedIn: result.alreadyCheckedIn,
         justCompleted: result.justCompleted,
         state: serializeState(result.state),
         target: result.target,
         isCompleted: result.isCompleted,
         remaining: result.remaining,
-      }),
+      },
       200,
     );
   },
@@ -138,7 +162,7 @@ checkInClientRouter.openapi(
 
 // GET /state?configKey=xxx — current user's check-in state
 checkInClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/state",
     tags: [TAG],
@@ -150,12 +174,10 @@ checkInClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": {
-            schema: envelopeOf(CheckInUserStateViewSchema),
-          },
+          "application/json": { schema: CheckInUserStateViewSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -170,12 +192,12 @@ checkInClientRouter.openapi(
     });
 
     return c.json(
-      ok({
+      {
         state: serializeState(view.state),
         target: view.target,
         isCompleted: view.isCompleted,
         remaining: view.remaining,
-      }),
+      },
       200,
     );
   },

@@ -16,24 +16,43 @@
  *   - read the global / tier-filtered leaderboard (`/leaderboard`)
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-import { makeApiRouter } from "../../lib/router";
-import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { clientAuthHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { rankService } from "./index";
 import type { RankMatchParticipant } from "./types";
 import {
+  ErrorResponseSchema,
   HistoryQuerySchema,
   LadderLocatorQuerySchema,
   LeaderboardQuerySchema,
   ParticipantDeltaResponseSchema,
+  PlayerRankViewListResponseSchema,
   PlayerRankViewResponseSchema,
 } from "./validators";
 
 const TAG = "Rank (Client)";
+
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
 
 function serializeParticipant(row: RankMatchParticipant) {
   return {
@@ -61,15 +80,25 @@ function serializeParticipant(row: RankMatchParticipant) {
   };
 }
 
-export const rankClientRouter = makeApiRouter();
+export const rankClientRouter = createClientRouter();
 
 rankClientRouter.use("*", requireClientCredential);
 rankClientRouter.use("*", requireClientUser);
 
+rankClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      { error: err.message, code: err.code, requestId: c.get("requestId") },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 /* ── GET /state — current player's standing ─────────────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/state",
     tags: [TAG],
@@ -84,10 +113,10 @@ rankClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(PlayerRankViewResponseSchema) },
+          "application/json": { schema: PlayerRankViewResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -100,14 +129,14 @@ rankClientRouter.openapi(
       tierConfigAlias,
       endUserId,
     });
-    return c.json(ok(view), 200);
+    return c.json(view, 200);
   },
 );
 
 /* ── GET /history — caller's recent match deltas ─────────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/history",
     tags: [TAG],
@@ -121,16 +150,14 @@ rankClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: envelopeOf(
-              z.object({
-                items: z.array(ParticipantDeltaResponseSchema),
-                nextCursor: z.string().optional(),
-              }),
-            ),
+            schema: z.object({
+              items: z.array(ParticipantDeltaResponseSchema),
+              nextCursor: z.string().optional(),
+            }),
           },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -155,10 +182,10 @@ rankClientRouter.openapi(
       cursor,
     });
     return c.json(
-      ok({
+      {
         items: items.map(serializeParticipant),
         nextCursor: nextCursor ?? undefined,
-      }),
+      },
       200,
     );
   },
@@ -167,7 +194,7 @@ rankClientRouter.openapi(
 /* ── GET /leaderboard — global or tier-filtered board ────────── */
 
 rankClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/leaderboard",
     tags: [TAG],
@@ -183,38 +210,36 @@ rankClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: envelopeOf(
-              z.object({
-                tier: z
-                  .object({
-                    id: z.string(),
-                    alias: z.string(),
-                  })
-                  .optional(),
-                rankings: z.array(
-                  z.object({
-                    rank: z.number().int().optional(),
-                    endUserId: z.string(),
-                    score: z.number().optional(),
-                    displaySnapshot: z
-                      .record(z.string(), z.unknown())
-                      .nullable()
-                      .optional(),
-                  }),
-                ),
-                self: z
-                  .object({
-                    rank: z.number().int().nullable(),
-                    score: z.number().nullable(),
-                  })
-                  .optional(),
-                items: z.array(PlayerRankViewResponseSchema).optional(),
-              }),
-            ),
+            schema: z.object({
+              tier: z
+                .object({
+                  id: z.string(),
+                  alias: z.string(),
+                })
+                .optional(),
+              rankings: z.array(
+                z.object({
+                  rank: z.number().int().optional(),
+                  endUserId: z.string(),
+                  score: z.number().optional(),
+                  displaySnapshot: z
+                    .record(z.string(), z.unknown())
+                    .nullable()
+                    .optional(),
+                }),
+              ),
+              self: z
+                .object({
+                  rank: z.number().int().nullable(),
+                  score: z.number().nullable(),
+                })
+                .optional(),
+              items: z.array(PlayerRankViewResponseSchema).optional(),
+            }),
           },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -237,7 +262,7 @@ rankClientRouter.openapi(
         tierId,
         limit,
       });
-      return c.json(ok({ rankings: [], items }), 200);
+      return c.json({ rankings: [], items }, 200);
     }
 
     // Global season board, delegate to leaderboard.
@@ -249,11 +274,11 @@ rankClientRouter.openapi(
       endUserId: around === "self" ? endUserId : undefined,
     });
     return c.json(
-      ok({
+      {
         rankings: top.rankings,
         self: top.self,
         items: [],
-      }),
+      },
       200,
     );
   },

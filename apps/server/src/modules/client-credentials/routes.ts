@@ -9,16 +9,12 @@
  * endpoints never expose it.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { clientCredentialService } from "./index";
 import {
@@ -27,6 +23,7 @@ import {
   CredentialIdParamSchema,
   CredentialListResponseSchema,
   CredentialResponseSchema,
+  ErrorResponseSchema,
   RotateResponseSchema,
   UpdateDevModeSchema,
 } from "./validators";
@@ -59,13 +56,38 @@ function serialize(row: {
   };
 }
 
-export const clientCredentialRouter = makeApiRouter();
+const errorResponses = {
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const clientCredentialRouter = createAdminRouter();
 
 clientCredentialRouter.use("*", requireAdminOrApiKey);
 
+clientCredentialRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /client-credentials — create
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/",
     tags: [TAG],
@@ -79,10 +101,10 @@ clientCredentialRouter.openapi(
       201: {
         description: "Created — secret is shown only once",
         content: {
-          "application/json": { schema: envelopeOf(CredentialCreatedResponseSchema) },
+          "application/json": { schema: CredentialCreatedResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -92,7 +114,7 @@ clientCredentialRouter.openapi(
       c.req.valid("json"),
     );
     return c.json(
-      ok({
+      {
         id: result.id,
         name: result.name,
         publishableKey: result.publishableKey,
@@ -101,7 +123,7 @@ clientCredentialRouter.openapi(
         enabled: result.enabled,
         expiresAt: result.expiresAt?.toISOString() ?? null,
         createdAt: result.createdAt.toISOString(),
-      }),
+      },
       201,
     );
   },
@@ -109,7 +131,7 @@ clientCredentialRouter.openapi(
 
 // GET /client-credentials — list
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -118,22 +140,22 @@ clientCredentialRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(CredentialListResponseSchema) },
+          "application/json": { schema: CredentialListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await clientCredentialService.list(orgId);
-    return c.json(ok({ items: rows.map(serialize) }), 200);
+    return c.json({ items: rows.map(serialize) }, 200);
   },
 );
 
 // GET /client-credentials/:id
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{id}",
     tags: [TAG],
@@ -142,22 +164,22 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
+        content: { "application/json": { schema: CredentialResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.get(orgId, id);
-    return c.json(ok(serialize(row)), 200);
+    return c.json(serialize(row), 200);
   },
 );
 
 // POST /client-credentials/:id/revoke
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/revoke",
     tags: [TAG],
@@ -166,22 +188,22 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "Revoked",
-        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
+        content: { "application/json": { schema: CredentialResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.revoke(orgId, id);
-    return c.json(ok(serialize(row)), 200);
+    return c.json(serialize(row), 200);
   },
 );
 
 // POST /client-credentials/:id/rotate
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/rotate",
     tags: [TAG],
@@ -190,22 +212,22 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "New keys — secret shown only once",
-        content: { "application/json": { schema: envelopeOf(RotateResponseSchema) } },
+        content: { "application/json": { schema: RotateResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const result = await clientCredentialService.rotate(orgId, id);
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // PATCH /client-credentials/:id/dev-mode
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{id}/dev-mode",
     tags: [TAG],
@@ -219,9 +241,9 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "Updated",
-        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
+        content: { "application/json": { schema: CredentialResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -229,30 +251,27 @@ clientCredentialRouter.openapi(
     const { id } = c.req.valid("param");
     const { devMode } = c.req.valid("json");
     const row = await clientCredentialService.updateDevMode(orgId, id, devMode);
-    return c.json(ok(serialize(row)), 200);
+    return c.json(serialize(row), 200);
   },
 );
 
 // DELETE /client-credentials/:id
 clientCredentialRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{id}",
     tags: [TAG],
     summary: "Permanently delete a client credential",
     request: { params: CredentialIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await clientCredentialService.delete(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

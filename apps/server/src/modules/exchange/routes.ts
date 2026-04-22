@@ -2,23 +2,21 @@
  * Admin-facing HTTP routes for the exchange module.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { ModuleError } from "./errors";
 import { exchangeService } from "./index";
 import {
   ConfigKeyParamSchema,
   ConfigListResponseSchema,
   CreateConfigSchema,
   CreateOptionSchema,
+  ErrorResponseSchema,
   ExchangeConfigResponseSchema,
   ExchangeOptionResponseSchema,
   ExchangeResultSchema,
@@ -96,14 +94,47 @@ function serializeOption(row: {
   };
 }
 
-export const exchangeRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const exchangeRouter = createAdminRouter();
 
 exchangeRouter.use("*", requireAdminOrApiKey);
+
+exchangeRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 // ─── Config routes ────────────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG_CFG],
@@ -114,20 +145,20 @@ exchangeRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
+        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await exchangeService.createConfig(orgId, c.req.valid("json"));
-    return c.json(ok(serializeConfig(row)), 201);
+    return c.json(serializeConfig(row), 201);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG_CFG],
@@ -135,20 +166,20 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ConfigListResponseSchema) } },
+        content: { "application/json": { schema: ConfigListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await exchangeService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json({ items: rows.map(serializeConfig) }, 200);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG_CFG],
@@ -157,21 +188,21 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
+        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await exchangeService.getConfig(orgId, key);
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG_CFG],
@@ -183,46 +214,43 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
+        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await exchangeService.updateConfig(orgId, id, c.req.valid("json"));
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG_CFG],
     summary: "Delete an exchange config (cascades to options)",
     request: { params: IdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await exchangeService.deleteConfig(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Option routes ────────────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs/{configKey}/options",
     tags: [TAG_OPT],
@@ -234,9 +262,9 @@ exchangeRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(ExchangeOptionResponseSchema) } },
+        content: { "application/json": { schema: ExchangeOptionResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -247,12 +275,12 @@ exchangeRouter.openapi(
       configKey,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeOption(row)), 201);
+    return c.json(serializeOption(row), 201);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{configKey}/options",
     tags: [TAG_OPT],
@@ -261,21 +289,21 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(OptionListResponseSchema) } },
+        content: { "application/json": { schema: OptionListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { configKey } = c.req.valid("param");
     const rows = await exchangeService.listOptions(orgId, configKey);
-    return c.json(ok({ items: rows.map(serializeOption) }), 200);
+    return c.json({ items: rows.map(serializeOption) }, 200);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/options/{optionId}",
     tags: [TAG_OPT],
@@ -287,9 +315,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ExchangeOptionResponseSchema) } },
+        content: { "application/json": { schema: ExchangeOptionResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -300,37 +328,34 @@ exchangeRouter.openapi(
       optionId,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeOption(row)), 200);
+    return c.json(serializeOption(row), 200);
   },
 );
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/options/{optionId}",
     tags: [TAG_OPT],
     summary: "Delete an exchange option",
     request: { params: OptionIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { optionId } = c.req.valid("param");
     await exchangeService.deleteOption(orgId, optionId);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Exchange execution ───────────────────────────────────────────
 
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/options/{optionId}/execute",
     tags: [TAG_EXEC],
@@ -342,9 +367,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ExchangeResultSchema) } },
+        content: { "application/json": { schema: ExchangeResultSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -357,13 +382,13 @@ exchangeRouter.openapi(
       optionId,
       idempotencyKey,
     });
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // GET user exchange state for an option
 exchangeRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/options/{optionId}/users/{endUserId}/state",
     tags: [TAG_EXEC],
@@ -371,9 +396,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(ExchangeUserStateResponseSchema) } },
+        content: { "application/json": { schema: ExchangeUserStateResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -385,6 +410,6 @@ exchangeRouter.openapi(
       endUserId,
       optionId,
     });
-    return c.json(ok(state), 200);
+    return c.json(state, 200);
   },
 );

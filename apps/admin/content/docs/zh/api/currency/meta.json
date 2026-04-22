@@ -1,0 +1,9 @@
+{
+  "title": "Currency",
+  "pages": [
+    "client",
+    "definitions",
+    "ledger",
+    "wallet"
+  ]
+}

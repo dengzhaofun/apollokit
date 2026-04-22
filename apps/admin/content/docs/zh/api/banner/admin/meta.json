@@ -1,0 +1,16 @@
+{
+  "title": "Admin",
+  "pages": [
+    "banner_admin_get_groups",
+    "banner_admin_post_groups",
+    "banner_admin_get_groups_by_id",
+    "banner_admin_patch_groups_by_id",
+    "banner_admin_delete_groups_by_id",
+    "banner_admin_get_groups_by_groupid_banners",
+    "banner_admin_post_groups_by_groupid_banners",
+    "banner_admin_post_groups_by_groupid_banners_reorder",
+    "banner_admin_get_banners_by_id",
+    "banner_admin_patch_banners_by_id",
+    "banner_admin_delete_banners_by_id"
+  ]
+}

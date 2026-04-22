@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { auth } from "./auth";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
+import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
 import { requestContext } from "./lib/request-context";
 import { INTERNAL_ERROR_CODE, fail } from "./lib/response";
 import { requireClientCredential } from "./middleware/require-client-credential";
@@ -100,7 +101,9 @@ import { rankClientRouter, rankRouter } from "./modules/rank";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
-const app = new OpenAPIHono<HonoEnv>();
+const app = new OpenAPIHono<HonoEnv>({
+  defaultHook: validationDefaultHook,
+});
 
 // Base middleware
 app.use("*", requestId());
@@ -126,8 +129,9 @@ app.use(
 );
 
 // Global error handler — returns the standard envelope. Module-level
-// routers handle `ModuleError` in their own `onError` (see
-// `lib/router.ts`); anything that reaches here is unexpected.
+// routers handle `ModuleError` in their own `onError` (installed by
+// `createAdminRouter` / `createClientRouter` in `lib/openapi.ts`);
+// anything that reaches here is unexpected.
 app.onError((err, c) => {
   console.error(err);
   return c.json(fail(INTERNAL_ERROR_CODE, err.message), 500);
@@ -246,11 +250,23 @@ app.route("/api/client/activity", activityClientRouter);
 app.route("/api/client/assist-pool", assistPoolClientRouter);
 
 // OpenAPI document + Scalar UI
+//
+// `registerSecuritySchemes` adds Session / AdminApiKey / ClientCredential
+// to `components.securitySchemes`. The `security` array on each route is
+// stamped per-router by `createAdminRoute` / `createClientRoute` /
+// `createPublicRoute` from `./lib/openapi`.
+registerSecuritySchemes(app);
+
 app.doc31("/openapi.json", {
   openapi: "3.1.0",
   info: {
     title: "apollokit API",
     version: "0.1.0",
+    description:
+      "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n" +
+      "- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`Authorization: Bearer ak_…`).\n" +
+      "- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client public key (`X-Client-Public-Key: cpk_…`) plus HMAC headers (`X-Client-Signature`, `X-Client-Timestamp`, `X-Client-Nonce`).\n\n" +
+      "Every business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format.",
   },
   servers: [{ url: "http://localhost:8787", description: "Dev" }],
 });

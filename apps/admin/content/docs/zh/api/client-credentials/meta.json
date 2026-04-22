@@ -1,0 +1,12 @@
+{
+  "title": "Client Credentials",
+  "pages": [
+    "client_credentials_get_root",
+    "client_credentials_post_root",
+    "client_credentials_get_by_id",
+    "client_credentials_delete_by_id",
+    "client_credentials_post_by_id_revoke",
+    "client_credentials_post_by_id_rotate",
+    "client_credentials_patch_by_id_dev_mode"
+  ]
+}

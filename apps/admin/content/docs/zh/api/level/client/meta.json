@@ -1,0 +1,10 @@
+{
+  "title": "Client",
+  "pages": [
+    "level_client_post_configs",
+    "level_client_post_configs_by_key_overview",
+    "level_client_post_levels_by_id_detail",
+    "level_client_post_levels_by_id_clear",
+    "level_client_post_levels_by_id_claim"
+  ]
+}

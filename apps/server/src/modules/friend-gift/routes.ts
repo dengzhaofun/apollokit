@@ -5,20 +5,17 @@
  * read `c.var.session!.activeOrganizationId!` uniformly.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { FriendGiftSettingsNotFound } from "./errors";
+import { FriendGiftSettingsNotFound, ModuleError } from "./errors";
 import { friendGiftService } from "./index";
 import {
   CreatePackageSchema,
+  ErrorResponseSchema,
   GiftSendListResponseSchema,
   GiftSendResponseSchema,
   PackageIdParamSchema,
@@ -117,15 +114,48 @@ function serializeSend(row: {
   };
 }
 
-export const friendGiftRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const friendGiftRouter = createAdminRouter();
 
 friendGiftRouter.use("*", requireAdminOrApiKey);
+
+friendGiftRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
 
 // ─── Settings ────────────────────────────────────────────────────
 
 // GET /friend-gift/settings
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/settings",
     tags: [TAG],
@@ -133,9 +163,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(SettingsResponseSchema) } },
+        content: { "application/json": { schema: SettingsResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -144,13 +174,13 @@ friendGiftRouter.openapi(
     if (!row) {
       throw new FriendGiftSettingsNotFound();
     }
-    return c.json(ok(serializeSettings(row)), 200);
+    return c.json(serializeSettings(row), 200);
   },
 );
 
 // PUT /friend-gift/settings
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/settings",
     tags: [TAG],
@@ -163,9 +193,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(SettingsResponseSchema) } },
+        content: { "application/json": { schema: SettingsResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -174,7 +204,7 @@ friendGiftRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeSettings(row)), 200);
+    return c.json(serializeSettings(row), 200);
   },
 );
 
@@ -182,7 +212,7 @@ friendGiftRouter.openapi(
 
 // POST /friend-gift/packages
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/packages",
     tags: [TAG],
@@ -195,9 +225,9 @@ friendGiftRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
+        content: { "application/json": { schema: PackageResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -206,13 +236,13 @@ friendGiftRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(ok(serializePackage(row)), 201);
+    return c.json(serializePackage(row), 201);
   },
 );
 
 // GET /friend-gift/packages
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/packages",
     tags: [TAG],
@@ -220,21 +250,21 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(PackageListResponseSchema) } },
+        content: { "application/json": { schema: PackageListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await friendGiftService.listPackages(orgId);
-    return c.json(ok({ items: rows.map(serializePackage) }), 200);
+    return c.json({ items: rows.map(serializePackage) }, 200);
   },
 );
 
 // GET /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/packages/{id}",
     tags: [TAG],
@@ -243,22 +273,22 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
+        content: { "application/json": { schema: PackageResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getPackage(orgId, id);
-    return c.json(ok(serializePackage(row)), 200);
+    return c.json(serializePackage(row), 200);
   },
 );
 
 // PUT /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "put",
     path: "/packages/{id}",
     tags: [TAG],
@@ -272,9 +302,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
+        content: { "application/json": { schema: PackageResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -285,31 +315,28 @@ friendGiftRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(ok(serializePackage(row)), 200);
+    return c.json(serializePackage(row), 200);
   },
 );
 
 // DELETE /friend-gift/packages/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/packages/{id}",
     tags: [TAG],
     summary: "Delete a gift package",
     request: { params: PackageIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await friendGiftService.deletePackage(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
@@ -317,7 +344,7 @@ friendGiftRouter.openapi(
 
 // GET /friend-gift/sends
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/sends",
     tags: [TAG],
@@ -326,22 +353,22 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GiftSendListResponseSchema) } },
+        content: { "application/json": { schema: GiftSendListResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { limit, offset } = c.req.valid("query");
     const rows = await friendGiftService.listSends(orgId, { limit, offset });
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    return c.json({ items: rows.map(serializeSend) }, 200);
   },
 );
 
 // GET /friend-gift/sends/:id
 friendGiftRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/sends/{id}",
     tags: [TAG],
@@ -350,15 +377,15 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: envelopeOf(GiftSendResponseSchema) } },
+        content: { "application/json": { schema: GiftSendResponseSchema } },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getSend(orgId, id);
-    return c.json(ok(serializeSend(row)), 200);
+    return c.json(serializeSend(row), 200);
   },
 );

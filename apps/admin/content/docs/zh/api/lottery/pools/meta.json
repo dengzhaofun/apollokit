@@ -1,0 +1,10 @@
+{
+  "title": "Pools",
+  "pages": [
+    "lottery_pools_get_pools",
+    "lottery_pools_post_pools",
+    "lottery_pools_get_pools_by_key",
+    "lottery_pools_patch_pools_by_id",
+    "lottery_pools_delete_pools_by_id"
+  ]
+}

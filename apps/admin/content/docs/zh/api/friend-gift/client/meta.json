@@ -1,0 +1,11 @@
+{
+  "title": "Client",
+  "pages": [
+    "friend_gift_client_get_packages",
+    "friend_gift_client_post_send",
+    "friend_gift_client_get_inbox",
+    "friend_gift_client_get_sent",
+    "friend_gift_client_post_sends_by_id_claim",
+    "friend_gift_client_get_daily_status"
+  ]
+}

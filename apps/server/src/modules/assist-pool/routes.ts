@@ -8,16 +8,13 @@
  * Guard: `requireAdminOrApiKey` — Better Auth session OR admin API key.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { ModuleError } from "./errors";
 import { assistPoolService } from "./index";
 import type {
   AssistPoolConfig,
@@ -36,6 +33,7 @@ import {
   ConfigIdParamSchema,
   ConfigKeyParamSchema,
   CreateConfigSchema,
+  ErrorResponseSchema,
   InstanceIdParamSchema,
   ListConfigsQuerySchema,
   ListInstancesQuerySchema,
@@ -101,13 +99,46 @@ function serializeContribution(row: AssistPoolContribution) {
   };
 }
 
-export const assistPoolRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const assistPoolRouter = createAdminRouter();
 
 assistPoolRouter.use("*", requireAdminOrApiKey);
 
+assistPoolRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // POST /configs
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
@@ -121,10 +152,10 @@ assistPoolRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
+          "application/json": { schema: AssistPoolConfigResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -133,13 +164,13 @@ assistPoolRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeConfig(row)), 201);
+    return c.json(serializeConfig(row), 201);
   },
 );
 
 // GET /configs
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
@@ -150,10 +181,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolConfigListSchema) },
+          "application/json": { schema: AssistPoolConfigListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -163,13 +194,13 @@ assistPoolRouter.openapi(
       activityId: q.activityId,
       includeActivity: q.includeActivity === "true",
     });
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json({ items: rows.map(serializeConfig) }, 200);
   },
 );
 
 // GET /configs/:key
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
@@ -179,23 +210,23 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
+          "application/json": { schema: AssistPoolConfigResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await assistPoolService.getConfig(orgId, key);
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 // PATCH /configs/:id
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/configs/{id}",
     tags: [TAG],
@@ -210,10 +241,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
+          "application/json": { schema: AssistPoolConfigResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -224,37 +255,34 @@ assistPoolRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(ok(serializeConfig(row)), 200);
+    return c.json(serializeConfig(row), 200);
   },
 );
 
 // DELETE /configs/:id
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
     summary: "Delete an assist-pool config (cascades to instances, contributions, ledger)",
     request: { params: ConfigIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await assistPoolService.deleteConfig(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // POST /instances — admin initiates on behalf of an end user
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances",
     tags: [TAG_INSTANCES],
@@ -268,10 +296,10 @@ assistPoolRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
+          "application/json": { schema: AssistPoolInstanceResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -282,13 +310,13 @@ assistPoolRouter.openapi(
       configKey: body.configKey,
       initiatorEndUserId: body.initiatorEndUserId,
     });
-    return c.json(ok(serializeInstance(row)), 201);
+    return c.json(serializeInstance(row), 201);
   },
 );
 
 // GET /instances — list / filter
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances",
     tags: [TAG_INSTANCES],
@@ -298,10 +326,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceListSchema) },
+          "application/json": { schema: AssistPoolInstanceListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -314,13 +342,13 @@ assistPoolRouter.openapi(
       status: q.status,
       limit: q.limit,
     });
-    return c.json(ok({ items: rows.map(serializeInstance) }), 200);
+    return c.json({ items: rows.map(serializeInstance) }, 200);
   },
 );
 
 // GET /instances/:instanceId
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG_INSTANCES],
@@ -330,23 +358,23 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
+          "application/json": { schema: AssistPoolInstanceResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
-    return c.json(ok(serializeInstance(row)), 200);
+    return c.json(serializeInstance(row), 200);
   },
 );
 
 // GET /instances/:instanceId/contributions
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/instances/{instanceId}/contributions",
     tags: [TAG_INSTANCES],
@@ -356,23 +384,23 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolContributionListSchema) },
+          "application/json": { schema: AssistPoolContributionListSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const rows = await assistPoolService.listContributions(orgId, instanceId);
-    return c.json(ok({ items: rows.map(serializeContribution) }), 200);
+    return c.json({ items: rows.map(serializeContribution) }, 200);
   },
 );
 
 // POST /instances/:instanceId/contribute — admin drives a contribution on behalf of another user
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances/{instanceId}/contribute",
     tags: [TAG_INSTANCES],
@@ -387,10 +415,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolContributeResultSchema) },
+          "application/json": { schema: AssistPoolContributeResultSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -403,12 +431,12 @@ assistPoolRouter.openapi(
       assisterEndUserId,
     });
     return c.json(
-      ok({
+      {
         instance: serializeInstance(res.instance),
         contribution: serializeContribution(res.contribution),
         completed: res.completed,
         rewards: res.rewards ? res.rewards.rewards : null,
-      }),
+      },
       200,
     );
   },
@@ -416,7 +444,7 @@ assistPoolRouter.openapi(
 
 // POST /instances/:instanceId/force-expire
 assistPoolRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/instances/{instanceId}/force-expire",
     tags: [TAG_INSTANCES],
@@ -426,16 +454,16 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
+          "application/json": { schema: AssistPoolInstanceResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.forceExpireInstance(orgId, instanceId);
-    return c.json(ok(serializeInstance(row)), 200);
+    return c.json(serializeInstance(row), 200);
   },
 );

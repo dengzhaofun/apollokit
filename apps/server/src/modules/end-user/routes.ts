@@ -15,15 +15,12 @@
  * these with their admin API key, never with the cpk_ publishable key.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
-import { makeApiRouter } from "../../lib/router";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 
 import { endUserService } from "./index";
@@ -31,6 +28,7 @@ import {
   EndUserIdParamSchema,
   EndUserListResponseSchema,
   EndUserViewSchema,
+  ErrorResponseSchema,
   ListEndUsersQuerySchema,
   SignOutAllResponseSchema,
   SyncEndUserResponseSchema,
@@ -40,13 +38,38 @@ import {
 
 const TAG = "End User";
 
-export const endUserRouter = makeApiRouter();
+export const endUserRouter = createAdminRouter();
 
 endUserRouter.use("*", requireAdminOrApiKey);
 
+endUserRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
+const commonErrorResponses = {
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
 // POST /sync — upsert from tenant identity
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/sync",
     tags: [TAG],
@@ -61,29 +84,36 @@ endUserRouter.openapi(
       200: {
         description: "Merged onto an existing end-user",
         content: {
-          "application/json": { schema: envelopeOf(SyncEndUserResponseSchema) },
+          "application/json": { schema: SyncEndUserResponseSchema },
         },
       },
       201: {
         description: "New end-user created",
         content: {
-          "application/json": { schema: envelopeOf(SyncEndUserResponseSchema) },
+          "application/json": { schema: SyncEndUserResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      401: {
+        description: "Unauthorized",
+        content: { "application/json": { schema: ErrorResponseSchema } },
+      },
+      409: {
+        description: "Identity conflict",
+        content: { "application/json": { schema: ErrorResponseSchema } },
+      },
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const result = await endUserService.syncUser(orgId, input);
-    return c.json(ok(result), result.created ? 201 : 200);
+    return c.json(result, result.created ? 201 : 200);
   },
 );
 
 // GET / — list
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -93,7 +123,7 @@ endUserRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(EndUserListResponseSchema) },
+          "application/json": { schema: EndUserListResponseSchema },
         },
       },
       ...commonErrorResponses,
@@ -103,13 +133,13 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
     const result = await endUserService.list(orgId, q);
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // GET /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{id}",
     tags: [TAG],
@@ -118,9 +148,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(EndUserViewSchema) },
-        },
+        content: { "application/json": { schema: EndUserViewSchema } },
       },
       ...commonErrorResponses,
     },
@@ -128,13 +156,13 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(ok(await endUserService.get(orgId, id)), 200);
+    return c.json(await endUserService.get(orgId, id), 200);
   },
 );
 
 // PATCH /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{id}",
     tags: [TAG],
@@ -146,9 +174,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(EndUserViewSchema) },
-        },
+        content: { "application/json": { schema: EndUserViewSchema } },
       },
       ...commonErrorResponses,
     },
@@ -157,13 +183,13 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
-    return c.json(ok(await endUserService.update(orgId, id, input)), 200);
+    return c.json(await endUserService.update(orgId, id, input), 200);
   },
 );
 
 // POST /:id/disable
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/disable",
     tags: [TAG],
@@ -172,9 +198,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Disabled",
-        content: {
-          "application/json": { schema: envelopeOf(EndUserViewSchema) },
-        },
+        content: { "application/json": { schema: EndUserViewSchema } },
       },
       ...commonErrorResponses,
     },
@@ -182,13 +206,13 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(ok(await endUserService.setDisabled(orgId, id, true)), 200);
+    return c.json(await endUserService.setDisabled(orgId, id, true), 200);
   },
 );
 
 // POST /:id/enable
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/enable",
     tags: [TAG],
@@ -197,9 +221,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Enabled",
-        content: {
-          "application/json": { schema: envelopeOf(EndUserViewSchema) },
-        },
+        content: { "application/json": { schema: EndUserViewSchema } },
       },
       ...commonErrorResponses,
     },
@@ -207,13 +229,13 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(ok(await endUserService.setDisabled(orgId, id, false)), 200);
+    return c.json(await endUserService.setDisabled(orgId, id, false), 200);
   },
 );
 
 // POST /:id/sign-out-all
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/{id}/sign-out-all",
     tags: [TAG],
@@ -222,9 +244,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Revoked",
-        content: {
-          "application/json": { schema: envelopeOf(SignOutAllResponseSchema) },
-        },
+        content: { "application/json": { schema: SignOutAllResponseSchema } },
       },
       ...commonErrorResponses,
     },
@@ -232,23 +252,20 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(ok(await endUserService.signOutAll(orgId, id)), 200);
+    return c.json(await endUserService.signOutAll(orgId, id), 200);
   },
 );
 
 // DELETE /:id
 endUserRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{id}",
     tags: [TAG],
     summary: "Hard-delete an end-user (cascades eu_session / eu_account)",
     request: { params: EndUserIdParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
+      204: { description: "Deleted" },
       ...commonErrorResponses,
     },
   }),
@@ -256,6 +273,6 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await endUserService.remove(orgId, id);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

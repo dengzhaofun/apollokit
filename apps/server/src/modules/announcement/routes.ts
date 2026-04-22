@@ -2,18 +2,15 @@
  * Admin-facing HTTP routes for the announcement module.
  *
  * Guarded by `requireAdminOrApiKey`. Structure mirrors the banner router —
- * serialize → call service → router factory maps ModuleError to JSON envelope.
+ * serialize → call service → onError maps ModuleError to JSON.
  */
 
-import { createRoute } from "@hono/zod-openapi";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+
+import type { HonoEnv } from "../../env";
+import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { announcementService } from "./index";
 import type {
@@ -26,6 +23,7 @@ import {
   AnnouncementListResponseSchema,
   AnnouncementResponseSchema,
   CreateAnnouncementSchema,
+  ErrorResponseSchema,
   ListAnnouncementsQuerySchema,
   UpdateAnnouncementSchema,
 } from "./validators";
@@ -54,12 +52,45 @@ function serialize(row: Announcement) {
   };
 }
 
-export const announcementRouter = makeApiRouter();
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
+
+export const announcementRouter = createAdminRouter();
 
 announcementRouter.use("*", requireAdminOrApiKey);
 
+announcementRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/",
     tags: [TAG],
@@ -69,24 +100,22 @@ announcementRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": {
-            schema: envelopeOf(AnnouncementListResponseSchema),
-          },
+          "application/json": { schema: AnnouncementListResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const filter = c.req.valid("query");
     const items = await announcementService.list(orgId, filter);
-    return c.json(ok({ items: items.map(serialize) }), 200);
+    return c.json({ items: items.map(serialize) }, 200);
   },
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "post",
     path: "/",
     tags: [TAG],
@@ -100,10 +129,10 @@ announcementRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: envelopeOf(AnnouncementResponseSchema) },
+          "application/json": { schema: AnnouncementResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -114,12 +143,12 @@ announcementRouter.openapi(
       input,
       c.var.user?.id ?? null,
     );
-    return c.json(ok(serialize(row)), 201);
+    return c.json(serialize(row), 201);
   },
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "get",
     path: "/{alias}",
     tags: [TAG],
@@ -129,22 +158,22 @@ announcementRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AnnouncementResponseSchema) },
+          "application/json": { schema: AnnouncementResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { alias } = c.req.valid("param");
     const row = await announcementService.getByAlias(orgId, alias);
-    return c.json(ok(serialize(row)), 200);
+    return c.json(serialize(row), 200);
   },
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "patch",
     path: "/{alias}",
     tags: [TAG],
@@ -159,10 +188,10 @@ announcementRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(AnnouncementResponseSchema) },
+          "application/json": { schema: AnnouncementResponseSchema },
         },
       },
-      ...commonErrorResponses,
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -170,31 +199,26 @@ announcementRouter.openapi(
     const { alias } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await announcementService.update(orgId, alias, input);
-    return c.json(ok(serialize(row)), 200);
+    return c.json(serialize(row), 200);
   },
 );
 
 announcementRouter.openapi(
-  createRoute({
+  createAdminRoute({
     method: "delete",
     path: "/{alias}",
     tags: [TAG],
     summary: "Delete an announcement",
     request: { params: AliasParamSchema },
     responses: {
-      200: {
-        description: "Deleted",
-        content: {
-          "application/json": { schema: NullDataEnvelopeSchema },
-        },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { alias } = c.req.valid("param");
     await announcementService.remove(orgId, alias);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );

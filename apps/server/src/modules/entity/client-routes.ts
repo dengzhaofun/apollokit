@@ -11,21 +11,39 @@
  * c.var.endUserId!. No inline verifyRequest calls; no endUserId path segment for the caller.
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-import { makeApiRouter } from "../../lib/router";
-import {
-  NullDataEnvelopeSchema,
-  commonErrorResponses,
-  envelopeOf,
-  ok,
-} from "../../lib/response";
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
+import type { HonoEnv } from "../../env";
+import { createClientRouter, createClientRoute } from "../../lib/openapi";
+import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { entityService } from "./index";
+import { ErrorResponseSchema } from "./validators";
 
 const TAG = "Entity (Client)";
+
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
+
+const errorResponses = {
+  400: {
+    description: "Bad request",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  401: {
+    description: "Unauthorized",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  404: {
+    description: "Not found",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+  409: {
+    description: "Conflict",
+    content: { "application/json": { schema: ErrorResponseSchema } },
+  },
+};
 
 const InstanceIdParam = z.object({
   instanceId: z.string().uuid().openapi({
@@ -33,15 +51,29 @@ const InstanceIdParam = z.object({
   }),
 });
 
-export const entityClientRouter = makeApiRouter();
+export const entityClientRouter = createClientRouter();
 
 entityClientRouter.use("*", requireClientCredential);
 entityClientRouter.use("*", requireClientUser);
 
+entityClientRouter.onError((err, c) => {
+  if (err instanceof ModuleError) {
+    return c.json(
+      {
+        error: err.message,
+        code: err.code,
+        requestId: c.get("requestId"),
+      },
+      err.httpStatus as ContentfulStatusCode,
+    );
+  }
+  throw err;
+});
+
 // ─── Read ─────────────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances",
     tags: [TAG],
@@ -54,11 +86,8 @@ entityClientRouter.openapi(
       }),
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.array(z.any())) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.array(z.any()) } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -69,23 +98,20 @@ entityClientRouter.openapi(
       schemaId,
       blueprintId,
     });
-    return c.json(ok(rows), 200);
+    return c.json(rows, 200);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/instances/{instanceId}",
     tags: [TAG],
     summary: "Get entity instance detail with slots",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -93,14 +119,14 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     const result = await entityService.getInstance(orgId, endUserId, instanceId);
-    return c.json(ok(result), 200);
+    return c.json(result, 200);
   },
 );
 
 // ─── Acquire / Discard ────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/acquire",
     tags: [TAG],
@@ -120,11 +146,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      201: {
-        description: "Created",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      201: { description: "Created", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -138,23 +161,20 @@ entityClientRouter.openapi(
       source,
       sourceId,
     );
-    return c.json(ok(inst), 201);
+    return c.json(inst, 201);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/discard",
     tags: [TAG],
     summary: "Discard (delete) an entity instance",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      200: {
-        description: "Deleted",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Deleted" },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -162,14 +182,14 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     await entityService.discardEntity(orgId, endUserId, instanceId);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 // ─── Lock ─────────────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/lock",
     tags: [TAG],
@@ -186,11 +206,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -204,14 +221,14 @@ entityClientRouter.openapi(
       instanceId,
       locked,
     );
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 // ─── Progression ──────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/add-exp",
     tags: [TAG],
@@ -228,11 +245,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -241,12 +255,12 @@ entityClientRouter.openapi(
     const { instanceId } = c.req.valid("param");
     const { amount } = c.req.valid("json");
     const inst = await entityService.addExp(orgId, endUserId, instanceId, amount);
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/level-up",
     tags: [TAG],
@@ -265,11 +279,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -283,23 +294,20 @@ entityClientRouter.openapi(
       instanceId,
       targetLevel,
     );
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/rank-up",
     tags: [TAG],
     summary: "Rank up (consumes materials)",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -307,12 +315,12 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     const inst = await entityService.rankUp(orgId, endUserId, instanceId);
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/synthesize",
     tags: [TAG],
@@ -331,11 +339,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -349,14 +354,14 @@ entityClientRouter.openapi(
       instanceId,
       feedInstanceIds,
     );
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 // ─── Slot System ──────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/equip",
     tags: [TAG],
@@ -377,11 +382,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      201: {
-        description: "Equipped",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      201: { description: "Equipped", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -397,12 +399,12 @@ entityClientRouter.openapi(
       slotIndex,
       equippedInstanceId,
     );
-    return c.json(ok(slot), 201);
+    return c.json(slot, 201);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/unequip",
     tags: [TAG],
@@ -422,11 +424,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "Unequipped",
-        content: { "application/json": { schema: NullDataEnvelopeSchema } },
-      },
-      ...commonErrorResponses,
+      204: { description: "Unequipped" },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -435,12 +434,12 @@ entityClientRouter.openapi(
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex } = c.req.valid("json");
     await entityService.unequip(orgId, endUserId, instanceId, slotKey, slotIndex);
-    return c.json(ok(null), 200);
+    return c.body(null, 204);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "post",
     path: "/instances/{instanceId}/change-skin",
     tags: [TAG],
@@ -459,11 +458,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -477,14 +473,14 @@ entityClientRouter.openapi(
       instanceId,
       skinId,
     );
-    return c.json(ok(inst), 200);
+    return c.json(inst, 200);
   },
 );
 
 // ─── Formations ───────────────────────────────────────────────
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "get",
     path: "/formations/{configId}",
     tags: [TAG],
@@ -498,11 +494,8 @@ entityClientRouter.openapi(
       }),
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.array(z.any())) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.array(z.any()) } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -510,12 +503,12 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { configId } = c.req.valid("param");
     const rows = await entityService.listFormations(orgId, endUserId, configId);
-    return c.json(ok(rows), 200);
+    return c.json(rows, 200);
   },
 );
 
 entityClientRouter.openapi(
-  createRoute({
+  createClientRoute({
     method: "put",
     path: "/formations/{configId}/{formationIndex}",
     tags: [TAG],
@@ -547,11 +540,8 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: {
-        description: "OK",
-        content: { "application/json": { schema: envelopeOf(z.any()) } },
-      },
-      ...commonErrorResponses,
+      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
+      ...errorResponses,
     },
   }),
   async (c) => {
@@ -567,6 +557,6 @@ entityClientRouter.openapi(
       name ?? null,
       slots,
     );
-    return c.json(ok(formation), 200);
+    return c.json(formation, 200);
   },
 );
