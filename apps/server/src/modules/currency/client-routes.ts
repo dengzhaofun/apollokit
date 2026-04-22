@@ -14,17 +14,14 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { currencyService } from "./index";
 import {
   BalanceResponseSchema,
-  ErrorResponseSchema,
   WalletListResponseSchema,
 } from "./validators";
 
@@ -39,39 +36,10 @@ const ClientBalanceParam = z.object({
   }),
 });
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const currencyClientRouter = createClientRouter();
 
 currencyClientRouter.use("*", requireClientCredential);
 currencyClientRouter.use("*", requireClientUser);
-
-currencyClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // GET /wallets — all balances
 currencyClientRouter.openapi(
@@ -84,16 +52,16 @@ currencyClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: WalletListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(WalletListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const wallets = await currencyService.getWallets(orgId, endUserId);
-    return c.json({ items: wallets }, 200);
+    return c.json(ok({ items: wallets }), 200);
   },
 );
 
@@ -108,9 +76,9 @@ currencyClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BalanceResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BalanceResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -119,6 +87,6 @@ currencyClientRouter.openapi(
     const { key } = c.req.valid("param");
     const def = await currencyService.getDefinition(orgId, key);
     const balance = await currencyService.getBalance(orgId, endUserId, def.id);
-    return c.json({ currencyId: def.id, balance }, 200);
+    return c.json(ok({ currencyId: def.id, balance }), 200);
   },
 );

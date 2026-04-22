@@ -11,7 +11,7 @@ import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
 import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
 import { requestContext } from "./lib/request-context";
-import { INTERNAL_ERROR_CODE, fail } from "./lib/response";
+import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
@@ -136,6 +136,17 @@ app.onError((err, c) => {
   console.error(err);
   return c.json(fail(INTERNAL_ERROR_CODE, err.message), 500);
 });
+
+// Global 404 — fires when no route matched at all (Hono's default is
+// `404 Not Found` plain text). Business module routers already cover
+// their own sub-paths; Better Auth's `/api/auth/*` and
+// `/api/client/auth/*` wildcards claim those prefixes. Anything that
+// still lands here is an unknown URL, so we return the standard
+// envelope so SDKs / frontend wrappers don't have to branch on
+// content-type.
+app.notFound((c) =>
+  c.json(fail(NOT_FOUND_CODE, `Not found: ${c.req.method} ${c.req.path}`), 404),
+);
 
 // Better Auth — handle all /api/auth/* routes (uses module-level auth instance)
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));

@@ -14,19 +14,15 @@
  *     this is the "publish gate" documented in the module header.
  */
 
-
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { bannerService } from "./index";
 import {
   ClientBannerGroupResponseSchema,
-  ErrorResponseSchema,
   GroupAliasParamSchema,
 } from "./validators";
 
@@ -34,39 +30,10 @@ const TAG = "Banner (Client)";
 
 import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const bannerClientRouter = createClientRouter();
 
 bannerClientRouter.use("*", requireClientCredential);
 bannerClientRouter.use("*", requireClientUser);
-
-bannerClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 bannerClientRouter.openapi(
   createClientRoute({
@@ -82,10 +49,10 @@ bannerClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientBannerGroupResponseSchema },
+          "application/json": { schema: envelopeOf(ClientBannerGroupResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -97,6 +64,6 @@ bannerClientRouter.openapi(
       alias,
       endUserId,
     );
-    return c.json(group, 200);
+    return c.json(ok(group), 200);
   },
 );

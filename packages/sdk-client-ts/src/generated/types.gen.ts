@@ -4,10 +4,18 @@ export type ClientAnnouncementList = {
     items: Array<ClientAnnouncement>;
 };
 
-export type AnnouncementErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
+export type ApiErrorEnvelope = {
+    code: string;
+    data: null;
+    message: string;
+    requestId: string;
+};
+
+export type ApiNullEnvelope = {
+    code: 'ok';
+    data: null;
+    message: string;
+    requestId: string;
 };
 
 export type ClientBannerGroup = {
@@ -18,12 +26,6 @@ export type ClientBannerGroup = {
     layout: 'carousel' | 'single' | 'grid';
     intervalMs: number;
     banners: Array<ClientBanner>;
-};
-
-export type BannerErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type CdkeyClientRedeemRequest = {
@@ -42,12 +44,6 @@ export type CdkeyRedeemResult = {
         count: number;
     }>;
     logId: string;
-};
-
-export type CdkeyErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type ClientCheckInRequest = {
@@ -71,12 +67,6 @@ export type CheckInResult = {
     }> | null;
 };
 
-export type CheckInErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type CheckInUserStateView = {
     state: CheckInUserState;
     target: number | null;
@@ -86,12 +76,6 @@ export type CheckInUserStateView = {
 
 export type CollectionClientAlbumList = {
     items: Array<CollectionClientAlbumSummary>;
-};
-
-export type CollectionErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type CollectionClientAlbumDetail = {
@@ -127,12 +111,6 @@ export type CurrencyWalletList = {
     items: Array<CurrencyWalletView>;
 };
 
-export type CurrencyErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type CurrencyBalance = {
     currencyId: string;
     balance: number;
@@ -147,24 +125,12 @@ export type DialogueSession = {
     grantedRewards: Array<DialogueRewardGrant>;
 };
 
-export type DialogueErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type DialogueAdvanceRequest = {
     optionId?: string;
 };
 
 export type ItemInventoryList = {
     items: Array<ItemInventoryView>;
-};
-
-export type ItemErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type ItemBalance = {
@@ -238,12 +204,6 @@ export type ExchangeResult = {
     }>;
 };
 
-export type ExchangeErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type ClientFriendSendRequest = {
     /**
      * The target end user id.
@@ -266,12 +226,6 @@ export type FriendRequest = {
     updatedAt: string;
 };
 
-export type FriendErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type FriendRequestList = {
     items: Array<FriendRequest>;
 };
@@ -291,12 +245,6 @@ export type FriendBlockList = {
 
 export type FriendGiftPackageList = {
     items: Array<FriendGiftPackage>;
-};
-
-export type FriendGiftErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type ClientFriendGiftSend = {
@@ -363,12 +311,6 @@ export type InviteCodeView = {
     rotatedAt: string | null;
 };
 
-export type ErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type InviteSummaryView = {
     myCode: string;
     myCodeRotatedAt: string | null;
@@ -426,12 +368,6 @@ export type ClientCreateGuild = {
 export type CreateGuildResponse = {
     guild: Guild;
     member: GuildMember;
-};
-
-export type GuildErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type GuildList = {
@@ -597,12 +533,6 @@ export type LotteryPullResult = {
     }>;
 };
 
-export type LotteryErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type ClientLotteryMultiPullRequest = {
     poolId: string;
     count: number;
@@ -624,12 +554,6 @@ export type LotteryPullLogList = {
 
 export type MailInboxList = {
     items: Array<MailInboxItem>;
-};
-
-export type MailErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type MailInboxItem = {
@@ -692,12 +616,6 @@ export type ShopPurchaseResult = {
     }>;
 };
 
-export type ShopErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type ShopClientClaimStageRequest = {
     /**
      * Growth stage to claim.
@@ -744,12 +662,6 @@ export type TaskEventResponse = {
      * Number of task definitions that matched and were updated.
      */
     processed: number;
-};
-
-export type TaskErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type TaskListBody = {
@@ -833,12 +745,6 @@ export type Team = {
     members?: Array<TeamMember>;
 };
 
-export type TeamErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type TeamTransferLeader = {
     /**
      * The new leader's end user id.
@@ -875,12 +781,6 @@ export type TeamInvitation = {
 
 export type LevelClientConfigList = {
     items: Array<LevelClientConfigSummary>;
-};
-
-export type LevelErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type LevelClientConfigOverview = {
@@ -988,12 +888,6 @@ export type LeaderboardTop = {
     };
 };
 
-export type LeaderboardError = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type LeaderboardSnapshotList = {
     items: Array<LeaderboardSnapshot>;
 };
@@ -1022,12 +916,6 @@ export type RankPlayerView = {
         subtierCount: number;
         starsPerSubtier: number;
     } | null;
-};
-
-export type RankError = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type Activity = {
@@ -1090,12 +978,6 @@ export type Activity = {
     updatedAt: string;
 };
 
-export type ActivityError = {
-    error: string;
-    code?: string;
-    requestId?: string;
-};
-
 export type ActivityClaimMilestoneClient = {
     milestoneAlias: string;
 };
@@ -1125,12 +1007,6 @@ export type AssistPoolInstance = {
     } | null;
     createdAt: string;
     updatedAt: string;
-};
-
-export type AssistPoolErrorResponse = {
-    error: string;
-    code?: string;
-    requestId?: string;
 };
 
 export type AssistPoolInstanceList = {
@@ -1694,15 +1570,27 @@ export type AnnouncementClientGetActiveErrors = {
     /**
      * Bad request
      */
-    400: AnnouncementErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AnnouncementErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AnnouncementErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AnnouncementClientGetActiveError = AnnouncementClientGetActiveErrors[keyof AnnouncementClientGetActiveErrors];
@@ -1711,7 +1599,12 @@ export type AnnouncementClientGetActiveResponses = {
     /**
      * OK
      */
-    200: ClientAnnouncementList;
+    200: {
+        code: 'ok';
+        data: ClientAnnouncementList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type AnnouncementClientGetActiveResponse = AnnouncementClientGetActiveResponses[keyof AnnouncementClientGetActiveResponses];
@@ -1743,15 +1636,27 @@ export type AnnouncementClientPostByAliasImpressionErrors = {
     /**
      * Bad request
      */
-    400: AnnouncementErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AnnouncementErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AnnouncementErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AnnouncementClientPostByAliasImpressionError = AnnouncementClientPostByAliasImpressionErrors[keyof AnnouncementClientPostByAliasImpressionErrors];
@@ -1760,7 +1665,7 @@ export type AnnouncementClientPostByAliasImpressionResponses = {
     /**
      * Recorded
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type AnnouncementClientPostByAliasImpressionResponse = AnnouncementClientPostByAliasImpressionResponses[keyof AnnouncementClientPostByAliasImpressionResponses];
@@ -1792,15 +1697,27 @@ export type AnnouncementClientPostByAliasClickErrors = {
     /**
      * Bad request
      */
-    400: AnnouncementErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AnnouncementErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AnnouncementErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AnnouncementClientPostByAliasClickError = AnnouncementClientPostByAliasClickErrors[keyof AnnouncementClientPostByAliasClickErrors];
@@ -1809,7 +1726,7 @@ export type AnnouncementClientPostByAliasClickResponses = {
     /**
      * Recorded
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type AnnouncementClientPostByAliasClickResponse = AnnouncementClientPostByAliasClickResponses[keyof AnnouncementClientPostByAliasClickResponses];
@@ -1841,15 +1758,27 @@ export type BannerClientGetGroupsByAliasErrors = {
     /**
      * Bad request
      */
-    400: BannerErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: BannerErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: BannerErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type BannerClientGetGroupsByAliasError = BannerClientGetGroupsByAliasErrors[keyof BannerClientGetGroupsByAliasErrors];
@@ -1858,7 +1787,12 @@ export type BannerClientGetGroupsByAliasResponses = {
     /**
      * OK
      */
-    200: ClientBannerGroup;
+    200: {
+        code: 'ok';
+        data: ClientBannerGroup;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type BannerClientGetGroupsByAliasResponse = BannerClientGetGroupsByAliasResponses[keyof BannerClientGetGroupsByAliasResponses];
@@ -1888,19 +1822,27 @@ export type CdkeyClientPostRedeemErrors = {
     /**
      * Bad request
      */
-    400: CdkeyErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CdkeyErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CdkeyErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: CdkeyErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CdkeyClientPostRedeemError = CdkeyClientPostRedeemErrors[keyof CdkeyClientPostRedeemErrors];
@@ -1909,7 +1851,12 @@ export type CdkeyClientPostRedeemResponses = {
     /**
      * OK
      */
-    200: CdkeyRedeemResult;
+    200: {
+        code: 'ok';
+        data: CdkeyRedeemResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CdkeyClientPostRedeemResponse = CdkeyClientPostRedeemResponses[keyof CdkeyClientPostRedeemResponses];
@@ -1925,15 +1872,27 @@ export type CheckInClientPostCheckInsErrors = {
     /**
      * Bad request
      */
-    400: CheckInErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CheckInErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CheckInErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CheckInClientPostCheckInsError = CheckInClientPostCheckInsErrors[keyof CheckInClientPostCheckInsErrors];
@@ -1942,7 +1901,12 @@ export type CheckInClientPostCheckInsResponses = {
     /**
      * OK
      */
-    200: CheckInResult;
+    200: {
+        code: 'ok';
+        data: CheckInResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CheckInClientPostCheckInsResponse = CheckInClientPostCheckInsResponses[keyof CheckInClientPostCheckInsResponses];
@@ -1963,15 +1927,27 @@ export type CheckInClientGetStateErrors = {
     /**
      * Bad request
      */
-    400: CheckInErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CheckInErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CheckInErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CheckInClientGetStateError = CheckInClientGetStateErrors[keyof CheckInClientGetStateErrors];
@@ -1980,7 +1956,12 @@ export type CheckInClientGetStateResponses = {
     /**
      * OK
      */
-    200: CheckInUserStateView;
+    200: {
+        code: 'ok';
+        data: CheckInUserStateView;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CheckInClientGetStateResponse = CheckInClientGetStateResponses[keyof CheckInClientGetStateResponses];
@@ -2010,19 +1991,27 @@ export type CollectionClientGetAlbumsErrors = {
     /**
      * Bad request
      */
-    400: CollectionErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CollectionErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CollectionErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: CollectionErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CollectionClientGetAlbumsError = CollectionClientGetAlbumsErrors[keyof CollectionClientGetAlbumsErrors];
@@ -2031,7 +2020,12 @@ export type CollectionClientGetAlbumsResponses = {
     /**
      * OK
      */
-    200: CollectionClientAlbumList;
+    200: {
+        code: 'ok';
+        data: CollectionClientAlbumList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CollectionClientGetAlbumsResponse = CollectionClientGetAlbumsResponses[keyof CollectionClientGetAlbumsResponses];
@@ -2063,19 +2057,27 @@ export type CollectionClientGetAlbumsByKeyErrors = {
     /**
      * Bad request
      */
-    400: CollectionErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CollectionErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CollectionErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: CollectionErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CollectionClientGetAlbumsByKeyError = CollectionClientGetAlbumsByKeyErrors[keyof CollectionClientGetAlbumsByKeyErrors];
@@ -2084,7 +2086,12 @@ export type CollectionClientGetAlbumsByKeyResponses = {
     /**
      * OK
      */
-    200: CollectionClientAlbumDetail;
+    200: {
+        code: 'ok';
+        data: CollectionClientAlbumDetail;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CollectionClientGetAlbumsByKeyResponse = CollectionClientGetAlbumsByKeyResponses[keyof CollectionClientGetAlbumsByKeyResponses];
@@ -2116,19 +2123,27 @@ export type CollectionClientPostAlbumsByKeySyncErrors = {
     /**
      * Bad request
      */
-    400: CollectionErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CollectionErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CollectionErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: CollectionErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CollectionClientPostAlbumsByKeySyncError = CollectionClientPostAlbumsByKeySyncErrors[keyof CollectionClientPostAlbumsByKeySyncErrors];
@@ -2137,7 +2152,12 @@ export type CollectionClientPostAlbumsByKeySyncResponses = {
     /**
      * OK
      */
-    200: CollectionSyncResponse;
+    200: {
+        code: 'ok';
+        data: CollectionSyncResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CollectionClientPostAlbumsByKeySyncResponse = CollectionClientPostAlbumsByKeySyncResponses[keyof CollectionClientPostAlbumsByKeySyncResponses];
@@ -2169,19 +2189,27 @@ export type CollectionClientPostMilestonesByIdClaimErrors = {
     /**
      * Bad request
      */
-    400: CollectionErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CollectionErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CollectionErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: CollectionErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CollectionClientPostMilestonesByIdClaimError = CollectionClientPostMilestonesByIdClaimErrors[keyof CollectionClientPostMilestonesByIdClaimErrors];
@@ -2190,7 +2218,12 @@ export type CollectionClientPostMilestonesByIdClaimResponses = {
     /**
      * OK
      */
-    200: CollectionClaimResponse;
+    200: {
+        code: 'ok';
+        data: CollectionClaimResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CollectionClientPostMilestonesByIdClaimResponse = CollectionClientPostMilestonesByIdClaimResponses[keyof CollectionClientPostMilestonesByIdClaimResponses];
@@ -2220,15 +2253,27 @@ export type CurrencyClientGetWalletsErrors = {
     /**
      * Bad request
      */
-    400: CurrencyErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CurrencyErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CurrencyErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CurrencyClientGetWalletsError = CurrencyClientGetWalletsErrors[keyof CurrencyClientGetWalletsErrors];
@@ -2237,7 +2282,12 @@ export type CurrencyClientGetWalletsResponses = {
     /**
      * OK
      */
-    200: CurrencyWalletList;
+    200: {
+        code: 'ok';
+        data: CurrencyWalletList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CurrencyClientGetWalletsResponse = CurrencyClientGetWalletsResponses[keyof CurrencyClientGetWalletsResponses];
@@ -2272,15 +2322,27 @@ export type CurrencyClientGetBalanceByKeyErrors = {
     /**
      * Bad request
      */
-    400: CurrencyErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: CurrencyErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: CurrencyErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type CurrencyClientGetBalanceByKeyError = CurrencyClientGetBalanceByKeyErrors[keyof CurrencyClientGetBalanceByKeyErrors];
@@ -2289,7 +2351,12 @@ export type CurrencyClientGetBalanceByKeyResponses = {
     /**
      * OK
      */
-    200: CurrencyBalance;
+    200: {
+        code: 'ok';
+        data: CurrencyBalance;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type CurrencyClientGetBalanceByKeyResponse = CurrencyClientGetBalanceByKeyResponses[keyof CurrencyClientGetBalanceByKeyResponses];
@@ -2307,19 +2374,27 @@ export type DialogueClientGetScriptsByAliasStartErrors = {
     /**
      * Bad request
      */
-    400: DialogueErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: DialogueErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: DialogueErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: DialogueErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type DialogueClientGetScriptsByAliasStartError = DialogueClientGetScriptsByAliasStartErrors[keyof DialogueClientGetScriptsByAliasStartErrors];
@@ -2328,7 +2403,12 @@ export type DialogueClientGetScriptsByAliasStartResponses = {
     /**
      * OK
      */
-    200: DialogueSession;
+    200: {
+        code: 'ok';
+        data: DialogueSession;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type DialogueClientGetScriptsByAliasStartResponse = DialogueClientGetScriptsByAliasStartResponses[keyof DialogueClientGetScriptsByAliasStartResponses];
@@ -2346,19 +2426,27 @@ export type DialogueClientPostScriptsByAliasAdvanceErrors = {
     /**
      * Bad request
      */
-    400: DialogueErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: DialogueErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: DialogueErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: DialogueErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type DialogueClientPostScriptsByAliasAdvanceError = DialogueClientPostScriptsByAliasAdvanceErrors[keyof DialogueClientPostScriptsByAliasAdvanceErrors];
@@ -2367,7 +2455,12 @@ export type DialogueClientPostScriptsByAliasAdvanceResponses = {
     /**
      * OK
      */
-    200: DialogueSession;
+    200: {
+        code: 'ok';
+        data: DialogueSession;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type DialogueClientPostScriptsByAliasAdvanceResponse = DialogueClientPostScriptsByAliasAdvanceResponses[keyof DialogueClientPostScriptsByAliasAdvanceResponses];
@@ -2385,19 +2478,27 @@ export type DialogueClientPostScriptsByAliasResetErrors = {
     /**
      * Bad request
      */
-    400: DialogueErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: DialogueErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: DialogueErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: DialogueErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type DialogueClientPostScriptsByAliasResetError = DialogueClientPostScriptsByAliasResetErrors[keyof DialogueClientPostScriptsByAliasResetErrors];
@@ -2406,7 +2507,12 @@ export type DialogueClientPostScriptsByAliasResetResponses = {
     /**
      * OK
      */
-    200: DialogueSession;
+    200: {
+        code: 'ok';
+        data: DialogueSession;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type DialogueClientPostScriptsByAliasResetResponse = DialogueClientPostScriptsByAliasResetResponses[keyof DialogueClientPostScriptsByAliasResetResponses];
@@ -2439,35 +2545,27 @@ export type EntityClientGetInstancesErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientGetInstancesError = EntityClientGetInstancesErrors[keyof EntityClientGetInstancesErrors];
@@ -2476,7 +2574,12 @@ export type EntityClientGetInstancesResponses = {
     /**
      * OK
      */
-    200: Array<unknown>;
+    200: {
+        code: 'ok';
+        data: Array<unknown>;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type EntityClientGetInstancesResponse = EntityClientGetInstancesResponses[keyof EntityClientGetInstancesResponses];
@@ -2508,35 +2611,27 @@ export type EntityClientGetInstancesByInstanceidErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientGetInstancesByInstanceidError = EntityClientGetInstancesByInstanceidErrors[keyof EntityClientGetInstancesByInstanceidErrors];
@@ -2545,8 +2640,15 @@ export type EntityClientGetInstancesByInstanceidResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientGetInstancesByInstanceidResponse = EntityClientGetInstancesByInstanceidResponses[keyof EntityClientGetInstancesByInstanceidResponses];
 
 export type EntityClientPostAcquireData = {
     body?: {
@@ -2577,35 +2679,27 @@ export type EntityClientPostAcquireErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostAcquireError = EntityClientPostAcquireErrors[keyof EntityClientPostAcquireErrors];
@@ -2614,8 +2708,15 @@ export type EntityClientPostAcquireResponses = {
     /**
      * Created
      */
-    201: unknown;
+    201: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostAcquireResponse = EntityClientPostAcquireResponses[keyof EntityClientPostAcquireResponses];
 
 export type EntityClientPostInstancesByInstanceidDiscardData = {
     body?: never;
@@ -2644,35 +2745,27 @@ export type EntityClientPostInstancesByInstanceidDiscardErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidDiscardError = EntityClientPostInstancesByInstanceidDiscardErrors[keyof EntityClientPostInstancesByInstanceidDiscardErrors];
@@ -2681,7 +2774,7 @@ export type EntityClientPostInstancesByInstanceidDiscardResponses = {
     /**
      * Deleted
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidDiscardResponse = EntityClientPostInstancesByInstanceidDiscardResponses[keyof EntityClientPostInstancesByInstanceidDiscardResponses];
@@ -2715,35 +2808,27 @@ export type EntityClientPostInstancesByInstanceidLockErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidLockError = EntityClientPostInstancesByInstanceidLockErrors[keyof EntityClientPostInstancesByInstanceidLockErrors];
@@ -2752,8 +2837,15 @@ export type EntityClientPostInstancesByInstanceidLockResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidLockResponse = EntityClientPostInstancesByInstanceidLockResponses[keyof EntityClientPostInstancesByInstanceidLockResponses];
 
 export type EntityClientPostInstancesByInstanceidAddExpData = {
     body?: {
@@ -2784,35 +2876,27 @@ export type EntityClientPostInstancesByInstanceidAddExpErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidAddExpError = EntityClientPostInstancesByInstanceidAddExpErrors[keyof EntityClientPostInstancesByInstanceidAddExpErrors];
@@ -2821,8 +2905,15 @@ export type EntityClientPostInstancesByInstanceidAddExpResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidAddExpResponse = EntityClientPostInstancesByInstanceidAddExpResponses[keyof EntityClientPostInstancesByInstanceidAddExpResponses];
 
 export type EntityClientPostInstancesByInstanceidLevelUpData = {
     body?: {
@@ -2853,35 +2944,27 @@ export type EntityClientPostInstancesByInstanceidLevelUpErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidLevelUpError = EntityClientPostInstancesByInstanceidLevelUpErrors[keyof EntityClientPostInstancesByInstanceidLevelUpErrors];
@@ -2890,8 +2973,15 @@ export type EntityClientPostInstancesByInstanceidLevelUpResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidLevelUpResponse = EntityClientPostInstancesByInstanceidLevelUpResponses[keyof EntityClientPostInstancesByInstanceidLevelUpResponses];
 
 export type EntityClientPostInstancesByInstanceidRankUpData = {
     body?: never;
@@ -2920,35 +3010,27 @@ export type EntityClientPostInstancesByInstanceidRankUpErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidRankUpError = EntityClientPostInstancesByInstanceidRankUpErrors[keyof EntityClientPostInstancesByInstanceidRankUpErrors];
@@ -2957,8 +3039,15 @@ export type EntityClientPostInstancesByInstanceidRankUpResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidRankUpResponse = EntityClientPostInstancesByInstanceidRankUpResponses[keyof EntityClientPostInstancesByInstanceidRankUpResponses];
 
 export type EntityClientPostInstancesByInstanceidSynthesizeData = {
     body?: {
@@ -2989,35 +3078,27 @@ export type EntityClientPostInstancesByInstanceidSynthesizeErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidSynthesizeError = EntityClientPostInstancesByInstanceidSynthesizeErrors[keyof EntityClientPostInstancesByInstanceidSynthesizeErrors];
@@ -3026,8 +3107,15 @@ export type EntityClientPostInstancesByInstanceidSynthesizeResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidSynthesizeResponse = EntityClientPostInstancesByInstanceidSynthesizeResponses[keyof EntityClientPostInstancesByInstanceidSynthesizeResponses];
 
 export type EntityClientPostInstancesByInstanceidEquipData = {
     body?: {
@@ -3060,35 +3148,27 @@ export type EntityClientPostInstancesByInstanceidEquipErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidEquipError = EntityClientPostInstancesByInstanceidEquipErrors[keyof EntityClientPostInstancesByInstanceidEquipErrors];
@@ -3097,8 +3177,15 @@ export type EntityClientPostInstancesByInstanceidEquipResponses = {
     /**
      * Equipped
      */
-    201: unknown;
+    201: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidEquipResponse = EntityClientPostInstancesByInstanceidEquipResponses[keyof EntityClientPostInstancesByInstanceidEquipResponses];
 
 export type EntityClientPostInstancesByInstanceidUnequipData = {
     body?: {
@@ -3130,35 +3217,27 @@ export type EntityClientPostInstancesByInstanceidUnequipErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidUnequipError = EntityClientPostInstancesByInstanceidUnequipErrors[keyof EntityClientPostInstancesByInstanceidUnequipErrors];
@@ -3167,7 +3246,7 @@ export type EntityClientPostInstancesByInstanceidUnequipResponses = {
     /**
      * Unequipped
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidUnequipResponse = EntityClientPostInstancesByInstanceidUnequipResponses[keyof EntityClientPostInstancesByInstanceidUnequipResponses];
@@ -3201,35 +3280,27 @@ export type EntityClientPostInstancesByInstanceidChangeSkinErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPostInstancesByInstanceidChangeSkinError = EntityClientPostInstancesByInstanceidChangeSkinErrors[keyof EntityClientPostInstancesByInstanceidChangeSkinErrors];
@@ -3238,8 +3309,15 @@ export type EntityClientPostInstancesByInstanceidChangeSkinResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPostInstancesByInstanceidChangeSkinResponse = EntityClientPostInstancesByInstanceidChangeSkinResponses[keyof EntityClientPostInstancesByInstanceidChangeSkinResponses];
 
 export type EntityClientGetFormationsByConfigidData = {
     body?: never;
@@ -3268,35 +3346,27 @@ export type EntityClientGetFormationsByConfigidErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientGetFormationsByConfigidError = EntityClientGetFormationsByConfigidErrors[keyof EntityClientGetFormationsByConfigidErrors];
@@ -3305,7 +3375,12 @@ export type EntityClientGetFormationsByConfigidResponses = {
     /**
      * OK
      */
-    200: Array<unknown>;
+    200: {
+        code: 'ok';
+        data: Array<unknown>;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type EntityClientGetFormationsByConfigidResponse = EntityClientGetFormationsByConfigidResponses[keyof EntityClientGetFormationsByConfigidResponses];
@@ -3344,35 +3419,27 @@ export type EntityClientPutFormationsByConfigidByFormationindexErrors = {
     /**
      * Bad request
      */
-    400: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: {
-        error: string;
-        code: string;
-        requestId?: string;
-    };
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type EntityClientPutFormationsByConfigidByFormationindexError = EntityClientPutFormationsByConfigidByFormationindexErrors[keyof EntityClientPutFormationsByConfigidByFormationindexErrors];
@@ -3381,8 +3448,15 @@ export type EntityClientPutFormationsByConfigidByFormationindexResponses = {
     /**
      * OK
      */
-    200: unknown;
+    200: {
+        code: 'ok';
+        data?: unknown;
+        message: string;
+        requestId: string;
+    };
 };
+
+export type EntityClientPutFormationsByConfigidByFormationindexResponse = EntityClientPutFormationsByConfigidByFormationindexResponses[keyof EntityClientPutFormationsByConfigidByFormationindexResponses];
 
 export type ItemClientGetInventoryData = {
     body?: never;
@@ -3400,15 +3474,27 @@ export type ItemClientGetInventoryErrors = {
     /**
      * Bad request
      */
-    400: ItemErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ItemErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ItemErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ItemClientGetInventoryError = ItemClientGetInventoryErrors[keyof ItemClientGetInventoryErrors];
@@ -3417,7 +3503,12 @@ export type ItemClientGetInventoryResponses = {
     /**
      * OK
      */
-    200: ItemInventoryList;
+    200: {
+        code: 'ok';
+        data: ItemInventoryList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ItemClientGetInventoryResponse = ItemClientGetInventoryResponses[keyof ItemClientGetInventoryResponses];
@@ -3438,15 +3529,27 @@ export type ItemClientGetBalanceByKeyErrors = {
     /**
      * Bad request
      */
-    400: ItemErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ItemErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ItemErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ItemClientGetBalanceByKeyError = ItemClientGetBalanceByKeyErrors[keyof ItemClientGetBalanceByKeyErrors];
@@ -3455,7 +3558,12 @@ export type ItemClientGetBalanceByKeyResponses = {
     /**
      * OK
      */
-    200: ItemBalance;
+    200: {
+        code: 'ok';
+        data: ItemBalance;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ItemClientGetBalanceByKeyResponse = ItemClientGetBalanceByKeyResponses[keyof ItemClientGetBalanceByKeyResponses];
@@ -3471,15 +3579,27 @@ export type ItemClientPostUseErrors = {
     /**
      * Bad request
      */
-    400: ItemErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ItemErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ItemErrorResponse;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ItemClientPostUseError = ItemClientPostUseErrors[keyof ItemClientPostUseErrors];
@@ -3488,7 +3608,12 @@ export type ItemClientPostUseResponses = {
     /**
      * OK
      */
-    200: UseItemResult;
+    200: {
+        code: 'ok';
+        data: UseItemResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ItemClientPostUseResponse = ItemClientPostUseResponses[keyof ItemClientPostUseResponses];
@@ -3504,19 +3629,27 @@ export type ExchangeClientPostExecuteErrors = {
     /**
      * Bad request
      */
-    400: ExchangeErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ExchangeErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ExchangeErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ExchangeErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ExchangeClientPostExecuteError = ExchangeClientPostExecuteErrors[keyof ExchangeClientPostExecuteErrors];
@@ -3525,7 +3658,12 @@ export type ExchangeClientPostExecuteResponses = {
     /**
      * OK
      */
-    200: ExchangeResult;
+    200: {
+        code: 'ok';
+        data: ExchangeResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ExchangeClientPostExecuteResponse = ExchangeClientPostExecuteResponses[keyof ExchangeClientPostExecuteResponses];
@@ -3541,19 +3679,27 @@ export type FriendClientPostRequestsErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientPostRequestsError = FriendClientPostRequestsErrors[keyof FriendClientPostRequestsErrors];
@@ -3562,7 +3708,12 @@ export type FriendClientPostRequestsResponses = {
     /**
      * Created
      */
-    201: FriendRequest;
+    201: {
+        code: 'ok';
+        data: FriendRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientPostRequestsResponse = FriendClientPostRequestsResponses[keyof FriendClientPostRequestsResponses];
@@ -3578,19 +3729,27 @@ export type FriendClientGetRequestsIncomingErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientGetRequestsIncomingError = FriendClientGetRequestsIncomingErrors[keyof FriendClientGetRequestsIncomingErrors];
@@ -3599,7 +3758,12 @@ export type FriendClientGetRequestsIncomingResponses = {
     /**
      * OK
      */
-    200: FriendRequestList;
+    200: {
+        code: 'ok';
+        data: FriendRequestList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientGetRequestsIncomingResponse = FriendClientGetRequestsIncomingResponses[keyof FriendClientGetRequestsIncomingResponses];
@@ -3615,19 +3779,27 @@ export type FriendClientGetRequestsOutgoingErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientGetRequestsOutgoingError = FriendClientGetRequestsOutgoingErrors[keyof FriendClientGetRequestsOutgoingErrors];
@@ -3636,7 +3808,12 @@ export type FriendClientGetRequestsOutgoingResponses = {
     /**
      * OK
      */
-    200: FriendRequestList;
+    200: {
+        code: 'ok';
+        data: FriendRequestList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientGetRequestsOutgoingResponse = FriendClientGetRequestsOutgoingResponses[keyof FriendClientGetRequestsOutgoingResponses];
@@ -3657,19 +3834,27 @@ export type FriendClientPostRequestsByIdAcceptErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientPostRequestsByIdAcceptError = FriendClientPostRequestsByIdAcceptErrors[keyof FriendClientPostRequestsByIdAcceptErrors];
@@ -3678,7 +3863,12 @@ export type FriendClientPostRequestsByIdAcceptResponses = {
     /**
      * OK
      */
-    200: FriendRequest;
+    200: {
+        code: 'ok';
+        data: FriendRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientPostRequestsByIdAcceptResponse = FriendClientPostRequestsByIdAcceptResponses[keyof FriendClientPostRequestsByIdAcceptResponses];
@@ -3699,19 +3889,27 @@ export type FriendClientPostRequestsByIdRejectErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientPostRequestsByIdRejectError = FriendClientPostRequestsByIdRejectErrors[keyof FriendClientPostRequestsByIdRejectErrors];
@@ -3720,7 +3918,12 @@ export type FriendClientPostRequestsByIdRejectResponses = {
     /**
      * OK
      */
-    200: FriendRequest;
+    200: {
+        code: 'ok';
+        data: FriendRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientPostRequestsByIdRejectResponse = FriendClientPostRequestsByIdRejectResponses[keyof FriendClientPostRequestsByIdRejectResponses];
@@ -3741,19 +3944,27 @@ export type FriendClientPostRequestsByIdCancelErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientPostRequestsByIdCancelError = FriendClientPostRequestsByIdCancelErrors[keyof FriendClientPostRequestsByIdCancelErrors];
@@ -3762,7 +3973,12 @@ export type FriendClientPostRequestsByIdCancelResponses = {
     /**
      * OK
      */
-    200: FriendRequest;
+    200: {
+        code: 'ok';
+        data: FriendRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientPostRequestsByIdCancelResponse = FriendClientPostRequestsByIdCancelResponses[keyof FriendClientPostRequestsByIdCancelResponses];
@@ -3787,19 +4003,27 @@ export type FriendClientGetFriendsErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientGetFriendsError = FriendClientGetFriendsErrors[keyof FriendClientGetFriendsErrors];
@@ -3808,7 +4032,12 @@ export type FriendClientGetFriendsResponses = {
     /**
      * OK
      */
-    200: FriendRelationshipList;
+    200: {
+        code: 'ok';
+        data: FriendRelationshipList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientGetFriendsResponse = FriendClientGetFriendsResponses[keyof FriendClientGetFriendsResponses];
@@ -3829,19 +4058,27 @@ export type FriendClientDeleteFriendsByIdErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientDeleteFriendsByIdError = FriendClientDeleteFriendsByIdErrors[keyof FriendClientDeleteFriendsByIdErrors];
@@ -3850,7 +4087,7 @@ export type FriendClientDeleteFriendsByIdResponses = {
     /**
      * Deleted
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type FriendClientDeleteFriendsByIdResponse = FriendClientDeleteFriendsByIdResponses[keyof FriendClientDeleteFriendsByIdResponses];
@@ -3871,19 +4108,27 @@ export type FriendClientGetFriendsMutualErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientGetFriendsMutualError = FriendClientGetFriendsMutualErrors[keyof FriendClientGetFriendsMutualErrors];
@@ -3892,7 +4137,12 @@ export type FriendClientGetFriendsMutualResponses = {
     /**
      * OK
      */
-    200: FriendRelationshipList;
+    200: {
+        code: 'ok';
+        data: FriendRelationshipList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientGetFriendsMutualResponse = FriendClientGetFriendsMutualResponses[keyof FriendClientGetFriendsMutualResponses];
@@ -3908,19 +4158,27 @@ export type FriendClientGetBlocksErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientGetBlocksError = FriendClientGetBlocksErrors[keyof FriendClientGetBlocksErrors];
@@ -3929,7 +4187,12 @@ export type FriendClientGetBlocksResponses = {
     /**
      * OK
      */
-    200: FriendBlockList;
+    200: {
+        code: 'ok';
+        data: FriendBlockList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendClientGetBlocksResponse = FriendClientGetBlocksResponses[keyof FriendClientGetBlocksResponses];
@@ -3945,19 +4208,27 @@ export type FriendClientPostBlocksErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientPostBlocksError = FriendClientPostBlocksErrors[keyof FriendClientPostBlocksErrors];
@@ -3966,7 +4237,7 @@ export type FriendClientPostBlocksResponses = {
     /**
      * Blocked
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type FriendClientPostBlocksResponse = FriendClientPostBlocksResponses[keyof FriendClientPostBlocksResponses];
@@ -3987,19 +4258,27 @@ export type FriendClientDeleteBlocksByBlockeduseridErrors = {
     /**
      * Bad request
      */
-    400: FriendErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendClientDeleteBlocksByBlockeduseridError = FriendClientDeleteBlocksByBlockeduseridErrors[keyof FriendClientDeleteBlocksByBlockeduseridErrors];
@@ -4008,7 +4287,7 @@ export type FriendClientDeleteBlocksByBlockeduseridResponses = {
     /**
      * Unblocked
      */
-    204: void;
+    200: ApiNullEnvelope;
 };
 
 export type FriendClientDeleteBlocksByBlockeduseridResponse = FriendClientDeleteBlocksByBlockeduseridResponses[keyof FriendClientDeleteBlocksByBlockeduseridResponses];
@@ -4038,19 +4317,27 @@ export type FriendGiftClientGetPackagesErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientGetPackagesError = FriendGiftClientGetPackagesErrors[keyof FriendGiftClientGetPackagesErrors];
@@ -4059,7 +4346,12 @@ export type FriendGiftClientGetPackagesResponses = {
     /**
      * OK
      */
-    200: FriendGiftPackageList;
+    200: {
+        code: 'ok';
+        data: FriendGiftPackageList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientGetPackagesResponse = FriendGiftClientGetPackagesResponses[keyof FriendGiftClientGetPackagesResponses];
@@ -4089,19 +4381,27 @@ export type FriendGiftClientPostSendErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientPostSendError = FriendGiftClientPostSendErrors[keyof FriendGiftClientPostSendErrors];
@@ -4110,7 +4410,12 @@ export type FriendGiftClientPostSendResponses = {
     /**
      * Created
      */
-    201: FriendGiftSendRecord;
+    201: {
+        code: 'ok';
+        data: FriendGiftSendRecord;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientPostSendResponse = FriendGiftClientPostSendResponses[keyof FriendGiftClientPostSendResponses];
@@ -4140,19 +4445,27 @@ export type FriendGiftClientGetInboxErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientGetInboxError = FriendGiftClientGetInboxErrors[keyof FriendGiftClientGetInboxErrors];
@@ -4161,7 +4474,12 @@ export type FriendGiftClientGetInboxResponses = {
     /**
      * OK
      */
-    200: FriendGiftSendList;
+    200: {
+        code: 'ok';
+        data: FriendGiftSendList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientGetInboxResponse = FriendGiftClientGetInboxResponses[keyof FriendGiftClientGetInboxResponses];
@@ -4191,19 +4509,27 @@ export type FriendGiftClientGetSentErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientGetSentError = FriendGiftClientGetSentErrors[keyof FriendGiftClientGetSentErrors];
@@ -4212,7 +4538,12 @@ export type FriendGiftClientGetSentResponses = {
     /**
      * OK
      */
-    200: FriendGiftSendList;
+    200: {
+        code: 'ok';
+        data: FriendGiftSendList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientGetSentResponse = FriendGiftClientGetSentResponses[keyof FriendGiftClientGetSentResponses];
@@ -4247,19 +4578,27 @@ export type FriendGiftClientPostSendsByIdClaimErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientPostSendsByIdClaimError = FriendGiftClientPostSendsByIdClaimErrors[keyof FriendGiftClientPostSendsByIdClaimErrors];
@@ -4268,7 +4607,12 @@ export type FriendGiftClientPostSendsByIdClaimResponses = {
     /**
      * OK
      */
-    200: FriendGiftSendRecord;
+    200: {
+        code: 'ok';
+        data: FriendGiftSendRecord;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientPostSendsByIdClaimResponse = FriendGiftClientPostSendsByIdClaimResponses[keyof FriendGiftClientPostSendsByIdClaimResponses];
@@ -4298,19 +4642,27 @@ export type FriendGiftClientGetDailyStatusErrors = {
     /**
      * Bad request
      */
-    400: FriendGiftErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: FriendGiftErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: FriendGiftErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: FriendGiftErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type FriendGiftClientGetDailyStatusError = FriendGiftClientGetDailyStatusErrors[keyof FriendGiftClientGetDailyStatusErrors];
@@ -4319,7 +4671,12 @@ export type FriendGiftClientGetDailyStatusResponses = {
     /**
      * OK
      */
-    200: FriendGiftDailyStatus;
+    200: {
+        code: 'ok';
+        data: FriendGiftDailyStatus;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type FriendGiftClientGetDailyStatusResponse = FriendGiftClientGetDailyStatusResponses[keyof FriendGiftClientGetDailyStatusResponses];
@@ -4349,23 +4706,27 @@ export type InviteClientGetMyCodeErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientGetMyCodeError = InviteClientGetMyCodeErrors[keyof InviteClientGetMyCodeErrors];
@@ -4374,7 +4735,12 @@ export type InviteClientGetMyCodeResponses = {
     /**
      * Current invite code (generated on first call).
      */
-    200: InviteCodeView;
+    200: {
+        code: 'ok';
+        data: InviteCodeView;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientGetMyCodeResponse = InviteClientGetMyCodeResponses[keyof InviteClientGetMyCodeResponses];
@@ -4404,23 +4770,27 @@ export type InviteClientPostResetMyCodeErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientPostResetMyCodeError = InviteClientPostResetMyCodeErrors[keyof InviteClientPostResetMyCodeErrors];
@@ -4429,7 +4799,12 @@ export type InviteClientPostResetMyCodeResponses = {
     /**
      * Rotated invite code.
      */
-    200: InviteCodeView;
+    200: {
+        code: 'ok';
+        data: InviteCodeView;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientPostResetMyCodeResponse = InviteClientPostResetMyCodeResponses[keyof InviteClientPostResetMyCodeResponses];
@@ -4459,23 +4834,27 @@ export type InviteClientGetSummaryErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientGetSummaryError = InviteClientGetSummaryErrors[keyof InviteClientGetSummaryErrors];
@@ -4484,7 +4863,12 @@ export type InviteClientGetSummaryResponses = {
     /**
      * Summary for the end user.
      */
-    200: InviteSummaryView;
+    200: {
+        code: 'ok';
+        data: InviteSummaryView;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientGetSummaryResponse = InviteClientGetSummaryResponses[keyof InviteClientGetSummaryResponses];
@@ -4523,23 +4907,27 @@ export type InviteClientGetInviteesErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientGetInviteesError = InviteClientGetInviteesErrors[keyof InviteClientGetInviteesErrors];
@@ -4548,7 +4936,12 @@ export type InviteClientGetInviteesResponses = {
     /**
      * Paged list of users this end user has invited.
      */
-    200: InviteRelationshipList;
+    200: {
+        code: 'ok';
+        data: InviteRelationshipList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientGetInviteesResponse = InviteClientGetInviteesResponses[keyof InviteClientGetInviteesResponses];
@@ -4578,23 +4971,27 @@ export type InviteClientPostBindErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientPostBindError = InviteClientPostBindErrors[keyof InviteClientPostBindErrors];
@@ -4603,7 +5000,12 @@ export type InviteClientPostBindResponses = {
     /**
      * Relationship bound (or existing for idempotent bind).
      */
-    200: BindResult;
+    200: {
+        code: 'ok';
+        data: BindResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientPostBindResponse = InviteClientPostBindResponses[keyof InviteClientPostBindResponses];
@@ -4633,23 +5035,27 @@ export type InviteClientPostQualifyErrors = {
     /**
      * Bad request
      */
-    400: ErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: ErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type InviteClientPostQualifyError = InviteClientPostQualifyErrors[keyof InviteClientPostQualifyErrors];
@@ -4658,7 +5064,12 @@ export type InviteClientPostQualifyResponses = {
     /**
      * Relationship qualified (or existing for idempotent qualify).
      */
-    200: QualifyResult;
+    200: {
+        code: 'ok';
+        data: QualifyResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type InviteClientPostQualifyResponse = InviteClientPostQualifyResponses[keyof InviteClientPostQualifyResponses];
@@ -4701,23 +5112,27 @@ export type GuildClientGetGuildsErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetGuildsError = GuildClientGetGuildsErrors[keyof GuildClientGetGuildsErrors];
@@ -4726,7 +5141,12 @@ export type GuildClientGetGuildsResponses = {
     /**
      * OK
      */
-    200: GuildList;
+    200: {
+        code: 'ok';
+        data: GuildList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetGuildsResponse = GuildClientGetGuildsResponses[keyof GuildClientGetGuildsResponses];
@@ -4756,23 +5176,27 @@ export type GuildClientPostGuildsErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsError = GuildClientPostGuildsErrors[keyof GuildClientPostGuildsErrors];
@@ -4781,7 +5205,12 @@ export type GuildClientPostGuildsResponses = {
     /**
      * Created
      */
-    201: CreateGuildResponse;
+    201: {
+        code: 'ok';
+        data: CreateGuildResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsResponse = GuildClientPostGuildsResponses[keyof GuildClientPostGuildsResponses];
@@ -4816,23 +5245,27 @@ export type GuildClientGetGuildsByIdErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetGuildsByIdError = GuildClientGetGuildsByIdErrors[keyof GuildClientGetGuildsByIdErrors];
@@ -4841,7 +5274,12 @@ export type GuildClientGetGuildsByIdResponses = {
     /**
      * OK
      */
-    200: Guild;
+    200: {
+        code: 'ok';
+        data: Guild;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetGuildsByIdResponse = GuildClientGetGuildsByIdResponses[keyof GuildClientGetGuildsByIdResponses];
@@ -4876,23 +5314,27 @@ export type GuildClientPutGuildsByIdErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPutGuildsByIdError = GuildClientPutGuildsByIdErrors[keyof GuildClientPutGuildsByIdErrors];
@@ -4901,7 +5343,12 @@ export type GuildClientPutGuildsByIdResponses = {
     /**
      * OK
      */
-    200: Guild;
+    200: {
+        code: 'ok';
+        data: Guild;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPutGuildsByIdResponse = GuildClientPutGuildsByIdResponses[keyof GuildClientPutGuildsByIdResponses];
@@ -4931,23 +5378,27 @@ export type GuildClientGetMyGuildErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetMyGuildError = GuildClientGetMyGuildErrors[keyof GuildClientGetMyGuildErrors];
@@ -4956,7 +5407,12 @@ export type GuildClientGetMyGuildResponses = {
     /**
      * OK
      */
-    200: MyGuildResponse;
+    200: {
+        code: 'ok';
+        data: MyGuildResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetMyGuildResponse = GuildClientGetMyGuildResponses[keyof GuildClientGetMyGuildResponses];
@@ -4991,23 +5447,27 @@ export type GuildClientPostGuildsByIdJoinErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdJoinError = GuildClientPostGuildsByIdJoinErrors[keyof GuildClientPostGuildsByIdJoinErrors];
@@ -5016,7 +5476,12 @@ export type GuildClientPostGuildsByIdJoinResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdJoinResponse = GuildClientPostGuildsByIdJoinResponses[keyof GuildClientPostGuildsByIdJoinResponses];
@@ -5051,23 +5516,27 @@ export type GuildClientPostGuildsByIdLeaveErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdLeaveError = GuildClientPostGuildsByIdLeaveErrors[keyof GuildClientPostGuildsByIdLeaveErrors];
@@ -5076,7 +5545,12 @@ export type GuildClientPostGuildsByIdLeaveResponses = {
     /**
      * OK
      */
-    200: SuccessResponse;
+    200: {
+        code: 'ok';
+        data: SuccessResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdLeaveResponse = GuildClientPostGuildsByIdLeaveResponses[keyof GuildClientPostGuildsByIdLeaveResponses];
@@ -5111,23 +5585,27 @@ export type GuildClientPostGuildsByIdDisbandErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdDisbandError = GuildClientPostGuildsByIdDisbandErrors[keyof GuildClientPostGuildsByIdDisbandErrors];
@@ -5136,7 +5614,12 @@ export type GuildClientPostGuildsByIdDisbandResponses = {
     /**
      * OK
      */
-    200: Guild;
+    200: {
+        code: 'ok';
+        data: Guild;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdDisbandResponse = GuildClientPostGuildsByIdDisbandResponses[keyof GuildClientPostGuildsByIdDisbandResponses];
@@ -5184,23 +5667,27 @@ export type GuildClientGetGuildsByIdRequestsErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetGuildsByIdRequestsError = GuildClientGetGuildsByIdRequestsErrors[keyof GuildClientGetGuildsByIdRequestsErrors];
@@ -5209,7 +5696,12 @@ export type GuildClientGetGuildsByIdRequestsResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequestList;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequestList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetGuildsByIdRequestsResponse = GuildClientGetGuildsByIdRequestsResponses[keyof GuildClientGetGuildsByIdRequestsResponses];
@@ -5244,23 +5736,27 @@ export type GuildClientPostRequestsByIdAcceptErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostRequestsByIdAcceptError = GuildClientPostRequestsByIdAcceptErrors[keyof GuildClientPostRequestsByIdAcceptErrors];
@@ -5269,7 +5765,12 @@ export type GuildClientPostRequestsByIdAcceptResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostRequestsByIdAcceptResponse = GuildClientPostRequestsByIdAcceptResponses[keyof GuildClientPostRequestsByIdAcceptResponses];
@@ -5304,23 +5805,27 @@ export type GuildClientPostRequestsByIdRejectErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostRequestsByIdRejectError = GuildClientPostRequestsByIdRejectErrors[keyof GuildClientPostRequestsByIdRejectErrors];
@@ -5329,7 +5834,12 @@ export type GuildClientPostRequestsByIdRejectResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostRequestsByIdRejectResponse = GuildClientPostRequestsByIdRejectResponses[keyof GuildClientPostRequestsByIdRejectResponses];
@@ -5364,23 +5874,27 @@ export type GuildClientPostGuildsByIdInviteErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdInviteError = GuildClientPostGuildsByIdInviteErrors[keyof GuildClientPostGuildsByIdInviteErrors];
@@ -5389,7 +5903,12 @@ export type GuildClientPostGuildsByIdInviteResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdInviteResponse = GuildClientPostGuildsByIdInviteResponses[keyof GuildClientPostGuildsByIdInviteResponses];
@@ -5424,23 +5943,27 @@ export type GuildClientPostInvitationsByIdAcceptErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostInvitationsByIdAcceptError = GuildClientPostInvitationsByIdAcceptErrors[keyof GuildClientPostInvitationsByIdAcceptErrors];
@@ -5449,7 +5972,12 @@ export type GuildClientPostInvitationsByIdAcceptResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostInvitationsByIdAcceptResponse = GuildClientPostInvitationsByIdAcceptResponses[keyof GuildClientPostInvitationsByIdAcceptResponses];
@@ -5484,23 +6012,27 @@ export type GuildClientPostInvitationsByIdRejectErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostInvitationsByIdRejectError = GuildClientPostInvitationsByIdRejectErrors[keyof GuildClientPostInvitationsByIdRejectErrors];
@@ -5509,7 +6041,12 @@ export type GuildClientPostInvitationsByIdRejectResponses = {
     /**
      * OK
      */
-    200: GuildJoinRequest;
+    200: {
+        code: 'ok';
+        data: GuildJoinRequest;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostInvitationsByIdRejectResponse = GuildClientPostInvitationsByIdRejectResponses[keyof GuildClientPostInvitationsByIdRejectResponses];
@@ -5548,23 +6085,27 @@ export type GuildClientPostGuildsByIdMembersByUseridPromoteErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridPromoteError = GuildClientPostGuildsByIdMembersByUseridPromoteErrors[keyof GuildClientPostGuildsByIdMembersByUseridPromoteErrors];
@@ -5573,7 +6114,12 @@ export type GuildClientPostGuildsByIdMembersByUseridPromoteResponses = {
     /**
      * OK
      */
-    200: GuildMember;
+    200: {
+        code: 'ok';
+        data: GuildMember;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridPromoteResponse = GuildClientPostGuildsByIdMembersByUseridPromoteResponses[keyof GuildClientPostGuildsByIdMembersByUseridPromoteResponses];
@@ -5612,23 +6158,27 @@ export type GuildClientPostGuildsByIdMembersByUseridDemoteErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridDemoteError = GuildClientPostGuildsByIdMembersByUseridDemoteErrors[keyof GuildClientPostGuildsByIdMembersByUseridDemoteErrors];
@@ -5637,7 +6187,12 @@ export type GuildClientPostGuildsByIdMembersByUseridDemoteResponses = {
     /**
      * OK
      */
-    200: GuildMember;
+    200: {
+        code: 'ok';
+        data: GuildMember;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridDemoteResponse = GuildClientPostGuildsByIdMembersByUseridDemoteResponses[keyof GuildClientPostGuildsByIdMembersByUseridDemoteResponses];
@@ -5676,23 +6231,27 @@ export type GuildClientPostGuildsByIdMembersByUseridKickErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridKickError = GuildClientPostGuildsByIdMembersByUseridKickErrors[keyof GuildClientPostGuildsByIdMembersByUseridKickErrors];
@@ -5701,7 +6260,12 @@ export type GuildClientPostGuildsByIdMembersByUseridKickResponses = {
     /**
      * OK
      */
-    200: KickSuccessResponse;
+    200: {
+        code: 'ok';
+        data: KickSuccessResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridKickResponse = GuildClientPostGuildsByIdMembersByUseridKickResponses[keyof GuildClientPostGuildsByIdMembersByUseridKickResponses];
@@ -5736,23 +6300,27 @@ export type GuildClientPostGuildsByIdTransferLeaderErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdTransferLeaderError = GuildClientPostGuildsByIdTransferLeaderErrors[keyof GuildClientPostGuildsByIdTransferLeaderErrors];
@@ -5761,7 +6329,12 @@ export type GuildClientPostGuildsByIdTransferLeaderResponses = {
     /**
      * OK
      */
-    200: TransferSuccessResponse;
+    200: {
+        code: 'ok';
+        data: TransferSuccessResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdTransferLeaderResponse = GuildClientPostGuildsByIdTransferLeaderResponses[keyof GuildClientPostGuildsByIdTransferLeaderResponses];
@@ -5796,23 +6369,27 @@ export type GuildClientPostGuildsByIdContributeErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientPostGuildsByIdContributeError = GuildClientPostGuildsByIdContributeErrors[keyof GuildClientPostGuildsByIdContributeErrors];
@@ -5821,7 +6398,12 @@ export type GuildClientPostGuildsByIdContributeResponses = {
     /**
      * OK
      */
-    200: GuildContributionLog;
+    200: {
+        code: 'ok';
+        data: GuildContributionLog;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientPostGuildsByIdContributeResponse = GuildClientPostGuildsByIdContributeResponses[keyof GuildClientPostGuildsByIdContributeResponses];
@@ -5865,23 +6447,27 @@ export type GuildClientGetGuildsByIdContributionsErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetGuildsByIdContributionsError = GuildClientGetGuildsByIdContributionsErrors[keyof GuildClientGetGuildsByIdContributionsErrors];
@@ -5890,7 +6476,12 @@ export type GuildClientGetGuildsByIdContributionsResponses = {
     /**
      * OK
      */
-    200: GuildContributionLogList;
+    200: {
+        code: 'ok';
+        data: GuildContributionLogList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetGuildsByIdContributionsResponse = GuildClientGetGuildsByIdContributionsResponses[keyof GuildClientGetGuildsByIdContributionsResponses];
@@ -5925,23 +6516,27 @@ export type GuildClientGetGuildsByIdMembersErrors = {
     /**
      * Bad request
      */
-    400: GuildErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: GuildErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: GuildErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: GuildErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: GuildErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type GuildClientGetGuildsByIdMembersError = GuildClientGetGuildsByIdMembersErrors[keyof GuildClientGetGuildsByIdMembersErrors];
@@ -5950,7 +6545,12 @@ export type GuildClientGetGuildsByIdMembersResponses = {
     /**
      * OK
      */
-    200: GuildMemberList;
+    200: {
+        code: 'ok';
+        data: GuildMemberList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type GuildClientGetGuildsByIdMembersResponse = GuildClientGetGuildsByIdMembersResponses[keyof GuildClientGetGuildsByIdMembersResponses];
@@ -5966,19 +6566,27 @@ export type LotteryClientPostPullErrors = {
     /**
      * Bad request
      */
-    400: LotteryErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LotteryErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LotteryErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LotteryErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LotteryClientPostPullError = LotteryClientPostPullErrors[keyof LotteryClientPostPullErrors];
@@ -5987,7 +6595,12 @@ export type LotteryClientPostPullResponses = {
     /**
      * OK
      */
-    200: LotteryPullResult;
+    200: {
+        code: 'ok';
+        data: LotteryPullResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LotteryClientPostPullResponse = LotteryClientPostPullResponses[keyof LotteryClientPostPullResponses];
@@ -6003,19 +6616,27 @@ export type LotteryClientPostMultiPullErrors = {
     /**
      * Bad request
      */
-    400: LotteryErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LotteryErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LotteryErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LotteryErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LotteryClientPostMultiPullError = LotteryClientPostMultiPullErrors[keyof LotteryClientPostMultiPullErrors];
@@ -6024,7 +6645,12 @@ export type LotteryClientPostMultiPullResponses = {
     /**
      * OK
      */
-    200: LotteryPullResult;
+    200: {
+        code: 'ok';
+        data: LotteryPullResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LotteryClientPostMultiPullResponse = LotteryClientPostMultiPullResponses[keyof LotteryClientPostMultiPullResponses];
@@ -6045,19 +6671,27 @@ export type LotteryClientGetPoolsByPoolkeyStateErrors = {
     /**
      * Bad request
      */
-    400: LotteryErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LotteryErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LotteryErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LotteryErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LotteryClientGetPoolsByPoolkeyStateError = LotteryClientGetPoolsByPoolkeyStateErrors[keyof LotteryClientGetPoolsByPoolkeyStateErrors];
@@ -6066,7 +6700,12 @@ export type LotteryClientGetPoolsByPoolkeyStateResponses = {
     /**
      * OK
      */
-    200: LotteryUserState;
+    200: {
+        code: 'ok';
+        data: LotteryUserState;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LotteryClientGetPoolsByPoolkeyStateResponse = LotteryClientGetPoolsByPoolkeyStateResponses[keyof LotteryClientGetPoolsByPoolkeyStateResponses];
@@ -6087,19 +6726,27 @@ export type LotteryClientGetPoolsByPoolkeyHistoryErrors = {
     /**
      * Bad request
      */
-    400: LotteryErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LotteryErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LotteryErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LotteryErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LotteryClientGetPoolsByPoolkeyHistoryError = LotteryClientGetPoolsByPoolkeyHistoryErrors[keyof LotteryClientGetPoolsByPoolkeyHistoryErrors];
@@ -6108,7 +6755,12 @@ export type LotteryClientGetPoolsByPoolkeyHistoryResponses = {
     /**
      * OK
      */
-    200: LotteryPullLogList;
+    200: {
+        code: 'ok';
+        data: LotteryPullLogList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LotteryClientGetPoolsByPoolkeyHistoryResponse = LotteryClientGetPoolsByPoolkeyHistoryResponses[keyof LotteryClientGetPoolsByPoolkeyHistoryResponses];
@@ -6130,23 +6782,27 @@ export type MailClientGetMessagesErrors = {
     /**
      * Bad request
      */
-    400: MailErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: MailErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: MailErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: MailErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: MailErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type MailClientGetMessagesError = MailClientGetMessagesErrors[keyof MailClientGetMessagesErrors];
@@ -6155,7 +6811,12 @@ export type MailClientGetMessagesResponses = {
     /**
      * OK
      */
-    200: MailInboxList;
+    200: {
+        code: 'ok';
+        data: MailInboxList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type MailClientGetMessagesResponse = MailClientGetMessagesResponses[keyof MailClientGetMessagesResponses];
@@ -6176,23 +6837,27 @@ export type MailClientGetMessagesByIdErrors = {
     /**
      * Bad request
      */
-    400: MailErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: MailErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: MailErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: MailErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: MailErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type MailClientGetMessagesByIdError = MailClientGetMessagesByIdErrors[keyof MailClientGetMessagesByIdErrors];
@@ -6201,7 +6866,12 @@ export type MailClientGetMessagesByIdResponses = {
     /**
      * OK
      */
-    200: MailInboxItem;
+    200: {
+        code: 'ok';
+        data: MailInboxItem;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type MailClientGetMessagesByIdResponse = MailClientGetMessagesByIdResponses[keyof MailClientGetMessagesByIdResponses];
@@ -6222,23 +6892,27 @@ export type MailClientPostMessagesByIdReadErrors = {
     /**
      * Bad request
      */
-    400: MailErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: MailErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: MailErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: MailErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: MailErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type MailClientPostMessagesByIdReadError = MailClientPostMessagesByIdReadErrors[keyof MailClientPostMessagesByIdReadErrors];
@@ -6247,7 +6921,12 @@ export type MailClientPostMessagesByIdReadResponses = {
     /**
      * OK
      */
-    200: MailUserState;
+    200: {
+        code: 'ok';
+        data: MailUserState;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type MailClientPostMessagesByIdReadResponse = MailClientPostMessagesByIdReadResponses[keyof MailClientPostMessagesByIdReadResponses];
@@ -6268,23 +6947,27 @@ export type MailClientPostMessagesByIdClaimErrors = {
     /**
      * Bad request
      */
-    400: MailErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: MailErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: MailErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: MailErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: MailErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type MailClientPostMessagesByIdClaimError = MailClientPostMessagesByIdClaimErrors[keyof MailClientPostMessagesByIdClaimErrors];
@@ -6293,7 +6976,12 @@ export type MailClientPostMessagesByIdClaimResponses = {
     /**
      * OK
      */
-    200: MailClaimResult;
+    200: {
+        code: 'ok';
+        data: MailClaimResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type MailClientPostMessagesByIdClaimResponse = MailClientPostMessagesByIdClaimResponses[keyof MailClientPostMessagesByIdClaimResponses];
@@ -6309,19 +6997,27 @@ export type ShopClientPostPurchaseErrors = {
     /**
      * Bad request
      */
-    400: ShopErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ShopErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ShopErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ShopErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ShopClientPostPurchaseError = ShopClientPostPurchaseErrors[keyof ShopClientPostPurchaseErrors];
@@ -6330,7 +7026,12 @@ export type ShopClientPostPurchaseResponses = {
     /**
      * OK
      */
-    200: ShopPurchaseResult;
+    200: {
+        code: 'ok';
+        data: ShopPurchaseResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ShopClientPostPurchaseResponse = ShopClientPostPurchaseResponses[keyof ShopClientPostPurchaseResponses];
@@ -6346,19 +7047,27 @@ export type ShopClientPostClaimStageErrors = {
     /**
      * Bad request
      */
-    400: ShopErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ShopErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ShopErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ShopErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ShopClientPostClaimStageError = ShopClientPostClaimStageErrors[keyof ShopClientPostClaimStageErrors];
@@ -6367,7 +7076,12 @@ export type ShopClientPostClaimStageResponses = {
     /**
      * OK
      */
-    200: ShopClaimStageResult;
+    200: {
+        code: 'ok';
+        data: ShopClaimStageResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ShopClientPostClaimStageResponse = ShopClientPostClaimStageResponses[keyof ShopClientPostClaimStageResponses];
@@ -6387,19 +7101,27 @@ export type ShopClientGetProductsErrors = {
     /**
      * Bad request
      */
-    400: ShopErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ShopErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ShopErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ShopErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ShopClientGetProductsError = ShopClientGetProductsErrors[keyof ShopClientGetProductsErrors];
@@ -6408,7 +7130,12 @@ export type ShopClientGetProductsResponses = {
     /**
      * OK
      */
-    200: ShopUserProductList;
+    200: {
+        code: 'ok';
+        data: ShopUserProductList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type ShopClientGetProductsResponse = ShopClientGetProductsResponses[keyof ShopClientGetProductsResponses];
@@ -6424,19 +7151,27 @@ export type TaskClientPostEventsErrors = {
     /**
      * Bad request
      */
-    400: TaskErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TaskErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TaskErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TaskErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TaskClientPostEventsError = TaskClientPostEventsErrors[keyof TaskClientPostEventsErrors];
@@ -6445,7 +7180,12 @@ export type TaskClientPostEventsResponses = {
     /**
      * OK
      */
-    200: TaskEventResponse;
+    200: {
+        code: 'ok';
+        data: TaskEventResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TaskClientPostEventsResponse = TaskClientPostEventsResponses[keyof TaskClientPostEventsResponses];
@@ -6461,19 +7201,27 @@ export type TaskClientPostListErrors = {
     /**
      * Bad request
      */
-    400: TaskErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TaskErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TaskErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TaskErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TaskClientPostListError = TaskClientPostListErrors[keyof TaskClientPostListErrors];
@@ -6482,7 +7230,12 @@ export type TaskClientPostListResponses = {
     /**
      * OK
      */
-    200: TaskClientList;
+    200: {
+        code: 'ok';
+        data: TaskClientList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TaskClientPostListResponse = TaskClientPostListResponses[keyof TaskClientPostListResponses];
@@ -6500,19 +7253,27 @@ export type TaskClientPostClaimByTaskidErrors = {
     /**
      * Bad request
      */
-    400: TaskErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TaskErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TaskErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TaskErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TaskClientPostClaimByTaskidError = TaskClientPostClaimByTaskidErrors[keyof TaskClientPostClaimByTaskidErrors];
@@ -6521,7 +7282,12 @@ export type TaskClientPostClaimByTaskidResponses = {
     /**
      * OK
      */
-    200: TaskClaimResponse;
+    200: {
+        code: 'ok';
+        data: TaskClaimResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TaskClientPostClaimByTaskidResponse = TaskClientPostClaimByTaskidResponses[keyof TaskClientPostClaimByTaskidResponses];
@@ -6537,19 +7303,27 @@ export type TaskClientPostClaimTierErrors = {
     /**
      * Bad request
      */
-    400: TaskErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TaskErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TaskErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TaskErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TaskClientPostClaimTierError = TaskClientPostClaimTierErrors[keyof TaskClientPostClaimTierErrors];
@@ -6558,7 +7332,12 @@ export type TaskClientPostClaimTierResponses = {
     /**
      * OK
      */
-    200: TaskClaimTierResponse;
+    200: {
+        code: 'ok';
+        data: TaskClaimTierResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TaskClientPostClaimTierResponse = TaskClientPostClaimTierResponses[keyof TaskClientPostClaimTierResponses];
@@ -6574,23 +7353,27 @@ export type TeamClientPostTeamsErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsError = TeamClientPostTeamsErrors[keyof TeamClientPostTeamsErrors];
@@ -6599,7 +7382,12 @@ export type TeamClientPostTeamsResponses = {
     /**
      * Created
      */
-    201: Team;
+    201: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsResponse = TeamClientPostTeamsResponses[keyof TeamClientPostTeamsResponses];
@@ -6620,23 +7408,27 @@ export type TeamClientGetMyTeamErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientGetMyTeamError = TeamClientGetMyTeamErrors[keyof TeamClientGetMyTeamErrors];
@@ -6645,9 +7437,14 @@ export type TeamClientGetMyTeamResponses = {
     /**
      * OK (returns team or null)
      */
-    200: Team & ({
-        [key: string]: unknown;
-    } | null);
+    200: {
+        code: 'ok';
+        data: Team & ({
+            [key: string]: unknown;
+        } | null);
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientGetMyTeamResponse = TeamClientGetMyTeamResponses[keyof TeamClientGetMyTeamResponses];
@@ -6668,23 +7465,27 @@ export type TeamClientGetTeamsByIdErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientGetTeamsByIdError = TeamClientGetTeamsByIdErrors[keyof TeamClientGetTeamsByIdErrors];
@@ -6693,7 +7494,12 @@ export type TeamClientGetTeamsByIdResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientGetTeamsByIdResponse = TeamClientGetTeamsByIdResponses[keyof TeamClientGetTeamsByIdResponses];
@@ -6714,23 +7520,27 @@ export type TeamClientPostTeamsByIdJoinErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdJoinError = TeamClientPostTeamsByIdJoinErrors[keyof TeamClientPostTeamsByIdJoinErrors];
@@ -6739,7 +7549,12 @@ export type TeamClientPostTeamsByIdJoinResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdJoinResponse = TeamClientPostTeamsByIdJoinResponses[keyof TeamClientPostTeamsByIdJoinResponses];
@@ -6760,23 +7575,27 @@ export type TeamClientPostTeamsByIdLeaveErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdLeaveError = TeamClientPostTeamsByIdLeaveErrors[keyof TeamClientPostTeamsByIdLeaveErrors];
@@ -6785,7 +7604,12 @@ export type TeamClientPostTeamsByIdLeaveResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdLeaveResponse = TeamClientPostTeamsByIdLeaveResponses[keyof TeamClientPostTeamsByIdLeaveResponses];
@@ -6806,23 +7630,27 @@ export type TeamClientPostTeamsByIdDissolveErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdDissolveError = TeamClientPostTeamsByIdDissolveErrors[keyof TeamClientPostTeamsByIdDissolveErrors];
@@ -6831,7 +7659,12 @@ export type TeamClientPostTeamsByIdDissolveResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdDissolveResponse = TeamClientPostTeamsByIdDissolveResponses[keyof TeamClientPostTeamsByIdDissolveResponses];
@@ -6856,23 +7689,27 @@ export type TeamClientPostTeamsByIdKickByUseridErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdKickByUseridError = TeamClientPostTeamsByIdKickByUseridErrors[keyof TeamClientPostTeamsByIdKickByUseridErrors];
@@ -6881,7 +7718,12 @@ export type TeamClientPostTeamsByIdKickByUseridResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdKickByUseridResponse = TeamClientPostTeamsByIdKickByUseridResponses[keyof TeamClientPostTeamsByIdKickByUseridResponses];
@@ -6902,23 +7744,27 @@ export type TeamClientPostTeamsByIdTransferLeaderErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdTransferLeaderError = TeamClientPostTeamsByIdTransferLeaderErrors[keyof TeamClientPostTeamsByIdTransferLeaderErrors];
@@ -6927,7 +7773,12 @@ export type TeamClientPostTeamsByIdTransferLeaderResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdTransferLeaderResponse = TeamClientPostTeamsByIdTransferLeaderResponses[keyof TeamClientPostTeamsByIdTransferLeaderResponses];
@@ -6948,23 +7799,27 @@ export type TeamClientPutTeamsByIdStatusErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPutTeamsByIdStatusError = TeamClientPutTeamsByIdStatusErrors[keyof TeamClientPutTeamsByIdStatusErrors];
@@ -6973,7 +7828,12 @@ export type TeamClientPutTeamsByIdStatusResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPutTeamsByIdStatusResponse = TeamClientPutTeamsByIdStatusResponses[keyof TeamClientPutTeamsByIdStatusResponses];
@@ -6994,23 +7854,27 @@ export type TeamClientPostTeamsByIdInviteErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostTeamsByIdInviteError = TeamClientPostTeamsByIdInviteErrors[keyof TeamClientPostTeamsByIdInviteErrors];
@@ -7019,7 +7883,12 @@ export type TeamClientPostTeamsByIdInviteResponses = {
     /**
      * Created
      */
-    201: TeamInvitation;
+    201: {
+        code: 'ok';
+        data: TeamInvitation;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostTeamsByIdInviteResponse = TeamClientPostTeamsByIdInviteResponses[keyof TeamClientPostTeamsByIdInviteResponses];
@@ -7040,23 +7909,27 @@ export type TeamClientPostInvitationsByIdAcceptErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostInvitationsByIdAcceptError = TeamClientPostInvitationsByIdAcceptErrors[keyof TeamClientPostInvitationsByIdAcceptErrors];
@@ -7065,7 +7938,12 @@ export type TeamClientPostInvitationsByIdAcceptResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostInvitationsByIdAcceptResponse = TeamClientPostInvitationsByIdAcceptResponses[keyof TeamClientPostInvitationsByIdAcceptResponses];
@@ -7086,23 +7964,27 @@ export type TeamClientPostInvitationsByIdRejectErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostInvitationsByIdRejectError = TeamClientPostInvitationsByIdRejectErrors[keyof TeamClientPostInvitationsByIdRejectErrors];
@@ -7111,7 +7993,12 @@ export type TeamClientPostInvitationsByIdRejectResponses = {
     /**
      * OK
      */
-    200: TeamInvitation;
+    200: {
+        code: 'ok';
+        data: TeamInvitation;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostInvitationsByIdRejectResponse = TeamClientPostInvitationsByIdRejectResponses[keyof TeamClientPostInvitationsByIdRejectResponses];
@@ -7132,23 +8019,27 @@ export type TeamClientPostQuickMatchErrors = {
     /**
      * Bad request
      */
-    400: TeamErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: TeamErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: TeamErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: TeamErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: TeamErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type TeamClientPostQuickMatchError = TeamClientPostQuickMatchErrors[keyof TeamClientPostQuickMatchErrors];
@@ -7157,7 +8048,12 @@ export type TeamClientPostQuickMatchResponses = {
     /**
      * OK
      */
-    200: Team;
+    200: {
+        code: 'ok';
+        data: Team;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type TeamClientPostQuickMatchResponse = TeamClientPostQuickMatchResponses[keyof TeamClientPostQuickMatchResponses];
@@ -7173,23 +8069,27 @@ export type LevelClientPostConfigsErrors = {
     /**
      * Bad request
      */
-    400: LevelErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LevelErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: LevelErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LevelErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LevelErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LevelClientPostConfigsError = LevelClientPostConfigsErrors[keyof LevelClientPostConfigsErrors];
@@ -7198,7 +8098,12 @@ export type LevelClientPostConfigsResponses = {
     /**
      * OK
      */
-    200: LevelClientConfigList;
+    200: {
+        code: 'ok';
+        data: LevelClientConfigList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LevelClientPostConfigsResponse = LevelClientPostConfigsResponses[keyof LevelClientPostConfigsResponses];
@@ -7219,23 +8124,27 @@ export type LevelClientPostConfigsByKeyOverviewErrors = {
     /**
      * Bad request
      */
-    400: LevelErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LevelErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: LevelErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LevelErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LevelErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LevelClientPostConfigsByKeyOverviewError = LevelClientPostConfigsByKeyOverviewErrors[keyof LevelClientPostConfigsByKeyOverviewErrors];
@@ -7244,7 +8153,12 @@ export type LevelClientPostConfigsByKeyOverviewResponses = {
     /**
      * OK
      */
-    200: LevelClientConfigOverview;
+    200: {
+        code: 'ok';
+        data: LevelClientConfigOverview;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LevelClientPostConfigsByKeyOverviewResponse = LevelClientPostConfigsByKeyOverviewResponses[keyof LevelClientPostConfigsByKeyOverviewResponses];
@@ -7262,23 +8176,27 @@ export type LevelClientPostLevelsByIdDetailErrors = {
     /**
      * Bad request
      */
-    400: LevelErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LevelErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: LevelErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LevelErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LevelErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LevelClientPostLevelsByIdDetailError = LevelClientPostLevelsByIdDetailErrors[keyof LevelClientPostLevelsByIdDetailErrors];
@@ -7287,7 +8205,12 @@ export type LevelClientPostLevelsByIdDetailResponses = {
     /**
      * OK
      */
-    200: LevelClientLevelDetail;
+    200: {
+        code: 'ok';
+        data: LevelClientLevelDetail;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LevelClientPostLevelsByIdDetailResponse = LevelClientPostLevelsByIdDetailResponses[keyof LevelClientPostLevelsByIdDetailResponses];
@@ -7305,23 +8228,27 @@ export type LevelClientPostLevelsByIdClearErrors = {
     /**
      * Bad request
      */
-    400: LevelErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LevelErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: LevelErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LevelErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LevelErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LevelClientPostLevelsByIdClearError = LevelClientPostLevelsByIdClearErrors[keyof LevelClientPostLevelsByIdClearErrors];
@@ -7330,7 +8257,12 @@ export type LevelClientPostLevelsByIdClearResponses = {
     /**
      * OK
      */
-    200: LevelReportClearResponse;
+    200: {
+        code: 'ok';
+        data: LevelReportClearResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LevelClientPostLevelsByIdClearResponse = LevelClientPostLevelsByIdClearResponses[keyof LevelClientPostLevelsByIdClearResponses];
@@ -7348,23 +8280,27 @@ export type LevelClientPostLevelsByIdClaimErrors = {
     /**
      * Bad request
      */
-    400: LevelErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LevelErrorResponse;
+    401: ApiErrorEnvelope;
     /**
      * Forbidden
      */
-    403: LevelErrorResponse;
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LevelErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: LevelErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LevelClientPostLevelsByIdClaimError = LevelClientPostLevelsByIdClaimErrors[keyof LevelClientPostLevelsByIdClaimErrors];
@@ -7373,7 +8309,12 @@ export type LevelClientPostLevelsByIdClaimResponses = {
     /**
      * OK
      */
-    200: LevelClaimRewardsResponse;
+    200: {
+        code: 'ok';
+        data: LevelClaimRewardsResponse;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LevelClientPostLevelsByIdClaimResponse = LevelClientPostLevelsByIdClaimResponses[keyof LevelClientPostLevelsByIdClaimResponses];
@@ -7409,15 +8350,27 @@ export type LeaderboardClientGetConfigsByAliasTopErrors = {
     /**
      * Bad request
      */
-    400: LeaderboardError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LeaderboardError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LeaderboardError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LeaderboardClientGetConfigsByAliasTopError = LeaderboardClientGetConfigsByAliasTopErrors[keyof LeaderboardClientGetConfigsByAliasTopErrors];
@@ -7426,7 +8379,12 @@ export type LeaderboardClientGetConfigsByAliasTopResponses = {
     /**
      * OK
      */
-    200: LeaderboardTop;
+    200: {
+        code: 'ok';
+        data: LeaderboardTop;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LeaderboardClientGetConfigsByAliasTopResponse = LeaderboardClientGetConfigsByAliasTopResponses[keyof LeaderboardClientGetConfigsByAliasTopResponses];
@@ -7462,15 +8420,27 @@ export type LeaderboardClientGetConfigsByAliasNeighborsErrors = {
     /**
      * Bad request
      */
-    400: LeaderboardError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LeaderboardError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LeaderboardError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LeaderboardClientGetConfigsByAliasNeighborsError = LeaderboardClientGetConfigsByAliasNeighborsErrors[keyof LeaderboardClientGetConfigsByAliasNeighborsErrors];
@@ -7479,7 +8449,12 @@ export type LeaderboardClientGetConfigsByAliasNeighborsResponses = {
     /**
      * OK
      */
-    200: LeaderboardTop;
+    200: {
+        code: 'ok';
+        data: LeaderboardTop;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LeaderboardClientGetConfigsByAliasNeighborsResponse = LeaderboardClientGetConfigsByAliasNeighborsResponses[keyof LeaderboardClientGetConfigsByAliasNeighborsResponses];
@@ -7511,15 +8486,27 @@ export type LeaderboardClientGetConfigsByAliasSnapshotsErrors = {
     /**
      * Bad request
      */
-    400: LeaderboardError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: LeaderboardError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: LeaderboardError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type LeaderboardClientGetConfigsByAliasSnapshotsError = LeaderboardClientGetConfigsByAliasSnapshotsErrors[keyof LeaderboardClientGetConfigsByAliasSnapshotsErrors];
@@ -7528,7 +8515,12 @@ export type LeaderboardClientGetConfigsByAliasSnapshotsResponses = {
     /**
      * OK
      */
-    200: LeaderboardSnapshotList;
+    200: {
+        code: 'ok';
+        data: LeaderboardSnapshotList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type LeaderboardClientGetConfigsByAliasSnapshotsResponse = LeaderboardClientGetConfigsByAliasSnapshotsResponses[keyof LeaderboardClientGetConfigsByAliasSnapshotsResponses];
@@ -7561,15 +8553,27 @@ export type RankClientGetStateErrors = {
     /**
      * Bad request
      */
-    400: RankError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: RankError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: RankError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type RankClientGetStateError = RankClientGetStateErrors[keyof RankClientGetStateErrors];
@@ -7578,7 +8582,12 @@ export type RankClientGetStateResponses = {
     /**
      * OK
      */
-    200: RankPlayerView;
+    200: {
+        code: 'ok';
+        data: RankPlayerView;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type RankClientGetStateResponse = RankClientGetStateResponses[keyof RankClientGetStateResponses];
@@ -7613,15 +8622,27 @@ export type RankClientGetHistoryErrors = {
     /**
      * Bad request
      */
-    400: RankError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: RankError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: RankError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type RankClientGetHistoryError = RankClientGetHistoryErrors[keyof RankClientGetHistoryErrors];
@@ -7631,31 +8652,36 @@ export type RankClientGetHistoryResponses = {
      * OK
      */
     200: {
-        items: Array<{
-            id: string;
-            matchId: string;
-            endUserId: string;
-            teamId: string;
-            placement: number | null;
-            win: boolean;
-            mmrBefore: number;
-            mmrAfter: number;
-            rankScoreBefore: number;
-            rankScoreAfter: number;
-            starsDelta: number;
-            subtierBefore: number;
-            subtierAfter: number;
-            starsBefore: number;
-            starsAfter: number;
-            tierBeforeId: string | null;
-            tierAfterId: string | null;
-            promoted: boolean;
-            demoted: boolean;
-            protectionApplied: {
-                [key: string]: unknown;
-            } | null;
-        }>;
-        nextCursor?: string;
+        code: 'ok';
+        data: {
+            items: Array<{
+                id: string;
+                matchId: string;
+                endUserId: string;
+                teamId: string;
+                placement: number | null;
+                win: boolean;
+                mmrBefore: number;
+                mmrAfter: number;
+                rankScoreBefore: number;
+                rankScoreAfter: number;
+                starsDelta: number;
+                subtierBefore: number;
+                subtierAfter: number;
+                starsBefore: number;
+                starsAfter: number;
+                tierBeforeId: string | null;
+                tierAfterId: string | null;
+                promoted: boolean;
+                demoted: boolean;
+                protectionApplied: {
+                    [key: string]: unknown;
+                } | null;
+            }>;
+            nextCursor?: string;
+        };
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7692,15 +8718,27 @@ export type RankClientGetLeaderboardErrors = {
     /**
      * Bad request
      */
-    400: RankError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: RankError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: RankError;
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type RankClientGetLeaderboardError = RankClientGetLeaderboardErrors[keyof RankClientGetLeaderboardErrors];
@@ -7710,23 +8748,28 @@ export type RankClientGetLeaderboardResponses = {
      * OK
      */
     200: {
-        tier?: {
-            id: string;
-            alias: string;
+        code: 'ok';
+        data: {
+            tier?: {
+                id: string;
+                alias: string;
+            };
+            rankings: Array<{
+                rank?: number;
+                endUserId: string;
+                score?: number;
+                displaySnapshot?: {
+                    [key: string]: unknown;
+                } | null;
+            }>;
+            self?: {
+                rank: number | null;
+                score: number | null;
+            };
+            items?: Array<RankPlayerView>;
         };
-        rankings: Array<{
-            rank?: number;
-            endUserId: string;
-            score?: number;
-            displaySnapshot?: {
-                [key: string]: unknown;
-            } | null;
-        }>;
-        self?: {
-            rank: number | null;
-            score: number | null;
-        };
-        items?: Array<RankPlayerView>;
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7757,19 +8800,27 @@ export type ActivityClientGetListErrors = {
     /**
      * Bad request
      */
-    400: ActivityError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ActivityError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ActivityError;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ActivityError;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ActivityClientGetListError = ActivityClientGetListErrors[keyof ActivityClientGetListErrors];
@@ -7779,7 +8830,12 @@ export type ActivityClientGetListResponses = {
      * OK
      */
     200: {
-        items: Array<Activity>;
+        code: 'ok';
+        data: {
+            items: Array<Activity>;
+        };
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7812,19 +8868,27 @@ export type ActivityClientGetByAliasErrors = {
     /**
      * Bad request
      */
-    400: ActivityError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ActivityError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ActivityError;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ActivityError;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ActivityClientGetByAliasError = ActivityClientGetByAliasErrors[keyof ActivityClientGetByAliasErrors];
@@ -7834,7 +8898,12 @@ export type ActivityClientGetByAliasResponses = {
      * OK
      */
     200: {
-        [key: string]: unknown;
+        code: 'ok';
+        data: {
+            [key: string]: unknown;
+        };
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7867,19 +8936,27 @@ export type ActivityClientPostByAliasJoinErrors = {
     /**
      * Bad request
      */
-    400: ActivityError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ActivityError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ActivityError;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ActivityError;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ActivityClientPostByAliasJoinError = ActivityClientPostByAliasJoinErrors[keyof ActivityClientPostByAliasJoinErrors];
@@ -7889,7 +8966,12 @@ export type ActivityClientPostByAliasJoinResponses = {
      * OK
      */
     200: {
-        [key: string]: unknown;
+        code: 'ok';
+        data: {
+            [key: string]: unknown;
+        };
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7922,19 +9004,27 @@ export type ActivityClientPostByAliasClaimMilestoneErrors = {
     /**
      * Bad request
      */
-    400: ActivityError;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: ActivityError;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: ActivityError;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: ActivityError;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type ActivityClientPostByAliasClaimMilestoneError = ActivityClientPostByAliasClaimMilestoneErrors[keyof ActivityClientPostByAliasClaimMilestoneErrors];
@@ -7944,7 +9034,12 @@ export type ActivityClientPostByAliasClaimMilestoneResponses = {
      * OK
      */
     200: {
-        [key: string]: unknown;
+        code: 'ok';
+        data: {
+            [key: string]: unknown;
+        };
+        message: string;
+        requestId: string;
     };
 };
 
@@ -7963,19 +9058,27 @@ export type AssistPoolClientGetInstancesErrors = {
     /**
      * Bad request
      */
-    400: AssistPoolErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AssistPoolErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AssistPoolErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: AssistPoolErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AssistPoolClientGetInstancesError = AssistPoolClientGetInstancesErrors[keyof AssistPoolClientGetInstancesErrors];
@@ -7984,7 +9087,12 @@ export type AssistPoolClientGetInstancesResponses = {
     /**
      * OK
      */
-    200: AssistPoolInstanceList;
+    200: {
+        code: 'ok';
+        data: AssistPoolInstanceList;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type AssistPoolClientGetInstancesResponse = AssistPoolClientGetInstancesResponses[keyof AssistPoolClientGetInstancesResponses];
@@ -8000,19 +9108,27 @@ export type AssistPoolClientPostInstancesErrors = {
     /**
      * Bad request
      */
-    400: AssistPoolErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AssistPoolErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AssistPoolErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: AssistPoolErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AssistPoolClientPostInstancesError = AssistPoolClientPostInstancesErrors[keyof AssistPoolClientPostInstancesErrors];
@@ -8021,7 +9137,12 @@ export type AssistPoolClientPostInstancesResponses = {
     /**
      * Created
      */
-    201: AssistPoolInstance;
+    201: {
+        code: 'ok';
+        data: AssistPoolInstance;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type AssistPoolClientPostInstancesResponse = AssistPoolClientPostInstancesResponses[keyof AssistPoolClientPostInstancesResponses];
@@ -8042,19 +9163,27 @@ export type AssistPoolClientGetInstancesByInstanceidErrors = {
     /**
      * Bad request
      */
-    400: AssistPoolErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AssistPoolErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AssistPoolErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: AssistPoolErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AssistPoolClientGetInstancesByInstanceidError = AssistPoolClientGetInstancesByInstanceidErrors[keyof AssistPoolClientGetInstancesByInstanceidErrors];
@@ -8063,7 +9192,12 @@ export type AssistPoolClientGetInstancesByInstanceidResponses = {
     /**
      * OK
      */
-    200: AssistPoolInstance;
+    200: {
+        code: 'ok';
+        data: AssistPoolInstance;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type AssistPoolClientGetInstancesByInstanceidResponse = AssistPoolClientGetInstancesByInstanceidResponses[keyof AssistPoolClientGetInstancesByInstanceidResponses];
@@ -8084,19 +9218,27 @@ export type AssistPoolClientPostInstancesByInstanceidContributeErrors = {
     /**
      * Bad request
      */
-    400: AssistPoolErrorResponse;
+    400: ApiErrorEnvelope;
     /**
      * Unauthorized
      */
-    401: AssistPoolErrorResponse;
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
     /**
      * Not found
      */
-    404: AssistPoolErrorResponse;
+    404: ApiErrorEnvelope;
     /**
      * Conflict
      */
-    409: AssistPoolErrorResponse;
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
 };
 
 export type AssistPoolClientPostInstancesByInstanceidContributeError = AssistPoolClientPostInstancesByInstanceidContributeErrors[keyof AssistPoolClientPostInstancesByInstanceidContributeErrors];
@@ -8105,7 +9247,12 @@ export type AssistPoolClientPostInstancesByInstanceidContributeResponses = {
     /**
      * OK
      */
-    200: AssistPoolContributeResult;
+    200: {
+        code: 'ok';
+        data: AssistPoolContributeResult;
+        message: string;
+        requestId: string;
+    };
 };
 
 export type AssistPoolClientPostInstancesByInstanceidContributeResponse = AssistPoolClientPostInstancesByInstanceidContributeResponses[keyof AssistPoolClientPostInstancesByInstanceidContributeResponses];

@@ -31,6 +31,7 @@ import { getTraceId } from "./request-context";
 export const OK_CODE = "ok";
 export const VALIDATION_ERROR_CODE = "validation_error";
 export const INTERNAL_ERROR_CODE = "internal_error";
+export const NOT_FOUND_CODE = "not_found";
 
 export type OkEnvelope<T> = {
   code: typeof OK_CODE;

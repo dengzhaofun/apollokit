@@ -12,8 +12,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
@@ -30,7 +29,6 @@ import {
   AdjustPlayerSchema,
   CreateSeasonSchema,
   CreateTierConfigSchema,
-  ErrorResponseSchema,
   IdParamSchema,
   ListPlayersQuerySchema,
   ListSeasonsQuerySchema,
@@ -142,38 +140,9 @@ function serializeParticipant(row: RankMatchParticipant) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const rankRouter = createAdminRouter();
 
 rankRouter.use("*", requireAdminOrApiKey);
-
-rankRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Settle match (server-to-server ingest) ─────────────────────
 
@@ -194,10 +163,10 @@ rankRouter.openapi(
       200: {
         description: "Settled (or alreadySettled=true on repeat).",
         content: {
-          "application/json": { schema: RankSettleResponseSchema },
+          "application/json": { schema: envelopeOf(RankSettleResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -209,7 +178,7 @@ rankRouter.openapi(
       organizationId: orgId,
       ...(reportedBy ? { reportedBy } : {}),
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -230,17 +199,17 @@ rankRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: RankTierConfigResponseSchema },
+          "application/json": { schema: envelopeOf(RankTierConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const result = await rankService.createTierConfig(orgId, input);
-    return c.json(serializeTierConfig(result), 201);
+    return c.json(ok(serializeTierConfig(result)), 201);
   },
 );
 
@@ -254,16 +223,16 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankTierConfigListResponseSchema },
+          "application/json": { schema: envelopeOf(RankTierConfigListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await rankService.listTierConfigs(orgId);
-    return c.json({ items: rows.map(serializeTierConfig) }, 200);
+    return c.json(ok({ items: rows.map(serializeTierConfig) }), 200);
   },
 );
 
@@ -278,17 +247,17 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankTierConfigResponseSchema },
+          "application/json": { schema: envelopeOf(RankTierConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const result = await rankService.getTierConfig(orgId, key);
-    return c.json(serializeTierConfig(result), 200);
+    return c.json(ok(serializeTierConfig(result)), 200);
   },
 );
 
@@ -308,10 +277,10 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankTierConfigResponseSchema },
+          "application/json": { schema: envelopeOf(RankTierConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -319,7 +288,7 @@ rankRouter.openapi(
     const { key } = c.req.valid("param");
     const input = c.req.valid("json");
     const result = await rankService.updateTierConfig(orgId, key, input);
-    return c.json(serializeTierConfig(result), 200);
+    return c.json(ok(serializeTierConfig(result)), 200);
   },
 );
 
@@ -330,13 +299,13 @@ rankRouter.openapi(
     tags: [TAG],
     summary: "Delete a tier config",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await rankService.deleteTierConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -356,16 +325,16 @@ rankRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: RankSeasonResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(RankSeasonResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await rankService.createSeason(orgId, input);
-    return c.json(serializeSeason(row), 201);
+    return c.json(ok(serializeSeason(row)), 201);
   },
 );
 
@@ -380,17 +349,17 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankSeasonListResponseSchema },
+          "application/json": { schema: envelopeOf(RankSeasonListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const filter = c.req.valid("query");
     const rows = await rankService.listSeasons(orgId, filter);
-    return c.json({ items: rows.map(serializeSeason) }, 200);
+    return c.json(ok({ items: rows.map(serializeSeason) }), 200);
   },
 );
 
@@ -404,16 +373,16 @@ rankRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: RankSeasonResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(RankSeasonResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await rankService.getSeason(orgId, id);
-    return c.json(serializeSeason(row), 200);
+    return c.json(ok(serializeSeason(row)), 200);
   },
 );
 
@@ -432,9 +401,9 @@ rankRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: RankSeasonResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(RankSeasonResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -442,7 +411,7 @@ rankRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await rankService.updateSeason(orgId, id, input);
-    return c.json(serializeSeason(row), 200);
+    return c.json(ok(serializeSeason(row)), 200);
   },
 );
 
@@ -456,16 +425,16 @@ rankRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: RankSeasonResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(RankSeasonResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await rankService.activateSeason(orgId, id);
-    return c.json(serializeSeason(row), 200);
+    return c.json(ok(serializeSeason(row)), 200);
   },
 );
 
@@ -480,17 +449,17 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankFinalizeResponseSchema },
+          "application/json": { schema: envelopeOf(RankFinalizeResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const result = await rankService.finalizeSeason(orgId, id);
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -510,10 +479,10 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: PlayerRankViewListResponseSchema },
+          "application/json": { schema: envelopeOf(PlayerRankViewListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -527,7 +496,7 @@ rankRouter.openapi(
       endUserId,
       limit,
     });
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -547,10 +516,10 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: PlayerRankViewResponseSchema },
+          "application/json": { schema: envelopeOf(PlayerRankViewResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -558,7 +527,7 @@ rankRouter.openapi(
     const { endUserId } = c.req.valid("param");
     const input = c.req.valid("json");
     const view = await rankService.adjustPlayer(orgId, endUserId, input);
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );
 
@@ -591,10 +560,10 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankMatchListResponseSchema },
+          "application/json": { schema: envelopeOf(RankMatchListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -607,13 +576,10 @@ rankRouter.openapi(
       limit,
       cursor,
     });
-    return c.json(
-      {
+    return c.json(ok({
         items: items.map(serializeMatch),
         nextCursor: nextCursor ?? undefined,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -628,22 +594,19 @@ rankRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RankMatchDetailResponseSchema },
+          "application/json": { schema: envelopeOf(RankMatchDetailResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const { match, participants } = await rankService.getMatch(orgId, id);
-    return c.json(
-      {
+    return c.json(ok({
         match: serializeMatch(match),
         participants: participants.map(serializeParticipant),
-      },
-      200,
-    );
+      }), 200,);
   },
 );

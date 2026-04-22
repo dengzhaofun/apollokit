@@ -9,11 +9,9 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { entityService } from "./index";
 import type {
@@ -31,7 +29,6 @@ import {
   CreateFormationConfigInput,
   CreateSchemaInput,
   CreateSkinInput,
-  ErrorResponseSchema,
   FormationConfigIdParamSchema,
   FormationConfigKeyParamSchema,
   FormationConfigListResponseSchema,
@@ -141,42 +138,9 @@ function serializeFormationConfig(row: EntityFormationConfig) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const entityRouter = createAdminRouter();
 
 entityRouter.use("*", requireAdminOrApiKey);
-
-entityRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ═══════════════════════════════════════════════════════════════
 // Schema routes
@@ -192,16 +156,16 @@ entityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: SchemaListResponseSchema },
+          "application/json": { schema: envelopeOf(SchemaListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await entityService.listSchemas(orgId);
-    return c.json(rows.map(serializeSchema), 200);
+    return c.json(ok(rows.map(serializeSchema)), 200);
   },
 );
 
@@ -219,16 +183,16 @@ entityRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: SchemaResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SchemaResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await entityService.createSchema(orgId, input);
-    return c.json(serializeSchema(row), 201);
+    return c.json(ok(serializeSchema(row)), 201);
   },
 );
 
@@ -242,16 +206,16 @@ entityRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: SchemaResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SchemaResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await entityService.getSchema(orgId, key);
-    return c.json(serializeSchema(row), 200);
+    return c.json(ok(serializeSchema(row)), 200);
   },
 );
 
@@ -270,9 +234,9 @@ entityRouter.openapi(
     responses: {
       200: {
         description: "Updated",
-        content: { "application/json": { schema: SchemaResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SchemaResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -280,7 +244,7 @@ entityRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateSchema(orgId, id, input);
-    return c.json(serializeSchema(row), 200);
+    return c.json(ok(serializeSchema(row)), 200);
   },
 );
 
@@ -292,15 +256,18 @@ entityRouter.openapi(
     summary: "Delete an entity schema",
     request: { params: SchemaIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await entityService.deleteSchema(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -323,17 +290,17 @@ entityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: BlueprintListResponseSchema },
+          "application/json": { schema: envelopeOf(BlueprintListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { schemaId } = c.req.valid("query");
     const rows = await entityService.listBlueprints(orgId, { schemaId });
-    return c.json(rows.map(serializeBlueprint), 200);
+    return c.json(ok(rows.map(serializeBlueprint)), 200);
   },
 );
 
@@ -352,17 +319,17 @@ entityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: BlueprintResponseSchema },
+          "application/json": { schema: envelopeOf(BlueprintResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await entityService.createBlueprint(orgId, input);
-    return c.json(serializeBlueprint(row), 201);
+    return c.json(ok(serializeBlueprint(row)), 201);
   },
 );
 
@@ -377,17 +344,17 @@ entityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: BlueprintResponseSchema },
+          "application/json": { schema: envelopeOf(BlueprintResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await entityService.getBlueprint(orgId, key);
-    return c.json(serializeBlueprint(row), 200);
+    return c.json(ok(serializeBlueprint(row)), 200);
   },
 );
 
@@ -407,10 +374,10 @@ entityRouter.openapi(
       200: {
         description: "Updated",
         content: {
-          "application/json": { schema: BlueprintResponseSchema },
+          "application/json": { schema: envelopeOf(BlueprintResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -418,7 +385,7 @@ entityRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateBlueprint(orgId, id, input);
-    return c.json(serializeBlueprint(row), 200);
+    return c.json(ok(serializeBlueprint(row)), 200);
   },
 );
 
@@ -430,15 +397,18 @@ entityRouter.openapi(
     summary: "Delete a blueprint",
     request: { params: BlueprintIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await entityService.deleteBlueprint(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -457,17 +427,17 @@ entityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: SkinListResponseSchema },
+          "application/json": { schema: envelopeOf(SkinListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const rows = await entityService.listSkins(orgId, id);
-    return c.json(rows.map(serializeSkin), 200);
+    return c.json(ok(rows.map(serializeSkin)), 200);
   },
 );
 
@@ -486,9 +456,9 @@ entityRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: SkinResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SkinResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -496,7 +466,7 @@ entityRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.createSkin(orgId, id, input);
-    return c.json(serializeSkin(row), 201);
+    return c.json(ok(serializeSkin(row)), 201);
   },
 );
 
@@ -515,9 +485,9 @@ entityRouter.openapi(
     responses: {
       200: {
         description: "Updated",
-        content: { "application/json": { schema: SkinResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SkinResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -525,7 +495,7 @@ entityRouter.openapi(
     const { skinId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateSkin(orgId, skinId, input);
-    return c.json(serializeSkin(row), 200);
+    return c.json(ok(serializeSkin(row)), 200);
   },
 );
 
@@ -537,15 +507,18 @@ entityRouter.openapi(
     summary: "Delete a skin",
     request: { params: SkinIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { skinId } = c.req.valid("param");
     await entityService.deleteSkin(orgId, skinId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -564,17 +537,17 @@ entityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: FormationConfigListResponseSchema,
+            schema: envelopeOf(FormationConfigListResponseSchema,)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await entityService.listFormationConfigs(orgId);
-    return c.json(rows.map(serializeFormationConfig), 200);
+    return c.json(ok(rows.map(serializeFormationConfig)), 200);
   },
 );
 
@@ -595,17 +568,17 @@ entityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: FormationConfigResponseSchema },
+          "application/json": { schema: envelopeOf(FormationConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await entityService.createFormationConfig(orgId, input);
-    return c.json(serializeFormationConfig(row), 201);
+    return c.json(ok(serializeFormationConfig(row)), 201);
   },
 );
 
@@ -620,17 +593,17 @@ entityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FormationConfigResponseSchema },
+          "application/json": { schema: envelopeOf(FormationConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await entityService.getFormationConfig(orgId, key);
-    return c.json(serializeFormationConfig(row), 200);
+    return c.json(ok(serializeFormationConfig(row)), 200);
   },
 );
 
@@ -652,10 +625,10 @@ entityRouter.openapi(
       200: {
         description: "Updated",
         content: {
-          "application/json": { schema: FormationConfigResponseSchema },
+          "application/json": { schema: envelopeOf(FormationConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -663,7 +636,7 @@ entityRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateFormationConfig(orgId, id, input);
-    return c.json(serializeFormationConfig(row), 200);
+    return c.json(ok(serializeFormationConfig(row)), 200);
   },
 );
 
@@ -675,15 +648,18 @@ entityRouter.openapi(
     summary: "Delete a formation config",
     request: { params: FormationConfigIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await entityService.deleteFormationConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 

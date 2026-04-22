@@ -22,16 +22,13 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
-import { ModuleError } from "./errors";
 import { leaderboardService } from "./index";
 import {
-  ErrorResponseSchema,
   SnapshotListResponseSchema,
   TopResponseSchema,
 } from "./validators";
@@ -40,35 +37,10 @@ const TAG = "Leaderboard (Client)";
 
 import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const leaderboardClientRouter = createClientRouter();
 
 leaderboardClientRouter.use("*", requireClientCredential);
 leaderboardClientRouter.use("*", requireClientUser);
-
-leaderboardClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 const AliasParam = z.object({
   alias: z.string().min(1).openapi({ param: { name: "alias", in: "path" } }),
@@ -118,9 +90,9 @@ leaderboardClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TopResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TopResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -136,7 +108,7 @@ leaderboardClientRouter.openapi(
       limit,
       endUserId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -154,9 +126,9 @@ leaderboardClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TopResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TopResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -172,7 +144,7 @@ leaderboardClientRouter.openapi(
       scopeKey,
       window,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -187,10 +159,10 @@ leaderboardClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: SnapshotListResponseSchema },
+          "application/json": { schema: envelopeOf(SnapshotListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -200,8 +172,7 @@ leaderboardClientRouter.openapi(
       organizationId: orgId,
       configKey: alias,
     });
-    return c.json(
-      {
+    return c.json(ok({
         items: rows.map((r) => ({
           id: r.id,
           configId: r.configId,
@@ -212,8 +183,6 @@ leaderboardClientRouter.openapi(
           rewardPlan: r.rewardPlan,
           settledAt: r.settledAt.toISOString(),
         })),
-      },
-      200,
-    );
+      }), 200,);
   },
 );

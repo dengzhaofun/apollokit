@@ -5,14 +5,11 @@
  * Auth: mounted with `requireAdminOrApiKey` — same as the item module.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { currencyService } from "./index";
-import { ModuleError } from "./errors";
 import {
   BalanceResponseSchema,
   CreateCurrencySchema,
@@ -23,7 +20,6 @@ import {
   DefinitionListQuerySchema,
   DefinitionListResponseSchema,
   EndUserIdParamSchema,
-  ErrorResponseSchema,
   GrantCurrencySchema,
   GrantResultSchema,
   IdParamSchema,
@@ -97,42 +93,9 @@ function serializeLedgerEntry(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const currencyRouter = createAdminRouter();
 
 currencyRouter.use("*", requireAdminOrApiKey);
-
-currencyRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Definition CRUD ─────────────────────────────────────────────
 
@@ -151,10 +114,10 @@ currencyRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: CurrencyDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(CurrencyDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -163,7 +126,7 @@ currencyRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(serializeDefinition(row), 201);
+    return c.json(ok(serializeDefinition(row)), 201);
   },
 );
 
@@ -178,10 +141,10 @@ currencyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: DefinitionListResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -192,7 +155,7 @@ currencyRouter.openapi(
       isActive:
         isActive === undefined ? undefined : isActive === "true" ? true : false,
     });
-    return c.json({ items: rows.map(serializeDefinition) }, 200);
+    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
   },
 );
 
@@ -207,17 +170,17 @@ currencyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CurrencyDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(CurrencyDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await currencyService.getDefinition(orgId, key);
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -237,10 +200,10 @@ currencyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CurrencyDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(CurrencyDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -251,7 +214,7 @@ currencyRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -263,15 +226,18 @@ currencyRouter.openapi(
     summary: "Delete a currency",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await currencyService.deleteDefinition(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -288,17 +254,17 @@ currencyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: WalletListResponseSchema },
+          "application/json": { schema: envelopeOf(WalletListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { endUserId } = c.req.valid("query");
     const wallets = await currencyService.getWallets(orgId, endUserId);
-    return c.json({ items: wallets }, 200);
+    return c.json(ok({ items: wallets }), 200);
   },
 );
 
@@ -314,9 +280,9 @@ currencyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BalanceResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BalanceResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -327,7 +293,7 @@ currencyRouter.openapi(
       endUserId,
       currencyId,
     );
-    return c.json({ currencyId, balance }, 200);
+    return c.json(ok({ currencyId, balance }), 200);
   },
 );
 
@@ -345,9 +311,9 @@ currencyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GrantResultSchema } },
+        content: { "application/json": { schema: envelopeOf(GrantResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -360,7 +326,7 @@ currencyRouter.openapi(
       source: body.source,
       sourceId: body.sourceId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -378,9 +344,9 @@ currencyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: DeductResultSchema } },
+        content: { "application/json": { schema: envelopeOf(DeductResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -393,7 +359,7 @@ currencyRouter.openapi(
       source: body.source,
       sourceId: body.sourceId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -410,22 +376,19 @@ currencyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LedgerListResponseSchema },
+          "application/json": { schema: envelopeOf(LedgerListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
     const page = await currencyService.listLedger(orgId, q);
-    return c.json(
-      {
+    return c.json(ok({
         items: page.items.map(serializeLedgerEntry),
         nextCursor: page.nextCursor,
-      },
-      200,
-    );
+      }), 200,);
   },
 );

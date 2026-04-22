@@ -13,11 +13,9 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { assistPoolService } from "./index";
@@ -27,7 +25,6 @@ import {
   AssistPoolInstanceListSchema,
   AssistPoolInstanceResponseSchema,
   ClientInitiateBodySchema,
-  ErrorResponseSchema,
   InstanceIdParamSchema,
 } from "./validators";
 
@@ -65,25 +62,6 @@ function serializeContribution(row: AssistPoolContribution) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 const ClientListQuerySchema = z.object({
   configKey: z.string().optional().openapi({
     param: { name: "configKey", in: "query" },
@@ -94,20 +72,6 @@ export const assistPoolClientRouter = createClientRouter();
 
 assistPoolClientRouter.use("*", requireClientCredential);
 assistPoolClientRouter.use("*", requireClientUser);
-
-assistPoolClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /instances
 assistPoolClientRouter.openapi(
@@ -125,10 +89,10 @@ assistPoolClientRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: AssistPoolInstanceResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -141,7 +105,7 @@ assistPoolClientRouter.openapi(
       configKey,
       initiatorEndUserId: endUserId,
     });
-    return c.json(serializeInstance(row), 201);
+    return c.json(ok(serializeInstance(row)), 201);
   },
 );
 
@@ -157,10 +121,10 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolInstanceListSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -173,7 +137,7 @@ assistPoolClientRouter.openapi(
       configKey,
       initiatorEndUserId: endUserId,
     });
-    return c.json({ items: rows.map(serializeInstance) }, 200);
+    return c.json(ok({ items: rows.map(serializeInstance) }), 200);
   },
 );
 
@@ -190,17 +154,17 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolInstanceResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
-    return c.json(serializeInstance(row), 200);
+    return c.json(ok(serializeInstance(row)), 200);
   },
 );
 
@@ -217,10 +181,10 @@ assistPoolClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolContributeResultSchema },
+          "application/json": { schema: envelopeOf(AssistPoolContributeResultSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -232,14 +196,11 @@ assistPoolClientRouter.openapi(
       instanceId,
       assisterEndUserId: endUserId,
     });
-    return c.json(
-      {
+    return c.json(ok({
         instance: serializeInstance(res.instance),
         contribution: serializeContribution(res.contribution),
         completed: res.completed,
         rewards: res.rewards ? res.rewards.rewards : null,
-      },
-      200,
-    );
+      }), 200,);
   },
 );

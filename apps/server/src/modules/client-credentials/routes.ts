@@ -9,12 +9,9 @@
  * endpoints never expose it.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { clientCredentialService } from "./index";
 import {
@@ -23,7 +20,6 @@ import {
   CredentialIdParamSchema,
   CredentialListResponseSchema,
   CredentialResponseSchema,
-  ErrorResponseSchema,
   RotateResponseSchema,
   UpdateDevModeSchema,
 } from "./validators";
@@ -56,34 +52,9 @@ function serialize(row: {
   };
 }
 
-const errorResponses = {
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const clientCredentialRouter = createAdminRouter();
 
 clientCredentialRouter.use("*", requireAdminOrApiKey);
-
-clientCredentialRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /client-credentials — create
 clientCredentialRouter.openapi(
@@ -101,10 +72,10 @@ clientCredentialRouter.openapi(
       201: {
         description: "Created — secret is shown only once",
         content: {
-          "application/json": { schema: CredentialCreatedResponseSchema },
+          "application/json": { schema: envelopeOf(CredentialCreatedResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -113,8 +84,7 @@ clientCredentialRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(
-      {
+    return c.json(ok({
         id: result.id,
         name: result.name,
         publishableKey: result.publishableKey,
@@ -123,9 +93,7 @@ clientCredentialRouter.openapi(
         enabled: result.enabled,
         expiresAt: result.expiresAt?.toISOString() ?? null,
         createdAt: result.createdAt.toISOString(),
-      },
-      201,
-    );
+      }), 201,);
   },
 );
 
@@ -140,16 +108,16 @@ clientCredentialRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CredentialListResponseSchema },
+          "application/json": { schema: envelopeOf(CredentialListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await clientCredentialService.list(orgId);
-    return c.json({ items: rows.map(serialize) }, 200);
+    return c.json(ok({ items: rows.map(serialize) }), 200);
   },
 );
 
@@ -164,16 +132,16 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CredentialResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.get(orgId, id);
-    return c.json(serialize(row), 200);
+    return c.json(ok(serialize(row)), 200);
   },
 );
 
@@ -188,16 +156,16 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "Revoked",
-        content: { "application/json": { schema: CredentialResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.revoke(orgId, id);
-    return c.json(serialize(row), 200);
+    return c.json(ok(serialize(row)), 200);
   },
 );
 
@@ -212,16 +180,16 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "New keys — secret shown only once",
-        content: { "application/json": { schema: RotateResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(RotateResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const result = await clientCredentialService.rotate(orgId, id);
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -241,9 +209,9 @@ clientCredentialRouter.openapi(
     responses: {
       200: {
         description: "Updated",
-        content: { "application/json": { schema: CredentialResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CredentialResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -251,7 +219,7 @@ clientCredentialRouter.openapi(
     const { id } = c.req.valid("param");
     const { devMode } = c.req.valid("json");
     const row = await clientCredentialService.updateDevMode(orgId, id, devMode);
-    return c.json(serialize(row), 200);
+    return c.json(ok(serialize(row)), 200);
   },
 );
 
@@ -264,14 +232,17 @@ clientCredentialRouter.openapi(
     summary: "Permanently delete a client credential",
     request: { params: CredentialIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await clientCredentialService.delete(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

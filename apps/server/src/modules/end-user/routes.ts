@@ -15,12 +15,9 @@
  * these with their admin API key, never with the cpk_ publishable key.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 
 import { endUserService } from "./index";
@@ -28,7 +25,6 @@ import {
   EndUserIdParamSchema,
   EndUserListResponseSchema,
   EndUserViewSchema,
-  ErrorResponseSchema,
   ListEndUsersQuerySchema,
   SignOutAllResponseSchema,
   SyncEndUserResponseSchema,
@@ -41,31 +37,6 @@ const TAG = "End User";
 export const endUserRouter = createAdminRouter();
 
 endUserRouter.use("*", requireAdminOrApiKey);
-
-endUserRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
-
-const commonErrorResponses = {
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 // POST /sync — upsert from tenant identity
 endUserRouter.openapi(
@@ -84,30 +55,23 @@ endUserRouter.openapi(
       200: {
         description: "Merged onto an existing end-user",
         content: {
-          "application/json": { schema: SyncEndUserResponseSchema },
+          "application/json": { schema: envelopeOf(SyncEndUserResponseSchema) },
         },
       },
       201: {
         description: "New end-user created",
         content: {
-          "application/json": { schema: SyncEndUserResponseSchema },
+          "application/json": { schema: envelopeOf(SyncEndUserResponseSchema) },
         },
       },
-      401: {
-        description: "Unauthorized",
-        content: { "application/json": { schema: ErrorResponseSchema } },
-      },
-      409: {
-        description: "Identity conflict",
-        content: { "application/json": { schema: ErrorResponseSchema } },
-      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const result = await endUserService.syncUser(orgId, input);
-    return c.json(result, result.created ? 201 : 200);
+    return c.json(ok(result), result.created ? 201 : 200);
   },
 );
 
@@ -123,7 +87,7 @@ endUserRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: EndUserListResponseSchema },
+          "application/json": { schema: envelopeOf(EndUserListResponseSchema) },
         },
       },
       ...commonErrorResponses,
@@ -133,7 +97,7 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
     const result = await endUserService.list(orgId, q);
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -148,7 +112,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: EndUserViewSchema } },
+        content: { "application/json": { schema: envelopeOf(EndUserViewSchema) } },
       },
       ...commonErrorResponses,
     },
@@ -156,7 +120,7 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(await endUserService.get(orgId, id), 200);
+    return c.json(ok(await endUserService.get(orgId, id)), 200);
   },
 );
 
@@ -174,7 +138,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: EndUserViewSchema } },
+        content: { "application/json": { schema: envelopeOf(EndUserViewSchema) } },
       },
       ...commonErrorResponses,
     },
@@ -183,7 +147,7 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
-    return c.json(await endUserService.update(orgId, id, input), 200);
+    return c.json(ok(await endUserService.update(orgId, id, input)), 200);
   },
 );
 
@@ -198,7 +162,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Disabled",
-        content: { "application/json": { schema: EndUserViewSchema } },
+        content: { "application/json": { schema: envelopeOf(EndUserViewSchema) } },
       },
       ...commonErrorResponses,
     },
@@ -206,7 +170,7 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(await endUserService.setDisabled(orgId, id, true), 200);
+    return c.json(ok(await endUserService.setDisabled(orgId, id, true)), 200);
   },
 );
 
@@ -221,7 +185,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Enabled",
-        content: { "application/json": { schema: EndUserViewSchema } },
+        content: { "application/json": { schema: envelopeOf(EndUserViewSchema) } },
       },
       ...commonErrorResponses,
     },
@@ -229,7 +193,7 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(await endUserService.setDisabled(orgId, id, false), 200);
+    return c.json(ok(await endUserService.setDisabled(orgId, id, false)), 200);
   },
 );
 
@@ -244,7 +208,7 @@ endUserRouter.openapi(
     responses: {
       200: {
         description: "Revoked",
-        content: { "application/json": { schema: SignOutAllResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SignOutAllResponseSchema) } },
       },
       ...commonErrorResponses,
     },
@@ -252,7 +216,7 @@ endUserRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    return c.json(await endUserService.signOutAll(orgId, id), 200);
+    return c.json(ok(await endUserService.signOutAll(orgId, id)), 200);
   },
 );
 
@@ -265,7 +229,10 @@ endUserRouter.openapi(
     summary: "Hard-delete an end-user (cascades eu_session / eu_account)",
     request: { params: EndUserIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
       ...commonErrorResponses,
     },
   }),
@@ -273,6 +240,6 @@ endUserRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await endUserService.remove(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

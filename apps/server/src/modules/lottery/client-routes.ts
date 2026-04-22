@@ -9,12 +9,9 @@
  * Exposes: pull, multi-pull, user state, pull history.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { lotteryService } from "./index";
@@ -25,48 +22,14 @@ import {
   PullResultResponseSchema,
   LotteryUserStateResponseSchema,
   PullLogListResponseSchema,
-  ErrorResponseSchema,
-} from "./validators";
+  } from "./validators";
 
 const TAG = "Lottery (Client)";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 export const lotteryClientRouter = createClientRouter();
 
 lotteryClientRouter.use("*", requireClientCredential);
 lotteryClientRouter.use("*", requireClientUser);
-
-lotteryClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /pull — single pull
 lotteryClientRouter.openapi(
@@ -83,9 +46,9 @@ lotteryClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullResultResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullResultResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -99,7 +62,7 @@ lotteryClientRouter.openapi(
       poolKey: poolId,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -118,9 +81,9 @@ lotteryClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullResultResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullResultResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -135,7 +98,7 @@ lotteryClientRouter.openapi(
       count,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -151,10 +114,10 @@ lotteryClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LotteryUserStateResponseSchema },
+          "application/json": { schema: envelopeOf(LotteryUserStateResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -166,7 +129,7 @@ lotteryClientRouter.openapi(
       endUserId,
       poolKey,
     });
-    return c.json(state, 200);
+    return c.json(ok(state), 200);
   },
 );
 
@@ -181,9 +144,9 @@ lotteryClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullLogListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullLogListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -195,8 +158,7 @@ lotteryClientRouter.openapi(
       endUserId,
       poolKey,
     });
-    return c.json(
-      {
+    return c.json(ok({
         items: rows.map((r) => ({
           id: r.id,
           poolId: r.poolId,
@@ -213,8 +175,6 @@ lotteryClientRouter.openapi(
           costItems: r.costItems,
           createdAt: r.createdAt.toISOString(),
         })),
-      },
-      200,
-    );
+      }), 200,);
   },
 );
