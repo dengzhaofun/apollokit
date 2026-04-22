@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { FriendSettingsNotFound, ModuleError } from "./errors";
 import { friendService } from "./index";
 import {
@@ -64,6 +65,7 @@ function serializeRelationship(row: {
 export const friendRouter = createAdminRouter();
 
 friendRouter.use("*", requireAdminOrApiKey);
+friendRouter.use("*", requireOrgManage);
 
 // GET /friend/settings
 friendRouter.openapi(

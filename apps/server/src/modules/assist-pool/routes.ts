@@ -12,6 +12,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { assistPoolService } from "./index";
 import type {
   AssistPoolConfig,
@@ -98,6 +99,7 @@ function serializeContribution(row: AssistPoolContribution) {
 export const assistPoolRouter = createAdminRouter();
 
 assistPoolRouter.use("*", requireAdminOrApiKey);
+assistPoolRouter.use("*", requireOrgManage);
 
 // POST /configs
 assistPoolRouter.openapi(

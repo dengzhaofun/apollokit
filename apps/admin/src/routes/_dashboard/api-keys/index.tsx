@@ -5,6 +5,7 @@ import { Copy, KeyRound, Plus, Trash2 } from "lucide-react"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
+import { WriteGate } from "#/components/WriteGate"
 import {
   Table,
   TableBody,
@@ -93,10 +94,12 @@ function AdminKeysTab() {
         <p className="text-sm text-muted-foreground">
           {m.apikeys_admin_keys_desc()}
         </p>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="size-4" />
-          {m.apikeys_create_admin_key()}
-        </Button>
+        <WriteGate>
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="size-4" />
+            {m.apikeys_create_admin_key()}
+          </Button>
+        </WriteGate>
       </div>
 
       {isPending ? (
@@ -278,10 +281,12 @@ function ClientCredentialsTab() {
         <p className="text-sm text-muted-foreground">
           {m.apikeys_client_credentials_desc()}
         </p>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="size-4" />
-          {m.apikeys_create_credential()}
-        </Button>
+        <WriteGate>
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="size-4" />
+            {m.apikeys_create_credential()}
+          </Button>
+        </WriteGate>
       </div>
 
       {isPending ? (

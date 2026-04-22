@@ -6,3 +6,15 @@ BETTER_AUTH_SECRET="replace-me-with-a-32-byte-random-string"
 BETTER_AUTH_URL="http://localhost:8787"
 UPSTASH_REDIS_REST_URL="https://your-db-xxxxxx.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="replace-me-with-upstash-rest-token"
+
+# ─── Organization invitations ────────────────────────────────────
+# ADMIN_URL is the origin of the admin SPA. Used to build the
+# accept-invitation link sent in invitation emails. Override the
+# wrangler.jsonc default when running locally.
+ADMIN_URL="http://localhost:3000"
+# INVITE_FROM_ADDRESS is the From address used by the organization
+# invitation email. In production it must be an authorized sender on
+# your Cloudflare-Email-Service onboarded domain; in dev we skip
+# sending and only log the accept link to the console, so any value
+# works.
+INVITE_FROM_ADDRESS="invites@localhost"

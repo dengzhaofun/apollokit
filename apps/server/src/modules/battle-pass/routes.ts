@@ -15,6 +15,7 @@ import {
   ok,
 } from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { battlePassService } from "./index";
 import type { BattlePassConfig } from "./types";
 import {
@@ -58,6 +59,7 @@ function serializeConfig(row: BattlePassConfig) {
 export const battlePassRouter = createAdminRouter();
 
 battlePassRouter.use("*", requireAdminOrApiKey);
+battlePassRouter.use("*", requireOrgManage);
 
 // POST /configs
 battlePassRouter.openapi(

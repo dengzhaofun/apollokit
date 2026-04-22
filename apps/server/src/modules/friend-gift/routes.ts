@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { FriendGiftSettingsNotFound, ModuleError } from "./errors";
 import { friendGiftService } from "./index";
 import {
@@ -114,6 +115,7 @@ function serializeSend(row: {
 export const friendGiftRouter = createAdminRouter();
 
 friendGiftRouter.use("*", requireAdminOrApiKey);
+friendGiftRouter.use("*", requireOrgManage);
 
 // ─── Settings ────────────────────────────────────────────────────
 

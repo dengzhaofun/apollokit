@@ -19,6 +19,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 
 import { endUserService } from "./index";
 import {
@@ -37,6 +38,7 @@ const TAG = "End User";
 export const endUserRouter = createAdminRouter();
 
 endUserRouter.use("*", requireAdminOrApiKey);
+endUserRouter.use("*", requireOrgManage);
 
 // POST /sync — upsert from tenant identity
 endUserRouter.openapi(

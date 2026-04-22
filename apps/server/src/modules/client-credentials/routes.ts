@@ -13,6 +13,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { clientCredentialService } from "./index";
 import {
   CreateCredentialSchema,
@@ -55,6 +56,7 @@ function serialize(row: {
 export const clientCredentialRouter = createAdminRouter();
 
 clientCredentialRouter.use("*", requireAdminOrApiKey);
+clientCredentialRouter.use("*", requireOrgManage);
 
 // POST /client-credentials — create
 clientCredentialRouter.openapi(

@@ -11,6 +11,7 @@ import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 
 import { eventCatalogService } from "./index";
 import {
@@ -25,6 +26,7 @@ const TAG = "Event Catalog";
 export const eventCatalogRouter = createAdminRouter();
 
 eventCatalogRouter.use("*", requireAdminOrApiKey);
+eventCatalogRouter.use("*", requireOrgManage);
 
 eventCatalogRouter.openapi(
   createAdminRoute({

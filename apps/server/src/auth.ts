@@ -6,6 +6,7 @@ import { organization } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
 
 import { db } from "./db";
+import { sendInviteEmail } from "./lib/mailer";
 import { member } from "./schema";
 
 export const auth = betterAuth({
@@ -22,6 +23,25 @@ export const auth = betterAuth({
   plugins: [
     organization({
       creatorRole: "owner",
+      // Better Auth calls this hook after it persists the invitation row.
+      // We deliver the accept link via Cloudflare Email Service (or log
+      // it to the console in dev — see `lib/mailer.ts`).
+      //
+      // Phase 2 will layer `createAccessControl({...statements})` + custom
+      // roles on top of this — the Phase 1 default is owner/admin/member
+      // from `better-auth/plugins/organization/access/statement`.
+      async sendInvitationEmail(data) {
+        const acceptUrl = `${env.ADMIN_URL}/accept-invitation/${data.id}`;
+        const inviterName =
+          data.inviter.user.name || data.inviter.user.email;
+        await sendInviteEmail({
+          to: data.email,
+          inviterName,
+          organizationName: data.organization.name,
+          acceptUrl,
+          role: data.role ?? "member",
+        });
+      },
     }),
     apiKey([
       {

@@ -12,6 +12,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import type { RewardEntry } from "../../lib/rewards";
 import type { MailMessage, MailMessageWithStats } from "./types";
 import { mailService } from "./index";
@@ -59,6 +60,7 @@ function serializeMessageWithStats(row: MailMessageWithStats) {
 export const mailRouter = createAdminRouter();
 
 mailRouter.use("*", requireAdminOrApiKey);
+mailRouter.use("*", requireOrgManage);
 
 // POST /messages — send a broadcast or multicast mail
 mailRouter.openapi(

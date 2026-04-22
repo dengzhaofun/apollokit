@@ -3,6 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router"
 import {
   ArrowLeftRight,
   BookOpen,
+  Building2,
   CalendarCheck,
   ChevronRight,
   Coins,
@@ -90,6 +91,7 @@ type NavItem = {
     | "/rank"
     | "/end-user"
     | "/api-keys"
+    | "/organization-settings"
   icon: LucideIcon
 }
 
@@ -163,7 +165,14 @@ function getNavGroups(): NavGroup[] {
     {
       key: "system",
       label: m.nav_group_system,
-      items: [{ title: m.nav_api_keys, to: "/api-keys", icon: KeyRound }],
+      items: [
+        {
+          title: m.nav_organization_settings,
+          to: "/organization-settings",
+          icon: Building2,
+        },
+        { title: m.nav_api_keys, to: "/api-keys", icon: KeyRound },
+      ],
     },
   ]
 }

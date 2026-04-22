@@ -3,6 +3,7 @@ import { Plus } from "lucide-react"
 
 import { AnnouncementTable } from "#/components/announcement/AnnouncementTable"
 import { Button } from "#/components/ui/button"
+import { WriteGate } from "#/components/WriteGate"
 import { useAnnouncements } from "#/hooks/use-announcement"
 import * as m from "#/paraglide/messages.js"
 
@@ -18,12 +19,14 @@ function AnnouncementListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/announcement/create">
-              <Plus className="size-4" />
-              {m.announcement_new()}
-            </Link>
-          </Button>
+          <WriteGate>
+            <Button asChild size="sm">
+              <Link to="/announcement/create">
+                <Plus className="size-4" />
+                {m.announcement_new()}
+              </Link>
+            </Button>
+          </WriteGate>
         </div>
       </PageHeaderActions>
 

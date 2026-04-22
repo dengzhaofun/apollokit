@@ -258,6 +258,13 @@
   "nav_mail": "Mail",
   "nav_shop": "Shop",
   "nav_api_keys": "API Keys",
+  "nav_organization_settings": "Organization",
+  "role_write_denied_tooltip": "Your role cannot perform this action",
+  "role_write_denied_toast": "Your role has no write permission. Contact an organization admin.",
+  "accept_invitation_processing": "Accepting invitation…",
+  "accept_invitation_sign_in_first": "Please sign in or register before accepting the invitation.",
+  "accept_invitation_failed": "Could not accept this invitation. Check the link or contact the inviter.",
+  "accept_invitation_success": "Invitation accepted. Redirecting to the dashboard…",
 
   "mail_title": "Mail",
   "mail_new_message": "New Mail",

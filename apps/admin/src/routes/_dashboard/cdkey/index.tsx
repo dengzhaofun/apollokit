@@ -6,6 +6,7 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
+import { WriteGate } from "#/components/WriteGate"
 import {
   Table,
   TableBody,
@@ -27,12 +28,14 @@ function CdkeyListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/cdkey/create">
-              <Plus className="size-4" />
-              {m.cdkey_new_batch()}
-            </Link>
-          </Button>
+          <WriteGate>
+            <Button asChild size="sm">
+              <Link to="/cdkey/create">
+                <Plus className="size-4" />
+                {m.cdkey_new_batch()}
+              </Link>
+            </Button>
+          </WriteGate>
         </div>
       </PageHeaderActions>
 

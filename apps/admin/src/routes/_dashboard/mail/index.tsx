@@ -4,6 +4,7 @@ import { Plus } from "lucide-react"
 import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
+import { WriteGate } from "#/components/WriteGate"
 import { MessageTable } from "#/components/mail/MessageTable"
 import { useMailMessages } from "#/hooks/use-mail"
 
@@ -18,12 +19,14 @@ function MailListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/mail/create">
-              <Plus className="size-4" />
-              {m.mail_new_message()}
-            </Link>
-          </Button>
+          <WriteGate>
+            <Button asChild size="sm">
+              <Link to="/mail/create">
+                <Plus className="size-4" />
+                {m.mail_new_message()}
+              </Link>
+            </Button>
+          </WriteGate>
         </div>
       </PageHeaderActions>
 

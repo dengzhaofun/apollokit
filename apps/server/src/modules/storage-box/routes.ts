@@ -12,6 +12,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { storageBoxService } from "./index";
 import { projectInterest } from "./interest";
 import type {
@@ -111,6 +112,7 @@ function viewFromDepositAndConfig(
 export const storageBoxRouter = createAdminRouter();
 
 storageBoxRouter.use("*", requireAdminOrApiKey);
+storageBoxRouter.use("*", requireOrgManage);
 
 // ─── Config routes ──────────────────────────────────────────────────
 

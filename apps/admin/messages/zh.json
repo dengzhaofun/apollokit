@@ -258,6 +258,13 @@
   "nav_mail": "邮件",
   "nav_shop": "商城",
   "nav_api_keys": "API 密钥",
+  "nav_organization_settings": "组织设置",
+  "role_write_denied_tooltip": "当前角色无写入权限",
+  "role_write_denied_toast": "你当前的角色没有写入权限,请联系组织管理员",
+  "accept_invitation_processing": "正在接受邀请…",
+  "accept_invitation_sign_in_first": "请先登录或注册,再接受邀请。",
+  "accept_invitation_failed": "邀请接受失败,请检查链接或联系邀请人。",
+  "accept_invitation_success": "邀请已接受,正在进入后台…",
 
   "mail_title": "邮件",
   "mail_new_message": "发送邮件",

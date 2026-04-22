@@ -4,6 +4,7 @@ import * as m from "#/paraglide/messages.js"
 
 import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
+import { WriteGate } from "#/components/WriteGate"
 import { CategoryTable } from "#/components/item/CategoryTable"
 import { DefinitionTable } from "#/components/item/DefinitionTable"
 import { useItemCategories, useItemDefinitions } from "#/hooks/use-item"
@@ -26,18 +27,22 @@ function ItemListPage() {
               <TabsTrigger value="categories">{m.item_categories()}</TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
-              <Button asChild size="sm">
-                <Link to="/item/definitions/create">
-                  <Plus className="size-4" />
-                  {m.item_new_definition()}
-                </Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/item/categories/create">
-                  <Plus className="size-4" />
-                  {m.item_new_category()}
-                </Link>
-              </Button>
+              <WriteGate>
+                <Button asChild size="sm">
+                  <Link to="/item/definitions/create">
+                    <Plus className="size-4" />
+                    {m.item_new_definition()}
+                  </Link>
+                </Button>
+              </WriteGate>
+              <WriteGate>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/item/categories/create">
+                    <Plus className="size-4" />
+                    {m.item_new_category()}
+                  </Link>
+                </Button>
+              </WriteGate>
             </div>
           </div>
 

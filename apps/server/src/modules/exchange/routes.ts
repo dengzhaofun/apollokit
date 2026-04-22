@@ -7,6 +7,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { exchangeService } from "./index";
 import {
   ConfigKeyParamSchema,
@@ -93,6 +94,7 @@ function serializeOption(row: {
 export const exchangeRouter = createAdminRouter();
 
 exchangeRouter.use("*", requireAdminOrApiKey);
+exchangeRouter.use("*", requireOrgManage);
 
 // ─── Config routes ────────────────────────────────────────────────
 

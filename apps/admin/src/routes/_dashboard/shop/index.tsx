@@ -4,6 +4,7 @@ import { useState } from "react"
 
 import { ProductTable } from "#/components/shop/ProductTable"
 import { Button } from "#/components/ui/button"
+import { WriteGate } from "#/components/WriteGate"
 import {
   Select,
   SelectContent,
@@ -67,12 +68,14 @@ function ShopProductsPage() {
               {m.shop_tags()}
             </Link>
           </Button>
-          <Button asChild size="sm">
-            <Link to="/shop/create">
-              <Plus className="size-4" />
-              {m.shop_new_product()}
-            </Link>
-          </Button>
+          <WriteGate>
+            <Button asChild size="sm">
+              <Link to="/shop/create">
+                <Plus className="size-4" />
+                {m.shop_new_product()}
+              </Link>
+            </Button>
+          </WriteGate>
         </div>
       </PageHeaderActions>
 

@@ -5,6 +5,7 @@ import { useState } from "react"
 import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
+import { WriteGate } from "#/components/WriteGate"
 import { ConfigTable } from "#/components/check-in/ConfigTable"
 import {
   ActivityScopeFilter,
@@ -28,12 +29,14 @@ function CheckInListPage() {
       <PageHeaderActions>
         <div className="ml-auto flex items-center gap-3">
           <ActivityScopeFilter value={scope} onChange={setScope} />
-          <Button asChild size="sm">
-            <Link to="/check-in/create">
-              <Plus className="size-4" />
-              {m.checkin_new_config()}
-            </Link>
-          </Button>
+          <WriteGate>
+            <Button asChild size="sm">
+              <Link to="/check-in/create">
+                <Plus className="size-4" />
+                {m.checkin_new_config()}
+              </Link>
+            </Button>
+          </WriteGate>
         </div>
       </PageHeaderActions>
 

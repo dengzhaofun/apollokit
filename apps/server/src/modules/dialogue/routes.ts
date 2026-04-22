@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { dialogueService } from "./index";
 import type { DialogueScript } from "./types";
 import {
@@ -42,6 +43,7 @@ function serializeScript(row: DialogueScript) {
 export const dialogueRouter = createAdminRouter();
 
 dialogueRouter.use("*", requireAdminOrApiKey);
+dialogueRouter.use("*", requireOrgManage);
 
 dialogueRouter.openapi(
   createAdminRoute({
