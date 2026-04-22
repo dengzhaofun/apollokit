@@ -5,6 +5,7 @@ import { RootProvider } from 'fumadocs-ui/provider/tanstack'
 import { Providers } from '../providers'
 import { getLocale } from '../paraglide/runtime.js'
 import { i18n as docsI18n, i18nUI } from '../lib/source'
+import { seo } from '../lib/seo'
 
 import appCss from '../styles.css?url'
 
@@ -32,26 +33,26 @@ function buildLocaleUrl(pathname: string, next: string): string {
 }
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'ApolloKit Admin',
-      },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
-  }),
+  head: () => {
+    // 站级默认 SEO,子路由(`/`、`/pricing`、docs 等)会用自己的 head 覆盖
+    // title/description/og:*。这里只管兜底 + 固定项(charset/viewport/icons)。
+    const base = seo({ path: '/' })
+    return {
+      meta: [
+        { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'theme-color', content: '#000000' },
+        ...base.meta,
+      ],
+      links: [
+        { rel: 'stylesheet', href: appCss },
+        { rel: 'icon', href: '/favicon.ico' },
+        { rel: 'apple-touch-icon', href: '/logo192.png' },
+        { rel: 'manifest', href: '/manifest.json' },
+        ...base.links,
+      ],
+    }
+  },
   shellComponent: RootDocument,
 })
 

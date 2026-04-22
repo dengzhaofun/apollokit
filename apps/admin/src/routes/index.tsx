@@ -3,8 +3,16 @@ import { useEffect } from "react"
 
 import Landing from "#/components/landing/Landing"
 import { authClient } from "#/lib/auth-client"
+import { seo } from "#/lib/seo"
 
 export const Route = createFileRoute("/")({
+  head: () =>
+    seo({
+      title: "游戏团队的一站式运营后台",
+      description:
+        "ApolloKit 提供玩家、货币、礼品、活动、助力池、公会等通用运营模块,帮助游戏团队最短时间上线完整后台能力。",
+      path: "/",
+    }),
   component: IndexPage,
 })
 
