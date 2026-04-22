@@ -7,6 +7,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { auth } from "./auth";
+import { deps } from "./deps";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
 import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
@@ -88,6 +89,11 @@ import {
   activityRouter,
   activityClientRouter,
 } from "./modules/activity";
+import { wireKindEventSubscriptions } from "./modules/activity/kind/event-bridge";
+import {
+  battlePassRouter,
+  battlePassClientRouter,
+} from "./modules/battle-pass";
 import {
   assistPoolRouter,
   assistPoolClientRouter,
@@ -206,6 +212,7 @@ app.route("/health", health);
 app.route("/api/analytics", analyticsRouter);
 app.route("/api/announcement", announcementRouter);
 app.route("/api/banner", bannerRouter);
+app.route("/api/battle-pass", battlePassRouter);
 app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
@@ -237,6 +244,7 @@ app.route("/api/rank", rankRouter);
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);
 app.route("/api/client/banner", bannerClientRouter);
+app.route("/api/client/battle-pass", battlePassClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
 app.route("/api/client/collection", collectionClientRouter);
@@ -259,6 +267,12 @@ app.route("/api/client/leaderboard", leaderboardClientRouter);
 app.route("/api/client/rank", rankClientRouter);
 app.route("/api/client/activity", activityClientRouter);
 app.route("/api/client/assist-pool", assistPoolClientRouter);
+
+// Kind Handler 事件接线 —— 每个派生玩法 module 在自己的 barrel
+// import 时通过 `kindRegistry.register(...)` 完成注册；所有 module
+// import 结束后在这里把每个 handler 的 `subscribedEvents` 统一接到
+// eventBus。放在路由挂载之后，保证所有 barrel 都已运行。
+wireKindEventSubscriptions(deps);
 
 // OpenAPI document + Scalar UI
 //

@@ -86,6 +86,10 @@ import {
   ActivityWrongState,
 } from "./errors";
 import {
+  broadcastArchive,
+  broadcastStateChange,
+} from "./kind/lifecycle-bridge";
+import {
   computeNextFireAt,
   deriveState,
   deriveTimeline,
@@ -1528,7 +1532,19 @@ export function createActivityService(
             previousState: act.status as ActivityState,
             newState: desired,
           });
+          // Kind Handler 生命周期 hook（handler 失败内部捕获打日志，
+          // 不中断核心流程 —— 见 kind/lifecycle-bridge.ts）。
+          await broadcastStateChange({
+            activity: { ...act, status: desired },
+            prevState: act.status as ActivityState,
+            nextState: desired,
+            runtime: { db, events },
+          });
           if (desired === "archived") {
+            await broadcastArchive({
+              activity: { ...act, status: desired },
+              runtime: { db, events },
+            });
             await runArchiveCleanup(db, act);
           }
         } catch (err) {
