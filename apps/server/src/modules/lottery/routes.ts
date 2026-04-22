@@ -6,6 +6,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import type { RewardEntry } from "../../lib/rewards";
 import { lotteryService } from "./index";
 import {
@@ -224,6 +225,7 @@ function serializePullLog(row: {
 export const lotteryRouter = createAdminRouter();
 
 lotteryRouter.use("*", requireAdminOrApiKey);
+lotteryRouter.use("*", requireOrgManage);
 
 // ─── Pool routes ──────────────────────────────────────────────
 

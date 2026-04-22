@@ -10,6 +10,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { announcementService } from "./index";
 import type {
   Announcement,
@@ -52,6 +53,7 @@ function serialize(row: Announcement) {
 export const announcementRouter = createAdminRouter();
 
 announcementRouter.use("*", requireAdminOrApiKey);
+announcementRouter.use("*", requireOrgManage);
 
 announcementRouter.openapi(
   createAdminRoute({

@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { currencyService } from "./index";
 import {
   BalanceResponseSchema,
@@ -96,6 +97,7 @@ function serializeLedgerEntry(row: {
 export const currencyRouter = createAdminRouter();
 
 currencyRouter.use("*", requireAdminOrApiKey);
+currencyRouter.use("*", requireOrgManage);
 
 // ─── Definition CRUD ─────────────────────────────────────────────
 

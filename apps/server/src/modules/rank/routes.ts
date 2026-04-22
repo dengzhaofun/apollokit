@@ -17,6 +17,7 @@ import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { rankService } from "./index";
 import type {
   RankMatch,
@@ -143,6 +144,7 @@ function serializeParticipant(row: RankMatchParticipant) {
 export const rankRouter = createAdminRouter();
 
 rankRouter.use("*", requireAdminOrApiKey);
+rankRouter.use("*", requireOrgManage);
 
 // ─── Settle match (server-to-server ingest) ─────────────────────
 

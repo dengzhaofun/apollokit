@@ -13,6 +13,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { entityService } from "./index";
 import type {
   EntityBlueprint,
@@ -141,6 +142,7 @@ function serializeFormationConfig(row: EntityFormationConfig) {
 export const entityRouter = createAdminRouter();
 
 entityRouter.use("*", requireAdminOrApiKey);
+entityRouter.use("*", requireOrgManage);
 
 // ═══════════════════════════════════════════════════════════════
 // Schema routes

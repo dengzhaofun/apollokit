@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import type { RewardEntry } from "../../lib/rewards";
 import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
 import { taskService } from "./index";
@@ -138,6 +139,7 @@ function serializeDefinition(row: {
 export const taskRouter = createAdminRouter();
 
 taskRouter.use("*", requireAdminOrApiKey);
+taskRouter.use("*", requireOrgManage);
 
 // ─── Categories ─────────────────────────────────────────────────
 

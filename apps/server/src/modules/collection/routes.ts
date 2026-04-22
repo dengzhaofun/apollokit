@@ -13,6 +13,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import type { RewardEntry } from "../../lib/rewards";
 import { collectionService } from "./index";
 import {
@@ -188,6 +189,7 @@ function serializeMilestone(row: {
 export const collectionRouter = createAdminRouter();
 
 collectionRouter.use("*", requireAdminOrApiKey);
+collectionRouter.use("*", requireOrgManage);
 
 // ─── Albums ──────────────────────────────────────────────────────
 

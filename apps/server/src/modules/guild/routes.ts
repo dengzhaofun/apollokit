@@ -9,6 +9,7 @@ import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import { guildService } from "./index";
 import {
   ContributionListQuerySchema,
@@ -178,6 +179,7 @@ function serializeContributionLog(row: {
 export const guildRouter = createAdminRouter();
 
 guildRouter.use("*", requireAdminOrApiKey);
+guildRouter.use("*", requireOrgManage);
 
 // ─── Settings ────────────────────────────────────────────────────
 

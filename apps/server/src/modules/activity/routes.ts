@@ -13,6 +13,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireOrgManage } from "../../middleware/require-org-manage";
 import type { ActivityConfig } from "../../schema/activity";
 import { activityService } from "./index";
 import {
@@ -78,6 +79,7 @@ function serializeActivity(row: ActivityConfig) {
 export const activityRouter = createAdminRouter();
 
 activityRouter.use("*", requireAdminOrApiKey);
+activityRouter.use("*", requireOrgManage);
 
 // ─── Activity CRUD ──────────────────────────────────────────────
 

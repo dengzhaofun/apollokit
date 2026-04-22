@@ -29,4 +29,15 @@ export const env = {
   get UPSTASH_REDIS_REST_TOKEN() {
     return process.env.UPSTASH_REDIS_REST_TOKEN!;
   },
+  get ADMIN_URL() {
+    return process.env.ADMIN_URL ?? "http://localhost:3000";
+  },
+  get INVITE_FROM_ADDRESS() {
+    return process.env.INVITE_FROM_ADDRESS ?? "invites@localhost";
+  },
+  // EMAIL binding is intentionally omitted — tests run against a
+  // real Neon branch but never through a real Email Service. The
+  // mailer falls back to `console.log` when this is undefined, which
+  // is what we want for CI / `pnpm test`. Tests that need to assert
+  // on the send call use `vi.doMock("cloudflare:workers", ...)` per-case.
 };

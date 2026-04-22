@@ -37,12 +37,32 @@
   //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)
   //   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST API token
   //
+  // Plain vars (public config; override per-environment as needed):
+  //   ADMIN_URL                 — origin of the admin SPA, used to build
+  //                               invitation accept links. Dev: http://localhost:3000.
+  //   INVITE_FROM_ADDRESS       — From address used by the organization
+  //                               invitation email. Must be an authorized
+  //                               sender under your Cloudflare Email Service
+  //                               onboarded domain in production.
+  //
   // Bindings:
   //   MEDIA_R2 — object store for the media library (admin asset drive).
   //   Bucket name can be overridden per-env; create it first with
   //   `wrangler r2 bucket create apollokit-media`.
+  //   EMAIL — Cloudflare Email Service send binding. Used by the
+  //   `sendInvitationEmail` hook in Better Auth organization plugin to
+  //   deliver organization invitation emails. `remote: true` lets
+  //   `wrangler dev` call the real Email Service; without it the mailer
+  //   falls back to a console log (see src/lib/mailer.ts).
+  "vars": {
+    "ADMIN_URL": "https://apollokit-admin.limitless-ai.workers.dev",
+    "INVITE_FROM_ADDRESS": "invites@example.com"
+  },
   "r2_buckets": [
     { "binding": "MEDIA_R2", "bucket_name": "apollokit-media" }
+  ],
+  "send_email": [
+    { "name": "EMAIL" }
   ]
   // "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],
   // "ai":            { "binding": "AI" }
