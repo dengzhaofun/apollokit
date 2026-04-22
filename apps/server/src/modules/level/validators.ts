@@ -409,11 +409,3 @@ export const ClaimRewardsResponseSchema = z
     claimedAt: z.string(),
   })
   .openapi("LevelClaimRewardsResponse");
-
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("LevelErrorResponse");

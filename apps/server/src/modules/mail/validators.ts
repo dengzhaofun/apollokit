@@ -172,10 +172,3 @@ export const MailUserStateResponseSchema = z
   })
   .openapi("MailUserState");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("MailErrorResponse");

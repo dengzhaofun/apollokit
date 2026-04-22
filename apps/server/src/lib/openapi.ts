@@ -29,44 +29,73 @@ import {
   type RouteConfig,
   type Hook,
 } from "@hono/zod-openapi";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import type { HonoEnv } from "../env";
+import { ModuleError } from "./errors";
+import { VALIDATION_ERROR_CODE, fail } from "./response";
 
 // ─── Validation defaultHook ──────────────────────────────────────
 
 /**
- * Default Zod-validation failure handler shared by every router. Returning
- * a `Response` here short-circuits the route handler.
+ * Default Zod-validation failure handler shared by every router. Emits
+ * the standard envelope with `code: "validation_error"`. Returning a
+ * `Response` here short-circuits the route handler.
  */
 export const validationDefaultHook: Hook<unknown, HonoEnv, string, unknown> = (
   result,
   c,
 ) => {
   if (!result.success) {
-    return c.json(
-      {
-        error: "Validation failed",
-        code: "VALIDATION_ERROR",
-        issues: result.error.issues,
-        requestId: c.get("requestId"),
-      },
-      400,
-    );
+    const issues = result.error.issues;
+    const message =
+      issues
+        .map(
+          (i) =>
+            `${i.path.length === 0 ? "(root)" : i.path.join(".")}: ${i.message}`,
+        )
+        .join("; ") || "Validation failed";
+    return c.json(fail(VALIDATION_ERROR_CODE, message), 400);
   }
 };
+
+/**
+ * `onError` handler shared by every module router. Maps `ModuleError`
+ * subclasses to the standard envelope using the subclass's `code` and
+ * `httpStatus`. Unknown errors rethrow so the global `app.onError` in
+ * `src/index.ts` produces a 500 envelope.
+ */
+function attachErrorHandler<Env extends HonoEnv>(router: OpenAPIHono<Env>) {
+  router.onError((err, c) => {
+    if (err instanceof ModuleError) {
+      return c.json(
+        fail(err.code, err.message),
+        err.httpStatus as ContentfulStatusCode,
+      );
+    }
+    throw err; // → global app.onError → 500 envelope
+  });
+  return router;
+}
 
 // ─── Router factories ────────────────────────────────────────────
 
 export function createAdminRouter() {
-  return new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook });
+  return attachErrorHandler(
+    new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook }),
+  );
 }
 
 export function createClientRouter() {
-  return new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook });
+  return attachErrorHandler(
+    new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook }),
+  );
 }
 
 export function createPublicRouter() {
-  return new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook });
+  return attachErrorHandler(
+    new OpenAPIHono<HonoEnv>({ defaultHook: validationDefaultHook }),
+  );
 }
 
 // ─── Security schemes ────────────────────────────────────────────

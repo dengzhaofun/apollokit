@@ -7,13 +7,11 @@
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { mediaLibraryService } from "./index";
 import type { MediaAsset, MediaFolder } from "./types";
@@ -23,7 +21,6 @@ import {
   AssetResponseSchema,
   ConfirmUploadSchema,
   CreateFolderSchema,
-  ErrorResponseSchema,
   FolderListResponseSchema,
   FolderResponseSchema,
   IdParamSchema,
@@ -69,25 +66,6 @@ function serializeAsset(row: MediaAsset) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const mediaLibraryRouter = createAdminRouter();
 
 // ─── Public-ish proxy route (no auth) ──────────────────────────
@@ -118,20 +96,6 @@ mediaLibraryRouter.get("/object/*", async (c) => {
 
 mediaLibraryRouter.use("*", requireAdminOrApiKey);
 
-mediaLibraryRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
-
 // ─── Folders ───────────────────────────────────────────────────
 
 mediaLibraryRouter.openapi(
@@ -145,10 +109,10 @@ mediaLibraryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FolderListResponseSchema },
+          "application/json": { schema: envelopeOf(FolderListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -158,10 +122,7 @@ mediaLibraryRouter.openapi(
       orgId,
       parentId ?? null,
     );
-    return c.json(
-      { items: items.map(serializeFolder), breadcrumb },
-      200,
-    );
+    return c.json(ok({ items: items.map(serializeFolder), breadcrumb }), 200,);
   },
 );
 
@@ -179,9 +140,9 @@ mediaLibraryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: FolderResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(FolderResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -189,7 +150,7 @@ mediaLibraryRouter.openapi(
     const input = c.req.valid("json");
     const createdBy = c.var.user?.id ?? null;
     const row = await mediaLibraryService.createFolder(orgId, input, createdBy);
-    return c.json(serializeFolder(row), 201);
+    return c.json(ok(serializeFolder(row)), 201);
   },
 );
 
@@ -208,9 +169,9 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: FolderResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(FolderResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -218,7 +179,7 @@ mediaLibraryRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await mediaLibraryService.updateFolder(orgId, id, input);
-    return c.json(serializeFolder(row), 200);
+    return c.json(ok(serializeFolder(row)), 200);
   },
 );
 
@@ -229,13 +190,13 @@ mediaLibraryRouter.openapi(
     tags: [TAG],
     summary: "Delete an empty folder",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteFolder(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -251,9 +212,9 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: AssetListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AssetListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -264,7 +225,7 @@ mediaLibraryRouter.openapi(
       folderId ?? null,
       { limit, cursor },
     );
-    return c.json({ items: items.map(serializeAsset), nextCursor }, 200);
+    return c.json(ok({ items: items.map(serializeAsset), nextCursor }), 200);
   },
 );
 
@@ -308,7 +269,7 @@ mediaLibraryRouter.post("/assets/upload", async (c) => {
     body: buf,
     uploadedBy,
   });
-  return c.json(serializeAsset(asset), 201);
+  return c.json(ok(serializeAsset(asset)), 201);
 });
 
 mediaLibraryRouter.openapi(
@@ -327,10 +288,10 @@ mediaLibraryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: PresignUploadResponseSchema },
+          "application/json": { schema: envelopeOf(PresignUploadResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -343,16 +304,13 @@ mediaLibraryRouter.openapi(
         uploadedBy,
         request,
       });
-    return c.json(
-      {
+    return c.json(ok({
         assetId: asset.id,
         objectKey,
         uploadUrl,
         publicUrl,
         expiresIn,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -370,16 +328,16 @@ mediaLibraryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: AssetResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AssetResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await mediaLibraryService.confirmUpload(orgId, input);
-    return c.json(serializeAsset(row), 200);
+    return c.json(ok(serializeAsset(row)), 200);
   },
 );
 
@@ -390,13 +348,13 @@ mediaLibraryRouter.openapi(
     tags: [TAG],
     summary: "Delete an asset (and its backing object)",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteAsset(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -424,9 +382,9 @@ mediaLibraryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: AssetResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AssetResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   // The above `mediaLibraryRouter.post("/assets/upload", …)` handles the

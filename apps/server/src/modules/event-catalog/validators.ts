@@ -57,12 +57,4 @@ export const CatalogListResponseSchema = z
   .object({ items: z.array(CatalogEventViewSchema) })
   .openapi("CatalogEventList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("EventCatalogErrorResponse");
-
 export type UpdateEventCatalogInput = z.input<typeof UpdateEventCatalogSchema>;

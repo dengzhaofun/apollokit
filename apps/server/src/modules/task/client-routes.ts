@@ -13,12 +13,9 @@
  *   POST /claim-tier        → manual staged-reward tier claim
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { taskService } from "./index";
@@ -27,7 +24,6 @@ import {
   ClaimTierBodySchema,
   ClaimTierResponseSchema,
   ClientTaskListResponseSchema,
-  ErrorResponseSchema,
   EventBodySchema,
   EventResponseSchema,
   TaskIdParamSchema,
@@ -36,43 +32,10 @@ import {
 
 const TAG = "Task (Client)";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const taskClientRouter = createClientRouter();
 
 taskClientRouter.use("*", requireClientCredential);
 taskClientRouter.use("*", requireClientUser);
-
-taskClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Event ingestion ────────────────────────────────────────────
 
@@ -90,9 +53,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: EventResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(EventResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -110,7 +73,7 @@ taskClientRouter.openapi(
       now,
     );
 
-    return c.json({ processed }, 200);
+    return c.json(ok({ processed }), 200);
   },
 );
 
@@ -131,10 +94,10 @@ taskClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientTaskListResponseSchema },
+          "application/json": { schema: envelopeOf(ClientTaskListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -152,7 +115,7 @@ taskClientRouter.openapi(
       },
     );
 
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -170,9 +133,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClaimResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ClaimResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -182,7 +145,7 @@ taskClientRouter.openapi(
 
     const result = await taskService.claimReward(orgId, endUserId, taskId);
 
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -202,9 +165,9 @@ taskClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClaimTierResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ClaimTierResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -219,6 +182,6 @@ taskClientRouter.openapi(
       body.tierAlias,
     );
 
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );

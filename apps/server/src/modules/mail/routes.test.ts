@@ -107,12 +107,16 @@ describe("mail routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const mail = (await create.json()) as {
-      id: string;
-      title: string;
-      targetType: string;
-      senderAdminId: string | null;
+    const mailEnv = (await create.json()) as {
+      code: string;
+      data: {
+        id: string;
+        title: string;
+        targetType: string;
+        senderAdminId: string | null;
+      };
     };
+    const mail = mailEnv.data;
     expect(mail.title).toBe("Route Broadcast");
     expect(mail.targetType).toBe("broadcast");
     expect(mail.senderAdminId).toBe(fx.adminUserId);
@@ -121,32 +125,38 @@ describe("mail routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(list.status).toBe(200);
-    const body = (await list.json()) as {
-      items: { id: string }[];
-      nextCursor: string | null;
+    const listEnv = (await list.json()) as {
+      code: string;
+      data: {
+        items: { id: string }[];
+        nextCursor: string | null;
+      };
     };
-    expect(body.items.some((i) => i.id === mail.id)).toBe(true);
+    expect(listEnv.data.items.some((i) => i.id === mail.id)).toBe(true);
 
     const detail = await app.request(`/api/mail/messages/${mail.id}`, {
       headers: { cookie: fx.cookie },
     });
     expect(detail.status).toBe(200);
-    const detailBody = (await detail.json()) as {
-      id: string;
-      readCount: number;
-      claimCount: number;
-      targetCount: number | null;
+    const detailEnv = (await detail.json()) as {
+      code: string;
+      data: {
+        id: string;
+        readCount: number;
+        claimCount: number;
+        targetCount: number | null;
+      };
     };
-    expect(detailBody.id).toBe(mail.id);
-    expect(detailBody.readCount).toBe(0);
-    expect(detailBody.claimCount).toBe(0);
-    expect(detailBody.targetCount).toBeNull();
+    expect(detailEnv.data.id).toBe(mail.id);
+    expect(detailEnv.data.readCount).toBe(0);
+    expect(detailEnv.data.claimCount).toBe(0);
+    expect(detailEnv.data.targetCount).toBeNull();
 
     const revoke = await app.request(
       `/api/mail/messages/${mail.id}/revoke`,
       { method: "POST", headers: { cookie: fx.cookie } },
     );
-    expect(revoke.status).toBe(204);
+    expect(revoke.status).toBe(200);
   });
 
   test("zod validation: broadcast with targetUserIds is a 201 (server-side invariant) OR rejected — we enforce via service invariant → 400", async () => {

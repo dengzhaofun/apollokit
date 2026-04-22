@@ -17,18 +17,15 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { clientAuthHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { rankService } from "./index";
 import type { RankMatchParticipant } from "./types";
 import {
-  ErrorResponseSchema,
   HistoryQuerySchema,
   LadderLocatorQuerySchema,
   LeaderboardQuerySchema,
@@ -38,21 +35,6 @@ import {
 } from "./validators";
 
 const TAG = "Rank (Client)";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 function serializeParticipant(row: RankMatchParticipant) {
   return {
@@ -85,16 +67,6 @@ export const rankClientRouter = createClientRouter();
 rankClientRouter.use("*", requireClientCredential);
 rankClientRouter.use("*", requireClientUser);
 
-rankClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
-
 /* ── GET /state — current player's standing ─────────────────── */
 
 rankClientRouter.openapi(
@@ -113,10 +85,10 @@ rankClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: PlayerRankViewResponseSchema },
+          "application/json": { schema: envelopeOf(PlayerRankViewResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -129,7 +101,7 @@ rankClientRouter.openapi(
       tierConfigAlias,
       endUserId,
     });
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );
 
@@ -150,14 +122,14 @@ rankClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
+            schema: envelopeOf(z.object({
               items: z.array(ParticipantDeltaResponseSchema),
               nextCursor: z.string().optional(),
-            }),
+            }),)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -181,13 +153,10 @@ rankClientRouter.openapi(
       limit,
       cursor,
     });
-    return c.json(
-      {
+    return c.json(ok({
         items: items.map(serializeParticipant),
         nextCursor: nextCursor ?? undefined,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -210,7 +179,7 @@ rankClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
+            schema: envelopeOf(z.object({
               tier: z
                 .object({
                   id: z.string(),
@@ -235,11 +204,11 @@ rankClientRouter.openapi(
                 })
                 .optional(),
               items: z.array(PlayerRankViewResponseSchema).optional(),
-            }),
+            }),)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -262,7 +231,7 @@ rankClientRouter.openapi(
         tierId,
         limit,
       });
-      return c.json({ rankings: [], items }, 200);
+      return c.json(ok({ rankings: [], items }), 200);
     }
 
     // Global season board, delegate to leaderboard.
@@ -273,13 +242,10 @@ rankClientRouter.openapi(
       limit,
       endUserId: around === "self" ? endUserId : undefined,
     });
-    return c.json(
-      {
+    return c.json(ok({
         rankings: top.rankings,
         self: top.self,
         items: [],
-      },
-      200,
-    );
+      }), 200,);
   },
 );

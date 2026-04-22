@@ -11,12 +11,9 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { friendService } from "./index";
@@ -24,7 +21,6 @@ import {
   ClientBlockSchema,
   ClientSendRequestSchema,
   BlockedUserIdParamSchema,
-  ErrorResponseSchema,
   FriendBlockListSchema,
   FriendRelationshipListSchema,
   FriendRequestListSchema,
@@ -97,43 +93,10 @@ function serializeBlock(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const friendClientRouter = createClientRouter();
 
 friendClientRouter.use("*", requireClientCredential);
 friendClientRouter.use("*", requireClientUser);
-
-friendClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Friend requests ─────────────────────────────────────────────
 
@@ -153,10 +116,10 @@ friendClientRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: FriendRequestResponseSchema },
+          "application/json": { schema: envelopeOf(FriendRequestResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -164,7 +127,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.sendRequest(orgId, endUserId, toUserId, message);
-    return c.json(serializeRequest(row), 201);
+    return c.json(ok(serializeRequest(row)), 201);
   },
 );
 
@@ -179,16 +142,16 @@ friendClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: FriendRequestListSchema } },
+        content: { "application/json": { schema: envelopeOf(FriendRequestListSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listIncomingRequests(orgId, endUserId);
-    return c.json({ items: rows.map(serializeRequest) }, 200);
+    return c.json(ok({ items: rows.map(serializeRequest) }), 200);
   },
 );
 
@@ -203,16 +166,16 @@ friendClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: FriendRequestListSchema } },
+        content: { "application/json": { schema: envelopeOf(FriendRequestListSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listOutgoingRequests(orgId, endUserId);
-    return c.json({ items: rows.map(serializeRequest) }, 200);
+    return c.json(ok({ items: rows.map(serializeRequest) }), 200);
   },
 );
 
@@ -230,10 +193,10 @@ friendClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendRequestResponseSchema },
+          "application/json": { schema: envelopeOf(FriendRequestResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -241,7 +204,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.acceptRequest(orgId, id, endUserId);
-    return c.json(serializeRequest(row), 200);
+    return c.json(ok(serializeRequest(row)), 200);
   },
 );
 
@@ -259,10 +222,10 @@ friendClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendRequestResponseSchema },
+          "application/json": { schema: envelopeOf(FriendRequestResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -270,7 +233,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.rejectRequest(orgId, id, endUserId);
-    return c.json(serializeRequest(row), 200);
+    return c.json(ok(serializeRequest(row)), 200);
   },
 );
 
@@ -288,10 +251,10 @@ friendClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendRequestResponseSchema },
+          "application/json": { schema: envelopeOf(FriendRequestResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -299,7 +262,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.cancelRequest(orgId, id, endUserId);
-    return c.json(serializeRequest(row), 200);
+    return c.json(ok(serializeRequest(row)), 200);
   },
 );
 
@@ -320,11 +283,11 @@ friendClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: FriendRelationshipListSchema,
+            schema: envelopeOf(FriendRelationshipListSchema,)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -332,7 +295,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listFriends(orgId, endUserId, { limit, offset });
-    return c.json({ items: rows.map(serializeRelationship), total: rows.length }, 200);
+    return c.json(ok({ items: rows.map(serializeRelationship), total: rows.length }), 200);
   },
 );
 
@@ -347,15 +310,18 @@ friendClientRouter.openapi(
       params: RelationshipIdParamSchema,
     },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const { id } = c.req.valid("param");
     const orgId = c.get("clientCredential")!.organizationId;
     await friendService.removeFriend(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -372,11 +338,11 @@ friendClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: FriendRelationshipListSchema,
+            schema: envelopeOf(FriendRelationshipListSchema,)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -393,7 +359,7 @@ friendClientRouter.openapi(
       metadata: (r.metadata ?? null) as Record<string, unknown> | null,
       createdAt: typeof r.created_at === "string" ? r.created_at : String(r.created_at),
     }));
-    return c.json({ items, total: items.length }, 200);
+    return c.json(ok({ items, total: items.length }), 200);
   },
 );
 
@@ -412,8 +378,11 @@ friendClientRouter.openapi(
       },
     },
     responses: {
-      204: { description: "Blocked" },
-      ...errorResponses,
+      200: {
+        description: "Blocked",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -421,7 +390,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     await friendService.blockUser(orgId, endUserId, blockedUserId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -436,8 +405,11 @@ friendClientRouter.openapi(
       params: BlockedUserIdParamSchema,
     },
     responses: {
-      204: { description: "Unblocked" },
-      ...errorResponses,
+      200: {
+        description: "Unblocked",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -445,7 +417,7 @@ friendClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     await friendService.unblockUser(orgId, endUserId, blockedUserId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -460,15 +432,15 @@ friendClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: FriendBlockListSchema } },
+        content: { "application/json": { schema: envelopeOf(FriendBlockListSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const endUserId = c.var.endUserId!;
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listBlocks(orgId, endUserId);
-    return c.json({ items: rows.map(serializeBlock) }, 200);
+    return c.json(ok({ items: rows.map(serializeBlock) }), 200);
   },
 );

@@ -1,13 +1,113 @@
+/**
+ * Thin HTTP client for the server's `/api/*` business routes.
+ *
+ * Every business endpoint returns the standard envelope:
+ *   { code: string, data: T | null, message: string, requestId: string }
+ *
+ * This wrapper unwraps `.data` on success, so hooks and routes can
+ * stay on their original typings — e.g. `useQuery` still receives the
+ * resource object / `{ items }` list, not the envelope.
+ *
+ * Errors are normalized into `ApiError` whose `body.error` mirrors the
+ * envelope's `message` for backward compatibility (dozens of existing
+ * toast call sites read `err.body.error`). New code can prefer
+ * `err.message`, `err.code`, or `err.requestId` directly.
+ *
+ * NOTE: Better Auth (`/api/auth/*`) uses its own client in
+ * `lib/auth-client.ts` and does NOT go through this wrapper — so the
+ * envelope assumption is safe here.
+ */
+
 const BASE_URL =
   import.meta.env.VITE_AUTH_SERVER_URL ?? "http://localhost:8787"
+
+type ApiErrorBody = {
+  /** Backward-compat alias for `message`. */
+  error: string
+  code: string
+  message: string
+  requestId: string
+}
 
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public body: { error: string; code?: string },
+    public body: ApiErrorBody,
   ) {
-    super(body.error)
+    super(body.message || body.error)
     this.name = "ApiError"
+  }
+
+  get code(): string {
+    return this.body.code
+  }
+
+  get requestId(): string {
+    return this.body.requestId
+  }
+}
+
+type SuccessEnvelope<T> = {
+  code: "ok"
+  data: T | null
+  message: string
+  requestId: string
+}
+
+type ErrorEnvelope = {
+  code: string
+  data: null
+  message: string
+  requestId: string
+}
+
+type AnyEnvelope<T> = SuccessEnvelope<T> | ErrorEnvelope
+
+function isEnvelope(value: unknown): value is AnyEnvelope<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "code" in value &&
+    typeof (value as { code: unknown }).code === "string" &&
+    "requestId" in value
+  )
+}
+
+function toErrorBody(status: number, parsed: unknown): ApiErrorBody {
+  if (isEnvelope(parsed)) {
+    return {
+      error: parsed.message,
+      code: parsed.code,
+      message: parsed.message,
+      requestId: parsed.requestId,
+    }
+  }
+  // Fallback for non-envelope error bodies (e.g. unexpected 5xx from a
+  // proxy, or legacy endpoint that slipped through). Preserve whatever
+  // text/JSON we got so the toast still shows something useful.
+  const fallbackMessage =
+    typeof parsed === "string"
+      ? parsed
+      : parsed && typeof parsed === "object" && "error" in parsed &&
+        typeof (parsed as { error: unknown }).error === "string"
+        ? (parsed as { error: string }).error
+        : `Request failed with status ${status}`
+  return {
+    error: fallbackMessage,
+    code: "http_error",
+    message: fallbackMessage,
+    requestId: "",
+  }
+}
+
+async function parseBody(res: Response): Promise<unknown> {
+  if (res.status === 204) return undefined
+  const text = await res.text()
+  if (!text) return undefined
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
   }
 }
 
@@ -24,15 +124,22 @@ async function request<T>(
     },
   })
 
-  if (res.status === 204) return undefined as T
-
-  const body = await res.json()
+  const parsed = await parseBody(res)
 
   if (!res.ok) {
-    throw new ApiError(res.status, body)
+    throw new ApiError(res.status, toErrorBody(res.status, parsed))
   }
 
-  return body as T
+  if (parsed === undefined) {
+    return undefined as T
+  }
+
+  // Unwrap envelope; non-envelope responses (shouldn't happen after
+  // the server-side migration, but just in case) fall through as-is.
+  if (isEnvelope(parsed)) {
+    return parsed.data as T
+  }
+  return parsed as T
 }
 
 /**
@@ -55,12 +162,20 @@ async function uploadFormData<T>(
     credentials: "include",
     body: form,
   })
-  if (res.status === 204) return undefined as T
-  const body = await res.json()
+
+  const parsed = await parseBody(res)
+
   if (!res.ok) {
-    throw new ApiError(res.status, body)
+    throw new ApiError(res.status, toErrorBody(res.status, parsed))
   }
-  return body as T
+
+  if (parsed === undefined) {
+    return undefined as T
+  }
+  if (isEnvelope(parsed)) {
+    return parsed.data as T
+  }
+  return parsed as T
 }
 
 export const api = {

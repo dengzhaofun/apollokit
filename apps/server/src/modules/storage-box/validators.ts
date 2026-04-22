@@ -198,10 +198,3 @@ export const WithdrawResultSchema = z
   })
   .openapi("StorageBoxWithdrawResult");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("StorageBoxErrorResponse");

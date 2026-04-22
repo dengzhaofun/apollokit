@@ -101,13 +101,17 @@ describe("event-catalog routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      items: Array<{ name: string; source: string; owner: string | null }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        items: Array<{ name: string; source: string; owner: string | null }>;
+      };
     };
-    const lc = body.items.find((i) => i.name === "level.cleared");
+    const lc = env.data.items.find((i) => i.name === "level.cleared");
     expect(lc).toBeDefined();
     expect(lc!.source).toBe("internal");
     expect(lc!.owner).toBe("level");
+    expect(env.code).toBe("ok");
   });
 
   test("GET /api/event-catalog/:name returns a single internal event", async () => {
@@ -115,14 +119,17 @@ describe("event-catalog routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      name: string;
-      source: string;
-      fields: Array<{ path: string }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        name: string;
+        source: string;
+        fields: Array<{ path: string }>;
+      };
     };
-    expect(body.name).toBe("level.cleared");
-    expect(body.source).toBe("internal");
-    expect(body.fields.map((f) => f.path)).toContain("stars");
+    expect(env.data.name).toBe("level.cleared");
+    expect(env.data.source).toBe("internal");
+    expect(env.data.fields.map((f) => f.path)).toContain("stars");
   });
 
   test("GET /api/event-catalog/:name 404 for unknown external event", async () => {
@@ -162,14 +169,17 @@ describe("event-catalog routes", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      status: string;
-      description: string;
-      fields: Array<{ path: string; required: boolean }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        status: string;
+        description: string;
+        fields: Array<{ path: string; required: boolean }>;
+      };
     };
-    expect(body.status).toBe("canonical");
-    expect(body.description).toBe("User signed in");
-    expect(body.fields[0]).toEqual({
+    expect(env.data.status).toBe("canonical");
+    expect(env.data.description).toBe("User signed in");
+    expect(env.data.fields[0]).toEqual({
       path: "ts",
       type: "number",
       required: true,

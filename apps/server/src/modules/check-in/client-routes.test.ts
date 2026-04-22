@@ -98,8 +98,12 @@ describe("client check-in routes", () => {
     const cfgListRes = await app.request("/api/check-in/configs", {
       headers: { cookie: fx.cookie },
     });
-    const { items } = (await cfgListRes.json()) as { items: Array<{ alias: string }> };
-    configAlias = items.find((c) => c.alias.startsWith("client-cfg-"))!.alias;
+    const listEnv = (await cfgListRes.json()) as {
+      data: { items: Array<{ alias: string }> };
+    };
+    configAlias = listEnv.data.items.find((c) =>
+      c.alias.startsWith("client-cfg-"),
+    )!.alias;
   });
 
   afterAll(async () => {
@@ -172,9 +176,13 @@ describe("client check-in routes", () => {
       body: JSON.stringify({ configKey: configAlias }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { alreadyCheckedIn: boolean; state: { totalDays: number } };
-    expect(body.alreadyCheckedIn).toBe(false);
-    expect(body.state.totalDays).toBe(1);
+    const env = (await res.json()) as {
+      code: string;
+      data: { alreadyCheckedIn: boolean; state: { totalDays: number } };
+    };
+    expect(env.code).toBe("ok");
+    expect(env.data.alreadyCheckedIn).toBe(false);
+    expect(env.data.state.totalDays).toBe(1);
   });
 
   test("valid cpk_ + wrong HMAC header → 401", async () => {
@@ -223,8 +231,12 @@ describe("client check-in routes", () => {
       },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { state: { totalDays: number } };
-    expect(body.state.totalDays).toBe(1);
+    const env = (await res.json()) as {
+      code: string;
+      data: { state: { totalDays: number } };
+    };
+    expect(env.code).toBe("ok");
+    expect(env.data.state.totalDays).toBe(1);
   });
 
   test("GET state without HMAC → 401", async () => {

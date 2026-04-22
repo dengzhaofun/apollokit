@@ -4,13 +4,10 @@
  * Covers: category CRUD, definition CRUD, grant/deduct, inventory queries.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { ModuleError } from "./errors";
 import { itemService } from "./index";
 import {
   BalanceResponseSchema,
@@ -21,7 +18,6 @@ import {
   DeductResultSchema,
   DefinitionListResponseSchema,
   EndUserIdParamSchema,
-  ErrorResponseSchema,
   GrantItemsSchema,
   GrantResultSchema,
   IdParamSchema,
@@ -102,42 +98,9 @@ function serializeDefinition(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const itemRouter = createAdminRouter();
 
 itemRouter.use("*", requireAdminOrApiKey);
-
-itemRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Category routes ──────────────────────────────────────────────
 
@@ -153,15 +116,15 @@ itemRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ItemCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ItemCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await itemService.createCategory(orgId, c.req.valid("json"));
-    return c.json(serializeCategory(row), 201);
+    return c.json(ok(serializeCategory(row)), 201);
   },
 );
 
@@ -174,15 +137,15 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CategoryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await itemService.listCategories(orgId);
-    return c.json({ items: rows.map(serializeCategory) }, 200);
+    return c.json(ok({ items: rows.map(serializeCategory) }), 200);
   },
 );
 
@@ -196,16 +159,16 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ItemCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ItemCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await itemService.getCategory(orgId, key);
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -222,16 +185,16 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ItemCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ItemCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await itemService.updateCategory(orgId, id, c.req.valid("json"));
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -243,15 +206,18 @@ itemRouter.openapi(
     summary: "Delete an item category",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await itemService.deleteCategory(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -272,16 +238,16 @@ itemRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: ItemDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(ItemDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await itemService.createDefinition(orgId, c.req.valid("json"));
-    return c.json(serializeDefinition(row), 201);
+    return c.json(ok(serializeDefinition(row)), 201);
   },
 );
 
@@ -295,16 +261,16 @@ itemRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: DefinitionListResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await itemService.listDefinitions(orgId);
-    return c.json({ items: rows.map(serializeDefinition) }, 200);
+    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
   },
 );
 
@@ -319,17 +285,17 @@ itemRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ItemDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(ItemDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await itemService.getDefinition(orgId, key);
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -349,10 +315,10 @@ itemRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ItemDefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(ItemDefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -363,7 +329,7 @@ itemRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -375,15 +341,18 @@ itemRouter.openapi(
     summary: "Delete an item definition (cascades to inventories)",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await itemService.deleteDefinition(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -401,9 +370,9 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GrantResultSchema } },
+        content: { "application/json": { schema: envelopeOf(GrantResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -416,7 +385,7 @@ itemRouter.openapi(
       source: body.source,
       sourceId: body.sourceId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -432,9 +401,9 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: DeductResultSchema } },
+        content: { "application/json": { schema: envelopeOf(DeductResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -447,7 +416,7 @@ itemRouter.openapi(
       source: body.source,
       sourceId: body.sourceId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -464,9 +433,9 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: InventoryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(InventoryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -478,7 +447,7 @@ itemRouter.openapi(
       endUserId,
       definitionId,
     });
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -494,9 +463,9 @@ itemRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BalanceResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BalanceResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -508,6 +477,6 @@ itemRouter.openapi(
       endUserId,
       definitionId: def.id,
     });
-    return c.json({ definitionId: def.id, balance }, 200);
+    return c.json(ok({ definitionId: def.id, balance }), 200);
   },
 );

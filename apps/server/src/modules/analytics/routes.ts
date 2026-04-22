@@ -1,5 +1,6 @@
 
 import { env } from "cloudflare:workers";
+import { envelopeOf, ok } from "../../lib/response";
 
 import { deps } from "../../deps";
 import type { HonoEnv } from "../../env";
@@ -34,7 +35,7 @@ const issueTokenRoute = createAdminRoute({
   responses: {
     200: {
       content: {
-        "application/json": { schema: issueTokenResponseSchema },
+        "application/json": { schema: envelopeOf(issueTokenResponseSchema) },
       },
       description: "Signed JWT",
     },
@@ -56,13 +57,10 @@ analyticsRouter.openapi(issueTokenRoute, async (c) => {
     Date.now() + (ttlSeconds ?? 600) * 1000,
   ).toISOString();
 
-  return c.json(
-    {
+  return c.json(ok({
       token,
       expiresAt,
       baseUrl: `${env.TINYBIRD_URL}/v0/pipes`,
       pipes,
-    },
-    200,
-  );
+    }), 200,);
 });

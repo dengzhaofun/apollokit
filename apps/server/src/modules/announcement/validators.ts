@@ -135,12 +135,3 @@ export const ClientAnnouncementListResponseSchema = z
   .object({ items: z.array(ClientAnnouncementSchema) })
   .openapi("ClientAnnouncementList");
 
-// ─── Error response ─────────────────────────────────────────────
-
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("AnnouncementErrorResponse");

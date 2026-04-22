@@ -146,10 +146,3 @@ export const PresignUploadResponseSchema = z
   })
   .openapi("MediaAssetPresignResponse");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("MediaLibraryErrorResponse");

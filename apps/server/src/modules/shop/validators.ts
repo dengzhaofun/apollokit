@@ -782,10 +782,3 @@ export const UserProductListResponseSchema = z
   .object({ items: z.array(UserProductViewSchema) })
   .openapi("ShopUserProductList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("ShopErrorResponse");

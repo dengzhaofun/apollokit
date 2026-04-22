@@ -11,6 +11,7 @@ import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
 import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
 import { requestContext } from "./lib/request-context";
+import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
@@ -127,14 +128,25 @@ app.use(
   }),
 );
 
-// Global error handler
+// Global error handler — returns the standard envelope. Module-level
+// routers handle `ModuleError` in their own `onError` (installed by
+// `createAdminRouter` / `createClientRouter` in `lib/openapi.ts`);
+// anything that reaches here is unexpected.
 app.onError((err, c) => {
   console.error(err);
-  return c.json(
-    { error: err.message, requestId: c.get("requestId") },
-    500,
-  );
+  return c.json(fail(INTERNAL_ERROR_CODE, err.message), 500);
 });
+
+// Global 404 — fires when no route matched at all (Hono's default is
+// `404 Not Found` plain text). Business module routers already cover
+// their own sub-paths; Better Auth's `/api/auth/*` and
+// `/api/client/auth/*` wildcards claim those prefixes. Anything that
+// still lands here is an unknown URL, so we return the standard
+// envelope so SDKs / frontend wrappers don't have to branch on
+// content-type.
+app.notFound((c) =>
+  c.json(fail(NOT_FOUND_CODE, `Not found: ${c.req.method} ${c.req.path}`), 404),
+);
 
 // Better Auth — handle all /api/auth/* routes (uses module-level auth instance)
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
@@ -265,7 +277,7 @@ app.doc31("/openapi.json", {
       "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n" +
       "- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`Authorization: Bearer ak_…`).\n" +
       "- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client public key (`X-Client-Public-Key: cpk_…`) plus HMAC headers (`X-Client-Signature`, `X-Client-Timestamp`, `X-Client-Nonce`).\n\n" +
-      "Validation errors return HTTP 400 with `{ error, code: \"VALIDATION_ERROR\", issues, requestId }`. Domain errors return their declared status with `{ error, code, requestId }`.",
+      "Every business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format.",
   },
   servers: [{ url: "http://localhost:8787", description: "Dev" }],
 });

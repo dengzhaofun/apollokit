@@ -9,8 +9,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -18,7 +17,6 @@ import type {
   LeaderboardConfig,
   LeaderboardRewardTier,
 } from "./types";
-import { ModuleError } from "./errors";
 import { leaderboardService } from "./index";
 import {
   ConfigIdParamSchema,
@@ -27,7 +25,6 @@ import {
   ContributeBodySchema,
   ContributeResponseSchema,
   CreateConfigSchema,
-  ErrorResponseSchema,
   LeaderboardConfigResponseSchema,
   NeighborsQuerySchema,
   SnapshotListResponseSchema,
@@ -64,42 +61,9 @@ function serializeConfig(row: LeaderboardConfig) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const leaderboardRouter = createAdminRouter();
 
 leaderboardRouter.use("*", requireAdminOrApiKey);
-
-leaderboardRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /leaderboard/configs
 leaderboardRouter.openapi(
@@ -117,16 +81,16 @@ leaderboardRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: LeaderboardConfigResponseSchema },
+          "application/json": { schema: envelopeOf(LeaderboardConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await leaderboardService.createConfig(orgId, c.req.valid("json"));
-    return c.json(serializeConfig(row), 201);
+    return c.json(ok(serializeConfig(row)), 201);
   },
 );
 
@@ -140,15 +104,15 @@ leaderboardRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ConfigListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ConfigListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await leaderboardService.listConfigs(orgId);
-    return c.json({ items: rows.map(serializeConfig) }, 200);
+    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
   },
 );
 
@@ -164,17 +128,17 @@ leaderboardRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LeaderboardConfigResponseSchema },
+          "application/json": { schema: envelopeOf(LeaderboardConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await leaderboardService.getConfig(orgId, key);
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -195,10 +159,10 @@ leaderboardRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LeaderboardConfigResponseSchema },
+          "application/json": { schema: envelopeOf(LeaderboardConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -209,7 +173,7 @@ leaderboardRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -223,15 +187,18 @@ leaderboardRouter.openapi(
       "Delete a leaderboard config (cascades to entries/snapshots/claims)",
     request: { params: ConfigIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await leaderboardService.deleteConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -252,10 +219,10 @@ leaderboardRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ContributeResponseSchema },
+          "application/json": { schema: envelopeOf(ContributeResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -272,7 +239,7 @@ leaderboardRouter.openapi(
       idempotencyKey: body.idempotencyKey,
       displaySnapshot: body.displaySnapshot,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -290,9 +257,9 @@ leaderboardRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TopResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TopResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -307,7 +274,7 @@ leaderboardRouter.openapi(
       limit: q.limit,
       endUserId: q.endUserId,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -326,9 +293,9 @@ leaderboardRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TopResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TopResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -343,7 +310,7 @@ leaderboardRouter.openapi(
       scopeKey: q.scopeKey,
       window: q.window,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -359,10 +326,10 @@ leaderboardRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: SnapshotListResponseSchema },
+          "application/json": { schema: envelopeOf(SnapshotListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -372,8 +339,7 @@ leaderboardRouter.openapi(
       organizationId: orgId,
       configKey: key,
     });
-    return c.json(
-      {
+    return c.json(ok({
         items: rows.map((r) => ({
           id: r.id,
           configId: r.configId,
@@ -384,9 +350,7 @@ leaderboardRouter.openapi(
           rewardPlan: r.rewardPlan,
           settledAt: r.settledAt.toISOString(),
         })),
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -403,20 +367,20 @@ leaderboardRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z
+            schema: envelopeOf(z
               .object({
                 settled: z.number().int(),
                 errors: z.number().int(),
               })
-              .openapi("LeaderboardSettleRunResult"),
+              .openapi("LeaderboardSettleRunResult"),)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const result = await leaderboardService.settleDue({});
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );

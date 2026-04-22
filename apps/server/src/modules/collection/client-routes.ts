@@ -20,13 +20,10 @@
  * admin routes only.
  */
 
-
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { collectionService } from "./index";
@@ -36,32 +33,12 @@ import {
   ClientAlbumKeyParamSchema,
   ClientAlbumListResponseSchema,
   ClientMilestoneIdParamSchema,
-  ErrorResponseSchema,
   SyncResponseSchema,
 } from "./validators";
 
 const TAG = "Collection (Client)";
 
 import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 function serializeAlbum(row: {
   id: string;
@@ -126,20 +103,6 @@ export const collectionClientRouter = createClientRouter();
 collectionClientRouter.use("*", requireClientCredential);
 collectionClientRouter.use("*", requireClientUser);
 
-collectionClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
-
 // ─── Album list (per-user) ───────────────────────────────────────
 
 collectionClientRouter.openapi(
@@ -155,10 +118,10 @@ collectionClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientAlbumListResponseSchema },
+          "application/json": { schema: envelopeOf(ClientAlbumListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -169,17 +132,14 @@ collectionClientRouter.openapi(
       endUserId,
     });
 
-    return c.json(
-      {
+    return c.json(ok({
         items: rows.map((r) => ({
           album: serializeAlbum(r.album),
           entryCount: r.entryCount,
           unlockedCount: r.unlockedCount,
           unclaimedMilestones: r.unclaimedMilestones,
         })),
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -198,9 +158,9 @@ collectionClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClientAlbumDetailSchema } },
+        content: { "application/json": { schema: envelopeOf(ClientAlbumDetailSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -213,16 +173,13 @@ collectionClientRouter.openapi(
       albumKey: key,
     });
 
-    return c.json(
-      {
+    return c.json(ok({
         album: serializeAlbum(detail.album),
         groups: detail.groups.map(serializeGroup),
         entries: detail.entries,
         milestones: detail.milestones,
         totals: detail.totals,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -242,9 +199,9 @@ collectionClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: SyncResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SyncResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -256,7 +213,7 @@ collectionClientRouter.openapi(
       endUserId,
       albumKey: key,
     });
-    return c.json({ unlocked: entries.map((e) => e.id) }, 200);
+    return c.json(ok({ unlocked: entries.map((e) => e.id) }), 200);
   },
 );
 
@@ -276,9 +233,9 @@ collectionClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClaimResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ClaimResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -290,13 +247,10 @@ collectionClientRouter.openapi(
       endUserId,
       milestoneId: id,
     });
-    return c.json(
-      {
+    return c.json(ok({
         milestoneId: id,
         grantedItems: result.grantedItems,
         claimedAt: result.claimedAt.toISOString(),
-      },
-      200,
-    );
+      }), 200,);
   },
 );

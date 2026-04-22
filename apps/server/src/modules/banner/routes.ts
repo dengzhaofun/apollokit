@@ -5,10 +5,8 @@
  * routers — serialize → call service → onError maps ModuleError to JSON.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -27,7 +25,6 @@ import {
   BannerResponseSchema,
   CreateBannerGroupSchema,
   CreateBannerSchema,
-  ErrorResponseSchema,
   GroupIdParamSchema,
   IdParamSchema,
   ReorderBannersSchema,
@@ -75,42 +72,9 @@ function serializeBanner(row: Banner) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const bannerRouter = createAdminRouter();
 
 bannerRouter.use("*", requireAdminOrApiKey);
-
-bannerRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Groups ────────────────────────────────────────────────────
 
@@ -124,10 +88,10 @@ bannerRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: BannerGroupListResponseSchema },
+          "application/json": { schema: envelopeOf(BannerGroupListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -138,7 +102,7 @@ bannerRouter.openapi(
       activityId,
       includeActivity,
     });
-    return c.json({ items: items.map(serializeGroup) }, 200);
+    return c.json(ok({ items: items.map(serializeGroup) }), 200);
   },
 );
 
@@ -156,16 +120,16 @@ bannerRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: BannerGroupResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const input = c.req.valid("json");
     const row = await bannerService.createGroup(orgId, input);
-    return c.json(serializeGroup(row), 201);
+    return c.json(ok(serializeGroup(row)), 201);
   },
 );
 
@@ -179,16 +143,16 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerGroupResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await bannerService.getGroup(orgId, id);
-    return c.json(serializeGroup(row), 200);
+    return c.json(ok(serializeGroup(row)), 200);
   },
 );
 
@@ -207,9 +171,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerGroupResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerGroupResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -217,7 +181,7 @@ bannerRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateGroup(orgId, id, input);
-    return c.json(serializeGroup(row), 200);
+    return c.json(ok(serializeGroup(row)), 200);
   },
 );
 
@@ -229,15 +193,18 @@ bannerRouter.openapi(
     summary: "Delete a banner group (cascades to banners)",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await bannerService.deleteGroup(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -253,16 +220,16 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { groupId } = c.req.valid("param");
     const rows = await bannerService.listBanners(orgId, groupId);
-    return c.json({ items: rows.map(serializeBanner) }, 200);
+    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
   },
 );
 
@@ -281,9 +248,9 @@ bannerRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: BannerResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -291,7 +258,7 @@ bannerRouter.openapi(
     const { groupId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.createBanner(orgId, groupId, input);
-    return c.json(serializeBanner(row), 201);
+    return c.json(ok(serializeBanner(row)), 201);
   },
 );
 
@@ -310,9 +277,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -320,7 +287,7 @@ bannerRouter.openapi(
     const { groupId } = c.req.valid("param");
     const { bannerIds } = c.req.valid("json");
     const rows = await bannerService.reorderBanners(orgId, groupId, bannerIds);
-    return c.json({ items: rows.map(serializeBanner) }, 200);
+    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
   },
 );
 
@@ -334,16 +301,16 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await bannerService.getBanner(orgId, id);
-    return c.json(serializeBanner(row), 200);
+    return c.json(ok(serializeBanner(row)), 200);
   },
 );
 
@@ -362,9 +329,9 @@ bannerRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BannerResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -372,7 +339,7 @@ bannerRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateBanner(orgId, id, input);
-    return c.json(serializeBanner(row), 200);
+    return c.json(ok(serializeBanner(row)), 200);
   },
 );
 
@@ -384,14 +351,17 @@ bannerRouter.openapi(
     summary: "Delete a banner",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await bannerService.deleteBanner(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

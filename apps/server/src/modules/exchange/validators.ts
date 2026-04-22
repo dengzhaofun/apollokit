@@ -210,10 +210,3 @@ export const OptionListResponseSchema = z
   .object({ items: z.array(ExchangeOptionResponseSchema) })
   .openapi("ExchangeOptionList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("ExchangeErrorResponse");

@@ -12,57 +12,25 @@
  */
 
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
-import { ModuleError } from "./errors";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
   ClaimMilestoneClientBody,
-  ErrorResponseSchema,
-} from "./validators";
+  } from "./validators";
 
 const TAG = "Activity (Client)";
 
 import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const activityClientRouter = createClientRouter();
 
 activityClientRouter.use("*", requireClientCredential);
 activityClientRouter.use("*", requireClientUser);
-
-activityClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 const AliasParam = z.object({
   alias: z.string().min(1).openapi({ param: { name: "alias", in: "path" } }),
@@ -83,13 +51,13 @@ activityClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
+            schema: envelopeOf(z.object({
               items: z.array(ActivityConfigResponseSchema),
-            }),
+            }),)
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -105,8 +73,7 @@ activityClientRouter.openapi(
         r.visibleAt.getTime() <= now.getTime() &&
         r.hiddenAt.getTime() > now.getTime(),
     );
-    return c.json(
-      {
+    return c.json(ok({
         items: visible.map((r) => ({
           id: r.id,
           organizationId: r.organizationId,
@@ -141,9 +108,7 @@ activityClientRouter.openapi(
           createdAt: r.createdAt.toISOString(),
           updatedAt: r.updatedAt.toISOString(),
         })),
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -160,10 +125,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -175,7 +140,7 @@ activityClientRouter.openapi(
       activityIdOrAlias: alias,
       endUserId,
     });
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );
 
@@ -195,10 +160,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -210,7 +175,7 @@ activityClientRouter.openapi(
       activityIdOrAlias: alias,
       endUserId,
     });
-    return c.json(row, 200);
+    return c.json(ok(row), 200);
   },
 );
 
@@ -235,10 +200,10 @@ activityClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -252,6 +217,6 @@ activityClientRouter.openapi(
       endUserId,
       milestoneAlias,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );

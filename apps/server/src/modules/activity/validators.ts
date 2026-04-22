@@ -309,14 +309,6 @@ export const ActivityConfigResponseSchema = z
   })
   .openapi("Activity");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("ActivityError");
-
 export type CreateActivityInput = z.input<typeof CreateActivitySchema>;
 export type UpdateActivityInput = z.input<typeof UpdateActivitySchema>;
 export type CreateNodeInput = z.input<typeof CreateNodeSchema>;

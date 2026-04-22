@@ -20,13 +20,10 @@
  * admin routes only.
  */
 
-
 import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
-import { ModuleError } from "../../lib/errors";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { levelService } from "./index";
@@ -36,7 +33,6 @@ import {
   ClaimRewardsBodySchema,
   ClaimRewardsResponseSchema,
   ConfigKeyParamSchema,
-  ErrorResponseSchema,
   LevelIdParamSchema,
   ReportClearBodySchema,
   ReportClearResponseSchema,
@@ -44,29 +40,6 @@ import {
 import type { StarRewardTier } from "./types";
 
 const TAG = "Level (Client)";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 // ─── Serialization helpers ──────────────────────────────────────
 
@@ -213,20 +186,6 @@ export const levelClientRouter = createClientRouter();
 levelClientRouter.use("*", requireClientCredential);
 levelClientRouter.use("*", requireClientUser);
 
-levelClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
-
 // ─── Config list (per-user summary) ─────────────────────────────
 
 levelClientRouter.openapi(
@@ -239,10 +198,10 @@ levelClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientConfigListResponseSchema },
+          "application/json": { schema: envelopeOf(ClientConfigListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -269,7 +228,7 @@ levelClientRouter.openapi(
         }),
     );
 
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -288,10 +247,10 @@ levelClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientConfigOverviewSchema },
+          "application/json": { schema: envelopeOf(ClientConfigOverviewSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -336,8 +295,7 @@ levelClientRouter.openapi(
       0,
     );
 
-    return c.json(
-      {
+    return c.json(ok({
         config: serializeConfig(overview.config),
         stages: stageViews,
         levels: levelViews,
@@ -347,9 +305,7 @@ levelClientRouter.openapi(
           totalStars: overview.totals.totalStars,
           maxPossibleStars,
         },
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -368,10 +324,10 @@ levelClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClientLevelDetailSchema },
+          "application/json": { schema: envelopeOf(ClientLevelDetailSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -384,8 +340,7 @@ levelClientRouter.openapi(
       (detail.level.starRewards as StarRewardTier[] | null) ?? [];
     const highestClaimed = detail.progress?.starRewardsClaimed ?? 0;
 
-    return c.json(
-      {
+    return c.json(ok({
         id: detail.level.id,
         configId: detail.level.configId,
         stageId: detail.level.stageId,
@@ -413,9 +368,7 @@ levelClientRouter.openapi(
             count: number;
           }>) ?? null,
         starRewards: starRewards.length > 0 ? starRewards : null,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -439,10 +392,10 @@ levelClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ReportClearResponseSchema },
+          "application/json": { schema: envelopeOf(ReportClearResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -455,16 +408,13 @@ levelClientRouter.openapi(
       score: score ?? null,
     });
 
-    return c.json(
-      {
+    return c.json(ok({
         levelId: result.levelId,
         stars: result.stars,
         bestScore: result.bestScore,
         firstClear: result.firstClear,
         newlyUnlocked: result.newlyUnlocked,
-      },
-      200,
-    );
+      }), 200,);
   },
 );
 
@@ -488,10 +438,10 @@ levelClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ClaimRewardsResponseSchema },
+          "application/json": { schema: envelopeOf(ClaimRewardsResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -512,14 +462,11 @@ levelClientRouter.openapi(
       input,
     );
 
-    return c.json(
-      {
+    return c.json(ok({
         levelId: result.levelId,
         type: result.type,
         grantedRewards: result.grantedRewards,
         claimedAt: result.claimedAt,
-      },
-      200,
-    );
+      }), 200,);
   },
 );

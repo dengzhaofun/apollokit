@@ -644,13 +644,6 @@ export const RankSettleResponseSchema = z
   })
   .openapi("RankSettleResult");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("RankError");
 
 /** 给 admin routes 用的 rating strategy enum */
 export { RATING_STRATEGIES };

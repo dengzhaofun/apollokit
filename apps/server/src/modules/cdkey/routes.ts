@@ -2,14 +2,11 @@
  * Admin-facing HTTP routes for the cdkey module.
  */
 
-
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { HonoEnv } from "../../env";
+import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
-import { ModuleError } from "./errors";
 import { cdkeyService } from "./index";
 import {
   AdminRedeemSchema,
@@ -21,7 +18,6 @@ import {
   CodeListQuerySchema,
   CodeListResponseSchema,
   CreateBatchSchema,
-  ErrorResponseSchema,
   GenerateCodesResponseSchema,
   GenerateCodesSchema,
   LogListQuerySchema,
@@ -92,42 +88,9 @@ function serializeLog(row: CdkeyRedemptionLog) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 export const cdkeyRouter = createAdminRouter();
 
 cdkeyRouter.use("*", requireAdminOrApiKey);
-
-cdkeyRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Batch CRUD ────────────────────────────────────────────────────
 
@@ -145,15 +108,15 @@ cdkeyRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: BatchResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BatchResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await cdkeyService.createBatch(orgId, c.req.valid("json"));
-    return c.json(serializeBatch(row), 201);
+    return c.json(ok(serializeBatch(row)), 201);
   },
 );
 
@@ -166,15 +129,15 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BatchListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BatchListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await cdkeyService.listBatches(orgId);
-    return c.json({ items: rows.map(serializeBatch) }, 200);
+    return c.json(ok({ items: rows.map(serializeBatch) }), 200);
   },
 );
 
@@ -188,16 +151,16 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BatchResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BatchResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await cdkeyService.getBatch(orgId, key);
-    return c.json(serializeBatch(row), 200);
+    return c.json(ok(serializeBatch(row)), 200);
   },
 );
 
@@ -214,16 +177,16 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BatchResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BatchResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await cdkeyService.updateBatch(orgId, key, c.req.valid("json"));
-    return c.json(serializeBatch(row), 200);
+    return c.json(ok(serializeBatch(row)), 200);
   },
 );
 
@@ -235,15 +198,18 @@ cdkeyRouter.openapi(
     summary: "Delete a cdkey batch (cascades to codes, states, logs)",
     request: { params: BatchKeyParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     await cdkeyService.deleteBatch(orgId, key);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -265,10 +231,10 @@ cdkeyRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: GenerateCodesResponseSchema },
+          "application/json": { schema: envelopeOf(GenerateCodesResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -279,7 +245,7 @@ cdkeyRouter.openapi(
       batchId,
       c.req.valid("json"),
     );
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -296,9 +262,9 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CodeListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CodeListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -310,10 +276,7 @@ cdkeyRouter.openapi(
       limit: q.limit ?? 50,
       offset: q.offset ?? 0,
     });
-    return c.json(
-      { items: res.items.map(serializeCode), total: res.total },
-      200,
-    );
+    return c.json(ok({ items: res.items.map(serializeCode), total: res.total }), 200,);
   },
 );
 
@@ -327,16 +290,16 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CodeResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CodeResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { codeId } = c.req.valid("param");
     const row = await cdkeyService.revokeCode(orgId, codeId);
-    return c.json(serializeCode(row), 200);
+    return c.json(ok(serializeCode(row)), 200);
   },
 );
 
@@ -386,9 +349,9 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: LogListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LogListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -400,10 +363,7 @@ cdkeyRouter.openapi(
       limit: q.limit ?? 50,
       offset: q.offset ?? 0,
     });
-    return c.json(
-      { items: res.items.map(serializeLog), total: res.total },
-      200,
-    );
+    return c.json(ok({ items: res.items.map(serializeLog), total: res.total }), 200,);
   },
 );
 
@@ -421,9 +381,9 @@ cdkeyRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: RedeemResultSchema } },
+        content: { "application/json": { schema: envelopeOf(RedeemResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -436,7 +396,7 @@ cdkeyRouter.openapi(
       idempotencyKey,
       source: "admin",
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 

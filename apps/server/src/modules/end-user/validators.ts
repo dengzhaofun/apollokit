@@ -87,11 +87,3 @@ export const UpdateEndUserSchema = z
 export const SignOutAllResponseSchema = z
   .object({ revoked: z.number().int() })
   .openapi("SignOutAllResponse");
-
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("ErrorResponse");
