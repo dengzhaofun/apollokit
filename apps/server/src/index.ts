@@ -10,6 +10,7 @@ import { auth } from "./auth";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
 import { requestContext } from "./lib/request-context";
+import { INTERNAL_ERROR_CODE, fail } from "./lib/response";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
@@ -124,13 +125,12 @@ app.use(
   }),
 );
 
-// Global error handler
+// Global error handler — returns the standard envelope. Module-level
+// routers handle `ModuleError` in their own `onError` (see
+// `lib/router.ts`); anything that reaches here is unexpected.
 app.onError((err, c) => {
   console.error(err);
-  return c.json(
-    { error: err.message, requestId: c.get("requestId") },
-    500,
-  );
+  return c.json(fail(INTERNAL_ERROR_CODE, err.message), 500);
 });
 
 // Better Auth — handle all /api/auth/* routes (uses module-level auth instance)

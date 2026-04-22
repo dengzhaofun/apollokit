@@ -8,18 +8,21 @@
  * through `mailService.createMessage` / `sendUnicast` directly.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import type { MailMessage, MailMessageWithStats } from "./types";
-import { ModuleError } from "./errors";
 import { mailService } from "./index";
 import {
   CreateMailSchema,
-  ErrorResponseSchema,
   IdParamSchema,
   ListMailQuerySchema,
   MailListResponseSchema,
@@ -59,46 +62,9 @@ function serializeMessageWithStats(row: MailMessageWithStats) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const mailRouter = new OpenAPIHono<HonoEnv>();
+export const mailRouter = makeApiRouter();
 
 mailRouter.use("*", requireAdminOrApiKey);
-
-mailRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /messages — send a broadcast or multicast mail
 mailRouter.openapi(
@@ -113,9 +79,9 @@ mailRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: MailMessageResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(MailMessageResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -126,7 +92,7 @@ mailRouter.openapi(
       ...input,
       senderAdminId: adminId,
     });
-    return c.json(serializeMessage(row), 201);
+    return c.json(ok(serializeMessage(row)), 201);
   },
 );
 
@@ -141,9 +107,9 @@ mailRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: MailListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(MailListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -155,7 +121,7 @@ mailRouter.openapi(
       targetType: query.targetType,
     });
     return c.json(
-      { items: items.map(serializeMessage), nextCursor },
+      ok({ items: items.map(serializeMessage), nextCursor }),
       200,
     );
   },
@@ -173,17 +139,17 @@ mailRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: MailMessageWithStatsResponseSchema },
+          "application/json": { schema: envelopeOf(MailMessageWithStatsResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await mailService.getMessage(orgId, id);
-    return c.json(serializeMessageWithStats(row), 200);
+    return c.json(ok(serializeMessageWithStats(row)), 200);
   },
 );
 
@@ -196,15 +162,18 @@ mailRouter.openapi(
     summary: "Revoke (soft-delete) a mail message",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Revoked" },
-      ...errorResponses,
+      200: {
+        description: "Revoked",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mailService.revokeMessage(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -217,14 +186,17 @@ mailRouter.openapi(
     summary: "Hard-delete a mail message (cascades to user states)",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await mailService.deleteMessage(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

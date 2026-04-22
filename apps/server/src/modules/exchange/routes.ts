@@ -2,20 +2,23 @@
  * Admin-facing HTTP routes for the exchange module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
 import type { RewardEntry } from "../../lib/rewards";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { ModuleError } from "./errors";
 import { exchangeService } from "./index";
 import {
   ConfigKeyParamSchema,
   ConfigListResponseSchema,
   CreateConfigSchema,
   CreateOptionSchema,
-  ErrorResponseSchema,
   ExchangeConfigResponseSchema,
   ExchangeOptionResponseSchema,
   ExchangeResultSchema,
@@ -93,42 +96,9 @@ function serializeOption(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const exchangeRouter = new OpenAPIHono<HonoEnv>();
+export const exchangeRouter = makeApiRouter();
 
 exchangeRouter.use("*", requireAdminOrApiKey);
-
-exchangeRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Config routes ────────────────────────────────────────────────
 
@@ -144,15 +114,15 @@ exchangeRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await exchangeService.createConfig(orgId, c.req.valid("json"));
-    return c.json(serializeConfig(row), 201);
+    return c.json(ok(serializeConfig(row)), 201);
   },
 );
 
@@ -165,15 +135,15 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ConfigListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ConfigListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await exchangeService.listConfigs(orgId);
-    return c.json({ items: rows.map(serializeConfig) }, 200);
+    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
   },
 );
 
@@ -187,16 +157,16 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await exchangeService.getConfig(orgId, key);
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -213,16 +183,16 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeConfigResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeConfigResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await exchangeService.updateConfig(orgId, id, c.req.valid("json"));
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -234,15 +204,18 @@ exchangeRouter.openapi(
     summary: "Delete an exchange config (cascades to options)",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await exchangeService.deleteConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -261,9 +234,9 @@ exchangeRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ExchangeOptionResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeOptionResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -274,7 +247,7 @@ exchangeRouter.openapi(
       configKey,
       c.req.valid("json"),
     );
-    return c.json(serializeOption(row), 201);
+    return c.json(ok(serializeOption(row)), 201);
   },
 );
 
@@ -288,16 +261,16 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: OptionListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(OptionListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { configKey } = c.req.valid("param");
     const rows = await exchangeService.listOptions(orgId, configKey);
-    return c.json({ items: rows.map(serializeOption) }, 200);
+    return c.json(ok({ items: rows.map(serializeOption) }), 200);
   },
 );
 
@@ -314,9 +287,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeOptionResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeOptionResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -327,7 +300,7 @@ exchangeRouter.openapi(
       optionId,
       c.req.valid("json"),
     );
-    return c.json(serializeOption(row), 200);
+    return c.json(ok(serializeOption(row)), 200);
   },
 );
 
@@ -339,15 +312,18 @@ exchangeRouter.openapi(
     summary: "Delete an exchange option",
     request: { params: OptionIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { optionId } = c.req.valid("param");
     await exchangeService.deleteOption(orgId, optionId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -366,9 +342,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeResultSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -381,7 +357,7 @@ exchangeRouter.openapi(
       optionId,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -395,9 +371,9 @@ exchangeRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeUserStateResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeUserStateResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -409,6 +385,6 @@ exchangeRouter.openapi(
       endUserId,
       optionId,
     });
-    return c.json(state, 200);
+    return c.json(ok(state), 200);
   },
 );

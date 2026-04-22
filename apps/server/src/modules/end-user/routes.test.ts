@@ -117,9 +117,13 @@ describe("end-user admin routes", () => {
       }),
     });
     expect(res.status).toBe(201);
-    const body = (await res.json()) as { euUserId: string; created: boolean };
-    expect(body.created).toBe(true);
-    expect(body.euUserId).toBeTruthy();
+    const env = (await res.json()) as {
+      code: string;
+      data: { euUserId: string; created: boolean };
+    };
+    expect(env.code).toBe("ok");
+    expect(env.data.created).toBe(true);
+    expect(env.data.euUserId).toBeTruthy();
   });
 
   test("POST /sync → 200 on merge", async () => {
@@ -133,8 +137,12 @@ describe("end-user admin routes", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { euUserId: string; created: boolean };
-    expect(body.created).toBe(false);
+    const env = (await res.json()) as {
+      code: string;
+      data: { euUserId: string; created: boolean };
+    };
+    expect(env.code).toBe("ok");
+    expect(env.data.created).toBe(false);
   });
 
   test("POST /sync → 400 on invalid body", async () => {
@@ -151,13 +159,17 @@ describe("end-user admin routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      items: Array<{ email: string; origin: string }>;
-      total: number;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        items: Array<{ email: string; origin: string }>;
+        total: number;
+      };
     };
-    expect(body.total).toBeGreaterThanOrEqual(1);
+    expect(env.code).toBe("ok");
+    expect(env.data.total).toBeGreaterThanOrEqual(1);
     // All emails should be raw (no {orgId}__ prefix)
-    expect(body.items.every((i) => !i.email.includes("__"))).toBe(true);
+    expect(env.data.items.every((i) => !i.email.includes("__"))).toBe(true);
   });
 
   test("GET /:id → 200 for valid, 404 for unknown", async () => {
@@ -179,8 +191,12 @@ describe("end-user admin routes", () => {
       body: JSON.stringify({ name: "Patched Name" }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { name: string };
-    expect(body.name).toBe("Patched Name");
+    const env = (await res.json()) as {
+      code: string;
+      data: { name: string };
+    };
+    expect(env.code).toBe("ok");
+    expect(env.data.name).toBe("Patched Name");
   });
 
   test("PATCH /:id → 400 on empty body", async () => {
@@ -198,14 +214,24 @@ describe("end-user admin routes", () => {
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(dis.status).toBe(200);
-    expect(((await dis.json()) as { disabled: boolean }).disabled).toBe(true);
+    const disEnv = (await dis.json()) as {
+      code: string;
+      data: { disabled: boolean };
+    };
+    expect(disEnv.code).toBe("ok");
+    expect(disEnv.data.disabled).toBe(true);
 
     const en = await app.request(`/api/end-user/${seededUserId}/enable`, {
       method: "POST",
       headers: { cookie: fx.cookie },
     });
     expect(en.status).toBe(200);
-    expect(((await en.json()) as { disabled: boolean }).disabled).toBe(false);
+    const enEnv = (await en.json()) as {
+      code: string;
+      data: { disabled: boolean };
+    };
+    expect(enEnv.code).toBe("ok");
+    expect(enEnv.data.disabled).toBe(false);
   });
 
   test("POST /:id/sign-out-all → 200", async () => {
@@ -214,11 +240,15 @@ describe("end-user admin routes", () => {
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { revoked: number };
-    expect(typeof body.revoked).toBe("number");
+    const env = (await res.json()) as {
+      code: string;
+      data: { revoked: number };
+    };
+    expect(env.code).toBe("ok");
+    expect(typeof env.data.revoked).toBe("number");
   });
 
-  test("DELETE /:id → 204, subsequent GET → 404", async () => {
+  test("DELETE /:id → 200 with null data, subsequent GET → 404", async () => {
     const created = await endUserService.syncUser(fx.orgId, {
       externalId: "u_delete_me",
       email: "delete-me@example.com",
@@ -228,7 +258,10 @@ describe("end-user admin routes", () => {
       method: "DELETE",
       headers: { cookie: fx.cookie },
     });
-    expect(del.status).toBe(204);
+    expect(del.status).toBe(200);
+    const delEnv = (await del.json()) as { code: string; data: null };
+    expect(delEnv.code).toBe("ok");
+    expect(delEnv.data).toBeNull();
 
     const check = await app.request(`/api/end-user/${created.euUserId}`, {
       headers: { cookie: fx.cookie },

@@ -177,10 +177,3 @@ export const DialogueSessionResponseSchema = z
   })
   .openapi("DialogueSession");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("DialogueErrorResponse");

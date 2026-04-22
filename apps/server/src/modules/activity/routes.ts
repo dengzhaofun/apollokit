@@ -8,13 +8,17 @@
  * re-exposed behind `requireClientCredential`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { ActivityConfig } from "../../schema/activity";
-import { ModuleError } from "./errors";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
@@ -25,7 +29,6 @@ import {
   CreateNodeSchema,
   CreateScheduleSchema,
   CreateWebhookEndpointBody,
-  ErrorResponseSchema,
   IdParam,
   JoinActivityBody,
   KeyParam,
@@ -77,38 +80,9 @@ function serializeActivity(row: ActivityConfig) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const activityRouter = new OpenAPIHono<HonoEnv>();
+export const activityRouter = makeApiRouter();
 
 activityRouter.use("*", requireAdminOrApiKey);
-
-activityRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Activity CRUD ──────────────────────────────────────────────
 
@@ -125,16 +99,16 @@ activityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: ActivityConfigResponseSchema },
+          "application/json": { schema: envelopeOf(ActivityConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await activityService.createActivity(orgId, c.req.valid("json"));
-    return c.json(serializeActivity(row), 201);
+    return c.json(ok(serializeActivity(row)), 201);
   },
 );
 
@@ -149,17 +123,19 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({ items: z.array(ActivityConfigResponseSchema) }),
+            schema: envelopeOf(
+              z.object({ items: z.array(ActivityConfigResponseSchema) }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await activityService.listActivities(orgId);
-    return c.json({ items: rows.map(serializeActivity) }, 200);
+    return c.json(ok({ items: rows.map(serializeActivity) }), 200);
   },
 );
 
@@ -174,17 +150,17 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ActivityConfigResponseSchema },
+          "application/json": { schema: envelopeOf(ActivityConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await activityService.getActivity(orgId, key);
-    return c.json(serializeActivity(row), 200);
+    return c.json(ok(serializeActivity(row)), 200);
   },
 );
 
@@ -202,17 +178,17 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ActivityConfigResponseSchema },
+          "application/json": { schema: envelopeOf(ActivityConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await activityService.updateActivity(orgId, id, c.req.valid("json"));
-    return c.json(serializeActivity(row), 200);
+    return c.json(ok(serializeActivity(row)), 200);
   },
 );
 
@@ -223,13 +199,19 @@ activityRouter.openapi(
     tags: [TAG],
     summary: "Delete an activity",
     request: { params: IdParam },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await activityService.deleteActivity(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -249,10 +231,10 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ActivityConfigResponseSchema },
+          "application/json": { schema: envelopeOf(ActivityConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -271,7 +253,7 @@ activityRouter.openapi(
       // beyond the time-driven cron. Ops can fast-forward by updating
       // hiddenAt to now and calling tick.
     }
-    return c.json(serializeActivity(row), 200);
+    return c.json(ok(serializeActivity(row)), 200);
   },
 );
 
@@ -292,18 +274,18 @@ activityRouter.openapi(
         description: "Created",
         content: {
           "application/json": {
-            schema: z.record(z.string(), z.unknown()),
+            schema: envelopeOf(z.record(z.string(), z.unknown())),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await activityService.createNode(orgId, key, c.req.valid("json"));
-    return c.json(row, 201);
+    return c.json(ok(row), 201);
   },
 );
 
@@ -319,18 +301,20 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({ items: z.array(z.record(z.string(), z.unknown())) }),
+            schema: envelopeOf(
+              z.object({ items: z.array(z.record(z.string(), z.unknown())) }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await activityService.listNodes(orgId, key);
-    return c.json({ items: rows }, 200);
+    return c.json(ok({ items: rows }), 200);
   },
 );
 
@@ -348,17 +332,17 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await activityService.updateNode(orgId, id, c.req.valid("json"));
-    return c.json(row, 200);
+    return c.json(ok(row), 200);
   },
 );
 
@@ -369,13 +353,19 @@ activityRouter.openapi(
     tags: [TAG],
     summary: "Delete an activity node",
     request: { params: IdParam },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await activityService.deleteNode(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -397,10 +387,10 @@ activityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -411,7 +401,7 @@ activityRouter.openapi(
       key,
       c.req.valid("json"),
     );
-    return c.json(row, 201);
+    return c.json(ok(row), 201);
   },
 );
 
@@ -427,18 +417,20 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({ items: z.array(z.record(z.string(), z.unknown())) }),
+            schema: envelopeOf(
+              z.object({ items: z.array(z.record(z.string(), z.unknown())) }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await activityService.listSchedules(orgId, key);
-    return c.json({ items: rows }, 200);
+    return c.json(ok({ items: rows }), 200);
   },
 );
 
@@ -449,13 +441,19 @@ activityRouter.openapi(
     tags: [TAG],
     summary: "Delete a schedule",
     request: { params: IdParam },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await activityService.deleteSchedule(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -475,10 +473,10 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -490,7 +488,7 @@ activityRouter.openapi(
       activityIdOrAlias: key,
       endUserId: body.endUserId,
     });
-    return c.json(row, 200);
+    return c.json(ok(row), 200);
   },
 );
 
@@ -509,14 +507,16 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
-              balance: z.number().int(),
-              unlockedMilestones: z.array(z.string()),
-            }),
+            schema: envelopeOf(
+              z.object({
+                balance: z.number().int(),
+                unlockedMilestones: z.array(z.string()),
+              }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -531,7 +531,7 @@ activityRouter.openapi(
       source: body.source,
       sourceRef: body.sourceRef,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -549,10 +549,10 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -565,7 +565,7 @@ activityRouter.openapi(
       endUserId: body.endUserId,
       milestoneAlias: body.milestoneAlias,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -587,10 +587,10 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -601,7 +601,7 @@ activityRouter.openapi(
       activityIdOrAlias: key,
       endUserId,
     });
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );
 
@@ -618,23 +618,25 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z
-              .object({
-                advanced: z.number().int(),
-                scheduleFired: z.number().int(),
-                webhooksDelivered: z.number().int(),
-                errors: z.number().int(),
-              })
-              .openapi("ActivityTickResult"),
+            schema: envelopeOf(
+              z
+                .object({
+                  advanced: z.number().int(),
+                  scheduleFired: z.number().int(),
+                  webhooksDelivered: z.number().int(),
+                  errors: z.number().int(),
+                })
+                .openapi("ActivityTickResult"),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const result = await activityService.tickDue({});
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -655,17 +657,17 @@ activityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const body = c.req.valid("json");
     const result = await activityService.createWebhookEndpoint(orgId, body);
-    return c.json(result, 201);
+    return c.json(ok(result), 201);
   },
 );
 
@@ -680,19 +682,21 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
-              items: z.array(z.record(z.string(), z.unknown())),
-            }),
+            schema: envelopeOf(
+              z.object({
+                items: z.array(z.record(z.string(), z.unknown())),
+              }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await activityService.listWebhookEndpoints(orgId);
-    return c.json({ items: rows }, 200);
+    return c.json(ok({ items: rows }), 200);
   },
 );
 
@@ -710,32 +714,34 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z
-              .object({
-                participants: z.number().int(),
-                completed: z.number().int(),
-                dropped: z.number().int(),
-                avgPoints: z.number(),
-                maxPoints: z.number(),
-                p50Points: z.number(),
-                milestoneClaims: z.array(
-                  z.object({
-                    milestoneAlias: z.string(),
-                    count: z.number().int(),
-                  }),
-                ),
-                pointsBuckets: z.array(
-                  z.object({
-                    bucket: z.string(),
-                    count: z.number().int(),
-                  }),
-                ),
-              })
-              .openapi("ActivityAnalytics"),
+            schema: envelopeOf(
+              z
+                .object({
+                  participants: z.number().int(),
+                  completed: z.number().int(),
+                  dropped: z.number().int(),
+                  avgPoints: z.number(),
+                  maxPoints: z.number(),
+                  p50Points: z.number(),
+                  milestoneClaims: z.array(
+                    z.object({
+                      milestoneAlias: z.string(),
+                      count: z.number().int(),
+                    }),
+                  ),
+                  pointsBuckets: z.array(
+                    z.object({
+                      bucket: z.string(),
+                      count: z.number().int(),
+                    }),
+                  ),
+                })
+                .openapi("ActivityAnalytics"),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -745,7 +751,7 @@ activityRouter.openapi(
       organizationId: orgId,
       activityIdOrAlias: key,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -766,17 +772,17 @@ activityRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: z.record(z.string(), z.unknown()) },
+          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const body = c.req.valid("json");
     const row = await activityService.createTemplate(orgId, body);
-    return c.json(row, 201);
+    return c.json(ok(row), 201);
   },
 );
 
@@ -791,19 +797,21 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z.object({
-              items: z.array(z.record(z.string(), z.unknown())),
-            }),
+            schema: envelopeOf(
+              z.object({
+                items: z.array(z.record(z.string(), z.unknown())),
+              }),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await activityService.listTemplates(orgId);
-    return c.json({ items: rows }, 200);
+    return c.json(ok({ items: rows }), 200);
   },
 );
 
@@ -814,13 +822,19 @@ activityRouter.openapi(
     tags: [TAG],
     summary: "Delete an activity template.",
     request: { params: IdParam },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await activityService.deleteTemplate(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -837,16 +851,18 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: z
-              .object({
-                activityAlias: z.string(),
-                activityId: z.string(),
-              })
-              .openapi("ActivityInstantiateResult"),
+            schema: envelopeOf(
+              z
+                .object({
+                  activityAlias: z.string(),
+                  activityId: z.string(),
+                })
+                .openapi("ActivityInstantiateResult"),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -856,7 +872,7 @@ activityRouter.openapi(
       organizationId: orgId,
       templateId: id,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -867,12 +883,18 @@ activityRouter.openapi(
     tags: [TAG],
     summary: "Delete a webhook endpoint",
     request: { params: IdParam },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await activityService.deleteWebhookEndpoint(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

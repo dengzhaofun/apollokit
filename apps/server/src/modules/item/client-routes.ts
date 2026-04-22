@@ -11,40 +11,22 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { lotteryService } from "../lottery";
 import { itemService } from "./index";
 import {
   BalanceResponseSchema,
-  ErrorResponseSchema,
   InventoryListResponseSchema,
   UseItemSchema,
   UseItemResponseSchema,
 } from "./validators";
 
 const TAG = "Item (Client)";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 const BalanceKeyParam = z.object({
   key: z.string().min(1).openapi({
@@ -60,24 +42,10 @@ const DefinitionIdQuery = z.object({
   }),
 });
 
-export const itemClientRouter = new OpenAPIHono<HonoEnv>();
+export const itemClientRouter = makeApiRouter();
 
 itemClientRouter.use("*", requireClientCredential);
 itemClientRouter.use("*", requireClientUser);
-
-itemClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // GET /inventory
 itemClientRouter.openapi(
@@ -92,9 +60,9 @@ itemClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: InventoryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(InventoryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -106,7 +74,7 @@ itemClientRouter.openapi(
       endUserId,
       definitionId,
     });
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -123,9 +91,9 @@ itemClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: BalanceResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(BalanceResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -138,7 +106,7 @@ itemClientRouter.openapi(
       endUserId,
       definitionId: def.id,
     });
-    return c.json({ definitionId: def.id, balance }, 200);
+    return c.json(ok({ definitionId: def.id, balance }), 200);
   },
 );
 
@@ -157,9 +125,9 @@ itemClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: UseItemResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(UseItemResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -191,11 +159,11 @@ itemClientRouter.openapi(
     }
 
     return c.json(
-      {
+      ok({
         definitionId: def.id,
         definitionName: def.name,
         lotteryResult,
-      },
+      }),
       200,
     );
   },

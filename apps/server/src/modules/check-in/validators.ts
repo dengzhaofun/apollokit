@@ -344,14 +344,6 @@ export const RewardListResponseSchema = z
   })
   .openapi("CheckInRewardList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("CheckInErrorResponse");
-
 export const ConfigListResponseSchema = z
   .object({
     items: z.array(CheckInConfigResponseSchema),

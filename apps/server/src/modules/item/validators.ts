@@ -333,10 +333,3 @@ export const UseItemResponseSchema = z
   })
   .openapi("UseItemResult");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("ItemErrorResponse");

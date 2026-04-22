@@ -48,30 +48,32 @@ const RewardItemSchema = z.object({
   count: z.number().int().positive(),
 });
 
-const UnlockRuleSchema: z.ZodType = z.lazy(() =>
-  z.discriminatedUnion("type", [
-    z.object({ type: z.literal("auto") }),
-    z.object({ type: z.literal("level_clear"), levelId: z.string() }),
-    z.object({
-      type: z.literal("level_stars"),
-      levelId: z.string(),
-      stars: z.number().int().min(1),
-    }),
-    z.object({ type: z.literal("stage_clear"), stageId: z.string() }),
-    z.object({
-      type: z.literal("star_threshold"),
-      threshold: z.number().int().min(1),
-    }),
-    z.object({
-      type: z.literal("all"),
-      rules: z.array(UnlockRuleSchema).min(1),
-    }),
-    z.object({
-      type: z.literal("any"),
-      rules: z.array(UnlockRuleSchema).min(1),
-    }),
-  ]),
-);
+const UnlockRuleSchema: z.ZodType = z
+  .lazy(() =>
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("auto") }),
+      z.object({ type: z.literal("level_clear"), levelId: z.string() }),
+      z.object({
+        type: z.literal("level_stars"),
+        levelId: z.string(),
+        stars: z.number().int().min(1),
+      }),
+      z.object({ type: z.literal("stage_clear"), stageId: z.string() }),
+      z.object({
+        type: z.literal("star_threshold"),
+        threshold: z.number().int().min(1),
+      }),
+      z.object({
+        type: z.literal("all"),
+        rules: z.array(UnlockRuleSchema).min(1),
+      }),
+      z.object({
+        type: z.literal("any"),
+        rules: z.array(UnlockRuleSchema).min(1),
+      }),
+    ]),
+  )
+  .openapi("UnlockRule");
 
 const StarRewardTierSchema = z.object({
   stars: z.number().int().min(1),
@@ -405,11 +407,3 @@ export const ClaimRewardsResponseSchema = z
     claimedAt: z.string(),
   })
   .openapi("LevelClaimRewardsResponse");
-
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("LevelErrorResponse");

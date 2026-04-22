@@ -145,8 +145,12 @@ describe("check-in routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const cfg = (await create.json()) as { id: string; alias: string };
-    expect(cfg.alias).toBe("route-happy");
+    const cfgEnv = (await create.json()) as {
+      code: string;
+      data: { id: string; alias: string };
+    };
+    expect(cfgEnv.code).toBe("ok");
+    expect(cfgEnv.data.alias).toBe("route-happy");
 
     const checkIn = await app.request(
       "/api/check-in/configs/route-happy/check-ins",
@@ -160,13 +164,17 @@ describe("check-in routes", () => {
       },
     );
     expect(checkIn.status).toBe(200);
-    const body = (await checkIn.json()) as {
-      alreadyCheckedIn: boolean;
-      state: { totalDays: number; currentStreak: number };
+    const env = (await checkIn.json()) as {
+      code: string;
+      data: {
+        alreadyCheckedIn: boolean;
+        state: { totalDays: number; currentStreak: number };
+      };
     };
-    expect(body.alreadyCheckedIn).toBe(false);
-    expect(body.state.totalDays).toBe(1);
-    expect(body.state.currentStreak).toBe(1);
+    expect(env.code).toBe("ok");
+    expect(env.data.alreadyCheckedIn).toBe(false);
+    expect(env.data.state.totalDays).toBe(1);
+    expect(env.data.state.currentStreak).toBe(1);
 
     const state = await app.request(
       "/api/check-in/configs/route-happy/users/biz-user-route/state",

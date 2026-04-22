@@ -111,9 +111,12 @@ describe("invite admin routes", () => {
       body: JSON.stringify({ enabled: true, codeLength: 8 }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { codeLength: number; enabled: boolean };
-    expect(body.codeLength).toBe(8);
-    expect(body.enabled).toBe(true);
+    const env = (await res.json()) as {
+      code: string;
+      data: { codeLength: number; enabled: boolean };
+    };
+    expect(env.data.codeLength).toBe(8);
+    expect(env.data.enabled).toBe(true);
   });
 
   test("PUT /settings 400 on invalid codeLength", async () => {

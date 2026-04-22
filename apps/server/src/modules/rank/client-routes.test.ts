@@ -108,13 +108,16 @@ describe("rank client routes", () => {
       },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      endUserId: string;
-      rankScore: number;
-      wins: number;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        endUserId: string;
+        rankScore: number;
+        wins: number;
+      };
     };
-    expect(body.endUserId).toBe("player-x");
-    expect(body.wins).toBe(1);
+    expect(env.data.endUserId).toBe("player-x");
+    expect(env.data.wins).toBe(1);
   });
 
   test("GET /history returns caller's participant rows", async () => {
@@ -128,12 +131,15 @@ describe("rank client routes", () => {
       },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      items: Array<{ endUserId: string; win: boolean }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        items: Array<{ endUserId: string; win: boolean }>;
+      };
     };
-    expect(body.items).toHaveLength(1);
-    expect(body.items[0]!.endUserId).toBe("player-x");
-    expect(body.items[0]!.win).toBe(true);
+    expect(env.data.items).toHaveLength(1);
+    expect(env.data.items[0]!.endUserId).toBe("player-x");
+    expect(env.data.items[0]!.win).toBe(true);
   });
 
   test("GET /leaderboard (global, no tierId) returns rankings array", async () => {
@@ -147,12 +153,15 @@ describe("rank client routes", () => {
       },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      rankings: Array<{ endUserId: string; score: number }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        rankings: Array<{ endUserId: string; score: number }>;
+      };
     };
     // Fallback PG path is active when no leaderboard is wired (tests
     // don't mount leaderboard). Either way, rankings should be present.
-    expect(Array.isArray(body.rankings)).toBe(true);
+    expect(Array.isArray(env.data.rankings)).toBe(true);
   });
 
   test("client router does NOT expose POST /settle (cheat-path guard)", async () => {

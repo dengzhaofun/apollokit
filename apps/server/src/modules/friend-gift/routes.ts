@@ -5,16 +5,20 @@
  * read `c.var.session!.activeOrganizationId!` uniformly.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { FriendGiftSettingsNotFound, ModuleError } from "./errors";
+import { FriendGiftSettingsNotFound } from "./errors";
 import { friendGiftService } from "./index";
 import {
   CreatePackageSchema,
-  ErrorResponseSchema,
   GiftSendListResponseSchema,
   GiftSendResponseSchema,
   PackageIdParamSchema,
@@ -113,42 +117,9 @@ function serializeSend(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const friendGiftRouter = new OpenAPIHono<HonoEnv>();
+export const friendGiftRouter = makeApiRouter();
 
 friendGiftRouter.use("*", requireAdminOrApiKey);
-
-friendGiftRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Settings ────────────────────────────────────────────────────
 
@@ -162,9 +133,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: SettingsResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SettingsResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -173,7 +144,7 @@ friendGiftRouter.openapi(
     if (!row) {
       throw new FriendGiftSettingsNotFound();
     }
-    return c.json(serializeSettings(row), 200);
+    return c.json(ok(serializeSettings(row)), 200);
   },
 );
 
@@ -192,9 +163,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: SettingsResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SettingsResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -203,7 +174,7 @@ friendGiftRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(serializeSettings(row), 200);
+    return c.json(ok(serializeSettings(row)), 200);
   },
 );
 
@@ -224,9 +195,9 @@ friendGiftRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: PackageResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -235,7 +206,7 @@ friendGiftRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(serializePackage(row), 201);
+    return c.json(ok(serializePackage(row)), 201);
   },
 );
 
@@ -249,15 +220,15 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PackageListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PackageListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await friendGiftService.listPackages(orgId);
-    return c.json({ items: rows.map(serializePackage) }, 200);
+    return c.json(ok({ items: rows.map(serializePackage) }), 200);
   },
 );
 
@@ -272,16 +243,16 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PackageResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getPackage(orgId, id);
-    return c.json(serializePackage(row), 200);
+    return c.json(ok(serializePackage(row)), 200);
   },
 );
 
@@ -301,9 +272,9 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PackageResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -314,7 +285,7 @@ friendGiftRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializePackage(row), 200);
+    return c.json(ok(serializePackage(row)), 200);
   },
 );
 
@@ -327,15 +298,18 @@ friendGiftRouter.openapi(
     summary: "Delete a gift package",
     request: { params: PackageIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await friendGiftService.deletePackage(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -352,16 +326,16 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GiftSendListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(GiftSendListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { limit, offset } = c.req.valid("query");
     const rows = await friendGiftService.listSends(orgId, { limit, offset });
-    return c.json({ items: rows.map(serializeSend) }, 200);
+    return c.json(ok({ items: rows.map(serializeSend) }), 200);
   },
 );
 
@@ -376,15 +350,15 @@ friendGiftRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GiftSendResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(GiftSendResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getSend(orgId, id);
-    return c.json(serializeSend(row), 200);
+    return c.json(ok(serializeSend(row)), 200);
   },
 );

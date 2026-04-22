@@ -587,13 +587,6 @@ export const ClaimTierResponseSchema = z
   })
   .openapi("TaskClaimTierResponse");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("TaskErrorResponse");
 
 // ─── Assignment bodies ────────────────────────────────────────────
 

@@ -11,38 +11,21 @@
  * c.var.endUserId!. No inline verifyRequest calls; no endUserId path segment for the caller.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { entityService } from "./index";
-import { ErrorResponseSchema } from "./validators";
 
 const TAG = "Entity (Client)";
-
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
 
 const InstanceIdParam = z.object({
   instanceId: z.string().uuid().openapi({
@@ -50,24 +33,10 @@ const InstanceIdParam = z.object({
   }),
 });
 
-export const entityClientRouter = new OpenAPIHono<HonoEnv>();
+export const entityClientRouter = makeApiRouter();
 
 entityClientRouter.use("*", requireClientCredential);
 entityClientRouter.use("*", requireClientUser);
-
-entityClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Read ─────────────────────────────────────────────────────
 
@@ -85,8 +54,11 @@ entityClientRouter.openapi(
       }),
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.array(z.any()) } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.array(z.any())) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -97,7 +69,7 @@ entityClientRouter.openapi(
       schemaId,
       blueprintId,
     });
-    return c.json(rows, 200);
+    return c.json(ok(rows), 200);
   },
 );
 
@@ -109,8 +81,11 @@ entityClientRouter.openapi(
     summary: "Get entity instance detail with slots",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -118,7 +93,7 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     const result = await entityService.getInstance(orgId, endUserId, instanceId);
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -145,8 +120,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      201: { description: "Created", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      201: {
+        description: "Created",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -160,7 +138,7 @@ entityClientRouter.openapi(
       source,
       sourceId,
     );
-    return c.json(inst, 201);
+    return c.json(ok(inst), 201);
   },
 );
 
@@ -172,8 +150,11 @@ entityClientRouter.openapi(
     summary: "Discard (delete) an entity instance",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -181,7 +162,7 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     await entityService.discardEntity(orgId, endUserId, instanceId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -205,8 +186,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -220,7 +204,7 @@ entityClientRouter.openapi(
       instanceId,
       locked,
     );
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -244,8 +228,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -254,7 +241,7 @@ entityClientRouter.openapi(
     const { instanceId } = c.req.valid("param");
     const { amount } = c.req.valid("json");
     const inst = await entityService.addExp(orgId, endUserId, instanceId, amount);
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -278,8 +265,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -293,7 +283,7 @@ entityClientRouter.openapi(
       instanceId,
       targetLevel,
     );
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -305,8 +295,11 @@ entityClientRouter.openapi(
     summary: "Rank up (consumes materials)",
     request: { headers: authHeaders, params: InstanceIdParam },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -314,7 +307,7 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { instanceId } = c.req.valid("param");
     const inst = await entityService.rankUp(orgId, endUserId, instanceId);
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -338,8 +331,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -353,7 +349,7 @@ entityClientRouter.openapi(
       instanceId,
       feedInstanceIds,
     );
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -381,8 +377,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      201: { description: "Equipped", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      201: {
+        description: "Equipped",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -398,7 +397,7 @@ entityClientRouter.openapi(
       slotIndex,
       equippedInstanceId,
     );
-    return c.json(slot, 201);
+    return c.json(ok(slot), 201);
   },
 );
 
@@ -423,8 +422,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      204: { description: "Unequipped" },
-      ...errorResponses,
+      200: {
+        description: "Unequipped",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -433,7 +435,7 @@ entityClientRouter.openapi(
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex } = c.req.valid("json");
     await entityService.unequip(orgId, endUserId, instanceId, slotKey, slotIndex);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -457,8 +459,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -472,7 +477,7 @@ entityClientRouter.openapi(
       instanceId,
       skinId,
     );
-    return c.json(inst, 200);
+    return c.json(ok(inst), 200);
   },
 );
 
@@ -493,8 +498,11 @@ entityClientRouter.openapi(
       }),
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.array(z.any()) } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.array(z.any())) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -502,7 +510,7 @@ entityClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { configId } = c.req.valid("param");
     const rows = await entityService.listFormations(orgId, endUserId, configId);
-    return c.json(rows, 200);
+    return c.json(ok(rows), 200);
   },
 );
 
@@ -539,8 +547,11 @@ entityClientRouter.openapi(
       },
     },
     responses: {
-      200: { description: "OK", content: { "application/json": { schema: z.any() } } },
-      ...errorResponses,
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(z.any()) } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -556,6 +567,6 @@ entityClientRouter.openapi(
       name ?? null,
       slots,
     );
-    return c.json(formation, 200);
+    return c.json(ok(formation), 200);
   },
 );

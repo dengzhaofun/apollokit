@@ -251,14 +251,17 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      matchId: string;
-      alreadySettled: boolean;
-      participants: Array<{ endUserId: string; mmrAfter: number }>;
+    const env = (await res.json()) as {
+      code: string;
+      data: {
+        matchId: string;
+        alreadySettled: boolean;
+        participants: Array<{ endUserId: string; mmrAfter: number }>;
+      };
     };
-    expect(body.alreadySettled).toBe(false);
-    expect(body.participants).toHaveLength(2);
-    const winner = body.participants.find((p) => p.endUserId === "route-a")!;
+    expect(env.data.alreadySettled).toBe(false);
+    expect(env.data.participants).toHaveLength(2);
+    const winner = env.data.participants.find((p) => p.endUserId === "route-a")!;
     expect(winner.mmrAfter).toBeGreaterThan(1000);
   });
 
@@ -276,7 +279,7 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { alreadySettled: boolean };
-    expect(body.alreadySettled).toBe(true);
+    const env = (await res.json()) as { code: string; data: { alreadySettled: boolean } };
+    expect(env.data.alreadySettled).toBe(true);
   });
 });

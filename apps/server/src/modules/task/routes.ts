@@ -5,15 +5,19 @@
  * session cookie or an admin API key (ak_).
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
 import { taskService } from "./index";
-import { ModuleError } from "./errors";
 import type { TaskUserAssignment } from "./types";
 import {
   AssignBatchResponseSchema,
@@ -27,7 +31,6 @@ import {
   DefinitionKeyParamSchema,
   DefinitionListResponseSchema,
   DefinitionResponseSchema,
-  ErrorResponseSchema,
   ListAssignmentsQuerySchema,
   RevokeAssignmentParamsSchema,
   UpdateCategorySchema,
@@ -138,42 +141,9 @@ function serializeDefinition(row: {
 
 // ─── Router ─────────────────────────────────────────────────────
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const taskRouter = new OpenAPIHono<HonoEnv>();
+export const taskRouter = makeApiRouter();
 
 taskRouter.use("*", requireAdminOrApiKey);
-
-taskRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Categories ─────────────────────────────────────────────────
 
@@ -191,15 +161,15 @@ taskRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: CategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await taskService.createCategory(orgId, c.req.valid("json"));
-    return c.json(serializeCategory(row), 201);
+    return c.json(ok(serializeCategory(row)), 201);
   },
 );
 
@@ -213,16 +183,16 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CategoryListResponseSchema },
+          "application/json": { schema: envelopeOf(CategoryListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await taskService.listCategories(orgId);
-    return c.json({ items: rows.map(serializeCategory) }, 200);
+    return c.json(ok({ items: rows.map(serializeCategory) }), 200);
   },
 );
 
@@ -236,16 +206,16 @@ taskRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await taskService.getCategory(orgId, id);
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -264,9 +234,9 @@ taskRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -277,7 +247,7 @@ taskRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -288,13 +258,19 @@ taskRouter.openapi(
     tags: [TAG_CAT],
     summary: "Delete a task category",
     request: { params: CategoryIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await taskService.deleteCategory(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -315,10 +291,10 @@ taskRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: DefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -327,7 +303,7 @@ taskRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(serializeDefinition(row), 201);
+    return c.json(ok(serializeDefinition(row)), 201);
   },
 );
 
@@ -341,10 +317,10 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: DefinitionListResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -361,7 +337,7 @@ taskRouter.openapi(
       activityId,
       includeActivity,
     });
-    return c.json({ items: rows.map(serializeDefinition) }, 200);
+    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
   },
 );
 
@@ -376,17 +352,17 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: DefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await taskService.getDefinition(orgId, key);
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -406,10 +382,10 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: DefinitionResponseSchema },
+          "application/json": { schema: envelopeOf(DefinitionResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -420,7 +396,7 @@ taskRouter.openapi(
       key,
       c.req.valid("json"),
     );
-    return c.json(serializeDefinition(row), 200);
+    return c.json(ok(serializeDefinition(row)), 200);
   },
 );
 
@@ -431,13 +407,19 @@ taskRouter.openapi(
     tags: [TAG_DEF],
     summary: "Delete a task definition (cascades to progress)",
     request: { params: DefinitionKeyParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     await taskService.deleteDefinition(orgId, key);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -475,10 +457,10 @@ taskRouter.openapi(
       201: {
         description: "Assigned",
         content: {
-          "application/json": { schema: AssignBatchResponseSchema },
+          "application/json": { schema: envelopeOf(AssignBatchResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -501,11 +483,11 @@ taskRouter.openapi(
     );
 
     return c.json(
-      {
+      ok({
         assigned: result.assigned,
         skipped: result.skipped,
         items: result.items.map(serializeAssignment),
-      },
+      }),
       201,
     );
   },
@@ -518,13 +500,19 @@ taskRouter.openapi(
     tags: [TAG_ASSIGN],
     summary: "Revoke a task assignment for a single end user",
     request: { params: RevokeAssignmentParamsSchema },
-    responses: { 204: { description: "Revoked" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Revoked",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key, endUserId } = c.req.valid("param");
     await taskService.revokeAssignment(orgId, endUserId, key);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -542,10 +530,10 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssignmentListResponseSchema },
+          "application/json": { schema: envelopeOf(AssignmentListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -562,7 +550,7 @@ taskRouter.openapi(
       },
       { limit },
     );
-    return c.json({ items: rows.map(serializeAssignment) }, 200);
+    return c.json(ok({ items: rows.map(serializeAssignment) }), 200);
   },
 );
 
@@ -577,10 +565,10 @@ taskRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssignmentListResponseSchema },
+          "application/json": { schema: envelopeOf(AssignmentListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -594,7 +582,6 @@ taskRouter.openapi(
       },
       { limit },
     );
-    return c.json({ items: rows.map(serializeAssignment) }, 200);
+    return c.json(ok({ items: rows.map(serializeAssignment) }), 200);
   },
 );
-

@@ -304,12 +304,6 @@ export const FormationConfigIdParamSchema = z.object({
 
 // ─── Response schemas ───────────────────────────────────────────
 
-export const ErrorResponseSchema = z.object({
-  error: z.string(),
-  code: z.string(),
-  requestId: z.string().optional(),
-});
-
 export const SchemaResponseSchema = z
   .object({
     id: z.string().uuid(),

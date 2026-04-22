@@ -291,10 +291,3 @@ export const AssistPoolContributionListSchema = z
   .object({ items: z.array(AssistPoolContributionResponseSchema) })
   .openapi("AssistPoolContributionList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("AssistPoolErrorResponse");

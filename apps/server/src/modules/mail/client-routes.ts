@@ -16,18 +16,16 @@
  * middleware), not from a session.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import type { InboxMessage, MailUserState } from "./types";
 import { mailService } from "./index";
 import {
   ClaimResultResponseSchema,
-  ErrorResponseSchema,
   IdParamSchema,
   InboxItemResponseSchema,
   InboxListResponseSchema,
@@ -60,47 +58,10 @@ function serializeUserState(row: MailUserState) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const mailClientRouter = new OpenAPIHono<HonoEnv>();
+export const mailClientRouter = makeApiRouter();
 
 mailClientRouter.use("*", requireClientCredential);
 mailClientRouter.use("*", requireClientUser);
-
-mailClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // GET /messages — inbox
 mailClientRouter.openapi(
@@ -113,9 +74,9 @@ mailClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: InboxListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(InboxListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -126,7 +87,7 @@ mailClientRouter.openapi(
       since: since ? new Date(since) : undefined,
       limit,
     });
-    return c.json({ items: items.map(serializeInbox) }, 200);
+    return c.json(ok({ items: items.map(serializeInbox) }), 200);
   },
 );
 
@@ -143,9 +104,9 @@ mailClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: InboxItemResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(InboxItemResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -153,7 +114,7 @@ mailClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const row = await mailService.getInboxMessage(orgId, endUserId, id);
-    return c.json(serializeInbox(row), 200);
+    return c.json(ok(serializeInbox(row)), 200);
   },
 );
 
@@ -171,10 +132,10 @@ mailClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: MailUserStateResponseSchema },
+          "application/json": { schema: envelopeOf(MailUserStateResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -182,7 +143,7 @@ mailClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const state = await mailService.markRead(orgId, endUserId, id);
-    return c.json(serializeUserState(state), 200);
+    return c.json(ok(serializeUserState(state)), 200);
   },
 );
 
@@ -199,9 +160,9 @@ mailClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClaimResultResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ClaimResultResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -210,13 +171,13 @@ mailClientRouter.openapi(
     const { id } = c.req.valid("param");
     const result = await mailService.claim(orgId, endUserId, id);
     return c.json(
-      {
+      ok({
         messageId: result.messageId,
         endUserId: result.endUserId,
         rewards: result.rewards,
         claimedAt: result.claimedAt.toISOString(),
         readAt: result.readAt?.toISOString() ?? null,
-      },
+      }),
       200,
     );
   },

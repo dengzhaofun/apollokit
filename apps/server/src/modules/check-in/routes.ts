@@ -11,15 +11,24 @@
  *
  * C-end (client) routes live in `client-routes.ts` under a separate base
  * path with client credential + HMAC auth.
+ *
+ * Response envelope: every endpoint returns `{ code, data, message,
+ * requestId }` — see `apps/server/src/lib/response.ts`. Success status
+ * is 200/201 with `code:"ok"`; business errors are mapped by the
+ * router factory in `apps/server/src/lib/router.ts`.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
 import type { RewardEntry } from "../../lib/rewards";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { ModuleError } from "./errors";
 import { checkInService } from "./index";
 import {
   CheckInBodySchema,
@@ -32,7 +41,6 @@ import {
   ConfigListResponseSchema,
   CreateConfigSchema,
   CreateRewardSchema,
-  ErrorResponseSchema,
   RewardIdParamSchema,
   RewardListResponseSchema,
   UpdateConfigSchema,
@@ -113,42 +121,9 @@ function serializeState(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const checkInRouter = new OpenAPIHono<HonoEnv>();
+export const checkInRouter = makeApiRouter();
 
 checkInRouter.use("*", requireAdminOrApiKey);
-
-checkInRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err; // let the global app.onError return 500
-});
 
 // POST /check-in/configs — create
 checkInRouter.openapi(
@@ -166,16 +141,18 @@ checkInRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: CheckInConfigResponseSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInConfigResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await checkInService.createConfig(orgId, c.req.valid("json"));
-    return c.json(serializeConfig(row), 201);
+    return c.json(ok(serializeConfig(row)), 201);
   },
 );
 
@@ -203,9 +180,11 @@ checkInRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ConfigListResponseSchema } },
+        content: {
+          "application/json": { schema: envelopeOf(ConfigListResponseSchema) },
+        },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -215,7 +194,7 @@ checkInRouter.openapi(
       activityId: q.activityId,
       includeActivity: q.includeActivity === "true",
     });
-    return c.json({ items: rows.map(serializeConfig) }, 200);
+    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
   },
 );
 
@@ -231,17 +210,19 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CheckInConfigResponseSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInConfigResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await checkInService.getConfig(orgId, key);
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -262,10 +243,12 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CheckInConfigResponseSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInConfigResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -276,7 +259,7 @@ checkInRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -289,15 +272,20 @@ checkInRouter.openapi(
     summary: "Delete a check-in config (cascades to user states)",
     request: { params: ConfigIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: {
+          "application/json": { schema: NullDataEnvelopeSchema },
+        },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await checkInService.deleteConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -313,10 +301,12 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: UserStateListResponseSchema },
+          "application/json": {
+            schema: envelopeOf(UserStateListResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -326,7 +316,7 @@ checkInRouter.openapi(
       organizationId: orgId,
       configKey: key,
     });
-    return c.json({ items: rows.map(serializeState) }, 200);
+    return c.json(ok({ items: rows.map(serializeState) }), 200);
   },
 );
 
@@ -346,9 +336,11 @@ checkInRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CheckInResultSchema } },
+        content: {
+          "application/json": { schema: envelopeOf(CheckInResultSchema) },
+        },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -361,7 +353,7 @@ checkInRouter.openapi(
       endUserId,
     });
     return c.json(
-      {
+      ok({
         alreadyCheckedIn: result.alreadyCheckedIn,
         justCompleted: result.justCompleted,
         state: serializeState(result.state),
@@ -369,7 +361,7 @@ checkInRouter.openapi(
         isCompleted: result.isCompleted,
         remaining: result.remaining,
         rewards: result.rewards ?? null,
-      },
+      }),
       200,
     );
   },
@@ -387,10 +379,12 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CheckInUserStateViewSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInUserStateViewSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -402,12 +396,12 @@ checkInRouter.openapi(
       endUserId,
     });
     return c.json(
-      {
+      ok({
         state: serializeState(view.state),
         target: view.target,
         isCompleted: view.isCompleted,
         remaining: view.remaining,
-      },
+      }),
       200,
     );
   },
@@ -456,10 +450,12 @@ checkInRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: CheckInRewardResponseSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInRewardResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -467,7 +463,7 @@ checkInRouter.openapi(
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await checkInService.createReward(orgId, key, body);
-    return c.json(serializeReward(row), 201);
+    return c.json(ok(serializeReward(row)), 201);
   },
 );
 
@@ -483,17 +479,19 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: RewardListResponseSchema },
+          "application/json": {
+            schema: envelopeOf(RewardListResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await checkInService.listRewards(orgId, key);
-    return c.json({ items: rows.map(serializeReward) }, 200);
+    return c.json(ok({ items: rows.map(serializeReward) }), 200);
   },
 );
 
@@ -514,10 +512,12 @@ checkInRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CheckInRewardResponseSchema },
+          "application/json": {
+            schema: envelopeOf(CheckInRewardResponseSchema),
+          },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -528,7 +528,7 @@ checkInRouter.openapi(
       rewardId,
       c.req.valid("json"),
     );
-    return c.json(serializeReward(row), 200);
+    return c.json(ok(serializeReward(row)), 200);
   },
 );
 
@@ -541,14 +541,19 @@ checkInRouter.openapi(
     summary: "Delete a check-in reward",
     request: { params: RewardIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: {
+          "application/json": { schema: NullDataEnvelopeSchema },
+        },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { rewardId } = c.req.valid("param");
     await checkInService.deleteReward(orgId, rewardId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

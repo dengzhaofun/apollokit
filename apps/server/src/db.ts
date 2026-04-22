@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { neon } from "@neondatabase/serverless";
 import { upstashCache } from "drizzle-orm/cache/upstash";
 import { drizzle as drizzleNeon, type NeonHttpDatabase } from "drizzle-orm/neon-http";
+import type { Pool as PgPool } from "pg";
 
 import * as schema from "./schema";
 
@@ -87,7 +88,7 @@ export const db: NeonHttpDatabase<typeof schema> = isNeon
         async end() {},
       };
       const drz = drizzle({
-        client: poolShim as unknown as pg.Pool,
+        client: poolShim as unknown as PgPool,
         schema,
         cache,
       });

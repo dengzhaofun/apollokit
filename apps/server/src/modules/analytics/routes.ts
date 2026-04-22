@@ -1,9 +1,14 @@
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { env } from "cloudflare:workers";
 
 import { deps } from "../../deps";
-import type { HonoEnv } from "../../env";
 import type { TenantPipeName } from "../../lib/analytics";
+import {
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
+import { makeApiRouter } from "../../lib/router";
 import { requireAuth } from "../../middleware/require-auth";
 
 import {
@@ -11,7 +16,7 @@ import {
   issueTokenResponseSchema,
 } from "./validators";
 
-export const analyticsRouter = new OpenAPIHono<HonoEnv>();
+export const analyticsRouter = makeApiRouter();
 analyticsRouter.use("*", requireAuth);
 
 const issueTokenRoute = createRoute({
@@ -33,10 +38,11 @@ const issueTokenRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": { schema: issueTokenResponseSchema },
+        "application/json": { schema: envelopeOf(issueTokenResponseSchema) },
       },
       description: "Signed JWT",
     },
+    ...commonErrorResponses,
   },
 });
 
@@ -56,12 +62,12 @@ analyticsRouter.openapi(issueTokenRoute, async (c) => {
   ).toISOString();
 
   return c.json(
-    {
+    ok({
       token,
       expiresAt,
       baseUrl: `${env.TINYBIRD_URL}/v0/pipes`,
       pipes,
-    },
+    }),
     200,
   );
 });

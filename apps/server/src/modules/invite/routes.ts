@@ -5,18 +5,20 @@
  * organizationId is read from session.activeOrganizationId.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAuth } from "../../middleware/require-auth";
 import { inviteService } from "./index";
 import {
   AdminListRelationshipsQuerySchema,
   EndUserIdParamSchema,
-  ErrorResponseSchema,
   InviteCodeViewSchema,
   InviteRelationshipListSchema,
   InviteRelationshipViewSchema,
@@ -94,42 +96,9 @@ function serializeSummary(s: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const inviteRouter = new OpenAPIHono<HonoEnv>();
+export const inviteRouter = makeApiRouter();
 
 inviteRouter.use("*", requireAuth);
-
-inviteRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 /* ── GET /settings ────────────────────────────────────────── */
 
@@ -143,17 +112,17 @@ inviteRouter.openapi(
         description: "Current invite settings (or defaults if never upserted).",
         content: {
           "application/json": {
-            schema: InviteSettingsViewSchema.nullable(),
+            schema: envelopeOf(InviteSettingsViewSchema.nullable()),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await inviteService.getSettings(orgId);
-    return c.json(row ? serializeSettings(row) : null, 200);
+    return c.json(ok(row ? serializeSettings(row) : null), 200);
   },
 );
 
@@ -173,17 +142,17 @@ inviteRouter.openapi(
       200: {
         description: "Updated settings row.",
         content: {
-          "application/json": { schema: InviteSettingsViewSchema },
+          "application/json": { schema: envelopeOf(InviteSettingsViewSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const body = c.req.valid("json");
     const row = await inviteService.upsertSettings(orgId, body);
-    return c.json(serializeSettings(row), 200);
+    return c.json(ok(serializeSettings(row)), 200);
   },
 );
 
@@ -199,10 +168,10 @@ inviteRouter.openapi(
       200: {
         description: "Paged invite relationships.",
         content: {
-          "application/json": { schema: InviteRelationshipListSchema },
+          "application/json": { schema: envelopeOf(InviteRelationshipListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -215,7 +184,7 @@ inviteRouter.openapi(
       qualifiedOnly: query.qualifiedOnly,
     });
     return c.json(
-      { items: items.map(serializeRelationship), total },
+      ok({ items: items.map(serializeRelationship), total }),
       200,
     );
   },
@@ -230,15 +199,18 @@ inviteRouter.openapi(
     tags: [TAG],
     request: { params: RelationshipIdParamSchema },
     responses: {
-      204: { description: "Deleted." },
-      ...errorResponses,
+      200: {
+        description: "Deleted.",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await inviteService.adminRevokeRelationship(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -253,16 +225,16 @@ inviteRouter.openapi(
     responses: {
       200: {
         description: "Summary for an end user.",
-        content: { "application/json": { schema: InviteSummaryViewSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteSummaryViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { endUserId } = c.req.valid("param");
     const summary = await inviteService.adminGetUserStats(orgId, endUserId);
-    return c.json(serializeSummary(summary), 200);
+    return c.json(ok(serializeSummary(summary)), 200);
   },
 );
 
@@ -277,9 +249,9 @@ inviteRouter.openapi(
     responses: {
       200: {
         description: "New code generated.",
-        content: { "application/json": { schema: InviteCodeViewSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteCodeViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -287,17 +259,14 @@ inviteRouter.openapi(
     const { endUserId } = c.req.valid("param");
     const result = await inviteService.adminResetUserCode(orgId, endUserId);
     return c.json(
-      {
+      ok({
         code: result.code,
         rotatedAt: result.rotatedAt.toISOString(),
-      },
+      }),
       200,
     );
   },
 );
-
-// Suppress unused-import warning if `z` ends up not being referenced here.
-void z;
 
 // Suppress unused-import warnings for schemas only used in openapi declarations.
 void InviteRelationshipViewSchema;

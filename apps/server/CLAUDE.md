@@ -168,26 +168,102 @@ Do **not** mount it globally on `app` in `src/index.ts`. Future public
 routes (API-key / JWT auth for tenant frontends) must be free of
 `requireAuth`, and a global mount would quietly break them.
 
-## Error handling — throw, map in router `onError`
+## Response envelope — every business endpoint returns `{code, data, message, requestId}`
 
-Routes throw `ModuleError` subclasses from handlers. Each router
-declares an `onError` that maps them:
+All business routes (everything under `/api/*` EXCEPT the Better Auth
+mounts `/api/auth/*` and `/api/client/auth/*`, which are third-party
+owned) return the standard envelope from
+`src/lib/response.ts`:
 
-```ts
-checkInRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      { error: err.message, code: err.code, requestId: c.get("requestId") },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err; // global app.onError → 500
-});
+```jsonc
+// success
+{ "code": "ok", "data": <payload>, "message": "", "requestId": "..." }
+// business error (HTTP 4xx)
+{ "code": "check_in.config_not_found", "data": null, "message": "...", "requestId": "..." }
+// validation error (HTTP 400)
+{ "code": "validation_error", "data": null, "message": "...", "requestId": "..." }
+// unhandled (HTTP 500)
+{ "code": "internal_error", "data": null, "message": "...", "requestId": "..." }
 ```
 
-Don't try to return `c.json(..., err.httpStatus)` inline per handler:
+HTTP status codes follow REST: success 2xx, business/validation 4xx,
+unhandled 5xx. Deletes and other "no payload" endpoints return HTTP
+200 with `data: null` — NEVER 204, so the SDK/frontend unwrap logic
+doesn't have to branch on status.
+
+### How to write a route
+
+1. Build the router with the factory, NOT `new OpenAPIHono<HonoEnv>()`:
+
+   ```ts
+   import { makeApiRouter } from "../../lib/router";
+   export const checkInRouter = makeApiRouter();
+   ```
+
+   The factory wires two things for you:
+   - `defaultHook` — Zod validation failures become the envelope with
+     `code: "validation_error"`, HTTP 400.
+   - `onError` — `ModuleError` instances become the envelope with the
+     subclass's `code` and `httpStatus`. Unknown errors rethrow to the
+     global `app.onError` which returns a 500 envelope.
+
+   **Do not** write a `router.onError(...)` block in a module — the
+   factory owns that. If you need module-specific error handling,
+   extend `ModuleError` with a new subclass.
+
+2. Wrap every success response schema in `envelopeOf(...)`:
+
+   ```ts
+   import { envelopeOf, commonErrorResponses, NullDataEnvelopeSchema } from "../../lib/response";
+
+   responses: {
+     200: {
+       description: "OK",
+       content: { "application/json": { schema: envelopeOf(CheckInConfigResponseSchema) } },
+     },
+     // delete / ack — 200 + null data (do NOT use 204)
+     200: {
+       description: "Deleted",
+       content: { "application/json": { schema: NullDataEnvelopeSchema } },
+     },
+     ...commonErrorResponses,  // 400 / 401 / 403 / 404 / 409 / 500
+   }
+   ```
+
+   This keeps the emitted OpenAPI spec honest about the wire format,
+   so the generated SDK types in `packages/sdk-*-ts` are accurate.
+
+3. Wrap every handler return in `ok(...)`:
+
+   ```ts
+   import { ok } from "../../lib/response";
+
+   return c.json(ok(serializeConfig(row)), 201);
+   return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+   return c.json(ok(null), 200);  // delete / ack
+   ```
+
+   `ok()` reads `requestId` from the `requestContext` AsyncLocalStorage —
+   the handler doesn't need to pass anything.
+
+4. **Do not** define a per-module `ErrorResponseSchema` in
+   `validators.ts`. The shared `ErrorEnvelopeSchema` in
+   `lib/response.ts` is what every 4xx/5xx response points at.
+
+### Why not wrap via middleware?
+
+A response-rewriting middleware would be smaller code, but the emitted
+OpenAPI spec would still declare the unwrapped payload as the response
+body — which would make every generated SDK type wrong. The explicit
+`envelopeOf(schema)` at the declaration site is the price we pay for
+accurate SDK contracts.
+
+### Don't try to return `c.json(..., err.httpStatus)` inline per handler
+
 `@hono/zod-openapi` requires every status literal to match a specific
-declared response, and a runtime-typed status won't narrow.
+declared response, and a runtime-typed status won't narrow. Throw
+`ModuleError` subclasses and let the router factory's `onError`
+translate them.
 
 ## Event history belongs to the unified behavior log (not here)
 

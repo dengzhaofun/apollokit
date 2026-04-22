@@ -16,58 +16,30 @@
  *   POST /{alias}/click       → fire-and-forget event
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { announcementService } from "./index";
 import {
   AliasParamSchema,
   ClientAnnouncementListResponseSchema,
-  ErrorResponseSchema,
 } from "./validators";
 
 const TAG = "Announcement (Client)";
 
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const announcementClientRouter = new OpenAPIHono<HonoEnv>();
+export const announcementClientRouter = makeApiRouter();
 
 announcementClientRouter.use("*", requireClientCredential);
 announcementClientRouter.use("*", requireClientUser);
-
-announcementClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 announcementClientRouter.openapi(
   createRoute({
@@ -83,11 +55,11 @@ announcementClientRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: ClientAnnouncementListResponseSchema,
+            schema: envelopeOf(ClientAnnouncementListResponseSchema),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -97,7 +69,7 @@ announcementClientRouter.openapi(
       orgId,
       endUserId,
     );
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -112,8 +84,13 @@ announcementClientRouter.openapi(
       params: AliasParamSchema,
     },
     responses: {
-      204: { description: "Recorded" },
-      ...errorResponses,
+      200: {
+        description: "Recorded",
+        content: {
+          "application/json": { schema: NullDataEnvelopeSchema },
+        },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -121,7 +98,7 @@ announcementClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { alias } = c.req.valid("param");
     await announcementService.recordImpression(orgId, alias, endUserId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -136,8 +113,13 @@ announcementClientRouter.openapi(
       params: AliasParamSchema,
     },
     responses: {
-      204: { description: "Recorded" },
-      ...errorResponses,
+      200: {
+        description: "Recorded",
+        content: {
+          "application/json": { schema: NullDataEnvelopeSchema },
+        },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -145,6 +127,6 @@ announcementClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { alias } = c.req.valid("param");
     await announcementService.recordClick(orgId, alias, endUserId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

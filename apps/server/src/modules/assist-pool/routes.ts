@@ -8,12 +8,16 @@
  * Guard: `requireAdminOrApiKey` — Better Auth session OR admin API key.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { ModuleError } from "./errors";
 import { assistPoolService } from "./index";
 import type {
   AssistPoolConfig,
@@ -32,7 +36,6 @@ import {
   ConfigIdParamSchema,
   ConfigKeyParamSchema,
   CreateConfigSchema,
-  ErrorResponseSchema,
   InstanceIdParamSchema,
   ListConfigsQuerySchema,
   ListInstancesQuerySchema,
@@ -98,42 +101,9 @@ function serializeContribution(row: AssistPoolContribution) {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const assistPoolRouter = new OpenAPIHono<HonoEnv>();
+export const assistPoolRouter = makeApiRouter();
 
 assistPoolRouter.use("*", requireAdminOrApiKey);
-
-assistPoolRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /configs
 assistPoolRouter.openapi(
@@ -151,10 +121,10 @@ assistPoolRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: AssistPoolConfigResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -163,7 +133,7 @@ assistPoolRouter.openapi(
       orgId,
       c.req.valid("json"),
     );
-    return c.json(serializeConfig(row), 201);
+    return c.json(ok(serializeConfig(row)), 201);
   },
 );
 
@@ -180,10 +150,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolConfigListSchema },
+          "application/json": { schema: envelopeOf(AssistPoolConfigListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -193,7 +163,7 @@ assistPoolRouter.openapi(
       activityId: q.activityId,
       includeActivity: q.includeActivity === "true",
     });
-    return c.json({ items: rows.map(serializeConfig) }, 200);
+    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
   },
 );
 
@@ -209,17 +179,17 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolConfigResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await assistPoolService.getConfig(orgId, key);
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -240,10 +210,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolConfigResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolConfigResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -254,7 +224,7 @@ assistPoolRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeConfig(row), 200);
+    return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
@@ -267,15 +237,18 @@ assistPoolRouter.openapi(
     summary: "Delete an assist-pool config (cascades to instances, contributions, ledger)",
     request: { params: ConfigIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await assistPoolService.deleteConfig(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -295,10 +268,10 @@ assistPoolRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: AssistPoolInstanceResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -309,7 +282,7 @@ assistPoolRouter.openapi(
       configKey: body.configKey,
       initiatorEndUserId: body.initiatorEndUserId,
     });
-    return c.json(serializeInstance(row), 201);
+    return c.json(ok(serializeInstance(row)), 201);
   },
 );
 
@@ -325,10 +298,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolInstanceListSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -341,7 +314,7 @@ assistPoolRouter.openapi(
       status: q.status,
       limit: q.limit,
     });
-    return c.json({ items: rows.map(serializeInstance) }, 200);
+    return c.json(ok({ items: rows.map(serializeInstance) }), 200);
   },
 );
 
@@ -357,17 +330,17 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolInstanceResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
-    return c.json(serializeInstance(row), 200);
+    return c.json(ok(serializeInstance(row)), 200);
   },
 );
 
@@ -383,17 +356,17 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolContributionListSchema },
+          "application/json": { schema: envelopeOf(AssistPoolContributionListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const rows = await assistPoolService.listContributions(orgId, instanceId);
-    return c.json({ items: rows.map(serializeContribution) }, 200);
+    return c.json(ok({ items: rows.map(serializeContribution) }), 200);
   },
 );
 
@@ -414,10 +387,10 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolContributeResultSchema },
+          "application/json": { schema: envelopeOf(AssistPoolContributeResultSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -430,12 +403,12 @@ assistPoolRouter.openapi(
       assisterEndUserId,
     });
     return c.json(
-      {
+      ok({
         instance: serializeInstance(res.instance),
         contribution: serializeContribution(res.contribution),
         completed: res.completed,
         rewards: res.rewards ? res.rewards.rewards : null,
-      },
+      }),
       200,
     );
   },
@@ -453,16 +426,16 @@ assistPoolRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: AssistPoolInstanceResponseSchema },
+          "application/json": { schema: envelopeOf(AssistPoolInstanceResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.forceExpireInstance(orgId, instanceId);
-    return c.json(serializeInstance(row), 200);
+    return c.json(ok(serializeInstance(row)), 200);
   },
 );

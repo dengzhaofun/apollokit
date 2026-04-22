@@ -5,15 +5,19 @@
  * relationship browsing/deletion.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { FriendSettingsNotFound, ModuleError } from "./errors";
+import { FriendSettingsNotFound } from "./errors";
 import { friendService } from "./index";
 import {
-  ErrorResponseSchema,
   FriendRelationshipListSchema,
   FriendSettingsResponseSchema,
   PaginationQuerySchema,
@@ -63,42 +67,9 @@ function serializeRelationship(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const friendRouter = new OpenAPIHono<HonoEnv>();
+export const friendRouter = makeApiRouter();
 
 friendRouter.use("*", requireAdminOrApiKey);
-
-friendRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // GET /friend/settings
 friendRouter.openapi(
@@ -111,17 +82,17 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendSettingsResponseSchema },
+          "application/json": { schema: envelopeOf(FriendSettingsResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await friendService.getSettings(orgId);
     if (!row) throw new FriendSettingsNotFound();
-    return c.json(serializeSettings(row), 200);
+    return c.json(ok(serializeSettings(row)), 200);
   },
 );
 
@@ -141,16 +112,16 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendSettingsResponseSchema },
+          "application/json": { schema: envelopeOf(FriendSettingsResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await friendService.upsertSettings(orgId, c.req.valid("json"));
-    return c.json(serializeSettings(row), 200);
+    return c.json(ok(serializeSettings(row)), 200);
   },
 );
 
@@ -166,10 +137,10 @@ friendRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: FriendRelationshipListSchema },
+          "application/json": { schema: envelopeOf(FriendRelationshipListSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -177,10 +148,10 @@ friendRouter.openapi(
     const { limit, offset } = c.req.valid("query");
     const result = await friendService.listRelationships(orgId, { limit, offset });
     return c.json(
-      {
+      ok({
         items: result.items.map(serializeRelationship),
         total: result.total,
-      },
+      }),
       200,
     );
   },
@@ -195,14 +166,17 @@ friendRouter.openapi(
     summary: "Force-remove a friend relationship (admin)",
     request: { params: RelationshipIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await friendService.deleteRelationship(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );

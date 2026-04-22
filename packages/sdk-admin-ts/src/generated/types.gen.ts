@@ -5,6 +5,408 @@ export type HealthResponse = {
     requestId: string;
 };
 
+export type IssueAnalyticsTokenBody = {
+    /**
+     * Pipes this JWT may query. Must be a non-empty subset.
+     */
+    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace'>;
+    /**
+     * Token lifetime. Default 600s (10 min).
+     */
+    ttlSeconds?: number;
+};
+
+export type IssueAnalyticsTokenResponse = {
+    token: string;
+    expiresAt: string;
+    /**
+     * Base URL for Tinybird pipes — concat `<pipe>.json?token=...`.
+     */
+    baseUrl: string;
+    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace'>;
+};
+
+export type AnnouncementList = {
+    items: Array<Announcement>;
+};
+
+export type AnnouncementErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type AnnouncementCreateRequest = {
+    /**
+     * Organization-scoped stable slug. Must be unique within the tenant.
+     */
+    alias: string;
+    /**
+     * 'modal' = one-shot popup on app start; 'feed' = persistent list item; 'ticker' = scrolling short-text banner. Clients decide how to render.
+     */
+    kind: 'modal' | 'feed' | 'ticker';
+    title: string;
+    /**
+     * Markdown. Rendered by the client.
+     */
+    body: string;
+    coverImageUrl?: string | null;
+    ctaUrl?: string | null;
+    ctaLabel?: string | null;
+    priority?: number;
+    /**
+     * Visual tone hint for the client — info / warning / urgent.
+     */
+    severity?: 'info' | 'warning' | 'urgent';
+    isActive?: boolean;
+    visibleFrom?: string | null;
+    visibleUntil?: string | null;
+};
+
+export type Announcement = {
+    id: string;
+    organizationId: string;
+    alias: string;
+    /**
+     * 'modal' = one-shot popup on app start; 'feed' = persistent list item; 'ticker' = scrolling short-text banner. Clients decide how to render.
+     */
+    kind: 'modal' | 'feed' | 'ticker';
+    title: string;
+    body: string;
+    coverImageUrl: string | null;
+    ctaUrl: string | null;
+    ctaLabel: string | null;
+    priority: number;
+    /**
+     * Visual tone hint for the client — info / warning / urgent.
+     */
+    severity: 'info' | 'warning' | 'urgent';
+    isActive: boolean;
+    visibleFrom: string | null;
+    visibleUntil: string | null;
+    createdBy: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type AnnouncementUpdateRequest = {
+    /**
+     * 'modal' = one-shot popup on app start; 'feed' = persistent list item; 'ticker' = scrolling short-text banner. Clients decide how to render.
+     */
+    kind?: 'modal' | 'feed' | 'ticker';
+    title?: string;
+    /**
+     * Markdown. Rendered by the client.
+     */
+    body?: string;
+    coverImageUrl?: string | null;
+    ctaUrl?: string | null;
+    ctaLabel?: string | null;
+    priority?: number;
+    /**
+     * Visual tone hint for the client — info / warning / urgent.
+     */
+    severity?: 'info' | 'warning' | 'urgent';
+    isActive?: boolean;
+    visibleFrom?: string | null;
+    visibleUntil?: string | null;
+};
+
+export type BannerGroupList = {
+    items: Array<BannerGroup>;
+};
+
+export type BannerErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type BannerGroupCreateRequest = {
+    /**
+     * Organization-scoped slug for client lookup. A group without an alias is effectively a draft — client API can't resolve it.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    layout?: 'carousel' | 'single' | 'grid';
+    intervalMs?: number;
+    isActive?: boolean;
+    /**
+     * Bind this banner group to an activity. Null means a permanent placement.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type BannerGroup = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    layout: 'carousel' | 'single' | 'grid';
+    intervalMs: number;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type BannerGroupUpdateRequest = {
+    /**
+     * Organization-scoped slug for client lookup. A group without an alias is effectively a draft — client API can't resolve it.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    layout?: 'carousel' | 'single' | 'grid';
+    intervalMs?: number;
+    isActive?: boolean;
+    /**
+     * Bind this banner group to an activity. Null means a permanent placement.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type BannerList = {
+    items: Array<Banner>;
+};
+
+export type BannerCreateRequest = {
+    title: string;
+    imageUrlMobile: string;
+    imageUrlDesktop: string;
+    altText?: string | null;
+    linkAction: LinkAction;
+    sortOrder?: number;
+    visibleFrom?: string | null;
+    visibleUntil?: string | null;
+    /**
+     * 'broadcast' = visible to every end user; 'multicast' = visible only to listed endUserIds.
+     */
+    targetType?: 'broadcast' | 'multicast';
+    /**
+     * Required and 1..5000 when targetType='multicast'; must be omitted/null when targetType='broadcast'.
+     */
+    targetUserIds?: Array<string> | null;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type Banner = {
+    id: string;
+    organizationId: string;
+    groupId: string;
+    title: string;
+    imageUrlMobile: string;
+    imageUrlDesktop: string;
+    altText: string | null;
+    linkAction: LinkAction;
+    sortOrder: number;
+    visibleFrom: string | null;
+    visibleUntil: string | null;
+    /**
+     * 'broadcast' = visible to every end user; 'multicast' = visible only to listed endUserIds.
+     */
+    targetType: 'broadcast' | 'multicast';
+    targetUserIds: Array<string> | null;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type BannerReorderRequest = {
+    bannerIds: Array<string>;
+};
+
+export type BannerUpdateRequest = {
+    title?: string;
+    imageUrlMobile?: string;
+    imageUrlDesktop?: string;
+    altText?: string | null;
+    linkAction?: LinkAction;
+    sortOrder?: number;
+    visibleFrom?: string | null;
+    visibleUntil?: string | null;
+    /**
+     * 'broadcast' = visible to every end user; 'multicast' = visible only to listed endUserIds.
+     */
+    targetType?: 'broadcast' | 'multicast';
+    /**
+     * Required and 1..5000 when targetType='multicast'; must be omitted/null when targetType='broadcast'.
+     */
+    targetUserIds?: Array<string> | null;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CdkeyCreateBatch = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    /**
+     * 'universal' = one shared string for many users (limited by totalLimit/perUserLimit). 'unique' = each string redeemable once; supply initialCount to batch-generate.
+     */
+    codeType: 'universal' | 'unique';
+    /**
+     * Items granted on successful redemption.
+     */
+    reward: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    totalLimit?: number | null;
+    /**
+     * Max redemptions per end-user on this batch. Default 1. Only enforced for universal batches.
+     */
+    perUserLimit?: number;
+    startsAt?: string | null;
+    endsAt?: string | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * For universal batches: the shared code string. If omitted, one is generated.
+     */
+    universalCode?: string;
+    /**
+     * For unique batches: number of codes to pre-generate.
+     */
+    initialCount?: number;
+};
+
+export type CdkeyBatch = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    /**
+     * 'universal' = one shared string for many users (limited by totalLimit/perUserLimit). 'unique' = each string redeemable once; supply initialCount to batch-generate.
+     */
+    codeType: 'universal' | 'unique';
+    reward: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    totalLimit: number | null;
+    perUserLimit: number;
+    totalRedeemed: number;
+    startsAt: string | null;
+    endsAt: string | null;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CdkeyErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type CdkeyBatchList = {
+    items: Array<CdkeyBatch>;
+};
+
+export type CdkeyUpdateBatch = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    reward?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    totalLimit?: number | null;
+    perUserLimit?: number;
+    startsAt?: string | null;
+    endsAt?: string | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CdkeyGenerateCodes = {
+    count: number;
+};
+
+export type CdkeyGenerateCodesResult = {
+    generated: number;
+};
+
+export type CdkeyCodeList = {
+    items: Array<CdkeyCode>;
+    total: number;
+};
+
+export type CdkeyCode = {
+    id: string;
+    organizationId: string;
+    batchId: string;
+    code: string;
+    status: string;
+    redeemedBy: string | null;
+    redeemedAt: string | null;
+    createdAt: string;
+};
+
+export type CdkeyRedemptionLogList = {
+    items: Array<CdkeyRedemptionLog>;
+    total: number;
+};
+
+export type CdkeyAdminRedeemRequest = {
+    code: string;
+    endUserId: string;
+    idempotencyKey: string;
+};
+
+export type CdkeyRedeemResult = {
+    status: 'success' | 'already_redeemed';
+    batchId: string;
+    codeId: string;
+    code: string;
+    reward: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    logId: string;
+};
+
 export type CheckInCreateConfig = {
     name: string;
     /**
@@ -29,6 +431,14 @@ export type CheckInCreateConfig = {
      */
     timezone?: string;
     isActive?: boolean;
+    /**
+     * When set, the config is an activity-scoped check-in that belongs to the given activity. Null = standalone.
+     */
+    activityId?: string | null;
+    /**
+     * When set alongside activityId, points at the specific activity node this config is mounted on.
+     */
+    activityNodeId?: string | null;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -89,6 +499,14 @@ export type CheckInUpdateConfig = {
     timezone?: string;
     isActive?: boolean;
     /**
+     * When set, the config is an activity-scoped check-in that belongs to the given activity. Null = standalone.
+     */
+    activityId?: string | null;
+    /**
+     * When set alongside activityId, points at the specific activity node this config is mounted on.
+     */
+    activityNodeId?: string | null;
+    /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
     metadata?: {
@@ -115,8 +533,9 @@ export type CheckInResult = {
     isCompleted: boolean;
     remaining: number | null;
     rewards?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }> | null;
 };
 
@@ -136,8 +555,9 @@ export type CheckInCreateReward = {
      * Items to grant on this day.
      */
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     metadata?: {
         [key: string]: unknown;
@@ -150,8 +570,9 @@ export type CheckInReward = {
     organizationId: string;
     dayNumber: number;
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     metadata: {
         [key: string]: unknown;
@@ -167,8 +588,9 @@ export type CheckInRewardList = {
 export type CheckInUpdateReward = {
     dayNumber?: number;
     rewardItems?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     metadata?: {
         [key: string]: unknown;
@@ -233,6 +655,1090 @@ export type RotateResult = {
 
 export type UpdateDevMode = {
     devMode: boolean;
+};
+
+export type SyncEndUser = {
+    /**
+     * Opaque id in the tenant's own user system.
+     */
+    externalId?: string;
+    email: string;
+    name: string;
+    image?: string | null;
+    emailVerified?: boolean;
+};
+
+export type SyncEndUserResponse = {
+    euUserId: string;
+    /**
+     * true when this call inserted a new row, false when it merged onto an existing row.
+     */
+    created: boolean;
+};
+
+export type EndUserListResponse = {
+    items: Array<EndUserView>;
+    total: number;
+};
+
+export type EndUserView = {
+    id: string;
+    email: string;
+    name: string;
+    image: string | null;
+    emailVerified: boolean;
+    externalId: string | null;
+    disabled: boolean;
+    origin: 'managed' | 'synced';
+    sessionCount: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UpdateEndUser = {
+    name?: string;
+    image?: string | null;
+    emailVerified?: boolean;
+};
+
+export type SignOutAllResponse = {
+    revoked: number;
+};
+
+export type CollectionCreateAlbum = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    description?: string | null;
+    coverImage?: string | null;
+    icon?: string | null;
+    /**
+     * Display classification for the album. Non-semantic — affects UI only.
+     */
+    scope?: 'hero' | 'monster' | 'equipment' | 'custom';
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionAlbum = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    icon: string | null;
+    scope: string;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CollectionErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type CollectionAlbumList = {
+    items: Array<CollectionAlbum>;
+};
+
+export type CollectionUpdateAlbum = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    description?: string | null;
+    coverImage?: string | null;
+    icon?: string | null;
+    /**
+     * Display classification for the album. Non-semantic — affects UI only.
+     */
+    scope?: 'hero' | 'monster' | 'equipment' | 'custom';
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionCreateGroup = {
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionGroup = {
+    id: string;
+    albumId: string;
+    organizationId: string;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CollectionGroupList = {
+    items: Array<CollectionGroup>;
+};
+
+export type CollectionUpdateGroup = {
+    name?: string;
+    description?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionCreateEntry = {
+    groupId?: string | null;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    image?: string | null;
+    rarity?: string | null;
+    sortOrder?: number;
+    hiddenUntilUnlocked?: boolean;
+    /**
+     * How entries unlock. Only 'item' is implemented in MVP; 'event' is reserved.
+     */
+    triggerType?: 'item' | 'event';
+    triggerItemDefinitionId?: string | null;
+    triggerQuantity?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionEntry = {
+    id: string;
+    albumId: string;
+    groupId: string | null;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    image: string | null;
+    rarity: string | null;
+    sortOrder: number;
+    hiddenUntilUnlocked: boolean;
+    triggerType: string;
+    triggerItemDefinitionId: string | null;
+    triggerQuantity: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CollectionEntryList = {
+    items: Array<CollectionEntry>;
+};
+
+export type CollectionBulkCreateEntries = {
+    /**
+     * Batch of entries to create under this album.
+     */
+    entries: Array<CollectionCreateEntry>;
+};
+
+export type CollectionUpdateEntry = {
+    groupId?: string | null;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    image?: string | null;
+    rarity?: string | null;
+    sortOrder?: number;
+    hiddenUntilUnlocked?: boolean;
+    /**
+     * How entries unlock. Only 'item' is implemented in MVP; 'event' is reserved.
+     */
+    triggerType?: 'item' | 'event';
+    triggerItemDefinitionId?: string | null;
+    triggerQuantity?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionCreateMilestone = {
+    /**
+     * Milestone granularity: 'entry' (per-card), 'group' (per-chapter), 'album' (per-book).
+     */
+    scope: 'entry' | 'group' | 'album';
+    groupId?: string | null;
+    entryId?: string | null;
+    threshold?: number;
+    label?: string | null;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    autoClaim?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionMilestone = {
+    id: string;
+    organizationId: string;
+    albumId: string;
+    scope: string;
+    groupId: string | null;
+    entryId: string | null;
+    threshold: number;
+    label: string | null;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    autoClaim: boolean;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CollectionMilestoneList = {
+    items: Array<CollectionMilestone>;
+};
+
+export type CollectionUpdateMilestone = {
+    threshold?: number;
+    label?: string | null;
+    rewardItems?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    autoClaim?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectionStats = {
+    albumId: string;
+    totalEndUsers: number;
+    entries: Array<{
+        entryId: string;
+        name: string;
+        unlockedCount: number;
+    }>;
+    milestones: Array<{
+        milestoneId: string;
+        scope: string;
+        threshold: number;
+        claimedCount: number;
+    }>;
+};
+
+export type CollectionRescanBody = {
+    endUserId: string;
+};
+
+export type CollectionSyncResponse = {
+    /**
+     * Entry ids that were newly unlocked by this sync.
+     */
+    unlocked: Array<string>;
+};
+
+export type CurrencyCreateDefinition = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Soft link to activity_configs.id when the currency is activity-scoped. NULL = permanent.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CurrencyDefinition = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    sortOrder: number;
+    isActive: boolean;
+    activityId: string | null;
+    activityNodeId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CurrencyErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type CurrencyDefinitionList = {
+    items: Array<CurrencyDefinition>;
+};
+
+export type CurrencyUpdateDefinition = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CurrencyWalletList = {
+    items: Array<CurrencyWalletView>;
+};
+
+export type CurrencyBalance = {
+    currencyId: string;
+    balance: number;
+};
+
+export type CurrencyGrantRequest = {
+    /**
+     * The end user's business id.
+     */
+    endUserId: string;
+    grants: Array<{
+        currencyId: string;
+        amount: number;
+    }>;
+    source: string;
+    sourceId?: string;
+};
+
+export type CurrencyGrantResult = {
+    grants: Array<{
+        currencyId: string;
+        balanceBefore: number;
+        balanceAfter: number;
+        delta: number;
+    }>;
+};
+
+export type CurrencyDeductRequest = {
+    endUserId: string;
+    deductions: Array<{
+        currencyId: string;
+        amount: number;
+    }>;
+    source: string;
+    sourceId?: string;
+};
+
+export type CurrencyDeductResult = {
+    deductions: Array<{
+        currencyId: string;
+        balanceBefore: number;
+        balanceAfter: number;
+        delta: number;
+    }>;
+};
+
+export type CurrencyLedgerList = {
+    items: Array<CurrencyLedgerEntry>;
+    nextCursor?: string;
+};
+
+export type DialogueScriptList = {
+    items: Array<DialogueScript>;
+};
+
+export type DialogueErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type DialogueScriptCreateRequest = {
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    startNodeId: string;
+    nodes: Array<{
+        id: string;
+        speaker: {
+            name: string;
+            avatarUrl?: string;
+            side: 'left' | 'right';
+        };
+        content: string;
+        next?: string;
+        options?: Array<{
+            id: string;
+            label: string;
+            next?: string;
+            action?: LinkAction;
+            rewards?: Array<{
+                definitionId: string;
+                quantity: number;
+            }>;
+        }>;
+        onEnter?: {
+            rewards?: Array<{
+                definitionId: string;
+                quantity: number;
+            }>;
+        };
+    }>;
+    triggerCondition?: {
+        kind: 'manual';
+    } | {
+        kind: 'onLogin';
+    } | {
+        kind: 'onScriptComplete';
+        scriptAlias: string;
+    } | {
+        kind: 'onLevel';
+        minLevel: number;
+    } | null;
+    repeatable?: boolean;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type DialogueScript = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    startNodeId: string;
+    nodes: Array<DialogueNode>;
+    triggerCondition: {
+        kind: 'manual';
+    } | {
+        kind: 'onLogin';
+    } | {
+        kind: 'onScriptComplete';
+        scriptAlias: string;
+    } | {
+        kind: 'onLevel';
+        minLevel: number;
+    } | null;
+    repeatable: boolean;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type DialogueScriptUpdateRequest = {
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    startNodeId?: string;
+    nodes?: Array<{
+        id: string;
+        speaker: {
+            name: string;
+            avatarUrl?: string;
+            side: 'left' | 'right';
+        };
+        content: string;
+        next?: string;
+        options?: Array<{
+            id: string;
+            label: string;
+            next?: string;
+            action?: LinkAction;
+            rewards?: Array<{
+                definitionId: string;
+                quantity: number;
+            }>;
+        }>;
+        onEnter?: {
+            rewards?: Array<{
+                definitionId: string;
+                quantity: number;
+            }>;
+        };
+    }>;
+    triggerCondition?: {
+        kind: 'manual';
+    } | {
+        kind: 'onLogin';
+    } | {
+        kind: 'onScriptComplete';
+        scriptAlias: string;
+    } | {
+        kind: 'onLevel';
+        minLevel: number;
+    } | null;
+    repeatable?: boolean;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntitySchema = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    statDefinitions: Array<{
+        key: string;
+        label: string;
+        type: 'integer' | 'decimal';
+        defaultValue: number;
+    }>;
+    tagDefinitions: Array<{
+        key: string;
+        label: string;
+        values: Array<string>;
+    }>;
+    slotDefinitions: Array<{
+        key: string;
+        label: string;
+        acceptsSchemaIds: Array<string>;
+        acceptsTags?: {
+            [key: string]: string | Array<string>;
+        };
+        maxCount: number;
+    }>;
+    levelConfig: {
+        enabled: boolean;
+        maxLevel: number;
+    };
+    rankConfig: {
+        enabled: boolean;
+        ranks: Array<{
+            key: string;
+            label: string;
+            order: number;
+        }>;
+    };
+    synthesisConfig: {
+        enabled: boolean;
+        sameBlueprint: boolean;
+        inputCount: number;
+    };
+    sortOrder: number;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type EntityCreateSchema = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    statDefinitions?: Array<{
+        key: string;
+        label: string;
+        type: 'integer' | 'decimal';
+        defaultValue: number;
+    }>;
+    tagDefinitions?: Array<{
+        key: string;
+        label: string;
+        values: Array<string>;
+    }>;
+    slotDefinitions?: Array<{
+        key: string;
+        label: string;
+        acceptsSchemaIds: Array<string>;
+        acceptsTags?: {
+            [key: string]: string | Array<string>;
+        };
+        maxCount: number;
+    }>;
+    levelConfig?: {
+        enabled: boolean;
+        maxLevel: number;
+    };
+    rankConfig?: {
+        enabled: boolean;
+        ranks: Array<{
+            key: string;
+            label: string;
+            order: number;
+        }>;
+    };
+    synthesisConfig?: {
+        enabled: boolean;
+        sameBlueprint: boolean;
+        inputCount: number;
+    };
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityUpdateSchema = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    statDefinitions?: Array<{
+        key: string;
+        label: string;
+        type: 'integer' | 'decimal';
+        defaultValue: number;
+    }>;
+    tagDefinitions?: Array<{
+        key: string;
+        label: string;
+        values: Array<string>;
+    }>;
+    slotDefinitions?: Array<{
+        key: string;
+        label: string;
+        acceptsSchemaIds: Array<string>;
+        acceptsTags?: {
+            [key: string]: string | Array<string>;
+        };
+        maxCount: number;
+    }>;
+    levelConfig?: {
+        enabled: boolean;
+        maxLevel: number;
+    };
+    rankConfig?: {
+        enabled: boolean;
+        ranks: Array<{
+            key: string;
+            label: string;
+            order: number;
+        }>;
+    };
+    synthesisConfig?: {
+        enabled: boolean;
+        sameBlueprint: boolean;
+        inputCount: number;
+    };
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityBlueprint = {
+    id: string;
+    organizationId: string;
+    schemaId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    rarity: string | null;
+    tags: {
+        [key: string]: string;
+    };
+    assets: {
+        [key: string]: string;
+    };
+    baseStats: {
+        [key: string]: number;
+    };
+    statGrowth: {
+        [key: string]: number;
+    };
+    levelUpCosts: Array<{
+        level: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    rankUpCosts: Array<{
+        fromRank: string;
+        toRank: string;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        statBonuses: {
+            [key: string]: number;
+        };
+    }>;
+    synthesisCost: {
+        inputCount: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        resultBonuses: {
+            [key: string]: number;
+        };
+    } | null;
+    maxLevel: number | null;
+    sortOrder: number;
+    isActive: boolean;
+    activityId: string | null;
+    activityNodeId: string | null;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type EntityCreateBlueprint = {
+    schemaId: string;
+    name: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    rarity?: string | null;
+    tags?: {
+        [key: string]: string;
+    };
+    assets?: {
+        [key: string]: string;
+    };
+    baseStats?: {
+        [key: string]: number;
+    };
+    statGrowth?: {
+        [key: string]: number;
+    };
+    levelUpCosts?: Array<{
+        level: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    rankUpCosts?: Array<{
+        fromRank: string;
+        toRank: string;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        statBonuses: {
+            [key: string]: number;
+        };
+    }>;
+    synthesisCost?: {
+        inputCount: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        resultBonuses: {
+            [key: string]: number;
+        };
+    } | null;
+    maxLevel?: number | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Soft link to activity_configs.id when the blueprint is activity-scoped. NULL = permanent.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityUpdateBlueprint = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    rarity?: string | null;
+    tags?: {
+        [key: string]: string;
+    };
+    assets?: {
+        [key: string]: string;
+    };
+    baseStats?: {
+        [key: string]: number;
+    };
+    statGrowth?: {
+        [key: string]: number;
+    };
+    levelUpCosts?: Array<{
+        level: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    rankUpCosts?: Array<{
+        fromRank: string;
+        toRank: string;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        statBonuses: {
+            [key: string]: number;
+        };
+    }>;
+    synthesisCost?: {
+        inputCount: number;
+        cost: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+        resultBonuses: {
+            [key: string]: number;
+        };
+    } | null;
+    maxLevel?: number | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntitySkin = {
+    id: string;
+    organizationId: string;
+    blueprintId: string;
+    alias: string | null;
+    name: string;
+    rarity: string | null;
+    assets: {
+        [key: string]: string;
+    };
+    statBonuses: {
+        [key: string]: number;
+    };
+    isDefault: boolean;
+    sortOrder: number;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type EntityCreateSkin = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    rarity?: string | null;
+    assets?: {
+        [key: string]: string;
+    };
+    statBonuses?: {
+        [key: string]: number;
+    };
+    isDefault?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityUpdateSkin = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    rarity?: string | null;
+    assets?: {
+        [key: string]: string;
+    };
+    statBonuses?: {
+        [key: string]: number;
+    };
+    isDefault?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityFormationConfig = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    maxFormations: number;
+    maxSlots: number;
+    acceptsSchemaIds: Array<string>;
+    allowDuplicateBlueprints: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type EntityCreateFormationConfig = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    maxFormations?: number;
+    maxSlots?: number;
+    acceptsSchemaIds?: Array<string>;
+    allowDuplicateBlueprints?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type EntityUpdateFormationConfig = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its scope.
+     */
+    alias?: string | null;
+    maxFormations?: number;
+    maxSlots?: number;
+    acceptsSchemaIds?: Array<string>;
+    allowDuplicateBlueprints?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 export type ItemCreateCategory = {
@@ -323,6 +1829,11 @@ export type ItemCreateDefinition = {
     holdLimit?: number | null;
     isActive?: boolean;
     /**
+     * Soft link to activity_configs.id when the item is activity-scoped. NULL = permanent.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
     metadata?: {
@@ -342,6 +1853,8 @@ export type ItemDefinition = {
     stackLimit: number | null;
     holdLimit: number | null;
     isActive: boolean;
+    activityId: string | null;
+    activityNodeId: string | null;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -366,6 +1879,8 @@ export type ItemUpdateDefinition = {
     stackLimit?: number | null;
     holdLimit?: number | null;
     isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -508,15 +2023,17 @@ export type ExchangeCreateOption = {
      * Resources consumed.
      */
     costItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     /**
      * Resources rewarded.
      */
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     userLimit?: number | null;
     globalLimit?: number | null;
@@ -537,12 +2054,14 @@ export type ExchangeOption = {
     name: string;
     description: string | null;
     costItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     userLimit: number | null;
     globalLimit: number | null;
@@ -564,12 +2083,14 @@ export type ExchangeUpdateOption = {
     name?: string;
     description?: string | null;
     costItems?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     rewardItems?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     userLimit?: number | null;
     globalLimit?: number | null;
@@ -599,12 +2120,14 @@ export type ExchangeResult = {
     exchangeId: string;
     optionId: string;
     costItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
 };
 
@@ -612,6 +2135,358 @@ export type ExchangeUserState = {
     optionId: string;
     endUserId: string;
     count: number;
+};
+
+export type FriendSettings = {
+    id: string;
+    organizationId: string;
+    maxFriends: number;
+    maxBlocked: number;
+    maxPendingRequests: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type FriendErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type FriendUpsertSettings = {
+    /**
+     * Maximum number of friends per user.
+     */
+    maxFriends?: number;
+    /**
+     * Maximum number of blocked users per user.
+     */
+    maxBlocked?: number;
+    /**
+     * Maximum number of outgoing pending requests per user.
+     */
+    maxPendingRequests?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type FriendRelationshipList = {
+    items: Array<FriendRelationship>;
+    total: number;
+};
+
+export type FriendGiftSettings = {
+    id: string;
+    organizationId: string;
+    dailySendLimit: number;
+    dailyReceiveLimit: number;
+    timezone: string;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type FriendGiftErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type FriendGiftUpsertSettings = {
+    /**
+     * Maximum number of gifts a user can send per day.
+     */
+    dailySendLimit?: number;
+    /**
+     * Maximum number of gifts a user can receive per day.
+     */
+    dailyReceiveLimit?: number;
+    /**
+     * IANA timezone id, e.g. 'Asia/Shanghai'.
+     */
+    timezone?: string;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type FriendGiftCreatePackage = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    /**
+     * Items deducted from sender and granted to receiver.
+     */
+    giftItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type FriendGiftPackage = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    giftItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive: boolean;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type FriendGiftPackageList = {
+    items: Array<FriendGiftPackage>;
+};
+
+export type FriendGiftUpdatePackage = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    giftItems?: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    isActive?: boolean;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type FriendGiftSendList = {
+    items: Array<FriendGiftSendRecord>;
+};
+
+export type FriendGiftSendRecord = {
+    id: string;
+    organizationId: string;
+    packageId: string | null;
+    senderUserId: string;
+    receiverUserId: string;
+    giftItems: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    status: string;
+    claimedAt: string | null;
+    expiresAt: string | null;
+    message: string | null;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type InviteSettingsView = {
+    organizationId: string;
+    enabled: boolean;
+    codeLength: number;
+    allowSelfInvite: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+} | null;
+
+export type UpsertInviteSettingsInput = {
+    enabled?: boolean;
+    codeLength?: number;
+    allowSelfInvite?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    };
+};
+
+export type InviteRelationshipList = {
+    items: Array<InviteRelationshipView>;
+    total: number;
+};
+
+export type InviteSummaryView = {
+    myCode: string;
+    myCodeRotatedAt: string | null;
+    boundCount: number;
+    qualifiedCount: number;
+    invitedBy: {
+        inviterEndUserId: string;
+        boundAt: string;
+        qualifiedAt: string | null;
+    } | null;
+};
+
+export type InviteCodeView = {
+    /**
+     * Human-readable form with dashes, e.g. ABCD-EFGH
+     */
+    code: string;
+    rotatedAt: string | null;
+};
+
+export type GuildSettings = {
+    id: string;
+    organizationId: string;
+    maxMembers: number;
+    maxOfficers: number;
+    createCost: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    levelUpRules: Array<{
+        level: number;
+        expRequired: number;
+        memberCapBonus: number;
+    }> | null;
+    joinMode: string;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type GuildErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type GuildUpsertSettings = {
+    maxMembers?: number;
+    maxOfficers?: number;
+    createCost?: Array<{
+        definitionId: string;
+        quantity: number;
+    }>;
+    levelUpRules?: Array<{
+        level: number;
+        expRequired: number;
+        memberCapBonus: number;
+    }> | null;
+    /**
+     * open = anyone can join, request = approval needed, closed = no new members.
+     */
+    joinMode?: 'open' | 'request' | 'closed';
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type GuildList = {
+    items: Array<Guild>;
+    total: number;
+};
+
+export type Guild = {
+    id: string;
+    organizationId: string;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    announcement: string | null;
+    leaderUserId: string;
+    level: number;
+    experience: number;
+    memberCount: number;
+    maxMembers: number;
+    joinMode: string;
+    isActive: boolean;
+    disbandedAt: string | null;
+    version: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type GuildUpdate = {
+    name?: string;
+    description?: string | null;
+    icon?: string | null;
+    announcement?: string | null;
+    /**
+     * open = anyone can join, request = approval needed, closed = no new members.
+     */
+    joinMode?: 'open' | 'request' | 'closed';
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type GuildGrantExp = {
+    amount: number;
+    source: string;
+    sourceId?: string | null;
+};
+
+export type GuildContributionLog = {
+    id: string;
+    organizationId: string;
+    guildId: string;
+    endUserId: string;
+    delta: number;
+    guildExpDelta: number;
+    source: string;
+    sourceId: string | null;
+    createdAt: string;
+};
+
+export type GuildMemberList = {
+    items: Array<GuildMember>;
+};
+
+export type GuildJoinRequestList = {
+    items: Array<GuildJoinRequest>;
+};
+
+export type GuildContributionLogList = {
+    items: Array<GuildContributionLog>;
 };
 
 export type LotteryCreatePool = {
@@ -625,13 +2500,16 @@ export type LotteryCreatePool = {
      * Cost per single pull. Empty array for item-triggered pools.
      */
     costPerPull?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     isActive?: boolean;
     startAt?: string | null;
     endAt?: string | null;
     globalPullLimit?: number | null;
+    activityId?: string | null;
+    activityNodeId?: string | null;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -647,8 +2525,9 @@ export type LotteryPool = {
     name: string;
     description: string | null;
     costPerPull: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     isActive: boolean;
     startAt: string | null;
@@ -680,13 +2559,16 @@ export type LotteryUpdatePool = {
     alias?: string | null;
     description?: string | null;
     costPerPull?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     isActive?: boolean;
     startAt?: string | null;
     endAt?: string | null;
     globalPullLimit?: number | null;
+    activityId?: string | null;
+    activityNodeId?: string | null;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -765,8 +2647,9 @@ export type LotteryCreatePrize = {
      * Items granted on win. Empty array for 'Better luck next time'.
      */
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     /**
      * Selection weight (relative).
@@ -794,8 +2677,9 @@ export type LotteryPrize = {
     name: string;
     description: string | null;
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     weight: number;
     isRateUp: boolean;
@@ -820,8 +2704,9 @@ export type LotteryUpdatePrize = {
     name?: string;
     description?: string | null;
     rewardItems?: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     weight?: number;
     isRateUp?: boolean;
@@ -910,8 +2795,9 @@ export type LotteryPullResult = {
     poolId: string;
     endUserId: string;
     costItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     pulls: Array<{
         batchIndex: number;
@@ -920,8 +2806,9 @@ export type LotteryPullResult = {
         tierId: string | null;
         tierName: string | null;
         rewardItems: Array<{
-            definitionId: string;
-            quantity: number;
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
         }>;
         pityTriggered: boolean;
         pityRuleId: string | null;
@@ -963,8 +2850,9 @@ export type MailCreateRequest = {
      * Optional reward list. Empty = informational-only mail.
      */
     rewards: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     /**
      * 'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).
@@ -990,8 +2878,9 @@ export type MailMessage = {
     title: string;
     content: string;
     rewards: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     /**
      * 'broadcast' = visible to every end user in the org; 'multicast' = visible only to listed endUserIds (unicast = length 1).
@@ -1026,6 +2915,2420 @@ export type MailMessageWithStats = MailMessage & {
     targetCount: number | null;
 };
 
+export type ShopCreateCategory = {
+    parentId?: string | null;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    coverImage?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopCategory = {
+    id: string;
+    organizationId: string;
+    parentId: string | null;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    icon: string | null;
+    level: number;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ShopErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type ShopCategoryList = {
+    items: Array<ShopCategory>;
+};
+
+export type ShopCategoryTree = {
+    items: Array<ShopCategoryTreeNode>;
+};
+
+export type ShopUpdateCategory = {
+    parentId?: string | null;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    coverImage?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopCreateTag = {
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name: string;
+    /**
+     * Badge color hex (with or without leading #).
+     */
+    color?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopTag = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    color: string | null;
+    icon: string | null;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ShopTagList = {
+    items: Array<ShopTag>;
+};
+
+export type ShopUpdateTag = {
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name?: string;
+    /**
+     * Badge color hex (with or without leading #).
+     */
+    color?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    icon?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopCreateProduct = {
+    categoryId?: string | null;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    coverImage?: string | null;
+    galleryImages?: Array<string> | null;
+    productType?: 'regular' | 'growth_pack';
+    costItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardItems?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    timeWindowType?: 'none' | 'absolute' | 'relative' | 'cyclic';
+    availableFrom?: string | null;
+    availableTo?: string | null;
+    eligibilityAnchor?: 'user_created' | 'first_purchase' | null;
+    eligibilityWindowSeconds?: number | null;
+    refreshCycle?: 'daily' | 'weekly' | 'monthly' | null;
+    refreshLimit?: number | null;
+    userLimit?: number | null;
+    globalLimit?: number | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+    tagIds?: Array<string>;
+};
+
+export type ShopProduct = {
+    id: string;
+    organizationId: string;
+    categoryId: string | null;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    galleryImages: Array<string> | null;
+    productType: 'regular' | 'growth_pack';
+    costItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    timeWindowType: 'none' | 'absolute' | 'relative' | 'cyclic';
+    availableFrom: string | null;
+    availableTo: string | null;
+    eligibilityAnchor: 'user_created' | 'first_purchase' | null;
+    eligibilityWindowSeconds: number | null;
+    refreshCycle: 'daily' | 'weekly' | 'monthly' | null;
+    refreshLimit: number | null;
+    userLimit: number | null;
+    globalLimit: number | null;
+    globalCount: number;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+    tags?: Array<ShopTag>;
+};
+
+export type ShopProductList = {
+    items: Array<ShopProduct>;
+};
+
+export type ShopUpdateProduct = {
+    categoryId?: string | null;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    /**
+     * URL or CDN path to an image asset.
+     */
+    coverImage?: string | null;
+    galleryImages?: Array<string> | null;
+    productType?: 'regular' | 'growth_pack';
+    costItems?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardItems?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    timeWindowType?: 'none' | 'absolute' | 'relative' | 'cyclic';
+    availableFrom?: string | null;
+    availableTo?: string | null;
+    eligibilityAnchor?: 'user_created' | 'first_purchase' | null;
+    eligibilityWindowSeconds?: number | null;
+    refreshCycle?: 'daily' | 'weekly' | 'monthly' | null;
+    refreshLimit?: number | null;
+    userLimit?: number | null;
+    globalLimit?: number | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+    tagIds?: Array<string>;
+};
+
+export type ShopGrowthStageList = {
+    items: Array<ShopGrowthStage>;
+};
+
+export type ShopCreateGrowthStage = {
+    stageIndex: number;
+    name: string;
+    description?: string | null;
+    triggerType: 'accumulated_cost' | 'accumulated_payment' | 'custom_metric' | 'manual';
+    triggerConfig?: {
+        [key: string]: unknown;
+    } | null;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopGrowthStage = {
+    id: string;
+    productId: string;
+    organizationId: string;
+    stageIndex: number;
+    name: string;
+    description: string | null;
+    triggerType: 'accumulated_cost' | 'accumulated_payment' | 'custom_metric' | 'manual';
+    triggerConfig: {
+        [key: string]: unknown;
+    } | null;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ShopUpsertGrowthStages = {
+    stages: Array<ShopCreateGrowthStage>;
+};
+
+export type ShopUpdateGrowthStage = {
+    stageIndex?: number;
+    name?: string;
+    description?: string | null;
+    triggerType?: 'accumulated_cost' | 'accumulated_payment' | 'custom_metric' | 'manual';
+    triggerConfig?: {
+        [key: string]: unknown;
+    } | null;
+    rewardItems?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ShopPurchaseRequest = {
+    /**
+     * Tenant's business user id.
+     */
+    endUserId: string;
+    idempotencyKey?: string;
+};
+
+export type ShopPurchaseResult = {
+    success: true;
+    purchaseId: string;
+    productId: string;
+    productType: 'regular' | 'growth_pack';
+    costItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+};
+
+export type ShopClaimStageRequest = {
+    endUserId: string;
+    idempotencyKey?: string;
+};
+
+export type ShopClaimStageResult = {
+    success: true;
+    claimId: string;
+    stageId: string;
+    productId: string;
+    rewardItems: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+};
+
+export type ShopUserProductList = {
+    items: Array<ShopUserProductView>;
+};
+
+export type StorageBoxCreateConfig = {
+    name: string;
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    /**
+     * 'demand' = withdraw any time; 'fixed' = locked until maturesAt.
+     */
+    type: 'demand' | 'fixed';
+    /**
+     * Required when type='fixed'. Ignored when type='demand'.
+     */
+    lockupDays?: number | null;
+    /**
+     * Interest rate in basis points (100 = 1%). Applied over interestPeriodDays.
+     */
+    interestRateBps?: number;
+    /**
+     * Number of days the interestRateBps applies to (e.g. 365 for annual).
+     */
+    interestPeriodDays?: number;
+    /**
+     * Whitelist of currencies.id the box accepts. Each must be a currency definition in the same org.
+     */
+    acceptedCurrencyIds: Array<string>;
+    minDeposit?: number | null;
+    maxDeposit?: number | null;
+    /**
+     * Only meaningful for type='fixed'. If true, early withdrawal forfeits accrued interest.
+     */
+    allowEarlyWithdraw?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type StorageBoxConfig = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    type: string;
+    lockupDays: number | null;
+    interestRateBps: number;
+    interestPeriodDays: number;
+    acceptedCurrencyIds: Array<string>;
+    minDeposit: number | null;
+    maxDeposit: number | null;
+    allowEarlyWithdraw: boolean;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type StorageBoxErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type StorageBoxConfigList = {
+    items: Array<StorageBoxConfig>;
+};
+
+export type StorageBoxUpdateConfig = {
+    name?: string;
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    /**
+     * 'demand' = withdraw any time; 'fixed' = locked until maturesAt.
+     */
+    type?: 'demand' | 'fixed';
+    lockupDays?: number | null;
+    interestRateBps?: number;
+    interestPeriodDays?: number;
+    acceptedCurrencyIds?: Array<string>;
+    minDeposit?: number | null;
+    maxDeposit?: number | null;
+    allowEarlyWithdraw?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type StorageBoxDepositRequest = {
+    endUserId: string;
+    boxConfigId: string;
+    currencyDefinitionId: string;
+    amount: number;
+    idempotencyKey?: string;
+};
+
+export type StorageBoxDepositResult = {
+    deposit: StorageBoxDepositView;
+    currencyDeducted: number;
+};
+
+export type StorageBoxWithdrawRequest = {
+    endUserId: string;
+    /**
+     * Required for fixed-term deposits. For demand, omit and pass boxConfigId + currencyDefinitionId.
+     */
+    depositId?: string;
+    boxConfigId?: string;
+    currencyDefinitionId?: string;
+    /**
+     * Demand only — partial withdraw amount. Omit to withdraw everything (principal + interest).
+     */
+    amount?: number;
+    idempotencyKey?: string;
+};
+
+export type StorageBoxWithdrawResult = {
+    deposit: StorageBoxDepositView;
+    principalPaid: number;
+    interestPaid: number;
+    currencyGranted: number;
+};
+
+export type StorageBoxDepositList = {
+    items: Array<StorageBoxDepositView>;
+};
+
+export type MediaFolderList = {
+    items: Array<MediaFolder>;
+    breadcrumb: Array<{
+        id: string;
+        name: string;
+    }>;
+};
+
+export type MediaLibraryErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type MediaFolderCreateRequest = {
+    name: string;
+    parentId?: string | null;
+};
+
+export type MediaFolder = {
+    id: string;
+    organizationId: string;
+    parentId: string | null;
+    name: string;
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MediaFolderUpdateRequest = {
+    name?: string;
+    parentId?: string | null;
+};
+
+export type MediaAssetList = {
+    items: Array<MediaAsset>;
+    nextCursor: string | null;
+};
+
+export type MediaAssetPresignRequest = {
+    filename: string;
+    mimeType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif' | 'image/svg+xml' | 'image/avif';
+    size: number;
+    folderId?: string | null;
+};
+
+export type MediaAssetPresignResponse = {
+    assetId: string;
+    objectKey: string;
+    uploadUrl: string;
+    publicUrl: string;
+    expiresIn: number;
+};
+
+export type MediaAssetConfirmRequest = {
+    assetId: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    checksum?: string;
+};
+
+export type MediaAsset = {
+    id: string;
+    organizationId: string;
+    folderId: string;
+    objectKey: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+    checksum: string | null;
+    url: string;
+    createdAt: string;
+};
+
+export type TaskCreateCategory = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the org.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    scope?: 'task' | 'achievement' | 'custom';
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TaskCategory = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    scope: string;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type TaskErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type TaskCategoryList = {
+    items: Array<TaskCategory>;
+};
+
+export type TaskUpdateCategory = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the org.
+     */
+    alias?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    scope?: 'task' | 'achievement' | 'custom';
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TaskCreateDefinition = {
+    categoryId?: string | null;
+    parentId?: string | null;
+    /**
+     * Optional human-readable key, unique within the org.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+    /**
+     * Reset cycle: daily, weekly, monthly, or none (permanent).
+     */
+    period: 'daily' | 'weekly' | 'monthly' | 'none';
+    timezone?: string;
+    weekStartsOn?: number;
+    /**
+     * How progress increments: event_count (+1), event_value (+data field), child_completion (SUM of children).
+     */
+    countingMethod: 'event_count' | 'event_value' | 'child_completion';
+    /**
+     * Event name to listen for. Required for event_count/event_value.
+     */
+    eventName?: string | null;
+    /**
+     * Dot-path into eventData for event_value counting. e.g. 'amount'.
+     */
+    eventValueField?: string | null;
+    /**
+     * Optional filtrex expression evaluated against eventData. The event only advances progress if it returns truthy. Nested fields use dot notation, e.g. `monsterId == "dragon" and stats.level >= 10`.
+     */
+    filter?: string | null;
+    /**
+     * Goal value to complete the task.
+     */
+    targetValue: number;
+    /**
+     * Progress contributed to parent task on completion. Default 1.
+     */
+    parentProgressValue?: number;
+    /**
+     * Task definition IDs that must be completed first.
+     */
+    prerequisiteTaskIds?: Array<string>;
+    /**
+     * Rewards granted on completion.
+     */
+    rewards: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    /**
+     * Staged (阶段性) rewards claimable at intermediate progress thresholds. Empty array keeps the legacy single-reward behavior. Aliases must be unique and thresholds strictly increasing and <= targetValue.
+     */
+    rewardTiers?: Array<TaskRewardTier>;
+    autoClaim?: boolean;
+    /**
+     * Client-side navigation config. Server stores it opaquely.
+     */
+    navigation?: {
+        type: string;
+        target: string;
+        params?: {
+            [key: string]: unknown;
+        };
+        label?: string;
+    } | null;
+    isActive?: boolean;
+    isHidden?: boolean;
+    sortOrder?: number;
+    /**
+     * Soft link to an activity. Null means this is a permanent task.
+     */
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * 'broadcast' (default) → visible to all end users. 'assigned' → only visible to users with an active task_user_assignments row.
+     */
+    visibility?: 'broadcast' | 'assigned';
+    /**
+     * Default TTL applied to assignments that don't specify their own expiry. Null = no default expiry.
+     */
+    defaultAssignmentTtlSeconds?: number | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TaskDefinition = {
+    id: string;
+    organizationId: string;
+    categoryId: string | null;
+    parentId: string | null;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    period: string;
+    timezone: string;
+    weekStartsOn: number;
+    countingMethod: string;
+    eventName: string | null;
+    eventValueField: string | null;
+    filter: string | null;
+    targetValue: number;
+    parentProgressValue: number;
+    prerequisiteTaskIds: Array<string>;
+    rewards: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardTiers: Array<TaskRewardTier>;
+    autoClaim: boolean;
+    navigation: {
+        type: string;
+        target: string;
+        params?: {
+            [key: string]: unknown;
+        };
+        label?: string;
+    } | null;
+    isActive: boolean;
+    isHidden: boolean;
+    visibility: string;
+    defaultAssignmentTtlSeconds: number | null;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type TaskDefinitionList = {
+    items: Array<TaskDefinition>;
+};
+
+export type TaskUpdateDefinition = {
+    categoryId?: string | null;
+    parentId?: string | null;
+    /**
+     * Optional human-readable key, unique within the org.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    icon?: string | null;
+    period?: 'daily' | 'weekly' | 'monthly' | 'none';
+    timezone?: string;
+    weekStartsOn?: number;
+    countingMethod?: 'event_count' | 'event_value' | 'child_completion';
+    eventName?: string | null;
+    eventValueField?: string | null;
+    filter?: string | null;
+    targetValue?: number;
+    parentProgressValue?: number;
+    prerequisiteTaskIds?: Array<string>;
+    rewards?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    rewardTiers?: Array<TaskRewardTier>;
+    autoClaim?: boolean;
+    /**
+     * Client-side navigation config. Server stores it opaquely.
+     */
+    navigation?: {
+        type: string;
+        target: string;
+        params?: {
+            [key: string]: unknown;
+        };
+        label?: string;
+    } | null;
+    isActive?: boolean;
+    isHidden?: boolean;
+    sortOrder?: number;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    visibility?: 'broadcast' | 'assigned';
+    defaultAssignmentTtlSeconds?: number | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TaskAssignBody = {
+    /**
+     * Target end-user ids. 1..1000 per call — chunk larger cohorts.
+     */
+    endUserIds: Array<string>;
+    /**
+     * Who/what is performing the assignment. Defaults to 'manual' when omitted.
+     */
+    source?: 'manual' | 'rule' | 'schedule' | 'external';
+    /**
+     * Free-form caller-defined pointer. e.g. a CRM request id, rule alias, admin user id.
+     */
+    sourceRef?: string | null;
+    /**
+     * Absolute ISO 8601 expiry. Mutually exclusive with ttlSeconds. Null keeps the assignment indefinite.
+     */
+    expiresAt?: string | null;
+    /**
+     * Relative TTL in seconds. Mutually exclusive with expiresAt. Falls back to the definition's defaultAssignmentTtlSeconds when omitted.
+     */
+    ttlSeconds?: number;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * If true, refresh assignedAt/expiresAt/source on already-assigned rows. Default false (no-op on existing active rows; revive revoked rows).
+     */
+    allowReassign?: boolean;
+};
+
+export type TaskAssignBatchResponse = {
+    assigned: number;
+    skipped: number;
+    items: Array<TaskAssignment>;
+};
+
+export type TaskAssignmentList = {
+    items: Array<TaskAssignment>;
+};
+
+export type TeamCreateConfig = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    /**
+     * Maximum number of members in a team.
+     */
+    maxMembers?: number;
+    /**
+     * Dissolve team when leader leaves instead of transferring leadership.
+     */
+    autoDissolveOnLeaderLeave?: boolean;
+    /**
+     * Allow quick match to auto-join open teams.
+     */
+    allowQuickMatch?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TeamConfig = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    maxMembers: number;
+    autoDissolveOnLeaderLeave: boolean;
+    allowQuickMatch: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type TeamErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type TeamConfigList = {
+    items: Array<TeamConfig>;
+};
+
+export type TeamUpdateConfig = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    maxMembers?: number;
+    autoDissolveOnLeaderLeave?: boolean;
+    allowQuickMatch?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type TeamList = {
+    items: Array<Team>;
+    total: number;
+};
+
+export type Team = {
+    id: string;
+    organizationId: string;
+    configId: string;
+    leaderUserId: string;
+    status: 'open' | 'closed' | 'in_game' | 'dissolved';
+    memberCount: number;
+    dissolvedAt: string | null;
+    version: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+    members?: Array<TeamMember>;
+};
+
+export type LevelConfigList = {
+    items: Array<LevelConfig>;
+};
+
+export type LevelErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type LevelCreateConfig = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    description?: string | null;
+    coverImage?: string | null;
+    icon?: string | null;
+    hasStages?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LevelConfig = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    icon: string | null;
+    hasStages: boolean;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LevelUpdateConfig = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    description?: string | null;
+    coverImage?: string | null;
+    icon?: string | null;
+    hasStages?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LevelStageList = {
+    items: Array<LevelStage>;
+};
+
+export type LevelCreateStage = {
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+    unlockRule?: LevelUnlockRule;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LevelStage = {
+    id: string;
+    configId: string;
+    organizationId: string;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    unlockRule?: unknown;
+    sortOrder: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LevelUpdateStage = {
+    name?: string;
+    description?: string | null;
+    icon?: string | null;
+    unlockRule?: LevelUnlockRule;
+    sortOrder?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LevelLevelList = {
+    items: Array<LevelLevel>;
+};
+
+export type LevelCreateLevel = {
+    stageId?: string | null;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+    difficulty?: string | null;
+    maxStars?: number;
+    unlockRule?: LevelUnlockRule;
+    clearRewards?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }> | null;
+    starRewards?: Array<{
+        stars: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }> | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LevelLevel = {
+    id: string;
+    configId: string;
+    stageId: string | null;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    icon: string | null;
+    difficulty: string | null;
+    maxStars: number;
+    unlockRule?: unknown;
+    clearRewards: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }> | null;
+    starRewards: Array<{
+        stars: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }> | null;
+    sortOrder: number;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LevelUpdateLevel = {
+    stageId?: string | null;
+    /**
+     * Optional human-readable key, unique within its parent.
+     */
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    icon?: string | null;
+    difficulty?: string | null;
+    maxStars?: number;
+    unlockRule?: LevelUnlockRule;
+    clearRewards?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }> | null;
+    starRewards?: Array<{
+        stars: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }> | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LeaderboardCreateConfig = {
+    alias: string;
+    name: string;
+    description?: string | null;
+    /**
+     * Key that other modules `contribute()` against. Multiple configs may share a metric_key.
+     */
+    metricKey: string;
+    cycle: 'daily' | 'weekly' | 'monthly' | 'all_time';
+    weekStartsOn?: number;
+    timezone?: string;
+    scope?: 'global' | 'guild' | 'team' | 'friend';
+    aggregation?: 'sum' | 'max' | 'latest';
+    maxEntries?: number;
+    tieBreaker?: 'earliest' | 'latest';
+    rewardTiers?: Array<{
+        from: number;
+        to: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    startAt?: string | null;
+    endAt?: string | null;
+    status?: 'draft' | 'active' | 'paused' | 'archived';
+    activityId?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LeaderboardConfig = {
+    id: string;
+    organizationId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    metricKey: string;
+    cycle: 'daily' | 'weekly' | 'monthly' | 'all_time';
+    weekStartsOn: number;
+    timezone: string;
+    scope: 'global' | 'guild' | 'team' | 'friend';
+    aggregation: 'sum' | 'max' | 'latest';
+    maxEntries: number;
+    tieBreaker: 'earliest' | 'latest';
+    rewardTiers: Array<{
+        from: number;
+        to: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    startAt: string | null;
+    endAt: string | null;
+    status: 'draft' | 'active' | 'paused' | 'archived';
+    activityId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type LeaderboardError = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type LeaderboardConfigList = {
+    items: Array<LeaderboardConfig>;
+};
+
+export type LeaderboardUpdateConfig = {
+    alias?: string;
+    name?: string;
+    description?: string | null;
+    /**
+     * Key that other modules `contribute()` against. Multiple configs may share a metric_key.
+     */
+    metricKey?: string;
+    weekStartsOn?: number;
+    timezone?: string;
+    aggregation?: 'sum' | 'max' | 'latest';
+    maxEntries?: number;
+    tieBreaker?: 'earliest' | 'latest';
+    rewardTiers?: Array<{
+        from: number;
+        to: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    startAt?: string | null;
+    endAt?: string | null;
+    status?: 'draft' | 'active' | 'paused' | 'archived';
+    activityId?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type LeaderboardContribute = {
+    endUserId: string;
+    /**
+     * Key that other modules `contribute()` against. Multiple configs may share a metric_key.
+     */
+    metricKey: string;
+    value: number;
+    scopeContext?: {
+        guildId?: string;
+        teamId?: string;
+        friendOwnerIds?: Array<string>;
+    };
+    activityContext?: {
+        activityId: string;
+        nodeAlias?: string;
+    };
+    source?: string;
+    idempotencyKey?: string;
+    displaySnapshot?: {
+        [key: string]: unknown;
+    };
+};
+
+export type LeaderboardContributeResult = {
+    applied: number;
+    details: Array<{
+        configId: string;
+        alias: string;
+        scopeKey: string;
+        cycleKey: string;
+        newScore: number | null;
+        skipped?: 'inactive' | 'time_window' | 'no_scope_key' | 'idempotent';
+    }>;
+};
+
+export type LeaderboardTop = {
+    configId: string;
+    alias: string;
+    cycleKey: string;
+    scopeKey: string;
+    rankings: Array<{
+        rank: number;
+        endUserId: string;
+        score: number;
+        displaySnapshot?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    self?: {
+        rank: number | null;
+        score: number | null;
+    };
+};
+
+export type LeaderboardSnapshotList = {
+    items: Array<LeaderboardSnapshot>;
+};
+
+export type LeaderboardSettleRunResult = {
+    settled: number;
+    errors: number;
+};
+
+export type ActivityCreate = {
+    alias: string;
+    name: string;
+    description?: string | null;
+    bannerImage?: string | null;
+    themeColor?: string | null;
+    kind?: 'generic' | 'check_in_only' | 'board_game' | 'gacha' | 'season_pass' | 'custom';
+    visibleAt: string;
+    startAt: string;
+    endAt: string;
+    rewardEndAt: string;
+    hiddenAt: string;
+    timezone?: string;
+    currency?: {
+        alias: string;
+        name: string;
+        icon?: string | null;
+    } | null;
+    milestoneTiers?: Array<{
+        alias: string;
+        points: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    globalRewards?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    kindMetadata?: {
+        [key: string]: unknown;
+    } | null;
+    cleanupRule?: {
+        mode: 'purge' | 'convert' | 'keep';
+        conversionMap?: {
+            [key: string]: Array<{
+                type: 'item' | 'entity' | 'currency';
+                id: string;
+                count: number;
+            }>;
+        };
+    };
+    joinRequirement?: {
+        [key: string]: unknown;
+    } | null;
+    visibility?: 'public' | 'hidden' | 'targeted';
+    templateId?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type Activity = {
+    id: string;
+    organizationId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    bannerImage: string | null;
+    themeColor: string | null;
+    kind: 'generic' | 'check_in_only' | 'board_game' | 'gacha' | 'season_pass' | 'custom';
+    visibleAt: string;
+    startAt: string;
+    endAt: string;
+    rewardEndAt: string;
+    hiddenAt: string;
+    timezone: string;
+    status: string;
+    currency: {
+        alias: string;
+        name: string;
+        icon?: string | null;
+    } | null;
+    milestoneTiers: Array<{
+        alias: string;
+        points: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    globalRewards: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    kindMetadata: {
+        [key: string]: unknown;
+    } | null;
+    cleanupRule: {
+        mode: 'purge' | 'convert' | 'keep';
+        conversionMap?: {
+            [key: string]: Array<{
+                type: 'item' | 'entity' | 'currency';
+                id: string;
+                count: number;
+            }>;
+        };
+    };
+    joinRequirement: {
+        [key: string]: unknown;
+    } | null;
+    visibility: 'public' | 'hidden' | 'targeted';
+    templateId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ActivityError = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type ActivityUpdate = {
+    name?: string;
+    description?: string | null;
+    bannerImage?: string | null;
+    themeColor?: string | null;
+    visibleAt?: string;
+    startAt?: string;
+    endAt?: string;
+    rewardEndAt?: string;
+    hiddenAt?: string;
+    timezone?: string;
+    currency?: {
+        alias: string;
+        name: string;
+        icon?: string | null;
+    } | null;
+    milestoneTiers?: Array<{
+        alias: string;
+        points: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    globalRewards?: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+    kindMetadata?: {
+        [key: string]: unknown;
+    } | null;
+    cleanupRule?: {
+        mode: 'purge' | 'convert' | 'keep';
+        conversionMap?: {
+            [key: string]: Array<{
+                type: 'item' | 'entity' | 'currency';
+                id: string;
+                count: number;
+            }>;
+        };
+    };
+    joinRequirement?: {
+        [key: string]: unknown;
+    } | null;
+    visibility?: 'public' | 'hidden' | 'targeted';
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ActivityPublishAction = {
+    action: 'publish' | 'unpublish' | 'archive';
+};
+
+export type ActivityCreateNode = {
+    alias: string;
+    nodeType: 'check_in' | 'task_group' | 'exchange' | 'leaderboard' | 'lottery' | 'banner' | 'assist_pool' | 'game_board' | 'custom';
+    refId?: string | null;
+    orderIndex?: number;
+    unlockRule?: {
+        requirePrevNodeAliases?: Array<string>;
+        minActivityPoints?: number;
+        notBefore?: string;
+        relativeToStartSeconds?: number;
+    } | null;
+    nodeConfig?: {
+        [key: string]: unknown;
+    } | null;
+    enabled?: boolean;
+};
+
+export type ActivityUpdateNode = {
+    orderIndex?: number;
+    unlockRule?: {
+        requirePrevNodeAliases?: Array<string>;
+        minActivityPoints?: number;
+        notBefore?: string;
+        relativeToStartSeconds?: number;
+    } | null;
+    nodeConfig?: {
+        [key: string]: unknown;
+    } | null;
+    enabled?: boolean;
+    refId?: string | null;
+};
+
+export type ActivityCreateSchedule = {
+    alias: string;
+    triggerKind: 'once_at' | 'relative_offset' | 'cron';
+    fireAt?: string | null;
+    offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'reward_end_at' | 'hidden_at' | null;
+    offsetSeconds?: number | null;
+    cronExpr?: string | null;
+    actionType: 'webhook_call' | 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
+    actionConfig?: {
+        [key: string]: unknown;
+    };
+    enabled?: boolean;
+};
+
+export type ActivityJoin = {
+    endUserId: string;
+};
+
+export type ActivityAddPoints = {
+    endUserId: string;
+    delta: number;
+    source: string;
+    sourceRef?: string;
+};
+
+export type ActivityClaimMilestone = {
+    endUserId: string;
+    milestoneAlias: string;
+};
+
+export type ActivityTickResult = {
+    advanced: number;
+    scheduleFired: number;
+    webhooksDelivered: number;
+    errors: number;
+};
+
+export type CreateWebhookEndpoint = {
+    alias: string;
+    url: string;
+    secret: string;
+    enabled?: boolean;
+    retryPolicy?: {
+        maxAttempts: number;
+        backoffBaseSeconds: number;
+    };
+};
+
+export type ActivityAnalytics = {
+    participants: number;
+    completed: number;
+    dropped: number;
+    avgPoints: number;
+    maxPoints: number;
+    p50Points: number;
+    milestoneClaims: Array<{
+        milestoneAlias: string;
+        count: number;
+    }>;
+    pointsBuckets: Array<{
+        bucket: string;
+        count: number;
+    }>;
+};
+
+export type ActivityTemplateCreate = {
+    alias: string;
+    name: string;
+    description?: string | null;
+    templatePayload: {
+        [key: string]: unknown;
+    };
+    durationSpec: {
+        teaseSeconds: number;
+        activeSeconds: number;
+        rewardSeconds: number;
+        hiddenSeconds: number;
+    };
+    recurrence: {
+        mode: 'weekly';
+        dayOfWeek: number;
+        hourOfDay: number;
+        timezone: string;
+    } | {
+        mode: 'monthly';
+        dayOfMonth: number;
+        hourOfDay: number;
+        timezone: string;
+    } | {
+        mode: 'manual';
+    };
+    aliasPattern: string;
+    nodesBlueprint?: Array<{
+        alias: string;
+        nodeType: 'check_in' | 'task_group' | 'exchange' | 'leaderboard' | 'lottery' | 'banner' | 'assist_pool' | 'game_board' | 'custom';
+        refIdStrategy: 'fixed' | 'omit' | 'link_only';
+        fixedRefId?: string | null;
+        orderIndex?: number;
+        unlockRule?: {
+            [key: string]: unknown;
+        } | null;
+        nodeConfig?: {
+            [key: string]: unknown;
+        } | null;
+        enabled?: boolean;
+    }>;
+    schedulesBlueprint?: Array<{
+        alias: string;
+        triggerKind: 'once_at' | 'relative_offset' | 'cron';
+        fireAtOffsetSeconds?: number;
+        offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'reward_end_at' | 'hidden_at';
+        offsetSeconds?: number;
+        cronExpr?: string;
+        actionType: 'webhook_call' | 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
+        actionConfig?: {
+            [key: string]: unknown;
+        };
+        enabled?: boolean;
+    }>;
+    autoPublish?: boolean;
+    enabled?: boolean;
+};
+
+export type ActivityInstantiateResult = {
+    activityAlias: string;
+    activityId: string;
+};
+
+export type AssistPoolCreateConfig = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    mode?: 'accumulate' | 'decrement';
+    /**
+     * Total work to complete the pool. For mode='decrement' the instance starts here and counts down to 0. For mode='accumulate' it starts at 0 and grows here.
+     */
+    targetAmount: number;
+    contributionPolicy: AssistPoolContributionPolicy;
+    perAssisterLimit?: number;
+    initiatorCanAssist?: boolean;
+    expiresInSeconds?: number;
+    maxInstancesPerInitiator?: number | null;
+    rewards?: Array<AssistPoolRewardItem>;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type AssistPoolConfig = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    mode: 'accumulate' | 'decrement';
+    targetAmount: number;
+    contributionPolicy: AssistPoolContributionPolicy;
+    perAssisterLimit: number;
+    initiatorCanAssist: boolean;
+    expiresInSeconds: number;
+    maxInstancesPerInitiator: number | null;
+    rewards: Array<AssistPoolRewardItem>;
+    isActive: boolean;
+    activityId: string | null;
+    activityNodeId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type AssistPoolErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type AssistPoolConfigList = {
+    items: Array<AssistPoolConfig>;
+};
+
+export type AssistPoolUpdateConfig = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the organization.
+     */
+    alias?: string | null;
+    description?: string | null;
+    perAssisterLimit?: number;
+    initiatorCanAssist?: boolean;
+    maxInstancesPerInitiator?: number | null;
+    rewards?: Array<AssistPoolRewardItem>;
+    isActive?: boolean;
+    activityId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type AssistPoolAdminInitiate = {
+    /**
+     * Config id or alias.
+     */
+    configKey: string;
+    initiatorEndUserId: string;
+};
+
+export type AssistPoolInstance = {
+    id: string;
+    organizationId: string;
+    configId: string;
+    initiatorEndUserId: string;
+    status: 'in_progress' | 'completed' | 'expired';
+    remaining: number;
+    targetAmount: number;
+    contributionCount: number;
+    expiresAt: string;
+    completedAt: string | null;
+    rewardGrantedAt: string | null;
+    version: number;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type AssistPoolInstanceList = {
+    items: Array<AssistPoolInstance>;
+};
+
+export type AssistPoolContributionList = {
+    items: Array<AssistPoolContribution>;
+};
+
+export type AssistPoolAdminContribute = {
+    assisterEndUserId: string;
+};
+
+export type AssistPoolContributeResult = {
+    instance: AssistPoolInstance;
+    contribution: AssistPoolContribution;
+    completed: boolean;
+    rewards: Array<AssistPoolRewardItem> | null;
+};
+
+export type CatalogEventList = {
+    items: Array<CatalogEventView>;
+};
+
+export type EventCatalogErrorResponse = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type CatalogEventView = {
+    name: string;
+    source: 'internal' | 'external';
+    owner: string | null;
+    description: string | null;
+    fields: Array<EventCatalogFieldRow>;
+    status: 'inferred' | 'canonical' | null;
+    lastSeenAt: string | null;
+    sampleEventData: {
+        [key: string]: unknown;
+    } | null;
+    forwardToTask: boolean;
+};
+
+export type EventCatalogUpdateBody = {
+    /**
+     * Admin-facing description. Null to clear.
+     */
+    description?: string | null;
+    /**
+     * Full replacement of the field list. Sets status='canonical' — fields will no longer be merged from future payloads.
+     */
+    fields?: Array<EventCatalogFieldRow>;
+};
+
+export type RankSettleMatch = {
+    tierConfigAlias?: string;
+    seasonId?: string;
+    externalMatchId: string;
+    gameMode?: string;
+    settledAt?: string;
+    rawPayload?: {
+        [key: string]: unknown;
+    } | null;
+    participants: Array<{
+        endUserId: string;
+        teamId: string;
+        placement: number;
+        win: boolean;
+        performanceScore?: number;
+    }>;
+};
+
+export type RankSettleResult = {
+    matchId: string;
+    alreadySettled: boolean;
+    participants: Array<{
+        endUserId: string;
+        teamId: string;
+        win: boolean;
+        mmrBefore: number;
+        mmrAfter: number;
+        rankScoreBefore: number;
+        rankScoreAfter: number;
+        starsDelta: number;
+        subtierBefore: number;
+        subtierAfter: number;
+        starsBefore: number;
+        starsAfter: number;
+        tierBeforeId: string | null;
+        tierAfterId: string | null;
+        promoted: boolean;
+        demoted: boolean;
+        protectionApplied: {
+            type: 'demotionShield' | 'bigDropShield';
+            remaining: number;
+        } | null;
+    }>;
+};
+
+export type RankError = {
+    error: string;
+    code?: string;
+    requestId?: string;
+};
+
+export type RankCreateTierConfig = {
+    alias: string;
+    name: string;
+    description?: string | null;
+    ratingParams: {
+        strategy: 'elo';
+        baseK: number;
+        teamMode?: 'avgTeamElo';
+        perfWeight?: number;
+        initialMmr?: number;
+    } | {
+        strategy: 'glicko2';
+        tau: number;
+        initialMmr?: number;
+        initialDeviation?: number;
+        initialVolatility?: number;
+    };
+    tiers: Array<{
+        alias: string;
+        name: string;
+        order: number;
+        minRankScore: number;
+        maxRankScore?: number | null;
+        subtierCount?: number;
+        starsPerSubtier?: number;
+        protectionRules?: {
+            demotionShieldMatches?: number;
+            bigDropShields?: number;
+            winStreakBonusFrom?: number;
+        };
+        metadata?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type RankTierConfig = {
+    id: string;
+    organizationId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    version: number;
+    isActive: boolean;
+    ratingParams: {
+        [key: string]: unknown;
+    };
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+    tiers: Array<{
+        id: string;
+        tierConfigId: string;
+        alias: string;
+        name: string;
+        order: number;
+        minRankScore: number;
+        maxRankScore: number | null;
+        subtierCount: number;
+        starsPerSubtier: number;
+        protectionRules: {
+            [key: string]: unknown;
+        };
+        metadata: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+};
+
+export type RankTierConfigList = {
+    items: Array<RankTierConfig>;
+};
+
+export type RankUpdateTierConfig = {
+    alias?: string;
+    name?: string;
+    description?: string | null;
+    ratingParams?: {
+        strategy: 'elo';
+        baseK: number;
+        teamMode?: 'avgTeamElo';
+        perfWeight?: number;
+        initialMmr?: number;
+    } | {
+        strategy: 'glicko2';
+        tau: number;
+        initialMmr?: number;
+        initialDeviation?: number;
+        initialVolatility?: number;
+    };
+    tiers?: Array<{
+        alias: string;
+        name: string;
+        order: number;
+        minRankScore: number;
+        maxRankScore?: number | null;
+        subtierCount?: number;
+        starsPerSubtier?: number;
+        protectionRules?: {
+            demotionShieldMatches?: number;
+            bigDropShields?: number;
+            winStreakBonusFrom?: number;
+        };
+        metadata?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    isActive?: boolean;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type RankCreateSeason = {
+    alias: string;
+    name: string;
+    description?: string | null;
+    tierConfigId: string;
+    startAt: string;
+    endAt: string;
+    inheritanceRules?: {
+        mode?: 'decay' | 'softReset' | 'keep';
+        decayFactor?: number;
+        baselineRankScore?: number;
+    } | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type RankSeason = {
+    id: string;
+    organizationId: string;
+    tierConfigId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    startAt: string;
+    endAt: string;
+    status: 'upcoming' | 'active' | 'finished';
+    inheritanceRules: {
+        [key: string]: unknown;
+    };
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type RankSeasonList = {
+    items: Array<RankSeason>;
+};
+
+export type RankUpdateSeason = {
+    alias?: string;
+    name?: string;
+    description?: string | null;
+    startAt?: string;
+    endAt?: string;
+    status?: 'upcoming' | 'active' | 'finished';
+    inheritanceRules?: {
+        mode?: 'decay' | 'softReset' | 'keep';
+        decayFactor?: number;
+        baselineRankScore?: number;
+    } | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type RankFinalizeResult = {
+    snapshotCount: number;
+    playerCount: number;
+};
+
+export type RankPlayerViewList = {
+    items: Array<RankPlayerView>;
+};
+
+export type RankAdjustPlayer = {
+    seasonId: string;
+    rankScore?: number;
+    mmr?: number;
+    tierId?: string | null;
+    subtier?: number;
+    stars?: number;
+    reason: string;
+};
+
+export type RankPlayerView = {
+    seasonId: string;
+    endUserId: string;
+    rankScore: number;
+    mmr: number;
+    subtier: number;
+    stars: number;
+    winStreak: number;
+    lossStreak: number;
+    matchesPlayed: number;
+    wins: number;
+    losses: number;
+    protectionUses: {
+        [key: string]: number;
+    };
+    lastMatchAt: string | null;
+    tier: {
+        id: string;
+        alias: string;
+        name: string;
+        order: number;
+        subtierCount: number;
+        starsPerSubtier: number;
+    } | null;
+};
+
+export type RankMatchList = {
+    items: Array<{
+        id: string;
+        externalMatchId: string;
+        gameMode: string | null;
+        teamCount: number;
+        totalParticipants: number;
+        settledAt: string;
+    }>;
+    nextCursor?: string;
+};
+
+export type RankMatchDetail = {
+    match: {
+        id: string;
+        externalMatchId: string;
+        gameMode: string | null;
+        teamCount: number;
+        totalParticipants: number;
+        settledAt: string;
+    };
+    participants: Array<{
+        id: string;
+        matchId: string;
+        endUserId: string;
+        teamId: string;
+        placement: number | null;
+        win: boolean;
+        mmrBefore: number;
+        mmrAfter: number;
+        rankScoreBefore: number;
+        rankScoreAfter: number;
+        starsDelta: number;
+        subtierBefore: number;
+        subtierAfter: number;
+        starsBefore: number;
+        starsAfter: number;
+        tierBeforeId: string | null;
+        tierAfterId: string | null;
+        promoted: boolean;
+        demoted: boolean;
+        protectionApplied: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+};
+
+export type EventCatalogFieldRow = {
+    path: string;
+    type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' | 'unknown';
+    description?: string;
+    required: boolean;
+};
+
+export type AssistPoolContribution = {
+    id: string;
+    organizationId: string;
+    instanceId: string;
+    assisterEndUserId: string;
+    amount: number;
+    remainingAfter: number;
+    createdAt: string;
+};
+
+export type AssistPoolRewardItem = {
+    type: 'item' | 'entity' | 'currency';
+    id: string;
+    count: number;
+};
+
+export type AssistPoolContributionPolicy = ({
+    kind: 'fixed';
+} & AssistPoolFixedPolicy) | ({
+    kind: 'uniform';
+} & AssistPoolUniformPolicy) | ({
+    kind: 'decaying';
+} & AssistPoolDecayingPolicy);
+
+export type AssistPoolFixedPolicy = {
+    kind: 'fixed';
+    amount: number;
+};
+
+export type AssistPoolUniformPolicy = {
+    kind: 'uniform';
+    min: number;
+    max: number;
+};
+
+export type AssistPoolDecayingPolicy = {
+    kind: 'decaying';
+    base: number;
+    tailRatio: number;
+    tailFloor: number;
+};
+
+export type LeaderboardSnapshot = {
+    id: string;
+    configId: string;
+    organizationId: string;
+    cycleKey: string;
+    scopeKey: string;
+    rankings: Array<{
+        rank: number;
+        endUserId: string;
+        score: number;
+        displaySnapshot?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    rewardPlan: Array<{
+        from: number;
+        to: number;
+        rewards: Array<{
+            type: 'item' | 'entity' | 'currency';
+            id: string;
+            count: number;
+        }>;
+    }>;
+    settledAt: string;
+};
+
+export type LevelUnlockRule = {
+    type: 'auto';
+} | {
+    type: 'level_clear';
+    levelId: string;
+} | {
+    type: 'level_stars';
+    levelId: string;
+    stars: number;
+} | {
+    type: 'stage_clear';
+    stageId: string;
+} | {
+    type: 'star_threshold';
+    threshold: number;
+} | {
+    type: 'all';
+    rules: Array<LevelUnlockRule>;
+} | {
+    type: 'any';
+    rules: Array<LevelUnlockRule>;
+};
+
+export type TeamMember = {
+    teamId: string;
+    endUserId: string;
+    organizationId: string;
+    role: 'leader' | 'member';
+    joinedAt: string;
+};
+
+export type TaskAssignment = {
+    taskId: string;
+    endUserId: string;
+    organizationId: string;
+    assignedAt: string;
+    expiresAt: string | null;
+    revokedAt: string | null;
+    source: string;
+    sourceRef: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type TaskRewardTier = {
+    /**
+     * Stable identifier for this tier, unique within the task. Used as the idempotency key on the claim ledger — keeping it stable lets admins add/remove/reorder tiers without invalidating prior claims.
+     */
+    alias: string;
+    /**
+     * currentValue >= threshold makes this tier claimable. Must be <= targetValue.
+     */
+    threshold: number;
+    /**
+     * Rewards granted when this tier is claimed.
+     */
+    rewards: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }>;
+};
+
+export type StorageBoxDepositView = {
+    id: string;
+    organizationId: string;
+    endUserId: string;
+    boxConfigId: string;
+    currencyDefinitionId: string;
+    principal: number;
+    accruedInterest: number;
+    projectedInterest: number;
+    status: string;
+    isSingleton: boolean;
+    isMatured: boolean;
+    depositedAt: string;
+    lastAccrualAt: string;
+    maturesAt: string | null;
+    withdrawnAt: string | null;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ShopUserProductView = ShopProduct & {
+    eligibility: {
+        status: 'available' | 'not_started' | 'expired' | 'out_of_stock' | 'user_limit' | 'cycle_limit';
+        resetsAt?: string | null;
+        availableUntil?: string | null;
+    };
+    userPurchaseState: {
+        productId: string;
+        endUserId: string;
+        organizationId: string;
+        totalCount: number;
+        cycleCount: number;
+        cycleResetAt: string | null;
+        firstPurchaseAt: string | null;
+    } | null;
+};
+
+export type ShopCategoryTreeNode = ShopCategory & {
+    children: Array<ShopCategoryTreeNode>;
+};
+
 export type LotteryPullLog = {
     id: string;
     poolId: string;
@@ -1037,15 +5340,68 @@ export type LotteryPullLog = {
     tierName: string | null;
     prizeName: string;
     rewardItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
     pityTriggered: boolean;
     pityRuleId: string | null;
     costItems: Array<{
-        definitionId: string;
-        quantity: number;
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
     }>;
+    createdAt: string;
+};
+
+export type GuildJoinRequest = {
+    id: string;
+    organizationId: string;
+    guildId: string;
+    endUserId: string;
+    type: 'application' | 'invitation';
+    status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+    invitedBy: string | null;
+    message: string | null;
+    respondedAt: string | null;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type GuildMember = {
+    guildId: string;
+    endUserId: string;
+    organizationId: string;
+    role: 'leader' | 'officer' | 'member';
+    contribution: number;
+    joinedAt: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type InviteRelationshipView = {
+    id: string;
+    organizationId: string;
+    inviterEndUserId: string;
+    inviteeEndUserId: string;
+    inviterCodeSnapshot: string;
+    boundAt: string;
+    qualifiedAt: string | null;
+    qualifiedReason: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type FriendRelationship = {
+    id: string;
+    organizationId: string;
+    userA: string;
+    userB: string;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
     createdAt: string;
 };
 
@@ -1061,6 +5417,71 @@ export type ItemInventoryView = {
         quantity: number;
         instanceData?: unknown;
     }>;
+};
+
+export type LinkAction = {
+    type: 'none';
+} | {
+    type: 'external';
+    url: string;
+    openIn?: '_blank' | '_self';
+} | {
+    type: 'internal';
+    /**
+     * One of the registered internal routes. See LINK_ROUTE_REGISTRY.
+     */
+    route: 'home' | 'check-in' | 'mail.inbox' | 'mail.detail' | 'shop.home' | 'shop.category' | 'shop.product' | 'shop.growth-pack' | 'lottery.pool' | 'dialogue.script' | 'friend.list' | 'friend.detail' | 'guild.home' | 'guild.detail' | 'leaderboard' | 'quest.list' | 'quest.detail' | 'activity.list' | 'activity.detail' | 'inventory';
+    params?: {
+        [key: string]: string;
+    };
+};
+
+export type DialogueNode = {
+    id: string;
+    speaker: {
+        name: string;
+        avatarUrl?: string;
+        side: 'left' | 'right';
+    };
+    content: string;
+    next?: string;
+    options?: Array<{
+        id: string;
+        label: string;
+        next?: string;
+        action?: LinkAction;
+        rewards?: Array<{
+            definitionId: string;
+            quantity: number;
+        }>;
+    }>;
+    onEnter?: {
+        rewards?: Array<{
+            definitionId: string;
+            quantity: number;
+        }>;
+    };
+};
+
+export type CurrencyLedgerEntry = {
+    id: string;
+    organizationId: string;
+    endUserId: string;
+    currencyId: string;
+    delta: number;
+    source: string;
+    sourceId: string | null;
+    balanceBefore: number | null;
+    balanceAfter: number | null;
+    createdAt: string;
+};
+
+export type CurrencyWalletView = {
+    currencyId: string;
+    currencyAlias: string | null;
+    currencyName: string;
+    icon: string | null;
+    balance: number;
 };
 
 export type CheckInUserState = {
@@ -1079,30 +5500,1107 @@ export type CheckInUserState = {
     updatedAt: string;
 };
 
-export type GetHealthData = {
+export type CdkeyRedemptionLog = {
+    id: string;
+    organizationId: string;
+    endUserId: string;
+    batchId: string;
+    codeId: string | null;
+    code: string;
+    source: string;
+    sourceId: string;
+    status: string;
+    failReason: string | null;
+    reward: Array<{
+        type: 'item' | 'entity' | 'currency';
+        id: string;
+        count: number;
+    }> | null;
+    createdAt: string;
+};
+
+export type MetaGetRootData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/health';
 };
 
-export type GetHealthResponses = {
+export type MetaGetRootResponses = {
     /**
      * Service is up
      */
     200: HealthResponse;
 };
 
-export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+export type MetaGetRootResponse = MetaGetRootResponses[keyof MetaGetRootResponses];
 
-export type GetApiCheckInConfigsData = {
+export type AnalyticsPostTokenData = {
+    body?: IssueAnalyticsTokenBody;
+    path?: never;
+    query?: never;
+    url: '/api/analytics/token';
+};
+
+export type AnalyticsPostTokenResponses = {
+    /**
+     * Signed JWT
+     */
+    200: IssueAnalyticsTokenResponse;
+};
+
+export type AnalyticsPostTokenResponse = AnalyticsPostTokenResponses[keyof AnalyticsPostTokenResponses];
+
+export type AnnouncementAdminGetRootData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * 'modal' = one-shot popup on app start; 'feed' = persistent list item; 'ticker' = scrolling short-text banner. Clients decide how to render.
+         */
+        kind?: 'modal' | 'feed' | 'ticker';
+        isActive?: 'true' | 'false';
+        /**
+         * Case-insensitive substring match on alias / title.
+         */
+        q?: string;
+    };
+    url: '/api/announcement';
+};
+
+export type AnnouncementAdminGetRootErrors = {
+    /**
+     * Bad request
+     */
+    400: AnnouncementErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AnnouncementErrorResponse;
+    /**
+     * Not found
+     */
+    404: AnnouncementErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AnnouncementErrorResponse;
+};
+
+export type AnnouncementAdminGetRootError = AnnouncementAdminGetRootErrors[keyof AnnouncementAdminGetRootErrors];
+
+export type AnnouncementAdminGetRootResponses = {
+    /**
+     * OK
+     */
+    200: AnnouncementList;
+};
+
+export type AnnouncementAdminGetRootResponse = AnnouncementAdminGetRootResponses[keyof AnnouncementAdminGetRootResponses];
+
+export type AnnouncementAdminPostRootData = {
+    body?: AnnouncementCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/announcement';
+};
+
+export type AnnouncementAdminPostRootErrors = {
+    /**
+     * Bad request
+     */
+    400: AnnouncementErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AnnouncementErrorResponse;
+    /**
+     * Not found
+     */
+    404: AnnouncementErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AnnouncementErrorResponse;
+};
+
+export type AnnouncementAdminPostRootError = AnnouncementAdminPostRootErrors[keyof AnnouncementAdminPostRootErrors];
+
+export type AnnouncementAdminPostRootResponses = {
+    /**
+     * Created
+     */
+    201: Announcement;
+};
+
+export type AnnouncementAdminPostRootResponse = AnnouncementAdminPostRootResponses[keyof AnnouncementAdminPostRootResponses];
+
+export type AnnouncementAdminDeleteByAliasData = {
+    body?: never;
+    path: {
+        alias: string;
+    };
+    query?: never;
+    url: '/api/announcement/{alias}';
+};
+
+export type AnnouncementAdminDeleteByAliasErrors = {
+    /**
+     * Bad request
+     */
+    400: AnnouncementErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AnnouncementErrorResponse;
+    /**
+     * Not found
+     */
+    404: AnnouncementErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AnnouncementErrorResponse;
+};
+
+export type AnnouncementAdminDeleteByAliasError = AnnouncementAdminDeleteByAliasErrors[keyof AnnouncementAdminDeleteByAliasErrors];
+
+export type AnnouncementAdminDeleteByAliasResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type AnnouncementAdminDeleteByAliasResponse = AnnouncementAdminDeleteByAliasResponses[keyof AnnouncementAdminDeleteByAliasResponses];
+
+export type AnnouncementAdminGetByAliasData = {
+    body?: never;
+    path: {
+        alias: string;
+    };
+    query?: never;
+    url: '/api/announcement/{alias}';
+};
+
+export type AnnouncementAdminGetByAliasErrors = {
+    /**
+     * Bad request
+     */
+    400: AnnouncementErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AnnouncementErrorResponse;
+    /**
+     * Not found
+     */
+    404: AnnouncementErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AnnouncementErrorResponse;
+};
+
+export type AnnouncementAdminGetByAliasError = AnnouncementAdminGetByAliasErrors[keyof AnnouncementAdminGetByAliasErrors];
+
+export type AnnouncementAdminGetByAliasResponses = {
+    /**
+     * OK
+     */
+    200: Announcement;
+};
+
+export type AnnouncementAdminGetByAliasResponse = AnnouncementAdminGetByAliasResponses[keyof AnnouncementAdminGetByAliasResponses];
+
+export type AnnouncementAdminPatchByAliasData = {
+    body?: AnnouncementUpdateRequest;
+    path: {
+        alias: string;
+    };
+    query?: never;
+    url: '/api/announcement/{alias}';
+};
+
+export type AnnouncementAdminPatchByAliasErrors = {
+    /**
+     * Bad request
+     */
+    400: AnnouncementErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AnnouncementErrorResponse;
+    /**
+     * Not found
+     */
+    404: AnnouncementErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AnnouncementErrorResponse;
+};
+
+export type AnnouncementAdminPatchByAliasError = AnnouncementAdminPatchByAliasErrors[keyof AnnouncementAdminPatchByAliasErrors];
+
+export type AnnouncementAdminPatchByAliasResponses = {
+    /**
+     * OK
+     */
+    200: Announcement;
+};
+
+export type AnnouncementAdminPatchByAliasResponse = AnnouncementAdminPatchByAliasResponses[keyof AnnouncementAdminPatchByAliasResponses];
+
+export type BannerAdminGetGroupsData = {
     body?: never;
     path?: never;
     query?: never;
+    url: '/api/banner/groups';
+};
+
+export type BannerAdminGetGroupsErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminGetGroupsError = BannerAdminGetGroupsErrors[keyof BannerAdminGetGroupsErrors];
+
+export type BannerAdminGetGroupsResponses = {
+    /**
+     * OK
+     */
+    200: BannerGroupList;
+};
+
+export type BannerAdminGetGroupsResponse = BannerAdminGetGroupsResponses[keyof BannerAdminGetGroupsResponses];
+
+export type BannerAdminPostGroupsData = {
+    body?: BannerGroupCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/banner/groups';
+};
+
+export type BannerAdminPostGroupsErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminPostGroupsError = BannerAdminPostGroupsErrors[keyof BannerAdminPostGroupsErrors];
+
+export type BannerAdminPostGroupsResponses = {
+    /**
+     * Created
+     */
+    201: BannerGroup;
+};
+
+export type BannerAdminPostGroupsResponse = BannerAdminPostGroupsResponses[keyof BannerAdminPostGroupsResponses];
+
+export type BannerAdminDeleteGroupsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{id}';
+};
+
+export type BannerAdminDeleteGroupsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminDeleteGroupsByIdError = BannerAdminDeleteGroupsByIdErrors[keyof BannerAdminDeleteGroupsByIdErrors];
+
+export type BannerAdminDeleteGroupsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type BannerAdminDeleteGroupsByIdResponse = BannerAdminDeleteGroupsByIdResponses[keyof BannerAdminDeleteGroupsByIdResponses];
+
+export type BannerAdminGetGroupsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{id}';
+};
+
+export type BannerAdminGetGroupsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminGetGroupsByIdError = BannerAdminGetGroupsByIdErrors[keyof BannerAdminGetGroupsByIdErrors];
+
+export type BannerAdminGetGroupsByIdResponses = {
+    /**
+     * OK
+     */
+    200: BannerGroup;
+};
+
+export type BannerAdminGetGroupsByIdResponse = BannerAdminGetGroupsByIdResponses[keyof BannerAdminGetGroupsByIdResponses];
+
+export type BannerAdminPatchGroupsByIdData = {
+    body?: BannerGroupUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{id}';
+};
+
+export type BannerAdminPatchGroupsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminPatchGroupsByIdError = BannerAdminPatchGroupsByIdErrors[keyof BannerAdminPatchGroupsByIdErrors];
+
+export type BannerAdminPatchGroupsByIdResponses = {
+    /**
+     * OK
+     */
+    200: BannerGroup;
+};
+
+export type BannerAdminPatchGroupsByIdResponse = BannerAdminPatchGroupsByIdResponses[keyof BannerAdminPatchGroupsByIdResponses];
+
+export type BannerAdminGetGroupsByGroupidBannersData = {
+    body?: never;
+    path: {
+        groupId: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{groupId}/banners';
+};
+
+export type BannerAdminGetGroupsByGroupidBannersErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminGetGroupsByGroupidBannersError = BannerAdminGetGroupsByGroupidBannersErrors[keyof BannerAdminGetGroupsByGroupidBannersErrors];
+
+export type BannerAdminGetGroupsByGroupidBannersResponses = {
+    /**
+     * OK
+     */
+    200: BannerList;
+};
+
+export type BannerAdminGetGroupsByGroupidBannersResponse = BannerAdminGetGroupsByGroupidBannersResponses[keyof BannerAdminGetGroupsByGroupidBannersResponses];
+
+export type BannerAdminPostGroupsByGroupidBannersData = {
+    body?: BannerCreateRequest;
+    path: {
+        groupId: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{groupId}/banners';
+};
+
+export type BannerAdminPostGroupsByGroupidBannersErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminPostGroupsByGroupidBannersError = BannerAdminPostGroupsByGroupidBannersErrors[keyof BannerAdminPostGroupsByGroupidBannersErrors];
+
+export type BannerAdminPostGroupsByGroupidBannersResponses = {
+    /**
+     * Created
+     */
+    201: Banner;
+};
+
+export type BannerAdminPostGroupsByGroupidBannersResponse = BannerAdminPostGroupsByGroupidBannersResponses[keyof BannerAdminPostGroupsByGroupidBannersResponses];
+
+export type BannerAdminPostGroupsByGroupidBannersReorderData = {
+    body?: BannerReorderRequest;
+    path: {
+        groupId: string;
+    };
+    query?: never;
+    url: '/api/banner/groups/{groupId}/banners/reorder';
+};
+
+export type BannerAdminPostGroupsByGroupidBannersReorderErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminPostGroupsByGroupidBannersReorderError = BannerAdminPostGroupsByGroupidBannersReorderErrors[keyof BannerAdminPostGroupsByGroupidBannersReorderErrors];
+
+export type BannerAdminPostGroupsByGroupidBannersReorderResponses = {
+    /**
+     * OK
+     */
+    200: BannerList;
+};
+
+export type BannerAdminPostGroupsByGroupidBannersReorderResponse = BannerAdminPostGroupsByGroupidBannersReorderResponses[keyof BannerAdminPostGroupsByGroupidBannersReorderResponses];
+
+export type BannerAdminDeleteBannersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/banners/{id}';
+};
+
+export type BannerAdminDeleteBannersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminDeleteBannersByIdError = BannerAdminDeleteBannersByIdErrors[keyof BannerAdminDeleteBannersByIdErrors];
+
+export type BannerAdminDeleteBannersByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type BannerAdminDeleteBannersByIdResponse = BannerAdminDeleteBannersByIdResponses[keyof BannerAdminDeleteBannersByIdResponses];
+
+export type BannerAdminGetBannersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/banners/{id}';
+};
+
+export type BannerAdminGetBannersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminGetBannersByIdError = BannerAdminGetBannersByIdErrors[keyof BannerAdminGetBannersByIdErrors];
+
+export type BannerAdminGetBannersByIdResponses = {
+    /**
+     * OK
+     */
+    200: Banner;
+};
+
+export type BannerAdminGetBannersByIdResponse = BannerAdminGetBannersByIdResponses[keyof BannerAdminGetBannersByIdResponses];
+
+export type BannerAdminPatchBannersByIdData = {
+    body?: BannerUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/banners/{id}';
+};
+
+export type BannerAdminPatchBannersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: BannerErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: BannerErrorResponse;
+    /**
+     * Not found
+     */
+    404: BannerErrorResponse;
+    /**
+     * Conflict
+     */
+    409: BannerErrorResponse;
+};
+
+export type BannerAdminPatchBannersByIdError = BannerAdminPatchBannersByIdErrors[keyof BannerAdminPatchBannersByIdErrors];
+
+export type BannerAdminPatchBannersByIdResponses = {
+    /**
+     * OK
+     */
+    200: Banner;
+};
+
+export type BannerAdminPatchBannersByIdResponse = BannerAdminPatchBannersByIdResponses[keyof BannerAdminPatchBannersByIdResponses];
+
+export type CdkeyBatchesGetBatchesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/cdkey/batches';
+};
+
+export type CdkeyBatchesGetBatchesErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyBatchesGetBatchesError = CdkeyBatchesGetBatchesErrors[keyof CdkeyBatchesGetBatchesErrors];
+
+export type CdkeyBatchesGetBatchesResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyBatchList;
+};
+
+export type CdkeyBatchesGetBatchesResponse = CdkeyBatchesGetBatchesResponses[keyof CdkeyBatchesGetBatchesResponses];
+
+export type CdkeyBatchesPostBatchesData = {
+    body?: CdkeyCreateBatch;
+    path?: never;
+    query?: never;
+    url: '/api/cdkey/batches';
+};
+
+export type CdkeyBatchesPostBatchesErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyBatchesPostBatchesError = CdkeyBatchesPostBatchesErrors[keyof CdkeyBatchesPostBatchesErrors];
+
+export type CdkeyBatchesPostBatchesResponses = {
+    /**
+     * Created
+     */
+    201: CdkeyBatch;
+};
+
+export type CdkeyBatchesPostBatchesResponse = CdkeyBatchesPostBatchesResponses[keyof CdkeyBatchesPostBatchesResponses];
+
+export type CdkeyBatchesDeleteBatchesByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Batch id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/cdkey/batches/{key}';
+};
+
+export type CdkeyBatchesDeleteBatchesByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyBatchesDeleteBatchesByKeyError = CdkeyBatchesDeleteBatchesByKeyErrors[keyof CdkeyBatchesDeleteBatchesByKeyErrors];
+
+export type CdkeyBatchesDeleteBatchesByKeyResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CdkeyBatchesDeleteBatchesByKeyResponse = CdkeyBatchesDeleteBatchesByKeyResponses[keyof CdkeyBatchesDeleteBatchesByKeyResponses];
+
+export type CdkeyBatchesGetBatchesByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Batch id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/cdkey/batches/{key}';
+};
+
+export type CdkeyBatchesGetBatchesByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyBatchesGetBatchesByKeyError = CdkeyBatchesGetBatchesByKeyErrors[keyof CdkeyBatchesGetBatchesByKeyErrors];
+
+export type CdkeyBatchesGetBatchesByKeyResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyBatch;
+};
+
+export type CdkeyBatchesGetBatchesByKeyResponse = CdkeyBatchesGetBatchesByKeyResponses[keyof CdkeyBatchesGetBatchesByKeyResponses];
+
+export type CdkeyBatchesPatchBatchesByKeyData = {
+    body?: CdkeyUpdateBatch;
+    path: {
+        /**
+         * Batch id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/cdkey/batches/{key}';
+};
+
+export type CdkeyBatchesPatchBatchesByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyBatchesPatchBatchesByKeyError = CdkeyBatchesPatchBatchesByKeyErrors[keyof CdkeyBatchesPatchBatchesByKeyErrors];
+
+export type CdkeyBatchesPatchBatchesByKeyResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyBatch;
+};
+
+export type CdkeyBatchesPatchBatchesByKeyResponse = CdkeyBatchesPatchBatchesByKeyResponses[keyof CdkeyBatchesPatchBatchesByKeyResponses];
+
+export type CdkeyCodesPostBatchesByBatchidCodesGenerateData = {
+    body?: CdkeyGenerateCodes;
+    path: {
+        /**
+         * Batch UUID.
+         */
+        batchId: string;
+    };
+    query?: never;
+    url: '/api/cdkey/batches/{batchId}/codes/generate';
+};
+
+export type CdkeyCodesPostBatchesByBatchidCodesGenerateErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyCodesPostBatchesByBatchidCodesGenerateError = CdkeyCodesPostBatchesByBatchidCodesGenerateErrors[keyof CdkeyCodesPostBatchesByBatchidCodesGenerateErrors];
+
+export type CdkeyCodesPostBatchesByBatchidCodesGenerateResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyGenerateCodesResult;
+};
+
+export type CdkeyCodesPostBatchesByBatchidCodesGenerateResponse = CdkeyCodesPostBatchesByBatchidCodesGenerateResponses[keyof CdkeyCodesPostBatchesByBatchidCodesGenerateResponses];
+
+export type CdkeyCodesGetBatchesByBatchidCodesData = {
+    body?: never;
+    path: {
+        /**
+         * Batch UUID.
+         */
+        batchId: string;
+    };
+    query?: {
+        status?: 'pending' | 'redeemed' | 'revoked' | 'active';
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/cdkey/batches/{batchId}/codes';
+};
+
+export type CdkeyCodesGetBatchesByBatchidCodesErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyCodesGetBatchesByBatchidCodesError = CdkeyCodesGetBatchesByBatchidCodesErrors[keyof CdkeyCodesGetBatchesByBatchidCodesErrors];
+
+export type CdkeyCodesGetBatchesByBatchidCodesResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyCodeList;
+};
+
+export type CdkeyCodesGetBatchesByBatchidCodesResponse = CdkeyCodesGetBatchesByBatchidCodesResponses[keyof CdkeyCodesGetBatchesByBatchidCodesResponses];
+
+export type CdkeyCodesPatchCodesByCodeidRevokeData = {
+    body?: never;
+    path: {
+        /**
+         * Code UUID.
+         */
+        codeId: string;
+    };
+    query?: never;
+    url: '/api/cdkey/codes/{codeId}/revoke';
+};
+
+export type CdkeyCodesPatchCodesByCodeidRevokeErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyCodesPatchCodesByCodeidRevokeError = CdkeyCodesPatchCodesByCodeidRevokeErrors[keyof CdkeyCodesPatchCodesByCodeidRevokeErrors];
+
+export type CdkeyCodesPatchCodesByCodeidRevokeResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyCode;
+};
+
+export type CdkeyCodesPatchCodesByCodeidRevokeResponse = CdkeyCodesPatchCodesByCodeidRevokeResponses[keyof CdkeyCodesPatchCodesByCodeidRevokeResponses];
+
+export type CdkeyLogsGetBatchesByBatchidLogsData = {
+    body?: never;
+    path: {
+        /**
+         * Batch UUID.
+         */
+        batchId: string;
+    };
+    query?: {
+        status?: 'success' | 'failed';
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/cdkey/batches/{batchId}/logs';
+};
+
+export type CdkeyLogsGetBatchesByBatchidLogsErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyLogsGetBatchesByBatchidLogsError = CdkeyLogsGetBatchesByBatchidLogsErrors[keyof CdkeyLogsGetBatchesByBatchidLogsErrors];
+
+export type CdkeyLogsGetBatchesByBatchidLogsResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyRedemptionLogList;
+};
+
+export type CdkeyLogsGetBatchesByBatchidLogsResponse = CdkeyLogsGetBatchesByBatchidLogsResponses[keyof CdkeyLogsGetBatchesByBatchidLogsResponses];
+
+export type CdkeyRedemptionPostRedeemData = {
+    body?: CdkeyAdminRedeemRequest;
+    path?: never;
+    query?: never;
+    url: '/api/cdkey/redeem';
+};
+
+export type CdkeyRedemptionPostRedeemErrors = {
+    /**
+     * Bad request
+     */
+    400: CdkeyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CdkeyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CdkeyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CdkeyErrorResponse;
+};
+
+export type CdkeyRedemptionPostRedeemError = CdkeyRedemptionPostRedeemErrors[keyof CdkeyRedemptionPostRedeemErrors];
+
+export type CdkeyRedemptionPostRedeemResponses = {
+    /**
+     * OK
+     */
+    200: CdkeyRedeemResult;
+};
+
+export type CdkeyRedemptionPostRedeemResponse = CdkeyRedemptionPostRedeemResponses[keyof CdkeyRedemptionPostRedeemResponses];
+
+export type CheckInGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        activityId?: string;
+        includeActivity?: 'true' | 'false';
+    };
     url: '/api/check-in/configs';
 };
 
-export type GetApiCheckInConfigsErrors = {
+export type CheckInGetConfigsErrors = {
     /**
      * Bad request
      */
@@ -1121,25 +6619,25 @@ export type GetApiCheckInConfigsErrors = {
     409: CheckInErrorResponse;
 };
 
-export type GetApiCheckInConfigsError = GetApiCheckInConfigsErrors[keyof GetApiCheckInConfigsErrors];
+export type CheckInGetConfigsError = CheckInGetConfigsErrors[keyof CheckInGetConfigsErrors];
 
-export type GetApiCheckInConfigsResponses = {
+export type CheckInGetConfigsResponses = {
     /**
      * OK
      */
     200: CheckInConfigList;
 };
 
-export type GetApiCheckInConfigsResponse = GetApiCheckInConfigsResponses[keyof GetApiCheckInConfigsResponses];
+export type CheckInGetConfigsResponse = CheckInGetConfigsResponses[keyof CheckInGetConfigsResponses];
 
-export type PostApiCheckInConfigsData = {
+export type CheckInPostConfigsData = {
     body?: CheckInCreateConfig;
     path?: never;
     query?: never;
     url: '/api/check-in/configs';
 };
 
-export type PostApiCheckInConfigsErrors = {
+export type CheckInPostConfigsErrors = {
     /**
      * Bad request
      */
@@ -1158,18 +6656,18 @@ export type PostApiCheckInConfigsErrors = {
     409: CheckInErrorResponse;
 };
 
-export type PostApiCheckInConfigsError = PostApiCheckInConfigsErrors[keyof PostApiCheckInConfigsErrors];
+export type CheckInPostConfigsError = CheckInPostConfigsErrors[keyof CheckInPostConfigsErrors];
 
-export type PostApiCheckInConfigsResponses = {
+export type CheckInPostConfigsResponses = {
     /**
      * Created
      */
     201: CheckInConfig;
 };
 
-export type PostApiCheckInConfigsResponse = PostApiCheckInConfigsResponses[keyof PostApiCheckInConfigsResponses];
+export type CheckInPostConfigsResponse = CheckInPostConfigsResponses[keyof CheckInPostConfigsResponses];
 
-export type GetApiCheckInConfigsByKeyData = {
+export type CheckInGetConfigsByKeyData = {
     body?: never;
     path: {
         /**
@@ -1181,7 +6679,7 @@ export type GetApiCheckInConfigsByKeyData = {
     url: '/api/check-in/configs/{key}';
 };
 
-export type GetApiCheckInConfigsByKeyErrors = {
+export type CheckInGetConfigsByKeyErrors = {
     /**
      * Bad request
      */
@@ -1200,18 +6698,18 @@ export type GetApiCheckInConfigsByKeyErrors = {
     409: CheckInErrorResponse;
 };
 
-export type GetApiCheckInConfigsByKeyError = GetApiCheckInConfigsByKeyErrors[keyof GetApiCheckInConfigsByKeyErrors];
+export type CheckInGetConfigsByKeyError = CheckInGetConfigsByKeyErrors[keyof CheckInGetConfigsByKeyErrors];
 
-export type GetApiCheckInConfigsByKeyResponses = {
+export type CheckInGetConfigsByKeyResponses = {
     /**
      * OK
      */
     200: CheckInConfig;
 };
 
-export type GetApiCheckInConfigsByKeyResponse = GetApiCheckInConfigsByKeyResponses[keyof GetApiCheckInConfigsByKeyResponses];
+export type CheckInGetConfigsByKeyResponse = CheckInGetConfigsByKeyResponses[keyof CheckInGetConfigsByKeyResponses];
 
-export type DeleteApiCheckInConfigsByIdData = {
+export type CheckInDeleteConfigsByIdData = {
     body?: never;
     path: {
         /**
@@ -1223,7 +6721,7 @@ export type DeleteApiCheckInConfigsByIdData = {
     url: '/api/check-in/configs/{id}';
 };
 
-export type DeleteApiCheckInConfigsByIdErrors = {
+export type CheckInDeleteConfigsByIdErrors = {
     /**
      * Bad request
      */
@@ -1242,18 +6740,18 @@ export type DeleteApiCheckInConfigsByIdErrors = {
     409: CheckInErrorResponse;
 };
 
-export type DeleteApiCheckInConfigsByIdError = DeleteApiCheckInConfigsByIdErrors[keyof DeleteApiCheckInConfigsByIdErrors];
+export type CheckInDeleteConfigsByIdError = CheckInDeleteConfigsByIdErrors[keyof CheckInDeleteConfigsByIdErrors];
 
-export type DeleteApiCheckInConfigsByIdResponses = {
+export type CheckInDeleteConfigsByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiCheckInConfigsByIdResponse = DeleteApiCheckInConfigsByIdResponses[keyof DeleteApiCheckInConfigsByIdResponses];
+export type CheckInDeleteConfigsByIdResponse = CheckInDeleteConfigsByIdResponses[keyof CheckInDeleteConfigsByIdResponses];
 
-export type PatchApiCheckInConfigsByIdData = {
+export type CheckInPatchConfigsByIdData = {
     body?: CheckInUpdateConfig;
     path: {
         /**
@@ -1265,7 +6763,7 @@ export type PatchApiCheckInConfigsByIdData = {
     url: '/api/check-in/configs/{id}';
 };
 
-export type PatchApiCheckInConfigsByIdErrors = {
+export type CheckInPatchConfigsByIdErrors = {
     /**
      * Bad request
      */
@@ -1284,18 +6782,18 @@ export type PatchApiCheckInConfigsByIdErrors = {
     409: CheckInErrorResponse;
 };
 
-export type PatchApiCheckInConfigsByIdError = PatchApiCheckInConfigsByIdErrors[keyof PatchApiCheckInConfigsByIdErrors];
+export type CheckInPatchConfigsByIdError = CheckInPatchConfigsByIdErrors[keyof CheckInPatchConfigsByIdErrors];
 
-export type PatchApiCheckInConfigsByIdResponses = {
+export type CheckInPatchConfigsByIdResponses = {
     /**
      * OK
      */
     200: CheckInConfig;
 };
 
-export type PatchApiCheckInConfigsByIdResponse = PatchApiCheckInConfigsByIdResponses[keyof PatchApiCheckInConfigsByIdResponses];
+export type CheckInPatchConfigsByIdResponse = CheckInPatchConfigsByIdResponses[keyof CheckInPatchConfigsByIdResponses];
 
-export type GetApiCheckInConfigsByKeyUsersData = {
+export type CheckInGetConfigsByKeyUsersData = {
     body?: never;
     path: {
         /**
@@ -1307,7 +6805,7 @@ export type GetApiCheckInConfigsByKeyUsersData = {
     url: '/api/check-in/configs/{key}/users';
 };
 
-export type GetApiCheckInConfigsByKeyUsersErrors = {
+export type CheckInGetConfigsByKeyUsersErrors = {
     /**
      * Bad request
      */
@@ -1326,18 +6824,18 @@ export type GetApiCheckInConfigsByKeyUsersErrors = {
     409: CheckInErrorResponse;
 };
 
-export type GetApiCheckInConfigsByKeyUsersError = GetApiCheckInConfigsByKeyUsersErrors[keyof GetApiCheckInConfigsByKeyUsersErrors];
+export type CheckInGetConfigsByKeyUsersError = CheckInGetConfigsByKeyUsersErrors[keyof CheckInGetConfigsByKeyUsersErrors];
 
-export type GetApiCheckInConfigsByKeyUsersResponses = {
+export type CheckInGetConfigsByKeyUsersResponses = {
     /**
      * OK
      */
     200: CheckInUserStateList;
 };
 
-export type GetApiCheckInConfigsByKeyUsersResponse = GetApiCheckInConfigsByKeyUsersResponses[keyof GetApiCheckInConfigsByKeyUsersResponses];
+export type CheckInGetConfigsByKeyUsersResponse = CheckInGetConfigsByKeyUsersResponses[keyof CheckInGetConfigsByKeyUsersResponses];
 
-export type PostApiCheckInConfigsByKeyCheckInsData = {
+export type CheckInPostConfigsByKeyCheckInsData = {
     body?: CheckInRequest;
     path: {
         /**
@@ -1349,7 +6847,7 @@ export type PostApiCheckInConfigsByKeyCheckInsData = {
     url: '/api/check-in/configs/{key}/check-ins';
 };
 
-export type PostApiCheckInConfigsByKeyCheckInsErrors = {
+export type CheckInPostConfigsByKeyCheckInsErrors = {
     /**
      * Bad request
      */
@@ -1368,18 +6866,18 @@ export type PostApiCheckInConfigsByKeyCheckInsErrors = {
     409: CheckInErrorResponse;
 };
 
-export type PostApiCheckInConfigsByKeyCheckInsError = PostApiCheckInConfigsByKeyCheckInsErrors[keyof PostApiCheckInConfigsByKeyCheckInsErrors];
+export type CheckInPostConfigsByKeyCheckInsError = CheckInPostConfigsByKeyCheckInsErrors[keyof CheckInPostConfigsByKeyCheckInsErrors];
 
-export type PostApiCheckInConfigsByKeyCheckInsResponses = {
+export type CheckInPostConfigsByKeyCheckInsResponses = {
     /**
      * OK
      */
     200: CheckInResult;
 };
 
-export type PostApiCheckInConfigsByKeyCheckInsResponse = PostApiCheckInConfigsByKeyCheckInsResponses[keyof PostApiCheckInConfigsByKeyCheckInsResponses];
+export type CheckInPostConfigsByKeyCheckInsResponse = CheckInPostConfigsByKeyCheckInsResponses[keyof CheckInPostConfigsByKeyCheckInsResponses];
 
-export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateData = {
+export type CheckInGetConfigsByKeyUsersByEnduseridStateData = {
     body?: never;
     path: {
         /**
@@ -1395,7 +6893,7 @@ export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateData = {
     url: '/api/check-in/configs/{key}/users/{endUserId}/state';
 };
 
-export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateErrors = {
+export type CheckInGetConfigsByKeyUsersByEnduseridStateErrors = {
     /**
      * Bad request
      */
@@ -1414,18 +6912,18 @@ export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateErrors = {
     409: CheckInErrorResponse;
 };
 
-export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateError = GetApiCheckInConfigsByKeyUsersByEndUserIdStateErrors[keyof GetApiCheckInConfigsByKeyUsersByEndUserIdStateErrors];
+export type CheckInGetConfigsByKeyUsersByEnduseridStateError = CheckInGetConfigsByKeyUsersByEnduseridStateErrors[keyof CheckInGetConfigsByKeyUsersByEnduseridStateErrors];
 
-export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateResponses = {
+export type CheckInGetConfigsByKeyUsersByEnduseridStateResponses = {
     /**
      * OK
      */
     200: CheckInUserStateView;
 };
 
-export type GetApiCheckInConfigsByKeyUsersByEndUserIdStateResponse = GetApiCheckInConfigsByKeyUsersByEndUserIdStateResponses[keyof GetApiCheckInConfigsByKeyUsersByEndUserIdStateResponses];
+export type CheckInGetConfigsByKeyUsersByEnduseridStateResponse = CheckInGetConfigsByKeyUsersByEnduseridStateResponses[keyof CheckInGetConfigsByKeyUsersByEnduseridStateResponses];
 
-export type GetApiCheckInConfigsByKeyRewardsData = {
+export type CheckInRewardsGetConfigsByKeyRewardsData = {
     body?: never;
     path: {
         /**
@@ -1437,7 +6935,7 @@ export type GetApiCheckInConfigsByKeyRewardsData = {
     url: '/api/check-in/configs/{key}/rewards';
 };
 
-export type GetApiCheckInConfigsByKeyRewardsErrors = {
+export type CheckInRewardsGetConfigsByKeyRewardsErrors = {
     /**
      * Bad request
      */
@@ -1456,18 +6954,18 @@ export type GetApiCheckInConfigsByKeyRewardsErrors = {
     409: CheckInErrorResponse;
 };
 
-export type GetApiCheckInConfigsByKeyRewardsError = GetApiCheckInConfigsByKeyRewardsErrors[keyof GetApiCheckInConfigsByKeyRewardsErrors];
+export type CheckInRewardsGetConfigsByKeyRewardsError = CheckInRewardsGetConfigsByKeyRewardsErrors[keyof CheckInRewardsGetConfigsByKeyRewardsErrors];
 
-export type GetApiCheckInConfigsByKeyRewardsResponses = {
+export type CheckInRewardsGetConfigsByKeyRewardsResponses = {
     /**
      * OK
      */
     200: CheckInRewardList;
 };
 
-export type GetApiCheckInConfigsByKeyRewardsResponse = GetApiCheckInConfigsByKeyRewardsResponses[keyof GetApiCheckInConfigsByKeyRewardsResponses];
+export type CheckInRewardsGetConfigsByKeyRewardsResponse = CheckInRewardsGetConfigsByKeyRewardsResponses[keyof CheckInRewardsGetConfigsByKeyRewardsResponses];
 
-export type PostApiCheckInConfigsByKeyRewardsData = {
+export type CheckInRewardsPostConfigsByKeyRewardsData = {
     body?: CheckInCreateReward;
     path: {
         /**
@@ -1479,7 +6977,7 @@ export type PostApiCheckInConfigsByKeyRewardsData = {
     url: '/api/check-in/configs/{key}/rewards';
 };
 
-export type PostApiCheckInConfigsByKeyRewardsErrors = {
+export type CheckInRewardsPostConfigsByKeyRewardsErrors = {
     /**
      * Bad request
      */
@@ -1498,18 +6996,18 @@ export type PostApiCheckInConfigsByKeyRewardsErrors = {
     409: CheckInErrorResponse;
 };
 
-export type PostApiCheckInConfigsByKeyRewardsError = PostApiCheckInConfigsByKeyRewardsErrors[keyof PostApiCheckInConfigsByKeyRewardsErrors];
+export type CheckInRewardsPostConfigsByKeyRewardsError = CheckInRewardsPostConfigsByKeyRewardsErrors[keyof CheckInRewardsPostConfigsByKeyRewardsErrors];
 
-export type PostApiCheckInConfigsByKeyRewardsResponses = {
+export type CheckInRewardsPostConfigsByKeyRewardsResponses = {
     /**
      * Created
      */
     201: CheckInReward;
 };
 
-export type PostApiCheckInConfigsByKeyRewardsResponse = PostApiCheckInConfigsByKeyRewardsResponses[keyof PostApiCheckInConfigsByKeyRewardsResponses];
+export type CheckInRewardsPostConfigsByKeyRewardsResponse = CheckInRewardsPostConfigsByKeyRewardsResponses[keyof CheckInRewardsPostConfigsByKeyRewardsResponses];
 
-export type DeleteApiCheckInRewardsByRewardIdData = {
+export type CheckInRewardsDeleteRewardsByRewardidData = {
     body?: never;
     path: {
         /**
@@ -1521,7 +7019,7 @@ export type DeleteApiCheckInRewardsByRewardIdData = {
     url: '/api/check-in/rewards/{rewardId}';
 };
 
-export type DeleteApiCheckInRewardsByRewardIdErrors = {
+export type CheckInRewardsDeleteRewardsByRewardidErrors = {
     /**
      * Bad request
      */
@@ -1540,18 +7038,18 @@ export type DeleteApiCheckInRewardsByRewardIdErrors = {
     409: CheckInErrorResponse;
 };
 
-export type DeleteApiCheckInRewardsByRewardIdError = DeleteApiCheckInRewardsByRewardIdErrors[keyof DeleteApiCheckInRewardsByRewardIdErrors];
+export type CheckInRewardsDeleteRewardsByRewardidError = CheckInRewardsDeleteRewardsByRewardidErrors[keyof CheckInRewardsDeleteRewardsByRewardidErrors];
 
-export type DeleteApiCheckInRewardsByRewardIdResponses = {
+export type CheckInRewardsDeleteRewardsByRewardidResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiCheckInRewardsByRewardIdResponse = DeleteApiCheckInRewardsByRewardIdResponses[keyof DeleteApiCheckInRewardsByRewardIdResponses];
+export type CheckInRewardsDeleteRewardsByRewardidResponse = CheckInRewardsDeleteRewardsByRewardidResponses[keyof CheckInRewardsDeleteRewardsByRewardidResponses];
 
-export type PatchApiCheckInRewardsByRewardIdData = {
+export type CheckInRewardsPatchRewardsByRewardidData = {
     body?: CheckInUpdateReward;
     path: {
         /**
@@ -1563,7 +7061,7 @@ export type PatchApiCheckInRewardsByRewardIdData = {
     url: '/api/check-in/rewards/{rewardId}';
 };
 
-export type PatchApiCheckInRewardsByRewardIdErrors = {
+export type CheckInRewardsPatchRewardsByRewardidErrors = {
     /**
      * Bad request
      */
@@ -1582,25 +7080,25 @@ export type PatchApiCheckInRewardsByRewardIdErrors = {
     409: CheckInErrorResponse;
 };
 
-export type PatchApiCheckInRewardsByRewardIdError = PatchApiCheckInRewardsByRewardIdErrors[keyof PatchApiCheckInRewardsByRewardIdErrors];
+export type CheckInRewardsPatchRewardsByRewardidError = CheckInRewardsPatchRewardsByRewardidErrors[keyof CheckInRewardsPatchRewardsByRewardidErrors];
 
-export type PatchApiCheckInRewardsByRewardIdResponses = {
+export type CheckInRewardsPatchRewardsByRewardidResponses = {
     /**
      * OK
      */
     200: CheckInReward;
 };
 
-export type PatchApiCheckInRewardsByRewardIdResponse = PatchApiCheckInRewardsByRewardIdResponses[keyof PatchApiCheckInRewardsByRewardIdResponses];
+export type CheckInRewardsPatchRewardsByRewardidResponse = CheckInRewardsPatchRewardsByRewardidResponses[keyof CheckInRewardsPatchRewardsByRewardidResponses];
 
-export type GetApiClientCredentialsData = {
+export type ClientCredentialsGetRootData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/client-credentials';
 };
 
-export type GetApiClientCredentialsErrors = {
+export type ClientCredentialsGetRootErrors = {
     /**
      * Unauthorized
      */
@@ -1611,25 +7109,25 @@ export type GetApiClientCredentialsErrors = {
     404: ErrorResponse;
 };
 
-export type GetApiClientCredentialsError = GetApiClientCredentialsErrors[keyof GetApiClientCredentialsErrors];
+export type ClientCredentialsGetRootError = ClientCredentialsGetRootErrors[keyof ClientCredentialsGetRootErrors];
 
-export type GetApiClientCredentialsResponses = {
+export type ClientCredentialsGetRootResponses = {
     /**
      * OK
      */
     200: ClientCredentialList;
 };
 
-export type GetApiClientCredentialsResponse = GetApiClientCredentialsResponses[keyof GetApiClientCredentialsResponses];
+export type ClientCredentialsGetRootResponse = ClientCredentialsGetRootResponses[keyof ClientCredentialsGetRootResponses];
 
-export type PostApiClientCredentialsData = {
+export type ClientCredentialsPostRootData = {
     body?: CreateCredential;
     path?: never;
     query?: never;
     url: '/api/client-credentials';
 };
 
-export type PostApiClientCredentialsErrors = {
+export type ClientCredentialsPostRootErrors = {
     /**
      * Unauthorized
      */
@@ -1640,18 +7138,18 @@ export type PostApiClientCredentialsErrors = {
     404: ErrorResponse;
 };
 
-export type PostApiClientCredentialsError = PostApiClientCredentialsErrors[keyof PostApiClientCredentialsErrors];
+export type ClientCredentialsPostRootError = ClientCredentialsPostRootErrors[keyof ClientCredentialsPostRootErrors];
 
-export type PostApiClientCredentialsResponses = {
+export type ClientCredentialsPostRootResponses = {
     /**
      * Created — secret is shown only once
      */
     201: ClientCredentialCreated;
 };
 
-export type PostApiClientCredentialsResponse = PostApiClientCredentialsResponses[keyof PostApiClientCredentialsResponses];
+export type ClientCredentialsPostRootResponse = ClientCredentialsPostRootResponses[keyof ClientCredentialsPostRootResponses];
 
-export type DeleteApiClientCredentialsByIdData = {
+export type ClientCredentialsDeleteByIdData = {
     body?: never;
     path: {
         id: string;
@@ -1660,7 +7158,7 @@ export type DeleteApiClientCredentialsByIdData = {
     url: '/api/client-credentials/{id}';
 };
 
-export type DeleteApiClientCredentialsByIdErrors = {
+export type ClientCredentialsDeleteByIdErrors = {
     /**
      * Unauthorized
      */
@@ -1671,18 +7169,18 @@ export type DeleteApiClientCredentialsByIdErrors = {
     404: ErrorResponse;
 };
 
-export type DeleteApiClientCredentialsByIdError = DeleteApiClientCredentialsByIdErrors[keyof DeleteApiClientCredentialsByIdErrors];
+export type ClientCredentialsDeleteByIdError = ClientCredentialsDeleteByIdErrors[keyof ClientCredentialsDeleteByIdErrors];
 
-export type DeleteApiClientCredentialsByIdResponses = {
+export type ClientCredentialsDeleteByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiClientCredentialsByIdResponse = DeleteApiClientCredentialsByIdResponses[keyof DeleteApiClientCredentialsByIdResponses];
+export type ClientCredentialsDeleteByIdResponse = ClientCredentialsDeleteByIdResponses[keyof ClientCredentialsDeleteByIdResponses];
 
-export type GetApiClientCredentialsByIdData = {
+export type ClientCredentialsGetByIdData = {
     body?: never;
     path: {
         id: string;
@@ -1691,7 +7189,7 @@ export type GetApiClientCredentialsByIdData = {
     url: '/api/client-credentials/{id}';
 };
 
-export type GetApiClientCredentialsByIdErrors = {
+export type ClientCredentialsGetByIdErrors = {
     /**
      * Unauthorized
      */
@@ -1702,18 +7200,18 @@ export type GetApiClientCredentialsByIdErrors = {
     404: ErrorResponse;
 };
 
-export type GetApiClientCredentialsByIdError = GetApiClientCredentialsByIdErrors[keyof GetApiClientCredentialsByIdErrors];
+export type ClientCredentialsGetByIdError = ClientCredentialsGetByIdErrors[keyof ClientCredentialsGetByIdErrors];
 
-export type GetApiClientCredentialsByIdResponses = {
+export type ClientCredentialsGetByIdResponses = {
     /**
      * OK
      */
     200: ClientCredential;
 };
 
-export type GetApiClientCredentialsByIdResponse = GetApiClientCredentialsByIdResponses[keyof GetApiClientCredentialsByIdResponses];
+export type ClientCredentialsGetByIdResponse = ClientCredentialsGetByIdResponses[keyof ClientCredentialsGetByIdResponses];
 
-export type PostApiClientCredentialsByIdRevokeData = {
+export type ClientCredentialsPostByIdRevokeData = {
     body?: never;
     path: {
         id: string;
@@ -1722,7 +7220,7 @@ export type PostApiClientCredentialsByIdRevokeData = {
     url: '/api/client-credentials/{id}/revoke';
 };
 
-export type PostApiClientCredentialsByIdRevokeErrors = {
+export type ClientCredentialsPostByIdRevokeErrors = {
     /**
      * Unauthorized
      */
@@ -1733,18 +7231,18 @@ export type PostApiClientCredentialsByIdRevokeErrors = {
     404: ErrorResponse;
 };
 
-export type PostApiClientCredentialsByIdRevokeError = PostApiClientCredentialsByIdRevokeErrors[keyof PostApiClientCredentialsByIdRevokeErrors];
+export type ClientCredentialsPostByIdRevokeError = ClientCredentialsPostByIdRevokeErrors[keyof ClientCredentialsPostByIdRevokeErrors];
 
-export type PostApiClientCredentialsByIdRevokeResponses = {
+export type ClientCredentialsPostByIdRevokeResponses = {
     /**
      * Revoked
      */
     200: ClientCredential;
 };
 
-export type PostApiClientCredentialsByIdRevokeResponse = PostApiClientCredentialsByIdRevokeResponses[keyof PostApiClientCredentialsByIdRevokeResponses];
+export type ClientCredentialsPostByIdRevokeResponse = ClientCredentialsPostByIdRevokeResponses[keyof ClientCredentialsPostByIdRevokeResponses];
 
-export type PostApiClientCredentialsByIdRotateData = {
+export type ClientCredentialsPostByIdRotateData = {
     body?: never;
     path: {
         id: string;
@@ -1753,7 +7251,7 @@ export type PostApiClientCredentialsByIdRotateData = {
     url: '/api/client-credentials/{id}/rotate';
 };
 
-export type PostApiClientCredentialsByIdRotateErrors = {
+export type ClientCredentialsPostByIdRotateErrors = {
     /**
      * Unauthorized
      */
@@ -1764,18 +7262,18 @@ export type PostApiClientCredentialsByIdRotateErrors = {
     404: ErrorResponse;
 };
 
-export type PostApiClientCredentialsByIdRotateError = PostApiClientCredentialsByIdRotateErrors[keyof PostApiClientCredentialsByIdRotateErrors];
+export type ClientCredentialsPostByIdRotateError = ClientCredentialsPostByIdRotateErrors[keyof ClientCredentialsPostByIdRotateErrors];
 
-export type PostApiClientCredentialsByIdRotateResponses = {
+export type ClientCredentialsPostByIdRotateResponses = {
     /**
      * New keys — secret shown only once
      */
     200: RotateResult;
 };
 
-export type PostApiClientCredentialsByIdRotateResponse = PostApiClientCredentialsByIdRotateResponses[keyof PostApiClientCredentialsByIdRotateResponses];
+export type ClientCredentialsPostByIdRotateResponse = ClientCredentialsPostByIdRotateResponses[keyof ClientCredentialsPostByIdRotateResponses];
 
-export type PatchApiClientCredentialsByIdDevModeData = {
+export type ClientCredentialsPatchByIdDevModeData = {
     body?: UpdateDevMode;
     path: {
         id: string;
@@ -1784,7 +7282,7 @@ export type PatchApiClientCredentialsByIdDevModeData = {
     url: '/api/client-credentials/{id}/dev-mode';
 };
 
-export type PatchApiClientCredentialsByIdDevModeErrors = {
+export type ClientCredentialsPatchByIdDevModeErrors = {
     /**
      * Unauthorized
      */
@@ -1795,25 +7293,2753 @@ export type PatchApiClientCredentialsByIdDevModeErrors = {
     404: ErrorResponse;
 };
 
-export type PatchApiClientCredentialsByIdDevModeError = PatchApiClientCredentialsByIdDevModeErrors[keyof PatchApiClientCredentialsByIdDevModeErrors];
+export type ClientCredentialsPatchByIdDevModeError = ClientCredentialsPatchByIdDevModeErrors[keyof ClientCredentialsPatchByIdDevModeErrors];
 
-export type PatchApiClientCredentialsByIdDevModeResponses = {
+export type ClientCredentialsPatchByIdDevModeResponses = {
     /**
      * Updated
      */
     200: ClientCredential;
 };
 
-export type PatchApiClientCredentialsByIdDevModeResponse = PatchApiClientCredentialsByIdDevModeResponses[keyof PatchApiClientCredentialsByIdDevModeResponses];
+export type ClientCredentialsPatchByIdDevModeResponse = ClientCredentialsPatchByIdDevModeResponses[keyof ClientCredentialsPatchByIdDevModeResponses];
 
-export type GetApiItemCategoriesData = {
+export type EndUserPostSyncData = {
+    body?: SyncEndUser;
+    path?: never;
+    query?: never;
+    url: '/api/end-user/sync';
+};
+
+export type EndUserPostSyncErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Identity conflict
+     */
+    409: ErrorResponse;
+};
+
+export type EndUserPostSyncError = EndUserPostSyncErrors[keyof EndUserPostSyncErrors];
+
+export type EndUserPostSyncResponses = {
+    /**
+     * Merged onto an existing end-user
+     */
+    200: SyncEndUserResponse;
+    /**
+     * New end-user created
+     */
+    201: SyncEndUserResponse;
+};
+
+export type EndUserPostSyncResponse = EndUserPostSyncResponses[keyof EndUserPostSyncResponses];
+
+export type EndUserGetRootData = {
+    body?: never;
+    path?: never;
+    query?: {
+        search?: string;
+        origin?: 'managed' | 'synced';
+        disabled?: 'true' | 'false';
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/end-user';
+};
+
+export type EndUserGetRootErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserGetRootError = EndUserGetRootErrors[keyof EndUserGetRootErrors];
+
+export type EndUserGetRootResponses = {
+    /**
+     * OK
+     */
+    200: EndUserListResponse;
+};
+
+export type EndUserGetRootResponse = EndUserGetRootResponses[keyof EndUserGetRootResponses];
+
+export type EndUserDeleteByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}';
+};
+
+export type EndUserDeleteByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserDeleteByIdError = EndUserDeleteByIdErrors[keyof EndUserDeleteByIdErrors];
+
+export type EndUserDeleteByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type EndUserDeleteByIdResponse = EndUserDeleteByIdResponses[keyof EndUserDeleteByIdResponses];
+
+export type EndUserGetByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}';
+};
+
+export type EndUserGetByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserGetByIdError = EndUserGetByIdErrors[keyof EndUserGetByIdErrors];
+
+export type EndUserGetByIdResponses = {
+    /**
+     * OK
+     */
+    200: EndUserView;
+};
+
+export type EndUserGetByIdResponse = EndUserGetByIdResponses[keyof EndUserGetByIdResponses];
+
+export type EndUserPatchByIdData = {
+    body?: UpdateEndUser;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}';
+};
+
+export type EndUserPatchByIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserPatchByIdError = EndUserPatchByIdErrors[keyof EndUserPatchByIdErrors];
+
+export type EndUserPatchByIdResponses = {
+    /**
+     * OK
+     */
+    200: EndUserView;
+};
+
+export type EndUserPatchByIdResponse = EndUserPatchByIdResponses[keyof EndUserPatchByIdResponses];
+
+export type EndUserPostByIdDisableData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}/disable';
+};
+
+export type EndUserPostByIdDisableErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserPostByIdDisableError = EndUserPostByIdDisableErrors[keyof EndUserPostByIdDisableErrors];
+
+export type EndUserPostByIdDisableResponses = {
+    /**
+     * Disabled
+     */
+    200: EndUserView;
+};
+
+export type EndUserPostByIdDisableResponse = EndUserPostByIdDisableResponses[keyof EndUserPostByIdDisableResponses];
+
+export type EndUserPostByIdEnableData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}/enable';
+};
+
+export type EndUserPostByIdEnableErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserPostByIdEnableError = EndUserPostByIdEnableErrors[keyof EndUserPostByIdEnableErrors];
+
+export type EndUserPostByIdEnableResponses = {
+    /**
+     * Enabled
+     */
+    200: EndUserView;
+};
+
+export type EndUserPostByIdEnableResponse = EndUserPostByIdEnableResponses[keyof EndUserPostByIdEnableResponses];
+
+export type EndUserPostByIdSignOutAllData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/end-user/{id}/sign-out-all';
+};
+
+export type EndUserPostByIdSignOutAllErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type EndUserPostByIdSignOutAllError = EndUserPostByIdSignOutAllErrors[keyof EndUserPostByIdSignOutAllErrors];
+
+export type EndUserPostByIdSignOutAllResponses = {
+    /**
+     * Revoked
+     */
+    200: SignOutAllResponse;
+};
+
+export type EndUserPostByIdSignOutAllResponse = EndUserPostByIdSignOutAllResponses[keyof EndUserPostByIdSignOutAllResponses];
+
+export type CollectionGetAlbumsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/collection/albums';
+};
+
+export type CollectionGetAlbumsErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGetAlbumsError = CollectionGetAlbumsErrors[keyof CollectionGetAlbumsErrors];
+
+export type CollectionGetAlbumsResponses = {
+    /**
+     * OK
+     */
+    200: CollectionAlbumList;
+};
+
+export type CollectionGetAlbumsResponse = CollectionGetAlbumsResponses[keyof CollectionGetAlbumsResponses];
+
+export type CollectionPostAlbumsData = {
+    body?: CollectionCreateAlbum;
+    path?: never;
+    query?: never;
+    url: '/api/collection/albums';
+};
+
+export type CollectionPostAlbumsErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionPostAlbumsError = CollectionPostAlbumsErrors[keyof CollectionPostAlbumsErrors];
+
+export type CollectionPostAlbumsResponses = {
+    /**
+     * Created
+     */
+    201: CollectionAlbum;
+};
+
+export type CollectionPostAlbumsResponse = CollectionPostAlbumsResponses[keyof CollectionPostAlbumsResponses];
+
+export type CollectionGetAlbumsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}';
+};
+
+export type CollectionGetAlbumsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGetAlbumsByKeyError = CollectionGetAlbumsByKeyErrors[keyof CollectionGetAlbumsByKeyErrors];
+
+export type CollectionGetAlbumsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: CollectionAlbum;
+};
+
+export type CollectionGetAlbumsByKeyResponse = CollectionGetAlbumsByKeyResponses[keyof CollectionGetAlbumsByKeyResponses];
+
+export type CollectionDeleteAlbumsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{id}';
+};
+
+export type CollectionDeleteAlbumsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionDeleteAlbumsByIdError = CollectionDeleteAlbumsByIdErrors[keyof CollectionDeleteAlbumsByIdErrors];
+
+export type CollectionDeleteAlbumsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CollectionDeleteAlbumsByIdResponse = CollectionDeleteAlbumsByIdResponses[keyof CollectionDeleteAlbumsByIdResponses];
+
+export type CollectionPatchAlbumsByIdData = {
+    body?: CollectionUpdateAlbum;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{id}';
+};
+
+export type CollectionPatchAlbumsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionPatchAlbumsByIdError = CollectionPatchAlbumsByIdErrors[keyof CollectionPatchAlbumsByIdErrors];
+
+export type CollectionPatchAlbumsByIdResponses = {
+    /**
+     * OK
+     */
+    200: CollectionAlbum;
+};
+
+export type CollectionPatchAlbumsByIdResponse = CollectionPatchAlbumsByIdResponses[keyof CollectionPatchAlbumsByIdResponses];
+
+export type CollectionGroupsGetAlbumsByKeyGroupsData = {
+    body?: never;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/groups';
+};
+
+export type CollectionGroupsGetAlbumsByKeyGroupsErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGroupsGetAlbumsByKeyGroupsError = CollectionGroupsGetAlbumsByKeyGroupsErrors[keyof CollectionGroupsGetAlbumsByKeyGroupsErrors];
+
+export type CollectionGroupsGetAlbumsByKeyGroupsResponses = {
+    /**
+     * OK
+     */
+    200: CollectionGroupList;
+};
+
+export type CollectionGroupsGetAlbumsByKeyGroupsResponse = CollectionGroupsGetAlbumsByKeyGroupsResponses[keyof CollectionGroupsGetAlbumsByKeyGroupsResponses];
+
+export type CollectionGroupsPostAlbumsByKeyGroupsData = {
+    body?: CollectionCreateGroup;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/groups';
+};
+
+export type CollectionGroupsPostAlbumsByKeyGroupsErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGroupsPostAlbumsByKeyGroupsError = CollectionGroupsPostAlbumsByKeyGroupsErrors[keyof CollectionGroupsPostAlbumsByKeyGroupsErrors];
+
+export type CollectionGroupsPostAlbumsByKeyGroupsResponses = {
+    /**
+     * Created
+     */
+    201: CollectionGroup;
+};
+
+export type CollectionGroupsPostAlbumsByKeyGroupsResponse = CollectionGroupsPostAlbumsByKeyGroupsResponses[keyof CollectionGroupsPostAlbumsByKeyGroupsResponses];
+
+export type CollectionGroupsDeleteGroupsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/groups/{id}';
+};
+
+export type CollectionGroupsDeleteGroupsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGroupsDeleteGroupsByIdError = CollectionGroupsDeleteGroupsByIdErrors[keyof CollectionGroupsDeleteGroupsByIdErrors];
+
+export type CollectionGroupsDeleteGroupsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CollectionGroupsDeleteGroupsByIdResponse = CollectionGroupsDeleteGroupsByIdResponses[keyof CollectionGroupsDeleteGroupsByIdResponses];
+
+export type CollectionGroupsPatchGroupsByIdData = {
+    body?: CollectionUpdateGroup;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/groups/{id}';
+};
+
+export type CollectionGroupsPatchGroupsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionGroupsPatchGroupsByIdError = CollectionGroupsPatchGroupsByIdErrors[keyof CollectionGroupsPatchGroupsByIdErrors];
+
+export type CollectionGroupsPatchGroupsByIdResponses = {
+    /**
+     * OK
+     */
+    200: CollectionGroup;
+};
+
+export type CollectionGroupsPatchGroupsByIdResponse = CollectionGroupsPatchGroupsByIdResponses[keyof CollectionGroupsPatchGroupsByIdResponses];
+
+export type CollectionEntriesGetAlbumsByKeyEntriesData = {
+    body?: never;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/entries';
+};
+
+export type CollectionEntriesGetAlbumsByKeyEntriesErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionEntriesGetAlbumsByKeyEntriesError = CollectionEntriesGetAlbumsByKeyEntriesErrors[keyof CollectionEntriesGetAlbumsByKeyEntriesErrors];
+
+export type CollectionEntriesGetAlbumsByKeyEntriesResponses = {
+    /**
+     * OK
+     */
+    200: CollectionEntryList;
+};
+
+export type CollectionEntriesGetAlbumsByKeyEntriesResponse = CollectionEntriesGetAlbumsByKeyEntriesResponses[keyof CollectionEntriesGetAlbumsByKeyEntriesResponses];
+
+export type CollectionEntriesPostAlbumsByKeyEntriesData = {
+    body?: CollectionCreateEntry;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/entries';
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesError = CollectionEntriesPostAlbumsByKeyEntriesErrors[keyof CollectionEntriesPostAlbumsByKeyEntriesErrors];
+
+export type CollectionEntriesPostAlbumsByKeyEntriesResponses = {
+    /**
+     * Created
+     */
+    201: CollectionEntry;
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesResponse = CollectionEntriesPostAlbumsByKeyEntriesResponses[keyof CollectionEntriesPostAlbumsByKeyEntriesResponses];
+
+export type CollectionEntriesPostAlbumsByKeyEntriesBulkData = {
+    body?: CollectionBulkCreateEntries;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/entries:bulk';
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesBulkErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesBulkError = CollectionEntriesPostAlbumsByKeyEntriesBulkErrors[keyof CollectionEntriesPostAlbumsByKeyEntriesBulkErrors];
+
+export type CollectionEntriesPostAlbumsByKeyEntriesBulkResponses = {
+    /**
+     * Created
+     */
+    201: CollectionEntryList;
+};
+
+export type CollectionEntriesPostAlbumsByKeyEntriesBulkResponse = CollectionEntriesPostAlbumsByKeyEntriesBulkResponses[keyof CollectionEntriesPostAlbumsByKeyEntriesBulkResponses];
+
+export type CollectionEntriesDeleteEntriesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/entries/{id}';
+};
+
+export type CollectionEntriesDeleteEntriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionEntriesDeleteEntriesByIdError = CollectionEntriesDeleteEntriesByIdErrors[keyof CollectionEntriesDeleteEntriesByIdErrors];
+
+export type CollectionEntriesDeleteEntriesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CollectionEntriesDeleteEntriesByIdResponse = CollectionEntriesDeleteEntriesByIdResponses[keyof CollectionEntriesDeleteEntriesByIdResponses];
+
+export type CollectionEntriesPatchEntriesByIdData = {
+    body?: CollectionUpdateEntry;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/entries/{id}';
+};
+
+export type CollectionEntriesPatchEntriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionEntriesPatchEntriesByIdError = CollectionEntriesPatchEntriesByIdErrors[keyof CollectionEntriesPatchEntriesByIdErrors];
+
+export type CollectionEntriesPatchEntriesByIdResponses = {
+    /**
+     * OK
+     */
+    200: CollectionEntry;
+};
+
+export type CollectionEntriesPatchEntriesByIdResponse = CollectionEntriesPatchEntriesByIdResponses[keyof CollectionEntriesPatchEntriesByIdResponses];
+
+export type CollectionMilestonesGetAlbumsByKeyMilestonesData = {
+    body?: never;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/milestones';
+};
+
+export type CollectionMilestonesGetAlbumsByKeyMilestonesErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionMilestonesGetAlbumsByKeyMilestonesError = CollectionMilestonesGetAlbumsByKeyMilestonesErrors[keyof CollectionMilestonesGetAlbumsByKeyMilestonesErrors];
+
+export type CollectionMilestonesGetAlbumsByKeyMilestonesResponses = {
+    /**
+     * OK
+     */
+    200: CollectionMilestoneList;
+};
+
+export type CollectionMilestonesGetAlbumsByKeyMilestonesResponse = CollectionMilestonesGetAlbumsByKeyMilestonesResponses[keyof CollectionMilestonesGetAlbumsByKeyMilestonesResponses];
+
+export type CollectionMilestonesPostAlbumsByKeyMilestonesData = {
+    body?: CollectionCreateMilestone;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/milestones';
+};
+
+export type CollectionMilestonesPostAlbumsByKeyMilestonesErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionMilestonesPostAlbumsByKeyMilestonesError = CollectionMilestonesPostAlbumsByKeyMilestonesErrors[keyof CollectionMilestonesPostAlbumsByKeyMilestonesErrors];
+
+export type CollectionMilestonesPostAlbumsByKeyMilestonesResponses = {
+    /**
+     * Created
+     */
+    201: CollectionMilestone;
+};
+
+export type CollectionMilestonesPostAlbumsByKeyMilestonesResponse = CollectionMilestonesPostAlbumsByKeyMilestonesResponses[keyof CollectionMilestonesPostAlbumsByKeyMilestonesResponses];
+
+export type CollectionMilestonesDeleteMilestonesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/milestones/{id}';
+};
+
+export type CollectionMilestonesDeleteMilestonesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionMilestonesDeleteMilestonesByIdError = CollectionMilestonesDeleteMilestonesByIdErrors[keyof CollectionMilestonesDeleteMilestonesByIdErrors];
+
+export type CollectionMilestonesDeleteMilestonesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CollectionMilestonesDeleteMilestonesByIdResponse = CollectionMilestonesDeleteMilestonesByIdResponses[keyof CollectionMilestonesDeleteMilestonesByIdResponses];
+
+export type CollectionMilestonesPatchMilestonesByIdData = {
+    body?: CollectionUpdateMilestone;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/milestones/{id}';
+};
+
+export type CollectionMilestonesPatchMilestonesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionMilestonesPatchMilestonesByIdError = CollectionMilestonesPatchMilestonesByIdErrors[keyof CollectionMilestonesPatchMilestonesByIdErrors];
+
+export type CollectionMilestonesPatchMilestonesByIdResponses = {
+    /**
+     * OK
+     */
+    200: CollectionMilestone;
+};
+
+export type CollectionMilestonesPatchMilestonesByIdResponse = CollectionMilestonesPatchMilestonesByIdResponses[keyof CollectionMilestonesPatchMilestonesByIdResponses];
+
+export type CollectionOpsGetAlbumsByKeyStatsData = {
+    body?: never;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/stats';
+};
+
+export type CollectionOpsGetAlbumsByKeyStatsErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionOpsGetAlbumsByKeyStatsError = CollectionOpsGetAlbumsByKeyStatsErrors[keyof CollectionOpsGetAlbumsByKeyStatsErrors];
+
+export type CollectionOpsGetAlbumsByKeyStatsResponses = {
+    /**
+     * OK
+     */
+    200: CollectionStats;
+};
+
+export type CollectionOpsGetAlbumsByKeyStatsResponse = CollectionOpsGetAlbumsByKeyStatsResponses[keyof CollectionOpsGetAlbumsByKeyStatsResponses];
+
+export type CollectionOpsPostAlbumsByKeyRescanData = {
+    body?: CollectionRescanBody;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/rescan';
+};
+
+export type CollectionOpsPostAlbumsByKeyRescanErrors = {
+    /**
+     * Bad request
+     */
+    400: CollectionErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CollectionErrorResponse;
+    /**
+     * Not found
+     */
+    404: CollectionErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CollectionErrorResponse;
+};
+
+export type CollectionOpsPostAlbumsByKeyRescanError = CollectionOpsPostAlbumsByKeyRescanErrors[keyof CollectionOpsPostAlbumsByKeyRescanErrors];
+
+export type CollectionOpsPostAlbumsByKeyRescanResponses = {
+    /**
+     * OK
+     */
+    200: CollectionSyncResponse;
+};
+
+export type CollectionOpsPostAlbumsByKeyRescanResponse = CollectionOpsPostAlbumsByKeyRescanResponses[keyof CollectionOpsPostAlbumsByKeyRescanResponses];
+
+export type CurrencyDefinitionsGetDefinitionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Filter by linked activity. Pass 'null' to filter for permanent-only.
+         */
+        activityId?: string | null;
+        isActive?: 'true' | 'false';
+    };
+    url: '/api/currency/definitions';
+};
+
+export type CurrencyDefinitionsGetDefinitionsErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyDefinitionsGetDefinitionsError = CurrencyDefinitionsGetDefinitionsErrors[keyof CurrencyDefinitionsGetDefinitionsErrors];
+
+export type CurrencyDefinitionsGetDefinitionsResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyDefinitionList;
+};
+
+export type CurrencyDefinitionsGetDefinitionsResponse = CurrencyDefinitionsGetDefinitionsResponses[keyof CurrencyDefinitionsGetDefinitionsResponses];
+
+export type CurrencyDefinitionsPostDefinitionsData = {
+    body?: CurrencyCreateDefinition;
+    path?: never;
+    query?: never;
+    url: '/api/currency/definitions';
+};
+
+export type CurrencyDefinitionsPostDefinitionsErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyDefinitionsPostDefinitionsError = CurrencyDefinitionsPostDefinitionsErrors[keyof CurrencyDefinitionsPostDefinitionsErrors];
+
+export type CurrencyDefinitionsPostDefinitionsResponses = {
+    /**
+     * Created
+     */
+    201: CurrencyDefinition;
+};
+
+export type CurrencyDefinitionsPostDefinitionsResponse = CurrencyDefinitionsPostDefinitionsResponses[keyof CurrencyDefinitionsPostDefinitionsResponses];
+
+export type CurrencyDefinitionsGetDefinitionsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/currency/definitions/{key}';
+};
+
+export type CurrencyDefinitionsGetDefinitionsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyDefinitionsGetDefinitionsByKeyError = CurrencyDefinitionsGetDefinitionsByKeyErrors[keyof CurrencyDefinitionsGetDefinitionsByKeyErrors];
+
+export type CurrencyDefinitionsGetDefinitionsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyDefinition;
+};
+
+export type CurrencyDefinitionsGetDefinitionsByKeyResponse = CurrencyDefinitionsGetDefinitionsByKeyResponses[keyof CurrencyDefinitionsGetDefinitionsByKeyResponses];
+
+export type CurrencyDefinitionsDeleteDefinitionsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/currency/definitions/{id}';
+};
+
+export type CurrencyDefinitionsDeleteDefinitionsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyDefinitionsDeleteDefinitionsByIdError = CurrencyDefinitionsDeleteDefinitionsByIdErrors[keyof CurrencyDefinitionsDeleteDefinitionsByIdErrors];
+
+export type CurrencyDefinitionsDeleteDefinitionsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type CurrencyDefinitionsDeleteDefinitionsByIdResponse = CurrencyDefinitionsDeleteDefinitionsByIdResponses[keyof CurrencyDefinitionsDeleteDefinitionsByIdResponses];
+
+export type CurrencyDefinitionsPatchDefinitionsByIdData = {
+    body?: CurrencyUpdateDefinition;
+    path: {
+        /**
+         * UUID.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/currency/definitions/{id}';
+};
+
+export type CurrencyDefinitionsPatchDefinitionsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyDefinitionsPatchDefinitionsByIdError = CurrencyDefinitionsPatchDefinitionsByIdErrors[keyof CurrencyDefinitionsPatchDefinitionsByIdErrors];
+
+export type CurrencyDefinitionsPatchDefinitionsByIdResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyDefinition;
+};
+
+export type CurrencyDefinitionsPatchDefinitionsByIdResponse = CurrencyDefinitionsPatchDefinitionsByIdResponses[keyof CurrencyDefinitionsPatchDefinitionsByIdResponses];
+
+export type CurrencyWalletGetWalletsData = {
+    body?: never;
+    path?: never;
+    query: {
+        endUserId: string;
+    };
+    url: '/api/currency/wallets';
+};
+
+export type CurrencyWalletGetWalletsErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyWalletGetWalletsError = CurrencyWalletGetWalletsErrors[keyof CurrencyWalletGetWalletsErrors];
+
+export type CurrencyWalletGetWalletsResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyWalletList;
+};
+
+export type CurrencyWalletGetWalletsResponse = CurrencyWalletGetWalletsResponses[keyof CurrencyWalletGetWalletsResponses];
+
+export type CurrencyWalletGetWalletsByEnduseridByCurrencyidData = {
+    body?: never;
+    path: {
+        endUserId: string;
+        currencyId: string;
+    };
+    query?: never;
+    url: '/api/currency/wallets/{endUserId}/{currencyId}';
+};
+
+export type CurrencyWalletGetWalletsByEnduseridByCurrencyidErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyWalletGetWalletsByEnduseridByCurrencyidError = CurrencyWalletGetWalletsByEnduseridByCurrencyidErrors[keyof CurrencyWalletGetWalletsByEnduseridByCurrencyidErrors];
+
+export type CurrencyWalletGetWalletsByEnduseridByCurrencyidResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyBalance;
+};
+
+export type CurrencyWalletGetWalletsByEnduseridByCurrencyidResponse = CurrencyWalletGetWalletsByEnduseridByCurrencyidResponses[keyof CurrencyWalletGetWalletsByEnduseridByCurrencyidResponses];
+
+export type CurrencyWalletPostWalletsGrantData = {
+    body?: CurrencyGrantRequest;
+    path?: never;
+    query?: never;
+    url: '/api/currency/wallets/grant';
+};
+
+export type CurrencyWalletPostWalletsGrantErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyWalletPostWalletsGrantError = CurrencyWalletPostWalletsGrantErrors[keyof CurrencyWalletPostWalletsGrantErrors];
+
+export type CurrencyWalletPostWalletsGrantResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyGrantResult;
+};
+
+export type CurrencyWalletPostWalletsGrantResponse = CurrencyWalletPostWalletsGrantResponses[keyof CurrencyWalletPostWalletsGrantResponses];
+
+export type CurrencyWalletPostWalletsDeductData = {
+    body?: CurrencyDeductRequest;
+    path?: never;
+    query?: never;
+    url: '/api/currency/wallets/deduct';
+};
+
+export type CurrencyWalletPostWalletsDeductErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyWalletPostWalletsDeductError = CurrencyWalletPostWalletsDeductErrors[keyof CurrencyWalletPostWalletsDeductErrors];
+
+export type CurrencyWalletPostWalletsDeductResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyDeductResult;
+};
+
+export type CurrencyWalletPostWalletsDeductResponse = CurrencyWalletPostWalletsDeductResponses[keyof CurrencyWalletPostWalletsDeductResponses];
+
+export type CurrencyLedgerGetLedgerData = {
+    body?: never;
+    path?: never;
+    query?: {
+        endUserId?: string;
+        currencyId?: string;
+        source?: string;
+        sourceId?: string;
+        limit?: number;
+        cursor?: string;
+    };
+    url: '/api/currency/ledger';
+};
+
+export type CurrencyLedgerGetLedgerErrors = {
+    /**
+     * Bad request
+     */
+    400: CurrencyErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: CurrencyErrorResponse;
+    /**
+     * Not found
+     */
+    404: CurrencyErrorResponse;
+    /**
+     * Conflict
+     */
+    409: CurrencyErrorResponse;
+};
+
+export type CurrencyLedgerGetLedgerError = CurrencyLedgerGetLedgerErrors[keyof CurrencyLedgerGetLedgerErrors];
+
+export type CurrencyLedgerGetLedgerResponses = {
+    /**
+     * OK
+     */
+    200: CurrencyLedgerList;
+};
+
+export type CurrencyLedgerGetLedgerResponse = CurrencyLedgerGetLedgerResponses[keyof CurrencyLedgerGetLedgerResponses];
+
+export type DialogueAdminGetScriptsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/dialogue/scripts';
+};
+
+export type DialogueAdminGetScriptsErrors = {
+    /**
+     * Bad request
+     */
+    400: DialogueErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: DialogueErrorResponse;
+    /**
+     * Not found
+     */
+    404: DialogueErrorResponse;
+    /**
+     * Conflict
+     */
+    409: DialogueErrorResponse;
+};
+
+export type DialogueAdminGetScriptsError = DialogueAdminGetScriptsErrors[keyof DialogueAdminGetScriptsErrors];
+
+export type DialogueAdminGetScriptsResponses = {
+    /**
+     * OK
+     */
+    200: DialogueScriptList;
+};
+
+export type DialogueAdminGetScriptsResponse = DialogueAdminGetScriptsResponses[keyof DialogueAdminGetScriptsResponses];
+
+export type DialogueAdminPostScriptsData = {
+    body?: DialogueScriptCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/dialogue/scripts';
+};
+
+export type DialogueAdminPostScriptsErrors = {
+    /**
+     * Bad request
+     */
+    400: DialogueErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: DialogueErrorResponse;
+    /**
+     * Not found
+     */
+    404: DialogueErrorResponse;
+    /**
+     * Conflict
+     */
+    409: DialogueErrorResponse;
+};
+
+export type DialogueAdminPostScriptsError = DialogueAdminPostScriptsErrors[keyof DialogueAdminPostScriptsErrors];
+
+export type DialogueAdminPostScriptsResponses = {
+    /**
+     * Created
+     */
+    201: DialogueScript;
+};
+
+export type DialogueAdminPostScriptsResponse = DialogueAdminPostScriptsResponses[keyof DialogueAdminPostScriptsResponses];
+
+export type DialogueAdminDeleteScriptsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/dialogue/scripts/{id}';
+};
+
+export type DialogueAdminDeleteScriptsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: DialogueErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: DialogueErrorResponse;
+    /**
+     * Not found
+     */
+    404: DialogueErrorResponse;
+    /**
+     * Conflict
+     */
+    409: DialogueErrorResponse;
+};
+
+export type DialogueAdminDeleteScriptsByIdError = DialogueAdminDeleteScriptsByIdErrors[keyof DialogueAdminDeleteScriptsByIdErrors];
+
+export type DialogueAdminDeleteScriptsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type DialogueAdminDeleteScriptsByIdResponse = DialogueAdminDeleteScriptsByIdResponses[keyof DialogueAdminDeleteScriptsByIdResponses];
+
+export type DialogueAdminGetScriptsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/dialogue/scripts/{id}';
+};
+
+export type DialogueAdminGetScriptsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: DialogueErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: DialogueErrorResponse;
+    /**
+     * Not found
+     */
+    404: DialogueErrorResponse;
+    /**
+     * Conflict
+     */
+    409: DialogueErrorResponse;
+};
+
+export type DialogueAdminGetScriptsByIdError = DialogueAdminGetScriptsByIdErrors[keyof DialogueAdminGetScriptsByIdErrors];
+
+export type DialogueAdminGetScriptsByIdResponses = {
+    /**
+     * OK
+     */
+    200: DialogueScript;
+};
+
+export type DialogueAdminGetScriptsByIdResponse = DialogueAdminGetScriptsByIdResponses[keyof DialogueAdminGetScriptsByIdResponses];
+
+export type DialogueAdminPatchScriptsByIdData = {
+    body?: DialogueScriptUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/dialogue/scripts/{id}';
+};
+
+export type DialogueAdminPatchScriptsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: DialogueErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: DialogueErrorResponse;
+    /**
+     * Not found
+     */
+    404: DialogueErrorResponse;
+    /**
+     * Conflict
+     */
+    409: DialogueErrorResponse;
+};
+
+export type DialogueAdminPatchScriptsByIdError = DialogueAdminPatchScriptsByIdErrors[keyof DialogueAdminPatchScriptsByIdErrors];
+
+export type DialogueAdminPatchScriptsByIdResponses = {
+    /**
+     * OK
+     */
+    200: DialogueScript;
+};
+
+export type DialogueAdminPatchScriptsByIdResponse = DialogueAdminPatchScriptsByIdResponses[keyof DialogueAdminPatchScriptsByIdResponses];
+
+export type EntitySchemasAdminGetSchemasData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/entity/schemas';
+};
+
+export type EntitySchemasAdminGetSchemasErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySchemasAdminGetSchemasError = EntitySchemasAdminGetSchemasErrors[keyof EntitySchemasAdminGetSchemasErrors];
+
+export type EntitySchemasAdminGetSchemasResponses = {
+    /**
+     * OK
+     */
+    200: Array<EntitySchema>;
+};
+
+export type EntitySchemasAdminGetSchemasResponse = EntitySchemasAdminGetSchemasResponses[keyof EntitySchemasAdminGetSchemasResponses];
+
+export type EntitySchemasAdminPostSchemasData = {
+    body?: EntityCreateSchema;
+    path?: never;
+    query?: never;
+    url: '/api/entity/schemas';
+};
+
+export type EntitySchemasAdminPostSchemasErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySchemasAdminPostSchemasError = EntitySchemasAdminPostSchemasErrors[keyof EntitySchemasAdminPostSchemasErrors];
+
+export type EntitySchemasAdminPostSchemasResponses = {
+    /**
+     * Created
+     */
+    201: EntitySchema;
+};
+
+export type EntitySchemasAdminPostSchemasResponse = EntitySchemasAdminPostSchemasResponses[keyof EntitySchemasAdminPostSchemasResponses];
+
+export type EntitySchemasAdminGetSchemasByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Schema ID (uuid) or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/entity/schemas/{key}';
+};
+
+export type EntitySchemasAdminGetSchemasByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySchemasAdminGetSchemasByKeyError = EntitySchemasAdminGetSchemasByKeyErrors[keyof EntitySchemasAdminGetSchemasByKeyErrors];
+
+export type EntitySchemasAdminGetSchemasByKeyResponses = {
+    /**
+     * OK
+     */
+    200: EntitySchema;
+};
+
+export type EntitySchemasAdminGetSchemasByKeyResponse = EntitySchemasAdminGetSchemasByKeyResponses[keyof EntitySchemasAdminGetSchemasByKeyResponses];
+
+export type EntitySchemasAdminDeleteSchemasByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Schema UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/schemas/{id}';
+};
+
+export type EntitySchemasAdminDeleteSchemasByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySchemasAdminDeleteSchemasByIdError = EntitySchemasAdminDeleteSchemasByIdErrors[keyof EntitySchemasAdminDeleteSchemasByIdErrors];
+
+export type EntitySchemasAdminDeleteSchemasByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type EntitySchemasAdminDeleteSchemasByIdResponse = EntitySchemasAdminDeleteSchemasByIdResponses[keyof EntitySchemasAdminDeleteSchemasByIdResponses];
+
+export type EntitySchemasAdminPatchSchemasByIdData = {
+    body?: EntityUpdateSchema;
+    path: {
+        /**
+         * Schema UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/schemas/{id}';
+};
+
+export type EntitySchemasAdminPatchSchemasByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySchemasAdminPatchSchemasByIdError = EntitySchemasAdminPatchSchemasByIdErrors[keyof EntitySchemasAdminPatchSchemasByIdErrors];
+
+export type EntitySchemasAdminPatchSchemasByIdResponses = {
+    /**
+     * Updated
+     */
+    200: EntitySchema;
+};
+
+export type EntitySchemasAdminPatchSchemasByIdResponse = EntitySchemasAdminPatchSchemasByIdResponses[keyof EntitySchemasAdminPatchSchemasByIdResponses];
+
+export type EntityBlueprintsAdminGetBlueprintsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        schemaId?: string;
+    };
+    url: '/api/entity/blueprints';
+};
+
+export type EntityBlueprintsAdminGetBlueprintsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityBlueprintsAdminGetBlueprintsError = EntityBlueprintsAdminGetBlueprintsErrors[keyof EntityBlueprintsAdminGetBlueprintsErrors];
+
+export type EntityBlueprintsAdminGetBlueprintsResponses = {
+    /**
+     * OK
+     */
+    200: Array<EntityBlueprint>;
+};
+
+export type EntityBlueprintsAdminGetBlueprintsResponse = EntityBlueprintsAdminGetBlueprintsResponses[keyof EntityBlueprintsAdminGetBlueprintsResponses];
+
+export type EntityBlueprintsAdminPostBlueprintsData = {
+    body?: EntityCreateBlueprint;
+    path?: never;
+    query?: never;
+    url: '/api/entity/blueprints';
+};
+
+export type EntityBlueprintsAdminPostBlueprintsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityBlueprintsAdminPostBlueprintsError = EntityBlueprintsAdminPostBlueprintsErrors[keyof EntityBlueprintsAdminPostBlueprintsErrors];
+
+export type EntityBlueprintsAdminPostBlueprintsResponses = {
+    /**
+     * Created
+     */
+    201: EntityBlueprint;
+};
+
+export type EntityBlueprintsAdminPostBlueprintsResponse = EntityBlueprintsAdminPostBlueprintsResponses[keyof EntityBlueprintsAdminPostBlueprintsResponses];
+
+export type EntityBlueprintsAdminGetBlueprintsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Blueprint ID (uuid) or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{key}';
+};
+
+export type EntityBlueprintsAdminGetBlueprintsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityBlueprintsAdminGetBlueprintsByKeyError = EntityBlueprintsAdminGetBlueprintsByKeyErrors[keyof EntityBlueprintsAdminGetBlueprintsByKeyErrors];
+
+export type EntityBlueprintsAdminGetBlueprintsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: EntityBlueprint;
+};
+
+export type EntityBlueprintsAdminGetBlueprintsByKeyResponse = EntityBlueprintsAdminGetBlueprintsByKeyResponses[keyof EntityBlueprintsAdminGetBlueprintsByKeyResponses];
+
+export type EntityBlueprintsAdminDeleteBlueprintsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Blueprint UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{id}';
+};
+
+export type EntityBlueprintsAdminDeleteBlueprintsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityBlueprintsAdminDeleteBlueprintsByIdError = EntityBlueprintsAdminDeleteBlueprintsByIdErrors[keyof EntityBlueprintsAdminDeleteBlueprintsByIdErrors];
+
+export type EntityBlueprintsAdminDeleteBlueprintsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type EntityBlueprintsAdminDeleteBlueprintsByIdResponse = EntityBlueprintsAdminDeleteBlueprintsByIdResponses[keyof EntityBlueprintsAdminDeleteBlueprintsByIdResponses];
+
+export type EntityBlueprintsAdminPatchBlueprintsByIdData = {
+    body?: EntityUpdateBlueprint;
+    path: {
+        /**
+         * Blueprint UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{id}';
+};
+
+export type EntityBlueprintsAdminPatchBlueprintsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityBlueprintsAdminPatchBlueprintsByIdError = EntityBlueprintsAdminPatchBlueprintsByIdErrors[keyof EntityBlueprintsAdminPatchBlueprintsByIdErrors];
+
+export type EntityBlueprintsAdminPatchBlueprintsByIdResponses = {
+    /**
+     * Updated
+     */
+    200: EntityBlueprint;
+};
+
+export type EntityBlueprintsAdminPatchBlueprintsByIdResponse = EntityBlueprintsAdminPatchBlueprintsByIdResponses[keyof EntityBlueprintsAdminPatchBlueprintsByIdResponses];
+
+export type EntitySkinsAdminGetBlueprintsByIdSkinsData = {
+    body?: never;
+    path: {
+        /**
+         * Blueprint UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{id}/skins';
+};
+
+export type EntitySkinsAdminGetBlueprintsByIdSkinsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySkinsAdminGetBlueprintsByIdSkinsError = EntitySkinsAdminGetBlueprintsByIdSkinsErrors[keyof EntitySkinsAdminGetBlueprintsByIdSkinsErrors];
+
+export type EntitySkinsAdminGetBlueprintsByIdSkinsResponses = {
+    /**
+     * OK
+     */
+    200: Array<EntitySkin>;
+};
+
+export type EntitySkinsAdminGetBlueprintsByIdSkinsResponse = EntitySkinsAdminGetBlueprintsByIdSkinsResponses[keyof EntitySkinsAdminGetBlueprintsByIdSkinsResponses];
+
+export type EntitySkinsAdminPostBlueprintsByIdSkinsData = {
+    body?: EntityCreateSkin;
+    path: {
+        /**
+         * Blueprint UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{id}/skins';
+};
+
+export type EntitySkinsAdminPostBlueprintsByIdSkinsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySkinsAdminPostBlueprintsByIdSkinsError = EntitySkinsAdminPostBlueprintsByIdSkinsErrors[keyof EntitySkinsAdminPostBlueprintsByIdSkinsErrors];
+
+export type EntitySkinsAdminPostBlueprintsByIdSkinsResponses = {
+    /**
+     * Created
+     */
+    201: EntitySkin;
+};
+
+export type EntitySkinsAdminPostBlueprintsByIdSkinsResponse = EntitySkinsAdminPostBlueprintsByIdSkinsResponses[keyof EntitySkinsAdminPostBlueprintsByIdSkinsResponses];
+
+export type EntitySkinsAdminDeleteSkinsBySkinidData = {
+    body?: never;
+    path: {
+        /**
+         * Skin UUID
+         */
+        skinId: string;
+    };
+    query?: never;
+    url: '/api/entity/skins/{skinId}';
+};
+
+export type EntitySkinsAdminDeleteSkinsBySkinidErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySkinsAdminDeleteSkinsBySkinidError = EntitySkinsAdminDeleteSkinsBySkinidErrors[keyof EntitySkinsAdminDeleteSkinsBySkinidErrors];
+
+export type EntitySkinsAdminDeleteSkinsBySkinidResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type EntitySkinsAdminDeleteSkinsBySkinidResponse = EntitySkinsAdminDeleteSkinsBySkinidResponses[keyof EntitySkinsAdminDeleteSkinsBySkinidResponses];
+
+export type EntitySkinsAdminPatchSkinsBySkinidData = {
+    body?: EntityUpdateSkin;
+    path: {
+        /**
+         * Skin UUID
+         */
+        skinId: string;
+    };
+    query?: never;
+    url: '/api/entity/skins/{skinId}';
+};
+
+export type EntitySkinsAdminPatchSkinsBySkinidErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntitySkinsAdminPatchSkinsBySkinidError = EntitySkinsAdminPatchSkinsBySkinidErrors[keyof EntitySkinsAdminPatchSkinsBySkinidErrors];
+
+export type EntitySkinsAdminPatchSkinsBySkinidResponses = {
+    /**
+     * Updated
+     */
+    200: EntitySkin;
+};
+
+export type EntitySkinsAdminPatchSkinsBySkinidResponse = EntitySkinsAdminPatchSkinsBySkinidResponses[keyof EntitySkinsAdminPatchSkinsBySkinidResponses];
+
+export type EntityFormationsAdminGetFormationConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/entity/formation-configs';
+};
+
+export type EntityFormationsAdminGetFormationConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityFormationsAdminGetFormationConfigsError = EntityFormationsAdminGetFormationConfigsErrors[keyof EntityFormationsAdminGetFormationConfigsErrors];
+
+export type EntityFormationsAdminGetFormationConfigsResponses = {
+    /**
+     * OK
+     */
+    200: Array<EntityFormationConfig>;
+};
+
+export type EntityFormationsAdminGetFormationConfigsResponse = EntityFormationsAdminGetFormationConfigsResponses[keyof EntityFormationsAdminGetFormationConfigsResponses];
+
+export type EntityFormationsAdminPostFormationConfigsData = {
+    body?: EntityCreateFormationConfig;
+    path?: never;
+    query?: never;
+    url: '/api/entity/formation-configs';
+};
+
+export type EntityFormationsAdminPostFormationConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityFormationsAdminPostFormationConfigsError = EntityFormationsAdminPostFormationConfigsErrors[keyof EntityFormationsAdminPostFormationConfigsErrors];
+
+export type EntityFormationsAdminPostFormationConfigsResponses = {
+    /**
+     * Created
+     */
+    201: EntityFormationConfig;
+};
+
+export type EntityFormationsAdminPostFormationConfigsResponse = EntityFormationsAdminPostFormationConfigsResponses[keyof EntityFormationsAdminPostFormationConfigsResponses];
+
+export type EntityFormationsAdminGetFormationConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Formation config ID (uuid) or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/entity/formation-configs/{key}';
+};
+
+export type EntityFormationsAdminGetFormationConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityFormationsAdminGetFormationConfigsByKeyError = EntityFormationsAdminGetFormationConfigsByKeyErrors[keyof EntityFormationsAdminGetFormationConfigsByKeyErrors];
+
+export type EntityFormationsAdminGetFormationConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: EntityFormationConfig;
+};
+
+export type EntityFormationsAdminGetFormationConfigsByKeyResponse = EntityFormationsAdminGetFormationConfigsByKeyResponses[keyof EntityFormationsAdminGetFormationConfigsByKeyResponses];
+
+export type EntityFormationsAdminDeleteFormationConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Formation config UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/formation-configs/{id}';
+};
+
+export type EntityFormationsAdminDeleteFormationConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityFormationsAdminDeleteFormationConfigsByIdError = EntityFormationsAdminDeleteFormationConfigsByIdErrors[keyof EntityFormationsAdminDeleteFormationConfigsByIdErrors];
+
+export type EntityFormationsAdminDeleteFormationConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type EntityFormationsAdminDeleteFormationConfigsByIdResponse = EntityFormationsAdminDeleteFormationConfigsByIdResponses[keyof EntityFormationsAdminDeleteFormationConfigsByIdResponses];
+
+export type EntityFormationsAdminPatchFormationConfigsByIdData = {
+    body?: EntityUpdateFormationConfig;
+    path: {
+        /**
+         * Formation config UUID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/entity/formation-configs/{id}';
+};
+
+export type EntityFormationsAdminPatchFormationConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Not found
+     */
+    404: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+    /**
+     * Conflict
+     */
+    409: {
+        error: string;
+        code: string;
+        requestId?: string;
+    };
+};
+
+export type EntityFormationsAdminPatchFormationConfigsByIdError = EntityFormationsAdminPatchFormationConfigsByIdErrors[keyof EntityFormationsAdminPatchFormationConfigsByIdErrors];
+
+export type EntityFormationsAdminPatchFormationConfigsByIdResponses = {
+    /**
+     * Updated
+     */
+    200: EntityFormationConfig;
+};
+
+export type EntityFormationsAdminPatchFormationConfigsByIdResponse = EntityFormationsAdminPatchFormationConfigsByIdResponses[keyof EntityFormationsAdminPatchFormationConfigsByIdResponses];
+
+export type ItemCategoriesGetCategoriesData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/item/categories';
 };
 
-export type GetApiItemCategoriesErrors = {
+export type ItemCategoriesGetCategoriesErrors = {
     /**
      * Bad request
      */
@@ -1832,25 +10058,25 @@ export type GetApiItemCategoriesErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemCategoriesError = GetApiItemCategoriesErrors[keyof GetApiItemCategoriesErrors];
+export type ItemCategoriesGetCategoriesError = ItemCategoriesGetCategoriesErrors[keyof ItemCategoriesGetCategoriesErrors];
 
-export type GetApiItemCategoriesResponses = {
+export type ItemCategoriesGetCategoriesResponses = {
     /**
      * OK
      */
     200: ItemCategoryList;
 };
 
-export type GetApiItemCategoriesResponse = GetApiItemCategoriesResponses[keyof GetApiItemCategoriesResponses];
+export type ItemCategoriesGetCategoriesResponse = ItemCategoriesGetCategoriesResponses[keyof ItemCategoriesGetCategoriesResponses];
 
-export type PostApiItemCategoriesData = {
+export type ItemCategoriesPostCategoriesData = {
     body?: ItemCreateCategory;
     path?: never;
     query?: never;
     url: '/api/item/categories';
 };
 
-export type PostApiItemCategoriesErrors = {
+export type ItemCategoriesPostCategoriesErrors = {
     /**
      * Bad request
      */
@@ -1869,18 +10095,18 @@ export type PostApiItemCategoriesErrors = {
     409: ItemErrorResponse;
 };
 
-export type PostApiItemCategoriesError = PostApiItemCategoriesErrors[keyof PostApiItemCategoriesErrors];
+export type ItemCategoriesPostCategoriesError = ItemCategoriesPostCategoriesErrors[keyof ItemCategoriesPostCategoriesErrors];
 
-export type PostApiItemCategoriesResponses = {
+export type ItemCategoriesPostCategoriesResponses = {
     /**
      * Created
      */
     201: ItemCategory;
 };
 
-export type PostApiItemCategoriesResponse = PostApiItemCategoriesResponses[keyof PostApiItemCategoriesResponses];
+export type ItemCategoriesPostCategoriesResponse = ItemCategoriesPostCategoriesResponses[keyof ItemCategoriesPostCategoriesResponses];
 
-export type GetApiItemCategoriesByKeyData = {
+export type ItemCategoriesGetCategoriesByKeyData = {
     body?: never;
     path: {
         /**
@@ -1892,7 +10118,7 @@ export type GetApiItemCategoriesByKeyData = {
     url: '/api/item/categories/{key}';
 };
 
-export type GetApiItemCategoriesByKeyErrors = {
+export type ItemCategoriesGetCategoriesByKeyErrors = {
     /**
      * Bad request
      */
@@ -1911,18 +10137,18 @@ export type GetApiItemCategoriesByKeyErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemCategoriesByKeyError = GetApiItemCategoriesByKeyErrors[keyof GetApiItemCategoriesByKeyErrors];
+export type ItemCategoriesGetCategoriesByKeyError = ItemCategoriesGetCategoriesByKeyErrors[keyof ItemCategoriesGetCategoriesByKeyErrors];
 
-export type GetApiItemCategoriesByKeyResponses = {
+export type ItemCategoriesGetCategoriesByKeyResponses = {
     /**
      * OK
      */
     200: ItemCategory;
 };
 
-export type GetApiItemCategoriesByKeyResponse = GetApiItemCategoriesByKeyResponses[keyof GetApiItemCategoriesByKeyResponses];
+export type ItemCategoriesGetCategoriesByKeyResponse = ItemCategoriesGetCategoriesByKeyResponses[keyof ItemCategoriesGetCategoriesByKeyResponses];
 
-export type DeleteApiItemCategoriesByIdData = {
+export type ItemCategoriesDeleteCategoriesByIdData = {
     body?: never;
     path: {
         /**
@@ -1934,7 +10160,7 @@ export type DeleteApiItemCategoriesByIdData = {
     url: '/api/item/categories/{id}';
 };
 
-export type DeleteApiItemCategoriesByIdErrors = {
+export type ItemCategoriesDeleteCategoriesByIdErrors = {
     /**
      * Bad request
      */
@@ -1953,18 +10179,18 @@ export type DeleteApiItemCategoriesByIdErrors = {
     409: ItemErrorResponse;
 };
 
-export type DeleteApiItemCategoriesByIdError = DeleteApiItemCategoriesByIdErrors[keyof DeleteApiItemCategoriesByIdErrors];
+export type ItemCategoriesDeleteCategoriesByIdError = ItemCategoriesDeleteCategoriesByIdErrors[keyof ItemCategoriesDeleteCategoriesByIdErrors];
 
-export type DeleteApiItemCategoriesByIdResponses = {
+export type ItemCategoriesDeleteCategoriesByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiItemCategoriesByIdResponse = DeleteApiItemCategoriesByIdResponses[keyof DeleteApiItemCategoriesByIdResponses];
+export type ItemCategoriesDeleteCategoriesByIdResponse = ItemCategoriesDeleteCategoriesByIdResponses[keyof ItemCategoriesDeleteCategoriesByIdResponses];
 
-export type PatchApiItemCategoriesByIdData = {
+export type ItemCategoriesPatchCategoriesByIdData = {
     body?: ItemUpdateCategory;
     path: {
         /**
@@ -1976,7 +10202,7 @@ export type PatchApiItemCategoriesByIdData = {
     url: '/api/item/categories/{id}';
 };
 
-export type PatchApiItemCategoriesByIdErrors = {
+export type ItemCategoriesPatchCategoriesByIdErrors = {
     /**
      * Bad request
      */
@@ -1995,25 +10221,25 @@ export type PatchApiItemCategoriesByIdErrors = {
     409: ItemErrorResponse;
 };
 
-export type PatchApiItemCategoriesByIdError = PatchApiItemCategoriesByIdErrors[keyof PatchApiItemCategoriesByIdErrors];
+export type ItemCategoriesPatchCategoriesByIdError = ItemCategoriesPatchCategoriesByIdErrors[keyof ItemCategoriesPatchCategoriesByIdErrors];
 
-export type PatchApiItemCategoriesByIdResponses = {
+export type ItemCategoriesPatchCategoriesByIdResponses = {
     /**
      * OK
      */
     200: ItemCategory;
 };
 
-export type PatchApiItemCategoriesByIdResponse = PatchApiItemCategoriesByIdResponses[keyof PatchApiItemCategoriesByIdResponses];
+export type ItemCategoriesPatchCategoriesByIdResponse = ItemCategoriesPatchCategoriesByIdResponses[keyof ItemCategoriesPatchCategoriesByIdResponses];
 
-export type GetApiItemDefinitionsData = {
+export type ItemDefinitionsGetDefinitionsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/item/definitions';
 };
 
-export type GetApiItemDefinitionsErrors = {
+export type ItemDefinitionsGetDefinitionsErrors = {
     /**
      * Bad request
      */
@@ -2032,25 +10258,25 @@ export type GetApiItemDefinitionsErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemDefinitionsError = GetApiItemDefinitionsErrors[keyof GetApiItemDefinitionsErrors];
+export type ItemDefinitionsGetDefinitionsError = ItemDefinitionsGetDefinitionsErrors[keyof ItemDefinitionsGetDefinitionsErrors];
 
-export type GetApiItemDefinitionsResponses = {
+export type ItemDefinitionsGetDefinitionsResponses = {
     /**
      * OK
      */
     200: ItemDefinitionList;
 };
 
-export type GetApiItemDefinitionsResponse = GetApiItemDefinitionsResponses[keyof GetApiItemDefinitionsResponses];
+export type ItemDefinitionsGetDefinitionsResponse = ItemDefinitionsGetDefinitionsResponses[keyof ItemDefinitionsGetDefinitionsResponses];
 
-export type PostApiItemDefinitionsData = {
+export type ItemDefinitionsPostDefinitionsData = {
     body?: ItemCreateDefinition;
     path?: never;
     query?: never;
     url: '/api/item/definitions';
 };
 
-export type PostApiItemDefinitionsErrors = {
+export type ItemDefinitionsPostDefinitionsErrors = {
     /**
      * Bad request
      */
@@ -2069,18 +10295,18 @@ export type PostApiItemDefinitionsErrors = {
     409: ItemErrorResponse;
 };
 
-export type PostApiItemDefinitionsError = PostApiItemDefinitionsErrors[keyof PostApiItemDefinitionsErrors];
+export type ItemDefinitionsPostDefinitionsError = ItemDefinitionsPostDefinitionsErrors[keyof ItemDefinitionsPostDefinitionsErrors];
 
-export type PostApiItemDefinitionsResponses = {
+export type ItemDefinitionsPostDefinitionsResponses = {
     /**
      * Created
      */
     201: ItemDefinition;
 };
 
-export type PostApiItemDefinitionsResponse = PostApiItemDefinitionsResponses[keyof PostApiItemDefinitionsResponses];
+export type ItemDefinitionsPostDefinitionsResponse = ItemDefinitionsPostDefinitionsResponses[keyof ItemDefinitionsPostDefinitionsResponses];
 
-export type GetApiItemDefinitionsByKeyData = {
+export type ItemDefinitionsGetDefinitionsByKeyData = {
     body?: never;
     path: {
         /**
@@ -2092,7 +10318,7 @@ export type GetApiItemDefinitionsByKeyData = {
     url: '/api/item/definitions/{key}';
 };
 
-export type GetApiItemDefinitionsByKeyErrors = {
+export type ItemDefinitionsGetDefinitionsByKeyErrors = {
     /**
      * Bad request
      */
@@ -2111,18 +10337,18 @@ export type GetApiItemDefinitionsByKeyErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemDefinitionsByKeyError = GetApiItemDefinitionsByKeyErrors[keyof GetApiItemDefinitionsByKeyErrors];
+export type ItemDefinitionsGetDefinitionsByKeyError = ItemDefinitionsGetDefinitionsByKeyErrors[keyof ItemDefinitionsGetDefinitionsByKeyErrors];
 
-export type GetApiItemDefinitionsByKeyResponses = {
+export type ItemDefinitionsGetDefinitionsByKeyResponses = {
     /**
      * OK
      */
     200: ItemDefinition;
 };
 
-export type GetApiItemDefinitionsByKeyResponse = GetApiItemDefinitionsByKeyResponses[keyof GetApiItemDefinitionsByKeyResponses];
+export type ItemDefinitionsGetDefinitionsByKeyResponse = ItemDefinitionsGetDefinitionsByKeyResponses[keyof ItemDefinitionsGetDefinitionsByKeyResponses];
 
-export type DeleteApiItemDefinitionsByIdData = {
+export type ItemDefinitionsDeleteDefinitionsByIdData = {
     body?: never;
     path: {
         /**
@@ -2134,7 +10360,7 @@ export type DeleteApiItemDefinitionsByIdData = {
     url: '/api/item/definitions/{id}';
 };
 
-export type DeleteApiItemDefinitionsByIdErrors = {
+export type ItemDefinitionsDeleteDefinitionsByIdErrors = {
     /**
      * Bad request
      */
@@ -2153,18 +10379,18 @@ export type DeleteApiItemDefinitionsByIdErrors = {
     409: ItemErrorResponse;
 };
 
-export type DeleteApiItemDefinitionsByIdError = DeleteApiItemDefinitionsByIdErrors[keyof DeleteApiItemDefinitionsByIdErrors];
+export type ItemDefinitionsDeleteDefinitionsByIdError = ItemDefinitionsDeleteDefinitionsByIdErrors[keyof ItemDefinitionsDeleteDefinitionsByIdErrors];
 
-export type DeleteApiItemDefinitionsByIdResponses = {
+export type ItemDefinitionsDeleteDefinitionsByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiItemDefinitionsByIdResponse = DeleteApiItemDefinitionsByIdResponses[keyof DeleteApiItemDefinitionsByIdResponses];
+export type ItemDefinitionsDeleteDefinitionsByIdResponse = ItemDefinitionsDeleteDefinitionsByIdResponses[keyof ItemDefinitionsDeleteDefinitionsByIdResponses];
 
-export type PatchApiItemDefinitionsByIdData = {
+export type ItemDefinitionsPatchDefinitionsByIdData = {
     body?: ItemUpdateDefinition;
     path: {
         /**
@@ -2176,7 +10402,7 @@ export type PatchApiItemDefinitionsByIdData = {
     url: '/api/item/definitions/{id}';
 };
 
-export type PatchApiItemDefinitionsByIdErrors = {
+export type ItemDefinitionsPatchDefinitionsByIdErrors = {
     /**
      * Bad request
      */
@@ -2195,25 +10421,25 @@ export type PatchApiItemDefinitionsByIdErrors = {
     409: ItemErrorResponse;
 };
 
-export type PatchApiItemDefinitionsByIdError = PatchApiItemDefinitionsByIdErrors[keyof PatchApiItemDefinitionsByIdErrors];
+export type ItemDefinitionsPatchDefinitionsByIdError = ItemDefinitionsPatchDefinitionsByIdErrors[keyof ItemDefinitionsPatchDefinitionsByIdErrors];
 
-export type PatchApiItemDefinitionsByIdResponses = {
+export type ItemDefinitionsPatchDefinitionsByIdResponses = {
     /**
      * OK
      */
     200: ItemDefinition;
 };
 
-export type PatchApiItemDefinitionsByIdResponse = PatchApiItemDefinitionsByIdResponses[keyof PatchApiItemDefinitionsByIdResponses];
+export type ItemDefinitionsPatchDefinitionsByIdResponse = ItemDefinitionsPatchDefinitionsByIdResponses[keyof ItemDefinitionsPatchDefinitionsByIdResponses];
 
-export type PostApiItemGrantData = {
+export type ItemInventoryPostGrantData = {
     body?: ItemGrantRequest;
     path?: never;
     query?: never;
     url: '/api/item/grant';
 };
 
-export type PostApiItemGrantErrors = {
+export type ItemInventoryPostGrantErrors = {
     /**
      * Bad request
      */
@@ -2232,25 +10458,25 @@ export type PostApiItemGrantErrors = {
     409: ItemErrorResponse;
 };
 
-export type PostApiItemGrantError = PostApiItemGrantErrors[keyof PostApiItemGrantErrors];
+export type ItemInventoryPostGrantError = ItemInventoryPostGrantErrors[keyof ItemInventoryPostGrantErrors];
 
-export type PostApiItemGrantResponses = {
+export type ItemInventoryPostGrantResponses = {
     /**
      * OK
      */
     200: ItemGrantResult;
 };
 
-export type PostApiItemGrantResponse = PostApiItemGrantResponses[keyof PostApiItemGrantResponses];
+export type ItemInventoryPostGrantResponse = ItemInventoryPostGrantResponses[keyof ItemInventoryPostGrantResponses];
 
-export type PostApiItemDeductData = {
+export type ItemInventoryPostDeductData = {
     body?: ItemDeductRequest;
     path?: never;
     query?: never;
     url: '/api/item/deduct';
 };
 
-export type PostApiItemDeductErrors = {
+export type ItemInventoryPostDeductErrors = {
     /**
      * Bad request
      */
@@ -2269,18 +10495,18 @@ export type PostApiItemDeductErrors = {
     409: ItemErrorResponse;
 };
 
-export type PostApiItemDeductError = PostApiItemDeductErrors[keyof PostApiItemDeductErrors];
+export type ItemInventoryPostDeductError = ItemInventoryPostDeductErrors[keyof ItemInventoryPostDeductErrors];
 
-export type PostApiItemDeductResponses = {
+export type ItemInventoryPostDeductResponses = {
     /**
      * OK
      */
     200: ItemDeductResult;
 };
 
-export type PostApiItemDeductResponse = PostApiItemDeductResponses[keyof PostApiItemDeductResponses];
+export type ItemInventoryPostDeductResponse = ItemInventoryPostDeductResponses[keyof ItemInventoryPostDeductResponses];
 
-export type GetApiItemUsersByEndUserIdInventoryData = {
+export type ItemInventoryGetUsersByEnduseridInventoryData = {
     body?: never;
     path: {
         /**
@@ -2297,7 +10523,7 @@ export type GetApiItemUsersByEndUserIdInventoryData = {
     url: '/api/item/users/{endUserId}/inventory';
 };
 
-export type GetApiItemUsersByEndUserIdInventoryErrors = {
+export type ItemInventoryGetUsersByEnduseridInventoryErrors = {
     /**
      * Bad request
      */
@@ -2316,18 +10542,18 @@ export type GetApiItemUsersByEndUserIdInventoryErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemUsersByEndUserIdInventoryError = GetApiItemUsersByEndUserIdInventoryErrors[keyof GetApiItemUsersByEndUserIdInventoryErrors];
+export type ItemInventoryGetUsersByEnduseridInventoryError = ItemInventoryGetUsersByEnduseridInventoryErrors[keyof ItemInventoryGetUsersByEnduseridInventoryErrors];
 
-export type GetApiItemUsersByEndUserIdInventoryResponses = {
+export type ItemInventoryGetUsersByEnduseridInventoryResponses = {
     /**
      * OK
      */
     200: ItemInventoryList;
 };
 
-export type GetApiItemUsersByEndUserIdInventoryResponse = GetApiItemUsersByEndUserIdInventoryResponses[keyof GetApiItemUsersByEndUserIdInventoryResponses];
+export type ItemInventoryGetUsersByEnduseridInventoryResponse = ItemInventoryGetUsersByEnduseridInventoryResponses[keyof ItemInventoryGetUsersByEnduseridInventoryResponses];
 
-export type GetApiItemUsersByEndUserIdBalanceByKeyData = {
+export type ItemInventoryGetUsersByEnduseridBalanceByKeyData = {
     body?: never;
     path: {
         /**
@@ -2343,7 +10569,7 @@ export type GetApiItemUsersByEndUserIdBalanceByKeyData = {
     url: '/api/item/users/{endUserId}/balance/{key}';
 };
 
-export type GetApiItemUsersByEndUserIdBalanceByKeyErrors = {
+export type ItemInventoryGetUsersByEnduseridBalanceByKeyErrors = {
     /**
      * Bad request
      */
@@ -2362,25 +10588,25 @@ export type GetApiItemUsersByEndUserIdBalanceByKeyErrors = {
     409: ItemErrorResponse;
 };
 
-export type GetApiItemUsersByEndUserIdBalanceByKeyError = GetApiItemUsersByEndUserIdBalanceByKeyErrors[keyof GetApiItemUsersByEndUserIdBalanceByKeyErrors];
+export type ItemInventoryGetUsersByEnduseridBalanceByKeyError = ItemInventoryGetUsersByEnduseridBalanceByKeyErrors[keyof ItemInventoryGetUsersByEnduseridBalanceByKeyErrors];
 
-export type GetApiItemUsersByEndUserIdBalanceByKeyResponses = {
+export type ItemInventoryGetUsersByEnduseridBalanceByKeyResponses = {
     /**
      * OK
      */
     200: ItemBalance;
 };
 
-export type GetApiItemUsersByEndUserIdBalanceByKeyResponse = GetApiItemUsersByEndUserIdBalanceByKeyResponses[keyof GetApiItemUsersByEndUserIdBalanceByKeyResponses];
+export type ItemInventoryGetUsersByEnduseridBalanceByKeyResponse = ItemInventoryGetUsersByEnduseridBalanceByKeyResponses[keyof ItemInventoryGetUsersByEnduseridBalanceByKeyResponses];
 
-export type GetApiExchangeConfigsData = {
+export type ExchangeConfigsGetConfigsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/exchange/configs';
 };
 
-export type GetApiExchangeConfigsErrors = {
+export type ExchangeConfigsGetConfigsErrors = {
     /**
      * Bad request
      */
@@ -2399,25 +10625,25 @@ export type GetApiExchangeConfigsErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type GetApiExchangeConfigsError = GetApiExchangeConfigsErrors[keyof GetApiExchangeConfigsErrors];
+export type ExchangeConfigsGetConfigsError = ExchangeConfigsGetConfigsErrors[keyof ExchangeConfigsGetConfigsErrors];
 
-export type GetApiExchangeConfigsResponses = {
+export type ExchangeConfigsGetConfigsResponses = {
     /**
      * OK
      */
     200: ExchangeConfigList;
 };
 
-export type GetApiExchangeConfigsResponse = GetApiExchangeConfigsResponses[keyof GetApiExchangeConfigsResponses];
+export type ExchangeConfigsGetConfigsResponse = ExchangeConfigsGetConfigsResponses[keyof ExchangeConfigsGetConfigsResponses];
 
-export type PostApiExchangeConfigsData = {
+export type ExchangeConfigsPostConfigsData = {
     body?: ExchangeCreateConfig;
     path?: never;
     query?: never;
     url: '/api/exchange/configs';
 };
 
-export type PostApiExchangeConfigsErrors = {
+export type ExchangeConfigsPostConfigsErrors = {
     /**
      * Bad request
      */
@@ -2436,18 +10662,18 @@ export type PostApiExchangeConfigsErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type PostApiExchangeConfigsError = PostApiExchangeConfigsErrors[keyof PostApiExchangeConfigsErrors];
+export type ExchangeConfigsPostConfigsError = ExchangeConfigsPostConfigsErrors[keyof ExchangeConfigsPostConfigsErrors];
 
-export type PostApiExchangeConfigsResponses = {
+export type ExchangeConfigsPostConfigsResponses = {
     /**
      * Created
      */
     201: ExchangeConfig;
 };
 
-export type PostApiExchangeConfigsResponse = PostApiExchangeConfigsResponses[keyof PostApiExchangeConfigsResponses];
+export type ExchangeConfigsPostConfigsResponse = ExchangeConfigsPostConfigsResponses[keyof ExchangeConfigsPostConfigsResponses];
 
-export type GetApiExchangeConfigsByKeyData = {
+export type ExchangeConfigsGetConfigsByKeyData = {
     body?: never;
     path: {
         /**
@@ -2459,7 +10685,7 @@ export type GetApiExchangeConfigsByKeyData = {
     url: '/api/exchange/configs/{key}';
 };
 
-export type GetApiExchangeConfigsByKeyErrors = {
+export type ExchangeConfigsGetConfigsByKeyErrors = {
     /**
      * Bad request
      */
@@ -2478,18 +10704,18 @@ export type GetApiExchangeConfigsByKeyErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type GetApiExchangeConfigsByKeyError = GetApiExchangeConfigsByKeyErrors[keyof GetApiExchangeConfigsByKeyErrors];
+export type ExchangeConfigsGetConfigsByKeyError = ExchangeConfigsGetConfigsByKeyErrors[keyof ExchangeConfigsGetConfigsByKeyErrors];
 
-export type GetApiExchangeConfigsByKeyResponses = {
+export type ExchangeConfigsGetConfigsByKeyResponses = {
     /**
      * OK
      */
     200: ExchangeConfig;
 };
 
-export type GetApiExchangeConfigsByKeyResponse = GetApiExchangeConfigsByKeyResponses[keyof GetApiExchangeConfigsByKeyResponses];
+export type ExchangeConfigsGetConfigsByKeyResponse = ExchangeConfigsGetConfigsByKeyResponses[keyof ExchangeConfigsGetConfigsByKeyResponses];
 
-export type DeleteApiExchangeConfigsByIdData = {
+export type ExchangeConfigsDeleteConfigsByIdData = {
     body?: never;
     path: {
         /**
@@ -2501,7 +10727,7 @@ export type DeleteApiExchangeConfigsByIdData = {
     url: '/api/exchange/configs/{id}';
 };
 
-export type DeleteApiExchangeConfigsByIdErrors = {
+export type ExchangeConfigsDeleteConfigsByIdErrors = {
     /**
      * Bad request
      */
@@ -2520,18 +10746,18 @@ export type DeleteApiExchangeConfigsByIdErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type DeleteApiExchangeConfigsByIdError = DeleteApiExchangeConfigsByIdErrors[keyof DeleteApiExchangeConfigsByIdErrors];
+export type ExchangeConfigsDeleteConfigsByIdError = ExchangeConfigsDeleteConfigsByIdErrors[keyof ExchangeConfigsDeleteConfigsByIdErrors];
 
-export type DeleteApiExchangeConfigsByIdResponses = {
+export type ExchangeConfigsDeleteConfigsByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiExchangeConfigsByIdResponse = DeleteApiExchangeConfigsByIdResponses[keyof DeleteApiExchangeConfigsByIdResponses];
+export type ExchangeConfigsDeleteConfigsByIdResponse = ExchangeConfigsDeleteConfigsByIdResponses[keyof ExchangeConfigsDeleteConfigsByIdResponses];
 
-export type PatchApiExchangeConfigsByIdData = {
+export type ExchangeConfigsPatchConfigsByIdData = {
     body?: ExchangeUpdateConfig;
     path: {
         /**
@@ -2543,7 +10769,7 @@ export type PatchApiExchangeConfigsByIdData = {
     url: '/api/exchange/configs/{id}';
 };
 
-export type PatchApiExchangeConfigsByIdErrors = {
+export type ExchangeConfigsPatchConfigsByIdErrors = {
     /**
      * Bad request
      */
@@ -2562,18 +10788,18 @@ export type PatchApiExchangeConfigsByIdErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type PatchApiExchangeConfigsByIdError = PatchApiExchangeConfigsByIdErrors[keyof PatchApiExchangeConfigsByIdErrors];
+export type ExchangeConfigsPatchConfigsByIdError = ExchangeConfigsPatchConfigsByIdErrors[keyof ExchangeConfigsPatchConfigsByIdErrors];
 
-export type PatchApiExchangeConfigsByIdResponses = {
+export type ExchangeConfigsPatchConfigsByIdResponses = {
     /**
      * OK
      */
     200: ExchangeConfig;
 };
 
-export type PatchApiExchangeConfigsByIdResponse = PatchApiExchangeConfigsByIdResponses[keyof PatchApiExchangeConfigsByIdResponses];
+export type ExchangeConfigsPatchConfigsByIdResponse = ExchangeConfigsPatchConfigsByIdResponses[keyof ExchangeConfigsPatchConfigsByIdResponses];
 
-export type GetApiExchangeConfigsByConfigKeyOptionsData = {
+export type ExchangeOptionsGetConfigsByConfigkeyOptionsData = {
     body?: never;
     path: {
         /**
@@ -2585,7 +10811,7 @@ export type GetApiExchangeConfigsByConfigKeyOptionsData = {
     url: '/api/exchange/configs/{configKey}/options';
 };
 
-export type GetApiExchangeConfigsByConfigKeyOptionsErrors = {
+export type ExchangeOptionsGetConfigsByConfigkeyOptionsErrors = {
     /**
      * Bad request
      */
@@ -2604,18 +10830,18 @@ export type GetApiExchangeConfigsByConfigKeyOptionsErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type GetApiExchangeConfigsByConfigKeyOptionsError = GetApiExchangeConfigsByConfigKeyOptionsErrors[keyof GetApiExchangeConfigsByConfigKeyOptionsErrors];
+export type ExchangeOptionsGetConfigsByConfigkeyOptionsError = ExchangeOptionsGetConfigsByConfigkeyOptionsErrors[keyof ExchangeOptionsGetConfigsByConfigkeyOptionsErrors];
 
-export type GetApiExchangeConfigsByConfigKeyOptionsResponses = {
+export type ExchangeOptionsGetConfigsByConfigkeyOptionsResponses = {
     /**
      * OK
      */
     200: ExchangeOptionList;
 };
 
-export type GetApiExchangeConfigsByConfigKeyOptionsResponse = GetApiExchangeConfigsByConfigKeyOptionsResponses[keyof GetApiExchangeConfigsByConfigKeyOptionsResponses];
+export type ExchangeOptionsGetConfigsByConfigkeyOptionsResponse = ExchangeOptionsGetConfigsByConfigkeyOptionsResponses[keyof ExchangeOptionsGetConfigsByConfigkeyOptionsResponses];
 
-export type PostApiExchangeConfigsByConfigKeyOptionsData = {
+export type ExchangeOptionsPostConfigsByConfigkeyOptionsData = {
     body?: ExchangeCreateOption;
     path: {
         /**
@@ -2627,7 +10853,7 @@ export type PostApiExchangeConfigsByConfigKeyOptionsData = {
     url: '/api/exchange/configs/{configKey}/options';
 };
 
-export type PostApiExchangeConfigsByConfigKeyOptionsErrors = {
+export type ExchangeOptionsPostConfigsByConfigkeyOptionsErrors = {
     /**
      * Bad request
      */
@@ -2646,18 +10872,18 @@ export type PostApiExchangeConfigsByConfigKeyOptionsErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type PostApiExchangeConfigsByConfigKeyOptionsError = PostApiExchangeConfigsByConfigKeyOptionsErrors[keyof PostApiExchangeConfigsByConfigKeyOptionsErrors];
+export type ExchangeOptionsPostConfigsByConfigkeyOptionsError = ExchangeOptionsPostConfigsByConfigkeyOptionsErrors[keyof ExchangeOptionsPostConfigsByConfigkeyOptionsErrors];
 
-export type PostApiExchangeConfigsByConfigKeyOptionsResponses = {
+export type ExchangeOptionsPostConfigsByConfigkeyOptionsResponses = {
     /**
      * Created
      */
     201: ExchangeOption;
 };
 
-export type PostApiExchangeConfigsByConfigKeyOptionsResponse = PostApiExchangeConfigsByConfigKeyOptionsResponses[keyof PostApiExchangeConfigsByConfigKeyOptionsResponses];
+export type ExchangeOptionsPostConfigsByConfigkeyOptionsResponse = ExchangeOptionsPostConfigsByConfigkeyOptionsResponses[keyof ExchangeOptionsPostConfigsByConfigkeyOptionsResponses];
 
-export type DeleteApiExchangeOptionsByOptionIdData = {
+export type ExchangeOptionsDeleteOptionsByOptionidData = {
     body?: never;
     path: {
         /**
@@ -2669,7 +10895,7 @@ export type DeleteApiExchangeOptionsByOptionIdData = {
     url: '/api/exchange/options/{optionId}';
 };
 
-export type DeleteApiExchangeOptionsByOptionIdErrors = {
+export type ExchangeOptionsDeleteOptionsByOptionidErrors = {
     /**
      * Bad request
      */
@@ -2688,18 +10914,18 @@ export type DeleteApiExchangeOptionsByOptionIdErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type DeleteApiExchangeOptionsByOptionIdError = DeleteApiExchangeOptionsByOptionIdErrors[keyof DeleteApiExchangeOptionsByOptionIdErrors];
+export type ExchangeOptionsDeleteOptionsByOptionidError = ExchangeOptionsDeleteOptionsByOptionidErrors[keyof ExchangeOptionsDeleteOptionsByOptionidErrors];
 
-export type DeleteApiExchangeOptionsByOptionIdResponses = {
+export type ExchangeOptionsDeleteOptionsByOptionidResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiExchangeOptionsByOptionIdResponse = DeleteApiExchangeOptionsByOptionIdResponses[keyof DeleteApiExchangeOptionsByOptionIdResponses];
+export type ExchangeOptionsDeleteOptionsByOptionidResponse = ExchangeOptionsDeleteOptionsByOptionidResponses[keyof ExchangeOptionsDeleteOptionsByOptionidResponses];
 
-export type PatchApiExchangeOptionsByOptionIdData = {
+export type ExchangeOptionsPatchOptionsByOptionidData = {
     body?: ExchangeUpdateOption;
     path: {
         /**
@@ -2711,7 +10937,7 @@ export type PatchApiExchangeOptionsByOptionIdData = {
     url: '/api/exchange/options/{optionId}';
 };
 
-export type PatchApiExchangeOptionsByOptionIdErrors = {
+export type ExchangeOptionsPatchOptionsByOptionidErrors = {
     /**
      * Bad request
      */
@@ -2730,18 +10956,18 @@ export type PatchApiExchangeOptionsByOptionIdErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type PatchApiExchangeOptionsByOptionIdError = PatchApiExchangeOptionsByOptionIdErrors[keyof PatchApiExchangeOptionsByOptionIdErrors];
+export type ExchangeOptionsPatchOptionsByOptionidError = ExchangeOptionsPatchOptionsByOptionidErrors[keyof ExchangeOptionsPatchOptionsByOptionidErrors];
 
-export type PatchApiExchangeOptionsByOptionIdResponses = {
+export type ExchangeOptionsPatchOptionsByOptionidResponses = {
     /**
      * OK
      */
     200: ExchangeOption;
 };
 
-export type PatchApiExchangeOptionsByOptionIdResponse = PatchApiExchangeOptionsByOptionIdResponses[keyof PatchApiExchangeOptionsByOptionIdResponses];
+export type ExchangeOptionsPatchOptionsByOptionidResponse = ExchangeOptionsPatchOptionsByOptionidResponses[keyof ExchangeOptionsPatchOptionsByOptionidResponses];
 
-export type PostApiExchangeOptionsByOptionIdExecuteData = {
+export type ExchangeExecutionPostOptionsByOptionidExecuteData = {
     body?: ExchangeExecuteRequest;
     path: {
         /**
@@ -2753,7 +10979,7 @@ export type PostApiExchangeOptionsByOptionIdExecuteData = {
     url: '/api/exchange/options/{optionId}/execute';
 };
 
-export type PostApiExchangeOptionsByOptionIdExecuteErrors = {
+export type ExchangeExecutionPostOptionsByOptionidExecuteErrors = {
     /**
      * Bad request
      */
@@ -2772,25 +10998,25 @@ export type PostApiExchangeOptionsByOptionIdExecuteErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type PostApiExchangeOptionsByOptionIdExecuteError = PostApiExchangeOptionsByOptionIdExecuteErrors[keyof PostApiExchangeOptionsByOptionIdExecuteErrors];
+export type ExchangeExecutionPostOptionsByOptionidExecuteError = ExchangeExecutionPostOptionsByOptionidExecuteErrors[keyof ExchangeExecutionPostOptionsByOptionidExecuteErrors];
 
-export type PostApiExchangeOptionsByOptionIdExecuteResponses = {
+export type ExchangeExecutionPostOptionsByOptionidExecuteResponses = {
     /**
      * OK
      */
     200: ExchangeResult;
 };
 
-export type PostApiExchangeOptionsByOptionIdExecuteResponse = PostApiExchangeOptionsByOptionIdExecuteResponses[keyof PostApiExchangeOptionsByOptionIdExecuteResponses];
+export type ExchangeExecutionPostOptionsByOptionidExecuteResponse = ExchangeExecutionPostOptionsByOptionidExecuteResponses[keyof ExchangeExecutionPostOptionsByOptionidExecuteResponses];
 
-export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateData = {
+export type ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/exchange/options/{optionId}/users/{endUserId}/state';
 };
 
-export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateErrors = {
+export type ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateErrors = {
     /**
      * Bad request
      */
@@ -2809,25 +11035,1274 @@ export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateErrors = {
     409: ExchangeErrorResponse;
 };
 
-export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateError = GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateErrors[keyof GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateErrors];
+export type ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateError = ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateErrors[keyof ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateErrors];
 
-export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses = {
+export type ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateResponses = {
     /**
      * OK
      */
     200: ExchangeUserState;
 };
 
-export type GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponse = GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses[keyof GetApiExchangeOptionsByOptionIdUsersByEndUserIdStateResponses];
+export type ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateResponse = ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateResponses[keyof ExchangeExecutionGetOptionsByOptionidUsersByEnduseridStateResponses];
 
-export type GetApiLotteryPoolsData = {
+export type FriendGetSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/friend/settings';
+};
+
+export type FriendGetSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendErrorResponse;
+};
+
+export type FriendGetSettingsError = FriendGetSettingsErrors[keyof FriendGetSettingsErrors];
+
+export type FriendGetSettingsResponses = {
+    /**
+     * OK
+     */
+    200: FriendSettings;
+};
+
+export type FriendGetSettingsResponse = FriendGetSettingsResponses[keyof FriendGetSettingsResponses];
+
+export type FriendPutSettingsData = {
+    body?: FriendUpsertSettings;
+    path?: never;
+    query?: never;
+    url: '/api/friend/settings';
+};
+
+export type FriendPutSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendErrorResponse;
+};
+
+export type FriendPutSettingsError = FriendPutSettingsErrors[keyof FriendPutSettingsErrors];
+
+export type FriendPutSettingsResponses = {
+    /**
+     * OK
+     */
+    200: FriendSettings;
+};
+
+export type FriendPutSettingsResponse = FriendPutSettingsResponses[keyof FriendPutSettingsResponses];
+
+export type FriendGetRelationshipsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page size (1-100).
+         */
+        limit?: number;
+        /**
+         * Number of items to skip.
+         */
+        offset?: number | null;
+    };
+    url: '/api/friend/relationships';
+};
+
+export type FriendGetRelationshipsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendErrorResponse;
+};
+
+export type FriendGetRelationshipsError = FriendGetRelationshipsErrors[keyof FriendGetRelationshipsErrors];
+
+export type FriendGetRelationshipsResponses = {
+    /**
+     * OK
+     */
+    200: FriendRelationshipList;
+};
+
+export type FriendGetRelationshipsResponse = FriendGetRelationshipsResponses[keyof FriendGetRelationshipsResponses];
+
+export type FriendDeleteRelationshipsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Friend relationship id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend/relationships/{id}';
+};
+
+export type FriendDeleteRelationshipsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendErrorResponse;
+};
+
+export type FriendDeleteRelationshipsByIdError = FriendDeleteRelationshipsByIdErrors[keyof FriendDeleteRelationshipsByIdErrors];
+
+export type FriendDeleteRelationshipsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type FriendDeleteRelationshipsByIdResponse = FriendDeleteRelationshipsByIdResponses[keyof FriendDeleteRelationshipsByIdResponses];
+
+export type FriendGiftGetSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/friend-gift/settings';
+};
+
+export type FriendGiftGetSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftGetSettingsError = FriendGiftGetSettingsErrors[keyof FriendGiftGetSettingsErrors];
+
+export type FriendGiftGetSettingsResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftSettings;
+};
+
+export type FriendGiftGetSettingsResponse = FriendGiftGetSettingsResponses[keyof FriendGiftGetSettingsResponses];
+
+export type FriendGiftPutSettingsData = {
+    body?: FriendGiftUpsertSettings;
+    path?: never;
+    query?: never;
+    url: '/api/friend-gift/settings';
+};
+
+export type FriendGiftPutSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftPutSettingsError = FriendGiftPutSettingsErrors[keyof FriendGiftPutSettingsErrors];
+
+export type FriendGiftPutSettingsResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftSettings;
+};
+
+export type FriendGiftPutSettingsResponse = FriendGiftPutSettingsResponses[keyof FriendGiftPutSettingsResponses];
+
+export type FriendGiftGetPackagesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/friend-gift/packages';
+};
+
+export type FriendGiftGetPackagesErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftGetPackagesError = FriendGiftGetPackagesErrors[keyof FriendGiftGetPackagesErrors];
+
+export type FriendGiftGetPackagesResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftPackageList;
+};
+
+export type FriendGiftGetPackagesResponse = FriendGiftGetPackagesResponses[keyof FriendGiftGetPackagesResponses];
+
+export type FriendGiftPostPackagesData = {
+    body?: FriendGiftCreatePackage;
+    path?: never;
+    query?: never;
+    url: '/api/friend-gift/packages';
+};
+
+export type FriendGiftPostPackagesErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftPostPackagesError = FriendGiftPostPackagesErrors[keyof FriendGiftPostPackagesErrors];
+
+export type FriendGiftPostPackagesResponses = {
+    /**
+     * Created
+     */
+    201: FriendGiftPackage;
+};
+
+export type FriendGiftPostPackagesResponse = FriendGiftPostPackagesResponses[keyof FriendGiftPostPackagesResponses];
+
+export type FriendGiftDeletePackagesByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Package id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend-gift/packages/{id}';
+};
+
+export type FriendGiftDeletePackagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftDeletePackagesByIdError = FriendGiftDeletePackagesByIdErrors[keyof FriendGiftDeletePackagesByIdErrors];
+
+export type FriendGiftDeletePackagesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type FriendGiftDeletePackagesByIdResponse = FriendGiftDeletePackagesByIdResponses[keyof FriendGiftDeletePackagesByIdResponses];
+
+export type FriendGiftGetPackagesByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Package id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend-gift/packages/{id}';
+};
+
+export type FriendGiftGetPackagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftGetPackagesByIdError = FriendGiftGetPackagesByIdErrors[keyof FriendGiftGetPackagesByIdErrors];
+
+export type FriendGiftGetPackagesByIdResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftPackage;
+};
+
+export type FriendGiftGetPackagesByIdResponse = FriendGiftGetPackagesByIdResponses[keyof FriendGiftGetPackagesByIdResponses];
+
+export type FriendGiftPutPackagesByIdData = {
+    body?: FriendGiftUpdatePackage;
+    path: {
+        /**
+         * Package id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend-gift/packages/{id}';
+};
+
+export type FriendGiftPutPackagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftPutPackagesByIdError = FriendGiftPutPackagesByIdErrors[keyof FriendGiftPutPackagesByIdErrors];
+
+export type FriendGiftPutPackagesByIdResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftPackage;
+};
+
+export type FriendGiftPutPackagesByIdResponse = FriendGiftPutPackagesByIdResponses[keyof FriendGiftPutPackagesByIdResponses];
+
+export type FriendGiftGetSendsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page size (1-100).
+         */
+        limit?: number;
+        /**
+         * Number of items to skip.
+         */
+        offset?: number | null;
+    };
+    url: '/api/friend-gift/sends';
+};
+
+export type FriendGiftGetSendsErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftGetSendsError = FriendGiftGetSendsErrors[keyof FriendGiftGetSendsErrors];
+
+export type FriendGiftGetSendsResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftSendList;
+};
+
+export type FriendGiftGetSendsResponse = FriendGiftGetSendsResponses[keyof FriendGiftGetSendsResponses];
+
+export type FriendGiftGetSendsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Gift send id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend-gift/sends/{id}';
+};
+
+export type FriendGiftGetSendsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: FriendGiftErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: FriendGiftErrorResponse;
+    /**
+     * Not found
+     */
+    404: FriendGiftErrorResponse;
+    /**
+     * Conflict
+     */
+    409: FriendGiftErrorResponse;
+};
+
+export type FriendGiftGetSendsByIdError = FriendGiftGetSendsByIdErrors[keyof FriendGiftGetSendsByIdErrors];
+
+export type FriendGiftGetSendsByIdResponses = {
+    /**
+     * OK
+     */
+    200: FriendGiftSendRecord;
+};
+
+export type FriendGiftGetSendsByIdResponse = FriendGiftGetSendsByIdResponses[keyof FriendGiftGetSendsByIdResponses];
+
+export type InviteAdminGetSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/invite/settings';
+};
+
+export type InviteAdminGetSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminGetSettingsError = InviteAdminGetSettingsErrors[keyof InviteAdminGetSettingsErrors];
+
+export type InviteAdminGetSettingsResponses = {
+    /**
+     * Current invite settings (or defaults if never upserted).
+     */
+    200: InviteSettingsView;
+};
+
+export type InviteAdminGetSettingsResponse = InviteAdminGetSettingsResponses[keyof InviteAdminGetSettingsResponses];
+
+export type InviteAdminPutSettingsData = {
+    body?: UpsertInviteSettingsInput;
+    path?: never;
+    query?: never;
+    url: '/api/invite/settings';
+};
+
+export type InviteAdminPutSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminPutSettingsError = InviteAdminPutSettingsErrors[keyof InviteAdminPutSettingsErrors];
+
+export type InviteAdminPutSettingsResponses = {
+    /**
+     * Updated settings row.
+     */
+    200: InviteSettingsView;
+};
+
+export type InviteAdminPutSettingsResponse = InviteAdminPutSettingsResponses[keyof InviteAdminPutSettingsResponses];
+
+export type InviteAdminGetRelationshipsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page size, 1-100 (default 20).
+         */
+        limit?: number;
+        /**
+         * Items to skip (default 0).
+         */
+        offset?: number | null;
+        inviterEndUserId?: string;
+        qualifiedOnly?: boolean | null;
+    };
+    url: '/api/invite/relationships';
+};
+
+export type InviteAdminGetRelationshipsErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminGetRelationshipsError = InviteAdminGetRelationshipsErrors[keyof InviteAdminGetRelationshipsErrors];
+
+export type InviteAdminGetRelationshipsResponses = {
+    /**
+     * Paged invite relationships.
+     */
+    200: InviteRelationshipList;
+};
+
+export type InviteAdminGetRelationshipsResponse = InviteAdminGetRelationshipsResponses[keyof InviteAdminGetRelationshipsResponses];
+
+export type InviteAdminDeleteRelationshipsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/invite/relationships/{id}';
+};
+
+export type InviteAdminDeleteRelationshipsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminDeleteRelationshipsByIdError = InviteAdminDeleteRelationshipsByIdErrors[keyof InviteAdminDeleteRelationshipsByIdErrors];
+
+export type InviteAdminDeleteRelationshipsByIdResponses = {
+    /**
+     * Deleted.
+     */
+    204: void;
+};
+
+export type InviteAdminDeleteRelationshipsByIdResponse = InviteAdminDeleteRelationshipsByIdResponses[keyof InviteAdminDeleteRelationshipsByIdResponses];
+
+export type InviteAdminGetUsersByEnduseridStatsData = {
+    body?: never;
+    path: {
+        /**
+         * The end user's opaque id from the customer's system.
+         */
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/invite/users/{endUserId}/stats';
+};
+
+export type InviteAdminGetUsersByEnduseridStatsErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminGetUsersByEnduseridStatsError = InviteAdminGetUsersByEnduseridStatsErrors[keyof InviteAdminGetUsersByEnduseridStatsErrors];
+
+export type InviteAdminGetUsersByEnduseridStatsResponses = {
+    /**
+     * Summary for an end user.
+     */
+    200: InviteSummaryView;
+};
+
+export type InviteAdminGetUsersByEnduseridStatsResponse = InviteAdminGetUsersByEnduseridStatsResponses[keyof InviteAdminGetUsersByEnduseridStatsResponses];
+
+export type InviteAdminPostUsersByEnduseridResetCodeData = {
+    body?: never;
+    path: {
+        /**
+         * The end user's opaque id from the customer's system.
+         */
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/invite/users/{endUserId}/reset-code';
+};
+
+export type InviteAdminPostUsersByEnduseridResetCodeErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not found
+     */
+    404: ErrorResponse;
+};
+
+export type InviteAdminPostUsersByEnduseridResetCodeError = InviteAdminPostUsersByEnduseridResetCodeErrors[keyof InviteAdminPostUsersByEnduseridResetCodeErrors];
+
+export type InviteAdminPostUsersByEnduseridResetCodeResponses = {
+    /**
+     * New code generated.
+     */
+    200: InviteCodeView;
+};
+
+export type InviteAdminPostUsersByEnduseridResetCodeResponse = InviteAdminPostUsersByEnduseridResetCodeResponses[keyof InviteAdminPostUsersByEnduseridResetCodeResponses];
+
+export type GuildGetSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/guild/settings';
+};
+
+export type GuildGetSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetSettingsError = GuildGetSettingsErrors[keyof GuildGetSettingsErrors];
+
+export type GuildGetSettingsResponses = {
+    /**
+     * OK
+     */
+    200: GuildSettings;
+};
+
+export type GuildGetSettingsResponse = GuildGetSettingsResponses[keyof GuildGetSettingsResponses];
+
+export type GuildPutSettingsData = {
+    body?: GuildUpsertSettings;
+    path?: never;
+    query?: never;
+    url: '/api/guild/settings';
+};
+
+export type GuildPutSettingsErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildPutSettingsError = GuildPutSettingsErrors[keyof GuildPutSettingsErrors];
+
+export type GuildPutSettingsResponses = {
+    /**
+     * OK
+     */
+    200: GuildSettings;
+};
+
+export type GuildPutSettingsResponse = GuildPutSettingsResponses[keyof GuildPutSettingsResponses];
+
+export type GuildGetGuildsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Search by guild name.
+         */
+        search?: string;
+        /**
+         * Page size (default 20).
+         */
+        limit?: string;
+        /**
+         * Pagination offset (default 0).
+         */
+        offset?: string;
+    };
+    url: '/api/guild/guilds';
+};
+
+export type GuildGetGuildsErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetGuildsError = GuildGetGuildsErrors[keyof GuildGetGuildsErrors];
+
+export type GuildGetGuildsResponses = {
+    /**
+     * OK
+     */
+    200: GuildList;
+};
+
+export type GuildGetGuildsResponse = GuildGetGuildsResponses[keyof GuildGetGuildsResponses];
+
+export type GuildDeleteGuildsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/guild/guilds/{id}';
+};
+
+export type GuildDeleteGuildsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildDeleteGuildsByIdError = GuildDeleteGuildsByIdErrors[keyof GuildDeleteGuildsByIdErrors];
+
+export type GuildDeleteGuildsByIdResponses = {
+    /**
+     * OK
+     */
+    200: Guild;
+};
+
+export type GuildDeleteGuildsByIdResponse = GuildDeleteGuildsByIdResponses[keyof GuildDeleteGuildsByIdResponses];
+
+export type GuildGetGuildsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/guild/guilds/{id}';
+};
+
+export type GuildGetGuildsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetGuildsByIdError = GuildGetGuildsByIdErrors[keyof GuildGetGuildsByIdErrors];
+
+export type GuildGetGuildsByIdResponses = {
+    /**
+     * OK
+     */
+    200: Guild;
+};
+
+export type GuildGetGuildsByIdResponse = GuildGetGuildsByIdResponses[keyof GuildGetGuildsByIdResponses];
+
+export type GuildPutGuildsByIdData = {
+    body?: GuildUpdate;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/guild/guilds/{id}';
+};
+
+export type GuildPutGuildsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildPutGuildsByIdError = GuildPutGuildsByIdErrors[keyof GuildPutGuildsByIdErrors];
+
+export type GuildPutGuildsByIdResponses = {
+    /**
+     * OK
+     */
+    200: Guild;
+};
+
+export type GuildPutGuildsByIdResponse = GuildPutGuildsByIdResponses[keyof GuildPutGuildsByIdResponses];
+
+export type GuildPostGuildsByIdGrantExpData = {
+    body?: GuildGrantExp;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/guild/guilds/{id}/grant-exp';
+};
+
+export type GuildPostGuildsByIdGrantExpErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildPostGuildsByIdGrantExpError = GuildPostGuildsByIdGrantExpErrors[keyof GuildPostGuildsByIdGrantExpErrors];
+
+export type GuildPostGuildsByIdGrantExpResponses = {
+    /**
+     * OK
+     */
+    200: GuildContributionLog;
+};
+
+export type GuildPostGuildsByIdGrantExpResponse = GuildPostGuildsByIdGrantExpResponses[keyof GuildPostGuildsByIdGrantExpResponses];
+
+export type GuildGetGuildsByIdMembersData = {
+    body?: never;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/guild/guilds/{id}/members';
+};
+
+export type GuildGetGuildsByIdMembersErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetGuildsByIdMembersError = GuildGetGuildsByIdMembersErrors[keyof GuildGetGuildsByIdMembersErrors];
+
+export type GuildGetGuildsByIdMembersResponses = {
+    /**
+     * OK
+     */
+    200: GuildMemberList;
+};
+
+export type GuildGetGuildsByIdMembersResponse = GuildGetGuildsByIdMembersResponses[keyof GuildGetGuildsByIdMembersResponses];
+
+export type GuildGetGuildsByIdRequestsData = {
+    body?: never;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: {
+        /**
+         * Filter by status (default: pending).
+         */
+        status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+        /**
+         * Page size (default 50).
+         */
+        limit?: string;
+        /**
+         * Pagination offset (default 0).
+         */
+        offset?: string;
+    };
+    url: '/api/guild/guilds/{id}/requests';
+};
+
+export type GuildGetGuildsByIdRequestsErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetGuildsByIdRequestsError = GuildGetGuildsByIdRequestsErrors[keyof GuildGetGuildsByIdRequestsErrors];
+
+export type GuildGetGuildsByIdRequestsResponses = {
+    /**
+     * OK
+     */
+    200: GuildJoinRequestList;
+};
+
+export type GuildGetGuildsByIdRequestsResponse = GuildGetGuildsByIdRequestsResponses[keyof GuildGetGuildsByIdRequestsResponses];
+
+export type GuildGetGuildsByIdContributionsData = {
+    body?: never;
+    path: {
+        /**
+         * Guild id (UUID).
+         */
+        id: string;
+    };
+    query?: {
+        /**
+         * Page size (default 50).
+         */
+        limit?: string;
+        /**
+         * Pagination offset (default 0).
+         */
+        offset?: string;
+    };
+    url: '/api/guild/guilds/{id}/contributions';
+};
+
+export type GuildGetGuildsByIdContributionsErrors = {
+    /**
+     * Bad request
+     */
+    400: GuildErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: GuildErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: GuildErrorResponse;
+    /**
+     * Not found
+     */
+    404: GuildErrorResponse;
+    /**
+     * Conflict
+     */
+    409: GuildErrorResponse;
+};
+
+export type GuildGetGuildsByIdContributionsError = GuildGetGuildsByIdContributionsErrors[keyof GuildGetGuildsByIdContributionsErrors];
+
+export type GuildGetGuildsByIdContributionsResponses = {
+    /**
+     * OK
+     */
+    200: GuildContributionLogList;
+};
+
+export type GuildGetGuildsByIdContributionsResponse = GuildGetGuildsByIdContributionsResponses[keyof GuildGetGuildsByIdContributionsResponses];
+
+export type LotteryPoolsGetPoolsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/lottery/pools';
 };
 
-export type GetApiLotteryPoolsErrors = {
+export type LotteryPoolsGetPoolsErrors = {
     /**
      * Bad request
      */
@@ -2846,25 +12321,25 @@ export type GetApiLotteryPoolsErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsError = GetApiLotteryPoolsErrors[keyof GetApiLotteryPoolsErrors];
+export type LotteryPoolsGetPoolsError = LotteryPoolsGetPoolsErrors[keyof LotteryPoolsGetPoolsErrors];
 
-export type GetApiLotteryPoolsResponses = {
+export type LotteryPoolsGetPoolsResponses = {
     /**
      * OK
      */
     200: LotteryPoolList;
 };
 
-export type GetApiLotteryPoolsResponse = GetApiLotteryPoolsResponses[keyof GetApiLotteryPoolsResponses];
+export type LotteryPoolsGetPoolsResponse = LotteryPoolsGetPoolsResponses[keyof LotteryPoolsGetPoolsResponses];
 
-export type PostApiLotteryPoolsData = {
+export type LotteryPoolsPostPoolsData = {
     body?: LotteryCreatePool;
     path?: never;
     query?: never;
     url: '/api/lottery/pools';
 };
 
-export type PostApiLotteryPoolsErrors = {
+export type LotteryPoolsPostPoolsErrors = {
     /**
      * Bad request
      */
@@ -2883,18 +12358,18 @@ export type PostApiLotteryPoolsErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsError = PostApiLotteryPoolsErrors[keyof PostApiLotteryPoolsErrors];
+export type LotteryPoolsPostPoolsError = LotteryPoolsPostPoolsErrors[keyof LotteryPoolsPostPoolsErrors];
 
-export type PostApiLotteryPoolsResponses = {
+export type LotteryPoolsPostPoolsResponses = {
     /**
      * Created
      */
     201: LotteryPool;
 };
 
-export type PostApiLotteryPoolsResponse = PostApiLotteryPoolsResponses[keyof PostApiLotteryPoolsResponses];
+export type LotteryPoolsPostPoolsResponse = LotteryPoolsPostPoolsResponses[keyof LotteryPoolsPostPoolsResponses];
 
-export type GetApiLotteryPoolsByKeyData = {
+export type LotteryPoolsGetPoolsByKeyData = {
     body?: never;
     path: {
         /**
@@ -2906,7 +12381,7 @@ export type GetApiLotteryPoolsByKeyData = {
     url: '/api/lottery/pools/{key}';
 };
 
-export type GetApiLotteryPoolsByKeyErrors = {
+export type LotteryPoolsGetPoolsByKeyErrors = {
     /**
      * Bad request
      */
@@ -2925,18 +12400,18 @@ export type GetApiLotteryPoolsByKeyErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByKeyError = GetApiLotteryPoolsByKeyErrors[keyof GetApiLotteryPoolsByKeyErrors];
+export type LotteryPoolsGetPoolsByKeyError = LotteryPoolsGetPoolsByKeyErrors[keyof LotteryPoolsGetPoolsByKeyErrors];
 
-export type GetApiLotteryPoolsByKeyResponses = {
+export type LotteryPoolsGetPoolsByKeyResponses = {
     /**
      * OK
      */
     200: LotteryPool;
 };
 
-export type GetApiLotteryPoolsByKeyResponse = GetApiLotteryPoolsByKeyResponses[keyof GetApiLotteryPoolsByKeyResponses];
+export type LotteryPoolsGetPoolsByKeyResponse = LotteryPoolsGetPoolsByKeyResponses[keyof LotteryPoolsGetPoolsByKeyResponses];
 
-export type DeleteApiLotteryPoolsByIdData = {
+export type LotteryPoolsDeletePoolsByIdData = {
     body?: never;
     path: {
         /**
@@ -2948,7 +12423,7 @@ export type DeleteApiLotteryPoolsByIdData = {
     url: '/api/lottery/pools/{id}';
 };
 
-export type DeleteApiLotteryPoolsByIdErrors = {
+export type LotteryPoolsDeletePoolsByIdErrors = {
     /**
      * Bad request
      */
@@ -2967,18 +12442,18 @@ export type DeleteApiLotteryPoolsByIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type DeleteApiLotteryPoolsByIdError = DeleteApiLotteryPoolsByIdErrors[keyof DeleteApiLotteryPoolsByIdErrors];
+export type LotteryPoolsDeletePoolsByIdError = LotteryPoolsDeletePoolsByIdErrors[keyof LotteryPoolsDeletePoolsByIdErrors];
 
-export type DeleteApiLotteryPoolsByIdResponses = {
+export type LotteryPoolsDeletePoolsByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiLotteryPoolsByIdResponse = DeleteApiLotteryPoolsByIdResponses[keyof DeleteApiLotteryPoolsByIdResponses];
+export type LotteryPoolsDeletePoolsByIdResponse = LotteryPoolsDeletePoolsByIdResponses[keyof LotteryPoolsDeletePoolsByIdResponses];
 
-export type PatchApiLotteryPoolsByIdData = {
+export type LotteryPoolsPatchPoolsByIdData = {
     body?: LotteryUpdatePool;
     path: {
         /**
@@ -2990,7 +12465,7 @@ export type PatchApiLotteryPoolsByIdData = {
     url: '/api/lottery/pools/{id}';
 };
 
-export type PatchApiLotteryPoolsByIdErrors = {
+export type LotteryPoolsPatchPoolsByIdErrors = {
     /**
      * Bad request
      */
@@ -3009,18 +12484,18 @@ export type PatchApiLotteryPoolsByIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PatchApiLotteryPoolsByIdError = PatchApiLotteryPoolsByIdErrors[keyof PatchApiLotteryPoolsByIdErrors];
+export type LotteryPoolsPatchPoolsByIdError = LotteryPoolsPatchPoolsByIdErrors[keyof LotteryPoolsPatchPoolsByIdErrors];
 
-export type PatchApiLotteryPoolsByIdResponses = {
+export type LotteryPoolsPatchPoolsByIdResponses = {
     /**
      * OK
      */
     200: LotteryPool;
 };
 
-export type PatchApiLotteryPoolsByIdResponse = PatchApiLotteryPoolsByIdResponses[keyof PatchApiLotteryPoolsByIdResponses];
+export type LotteryPoolsPatchPoolsByIdResponse = LotteryPoolsPatchPoolsByIdResponses[keyof LotteryPoolsPatchPoolsByIdResponses];
 
-export type GetApiLotteryPoolsByPoolKeyTiersData = {
+export type LotteryTiersGetPoolsByPoolkeyTiersData = {
     body?: never;
     path: {
         /**
@@ -3032,7 +12507,7 @@ export type GetApiLotteryPoolsByPoolKeyTiersData = {
     url: '/api/lottery/pools/{poolKey}/tiers';
 };
 
-export type GetApiLotteryPoolsByPoolKeyTiersErrors = {
+export type LotteryTiersGetPoolsByPoolkeyTiersErrors = {
     /**
      * Bad request
      */
@@ -3051,18 +12526,18 @@ export type GetApiLotteryPoolsByPoolKeyTiersErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByPoolKeyTiersError = GetApiLotteryPoolsByPoolKeyTiersErrors[keyof GetApiLotteryPoolsByPoolKeyTiersErrors];
+export type LotteryTiersGetPoolsByPoolkeyTiersError = LotteryTiersGetPoolsByPoolkeyTiersErrors[keyof LotteryTiersGetPoolsByPoolkeyTiersErrors];
 
-export type GetApiLotteryPoolsByPoolKeyTiersResponses = {
+export type LotteryTiersGetPoolsByPoolkeyTiersResponses = {
     /**
      * OK
      */
     200: LotteryTierList;
 };
 
-export type GetApiLotteryPoolsByPoolKeyTiersResponse = GetApiLotteryPoolsByPoolKeyTiersResponses[keyof GetApiLotteryPoolsByPoolKeyTiersResponses];
+export type LotteryTiersGetPoolsByPoolkeyTiersResponse = LotteryTiersGetPoolsByPoolkeyTiersResponses[keyof LotteryTiersGetPoolsByPoolkeyTiersResponses];
 
-export type PostApiLotteryPoolsByPoolKeyTiersData = {
+export type LotteryTiersPostPoolsByPoolkeyTiersData = {
     body?: LotteryCreateTier;
     path: {
         /**
@@ -3074,7 +12549,7 @@ export type PostApiLotteryPoolsByPoolKeyTiersData = {
     url: '/api/lottery/pools/{poolKey}/tiers';
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersErrors = {
+export type LotteryTiersPostPoolsByPoolkeyTiersErrors = {
     /**
      * Bad request
      */
@@ -3093,18 +12568,18 @@ export type PostApiLotteryPoolsByPoolKeyTiersErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersError = PostApiLotteryPoolsByPoolKeyTiersErrors[keyof PostApiLotteryPoolsByPoolKeyTiersErrors];
+export type LotteryTiersPostPoolsByPoolkeyTiersError = LotteryTiersPostPoolsByPoolkeyTiersErrors[keyof LotteryTiersPostPoolsByPoolkeyTiersErrors];
 
-export type PostApiLotteryPoolsByPoolKeyTiersResponses = {
+export type LotteryTiersPostPoolsByPoolkeyTiersResponses = {
     /**
      * Created
      */
     201: LotteryTier;
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersResponse = PostApiLotteryPoolsByPoolKeyTiersResponses[keyof PostApiLotteryPoolsByPoolKeyTiersResponses];
+export type LotteryTiersPostPoolsByPoolkeyTiersResponse = LotteryTiersPostPoolsByPoolkeyTiersResponses[keyof LotteryTiersPostPoolsByPoolkeyTiersResponses];
 
-export type DeleteApiLotteryTiersByTierIdData = {
+export type LotteryTiersDeleteTiersByTieridData = {
     body?: never;
     path: {
         /**
@@ -3116,7 +12591,7 @@ export type DeleteApiLotteryTiersByTierIdData = {
     url: '/api/lottery/tiers/{tierId}';
 };
 
-export type DeleteApiLotteryTiersByTierIdErrors = {
+export type LotteryTiersDeleteTiersByTieridErrors = {
     /**
      * Bad request
      */
@@ -3135,18 +12610,18 @@ export type DeleteApiLotteryTiersByTierIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type DeleteApiLotteryTiersByTierIdError = DeleteApiLotteryTiersByTierIdErrors[keyof DeleteApiLotteryTiersByTierIdErrors];
+export type LotteryTiersDeleteTiersByTieridError = LotteryTiersDeleteTiersByTieridErrors[keyof LotteryTiersDeleteTiersByTieridErrors];
 
-export type DeleteApiLotteryTiersByTierIdResponses = {
+export type LotteryTiersDeleteTiersByTieridResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiLotteryTiersByTierIdResponse = DeleteApiLotteryTiersByTierIdResponses[keyof DeleteApiLotteryTiersByTierIdResponses];
+export type LotteryTiersDeleteTiersByTieridResponse = LotteryTiersDeleteTiersByTieridResponses[keyof LotteryTiersDeleteTiersByTieridResponses];
 
-export type PatchApiLotteryTiersByTierIdData = {
+export type LotteryTiersPatchTiersByTieridData = {
     body?: LotteryUpdateTier;
     path: {
         /**
@@ -3158,7 +12633,7 @@ export type PatchApiLotteryTiersByTierIdData = {
     url: '/api/lottery/tiers/{tierId}';
 };
 
-export type PatchApiLotteryTiersByTierIdErrors = {
+export type LotteryTiersPatchTiersByTieridErrors = {
     /**
      * Bad request
      */
@@ -3177,18 +12652,18 @@ export type PatchApiLotteryTiersByTierIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PatchApiLotteryTiersByTierIdError = PatchApiLotteryTiersByTierIdErrors[keyof PatchApiLotteryTiersByTierIdErrors];
+export type LotteryTiersPatchTiersByTieridError = LotteryTiersPatchTiersByTieridErrors[keyof LotteryTiersPatchTiersByTieridErrors];
 
-export type PatchApiLotteryTiersByTierIdResponses = {
+export type LotteryTiersPatchTiersByTieridResponses = {
     /**
      * OK
      */
     200: LotteryTier;
 };
 
-export type PatchApiLotteryTiersByTierIdResponse = PatchApiLotteryTiersByTierIdResponses[keyof PatchApiLotteryTiersByTierIdResponses];
+export type LotteryTiersPatchTiersByTieridResponse = LotteryTiersPatchTiersByTieridResponses[keyof LotteryTiersPatchTiersByTieridResponses];
 
-export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesData = {
+export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesData = {
     body?: LotteryCreatePrize;
     path: {
         /**
@@ -3204,7 +12679,7 @@ export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesData = {
     url: '/api/lottery/pools/{poolKey}/tiers/{tierId}/prizes';
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors = {
+export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesErrors = {
     /**
      * Bad request
      */
@@ -3223,18 +12698,18 @@ export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesError = PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors[keyof PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesErrors];
+export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesError = LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesErrors[keyof LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesErrors];
 
-export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses = {
+export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesResponses = {
     /**
      * Created
      */
     201: LotteryPrize;
 };
 
-export type PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponse = PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses[keyof PostApiLotteryPoolsByPoolKeyTiersByTierIdPrizesResponses];
+export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesResponse = LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesResponses[keyof LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesResponses];
 
-export type GetApiLotteryPoolsByPoolKeyPrizesData = {
+export type LotteryPrizesGetPoolsByPoolkeyPrizesData = {
     body?: never;
     path: {
         /**
@@ -3246,7 +12721,7 @@ export type GetApiLotteryPoolsByPoolKeyPrizesData = {
     url: '/api/lottery/pools/{poolKey}/prizes';
 };
 
-export type GetApiLotteryPoolsByPoolKeyPrizesErrors = {
+export type LotteryPrizesGetPoolsByPoolkeyPrizesErrors = {
     /**
      * Bad request
      */
@@ -3265,18 +12740,18 @@ export type GetApiLotteryPoolsByPoolKeyPrizesErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByPoolKeyPrizesError = GetApiLotteryPoolsByPoolKeyPrizesErrors[keyof GetApiLotteryPoolsByPoolKeyPrizesErrors];
+export type LotteryPrizesGetPoolsByPoolkeyPrizesError = LotteryPrizesGetPoolsByPoolkeyPrizesErrors[keyof LotteryPrizesGetPoolsByPoolkeyPrizesErrors];
 
-export type GetApiLotteryPoolsByPoolKeyPrizesResponses = {
+export type LotteryPrizesGetPoolsByPoolkeyPrizesResponses = {
     /**
      * OK
      */
     200: LotteryPrizeList;
 };
 
-export type GetApiLotteryPoolsByPoolKeyPrizesResponse = GetApiLotteryPoolsByPoolKeyPrizesResponses[keyof GetApiLotteryPoolsByPoolKeyPrizesResponses];
+export type LotteryPrizesGetPoolsByPoolkeyPrizesResponse = LotteryPrizesGetPoolsByPoolkeyPrizesResponses[keyof LotteryPrizesGetPoolsByPoolkeyPrizesResponses];
 
-export type PostApiLotteryPoolsByPoolKeyPrizesData = {
+export type LotteryPrizesPostPoolsByPoolkeyPrizesData = {
     body?: LotteryCreatePrize;
     path: {
         /**
@@ -3288,7 +12763,7 @@ export type PostApiLotteryPoolsByPoolKeyPrizesData = {
     url: '/api/lottery/pools/{poolKey}/prizes';
 };
 
-export type PostApiLotteryPoolsByPoolKeyPrizesErrors = {
+export type LotteryPrizesPostPoolsByPoolkeyPrizesErrors = {
     /**
      * Bad request
      */
@@ -3307,18 +12782,18 @@ export type PostApiLotteryPoolsByPoolKeyPrizesErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPrizesError = PostApiLotteryPoolsByPoolKeyPrizesErrors[keyof PostApiLotteryPoolsByPoolKeyPrizesErrors];
+export type LotteryPrizesPostPoolsByPoolkeyPrizesError = LotteryPrizesPostPoolsByPoolkeyPrizesErrors[keyof LotteryPrizesPostPoolsByPoolkeyPrizesErrors];
 
-export type PostApiLotteryPoolsByPoolKeyPrizesResponses = {
+export type LotteryPrizesPostPoolsByPoolkeyPrizesResponses = {
     /**
      * Created
      */
     201: LotteryPrize;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPrizesResponse = PostApiLotteryPoolsByPoolKeyPrizesResponses[keyof PostApiLotteryPoolsByPoolKeyPrizesResponses];
+export type LotteryPrizesPostPoolsByPoolkeyPrizesResponse = LotteryPrizesPostPoolsByPoolkeyPrizesResponses[keyof LotteryPrizesPostPoolsByPoolkeyPrizesResponses];
 
-export type DeleteApiLotteryPrizesByPrizeIdData = {
+export type LotteryPrizesDeletePrizesByPrizeidData = {
     body?: never;
     path: {
         /**
@@ -3330,7 +12805,7 @@ export type DeleteApiLotteryPrizesByPrizeIdData = {
     url: '/api/lottery/prizes/{prizeId}';
 };
 
-export type DeleteApiLotteryPrizesByPrizeIdErrors = {
+export type LotteryPrizesDeletePrizesByPrizeidErrors = {
     /**
      * Bad request
      */
@@ -3349,18 +12824,18 @@ export type DeleteApiLotteryPrizesByPrizeIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type DeleteApiLotteryPrizesByPrizeIdError = DeleteApiLotteryPrizesByPrizeIdErrors[keyof DeleteApiLotteryPrizesByPrizeIdErrors];
+export type LotteryPrizesDeletePrizesByPrizeidError = LotteryPrizesDeletePrizesByPrizeidErrors[keyof LotteryPrizesDeletePrizesByPrizeidErrors];
 
-export type DeleteApiLotteryPrizesByPrizeIdResponses = {
+export type LotteryPrizesDeletePrizesByPrizeidResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiLotteryPrizesByPrizeIdResponse = DeleteApiLotteryPrizesByPrizeIdResponses[keyof DeleteApiLotteryPrizesByPrizeIdResponses];
+export type LotteryPrizesDeletePrizesByPrizeidResponse = LotteryPrizesDeletePrizesByPrizeidResponses[keyof LotteryPrizesDeletePrizesByPrizeidResponses];
 
-export type PatchApiLotteryPrizesByPrizeIdData = {
+export type LotteryPrizesPatchPrizesByPrizeidData = {
     body?: LotteryUpdatePrize;
     path: {
         /**
@@ -3372,7 +12847,7 @@ export type PatchApiLotteryPrizesByPrizeIdData = {
     url: '/api/lottery/prizes/{prizeId}';
 };
 
-export type PatchApiLotteryPrizesByPrizeIdErrors = {
+export type LotteryPrizesPatchPrizesByPrizeidErrors = {
     /**
      * Bad request
      */
@@ -3391,18 +12866,18 @@ export type PatchApiLotteryPrizesByPrizeIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PatchApiLotteryPrizesByPrizeIdError = PatchApiLotteryPrizesByPrizeIdErrors[keyof PatchApiLotteryPrizesByPrizeIdErrors];
+export type LotteryPrizesPatchPrizesByPrizeidError = LotteryPrizesPatchPrizesByPrizeidErrors[keyof LotteryPrizesPatchPrizesByPrizeidErrors];
 
-export type PatchApiLotteryPrizesByPrizeIdResponses = {
+export type LotteryPrizesPatchPrizesByPrizeidResponses = {
     /**
      * OK
      */
     200: LotteryPrize;
 };
 
-export type PatchApiLotteryPrizesByPrizeIdResponse = PatchApiLotteryPrizesByPrizeIdResponses[keyof PatchApiLotteryPrizesByPrizeIdResponses];
+export type LotteryPrizesPatchPrizesByPrizeidResponse = LotteryPrizesPatchPrizesByPrizeidResponses[keyof LotteryPrizesPatchPrizesByPrizeidResponses];
 
-export type GetApiLotteryPoolsByPoolKeyPityRulesData = {
+export type LotteryPityRulesGetPoolsByPoolkeyPityRulesData = {
     body?: never;
     path: {
         /**
@@ -3414,7 +12889,7 @@ export type GetApiLotteryPoolsByPoolKeyPityRulesData = {
     url: '/api/lottery/pools/{poolKey}/pity-rules';
 };
 
-export type GetApiLotteryPoolsByPoolKeyPityRulesErrors = {
+export type LotteryPityRulesGetPoolsByPoolkeyPityRulesErrors = {
     /**
      * Bad request
      */
@@ -3433,18 +12908,18 @@ export type GetApiLotteryPoolsByPoolKeyPityRulesErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByPoolKeyPityRulesError = GetApiLotteryPoolsByPoolKeyPityRulesErrors[keyof GetApiLotteryPoolsByPoolKeyPityRulesErrors];
+export type LotteryPityRulesGetPoolsByPoolkeyPityRulesError = LotteryPityRulesGetPoolsByPoolkeyPityRulesErrors[keyof LotteryPityRulesGetPoolsByPoolkeyPityRulesErrors];
 
-export type GetApiLotteryPoolsByPoolKeyPityRulesResponses = {
+export type LotteryPityRulesGetPoolsByPoolkeyPityRulesResponses = {
     /**
      * OK
      */
     200: LotteryPityRuleList;
 };
 
-export type GetApiLotteryPoolsByPoolKeyPityRulesResponse = GetApiLotteryPoolsByPoolKeyPityRulesResponses[keyof GetApiLotteryPoolsByPoolKeyPityRulesResponses];
+export type LotteryPityRulesGetPoolsByPoolkeyPityRulesResponse = LotteryPityRulesGetPoolsByPoolkeyPityRulesResponses[keyof LotteryPityRulesGetPoolsByPoolkeyPityRulesResponses];
 
-export type PostApiLotteryPoolsByPoolKeyPityRulesData = {
+export type LotteryPityRulesPostPoolsByPoolkeyPityRulesData = {
     body?: LotteryCreatePityRule;
     path: {
         /**
@@ -3456,7 +12931,7 @@ export type PostApiLotteryPoolsByPoolKeyPityRulesData = {
     url: '/api/lottery/pools/{poolKey}/pity-rules';
 };
 
-export type PostApiLotteryPoolsByPoolKeyPityRulesErrors = {
+export type LotteryPityRulesPostPoolsByPoolkeyPityRulesErrors = {
     /**
      * Bad request
      */
@@ -3475,18 +12950,18 @@ export type PostApiLotteryPoolsByPoolKeyPityRulesErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPityRulesError = PostApiLotteryPoolsByPoolKeyPityRulesErrors[keyof PostApiLotteryPoolsByPoolKeyPityRulesErrors];
+export type LotteryPityRulesPostPoolsByPoolkeyPityRulesError = LotteryPityRulesPostPoolsByPoolkeyPityRulesErrors[keyof LotteryPityRulesPostPoolsByPoolkeyPityRulesErrors];
 
-export type PostApiLotteryPoolsByPoolKeyPityRulesResponses = {
+export type LotteryPityRulesPostPoolsByPoolkeyPityRulesResponses = {
     /**
      * Created
      */
     201: LotteryPityRule;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPityRulesResponse = PostApiLotteryPoolsByPoolKeyPityRulesResponses[keyof PostApiLotteryPoolsByPoolKeyPityRulesResponses];
+export type LotteryPityRulesPostPoolsByPoolkeyPityRulesResponse = LotteryPityRulesPostPoolsByPoolkeyPityRulesResponses[keyof LotteryPityRulesPostPoolsByPoolkeyPityRulesResponses];
 
-export type DeleteApiLotteryPityRulesByRuleIdData = {
+export type LotteryPityRulesDeletePityRulesByRuleidData = {
     body?: never;
     path: {
         /**
@@ -3498,7 +12973,7 @@ export type DeleteApiLotteryPityRulesByRuleIdData = {
     url: '/api/lottery/pity-rules/{ruleId}';
 };
 
-export type DeleteApiLotteryPityRulesByRuleIdErrors = {
+export type LotteryPityRulesDeletePityRulesByRuleidErrors = {
     /**
      * Bad request
      */
@@ -3517,18 +12992,18 @@ export type DeleteApiLotteryPityRulesByRuleIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type DeleteApiLotteryPityRulesByRuleIdError = DeleteApiLotteryPityRulesByRuleIdErrors[keyof DeleteApiLotteryPityRulesByRuleIdErrors];
+export type LotteryPityRulesDeletePityRulesByRuleidError = LotteryPityRulesDeletePityRulesByRuleidErrors[keyof LotteryPityRulesDeletePityRulesByRuleidErrors];
 
-export type DeleteApiLotteryPityRulesByRuleIdResponses = {
+export type LotteryPityRulesDeletePityRulesByRuleidResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiLotteryPityRulesByRuleIdResponse = DeleteApiLotteryPityRulesByRuleIdResponses[keyof DeleteApiLotteryPityRulesByRuleIdResponses];
+export type LotteryPityRulesDeletePityRulesByRuleidResponse = LotteryPityRulesDeletePityRulesByRuleidResponses[keyof LotteryPityRulesDeletePityRulesByRuleidResponses];
 
-export type PatchApiLotteryPityRulesByRuleIdData = {
+export type LotteryPityRulesPatchPityRulesByRuleidData = {
     body?: LotteryUpdatePityRule;
     path: {
         /**
@@ -3540,7 +13015,7 @@ export type PatchApiLotteryPityRulesByRuleIdData = {
     url: '/api/lottery/pity-rules/{ruleId}';
 };
 
-export type PatchApiLotteryPityRulesByRuleIdErrors = {
+export type LotteryPityRulesPatchPityRulesByRuleidErrors = {
     /**
      * Bad request
      */
@@ -3559,18 +13034,18 @@ export type PatchApiLotteryPityRulesByRuleIdErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PatchApiLotteryPityRulesByRuleIdError = PatchApiLotteryPityRulesByRuleIdErrors[keyof PatchApiLotteryPityRulesByRuleIdErrors];
+export type LotteryPityRulesPatchPityRulesByRuleidError = LotteryPityRulesPatchPityRulesByRuleidErrors[keyof LotteryPityRulesPatchPityRulesByRuleidErrors];
 
-export type PatchApiLotteryPityRulesByRuleIdResponses = {
+export type LotteryPityRulesPatchPityRulesByRuleidResponses = {
     /**
      * OK
      */
     200: LotteryPityRule;
 };
 
-export type PatchApiLotteryPityRulesByRuleIdResponse = PatchApiLotteryPityRulesByRuleIdResponses[keyof PatchApiLotteryPityRulesByRuleIdResponses];
+export type LotteryPityRulesPatchPityRulesByRuleidResponse = LotteryPityRulesPatchPityRulesByRuleidResponses[keyof LotteryPityRulesPatchPityRulesByRuleidResponses];
 
-export type PostApiLotteryPoolsByPoolKeyPullData = {
+export type LotteryPullPostPoolsByPoolkeyPullData = {
     body?: LotteryPullRequest;
     path: {
         /**
@@ -3582,7 +13057,7 @@ export type PostApiLotteryPoolsByPoolKeyPullData = {
     url: '/api/lottery/pools/{poolKey}/pull';
 };
 
-export type PostApiLotteryPoolsByPoolKeyPullErrors = {
+export type LotteryPullPostPoolsByPoolkeyPullErrors = {
     /**
      * Bad request
      */
@@ -3601,18 +13076,18 @@ export type PostApiLotteryPoolsByPoolKeyPullErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPullError = PostApiLotteryPoolsByPoolKeyPullErrors[keyof PostApiLotteryPoolsByPoolKeyPullErrors];
+export type LotteryPullPostPoolsByPoolkeyPullError = LotteryPullPostPoolsByPoolkeyPullErrors[keyof LotteryPullPostPoolsByPoolkeyPullErrors];
 
-export type PostApiLotteryPoolsByPoolKeyPullResponses = {
+export type LotteryPullPostPoolsByPoolkeyPullResponses = {
     /**
      * OK
      */
     200: LotteryPullResult;
 };
 
-export type PostApiLotteryPoolsByPoolKeyPullResponse = PostApiLotteryPoolsByPoolKeyPullResponses[keyof PostApiLotteryPoolsByPoolKeyPullResponses];
+export type LotteryPullPostPoolsByPoolkeyPullResponse = LotteryPullPostPoolsByPoolkeyPullResponses[keyof LotteryPullPostPoolsByPoolkeyPullResponses];
 
-export type PostApiLotteryPoolsByPoolKeyMultiPullData = {
+export type LotteryPullPostPoolsByPoolkeyMultiPullData = {
     body?: LotteryMultiPullRequest;
     path: {
         /**
@@ -3624,7 +13099,7 @@ export type PostApiLotteryPoolsByPoolKeyMultiPullData = {
     url: '/api/lottery/pools/{poolKey}/multi-pull';
 };
 
-export type PostApiLotteryPoolsByPoolKeyMultiPullErrors = {
+export type LotteryPullPostPoolsByPoolkeyMultiPullErrors = {
     /**
      * Bad request
      */
@@ -3643,18 +13118,18 @@ export type PostApiLotteryPoolsByPoolKeyMultiPullErrors = {
     409: LotteryErrorResponse;
 };
 
-export type PostApiLotteryPoolsByPoolKeyMultiPullError = PostApiLotteryPoolsByPoolKeyMultiPullErrors[keyof PostApiLotteryPoolsByPoolKeyMultiPullErrors];
+export type LotteryPullPostPoolsByPoolkeyMultiPullError = LotteryPullPostPoolsByPoolkeyMultiPullErrors[keyof LotteryPullPostPoolsByPoolkeyMultiPullErrors];
 
-export type PostApiLotteryPoolsByPoolKeyMultiPullResponses = {
+export type LotteryPullPostPoolsByPoolkeyMultiPullResponses = {
     /**
      * OK
      */
     200: LotteryPullResult;
 };
 
-export type PostApiLotteryPoolsByPoolKeyMultiPullResponse = PostApiLotteryPoolsByPoolKeyMultiPullResponses[keyof PostApiLotteryPoolsByPoolKeyMultiPullResponses];
+export type LotteryPullPostPoolsByPoolkeyMultiPullResponse = LotteryPullPostPoolsByPoolkeyMultiPullResponses[keyof LotteryPullPostPoolsByPoolkeyMultiPullResponses];
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateData = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateData = {
     body?: never;
     path: {
         /**
@@ -3670,7 +13145,7 @@ export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateData = {
     url: '/api/lottery/pools/{poolKey}/users/{endUserId}/state';
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateErrors = {
     /**
      * Bad request
      */
@@ -3689,18 +13164,18 @@ export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateError = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateErrors];
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateError = LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateErrors[keyof LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateErrors];
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateResponses = {
     /**
      * OK
      */
     200: LotteryUserState;
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponse = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdStateResponses];
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateResponse = LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateResponses[keyof LotteryPullGetPoolsByPoolkeyUsersByEnduseridStateResponses];
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryData = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryData = {
     body?: never;
     path: {
         /**
@@ -3716,7 +13191,7 @@ export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryData = {
     url: '/api/lottery/pools/{poolKey}/users/{endUserId}/history';
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryErrors = {
     /**
      * Bad request
      */
@@ -3735,18 +13210,18 @@ export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors = {
     409: LotteryErrorResponse;
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryError = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryErrors];
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryError = LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryErrors[keyof LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryErrors];
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses = {
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryResponses = {
     /**
      * OK
      */
     200: LotteryPullLogList;
 };
 
-export type GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponse = GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses[keyof GetApiLotteryPoolsByPoolKeyUsersByEndUserIdHistoryResponses];
+export type LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryResponse = LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryResponses[keyof LotteryPullGetPoolsByPoolkeyUsersByEnduseridHistoryResponses];
 
-export type GetApiMailMessagesData = {
+export type MailAdminGetMessagesData = {
     body?: never;
     path?: never;
     query?: {
@@ -3763,7 +13238,7 @@ export type GetApiMailMessagesData = {
     url: '/api/mail/messages';
 };
 
-export type GetApiMailMessagesErrors = {
+export type MailAdminGetMessagesErrors = {
     /**
      * Bad request
      */
@@ -3786,25 +13261,25 @@ export type GetApiMailMessagesErrors = {
     409: MailErrorResponse;
 };
 
-export type GetApiMailMessagesError = GetApiMailMessagesErrors[keyof GetApiMailMessagesErrors];
+export type MailAdminGetMessagesError = MailAdminGetMessagesErrors[keyof MailAdminGetMessagesErrors];
 
-export type GetApiMailMessagesResponses = {
+export type MailAdminGetMessagesResponses = {
     /**
      * OK
      */
     200: MailList;
 };
 
-export type GetApiMailMessagesResponse = GetApiMailMessagesResponses[keyof GetApiMailMessagesResponses];
+export type MailAdminGetMessagesResponse = MailAdminGetMessagesResponses[keyof MailAdminGetMessagesResponses];
 
-export type PostApiMailMessagesData = {
+export type MailAdminPostMessagesData = {
     body?: MailCreateRequest;
     path?: never;
     query?: never;
     url: '/api/mail/messages';
 };
 
-export type PostApiMailMessagesErrors = {
+export type MailAdminPostMessagesErrors = {
     /**
      * Bad request
      */
@@ -3827,18 +13302,18 @@ export type PostApiMailMessagesErrors = {
     409: MailErrorResponse;
 };
 
-export type PostApiMailMessagesError = PostApiMailMessagesErrors[keyof PostApiMailMessagesErrors];
+export type MailAdminPostMessagesError = MailAdminPostMessagesErrors[keyof MailAdminPostMessagesErrors];
 
-export type PostApiMailMessagesResponses = {
+export type MailAdminPostMessagesResponses = {
     /**
      * Created
      */
     201: MailMessage;
 };
 
-export type PostApiMailMessagesResponse = PostApiMailMessagesResponses[keyof PostApiMailMessagesResponses];
+export type MailAdminPostMessagesResponse = MailAdminPostMessagesResponses[keyof MailAdminPostMessagesResponses];
 
-export type DeleteApiMailMessagesByIdData = {
+export type MailAdminDeleteMessagesByIdData = {
     body?: never;
     path: {
         /**
@@ -3850,7 +13325,7 @@ export type DeleteApiMailMessagesByIdData = {
     url: '/api/mail/messages/{id}';
 };
 
-export type DeleteApiMailMessagesByIdErrors = {
+export type MailAdminDeleteMessagesByIdErrors = {
     /**
      * Bad request
      */
@@ -3873,18 +13348,18 @@ export type DeleteApiMailMessagesByIdErrors = {
     409: MailErrorResponse;
 };
 
-export type DeleteApiMailMessagesByIdError = DeleteApiMailMessagesByIdErrors[keyof DeleteApiMailMessagesByIdErrors];
+export type MailAdminDeleteMessagesByIdError = MailAdminDeleteMessagesByIdErrors[keyof MailAdminDeleteMessagesByIdErrors];
 
-export type DeleteApiMailMessagesByIdResponses = {
+export type MailAdminDeleteMessagesByIdResponses = {
     /**
      * Deleted
      */
     204: void;
 };
 
-export type DeleteApiMailMessagesByIdResponse = DeleteApiMailMessagesByIdResponses[keyof DeleteApiMailMessagesByIdResponses];
+export type MailAdminDeleteMessagesByIdResponse = MailAdminDeleteMessagesByIdResponses[keyof MailAdminDeleteMessagesByIdResponses];
 
-export type GetApiMailMessagesByIdData = {
+export type MailAdminGetMessagesByIdData = {
     body?: never;
     path: {
         /**
@@ -3896,7 +13371,7 @@ export type GetApiMailMessagesByIdData = {
     url: '/api/mail/messages/{id}';
 };
 
-export type GetApiMailMessagesByIdErrors = {
+export type MailAdminGetMessagesByIdErrors = {
     /**
      * Bad request
      */
@@ -3919,18 +13394,18 @@ export type GetApiMailMessagesByIdErrors = {
     409: MailErrorResponse;
 };
 
-export type GetApiMailMessagesByIdError = GetApiMailMessagesByIdErrors[keyof GetApiMailMessagesByIdErrors];
+export type MailAdminGetMessagesByIdError = MailAdminGetMessagesByIdErrors[keyof MailAdminGetMessagesByIdErrors];
 
-export type GetApiMailMessagesByIdResponses = {
+export type MailAdminGetMessagesByIdResponses = {
     /**
      * OK
      */
     200: MailMessageWithStats;
 };
 
-export type GetApiMailMessagesByIdResponse = GetApiMailMessagesByIdResponses[keyof GetApiMailMessagesByIdResponses];
+export type MailAdminGetMessagesByIdResponse = MailAdminGetMessagesByIdResponses[keyof MailAdminGetMessagesByIdResponses];
 
-export type PostApiMailMessagesByIdRevokeData = {
+export type MailAdminPostMessagesByIdRevokeData = {
     body?: never;
     path: {
         /**
@@ -3942,7 +13417,7 @@ export type PostApiMailMessagesByIdRevokeData = {
     url: '/api/mail/messages/{id}/revoke';
 };
 
-export type PostApiMailMessagesByIdRevokeErrors = {
+export type MailAdminPostMessagesByIdRevokeErrors = {
     /**
      * Bad request
      */
@@ -3965,16 +13440,5742 @@ export type PostApiMailMessagesByIdRevokeErrors = {
     409: MailErrorResponse;
 };
 
-export type PostApiMailMessagesByIdRevokeError = PostApiMailMessagesByIdRevokeErrors[keyof PostApiMailMessagesByIdRevokeErrors];
+export type MailAdminPostMessagesByIdRevokeError = MailAdminPostMessagesByIdRevokeErrors[keyof MailAdminPostMessagesByIdRevokeErrors];
 
-export type PostApiMailMessagesByIdRevokeResponses = {
+export type MailAdminPostMessagesByIdRevokeResponses = {
     /**
      * Revoked
      */
     204: void;
 };
 
-export type PostApiMailMessagesByIdRevokeResponse = PostApiMailMessagesByIdRevokeResponses[keyof PostApiMailMessagesByIdRevokeResponses];
+export type MailAdminPostMessagesByIdRevokeResponse = MailAdminPostMessagesByIdRevokeResponses[keyof MailAdminPostMessagesByIdRevokeResponses];
+
+export type ShopCategoriesGetCategoriesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/shop/categories';
+};
+
+export type ShopCategoriesGetCategoriesErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesGetCategoriesError = ShopCategoriesGetCategoriesErrors[keyof ShopCategoriesGetCategoriesErrors];
+
+export type ShopCategoriesGetCategoriesResponses = {
+    /**
+     * OK
+     */
+    200: ShopCategoryList;
+};
+
+export type ShopCategoriesGetCategoriesResponse = ShopCategoriesGetCategoriesResponses[keyof ShopCategoriesGetCategoriesResponses];
+
+export type ShopCategoriesPostCategoriesData = {
+    body?: ShopCreateCategory;
+    path?: never;
+    query?: never;
+    url: '/api/shop/categories';
+};
+
+export type ShopCategoriesPostCategoriesErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesPostCategoriesError = ShopCategoriesPostCategoriesErrors[keyof ShopCategoriesPostCategoriesErrors];
+
+export type ShopCategoriesPostCategoriesResponses = {
+    /**
+     * Created
+     */
+    201: ShopCategory;
+};
+
+export type ShopCategoriesPostCategoriesResponse = ShopCategoriesPostCategoriesResponses[keyof ShopCategoriesPostCategoriesResponses];
+
+export type ShopCategoriesGetCategoriesTreeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/shop/categories/tree';
+};
+
+export type ShopCategoriesGetCategoriesTreeErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesGetCategoriesTreeError = ShopCategoriesGetCategoriesTreeErrors[keyof ShopCategoriesGetCategoriesTreeErrors];
+
+export type ShopCategoriesGetCategoriesTreeResponses = {
+    /**
+     * OK
+     */
+    200: ShopCategoryTree;
+};
+
+export type ShopCategoriesGetCategoriesTreeResponse = ShopCategoriesGetCategoriesTreeResponses[keyof ShopCategoriesGetCategoriesTreeResponses];
+
+export type ShopCategoriesGetCategoriesByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/categories/{key}';
+};
+
+export type ShopCategoriesGetCategoriesByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesGetCategoriesByKeyError = ShopCategoriesGetCategoriesByKeyErrors[keyof ShopCategoriesGetCategoriesByKeyErrors];
+
+export type ShopCategoriesGetCategoriesByKeyResponses = {
+    /**
+     * OK
+     */
+    200: ShopCategory;
+};
+
+export type ShopCategoriesGetCategoriesByKeyResponse = ShopCategoriesGetCategoriesByKeyResponses[keyof ShopCategoriesGetCategoriesByKeyResponses];
+
+export type ShopCategoriesDeleteCategoriesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/categories/{id}';
+};
+
+export type ShopCategoriesDeleteCategoriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesDeleteCategoriesByIdError = ShopCategoriesDeleteCategoriesByIdErrors[keyof ShopCategoriesDeleteCategoriesByIdErrors];
+
+export type ShopCategoriesDeleteCategoriesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ShopCategoriesDeleteCategoriesByIdResponse = ShopCategoriesDeleteCategoriesByIdResponses[keyof ShopCategoriesDeleteCategoriesByIdResponses];
+
+export type ShopCategoriesPatchCategoriesByIdData = {
+    body?: ShopUpdateCategory;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/categories/{id}';
+};
+
+export type ShopCategoriesPatchCategoriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopCategoriesPatchCategoriesByIdError = ShopCategoriesPatchCategoriesByIdErrors[keyof ShopCategoriesPatchCategoriesByIdErrors];
+
+export type ShopCategoriesPatchCategoriesByIdResponses = {
+    /**
+     * OK
+     */
+    200: ShopCategory;
+};
+
+export type ShopCategoriesPatchCategoriesByIdResponse = ShopCategoriesPatchCategoriesByIdResponses[keyof ShopCategoriesPatchCategoriesByIdResponses];
+
+export type ShopTagsGetTagsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/shop/tags';
+};
+
+export type ShopTagsGetTagsErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopTagsGetTagsError = ShopTagsGetTagsErrors[keyof ShopTagsGetTagsErrors];
+
+export type ShopTagsGetTagsResponses = {
+    /**
+     * OK
+     */
+    200: ShopTagList;
+};
+
+export type ShopTagsGetTagsResponse = ShopTagsGetTagsResponses[keyof ShopTagsGetTagsResponses];
+
+export type ShopTagsPostTagsData = {
+    body?: ShopCreateTag;
+    path?: never;
+    query?: never;
+    url: '/api/shop/tags';
+};
+
+export type ShopTagsPostTagsErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopTagsPostTagsError = ShopTagsPostTagsErrors[keyof ShopTagsPostTagsErrors];
+
+export type ShopTagsPostTagsResponses = {
+    /**
+     * Created
+     */
+    201: ShopTag;
+};
+
+export type ShopTagsPostTagsResponse = ShopTagsPostTagsResponses[keyof ShopTagsPostTagsResponses];
+
+export type ShopTagsGetTagsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/tags/{key}';
+};
+
+export type ShopTagsGetTagsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopTagsGetTagsByKeyError = ShopTagsGetTagsByKeyErrors[keyof ShopTagsGetTagsByKeyErrors];
+
+export type ShopTagsGetTagsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: ShopTag;
+};
+
+export type ShopTagsGetTagsByKeyResponse = ShopTagsGetTagsByKeyResponses[keyof ShopTagsGetTagsByKeyResponses];
+
+export type ShopTagsDeleteTagsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/tags/{id}';
+};
+
+export type ShopTagsDeleteTagsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopTagsDeleteTagsByIdError = ShopTagsDeleteTagsByIdErrors[keyof ShopTagsDeleteTagsByIdErrors];
+
+export type ShopTagsDeleteTagsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ShopTagsDeleteTagsByIdResponse = ShopTagsDeleteTagsByIdResponses[keyof ShopTagsDeleteTagsByIdResponses];
+
+export type ShopTagsPatchTagsByIdData = {
+    body?: ShopUpdateTag;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/tags/{id}';
+};
+
+export type ShopTagsPatchTagsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopTagsPatchTagsByIdError = ShopTagsPatchTagsByIdErrors[keyof ShopTagsPatchTagsByIdErrors];
+
+export type ShopTagsPatchTagsByIdResponses = {
+    /**
+     * OK
+     */
+    200: ShopTag;
+};
+
+export type ShopTagsPatchTagsByIdResponse = ShopTagsPatchTagsByIdResponses[keyof ShopTagsPatchTagsByIdResponses];
+
+export type ShopProductsGetProductsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        categoryId?: string;
+        /**
+         * When 'true' and categoryId is set, walk the category subtree.
+         */
+        includeDescendantCategories?: 'true' | 'false';
+        tagId?: string;
+        productType?: 'regular' | 'growth_pack';
+        isActive?: 'true' | 'false';
+        timeWindowType?: 'none' | 'absolute' | 'relative' | 'cyclic';
+        /**
+         * Restrict to products whose absolute time-window contains this instant.
+         */
+        availableAt?: string;
+        /**
+         * Only list products linked to this activity. Overrides the default (activityId IS NULL) filter.
+         */
+        activityId?: string;
+        /**
+         * When 'true', include activity-scoped products in the result. Default lists standalone products only.
+         */
+        includeActivity?: 'true' | 'false';
+    };
+    url: '/api/shop/products';
+};
+
+export type ShopProductsGetProductsErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopProductsGetProductsError = ShopProductsGetProductsErrors[keyof ShopProductsGetProductsErrors];
+
+export type ShopProductsGetProductsResponses = {
+    /**
+     * OK
+     */
+    200: ShopProductList;
+};
+
+export type ShopProductsGetProductsResponse = ShopProductsGetProductsResponses[keyof ShopProductsGetProductsResponses];
+
+export type ShopProductsPostProductsData = {
+    body?: ShopCreateProduct;
+    path?: never;
+    query?: never;
+    url: '/api/shop/products';
+};
+
+export type ShopProductsPostProductsErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopProductsPostProductsError = ShopProductsPostProductsErrors[keyof ShopProductsPostProductsErrors];
+
+export type ShopProductsPostProductsResponses = {
+    /**
+     * Created
+     */
+    201: ShopProduct;
+};
+
+export type ShopProductsPostProductsResponse = ShopProductsPostProductsResponses[keyof ShopProductsPostProductsResponses];
+
+export type ShopProductsGetProductsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{key}';
+};
+
+export type ShopProductsGetProductsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopProductsGetProductsByKeyError = ShopProductsGetProductsByKeyErrors[keyof ShopProductsGetProductsByKeyErrors];
+
+export type ShopProductsGetProductsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: ShopProduct;
+};
+
+export type ShopProductsGetProductsByKeyResponse = ShopProductsGetProductsByKeyResponses[keyof ShopProductsGetProductsByKeyResponses];
+
+export type ShopProductsDeleteProductsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{id}';
+};
+
+export type ShopProductsDeleteProductsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopProductsDeleteProductsByIdError = ShopProductsDeleteProductsByIdErrors[keyof ShopProductsDeleteProductsByIdErrors];
+
+export type ShopProductsDeleteProductsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ShopProductsDeleteProductsByIdResponse = ShopProductsDeleteProductsByIdResponses[keyof ShopProductsDeleteProductsByIdResponses];
+
+export type ShopProductsPatchProductsByIdData = {
+    body?: ShopUpdateProduct;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{id}';
+};
+
+export type ShopProductsPatchProductsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopProductsPatchProductsByIdError = ShopProductsPatchProductsByIdErrors[keyof ShopProductsPatchProductsByIdErrors];
+
+export type ShopProductsPatchProductsByIdResponses = {
+    /**
+     * OK
+     */
+    200: ShopProduct;
+};
+
+export type ShopProductsPatchProductsByIdResponse = ShopProductsPatchProductsByIdResponses[keyof ShopProductsPatchProductsByIdResponses];
+
+export type ShopGrowthStagesGetProductsByProductidStagesData = {
+    body?: never;
+    path: {
+        productId: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{productId}/stages';
+};
+
+export type ShopGrowthStagesGetProductsByProductidStagesErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopGrowthStagesGetProductsByProductidStagesError = ShopGrowthStagesGetProductsByProductidStagesErrors[keyof ShopGrowthStagesGetProductsByProductidStagesErrors];
+
+export type ShopGrowthStagesGetProductsByProductidStagesResponses = {
+    /**
+     * OK
+     */
+    200: ShopGrowthStageList;
+};
+
+export type ShopGrowthStagesGetProductsByProductidStagesResponse = ShopGrowthStagesGetProductsByProductidStagesResponses[keyof ShopGrowthStagesGetProductsByProductidStagesResponses];
+
+export type ShopGrowthStagesPostProductsByProductidStagesData = {
+    body?: ShopCreateGrowthStage;
+    path: {
+        productId: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{productId}/stages';
+};
+
+export type ShopGrowthStagesPostProductsByProductidStagesErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopGrowthStagesPostProductsByProductidStagesError = ShopGrowthStagesPostProductsByProductidStagesErrors[keyof ShopGrowthStagesPostProductsByProductidStagesErrors];
+
+export type ShopGrowthStagesPostProductsByProductidStagesResponses = {
+    /**
+     * Created
+     */
+    201: ShopGrowthStage;
+};
+
+export type ShopGrowthStagesPostProductsByProductidStagesResponse = ShopGrowthStagesPostProductsByProductidStagesResponses[keyof ShopGrowthStagesPostProductsByProductidStagesResponses];
+
+export type ShopGrowthStagesPutProductsByProductidStagesData = {
+    body?: ShopUpsertGrowthStages;
+    path: {
+        productId: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{productId}/stages';
+};
+
+export type ShopGrowthStagesPutProductsByProductidStagesErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopGrowthStagesPutProductsByProductidStagesError = ShopGrowthStagesPutProductsByProductidStagesErrors[keyof ShopGrowthStagesPutProductsByProductidStagesErrors];
+
+export type ShopGrowthStagesPutProductsByProductidStagesResponses = {
+    /**
+     * OK
+     */
+    200: ShopGrowthStageList;
+};
+
+export type ShopGrowthStagesPutProductsByProductidStagesResponse = ShopGrowthStagesPutProductsByProductidStagesResponses[keyof ShopGrowthStagesPutProductsByProductidStagesResponses];
+
+export type ShopGrowthStagesDeleteStagesByStageidData = {
+    body?: never;
+    path: {
+        stageId: string;
+    };
+    query?: never;
+    url: '/api/shop/stages/{stageId}';
+};
+
+export type ShopGrowthStagesDeleteStagesByStageidErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopGrowthStagesDeleteStagesByStageidError = ShopGrowthStagesDeleteStagesByStageidErrors[keyof ShopGrowthStagesDeleteStagesByStageidErrors];
+
+export type ShopGrowthStagesDeleteStagesByStageidResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ShopGrowthStagesDeleteStagesByStageidResponse = ShopGrowthStagesDeleteStagesByStageidResponses[keyof ShopGrowthStagesDeleteStagesByStageidResponses];
+
+export type ShopGrowthStagesPatchStagesByStageidData = {
+    body?: ShopUpdateGrowthStage;
+    path: {
+        stageId: string;
+    };
+    query?: never;
+    url: '/api/shop/stages/{stageId}';
+};
+
+export type ShopGrowthStagesPatchStagesByStageidErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopGrowthStagesPatchStagesByStageidError = ShopGrowthStagesPatchStagesByStageidErrors[keyof ShopGrowthStagesPatchStagesByStageidErrors];
+
+export type ShopGrowthStagesPatchStagesByStageidResponses = {
+    /**
+     * OK
+     */
+    200: ShopGrowthStage;
+};
+
+export type ShopGrowthStagesPatchStagesByStageidResponse = ShopGrowthStagesPatchStagesByStageidResponses[keyof ShopGrowthStagesPatchStagesByStageidResponses];
+
+export type ShopExecutionPostProductsByIdPurchaseData = {
+    body?: ShopPurchaseRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{id}/purchase';
+};
+
+export type ShopExecutionPostProductsByIdPurchaseErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopExecutionPostProductsByIdPurchaseError = ShopExecutionPostProductsByIdPurchaseErrors[keyof ShopExecutionPostProductsByIdPurchaseErrors];
+
+export type ShopExecutionPostProductsByIdPurchaseResponses = {
+    /**
+     * OK
+     */
+    200: ShopPurchaseResult;
+};
+
+export type ShopExecutionPostProductsByIdPurchaseResponse = ShopExecutionPostProductsByIdPurchaseResponses[keyof ShopExecutionPostProductsByIdPurchaseResponses];
+
+export type ShopExecutionPostUsersByEnduseridStagesByStageidClaimData = {
+    body?: ShopClaimStageRequest;
+    path: {
+        endUserId: string;
+        stageId: string;
+    };
+    query?: never;
+    url: '/api/shop/users/{endUserId}/stages/{stageId}/claim';
+};
+
+export type ShopExecutionPostUsersByEnduseridStagesByStageidClaimErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopExecutionPostUsersByEnduseridStagesByStageidClaimError = ShopExecutionPostUsersByEnduseridStagesByStageidClaimErrors[keyof ShopExecutionPostUsersByEnduseridStagesByStageidClaimErrors];
+
+export type ShopExecutionPostUsersByEnduseridStagesByStageidClaimResponses = {
+    /**
+     * OK
+     */
+    200: ShopClaimStageResult;
+};
+
+export type ShopExecutionPostUsersByEnduseridStagesByStageidClaimResponse = ShopExecutionPostUsersByEnduseridStagesByStageidClaimResponses[keyof ShopExecutionPostUsersByEnduseridStagesByStageidClaimResponses];
+
+export type ShopExecutionGetUsersByEnduseridProductsData = {
+    body?: never;
+    path: {
+        endUserId: string;
+    };
+    query?: {
+        categoryId?: string;
+        tagId?: string;
+        productType?: 'regular' | 'growth_pack';
+    };
+    url: '/api/shop/users/{endUserId}/products';
+};
+
+export type ShopExecutionGetUsersByEnduseridProductsErrors = {
+    /**
+     * Bad request
+     */
+    400: ShopErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ShopErrorResponse;
+    /**
+     * Not found
+     */
+    404: ShopErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ShopErrorResponse;
+};
+
+export type ShopExecutionGetUsersByEnduseridProductsError = ShopExecutionGetUsersByEnduseridProductsErrors[keyof ShopExecutionGetUsersByEnduseridProductsErrors];
+
+export type ShopExecutionGetUsersByEnduseridProductsResponses = {
+    /**
+     * OK
+     */
+    200: ShopUserProductList;
+};
+
+export type ShopExecutionGetUsersByEnduseridProductsResponse = ShopExecutionGetUsersByEnduseridProductsResponses[keyof ShopExecutionGetUsersByEnduseridProductsResponses];
+
+export type StorageBoxConfigsGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/storage-box/configs';
+};
+
+export type StorageBoxConfigsGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxConfigsGetConfigsError = StorageBoxConfigsGetConfigsErrors[keyof StorageBoxConfigsGetConfigsErrors];
+
+export type StorageBoxConfigsGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: StorageBoxConfigList;
+};
+
+export type StorageBoxConfigsGetConfigsResponse = StorageBoxConfigsGetConfigsResponses[keyof StorageBoxConfigsGetConfigsResponses];
+
+export type StorageBoxConfigsPostConfigsData = {
+    body?: StorageBoxCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/storage-box/configs';
+};
+
+export type StorageBoxConfigsPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxConfigsPostConfigsError = StorageBoxConfigsPostConfigsErrors[keyof StorageBoxConfigsPostConfigsErrors];
+
+export type StorageBoxConfigsPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: StorageBoxConfig;
+};
+
+export type StorageBoxConfigsPostConfigsResponse = StorageBoxConfigsPostConfigsResponses[keyof StorageBoxConfigsPostConfigsResponses];
+
+export type StorageBoxConfigsDeleteConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * UUID or alias.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/storage-box/configs/{id}';
+};
+
+export type StorageBoxConfigsDeleteConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxConfigsDeleteConfigsByIdError = StorageBoxConfigsDeleteConfigsByIdErrors[keyof StorageBoxConfigsDeleteConfigsByIdErrors];
+
+export type StorageBoxConfigsDeleteConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type StorageBoxConfigsDeleteConfigsByIdResponse = StorageBoxConfigsDeleteConfigsByIdResponses[keyof StorageBoxConfigsDeleteConfigsByIdResponses];
+
+export type StorageBoxConfigsGetConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * UUID or alias.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/storage-box/configs/{id}';
+};
+
+export type StorageBoxConfigsGetConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxConfigsGetConfigsByIdError = StorageBoxConfigsGetConfigsByIdErrors[keyof StorageBoxConfigsGetConfigsByIdErrors];
+
+export type StorageBoxConfigsGetConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: StorageBoxConfig;
+};
+
+export type StorageBoxConfigsGetConfigsByIdResponse = StorageBoxConfigsGetConfigsByIdResponses[keyof StorageBoxConfigsGetConfigsByIdResponses];
+
+export type StorageBoxConfigsPatchConfigsByIdData = {
+    body?: StorageBoxUpdateConfig;
+    path: {
+        /**
+         * UUID or alias.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/storage-box/configs/{id}';
+};
+
+export type StorageBoxConfigsPatchConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxConfigsPatchConfigsByIdError = StorageBoxConfigsPatchConfigsByIdErrors[keyof StorageBoxConfigsPatchConfigsByIdErrors];
+
+export type StorageBoxConfigsPatchConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: StorageBoxConfig;
+};
+
+export type StorageBoxConfigsPatchConfigsByIdResponse = StorageBoxConfigsPatchConfigsByIdResponses[keyof StorageBoxConfigsPatchConfigsByIdResponses];
+
+export type StorageBoxTransactionsPostDepositsData = {
+    body?: StorageBoxDepositRequest;
+    path?: never;
+    query?: never;
+    url: '/api/storage-box/deposits';
+};
+
+export type StorageBoxTransactionsPostDepositsErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxTransactionsPostDepositsError = StorageBoxTransactionsPostDepositsErrors[keyof StorageBoxTransactionsPostDepositsErrors];
+
+export type StorageBoxTransactionsPostDepositsResponses = {
+    /**
+     * Created
+     */
+    201: StorageBoxDepositResult;
+};
+
+export type StorageBoxTransactionsPostDepositsResponse = StorageBoxTransactionsPostDepositsResponses[keyof StorageBoxTransactionsPostDepositsResponses];
+
+export type StorageBoxTransactionsPostWithdrawalsData = {
+    body?: StorageBoxWithdrawRequest;
+    path?: never;
+    query?: never;
+    url: '/api/storage-box/withdrawals';
+};
+
+export type StorageBoxTransactionsPostWithdrawalsErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxTransactionsPostWithdrawalsError = StorageBoxTransactionsPostWithdrawalsErrors[keyof StorageBoxTransactionsPostWithdrawalsErrors];
+
+export type StorageBoxTransactionsPostWithdrawalsResponses = {
+    /**
+     * OK
+     */
+    200: StorageBoxWithdrawResult;
+};
+
+export type StorageBoxTransactionsPostWithdrawalsResponse = StorageBoxTransactionsPostWithdrawalsResponses[keyof StorageBoxTransactionsPostWithdrawalsResponses];
+
+export type StorageBoxTransactionsGetDepositsByEnduseridData = {
+    body?: never;
+    path: {
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/storage-box/deposits/{endUserId}';
+};
+
+export type StorageBoxTransactionsGetDepositsByEnduseridErrors = {
+    /**
+     * Bad request
+     */
+    400: StorageBoxErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: StorageBoxErrorResponse;
+    /**
+     * Not found
+     */
+    404: StorageBoxErrorResponse;
+    /**
+     * Conflict
+     */
+    409: StorageBoxErrorResponse;
+};
+
+export type StorageBoxTransactionsGetDepositsByEnduseridError = StorageBoxTransactionsGetDepositsByEnduseridErrors[keyof StorageBoxTransactionsGetDepositsByEnduseridErrors];
+
+export type StorageBoxTransactionsGetDepositsByEnduseridResponses = {
+    /**
+     * OK
+     */
+    200: StorageBoxDepositList;
+};
+
+export type StorageBoxTransactionsGetDepositsByEnduseridResponse = StorageBoxTransactionsGetDepositsByEnduseridResponses[keyof StorageBoxTransactionsGetDepositsByEnduseridResponses];
+
+export type MediaLibraryAdminGetFoldersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * List folders directly under this parent. Omit for root.
+         */
+        parentId?: string;
+    };
+    url: '/api/media-library/folders';
+};
+
+export type MediaLibraryAdminGetFoldersErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminGetFoldersError = MediaLibraryAdminGetFoldersErrors[keyof MediaLibraryAdminGetFoldersErrors];
+
+export type MediaLibraryAdminGetFoldersResponses = {
+    /**
+     * OK
+     */
+    200: MediaFolderList;
+};
+
+export type MediaLibraryAdminGetFoldersResponse = MediaLibraryAdminGetFoldersResponses[keyof MediaLibraryAdminGetFoldersResponses];
+
+export type MediaLibraryAdminPostFoldersData = {
+    body?: MediaFolderCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/media-library/folders';
+};
+
+export type MediaLibraryAdminPostFoldersErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminPostFoldersError = MediaLibraryAdminPostFoldersErrors[keyof MediaLibraryAdminPostFoldersErrors];
+
+export type MediaLibraryAdminPostFoldersResponses = {
+    /**
+     * Created
+     */
+    201: MediaFolder;
+};
+
+export type MediaLibraryAdminPostFoldersResponse = MediaLibraryAdminPostFoldersResponses[keyof MediaLibraryAdminPostFoldersResponses];
+
+export type MediaLibraryAdminDeleteFoldersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/media-library/folders/{id}';
+};
+
+export type MediaLibraryAdminDeleteFoldersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminDeleteFoldersByIdError = MediaLibraryAdminDeleteFoldersByIdErrors[keyof MediaLibraryAdminDeleteFoldersByIdErrors];
+
+export type MediaLibraryAdminDeleteFoldersByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type MediaLibraryAdminDeleteFoldersByIdResponse = MediaLibraryAdminDeleteFoldersByIdResponses[keyof MediaLibraryAdminDeleteFoldersByIdResponses];
+
+export type MediaLibraryAdminPatchFoldersByIdData = {
+    body?: MediaFolderUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/media-library/folders/{id}';
+};
+
+export type MediaLibraryAdminPatchFoldersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminPatchFoldersByIdError = MediaLibraryAdminPatchFoldersByIdErrors[keyof MediaLibraryAdminPatchFoldersByIdErrors];
+
+export type MediaLibraryAdminPatchFoldersByIdResponses = {
+    /**
+     * OK
+     */
+    200: MediaFolder;
+};
+
+export type MediaLibraryAdminPatchFoldersByIdResponse = MediaLibraryAdminPatchFoldersByIdResponses[keyof MediaLibraryAdminPatchFoldersByIdResponses];
+
+export type MediaLibraryAdminGetAssetsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * List assets in this folder. Omit to list the default upload folder's contents.
+         */
+        folderId?: string;
+        limit?: number;
+        /**
+         * ISO timestamp from the previous page's last item.
+         */
+        cursor?: string;
+    };
+    url: '/api/media-library/assets';
+};
+
+export type MediaLibraryAdminGetAssetsErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminGetAssetsError = MediaLibraryAdminGetAssetsErrors[keyof MediaLibraryAdminGetAssetsErrors];
+
+export type MediaLibraryAdminGetAssetsResponses = {
+    /**
+     * OK
+     */
+    200: MediaAssetList;
+};
+
+export type MediaLibraryAdminGetAssetsResponse = MediaLibraryAdminGetAssetsResponses[keyof MediaLibraryAdminGetAssetsResponses];
+
+export type MediaLibraryAdminPostAssetsPresignData = {
+    body?: MediaAssetPresignRequest;
+    path?: never;
+    query?: never;
+    url: '/api/media-library/assets/presign';
+};
+
+export type MediaLibraryAdminPostAssetsPresignErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminPostAssetsPresignError = MediaLibraryAdminPostAssetsPresignErrors[keyof MediaLibraryAdminPostAssetsPresignErrors];
+
+export type MediaLibraryAdminPostAssetsPresignResponses = {
+    /**
+     * OK
+     */
+    200: MediaAssetPresignResponse;
+};
+
+export type MediaLibraryAdminPostAssetsPresignResponse = MediaLibraryAdminPostAssetsPresignResponses[keyof MediaLibraryAdminPostAssetsPresignResponses];
+
+export type MediaLibraryAdminPostAssetsConfirmData = {
+    body?: MediaAssetConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/media-library/assets/confirm';
+};
+
+export type MediaLibraryAdminPostAssetsConfirmErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminPostAssetsConfirmError = MediaLibraryAdminPostAssetsConfirmErrors[keyof MediaLibraryAdminPostAssetsConfirmErrors];
+
+export type MediaLibraryAdminPostAssetsConfirmResponses = {
+    /**
+     * OK
+     */
+    200: MediaAsset;
+};
+
+export type MediaLibraryAdminPostAssetsConfirmResponse = MediaLibraryAdminPostAssetsConfirmResponses[keyof MediaLibraryAdminPostAssetsConfirmResponses];
+
+export type MediaLibraryAdminDeleteAssetsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/media-library/assets/{id}';
+};
+
+export type MediaLibraryAdminDeleteAssetsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminDeleteAssetsByIdError = MediaLibraryAdminDeleteAssetsByIdErrors[keyof MediaLibraryAdminDeleteAssetsByIdErrors];
+
+export type MediaLibraryAdminDeleteAssetsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type MediaLibraryAdminDeleteAssetsByIdResponse = MediaLibraryAdminDeleteAssetsByIdResponses[keyof MediaLibraryAdminDeleteAssetsByIdResponses];
+
+export type MediaLibraryAdminPostAssetsUploadData = {
+    body?: {
+        file: Blob | File;
+        folderId?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/media-library/assets/upload';
+};
+
+export type MediaLibraryAdminPostAssetsUploadErrors = {
+    /**
+     * Bad request
+     */
+    400: MediaLibraryErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: MediaLibraryErrorResponse;
+    /**
+     * Not found
+     */
+    404: MediaLibraryErrorResponse;
+    /**
+     * Conflict
+     */
+    409: MediaLibraryErrorResponse;
+};
+
+export type MediaLibraryAdminPostAssetsUploadError = MediaLibraryAdminPostAssetsUploadErrors[keyof MediaLibraryAdminPostAssetsUploadErrors];
+
+export type MediaLibraryAdminPostAssetsUploadResponses = {
+    /**
+     * Created
+     */
+    201: MediaAsset;
+};
+
+export type MediaLibraryAdminPostAssetsUploadResponse = MediaLibraryAdminPostAssetsUploadResponses[keyof MediaLibraryAdminPostAssetsUploadResponses];
+
+export type TaskCategoriesGetCategoriesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/task/categories';
+};
+
+export type TaskCategoriesGetCategoriesErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskCategoriesGetCategoriesError = TaskCategoriesGetCategoriesErrors[keyof TaskCategoriesGetCategoriesErrors];
+
+export type TaskCategoriesGetCategoriesResponses = {
+    /**
+     * OK
+     */
+    200: TaskCategoryList;
+};
+
+export type TaskCategoriesGetCategoriesResponse = TaskCategoriesGetCategoriesResponses[keyof TaskCategoriesGetCategoriesResponses];
+
+export type TaskCategoriesPostCategoriesData = {
+    body?: TaskCreateCategory;
+    path?: never;
+    query?: never;
+    url: '/api/task/categories';
+};
+
+export type TaskCategoriesPostCategoriesErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskCategoriesPostCategoriesError = TaskCategoriesPostCategoriesErrors[keyof TaskCategoriesPostCategoriesErrors];
+
+export type TaskCategoriesPostCategoriesResponses = {
+    /**
+     * Created
+     */
+    201: TaskCategory;
+};
+
+export type TaskCategoriesPostCategoriesResponse = TaskCategoriesPostCategoriesResponses[keyof TaskCategoriesPostCategoriesResponses];
+
+export type TaskCategoriesDeleteCategoriesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/task/categories/{id}';
+};
+
+export type TaskCategoriesDeleteCategoriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskCategoriesDeleteCategoriesByIdError = TaskCategoriesDeleteCategoriesByIdErrors[keyof TaskCategoriesDeleteCategoriesByIdErrors];
+
+export type TaskCategoriesDeleteCategoriesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type TaskCategoriesDeleteCategoriesByIdResponse = TaskCategoriesDeleteCategoriesByIdResponses[keyof TaskCategoriesDeleteCategoriesByIdResponses];
+
+export type TaskCategoriesGetCategoriesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/task/categories/{id}';
+};
+
+export type TaskCategoriesGetCategoriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskCategoriesGetCategoriesByIdError = TaskCategoriesGetCategoriesByIdErrors[keyof TaskCategoriesGetCategoriesByIdErrors];
+
+export type TaskCategoriesGetCategoriesByIdResponses = {
+    /**
+     * OK
+     */
+    200: TaskCategory;
+};
+
+export type TaskCategoriesGetCategoriesByIdResponse = TaskCategoriesGetCategoriesByIdResponses[keyof TaskCategoriesGetCategoriesByIdResponses];
+
+export type TaskCategoriesPatchCategoriesByIdData = {
+    body?: TaskUpdateCategory;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/task/categories/{id}';
+};
+
+export type TaskCategoriesPatchCategoriesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskCategoriesPatchCategoriesByIdError = TaskCategoriesPatchCategoriesByIdErrors[keyof TaskCategoriesPatchCategoriesByIdErrors];
+
+export type TaskCategoriesPatchCategoriesByIdResponses = {
+    /**
+     * OK
+     */
+    200: TaskCategory;
+};
+
+export type TaskCategoriesPatchCategoriesByIdResponse = TaskCategoriesPatchCategoriesByIdResponses[keyof TaskCategoriesPatchCategoriesByIdResponses];
+
+export type TaskDefinitionsGetDefinitionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/task/definitions';
+};
+
+export type TaskDefinitionsGetDefinitionsErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskDefinitionsGetDefinitionsError = TaskDefinitionsGetDefinitionsErrors[keyof TaskDefinitionsGetDefinitionsErrors];
+
+export type TaskDefinitionsGetDefinitionsResponses = {
+    /**
+     * OK
+     */
+    200: TaskDefinitionList;
+};
+
+export type TaskDefinitionsGetDefinitionsResponse = TaskDefinitionsGetDefinitionsResponses[keyof TaskDefinitionsGetDefinitionsResponses];
+
+export type TaskDefinitionsPostDefinitionsData = {
+    body?: TaskCreateDefinition;
+    path?: never;
+    query?: never;
+    url: '/api/task/definitions';
+};
+
+export type TaskDefinitionsPostDefinitionsErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskDefinitionsPostDefinitionsError = TaskDefinitionsPostDefinitionsErrors[keyof TaskDefinitionsPostDefinitionsErrors];
+
+export type TaskDefinitionsPostDefinitionsResponses = {
+    /**
+     * Created
+     */
+    201: TaskDefinition;
+};
+
+export type TaskDefinitionsPostDefinitionsResponse = TaskDefinitionsPostDefinitionsResponses[keyof TaskDefinitionsPostDefinitionsResponses];
+
+export type TaskDefinitionsDeleteDefinitionsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}';
+};
+
+export type TaskDefinitionsDeleteDefinitionsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskDefinitionsDeleteDefinitionsByKeyError = TaskDefinitionsDeleteDefinitionsByKeyErrors[keyof TaskDefinitionsDeleteDefinitionsByKeyErrors];
+
+export type TaskDefinitionsDeleteDefinitionsByKeyResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type TaskDefinitionsDeleteDefinitionsByKeyResponse = TaskDefinitionsDeleteDefinitionsByKeyResponses[keyof TaskDefinitionsDeleteDefinitionsByKeyResponses];
+
+export type TaskDefinitionsGetDefinitionsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}';
+};
+
+export type TaskDefinitionsGetDefinitionsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskDefinitionsGetDefinitionsByKeyError = TaskDefinitionsGetDefinitionsByKeyErrors[keyof TaskDefinitionsGetDefinitionsByKeyErrors];
+
+export type TaskDefinitionsGetDefinitionsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: TaskDefinition;
+};
+
+export type TaskDefinitionsGetDefinitionsByKeyResponse = TaskDefinitionsGetDefinitionsByKeyResponses[keyof TaskDefinitionsGetDefinitionsByKeyResponses];
+
+export type TaskDefinitionsPatchDefinitionsByKeyData = {
+    body?: TaskUpdateDefinition;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}';
+};
+
+export type TaskDefinitionsPatchDefinitionsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskDefinitionsPatchDefinitionsByKeyError = TaskDefinitionsPatchDefinitionsByKeyErrors[keyof TaskDefinitionsPatchDefinitionsByKeyErrors];
+
+export type TaskDefinitionsPatchDefinitionsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: TaskDefinition;
+};
+
+export type TaskDefinitionsPatchDefinitionsByKeyResponse = TaskDefinitionsPatchDefinitionsByKeyResponses[keyof TaskDefinitionsPatchDefinitionsByKeyResponses];
+
+export type TaskAssignmentsGetDefinitionsByKeyAssignmentsData = {
+    body?: never;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: {
+        endUserId?: string;
+        activeOnly?: 'true' | 'false';
+        limit?: number;
+    };
+    url: '/api/task/definitions/{key}/assignments';
+};
+
+export type TaskAssignmentsGetDefinitionsByKeyAssignmentsErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskAssignmentsGetDefinitionsByKeyAssignmentsError = TaskAssignmentsGetDefinitionsByKeyAssignmentsErrors[keyof TaskAssignmentsGetDefinitionsByKeyAssignmentsErrors];
+
+export type TaskAssignmentsGetDefinitionsByKeyAssignmentsResponses = {
+    /**
+     * OK
+     */
+    200: TaskAssignmentList;
+};
+
+export type TaskAssignmentsGetDefinitionsByKeyAssignmentsResponse = TaskAssignmentsGetDefinitionsByKeyAssignmentsResponses[keyof TaskAssignmentsGetDefinitionsByKeyAssignmentsResponses];
+
+export type TaskAssignmentsPostDefinitionsByKeyAssignmentsData = {
+    body?: TaskAssignBody;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}/assignments';
+};
+
+export type TaskAssignmentsPostDefinitionsByKeyAssignmentsErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskAssignmentsPostDefinitionsByKeyAssignmentsError = TaskAssignmentsPostDefinitionsByKeyAssignmentsErrors[keyof TaskAssignmentsPostDefinitionsByKeyAssignmentsErrors];
+
+export type TaskAssignmentsPostDefinitionsByKeyAssignmentsResponses = {
+    /**
+     * Assigned
+     */
+    201: TaskAssignBatchResponse;
+};
+
+export type TaskAssignmentsPostDefinitionsByKeyAssignmentsResponse = TaskAssignmentsPostDefinitionsByKeyAssignmentsResponses[keyof TaskAssignmentsPostDefinitionsByKeyAssignmentsResponses];
+
+export type TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridData = {
+    body?: never;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}/assignments/{endUserId}';
+};
+
+export type TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridError = TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridErrors[keyof TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridErrors];
+
+export type TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridResponses = {
+    /**
+     * Revoked
+     */
+    204: void;
+};
+
+export type TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridResponse = TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridResponses[keyof TaskAssignmentsDeleteDefinitionsByKeyAssignmentsByEnduseridResponses];
+
+export type TaskAssignmentsGetAssignmentsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        endUserId?: string;
+        activeOnly?: 'true' | 'false';
+        limit?: number;
+    };
+    url: '/api/task/assignments';
+};
+
+export type TaskAssignmentsGetAssignmentsErrors = {
+    /**
+     * Bad request
+     */
+    400: TaskErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TaskErrorResponse;
+    /**
+     * Not found
+     */
+    404: TaskErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TaskErrorResponse;
+};
+
+export type TaskAssignmentsGetAssignmentsError = TaskAssignmentsGetAssignmentsErrors[keyof TaskAssignmentsGetAssignmentsErrors];
+
+export type TaskAssignmentsGetAssignmentsResponses = {
+    /**
+     * OK
+     */
+    200: TaskAssignmentList;
+};
+
+export type TaskAssignmentsGetAssignmentsResponse = TaskAssignmentsGetAssignmentsResponses[keyof TaskAssignmentsGetAssignmentsResponses];
+
+export type TeamGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/team/configs';
+};
+
+export type TeamGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamGetConfigsError = TeamGetConfigsErrors[keyof TeamGetConfigsErrors];
+
+export type TeamGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: TeamConfigList;
+};
+
+export type TeamGetConfigsResponse = TeamGetConfigsResponses[keyof TeamGetConfigsResponses];
+
+export type TeamPostConfigsData = {
+    body?: TeamCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/team/configs';
+};
+
+export type TeamPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamPostConfigsError = TeamPostConfigsErrors[keyof TeamPostConfigsErrors];
+
+export type TeamPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: TeamConfig;
+};
+
+export type TeamPostConfigsResponse = TeamPostConfigsResponses[keyof TeamPostConfigsResponses];
+
+export type TeamDeleteConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/team/configs/{key}';
+};
+
+export type TeamDeleteConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamDeleteConfigsByKeyError = TeamDeleteConfigsByKeyErrors[keyof TeamDeleteConfigsByKeyErrors];
+
+export type TeamDeleteConfigsByKeyResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type TeamDeleteConfigsByKeyResponse = TeamDeleteConfigsByKeyResponses[keyof TeamDeleteConfigsByKeyResponses];
+
+export type TeamGetConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/team/configs/{key}';
+};
+
+export type TeamGetConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamGetConfigsByKeyError = TeamGetConfigsByKeyErrors[keyof TeamGetConfigsByKeyErrors];
+
+export type TeamGetConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: TeamConfig;
+};
+
+export type TeamGetConfigsByKeyResponse = TeamGetConfigsByKeyResponses[keyof TeamGetConfigsByKeyResponses];
+
+export type TeamPutConfigsByKeyData = {
+    body?: TeamUpdateConfig;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/team/configs/{key}';
+};
+
+export type TeamPutConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamPutConfigsByKeyError = TeamPutConfigsByKeyErrors[keyof TeamPutConfigsByKeyErrors];
+
+export type TeamPutConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: TeamConfig;
+};
+
+export type TeamPutConfigsByKeyResponse = TeamPutConfigsByKeyResponses[keyof TeamPutConfigsByKeyResponses];
+
+export type TeamGetTeamsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Filter by config id or alias.
+         */
+        configKey?: string;
+        /**
+         * Filter by team status.
+         */
+        status?: 'open' | 'closed' | 'in_game' | 'dissolved';
+        /**
+         * Page size.
+         */
+        limit?: number;
+        /**
+         * Pagination offset.
+         */
+        offset?: number | null;
+    };
+    url: '/api/team/teams';
+};
+
+export type TeamGetTeamsErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamGetTeamsError = TeamGetTeamsErrors[keyof TeamGetTeamsErrors];
+
+export type TeamGetTeamsResponses = {
+    /**
+     * OK
+     */
+    200: TeamList;
+};
+
+export type TeamGetTeamsResponse = TeamGetTeamsResponses[keyof TeamGetTeamsResponses];
+
+export type TeamGetTeamsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Team id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/team/teams/{id}';
+};
+
+export type TeamGetTeamsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamGetTeamsByIdError = TeamGetTeamsByIdErrors[keyof TeamGetTeamsByIdErrors];
+
+export type TeamGetTeamsByIdResponses = {
+    /**
+     * OK
+     */
+    200: Team;
+};
+
+export type TeamGetTeamsByIdResponse = TeamGetTeamsByIdResponses[keyof TeamGetTeamsByIdResponses];
+
+export type TeamPostTeamsByIdDissolveData = {
+    body?: never;
+    path: {
+        /**
+         * Team id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/team/teams/{id}/dissolve';
+};
+
+export type TeamPostTeamsByIdDissolveErrors = {
+    /**
+     * Bad request
+     */
+    400: TeamErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: TeamErrorResponse;
+    /**
+     * Not found
+     */
+    404: TeamErrorResponse;
+    /**
+     * Conflict
+     */
+    409: TeamErrorResponse;
+};
+
+export type TeamPostTeamsByIdDissolveError = TeamPostTeamsByIdDissolveErrors[keyof TeamPostTeamsByIdDissolveErrors];
+
+export type TeamPostTeamsByIdDissolveResponses = {
+    /**
+     * OK
+     */
+    200: Team;
+};
+
+export type TeamPostTeamsByIdDissolveResponse = TeamPostTeamsByIdDissolveResponses[keyof TeamPostTeamsByIdDissolveResponses];
+
+export type LevelGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/level/configs';
+};
+
+export type LevelGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelGetConfigsError = LevelGetConfigsErrors[keyof LevelGetConfigsErrors];
+
+export type LevelGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: LevelConfigList;
+};
+
+export type LevelGetConfigsResponse = LevelGetConfigsResponses[keyof LevelGetConfigsResponses];
+
+export type LevelPostConfigsData = {
+    body?: LevelCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/level/configs';
+};
+
+export type LevelPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelPostConfigsError = LevelPostConfigsErrors[keyof LevelPostConfigsErrors];
+
+export type LevelPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: LevelConfig;
+};
+
+export type LevelPostConfigsResponse = LevelPostConfigsResponses[keyof LevelPostConfigsResponses];
+
+export type LevelGetConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{key}';
+};
+
+export type LevelGetConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelGetConfigsByKeyError = LevelGetConfigsByKeyErrors[keyof LevelGetConfigsByKeyErrors];
+
+export type LevelGetConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: LevelConfig;
+};
+
+export type LevelGetConfigsByKeyResponse = LevelGetConfigsByKeyResponses[keyof LevelGetConfigsByKeyResponses];
+
+export type LevelDeleteConfigsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{id}';
+};
+
+export type LevelDeleteConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelDeleteConfigsByIdError = LevelDeleteConfigsByIdErrors[keyof LevelDeleteConfigsByIdErrors];
+
+export type LevelDeleteConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type LevelDeleteConfigsByIdResponse = LevelDeleteConfigsByIdResponses[keyof LevelDeleteConfigsByIdResponses];
+
+export type LevelPutConfigsByIdData = {
+    body?: LevelUpdateConfig;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{id}';
+};
+
+export type LevelPutConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelPutConfigsByIdError = LevelPutConfigsByIdErrors[keyof LevelPutConfigsByIdErrors];
+
+export type LevelPutConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: LevelConfig;
+};
+
+export type LevelPutConfigsByIdResponse = LevelPutConfigsByIdResponses[keyof LevelPutConfigsByIdResponses];
+
+export type LevelStagesGetConfigsByIdStagesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{id}/stages';
+};
+
+export type LevelStagesGetConfigsByIdStagesErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelStagesGetConfigsByIdStagesError = LevelStagesGetConfigsByIdStagesErrors[keyof LevelStagesGetConfigsByIdStagesErrors];
+
+export type LevelStagesGetConfigsByIdStagesResponses = {
+    /**
+     * OK
+     */
+    200: LevelStageList;
+};
+
+export type LevelStagesGetConfigsByIdStagesResponse = LevelStagesGetConfigsByIdStagesResponses[keyof LevelStagesGetConfigsByIdStagesResponses];
+
+export type LevelStagesPostConfigsByIdStagesData = {
+    body?: LevelCreateStage;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{id}/stages';
+};
+
+export type LevelStagesPostConfigsByIdStagesErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelStagesPostConfigsByIdStagesError = LevelStagesPostConfigsByIdStagesErrors[keyof LevelStagesPostConfigsByIdStagesErrors];
+
+export type LevelStagesPostConfigsByIdStagesResponses = {
+    /**
+     * Created
+     */
+    201: LevelStage;
+};
+
+export type LevelStagesPostConfigsByIdStagesResponse = LevelStagesPostConfigsByIdStagesResponses[keyof LevelStagesPostConfigsByIdStagesResponses];
+
+export type LevelStagesDeleteStagesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/stages/{id}';
+};
+
+export type LevelStagesDeleteStagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelStagesDeleteStagesByIdError = LevelStagesDeleteStagesByIdErrors[keyof LevelStagesDeleteStagesByIdErrors];
+
+export type LevelStagesDeleteStagesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type LevelStagesDeleteStagesByIdResponse = LevelStagesDeleteStagesByIdResponses[keyof LevelStagesDeleteStagesByIdResponses];
+
+export type LevelStagesPutStagesByIdData = {
+    body?: LevelUpdateStage;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/stages/{id}';
+};
+
+export type LevelStagesPutStagesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelStagesPutStagesByIdError = LevelStagesPutStagesByIdErrors[keyof LevelStagesPutStagesByIdErrors];
+
+export type LevelStagesPutStagesByIdResponses = {
+    /**
+     * OK
+     */
+    200: LevelStage;
+};
+
+export type LevelStagesPutStagesByIdResponse = LevelStagesPutStagesByIdResponses[keyof LevelStagesPutStagesByIdResponses];
+
+export type LevelLevelsGetConfigsByIdLevelsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        /**
+         * Filter levels by stage id.
+         */
+        stageId?: string;
+    };
+    url: '/api/level/configs/{id}/levels';
+};
+
+export type LevelLevelsGetConfigsByIdLevelsErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelLevelsGetConfigsByIdLevelsError = LevelLevelsGetConfigsByIdLevelsErrors[keyof LevelLevelsGetConfigsByIdLevelsErrors];
+
+export type LevelLevelsGetConfigsByIdLevelsResponses = {
+    /**
+     * OK
+     */
+    200: LevelLevelList;
+};
+
+export type LevelLevelsGetConfigsByIdLevelsResponse = LevelLevelsGetConfigsByIdLevelsResponses[keyof LevelLevelsGetConfigsByIdLevelsResponses];
+
+export type LevelLevelsPostConfigsByIdLevelsData = {
+    body?: LevelCreateLevel;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{id}/levels';
+};
+
+export type LevelLevelsPostConfigsByIdLevelsErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelLevelsPostConfigsByIdLevelsError = LevelLevelsPostConfigsByIdLevelsErrors[keyof LevelLevelsPostConfigsByIdLevelsErrors];
+
+export type LevelLevelsPostConfigsByIdLevelsResponses = {
+    /**
+     * Created
+     */
+    201: LevelLevel;
+};
+
+export type LevelLevelsPostConfigsByIdLevelsResponse = LevelLevelsPostConfigsByIdLevelsResponses[keyof LevelLevelsPostConfigsByIdLevelsResponses];
+
+export type LevelLevelsDeleteLevelsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/levels/{id}';
+};
+
+export type LevelLevelsDeleteLevelsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelLevelsDeleteLevelsByIdError = LevelLevelsDeleteLevelsByIdErrors[keyof LevelLevelsDeleteLevelsByIdErrors];
+
+export type LevelLevelsDeleteLevelsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type LevelLevelsDeleteLevelsByIdResponse = LevelLevelsDeleteLevelsByIdResponses[keyof LevelLevelsDeleteLevelsByIdResponses];
+
+export type LevelLevelsGetLevelsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/levels/{id}';
+};
+
+export type LevelLevelsGetLevelsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelLevelsGetLevelsByIdError = LevelLevelsGetLevelsByIdErrors[keyof LevelLevelsGetLevelsByIdErrors];
+
+export type LevelLevelsGetLevelsByIdResponses = {
+    /**
+     * OK
+     */
+    200: LevelLevel;
+};
+
+export type LevelLevelsGetLevelsByIdResponse = LevelLevelsGetLevelsByIdResponses[keyof LevelLevelsGetLevelsByIdResponses];
+
+export type LevelLevelsPutLevelsByIdData = {
+    body?: LevelUpdateLevel;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/levels/{id}';
+};
+
+export type LevelLevelsPutLevelsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LevelErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: LevelErrorResponse;
+    /**
+     * Not found
+     */
+    404: LevelErrorResponse;
+    /**
+     * Conflict
+     */
+    409: LevelErrorResponse;
+};
+
+export type LevelLevelsPutLevelsByIdError = LevelLevelsPutLevelsByIdErrors[keyof LevelLevelsPutLevelsByIdErrors];
+
+export type LevelLevelsPutLevelsByIdResponses = {
+    /**
+     * OK
+     */
+    200: LevelLevel;
+};
+
+export type LevelLevelsPutLevelsByIdResponse = LevelLevelsPutLevelsByIdResponses[keyof LevelLevelsPutLevelsByIdResponses];
+
+export type LeaderboardGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/leaderboard/configs';
+};
+
+export type LeaderboardGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardGetConfigsError = LeaderboardGetConfigsErrors[keyof LeaderboardGetConfigsErrors];
+
+export type LeaderboardGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardConfigList;
+};
+
+export type LeaderboardGetConfigsResponse = LeaderboardGetConfigsResponses[keyof LeaderboardGetConfigsResponses];
+
+export type LeaderboardPostConfigsData = {
+    body?: LeaderboardCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/leaderboard/configs';
+};
+
+export type LeaderboardPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardPostConfigsError = LeaderboardPostConfigsErrors[keyof LeaderboardPostConfigsErrors];
+
+export type LeaderboardPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: LeaderboardConfig;
+};
+
+export type LeaderboardPostConfigsResponse = LeaderboardPostConfigsResponses[keyof LeaderboardPostConfigsResponses];
+
+export type LeaderboardGetConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/leaderboard/configs/{key}';
+};
+
+export type LeaderboardGetConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardGetConfigsByKeyError = LeaderboardGetConfigsByKeyErrors[keyof LeaderboardGetConfigsByKeyErrors];
+
+export type LeaderboardGetConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardConfig;
+};
+
+export type LeaderboardGetConfigsByKeyResponse = LeaderboardGetConfigsByKeyResponses[keyof LeaderboardGetConfigsByKeyResponses];
+
+export type LeaderboardDeleteConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/leaderboard/configs/{id}';
+};
+
+export type LeaderboardDeleteConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardDeleteConfigsByIdError = LeaderboardDeleteConfigsByIdErrors[keyof LeaderboardDeleteConfigsByIdErrors];
+
+export type LeaderboardDeleteConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type LeaderboardDeleteConfigsByIdResponse = LeaderboardDeleteConfigsByIdResponses[keyof LeaderboardDeleteConfigsByIdResponses];
+
+export type LeaderboardPatchConfigsByIdData = {
+    body?: LeaderboardUpdateConfig;
+    path: {
+        /**
+         * Config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/leaderboard/configs/{id}';
+};
+
+export type LeaderboardPatchConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardPatchConfigsByIdError = LeaderboardPatchConfigsByIdErrors[keyof LeaderboardPatchConfigsByIdErrors];
+
+export type LeaderboardPatchConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardConfig;
+};
+
+export type LeaderboardPatchConfigsByIdResponse = LeaderboardPatchConfigsByIdResponses[keyof LeaderboardPatchConfigsByIdResponses];
+
+export type LeaderboardPostContributeData = {
+    body?: LeaderboardContribute;
+    path?: never;
+    query?: never;
+    url: '/api/leaderboard/contribute';
+};
+
+export type LeaderboardPostContributeErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardPostContributeError = LeaderboardPostContributeErrors[keyof LeaderboardPostContributeErrors];
+
+export type LeaderboardPostContributeResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardContributeResult;
+};
+
+export type LeaderboardPostContributeResponse = LeaderboardPostContributeResponses[keyof LeaderboardPostContributeResponses];
+
+export type LeaderboardGetConfigsByKeyTopData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: {
+        /**
+         * Override the current cycleKey (e.g. for history).
+         */
+        cycleKey?: string;
+        /**
+         * Defaults to organizationId for scope=global; required for guild/team/friend.
+         */
+        scopeKey?: string;
+        /**
+         * Top N to return. Clamped to [1, maxEntries].
+         */
+        limit?: string;
+        /**
+         * If set, include this user's current rank/score in the response.
+         */
+        endUserId?: string;
+    };
+    url: '/api/leaderboard/configs/{key}/top';
+};
+
+export type LeaderboardGetConfigsByKeyTopErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardGetConfigsByKeyTopError = LeaderboardGetConfigsByKeyTopErrors[keyof LeaderboardGetConfigsByKeyTopErrors];
+
+export type LeaderboardGetConfigsByKeyTopResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardTop;
+};
+
+export type LeaderboardGetConfigsByKeyTopResponse = LeaderboardGetConfigsByKeyTopResponses[keyof LeaderboardGetConfigsByKeyTopResponses];
+
+export type LeaderboardGetConfigsByKeyNeighborsData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query: {
+        cycleKey?: string;
+        scopeKey?: string;
+        endUserId: string;
+        /**
+         * How many entries above AND below self to return.
+         */
+        window?: string;
+    };
+    url: '/api/leaderboard/configs/{key}/neighbors';
+};
+
+export type LeaderboardGetConfigsByKeyNeighborsErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardGetConfigsByKeyNeighborsError = LeaderboardGetConfigsByKeyNeighborsErrors[keyof LeaderboardGetConfigsByKeyNeighborsErrors];
+
+export type LeaderboardGetConfigsByKeyNeighborsResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardTop;
+};
+
+export type LeaderboardGetConfigsByKeyNeighborsResponse = LeaderboardGetConfigsByKeyNeighborsResponses[keyof LeaderboardGetConfigsByKeyNeighborsResponses];
+
+export type LeaderboardGetConfigsByKeySnapshotsData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/leaderboard/configs/{key}/snapshots';
+};
+
+export type LeaderboardGetConfigsByKeySnapshotsErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardGetConfigsByKeySnapshotsError = LeaderboardGetConfigsByKeySnapshotsErrors[keyof LeaderboardGetConfigsByKeySnapshotsErrors];
+
+export type LeaderboardGetConfigsByKeySnapshotsResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardSnapshotList;
+};
+
+export type LeaderboardGetConfigsByKeySnapshotsResponse = LeaderboardGetConfigsByKeySnapshotsResponses[keyof LeaderboardGetConfigsByKeySnapshotsResponses];
+
+export type LeaderboardPostSettleRunData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/leaderboard/settle/run';
+};
+
+export type LeaderboardPostSettleRunErrors = {
+    /**
+     * Bad request
+     */
+    400: LeaderboardError;
+    /**
+     * Unauthorized
+     */
+    401: LeaderboardError;
+    /**
+     * Not found
+     */
+    404: LeaderboardError;
+    /**
+     * Conflict
+     */
+    409: LeaderboardError;
+};
+
+export type LeaderboardPostSettleRunError = LeaderboardPostSettleRunErrors[keyof LeaderboardPostSettleRunErrors];
+
+export type LeaderboardPostSettleRunResponses = {
+    /**
+     * OK
+     */
+    200: LeaderboardSettleRunResult;
+};
+
+export type LeaderboardPostSettleRunResponse = LeaderboardPostSettleRunResponses[keyof LeaderboardPostSettleRunResponses];
+
+export type ActivityGetRootData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/activity';
+};
+
+export type ActivityGetRootErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetRootError = ActivityGetRootErrors[keyof ActivityGetRootErrors];
+
+export type ActivityGetRootResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<Activity>;
+    };
+};
+
+export type ActivityGetRootResponse = ActivityGetRootResponses[keyof ActivityGetRootResponses];
+
+export type ActivityPostRootData = {
+    body?: ActivityCreate;
+    path?: never;
+    query?: never;
+    url: '/api/activity';
+};
+
+export type ActivityPostRootErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostRootError = ActivityPostRootErrors[keyof ActivityPostRootErrors];
+
+export type ActivityPostRootResponses = {
+    /**
+     * Created
+     */
+    201: Activity;
+};
+
+export type ActivityPostRootResponse = ActivityPostRootResponses[keyof ActivityPostRootResponses];
+
+export type ActivityGetByKeyData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}';
+};
+
+export type ActivityGetByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetByKeyError = ActivityGetByKeyErrors[keyof ActivityGetByKeyErrors];
+
+export type ActivityGetByKeyResponses = {
+    /**
+     * OK
+     */
+    200: Activity;
+};
+
+export type ActivityGetByKeyResponse = ActivityGetByKeyResponses[keyof ActivityGetByKeyResponses];
+
+export type ActivityDeleteByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/{id}';
+};
+
+export type ActivityDeleteByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityDeleteByIdError = ActivityDeleteByIdErrors[keyof ActivityDeleteByIdErrors];
+
+export type ActivityDeleteByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ActivityDeleteByIdResponse = ActivityDeleteByIdResponses[keyof ActivityDeleteByIdResponses];
+
+export type ActivityPatchByIdData = {
+    body?: ActivityUpdate;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/{id}';
+};
+
+export type ActivityPatchByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPatchByIdError = ActivityPatchByIdErrors[keyof ActivityPatchByIdErrors];
+
+export type ActivityPatchByIdResponses = {
+    /**
+     * OK
+     */
+    200: Activity;
+};
+
+export type ActivityPatchByIdResponse = ActivityPatchByIdResponses[keyof ActivityPatchByIdResponses];
+
+export type ActivityPostByKeyPublishData = {
+    body?: ActivityPublishAction;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/publish';
+};
+
+export type ActivityPostByKeyPublishErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeyPublishError = ActivityPostByKeyPublishErrors[keyof ActivityPostByKeyPublishErrors];
+
+export type ActivityPostByKeyPublishResponses = {
+    /**
+     * OK
+     */
+    200: Activity;
+};
+
+export type ActivityPostByKeyPublishResponse = ActivityPostByKeyPublishResponses[keyof ActivityPostByKeyPublishResponses];
+
+export type ActivityGetByKeyNodesData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/nodes';
+};
+
+export type ActivityGetByKeyNodesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetByKeyNodesError = ActivityGetByKeyNodesErrors[keyof ActivityGetByKeyNodesErrors];
+
+export type ActivityGetByKeyNodesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            [key: string]: unknown;
+        }>;
+    };
+};
+
+export type ActivityGetByKeyNodesResponse = ActivityGetByKeyNodesResponses[keyof ActivityGetByKeyNodesResponses];
+
+export type ActivityPostByKeyNodesData = {
+    body?: ActivityCreateNode;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/nodes';
+};
+
+export type ActivityPostByKeyNodesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeyNodesError = ActivityPostByKeyNodesErrors[keyof ActivityPostByKeyNodesErrors];
+
+export type ActivityPostByKeyNodesResponses = {
+    /**
+     * Created
+     */
+    201: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostByKeyNodesResponse = ActivityPostByKeyNodesResponses[keyof ActivityPostByKeyNodesResponses];
+
+export type ActivityDeleteNodesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/nodes/{id}';
+};
+
+export type ActivityDeleteNodesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityDeleteNodesByIdError = ActivityDeleteNodesByIdErrors[keyof ActivityDeleteNodesByIdErrors];
+
+export type ActivityDeleteNodesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ActivityDeleteNodesByIdResponse = ActivityDeleteNodesByIdResponses[keyof ActivityDeleteNodesByIdResponses];
+
+export type ActivityPatchNodesByIdData = {
+    body?: ActivityUpdateNode;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/nodes/{id}';
+};
+
+export type ActivityPatchNodesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPatchNodesByIdError = ActivityPatchNodesByIdErrors[keyof ActivityPatchNodesByIdErrors];
+
+export type ActivityPatchNodesByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPatchNodesByIdResponse = ActivityPatchNodesByIdResponses[keyof ActivityPatchNodesByIdResponses];
+
+export type ActivityGetByKeySchedulesData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/schedules';
+};
+
+export type ActivityGetByKeySchedulesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetByKeySchedulesError = ActivityGetByKeySchedulesErrors[keyof ActivityGetByKeySchedulesErrors];
+
+export type ActivityGetByKeySchedulesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            [key: string]: unknown;
+        }>;
+    };
+};
+
+export type ActivityGetByKeySchedulesResponse = ActivityGetByKeySchedulesResponses[keyof ActivityGetByKeySchedulesResponses];
+
+export type ActivityPostByKeySchedulesData = {
+    body?: ActivityCreateSchedule;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/schedules';
+};
+
+export type ActivityPostByKeySchedulesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeySchedulesError = ActivityPostByKeySchedulesErrors[keyof ActivityPostByKeySchedulesErrors];
+
+export type ActivityPostByKeySchedulesResponses = {
+    /**
+     * Created
+     */
+    201: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostByKeySchedulesResponse = ActivityPostByKeySchedulesResponses[keyof ActivityPostByKeySchedulesResponses];
+
+export type ActivityDeleteSchedulesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/schedules/{id}';
+};
+
+export type ActivityDeleteSchedulesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityDeleteSchedulesByIdError = ActivityDeleteSchedulesByIdErrors[keyof ActivityDeleteSchedulesByIdErrors];
+
+export type ActivityDeleteSchedulesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ActivityDeleteSchedulesByIdResponse = ActivityDeleteSchedulesByIdResponses[keyof ActivityDeleteSchedulesByIdResponses];
+
+export type ActivityPostByKeyJoinData = {
+    body?: ActivityJoin;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/join';
+};
+
+export type ActivityPostByKeyJoinErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeyJoinError = ActivityPostByKeyJoinErrors[keyof ActivityPostByKeyJoinErrors];
+
+export type ActivityPostByKeyJoinResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostByKeyJoinResponse = ActivityPostByKeyJoinResponses[keyof ActivityPostByKeyJoinResponses];
+
+export type ActivityPostByKeyAddPointsData = {
+    body?: ActivityAddPoints;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/add-points';
+};
+
+export type ActivityPostByKeyAddPointsErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeyAddPointsError = ActivityPostByKeyAddPointsErrors[keyof ActivityPostByKeyAddPointsErrors];
+
+export type ActivityPostByKeyAddPointsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        balance: number;
+        unlockedMilestones: Array<string>;
+    };
+};
+
+export type ActivityPostByKeyAddPointsResponse = ActivityPostByKeyAddPointsResponses[keyof ActivityPostByKeyAddPointsResponses];
+
+export type ActivityPostByKeyClaimMilestoneData = {
+    body?: ActivityClaimMilestone;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/claim-milestone';
+};
+
+export type ActivityPostByKeyClaimMilestoneErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostByKeyClaimMilestoneError = ActivityPostByKeyClaimMilestoneErrors[keyof ActivityPostByKeyClaimMilestoneErrors];
+
+export type ActivityPostByKeyClaimMilestoneResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostByKeyClaimMilestoneResponse = ActivityPostByKeyClaimMilestoneResponses[keyof ActivityPostByKeyClaimMilestoneResponses];
+
+export type ActivityGetByKeyViewByEnduseridData = {
+    body?: never;
+    path: {
+        key: string;
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/view/{endUserId}';
+};
+
+export type ActivityGetByKeyViewByEnduseridErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetByKeyViewByEnduseridError = ActivityGetByKeyViewByEnduseridErrors[keyof ActivityGetByKeyViewByEnduseridErrors];
+
+export type ActivityGetByKeyViewByEnduseridResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityGetByKeyViewByEnduseridResponse = ActivityGetByKeyViewByEnduseridResponses[keyof ActivityGetByKeyViewByEnduseridResponses];
+
+export type ActivityPostTickRunData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/activity/tick/run';
+};
+
+export type ActivityPostTickRunErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostTickRunError = ActivityPostTickRunErrors[keyof ActivityPostTickRunErrors];
+
+export type ActivityPostTickRunResponses = {
+    /**
+     * OK
+     */
+    200: ActivityTickResult;
+};
+
+export type ActivityPostTickRunResponse = ActivityPostTickRunResponses[keyof ActivityPostTickRunResponses];
+
+export type ActivityGetWebhookEndpointsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/activity/webhook-endpoints';
+};
+
+export type ActivityGetWebhookEndpointsErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetWebhookEndpointsError = ActivityGetWebhookEndpointsErrors[keyof ActivityGetWebhookEndpointsErrors];
+
+export type ActivityGetWebhookEndpointsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            [key: string]: unknown;
+        }>;
+    };
+};
+
+export type ActivityGetWebhookEndpointsResponse = ActivityGetWebhookEndpointsResponses[keyof ActivityGetWebhookEndpointsResponses];
+
+export type ActivityPostWebhookEndpointsData = {
+    body?: CreateWebhookEndpoint;
+    path?: never;
+    query?: never;
+    url: '/api/activity/webhook-endpoints';
+};
+
+export type ActivityPostWebhookEndpointsErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostWebhookEndpointsError = ActivityPostWebhookEndpointsErrors[keyof ActivityPostWebhookEndpointsErrors];
+
+export type ActivityPostWebhookEndpointsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostWebhookEndpointsResponse = ActivityPostWebhookEndpointsResponses[keyof ActivityPostWebhookEndpointsResponses];
+
+export type ActivityGetByKeyAnalyticsData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/analytics';
+};
+
+export type ActivityGetByKeyAnalyticsErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetByKeyAnalyticsError = ActivityGetByKeyAnalyticsErrors[keyof ActivityGetByKeyAnalyticsErrors];
+
+export type ActivityGetByKeyAnalyticsResponses = {
+    /**
+     * OK
+     */
+    200: ActivityAnalytics;
+};
+
+export type ActivityGetByKeyAnalyticsResponse = ActivityGetByKeyAnalyticsResponses[keyof ActivityGetByKeyAnalyticsResponses];
+
+export type ActivityGetTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/activity/templates';
+};
+
+export type ActivityGetTemplatesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityGetTemplatesError = ActivityGetTemplatesErrors[keyof ActivityGetTemplatesErrors];
+
+export type ActivityGetTemplatesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            [key: string]: unknown;
+        }>;
+    };
+};
+
+export type ActivityGetTemplatesResponse = ActivityGetTemplatesResponses[keyof ActivityGetTemplatesResponses];
+
+export type ActivityPostTemplatesData = {
+    body?: ActivityTemplateCreate;
+    path?: never;
+    query?: never;
+    url: '/api/activity/templates';
+};
+
+export type ActivityPostTemplatesErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostTemplatesError = ActivityPostTemplatesErrors[keyof ActivityPostTemplatesErrors];
+
+export type ActivityPostTemplatesResponses = {
+    /**
+     * Created
+     */
+    201: {
+        [key: string]: unknown;
+    };
+};
+
+export type ActivityPostTemplatesResponse = ActivityPostTemplatesResponses[keyof ActivityPostTemplatesResponses];
+
+export type ActivityDeleteTemplatesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/templates/{id}';
+};
+
+export type ActivityDeleteTemplatesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityDeleteTemplatesByIdError = ActivityDeleteTemplatesByIdErrors[keyof ActivityDeleteTemplatesByIdErrors];
+
+export type ActivityDeleteTemplatesByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ActivityDeleteTemplatesByIdResponse = ActivityDeleteTemplatesByIdResponses[keyof ActivityDeleteTemplatesByIdResponses];
+
+export type ActivityPostTemplatesByIdInstantiateData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/templates/{id}/instantiate';
+};
+
+export type ActivityPostTemplatesByIdInstantiateErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityPostTemplatesByIdInstantiateError = ActivityPostTemplatesByIdInstantiateErrors[keyof ActivityPostTemplatesByIdInstantiateErrors];
+
+export type ActivityPostTemplatesByIdInstantiateResponses = {
+    /**
+     * OK
+     */
+    200: ActivityInstantiateResult;
+};
+
+export type ActivityPostTemplatesByIdInstantiateResponse = ActivityPostTemplatesByIdInstantiateResponses[keyof ActivityPostTemplatesByIdInstantiateResponses];
+
+export type ActivityDeleteWebhookEndpointsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/activity/webhook-endpoints/{id}';
+};
+
+export type ActivityDeleteWebhookEndpointsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ActivityError;
+    /**
+     * Unauthorized
+     */
+    401: ActivityError;
+    /**
+     * Not found
+     */
+    404: ActivityError;
+    /**
+     * Conflict
+     */
+    409: ActivityError;
+};
+
+export type ActivityDeleteWebhookEndpointsByIdError = ActivityDeleteWebhookEndpointsByIdErrors[keyof ActivityDeleteWebhookEndpointsByIdErrors];
+
+export type ActivityDeleteWebhookEndpointsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type ActivityDeleteWebhookEndpointsByIdResponse = ActivityDeleteWebhookEndpointsByIdResponses[keyof ActivityDeleteWebhookEndpointsByIdResponses];
+
+export type AssistPoolGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        activityId?: string;
+        includeActivity?: 'true' | 'false';
+    };
+    url: '/api/assist-pool/configs';
+};
+
+export type AssistPoolGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolGetConfigsError = AssistPoolGetConfigsErrors[keyof AssistPoolGetConfigsErrors];
+
+export type AssistPoolGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolConfigList;
+};
+
+export type AssistPoolGetConfigsResponse = AssistPoolGetConfigsResponses[keyof AssistPoolGetConfigsResponses];
+
+export type AssistPoolPostConfigsData = {
+    body?: AssistPoolCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/assist-pool/configs';
+};
+
+export type AssistPoolPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolPostConfigsError = AssistPoolPostConfigsErrors[keyof AssistPoolPostConfigsErrors];
+
+export type AssistPoolPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: AssistPoolConfig;
+};
+
+export type AssistPoolPostConfigsResponse = AssistPoolPostConfigsResponses[keyof AssistPoolPostConfigsResponses];
+
+export type AssistPoolGetConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/configs/{key}';
+};
+
+export type AssistPoolGetConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolGetConfigsByKeyError = AssistPoolGetConfigsByKeyErrors[keyof AssistPoolGetConfigsByKeyErrors];
+
+export type AssistPoolGetConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolConfig;
+};
+
+export type AssistPoolGetConfigsByKeyResponse = AssistPoolGetConfigsByKeyResponses[keyof AssistPoolGetConfigsByKeyResponses];
+
+export type AssistPoolDeleteConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/configs/{id}';
+};
+
+export type AssistPoolDeleteConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolDeleteConfigsByIdError = AssistPoolDeleteConfigsByIdErrors[keyof AssistPoolDeleteConfigsByIdErrors];
+
+export type AssistPoolDeleteConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type AssistPoolDeleteConfigsByIdResponse = AssistPoolDeleteConfigsByIdResponses[keyof AssistPoolDeleteConfigsByIdResponses];
+
+export type AssistPoolPatchConfigsByIdData = {
+    body?: AssistPoolUpdateConfig;
+    path: {
+        /**
+         * Config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/configs/{id}';
+};
+
+export type AssistPoolPatchConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolPatchConfigsByIdError = AssistPoolPatchConfigsByIdErrors[keyof AssistPoolPatchConfigsByIdErrors];
+
+export type AssistPoolPatchConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolConfig;
+};
+
+export type AssistPoolPatchConfigsByIdResponse = AssistPoolPatchConfigsByIdResponses[keyof AssistPoolPatchConfigsByIdResponses];
+
+export type AssistPoolInstancesGetInstancesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        configKey?: string;
+        initiatorEndUserId?: string;
+        status?: 'in_progress' | 'completed' | 'expired';
+        limit?: number;
+    };
+    url: '/api/assist-pool/instances';
+};
+
+export type AssistPoolInstancesGetInstancesErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesGetInstancesError = AssistPoolInstancesGetInstancesErrors[keyof AssistPoolInstancesGetInstancesErrors];
+
+export type AssistPoolInstancesGetInstancesResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolInstanceList;
+};
+
+export type AssistPoolInstancesGetInstancesResponse = AssistPoolInstancesGetInstancesResponses[keyof AssistPoolInstancesGetInstancesResponses];
+
+export type AssistPoolInstancesPostInstancesData = {
+    body?: AssistPoolAdminInitiate;
+    path?: never;
+    query?: never;
+    url: '/api/assist-pool/instances';
+};
+
+export type AssistPoolInstancesPostInstancesErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesPostInstancesError = AssistPoolInstancesPostInstancesErrors[keyof AssistPoolInstancesPostInstancesErrors];
+
+export type AssistPoolInstancesPostInstancesResponses = {
+    /**
+     * Created
+     */
+    201: AssistPoolInstance;
+};
+
+export type AssistPoolInstancesPostInstancesResponse = AssistPoolInstancesPostInstancesResponses[keyof AssistPoolInstancesPostInstancesResponses];
+
+export type AssistPoolInstancesGetInstancesByInstanceidData = {
+    body?: never;
+    path: {
+        /**
+         * Instance id.
+         */
+        instanceId: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/instances/{instanceId}';
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidError = AssistPoolInstancesGetInstancesByInstanceidErrors[keyof AssistPoolInstancesGetInstancesByInstanceidErrors];
+
+export type AssistPoolInstancesGetInstancesByInstanceidResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolInstance;
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidResponse = AssistPoolInstancesGetInstancesByInstanceidResponses[keyof AssistPoolInstancesGetInstancesByInstanceidResponses];
+
+export type AssistPoolInstancesGetInstancesByInstanceidContributionsData = {
+    body?: never;
+    path: {
+        /**
+         * Instance id.
+         */
+        instanceId: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/instances/{instanceId}/contributions';
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidContributionsErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidContributionsError = AssistPoolInstancesGetInstancesByInstanceidContributionsErrors[keyof AssistPoolInstancesGetInstancesByInstanceidContributionsErrors];
+
+export type AssistPoolInstancesGetInstancesByInstanceidContributionsResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolContributionList;
+};
+
+export type AssistPoolInstancesGetInstancesByInstanceidContributionsResponse = AssistPoolInstancesGetInstancesByInstanceidContributionsResponses[keyof AssistPoolInstancesGetInstancesByInstanceidContributionsResponses];
+
+export type AssistPoolInstancesPostInstancesByInstanceidContributeData = {
+    body?: AssistPoolAdminContribute;
+    path: {
+        /**
+         * Instance id.
+         */
+        instanceId: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/instances/{instanceId}/contribute';
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidContributeErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidContributeError = AssistPoolInstancesPostInstancesByInstanceidContributeErrors[keyof AssistPoolInstancesPostInstancesByInstanceidContributeErrors];
+
+export type AssistPoolInstancesPostInstancesByInstanceidContributeResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolContributeResult;
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidContributeResponse = AssistPoolInstancesPostInstancesByInstanceidContributeResponses[keyof AssistPoolInstancesPostInstancesByInstanceidContributeResponses];
+
+export type AssistPoolInstancesPostInstancesByInstanceidForceExpireData = {
+    body?: never;
+    path: {
+        /**
+         * Instance id.
+         */
+        instanceId: string;
+    };
+    query?: never;
+    url: '/api/assist-pool/instances/{instanceId}/force-expire';
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidForceExpireErrors = {
+    /**
+     * Bad request
+     */
+    400: AssistPoolErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: AssistPoolErrorResponse;
+    /**
+     * Not found
+     */
+    404: AssistPoolErrorResponse;
+    /**
+     * Conflict
+     */
+    409: AssistPoolErrorResponse;
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidForceExpireError = AssistPoolInstancesPostInstancesByInstanceidForceExpireErrors[keyof AssistPoolInstancesPostInstancesByInstanceidForceExpireErrors];
+
+export type AssistPoolInstancesPostInstancesByInstanceidForceExpireResponses = {
+    /**
+     * OK
+     */
+    200: AssistPoolInstance;
+};
+
+export type AssistPoolInstancesPostInstancesByInstanceidForceExpireResponse = AssistPoolInstancesPostInstancesByInstanceidForceExpireResponses[keyof AssistPoolInstancesPostInstancesByInstanceidForceExpireResponses];
+
+export type EventCatalogGetRootData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/event-catalog';
+};
+
+export type EventCatalogGetRootErrors = {
+    /**
+     * Bad request
+     */
+    400: EventCatalogErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: EventCatalogErrorResponse;
+    /**
+     * Not found
+     */
+    404: EventCatalogErrorResponse;
+};
+
+export type EventCatalogGetRootError = EventCatalogGetRootErrors[keyof EventCatalogGetRootErrors];
+
+export type EventCatalogGetRootResponses = {
+    /**
+     * OK
+     */
+    200: CatalogEventList;
+};
+
+export type EventCatalogGetRootResponse = EventCatalogGetRootResponses[keyof EventCatalogGetRootResponses];
+
+export type EventCatalogGetByNameData = {
+    body?: never;
+    path: {
+        name: string;
+    };
+    query?: never;
+    url: '/api/event-catalog/{name}';
+};
+
+export type EventCatalogGetByNameErrors = {
+    /**
+     * Bad request
+     */
+    400: EventCatalogErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: EventCatalogErrorResponse;
+    /**
+     * Not found
+     */
+    404: EventCatalogErrorResponse;
+};
+
+export type EventCatalogGetByNameError = EventCatalogGetByNameErrors[keyof EventCatalogGetByNameErrors];
+
+export type EventCatalogGetByNameResponses = {
+    /**
+     * OK
+     */
+    200: CatalogEventView;
+};
+
+export type EventCatalogGetByNameResponse = EventCatalogGetByNameResponses[keyof EventCatalogGetByNameResponses];
+
+export type EventCatalogPatchByNameData = {
+    body?: EventCatalogUpdateBody;
+    path: {
+        name: string;
+    };
+    query?: never;
+    url: '/api/event-catalog/{name}';
+};
+
+export type EventCatalogPatchByNameErrors = {
+    /**
+     * Bad request
+     */
+    400: EventCatalogErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: EventCatalogErrorResponse;
+    /**
+     * Not found
+     */
+    404: EventCatalogErrorResponse;
+};
+
+export type EventCatalogPatchByNameError = EventCatalogPatchByNameErrors[keyof EventCatalogPatchByNameErrors];
+
+export type EventCatalogPatchByNameResponses = {
+    /**
+     * OK
+     */
+    200: CatalogEventView;
+};
+
+export type EventCatalogPatchByNameResponse = EventCatalogPatchByNameResponses[keyof EventCatalogPatchByNameResponses];
+
+export type RankAdminPostSettleData = {
+    body?: RankSettleMatch;
+    path?: never;
+    query?: never;
+    url: '/api/rank/settle';
+};
+
+export type RankAdminPostSettleErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPostSettleError = RankAdminPostSettleErrors[keyof RankAdminPostSettleErrors];
+
+export type RankAdminPostSettleResponses = {
+    /**
+     * Settled (or alreadySettled=true on repeat).
+     */
+    200: RankSettleResult;
+};
+
+export type RankAdminPostSettleResponse = RankAdminPostSettleResponses[keyof RankAdminPostSettleResponses];
+
+export type RankAdminGetTierConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/rank/tier-configs';
+};
+
+export type RankAdminGetTierConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetTierConfigsError = RankAdminGetTierConfigsErrors[keyof RankAdminGetTierConfigsErrors];
+
+export type RankAdminGetTierConfigsResponses = {
+    /**
+     * OK
+     */
+    200: RankTierConfigList;
+};
+
+export type RankAdminGetTierConfigsResponse = RankAdminGetTierConfigsResponses[keyof RankAdminGetTierConfigsResponses];
+
+export type RankAdminPostTierConfigsData = {
+    body?: RankCreateTierConfig;
+    path?: never;
+    query?: never;
+    url: '/api/rank/tier-configs';
+};
+
+export type RankAdminPostTierConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPostTierConfigsError = RankAdminPostTierConfigsErrors[keyof RankAdminPostTierConfigsErrors];
+
+export type RankAdminPostTierConfigsResponses = {
+    /**
+     * Created
+     */
+    201: RankTierConfig;
+};
+
+export type RankAdminPostTierConfigsResponse = RankAdminPostTierConfigsResponses[keyof RankAdminPostTierConfigsResponses];
+
+export type RankAdminGetTierConfigsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * tier config id or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/rank/tier-configs/{key}';
+};
+
+export type RankAdminGetTierConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetTierConfigsByKeyError = RankAdminGetTierConfigsByKeyErrors[keyof RankAdminGetTierConfigsByKeyErrors];
+
+export type RankAdminGetTierConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: RankTierConfig;
+};
+
+export type RankAdminGetTierConfigsByKeyResponse = RankAdminGetTierConfigsByKeyResponses[keyof RankAdminGetTierConfigsByKeyResponses];
+
+export type RankAdminPatchTierConfigsByKeyData = {
+    body?: RankUpdateTierConfig;
+    path: {
+        /**
+         * tier config id or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/rank/tier-configs/{key}';
+};
+
+export type RankAdminPatchTierConfigsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPatchTierConfigsByKeyError = RankAdminPatchTierConfigsByKeyErrors[keyof RankAdminPatchTierConfigsByKeyErrors];
+
+export type RankAdminPatchTierConfigsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: RankTierConfig;
+};
+
+export type RankAdminPatchTierConfigsByKeyResponse = RankAdminPatchTierConfigsByKeyResponses[keyof RankAdminPatchTierConfigsByKeyResponses];
+
+export type RankAdminDeleteTierConfigsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/tier-configs/{id}';
+};
+
+export type RankAdminDeleteTierConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminDeleteTierConfigsByIdError = RankAdminDeleteTierConfigsByIdErrors[keyof RankAdminDeleteTierConfigsByIdErrors];
+
+export type RankAdminDeleteTierConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    204: void;
+};
+
+export type RankAdminDeleteTierConfigsByIdResponse = RankAdminDeleteTierConfigsByIdResponses[keyof RankAdminDeleteTierConfigsByIdResponses];
+
+export type RankAdminGetSeasonsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        tierConfigId?: string;
+        status?: 'upcoming' | 'active' | 'finished';
+    };
+    url: '/api/rank/seasons';
+};
+
+export type RankAdminGetSeasonsErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetSeasonsError = RankAdminGetSeasonsErrors[keyof RankAdminGetSeasonsErrors];
+
+export type RankAdminGetSeasonsResponses = {
+    /**
+     * OK
+     */
+    200: RankSeasonList;
+};
+
+export type RankAdminGetSeasonsResponse = RankAdminGetSeasonsResponses[keyof RankAdminGetSeasonsResponses];
+
+export type RankAdminPostSeasonsData = {
+    body?: RankCreateSeason;
+    path?: never;
+    query?: never;
+    url: '/api/rank/seasons';
+};
+
+export type RankAdminPostSeasonsErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPostSeasonsError = RankAdminPostSeasonsErrors[keyof RankAdminPostSeasonsErrors];
+
+export type RankAdminPostSeasonsResponses = {
+    /**
+     * Created
+     */
+    201: RankSeason;
+};
+
+export type RankAdminPostSeasonsResponse = RankAdminPostSeasonsResponses[keyof RankAdminPostSeasonsResponses];
+
+export type RankAdminGetSeasonsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/seasons/{id}';
+};
+
+export type RankAdminGetSeasonsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetSeasonsByIdError = RankAdminGetSeasonsByIdErrors[keyof RankAdminGetSeasonsByIdErrors];
+
+export type RankAdminGetSeasonsByIdResponses = {
+    /**
+     * OK
+     */
+    200: RankSeason;
+};
+
+export type RankAdminGetSeasonsByIdResponse = RankAdminGetSeasonsByIdResponses[keyof RankAdminGetSeasonsByIdResponses];
+
+export type RankAdminPatchSeasonsByIdData = {
+    body?: RankUpdateSeason;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/seasons/{id}';
+};
+
+export type RankAdminPatchSeasonsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPatchSeasonsByIdError = RankAdminPatchSeasonsByIdErrors[keyof RankAdminPatchSeasonsByIdErrors];
+
+export type RankAdminPatchSeasonsByIdResponses = {
+    /**
+     * OK
+     */
+    200: RankSeason;
+};
+
+export type RankAdminPatchSeasonsByIdResponse = RankAdminPatchSeasonsByIdResponses[keyof RankAdminPatchSeasonsByIdResponses];
+
+export type RankAdminPostSeasonsByIdActivateData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/seasons/{id}/activate';
+};
+
+export type RankAdminPostSeasonsByIdActivateErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPostSeasonsByIdActivateError = RankAdminPostSeasonsByIdActivateErrors[keyof RankAdminPostSeasonsByIdActivateErrors];
+
+export type RankAdminPostSeasonsByIdActivateResponses = {
+    /**
+     * OK
+     */
+    200: RankSeason;
+};
+
+export type RankAdminPostSeasonsByIdActivateResponse = RankAdminPostSeasonsByIdActivateResponses[keyof RankAdminPostSeasonsByIdActivateResponses];
+
+export type RankAdminPostSeasonsByIdFinalizeData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/seasons/{id}/finalize';
+};
+
+export type RankAdminPostSeasonsByIdFinalizeErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPostSeasonsByIdFinalizeError = RankAdminPostSeasonsByIdFinalizeErrors[keyof RankAdminPostSeasonsByIdFinalizeErrors];
+
+export type RankAdminPostSeasonsByIdFinalizeResponses = {
+    /**
+     * OK
+     */
+    200: RankFinalizeResult;
+};
+
+export type RankAdminPostSeasonsByIdFinalizeResponse = RankAdminPostSeasonsByIdFinalizeResponses[keyof RankAdminPostSeasonsByIdFinalizeResponses];
+
+export type RankAdminGetSeasonsByIdPlayersData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        tierId?: string;
+        endUserId?: string;
+        limit?: string;
+    };
+    url: '/api/rank/seasons/{id}/players';
+};
+
+export type RankAdminGetSeasonsByIdPlayersErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetSeasonsByIdPlayersError = RankAdminGetSeasonsByIdPlayersErrors[keyof RankAdminGetSeasonsByIdPlayersErrors];
+
+export type RankAdminGetSeasonsByIdPlayersResponses = {
+    /**
+     * OK
+     */
+    200: RankPlayerViewList;
+};
+
+export type RankAdminGetSeasonsByIdPlayersResponse = RankAdminGetSeasonsByIdPlayersResponses[keyof RankAdminGetSeasonsByIdPlayersResponses];
+
+export type RankAdminPatchSeasonsBySeasonidPlayersByEnduseridData = {
+    body?: RankAdjustPlayer;
+    path: {
+        seasonId: string;
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/rank/seasons/{seasonId}/players/{endUserId}';
+};
+
+export type RankAdminPatchSeasonsBySeasonidPlayersByEnduseridErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminPatchSeasonsBySeasonidPlayersByEnduseridError = RankAdminPatchSeasonsBySeasonidPlayersByEnduseridErrors[keyof RankAdminPatchSeasonsBySeasonidPlayersByEnduseridErrors];
+
+export type RankAdminPatchSeasonsBySeasonidPlayersByEnduseridResponses = {
+    /**
+     * OK
+     */
+    200: RankPlayerView;
+};
+
+export type RankAdminPatchSeasonsBySeasonidPlayersByEnduseridResponse = RankAdminPatchSeasonsBySeasonidPlayersByEnduseridResponses[keyof RankAdminPatchSeasonsBySeasonidPlayersByEnduseridResponses];
+
+export type RankAdminGetSeasonsByIdMatchesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        limit?: string;
+        cursor?: string;
+    };
+    url: '/api/rank/seasons/{id}/matches';
+};
+
+export type RankAdminGetSeasonsByIdMatchesErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetSeasonsByIdMatchesError = RankAdminGetSeasonsByIdMatchesErrors[keyof RankAdminGetSeasonsByIdMatchesErrors];
+
+export type RankAdminGetSeasonsByIdMatchesResponses = {
+    /**
+     * OK
+     */
+    200: RankMatchList;
+};
+
+export type RankAdminGetSeasonsByIdMatchesResponse = RankAdminGetSeasonsByIdMatchesResponses[keyof RankAdminGetSeasonsByIdMatchesResponses];
+
+export type RankAdminGetMatchesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/rank/matches/{id}';
+};
+
+export type RankAdminGetMatchesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: RankError;
+    /**
+     * Unauthorized
+     */
+    401: RankError;
+    /**
+     * Not found
+     */
+    404: RankError;
+    /**
+     * Conflict
+     */
+    409: RankError;
+};
+
+export type RankAdminGetMatchesByIdError = RankAdminGetMatchesByIdErrors[keyof RankAdminGetMatchesByIdErrors];
+
+export type RankAdminGetMatchesByIdResponses = {
+    /**
+     * OK
+     */
+    200: RankMatchDetail;
+};
+
+export type RankAdminGetMatchesByIdResponse = RankAdminGetMatchesByIdResponses[keyof RankAdminGetMatchesByIdResponses];
 
 export type ClientOptions = {
     baseUrl: 'http://localhost:8787' | (string & {});

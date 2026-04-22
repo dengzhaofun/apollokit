@@ -5,11 +5,15 @@
  * OpenAPI-declared → body shape pattern as `exchange/routes.ts`.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import { shopService } from "./index";
@@ -32,7 +36,6 @@ import {
   CreateTagSchema,
   EndUserAndStageParamSchema,
   EndUserIdParamSchema,
-  ErrorResponseSchema,
   GrowthStageListResponseSchema,
   IdParamSchema,
   KeyParamSchema,
@@ -208,42 +211,9 @@ function serializeUserProduct(row: UserProductView) {
 
 // ─── Router ──────────────────────────────────────────────────────
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const shopRouter = new OpenAPIHono<HonoEnv>();
+export const shopRouter = makeApiRouter();
 
 shopRouter.use("*", requireAdminOrApiKey);
-
-shopRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Categories ──────────────────────────────────────────────────
 
@@ -261,15 +231,15 @@ shopRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ShopCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.createCategory(orgId, c.req.valid("json"));
-    return c.json(serializeCategory(row), 201);
+    return c.json(ok(serializeCategory(row)), 201);
   },
 );
 
@@ -282,15 +252,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CategoryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await shopService.listCategories(orgId);
-    return c.json({ items: rows.map(serializeCategory) }, 200);
+    return c.json(ok({ items: rows.map(serializeCategory) }), 200);
   },
 );
 
@@ -303,15 +273,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CategoryTreeResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(CategoryTreeResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const tree = await shopService.listCategoryTree(orgId);
-    return c.json({ items: tree.map(serializeTree) }, 200);
+    return c.json(ok({ items: tree.map(serializeTree) }), 200);
   },
 );
 
@@ -325,15 +295,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.getCategory(orgId, c.req.valid("param").key);
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -352,9 +322,9 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopCategoryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopCategoryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -364,7 +334,7 @@ shopRouter.openapi(
       c.req.valid("param").id,
       c.req.valid("json"),
     );
-    return c.json(serializeCategory(row), 200);
+    return c.json(ok(serializeCategory(row)), 200);
   },
 );
 
@@ -375,12 +345,18 @@ shopRouter.openapi(
     tags: [TAG_CAT],
     summary: "Delete a shop category",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     await shopService.deleteCategory(orgId, c.req.valid("param").id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -398,15 +374,15 @@ shopRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ShopTagResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopTagResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.createTag(orgId, c.req.valid("json"));
-    return c.json(serializeTag(row), 201);
+    return c.json(ok(serializeTag(row)), 201);
   },
 );
 
@@ -419,15 +395,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TagListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TagListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await shopService.listTags(orgId);
-    return c.json({ items: rows.map(serializeTag) }, 200);
+    return c.json(ok({ items: rows.map(serializeTag) }), 200);
   },
 );
 
@@ -441,15 +417,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopTagResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopTagResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.getTag(orgId, c.req.valid("param").key);
-    return c.json(serializeTag(row), 200);
+    return c.json(ok(serializeTag(row)), 200);
   },
 );
 
@@ -466,9 +442,9 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopTagResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopTagResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -478,7 +454,7 @@ shopRouter.openapi(
       c.req.valid("param").id,
       c.req.valid("json"),
     );
-    return c.json(serializeTag(row), 200);
+    return c.json(ok(serializeTag(row)), 200);
   },
 );
 
@@ -489,12 +465,18 @@ shopRouter.openapi(
     tags: [TAG_TAG],
     summary: "Delete a shop tag",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     await shopService.deleteTag(orgId, c.req.valid("param").id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -514,15 +496,15 @@ shopRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: ShopProductResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopProductResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.createProduct(orgId, c.req.valid("json"));
-    return c.json(serializeProduct(row), 201);
+    return c.json(ok(serializeProduct(row)), 201);
   },
 );
 
@@ -536,15 +518,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ProductListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ProductListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await shopService.listProducts(orgId, c.req.valid("query"));
-    return c.json({ items: rows.map(serializeProduct) }, 200);
+    return c.json(ok({ items: rows.map(serializeProduct) }), 200);
   },
 );
 
@@ -558,15 +540,15 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopProductResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopProductResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await shopService.getProduct(orgId, c.req.valid("param").key);
-    return c.json(serializeProduct(row), 200);
+    return c.json(ok(serializeProduct(row)), 200);
   },
 );
 
@@ -585,9 +567,9 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ShopProductResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(ShopProductResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -597,7 +579,7 @@ shopRouter.openapi(
       c.req.valid("param").id,
       c.req.valid("json"),
     );
-    return c.json(serializeProduct(row), 200);
+    return c.json(ok(serializeProduct(row)), 200);
   },
 );
 
@@ -608,12 +590,18 @@ shopRouter.openapi(
     tags: [TAG_PROD],
     summary: "Delete a shop product",
     request: { params: IdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     await shopService.deleteProduct(orgId, c.req.valid("param").id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -630,10 +618,10 @@ shopRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: GrowthStageListResponseSchema },
+          "application/json": { schema: envelopeOf(GrowthStageListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -642,7 +630,7 @@ shopRouter.openapi(
       orgId,
       c.req.valid("param").productId,
     );
-    return c.json({ items: rows.map(serializeStage) }, 200);
+    return c.json(ok({ items: rows.map(serializeStage) }), 200);
   },
 );
 
@@ -662,10 +650,10 @@ shopRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: ShopGrowthStageResponseSchema },
+          "application/json": { schema: envelopeOf(ShopGrowthStageResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -675,7 +663,7 @@ shopRouter.openapi(
       c.req.valid("param").productId,
       c.req.valid("json"),
     );
-    return c.json(serializeStage(row), 201);
+    return c.json(ok(serializeStage(row)), 201);
   },
 );
 
@@ -695,10 +683,10 @@ shopRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: GrowthStageListResponseSchema },
+          "application/json": { schema: envelopeOf(GrowthStageListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -708,7 +696,7 @@ shopRouter.openapi(
       c.req.valid("param").productId,
       c.req.valid("json"),
     );
-    return c.json({ items: rows.map(serializeStage) }, 200);
+    return c.json(ok({ items: rows.map(serializeStage) }), 200);
   },
 );
 
@@ -728,10 +716,10 @@ shopRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: ShopGrowthStageResponseSchema },
+          "application/json": { schema: envelopeOf(ShopGrowthStageResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -741,7 +729,7 @@ shopRouter.openapi(
       c.req.valid("param").stageId,
       c.req.valid("json"),
     );
-    return c.json(serializeStage(row), 200);
+    return c.json(ok(serializeStage(row)), 200);
   },
 );
 
@@ -752,12 +740,18 @@ shopRouter.openapi(
     tags: [TAG_STG],
     summary: "Delete a growth stage",
     request: { params: StageIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: {
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     await shopService.deleteStage(orgId, c.req.valid("param").stageId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -776,9 +770,9 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PurchaseResultSchema } },
+        content: { "application/json": { schema: envelopeOf(PurchaseResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -791,7 +785,7 @@ shopRouter.openapi(
       productKey: id,
       idempotencyKey: body.idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -808,9 +802,9 @@ shopRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ClaimStageResultSchema } },
+        content: { "application/json": { schema: envelopeOf(ClaimStageResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -823,7 +817,7 @@ shopRouter.openapi(
       stageId,
       idempotencyKey: body.idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -841,10 +835,10 @@ shopRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: UserProductListResponseSchema },
+          "application/json": { schema: envelopeOf(UserProductListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -856,7 +850,7 @@ shopRouter.openapi(
       endUserId,
       query,
     });
-    return c.json({ items: views.map(serializeUserProduct) }, 200);
+    return c.json(ok({ items: views.map(serializeUserProduct) }), 200);
   },
 );
 

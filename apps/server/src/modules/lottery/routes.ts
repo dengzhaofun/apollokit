@@ -2,13 +2,17 @@
  * Admin-facing HTTP routes for the lottery module.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
-import { ModuleError } from "./errors";
 import { lotteryService } from "./index";
 import {
   CreatePoolSchema,
@@ -39,7 +43,6 @@ import {
   PrizeListResponseSchema,
   PityRuleListResponseSchema,
   PullLogListResponseSchema,
-  ErrorResponseSchema,
 } from "./validators";
 
 const TAG_POOL = "Lottery Pools";
@@ -220,46 +223,11 @@ function serializePullLog(row: {
   };
 }
 
-// ─── Error responses ──────────────────────────────────────────
-
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
 // ─── Router ───────────────────────────────────────────────────
 
-export const lotteryRouter = new OpenAPIHono<HonoEnv>();
+export const lotteryRouter = makeApiRouter();
 
 lotteryRouter.use("*", requireAdminOrApiKey);
-
-lotteryRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Pool routes ──────────────────────────────────────────────
 
@@ -275,15 +243,15 @@ lotteryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: LotteryPoolResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPoolResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await lotteryService.createPool(orgId, c.req.valid("json"));
-    return c.json(serializePool(row), 201);
+    return c.json(ok(serializePool(row)), 201);
   },
 );
 
@@ -296,9 +264,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PoolListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PoolListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -309,7 +277,7 @@ lotteryRouter.openapi(
       activityId,
       includeActivity,
     });
-    return c.json({ items: rows.map(serializePool) }, 200);
+    return c.json(ok({ items: rows.map(serializePool) }), 200);
   },
 );
 
@@ -323,16 +291,16 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: LotteryPoolResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPoolResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await lotteryService.getPool(orgId, key);
-    return c.json(serializePool(row), 200);
+    return c.json(ok(serializePool(row)), 200);
   },
 );
 
@@ -349,16 +317,16 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: LotteryPoolResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPoolResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const row = await lotteryService.updatePool(orgId, id, c.req.valid("json"));
-    return c.json(serializePool(row), 200);
+    return c.json(ok(serializePool(row)), 200);
   },
 );
 
@@ -370,15 +338,18 @@ lotteryRouter.openapi(
     summary: "Delete a lottery pool (cascades)",
     request: { params: IdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await lotteryService.deletePool(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -397,9 +368,9 @@ lotteryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: LotteryTierResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryTierResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -410,7 +381,7 @@ lotteryRouter.openapi(
       poolKey,
       c.req.valid("json"),
     );
-    return c.json(serializeTier(row), 201);
+    return c.json(ok(serializeTier(row)), 201);
   },
 );
 
@@ -424,16 +395,16 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TierListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TierListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
     const rows = await lotteryService.listTiers(orgId, poolKey);
-    return c.json({ items: rows.map(serializeTier) }, 200);
+    return c.json(ok({ items: rows.map(serializeTier) }), 200);
   },
 );
 
@@ -450,9 +421,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: LotteryTierResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryTierResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -463,7 +434,7 @@ lotteryRouter.openapi(
       tierId,
       c.req.valid("json"),
     );
-    return c.json(serializeTier(row), 200);
+    return c.json(ok(serializeTier(row)), 200);
   },
 );
 
@@ -475,15 +446,18 @@ lotteryRouter.openapi(
     summary: "Delete a tier",
     request: { params: TierIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { tierId } = c.req.valid("param");
     await lotteryService.deleteTier(orgId, tierId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -502,9 +476,9 @@ lotteryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: LotteryPrizeResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPrizeResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -516,7 +490,7 @@ lotteryRouter.openapi(
       tierId,
       c.req.valid("json"),
     );
-    return c.json(serializePrize(row), 201);
+    return c.json(ok(serializePrize(row)), 201);
   },
 );
 
@@ -533,9 +507,9 @@ lotteryRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: LotteryPrizeResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPrizeResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -547,7 +521,7 @@ lotteryRouter.openapi(
       null,
       c.req.valid("json"),
     );
-    return c.json(serializePrize(row), 201);
+    return c.json(ok(serializePrize(row)), 201);
   },
 );
 
@@ -561,16 +535,16 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PrizeListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PrizeListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
     const rows = await lotteryService.listPrizes(orgId, poolKey);
-    return c.json({ items: rows.map(serializePrize) }, 200);
+    return c.json(ok({ items: rows.map(serializePrize) }), 200);
   },
 );
 
@@ -587,9 +561,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: LotteryPrizeResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(LotteryPrizeResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -600,7 +574,7 @@ lotteryRouter.openapi(
       prizeId,
       c.req.valid("json"),
     );
-    return c.json(serializePrize(row), 200);
+    return c.json(ok(serializePrize(row)), 200);
   },
 );
 
@@ -612,15 +586,18 @@ lotteryRouter.openapi(
     summary: "Delete a prize",
     request: { params: PrizeIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { prizeId } = c.req.valid("param");
     await lotteryService.deletePrize(orgId, prizeId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -642,10 +619,10 @@ lotteryRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: LotteryPityRuleResponseSchema },
+          "application/json": { schema: envelopeOf(LotteryPityRuleResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -656,7 +633,7 @@ lotteryRouter.openapi(
       poolKey,
       c.req.valid("json"),
     );
-    return c.json(serializePityRule(row), 201);
+    return c.json(ok(serializePityRule(row)), 201);
   },
 );
 
@@ -671,17 +648,17 @@ lotteryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: PityRuleListResponseSchema },
+          "application/json": { schema: envelopeOf(PityRuleListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
     const rows = await lotteryService.listPityRules(orgId, poolKey);
-    return c.json({ items: rows.map(serializePityRule) }, 200);
+    return c.json(ok({ items: rows.map(serializePityRule) }), 200);
   },
 );
 
@@ -701,10 +678,10 @@ lotteryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LotteryPityRuleResponseSchema },
+          "application/json": { schema: envelopeOf(LotteryPityRuleResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -715,7 +692,7 @@ lotteryRouter.openapi(
       ruleId,
       c.req.valid("json"),
     );
-    return c.json(serializePityRule(row), 200);
+    return c.json(ok(serializePityRule(row)), 200);
   },
 );
 
@@ -727,15 +704,18 @@ lotteryRouter.openapi(
     summary: "Delete a pity rule",
     request: { params: RuleIdParamSchema },
     responses: {
-      204: { description: "Deleted" },
-      ...errorResponses,
+      200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { ruleId } = c.req.valid("param");
     await lotteryService.deletePityRule(orgId, ruleId);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -754,9 +734,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullResultResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullResultResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -769,7 +749,7 @@ lotteryRouter.openapi(
       poolKey,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -786,9 +766,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullResultResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullResultResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -802,7 +782,7 @@ lotteryRouter.openapi(
       count,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );
 
@@ -821,10 +801,10 @@ lotteryRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: LotteryUserStateResponseSchema },
+          "application/json": { schema: envelopeOf(LotteryUserStateResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -836,7 +816,7 @@ lotteryRouter.openapi(
       endUserId,
       poolKey,
     });
-    return c.json(state, 200);
+    return c.json(ok(state), 200);
   },
 );
 
@@ -852,9 +832,9 @@ lotteryRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: PullLogListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(PullLogListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -866,6 +846,6 @@ lotteryRouter.openapi(
       endUserId,
       poolKey,
     });
-    return c.json({ items: rows.map(serializePullLog) }, 200);
+    return c.json(ok({ items: rows.map(serializePullLog) }), 200);
   },
 );

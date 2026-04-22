@@ -52,8 +52,8 @@ describe("invite client routes", () => {
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "u1" } },
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(
+    const env = (await res.json()) as { code: string; data: { code: string } };
+    expect(env.data.code).toMatch(
       /^[23456789A-HJ-NP-Z]{4}-[23456789A-HJ-NP-Z]{4}$/,
     );
   });
@@ -64,7 +64,8 @@ describe("invite client routes", () => {
       "/api/client/invite/my-code",
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "inviter-1" } },
     );
-    const { code } = (await codeRes.json()) as { code: string };
+    const codeEnv = (await codeRes.json()) as { data: { code: string } };
+    const code = codeEnv.data.code;
 
     const bindRes = await app.request("/api/client/invite/bind", {
       method: "POST",
@@ -76,12 +77,15 @@ describe("invite client routes", () => {
       body: JSON.stringify({ code }),
     });
     expect(bindRes.status).toBe(200);
-    const body = (await bindRes.json()) as {
-      alreadyBound: boolean;
-      relationship: { inviterEndUserId: string };
+    const env = (await bindRes.json()) as {
+      code: string;
+      data: {
+        alreadyBound: boolean;
+        relationship: { inviterEndUserId: string };
+      };
     };
-    expect(body.alreadyBound).toBe(false);
-    expect(body.relationship.inviterEndUserId).toBe("inviter-1");
+    expect(env.data.alreadyBound).toBe(false);
+    expect(env.data.relationship.inviterEndUserId).toBe("inviter-1");
   });
 
   test("POST /bind 400 on missing code", async () => {

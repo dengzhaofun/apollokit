@@ -11,59 +11,24 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { exchangeService } from "./index";
 import {
   ClientExecuteExchangeSchema,
-  ErrorResponseSchema,
   ExchangeResultSchema,
 } from "./validators";
 
 const TAG = "Exchange (Client)";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const exchangeClientRouter = new OpenAPIHono<HonoEnv>();
+export const exchangeClientRouter = makeApiRouter();
 
 exchangeClientRouter.use("*", requireClientCredential);
 exchangeClientRouter.use("*", requireClientUser);
-
-exchangeClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /execute — execute an exchange
 exchangeClientRouter.openapi(
@@ -82,9 +47,9 @@ exchangeClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: ExchangeResultSchema } },
+        content: { "application/json": { schema: envelopeOf(ExchangeResultSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -98,6 +63,6 @@ exchangeClientRouter.openapi(
       optionId,
       idempotencyKey,
     });
-    return c.json(result, 200);
+    return c.json(ok(result), 200);
   },
 );

@@ -519,10 +519,3 @@ export const RescanBodySchema = z
   })
   .openapi("CollectionRescanBody");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("CollectionErrorResponse");

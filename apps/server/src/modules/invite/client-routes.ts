@@ -11,19 +11,17 @@
  * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { z } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { inviteService } from "./index";
 import {
   ClientBindBodySchema,
   ClientQualifyBodySchema,
-  ErrorResponseSchema,
   InviteCodeViewSchema,
   InviteRelationshipListSchema,
   InviteRelationshipViewSchema,
@@ -32,8 +30,6 @@ import {
 } from "./validators";
 
 const TAG = "Invite (Client)";
-
-import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-headers";
 
 function serializeRelationship(row: {
   id: string;
@@ -81,47 +77,10 @@ function serializeSummary(s: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const inviteClientRouter = new OpenAPIHono<HonoEnv>();
+export const inviteClientRouter = makeApiRouter();
 
 inviteClientRouter.use("*", requireClientCredential);
 inviteClientRouter.use("*", requireClientUser);
-
-inviteClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 /* ── GET /my-code ─────────────────────────────────────────────── */
 
@@ -136,9 +95,9 @@ inviteClientRouter.openapi(
     responses: {
       200: {
         description: "Current invite code (generated on first call).",
-        content: { "application/json": { schema: InviteCodeViewSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteCodeViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -146,10 +105,10 @@ inviteClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const result = await inviteService.getOrCreateMyCode(orgId, endUserId);
     return c.json(
-      {
+      ok({
         code: result.code,
         rotatedAt: result.rotatedAt?.toISOString() ?? null,
-      },
+      }),
       200,
     );
   },
@@ -168,9 +127,9 @@ inviteClientRouter.openapi(
     responses: {
       200: {
         description: "Rotated invite code.",
-        content: { "application/json": { schema: InviteCodeViewSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteCodeViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -178,10 +137,10 @@ inviteClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const result = await inviteService.resetCode(orgId, endUserId);
     return c.json(
-      {
+      ok({
         code: result.code,
         rotatedAt: result.rotatedAt.toISOString(),
-      },
+      }),
       200,
     );
   },
@@ -200,16 +159,16 @@ inviteClientRouter.openapi(
     responses: {
       200: {
         description: "Summary for the end user.",
-        content: { "application/json": { schema: InviteSummaryViewSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteSummaryViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const summary = await inviteService.getSummary(orgId, endUserId);
-    return c.json(serializeSummary(summary), 200);
+    return c.json(ok(serializeSummary(summary)), 200);
   },
 );
 
@@ -227,9 +186,9 @@ inviteClientRouter.openapi(
     responses: {
       200: {
         description: "Paged list of users this end user has invited.",
-        content: { "application/json": { schema: InviteRelationshipListSchema } },
+        content: { "application/json": { schema: envelopeOf(InviteRelationshipListSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -240,7 +199,7 @@ inviteClientRouter.openapi(
       limit,
       offset,
     });
-    return c.json({ items: items.map(serializeRelationship), total }, 200);
+    return c.json(ok({ items: items.map(serializeRelationship), total }), 200);
   },
 );
 
@@ -262,16 +221,18 @@ inviteClientRouter.openapi(
         description: "Relationship bound (or existing for idempotent bind).",
         content: {
           "application/json": {
-            schema: z
-              .object({
-                relationship: InviteRelationshipViewSchema,
-                alreadyBound: z.boolean(),
-              })
-              .openapi("BindResult"),
+            schema: envelopeOf(
+              z
+                .object({
+                  relationship: InviteRelationshipViewSchema,
+                  alreadyBound: z.boolean(),
+                })
+                .openapi("BindResult"),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -282,7 +243,7 @@ inviteClientRouter.openapi(
       inviteeEndUserId: c.var.endUserId!,
     });
     return c.json(
-      { relationship: serializeRelationship(relationship), alreadyBound },
+      ok({ relationship: serializeRelationship(relationship), alreadyBound }),
       200,
     );
   },
@@ -306,16 +267,18 @@ inviteClientRouter.openapi(
         description: "Relationship qualified (or existing for idempotent qualify).",
         content: {
           "application/json": {
-            schema: z
-              .object({
-                relationship: InviteRelationshipViewSchema,
-                alreadyQualified: z.boolean(),
-              })
-              .openapi("QualifyResult"),
+            schema: envelopeOf(
+              z
+                .object({
+                  relationship: InviteRelationshipViewSchema,
+                  alreadyQualified: z.boolean(),
+                })
+                .openapi("QualifyResult"),
+            ),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -326,7 +289,7 @@ inviteClientRouter.openapi(
       qualifiedReason: body.qualifiedReason ?? null,
     });
     return c.json(
-      { relationship: serializeRelationship(relationship), alreadyQualified },
+      ok({ relationship: serializeRelationship(relationship), alreadyQualified }),
       200,
     );
   },

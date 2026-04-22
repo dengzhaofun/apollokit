@@ -7,56 +7,25 @@
  * external event to canonical.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 
 import { eventCatalogService } from "./index";
 import {
   CatalogEventViewSchema,
   CatalogListResponseSchema,
-  ErrorResponseSchema,
   EventNameParamSchema,
   UpdateEventCatalogSchema,
 } from "./validators";
 
 const TAG = "Event Catalog";
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const eventCatalogRouter = new OpenAPIHono<HonoEnv>();
+export const eventCatalogRouter = makeApiRouter();
 
 eventCatalogRouter.use("*", requireAdminOrApiKey);
-
-eventCatalogRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 eventCatalogRouter.openapi(
   createRoute({
@@ -68,16 +37,16 @@ eventCatalogRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: CatalogListResponseSchema },
+          "application/json": { schema: envelopeOf(CatalogListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const items = await eventCatalogService.listAll(orgId);
-    return c.json({ items }, 200);
+    return c.json(ok({ items }), 200);
   },
 );
 
@@ -91,16 +60,16 @@ eventCatalogRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CatalogEventViewSchema } },
+        content: { "application/json": { schema: envelopeOf(CatalogEventViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { name } = c.req.valid("param");
     const view = await eventCatalogService.getOne(orgId, name);
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );
 
@@ -120,9 +89,9 @@ eventCatalogRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: CatalogEventViewSchema } },
+        content: { "application/json": { schema: envelopeOf(CatalogEventViewSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -130,6 +99,6 @@ eventCatalogRouter.openapi(
     const { name } = c.req.valid("param");
     const body = c.req.valid("json");
     const view = await eventCatalogService.updateExternal(orgId, name, body);
-    return c.json(view, 200);
+    return c.json(ok(view), 200);
   },
 );

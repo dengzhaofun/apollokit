@@ -164,13 +164,6 @@ export const FriendBlockListSchema = z
   })
   .openapi("FriendBlockList");
 
-export const ErrorResponseSchema = z
-  .object({
-    error: z.string(),
-    code: z.string().optional(),
-    requestId: z.string().optional(),
-  })
-  .openapi("FriendErrorResponse");
 
 // ─── Client-route body schemas ───────────────────────────────────
 

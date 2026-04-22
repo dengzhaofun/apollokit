@@ -9,14 +9,19 @@
  * `client-routes.ts`.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
+import { makeApiRouter } from "../../lib/router";
+import {
+  NullDataEnvelopeSchema,
+  commonErrorResponses,
+  envelopeOf,
+  ok,
+} from "../../lib/response";
+
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import type { RewardEntry } from "../../lib/rewards";
 import { collectionService } from "./index";
-import { ModuleError } from "./errors";
 import {
   AlbumIdParamSchema,
   AlbumKeyParamSchema,
@@ -30,7 +35,6 @@ import {
   EntryIdParamSchema,
   EntryListResponseSchema,
   EntryResponseSchema,
-  ErrorResponseSchema,
   GroupIdParamSchema,
   GroupListResponseSchema,
   GroupResponseSchema,
@@ -188,42 +192,9 @@ function serializeMilestone(row: {
 
 // ─── Router scaffold ─────────────────────────────────────────────
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const collectionRouter = new OpenAPIHono<HonoEnv>();
+export const collectionRouter = makeApiRouter();
 
 collectionRouter.use("*", requireAdminOrApiKey);
-
-collectionRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // ─── Albums ──────────────────────────────────────────────────────
 
@@ -239,15 +210,15 @@ collectionRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: AlbumResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AlbumResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const row = await collectionService.createAlbum(orgId, c.req.valid("json"));
-    return c.json(serializeAlbum(row), 201);
+    return c.json(ok(serializeAlbum(row)), 201);
   },
 );
 
@@ -260,15 +231,15 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: AlbumListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AlbumListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const rows = await collectionService.listAlbums(orgId);
-    return c.json({ items: rows.map(serializeAlbum) }, 200);
+    return c.json(ok({ items: rows.map(serializeAlbum) }), 200);
   },
 );
 
@@ -282,16 +253,16 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: AlbumResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AlbumResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const row = await collectionService.getAlbum(orgId, key);
-    return c.json(serializeAlbum(row), 200);
+    return c.json(ok(serializeAlbum(row)), 200);
   },
 );
 
@@ -308,9 +279,9 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: AlbumResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(AlbumResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -321,7 +292,7 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeAlbum(row), 200);
+    return c.json(ok(serializeAlbum(row)), 200);
   },
 );
 
@@ -332,13 +303,16 @@ collectionRouter.openapi(
     tags: [TAG],
     summary: "Delete an album (cascades to groups, entries, milestones, user state)",
     request: { params: AlbumIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await collectionService.deleteAlbum(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -357,9 +331,9 @@ collectionRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: GroupResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(GroupResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -370,7 +344,7 @@ collectionRouter.openapi(
       key,
       c.req.valid("json"),
     );
-    return c.json(serializeGroup(row), 201);
+    return c.json(ok(serializeGroup(row)), 201);
   },
 );
 
@@ -384,16 +358,16 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GroupListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(GroupListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await collectionService.listGroups(orgId, key);
-    return c.json({ items: rows.map(serializeGroup) }, 200);
+    return c.json(ok({ items: rows.map(serializeGroup) }), 200);
   },
 );
 
@@ -410,9 +384,9 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: GroupResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(GroupResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -423,7 +397,7 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeGroup(row), 200);
+    return c.json(ok(serializeGroup(row)), 200);
   },
 );
 
@@ -434,13 +408,16 @@ collectionRouter.openapi(
     tags: [TAG_GROUP],
     summary: "Delete a group (entries have their groupId set to null)",
     request: { params: GroupIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await collectionService.deleteGroup(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -459,9 +436,9 @@ collectionRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: EntryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(EntryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -472,7 +449,7 @@ collectionRouter.openapi(
       key,
       c.req.valid("json"),
     );
-    return c.json(serializeEntry(row), 201);
+    return c.json(ok(serializeEntry(row)), 201);
   },
 );
 
@@ -491,9 +468,9 @@ collectionRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: EntryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(EntryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -505,7 +482,7 @@ collectionRouter.openapi(
       key,
       body.entries,
     );
-    return c.json({ items: rows.map(serializeEntry) }, 201);
+    return c.json(ok({ items: rows.map(serializeEntry) }), 201);
   },
 );
 
@@ -519,16 +496,16 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: EntryListResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(EntryListResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await collectionService.listEntries(orgId, key);
-    return c.json({ items: rows.map(serializeEntry) }, 200);
+    return c.json(ok({ items: rows.map(serializeEntry) }), 200);
   },
 );
 
@@ -545,9 +522,9 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: EntryResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(EntryResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -558,7 +535,7 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeEntry(row), 200);
+    return c.json(ok(serializeEntry(row)), 200);
   },
 );
 
@@ -569,13 +546,16 @@ collectionRouter.openapi(
     tags: [TAG_ENTRY],
     summary: "Delete an entry (cascades to user unlocks)",
     request: { params: EntryIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await collectionService.deleteEntry(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -596,9 +576,9 @@ collectionRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: MilestoneResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(MilestoneResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -609,7 +589,7 @@ collectionRouter.openapi(
       key,
       c.req.valid("json"),
     );
-    return c.json(serializeMilestone(row), 201);
+    return c.json(ok(serializeMilestone(row)), 201);
   },
 );
 
@@ -624,17 +604,17 @@ collectionRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: MilestoneListResponseSchema },
+          "application/json": { schema: envelopeOf(MilestoneListResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const rows = await collectionService.listMilestones(orgId, key);
-    return c.json({ items: rows.map(serializeMilestone) }, 200);
+    return c.json(ok({ items: rows.map(serializeMilestone) }), 200);
   },
 );
 
@@ -653,9 +633,9 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: MilestoneResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(MilestoneResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -666,7 +646,7 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
-    return c.json(serializeMilestone(row), 200);
+    return c.json(ok(serializeMilestone(row)), 200);
   },
 );
 
@@ -677,13 +657,16 @@ collectionRouter.openapi(
     tags: [TAG_MILESTONE],
     summary: "Delete a milestone",
     request: { params: MilestoneIdParamSchema },
-    responses: { 204: { description: "Deleted" }, ...errorResponses },
+    responses: { 200: {
+        description: "Deleted",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      }, ...commonErrorResponses },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     await collectionService.deleteMilestone(orgId, id);
-    return c.body(null, 204);
+    return c.json(ok(null), 200);
   },
 );
 
@@ -699,16 +682,16 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: StatsResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(StatsResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
     const stats = await collectionService.getStats(orgId, key);
-    return c.json(stats, 200);
+    return c.json(ok(stats), 200);
   },
 );
 
@@ -727,9 +710,9 @@ collectionRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: SyncResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(SyncResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -741,6 +724,6 @@ collectionRouter.openapi(
       endUserId,
       albumKey: key,
     });
-    return c.json({ unlocked: entries.map((e) => e.id) }, 200);
+    return c.json(ok({ unlocked: entries.map((e) => e.id) }), 200);
   },
 );

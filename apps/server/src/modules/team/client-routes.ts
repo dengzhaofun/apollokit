@@ -11,18 +11,16 @@
  * body or query.
  */
 
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { createRoute } from "@hono/zod-openapi";
 
-import type { HonoEnv } from "../../env";
-import { ModuleError } from "../../lib/errors";
+import { makeApiRouter } from "../../lib/router";
+import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { teamService } from "./index";
 import {
   ConfigAliasQuerySchema,
   CreateTeamSchema,
-  ErrorResponseSchema,
   InvitationIdParamSchema,
   InvitationResponseSchema,
   InviteSchema,
@@ -116,47 +114,10 @@ function serializeInvitation(row: {
   };
 }
 
-const errorResponses = {
-  400: {
-    description: "Bad request",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  401: {
-    description: "Unauthorized",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  403: {
-    description: "Forbidden",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  404: {
-    description: "Not found",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-  409: {
-    description: "Conflict",
-    content: { "application/json": { schema: ErrorResponseSchema } },
-  },
-};
-
-export const teamClientRouter = new OpenAPIHono<HonoEnv>();
+export const teamClientRouter = makeApiRouter();
 
 teamClientRouter.use("*", requireClientCredential);
 teamClientRouter.use("*", requireClientUser);
-
-teamClientRouter.onError((err, c) => {
-  if (err instanceof ModuleError) {
-    return c.json(
-      {
-        error: err.message,
-        code: err.code,
-        requestId: c.get("requestId"),
-      },
-      err.httpStatus as ContentfulStatusCode,
-    );
-  }
-  throw err;
-});
 
 // POST /teams — create a new team
 teamClientRouter.openapi(
@@ -173,9 +134,9 @@ teamClientRouter.openapi(
     responses: {
       201: {
         description: "Created",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -184,7 +145,7 @@ teamClientRouter.openapi(
     const { configKey, metadata } = c.req.valid("json");
 
     const team = await teamService.createTeam(orgId, configKey, endUserId, metadata);
-    return c.json(serializeTeam(team), 201);
+    return c.json(ok(serializeTeam(team)), 201);
   },
 );
 
@@ -203,11 +164,11 @@ teamClientRouter.openapi(
         description: "OK (returns team or null)",
         content: {
           "application/json": {
-            schema: TeamResponseSchema.nullable(),
+            schema: envelopeOf(TeamResponseSchema.nullable()),
           },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -215,7 +176,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { configAlias } = c.req.valid("query");
     const team = await teamService.getMyTeam(orgId, configAlias, endUserId);
-    return c.json(team ? serializeTeam(team) : null, 200);
+    return c.json(ok(team ? serializeTeam(team) : null), 200);
   },
 );
 
@@ -230,16 +191,16 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const { id } = c.req.valid("param");
     const team = await teamService.getTeam(orgId, id);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -256,9 +217,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -266,7 +227,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.joinTeam(orgId, id, endUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -283,9 +244,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -293,7 +254,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.leaveTeam(orgId, id, endUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -310,9 +271,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -320,7 +281,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.dissolveTeam(orgId, id, endUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -337,9 +298,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -347,7 +308,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id, userId } = c.req.valid("param");
     const team = await teamService.kickMember(orgId, id, endUserId, userId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -367,9 +328,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -378,7 +339,7 @@ teamClientRouter.openapi(
     const { newLeaderUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.transferLeader(orgId, id, endUserId, newLeaderUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -398,9 +359,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -409,7 +370,7 @@ teamClientRouter.openapi(
     const { status } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.updateTeamStatus(orgId, id, endUserId, status);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -430,10 +391,10 @@ teamClientRouter.openapi(
       201: {
         description: "Created",
         content: {
-          "application/json": { schema: InvitationResponseSchema },
+          "application/json": { schema: envelopeOf(InvitationResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -442,7 +403,7 @@ teamClientRouter.openapi(
     const { toUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const inv = await teamService.inviteUser(orgId, id, endUserId, toUserId);
-    return c.json(serializeInvitation(inv), 201);
+    return c.json(ok(serializeInvitation(inv)), 201);
   },
 );
 
@@ -459,9 +420,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -469,7 +430,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const team = await teamService.acceptInvitation(orgId, id, endUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
 
@@ -487,10 +448,10 @@ teamClientRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: InvitationResponseSchema },
+          "application/json": { schema: envelopeOf(InvitationResponseSchema) },
         },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -498,7 +459,7 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { id } = c.req.valid("param");
     const inv = await teamService.rejectInvitation(orgId, id, endUserId);
-    return c.json(serializeInvitation(inv), 200);
+    return c.json(ok(serializeInvitation(inv)), 200);
   },
 );
 
@@ -515,9 +476,9 @@ teamClientRouter.openapi(
     responses: {
       200: {
         description: "OK",
-        content: { "application/json": { schema: TeamResponseSchema } },
+        content: { "application/json": { schema: envelopeOf(TeamResponseSchema) } },
       },
-      ...errorResponses,
+      ...commonErrorResponses,
     },
   }),
   async (c) => {
@@ -525,6 +486,6 @@ teamClientRouter.openapi(
     const endUserId = c.var.endUserId!;
     const { configAlias } = c.req.valid("query");
     const team = await teamService.quickMatch(orgId, configAlias, endUserId);
-    return c.json(serializeTeam(team), 200);
+    return c.json(ok(serializeTeam(team)), 200);
   },
 );
