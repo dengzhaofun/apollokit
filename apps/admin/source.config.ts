@@ -4,7 +4,6 @@ import {
   frontmatterSchema,
   metaSchema,
 } from 'fumadocs-mdx/config';
-import { remarkLLMs } from 'fumadocs-core/mdx-plugins/remark-llms';
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { z } from 'zod';
 
@@ -22,10 +21,13 @@ export const docs = defineDocs({
       // full: true 时不显示右侧 TOC(用于 landing 类页面)。
       full: z.boolean().optional(),
     }),
-    // remarkLLMs 把 MDX 编译后的纯 markdown 导出到 page.data._markdown,
-    // 驱动 /llms.txt、/llms-full.txt、每页 /docs-md/... 三个 LLM 端点。
-    mdxOptions: {
-      remarkPlugins: [remarkLLMs],
+    // 让 fumadocs-mdx 编译期把 MDX stringify 回纯 markdown,注入
+    // page.data._markdown,驱动 /llms.txt、/llms-full.txt、/docs-md/... 三个
+    // LLM 端点。这是官方推荐入口,内部会自动挂 remarkLLMs,不要再手动往
+    // mdxOptions.remarkPlugins 里塞——手塞会和默认 preset 顺序冲突导致
+    // _markdown 为空 / 默认 remark 链(gfm、shiki)被整个覆盖。
+    postprocess: {
+      includeProcessedMarkdown: {},
     },
   },
   meta: {

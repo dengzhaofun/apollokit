@@ -5,7 +5,8 @@
  */
 import { createFileRoute } from '@tanstack/react-router'
 import { llms } from 'fumadocs-core/source'
-import { source, i18n } from '#/lib/source'
+import { i18n } from '#/lib/source'
+import { source } from '#/lib/source-server'
 
 export const Route = createFileRoute('/llms.txt')({
   server: {

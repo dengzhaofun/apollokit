@@ -1,12 +1,15 @@
 /**
  * `/llms-full.txt` — 全库 Markdown 拼接,供 LLM 做全文 QA。
  *
- * remarkLLMs 插件把每页 MDX 编译成纯 markdown 并挂在 page.data._markdown
- * (见 apps/admin/source.config.ts)。本路由遍历所有页面,按 locale
- * 分组、按 URL 排序,用清晰的分隔符拼接。
+ * fumadocs-mdx 的 postprocess.includeProcessedMarkdown 在编译期把每页
+ * stringify 回纯 markdown,运行时通过 page.data.getText('processed') 取,
+ * 驱动这个端点(以及 /llms.txt、/docs-md/...)。
  */
 import { createFileRoute } from '@tanstack/react-router'
-import { source, i18n } from '#/lib/source'
+import { i18n } from '#/lib/source'
+import { source } from '#/lib/source-server'
+
+type DocData = { title?: string; getText?: (k: string) => Promise<string> | string }
 
 export const Route = createFileRoute('/llms-full.txt')({
   server: {
@@ -24,9 +27,9 @@ export const Route = createFileRoute('/llms-full.txt')({
           chunks.push(heading)
 
           for (const page of sorted) {
-            const data = page.data as { title?: string; _markdown?: string }
+            const data = page.data as DocData
             const title = data.title ?? page.slugs.join('/')
-            const md = data._markdown ?? ''
+            const md = data.getText ? await data.getText('processed') : ''
             chunks.push(
               `\n\n---\n\n## ${title}\n\nSource: ${page.url}\n\n${md}`,
             )
