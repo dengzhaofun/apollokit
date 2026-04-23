@@ -1,6 +1,7 @@
 import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
 import { Link, useLocation } from "@tanstack/react-router"
 import {
+  Activity,
   ArrowLeftRight,
   BookOpen,
   Building2,
@@ -15,6 +16,7 @@ import {
   Gift,
   KeyRound,
   LayoutDashboard,
+  LineChart,
   ListTodo,
   Medal,
   Megaphone,
@@ -24,7 +26,9 @@ import {
   MessagesSquare,
   Package,
   PartyPopper,
+  PieChart,
   PiggyBank,
+  ScrollText,
   Shield,
   ShoppingCart,
   Sparkles,
@@ -62,6 +66,10 @@ type NavItem = {
   title: () => string
   to:
     | "/dashboard"
+    | "/analytics/users"
+    | "/analytics/modules"
+    | "/analytics/activity"
+    | "/analytics/logs"
     | "/check-in"
     | "/item"
     | "/currency"
@@ -96,7 +104,14 @@ type NavItem = {
 }
 
 type NavGroup = {
-  key: "overview" | "economy" | "operations" | "content" | "social" | "system"
+  key:
+    | "overview"
+    | "analytics"
+    | "economy"
+    | "operations"
+    | "content"
+    | "social"
+    | "system"
   label: () => string
   items: NavItem[]
 }
@@ -108,6 +123,26 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_overview,
       items: [
         { title: m.nav_dashboard, to: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      // 数据分析组:分析"读"视角 — 数据大盘在 overview,深度分析(用户/模块/活动/日志)集中到这里
+      // 事件管理(schema / 订阅健康 / 回放)是"治理"视角,放在 system 组,不属于这里
+      key: "analytics",
+      label: m.nav_group_analytics,
+      items: [
+        { title: m.nav_user_analytics, to: "/analytics/users", icon: PieChart },
+        {
+          title: m.nav_module_analytics,
+          to: "/analytics/modules",
+          icon: LineChart,
+        },
+        {
+          title: m.nav_activity_analytics,
+          to: "/analytics/activity",
+          icon: Activity,
+        },
+        { title: m.nav_logs, to: "/analytics/logs", icon: ScrollText },
       ],
     },
     {
@@ -139,6 +174,9 @@ function getNavGroups(): NavGroup[] {
       ],
     },
     {
+      // 事件中心(event-catalog)原本挂在这里,现已迁到 system 组 —
+      // 因为后续要扩展"订阅者健康"、"事件回放"等平台治理能力,
+      // 和 api-keys / 组织设置属于同一个"基础设施治理"语义
       key: "content",
       label: m.nav_group_content,
       items: [
@@ -146,7 +184,6 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_dialogue, to: "/dialogue", icon: MessagesSquare },
         { title: m.nav_collection, to: "/collection", icon: BookOpen },
         { title: m.nav_level, to: "/level", icon: Map },
-        { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
       ],
     },
     {
@@ -172,6 +209,8 @@ function getNavGroups(): NavGroup[] {
           icon: Building2,
         },
         { title: m.nav_api_keys, to: "/api-keys", icon: KeyRound },
+        // 事件中心:事件 schema / 生产消费拓扑 / 订阅健康 / 回放(二期扩展)
+        { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
       ],
     },
   ]

@@ -288,6 +288,20 @@
       "when": 1776852808313,
       "tag": "0040_natural_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1776937035224,
+      "tag": "0041_short_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1776938593220,
+      "tag": "0042_slippery_santa_claus",
+      "breakpoints": true
     }
   ]
 }

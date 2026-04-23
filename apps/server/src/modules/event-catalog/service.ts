@@ -15,6 +15,7 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import type { EventCapability } from "../../lib/event-capability";
 import {
   getInternalEvent,
   listInternalEvents,
@@ -23,11 +24,13 @@ import { eventCatalogEntries } from "../../schema/event-catalog";
 
 import { EventCatalogNotFound, EventCatalogReadOnly } from "./errors";
 import { inferFields, mergeFields } from "./infer";
+import { PLATFORM_EVENTS } from "./platform-events";
 import {
   type CatalogEventView,
   type EventCatalogEntry,
   externalToView,
   internalToView,
+  platformToView,
 } from "./types";
 import type { EventFieldRow } from "../../schema/event-catalog";
 
@@ -123,10 +126,20 @@ export function createEventCatalogService(d: EventCatalogDeps) {
   }
 
   /**
-   * 列出所有事件 —— 内部 registry + 外部 DB 行按 name 去重合并。
-   * 内部优先（internal 覆盖 external 的同名行，如果有的话）。
+   * 列出所有事件 —— 合并 4 种数据源,按 name 去重(internal 优先覆盖 external
+   * 同名行;platform 的 name 约定不和业务事件冲突)。
+   *
+   * 支持按 capability 过滤:
+   *   - 不传:返回全量,admin 自己判断
+   *   - "task-trigger": 仅返回能路由到 task.processEvent 的事件
+   *   - "analytics":    仅返回进了 Tinybird 的事件(几乎是全量)
    */
-  async function listAll(organizationId: string): Promise<CatalogEventView[]> {
+  async function listAll(
+    organizationId: string,
+    opts: { capability?: EventCapability } = {},
+  ): Promise<CatalogEventView[]> {
+    const { capability } = opts;
+
     const internal = listInternalEvents().map(internalToView);
     const internalNames = new Set(internal.map((v) => v.name));
 
@@ -140,15 +153,24 @@ export function createEventCatalogService(d: EventCatalogDeps) {
       .filter((r) => !internalNames.has(r.eventName))
       .map(externalToView);
 
-    return [...internal, ...external];
+    const platform = PLATFORM_EVENTS.map(platformToView);
+
+    const merged = [...internal, ...external, ...platform];
+
+    if (!capability) return merged;
+    return merged.filter((v) => v.capabilities.includes(capability));
   }
 
   async function getOne(
     organizationId: string,
     eventName: string,
   ): Promise<CatalogEventView> {
+    // 查找顺序:internal registry → platform 静态 → external DB
     const internal = getInternalEvent(eventName);
     if (internal) return internalToView(internal);
+
+    const platform = PLATFORM_EVENTS.find((p) => p.name === eventName);
+    if (platform) return platformToView(platform);
 
     const rows = await db
       .select()
@@ -168,6 +190,8 @@ export function createEventCatalogService(d: EventCatalogDeps) {
   /**
    * admin 编辑外部事件的描述/字段。提交后 status 升级为 canonical。
    * 内部事件拒绝编辑（`EventCatalogReadOnly`）—— 要改请改代码。
+   * platform 事件同样拒绝 —— 静态声明的,要改请改 platform-events.ts。
+   * 外部事件的 capability 不可编辑(永远是 "task-trigger",见 externalToView)。
    */
   async function updateExternal(
     organizationId: string,
@@ -180,6 +204,11 @@ export function createEventCatalogService(d: EventCatalogDeps) {
     if (getInternalEvent(eventName)) {
       throw new EventCatalogReadOnly(
         "internal event, edit source code instead",
+      );
+    }
+    if (PLATFORM_EVENTS.some((p) => p.name === eventName)) {
+      throw new EventCatalogReadOnly(
+        "platform event, edit platform-events.ts instead",
       );
     }
 
@@ -204,11 +233,48 @@ export function createEventCatalogService(d: EventCatalogDeps) {
     return externalToView(row);
   }
 
+  /**
+   * 轻量级 capability 校验 —— 不必 listAll 全量拉回再过滤。典型调用方
+   * 是 task.createDefinition / updateDefinition,校验绑定的 eventName
+   * 确实是 `task-trigger` 能力的事件,避免"选了个 HTTP 路径名静默失败"。
+   *
+   * 查找顺序与 getOne 一致:internal → platform → external DB。
+   * 外部事件的 capability 永远是常量 `["task-trigger"]`(见 externalToView),
+   * 所以 DB 查询只判断"事件是否存在"。事件不存在时返回 `false`(**不抛**),
+   * 让调用方给出自己的语义化错误。
+   */
+  async function hasCapability(
+    organizationId: string,
+    eventName: string,
+    capability: EventCapability,
+  ): Promise<boolean> {
+    const internal = getInternalEvent(eventName);
+    if (internal) return internal.capabilities.includes(capability);
+
+    const platform = PLATFORM_EVENTS.find((p) => p.name === eventName);
+    if (platform) return platform.capabilities.includes(capability);
+
+    // External events: only existence check — their capability is constant.
+    const rows = await db
+      .select({ id: eventCatalogEntries.id })
+      .from(eventCatalogEntries)
+      .where(
+        and(
+          eq(eventCatalogEntries.organizationId, organizationId),
+          eq(eventCatalogEntries.eventName, eventName),
+        ),
+      )
+      .limit(1);
+    if (rows.length === 0) return false;
+    return capability === "task-trigger";
+  }
+
   return {
     recordExternalEvent,
     listAll,
     getOne,
     updateExternal,
+    hasCapability,
   };
 }
 

@@ -11,14 +11,26 @@ import {
 import { organization } from "./auth";
 
 /**
- * 外部事件 catalog。
+ * 外部事件 catalog —— 实际定位是"**task 消费的外部事件目录**"。
  *
- * 每个 (organizationId, eventName) 一行。首次被 `taskService.processEvent`
- * 收到时用字段推断写入 `status='inferred'`；admin 通过 PATCH 补充描述
- * 或修正字段类型后升级为 `status='canonical'`，之后字段不再被推断覆盖。
+ * 这张表里的事件生命周期:
+ *   1. 游戏服务端通过 `POST /api/client/task/events` 上报
+ *   2. `taskService.processEvent` 拿 eventData 累加 task 进度
+ *   3. 同步写这张表做字段推断(schema 记录给 admin 看),`status='inferred'`
+ *   4. admin 可以 PATCH 把描述 / 字段补完,升级为 `status='canonical'`
  *
- * 内部事件不写这张表 —— 内部事件走 `src/lib/event-registry.ts` 的 runtime
- * registry。这张表只存外部事件。
+ * **外部事件本体不进 Tinybird**(见 `task/service.ts` 的 processEvent —
+ * 只有 task 自己产生的 `task.progress_reported` 信号会写 analytics)。
+ * 所以这张表里的条目只服务于 task 触发,不服务数据分析。
+ * `capabilities` 字段曾短暂存在,后来移除 —— 因为外部事件的 capability
+ * 就是常量 `["task-trigger"]`,存库冗余。统一视图 `CatalogEventView.capabilities`
+ * 仍保留,由 `externalToView` 常量填充。
+ *
+ * TODO(任务后续): 考虑重命名为 `task_event_catalog` / `task_events`,
+ * 让表名更精确反映"唯一职责是 task 触发"。当前保留名字避免 import 大规模改动。
+ *
+ * 每个 (organizationId, eventName) 一行。内部事件不写这张表 —— 内部事件走
+ * `src/lib/event-registry.ts` 的 runtime registry。
  */
 
 /**

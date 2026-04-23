@@ -33,6 +33,7 @@ import {
   TaskAutoClaimOnly,
   TaskCategoryNotFound,
   TaskDefinitionNotFound,
+  TaskInvalidEventBinding,
   TaskInvalidInput,
   TaskNestingTooDeep,
   TaskNotAssignable,
@@ -418,6 +419,18 @@ export function createTaskService(
       }
     }
 
+    // Validate eventName is a bindable (task-trigger) event if provided.
+    // When `eventCatalog` dep is absent (unit tests that stub only { db }),
+    // fall open — the existing test suite doesn't simulate the catalog.
+    if (input.eventName && eventCatalog) {
+      const ok = await eventCatalog.hasCapability(
+        organizationId,
+        input.eventName,
+        "task-trigger",
+      );
+      if (!ok) throw new TaskInvalidEventBinding(input.eventName);
+    }
+
     try {
       const [row] = await db
         .insert(taskDefinitions)
@@ -510,6 +523,18 @@ export function createTaskService(
           );
         }
       }
+    }
+
+    // Validate the new eventName (if the caller is changing it) is a
+    // bindable (task-trigger) event. Skip if the patch is clearing it
+    // (null) or leaving it unchanged (undefined).
+    if (patch.eventName && eventCatalog) {
+      const ok = await eventCatalog.hasCapability(
+        organizationId,
+        patch.eventName,
+        "task-trigger",
+      );
+      if (!ok) throw new TaskInvalidEventBinding(patch.eventName);
     }
 
     const values: Partial<typeof taskDefinitions.$inferInsert> = {};

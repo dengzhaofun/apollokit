@@ -18,6 +18,7 @@ import {
   CatalogEventViewSchema,
   CatalogListResponseSchema,
   EventNameParamSchema,
+  ListEventCatalogQuerySchema,
   UpdateEventCatalogSchema,
 } from "./validators";
 
@@ -33,7 +34,9 @@ eventCatalogRouter.openapi(
     method: "get",
     path: "/",
     tags: [TAG],
-    summary: "List all events (internal + external) for the current org",
+    summary:
+      "List all events (internal + external + platform) for the current org, optionally filtered by capability",
+    request: { query: ListEventCatalogQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -46,7 +49,8 @@ eventCatalogRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const items = await eventCatalogService.listAll(orgId);
+    const { capability } = c.req.valid("query");
+    const items = await eventCatalogService.listAll(orgId, { capability });
     return c.json(ok({ items }), 200);
   },
 );
