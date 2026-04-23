@@ -3,6 +3,7 @@
 // re-export them here so drizzle picks them up.
 export * from "./announcement";
 export * from "./auth";
+export * from "./badge";
 export * from "./banner";
 export * from "./battle-pass";
 export * from "./cdkey";

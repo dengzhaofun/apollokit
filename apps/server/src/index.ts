@@ -21,6 +21,7 @@ import {
   announcementRouter,
   announcementClientRouter,
 } from "./modules/announcement";
+import { badgeRouter, badgeClientRouter } from "./modules/badge";
 import { bannerRouter, bannerClientRouter } from "./modules/banner";
 import {
   cdkeyRouter,
@@ -212,6 +213,7 @@ app.route("/health", health);
 // Admin routes — session or admin API key
 app.route("/api/analytics", analyticsRouter);
 app.route("/api/announcement", announcementRouter);
+app.route("/api/badge", badgeRouter);
 app.route("/api/banner", bannerRouter);
 app.route("/api/battle-pass", battlePassRouter);
 app.route("/api/cdkey", cdkeyRouter);
@@ -245,6 +247,7 @@ app.route("/api/rank", rankRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);
+app.route("/api/client/badge", badgeClientRouter);
 app.route("/api/client/banner", bannerClientRouter);
 app.route("/api/client/battle-pass", battlePassClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
