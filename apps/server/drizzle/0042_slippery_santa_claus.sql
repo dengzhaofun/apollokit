@@ -1,1 +1,0 @@
-ALTER TABLE "event_catalog_entries" DROP COLUMN "capabilities";

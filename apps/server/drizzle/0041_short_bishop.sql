@@ -1,1 +1,0 @@
-ALTER TABLE "event_catalog_entries" ADD COLUMN "capabilities" text[] DEFAULT ARRAY['task-trigger','analytics']::text[] NOT NULL;

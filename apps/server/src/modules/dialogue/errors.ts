@@ -102,3 +102,14 @@ export class DialogueUnknownReward extends ModuleError {
     this.name = "DialogueUnknownReward";
   }
 }
+
+export class DialogueUnknownCharacter extends ModuleError {
+  constructor(characterId: string) {
+    super(
+      "dialogue.unknown_character",
+      400,
+      `dialogue speaker references unknown character: ${characterId}`,
+    );
+    this.name = "DialogueUnknownCharacter";
+  }
+}

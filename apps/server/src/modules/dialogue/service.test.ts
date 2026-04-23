@@ -16,11 +16,13 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import { itemDefinitions, itemGrantLogs } from "../../schema/item";
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures";
+import { createCharacterService } from "../character/service";
 import { createItemService } from "../item/service";
 import { createDialogueService } from "./service";
 import type { DialogueNode } from "./types";
 
 const itemSvc = createItemService({ db });
+const characterSvc = createCharacterService({ db });
 const svc = createDialogueService({ db }, itemSvc);
 
 async function seedDefinition(orgId: string): Promise<string> {
@@ -347,5 +349,144 @@ describe("dialogue service — start/advance/reset", () => {
       svc.start(orgId, "u-whatever", "dormant"),
     ).rejects.toMatchObject({ code: "dialogue.script_inactive" });
     await svc.deleteScript(orgId, script.id);
+  });
+});
+
+// ─── character-backed speaker ───────────────────────────────────
+//
+// The character module lets authors reference a shared NPC row instead
+// of inlining name/avatar on every node. The dialogue service
+//  (a) validates the reference on write,
+//  (b) flattens name/avatarUrl into the client payload on read, pulled
+//      live from character_definitions so renaming takes effect
+//      immediately across every script that references it.
+
+describe("dialogue service — character-backed speakers", () => {
+  let orgId: string;
+  beforeAll(async () => {
+    orgId = await createTestOrg("dlg-character");
+  });
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  test("rejects unknown speaker.characterId on create", async () => {
+    const ghostId = crypto.randomUUID();
+    const nodes: DialogueNode[] = [
+      {
+        id: "start",
+        speaker: { characterId: ghostId, side: "left" },
+        content: "hi",
+      },
+    ];
+    await expect(
+      svc.createScript(orgId, {
+        alias: "bad-ref",
+        name: "bad-ref",
+        startNodeId: "start",
+        nodes,
+      }),
+    ).rejects.toMatchObject({ code: "dialogue.unknown_character" });
+  });
+
+  test("client payload surfaces the character's live name/avatar", async () => {
+    const chief = await characterSvc.createCharacter(orgId, {
+      alias: `chief-${crypto.randomUUID().slice(0, 6)}`,
+      name: "Village Chief",
+      avatarUrl: "https://cdn.example.com/chief-v1.png",
+    });
+
+    const alias = `chief-intro-${crypto.randomUUID().slice(0, 6)}`;
+    const nodes: DialogueNode[] = [
+      {
+        id: "start",
+        speaker: { characterId: chief.id, side: "left" },
+        content: "Welcome!",
+      },
+    ];
+    await svc.createScript(orgId, {
+      alias,
+      name: "chief-intro",
+      startNodeId: "start",
+      nodes,
+    });
+
+    const userId = `u-chief-${crypto.randomUUID().slice(0, 6)}`;
+    const first = await svc.start(orgId, userId, alias);
+    expect(first.currentNode?.speaker).toMatchObject({
+      name: "Village Chief",
+      avatarUrl: "https://cdn.example.com/chief-v1.png",
+      side: "left",
+    });
+    // characterId is authoring metadata — must NOT leak to the client.
+    expect(
+      (first.currentNode?.speaker as Record<string, unknown>).characterId,
+    ).toBeUndefined();
+
+    // Rename + re-avatar the character; the same script's next /start
+    // must reflect the change without any script edit.
+    await characterSvc.updateCharacter(orgId, chief.id, {
+      name: "Elder Chief",
+      avatarUrl: "https://cdn.example.com/chief-v2.png",
+    });
+    const second = await svc.start(orgId, userId, alias);
+    expect(second.currentNode?.speaker).toMatchObject({
+      name: "Elder Chief",
+      avatarUrl: "https://cdn.example.com/chief-v2.png",
+    });
+  });
+
+  test("inline speaker (no characterId) still works", async () => {
+    const alias = `inline-${crypto.randomUUID().slice(0, 6)}`;
+    const nodes: DialogueNode[] = [
+      {
+        id: "start",
+        speaker: { name: "System", side: "right" },
+        content: "Hello from narrator.",
+      },
+    ];
+    await svc.createScript(orgId, {
+      alias,
+      name: "inline",
+      startNodeId: "start",
+      nodes,
+    });
+    const view = await svc.start(orgId, `u-inline-${crypto.randomUUID()}`, alias);
+    expect(view.currentNode?.speaker).toEqual({
+      name: "System",
+      avatarUrl: undefined,
+      side: "right",
+    });
+  });
+
+  test("update that adds a new unknown characterId is also rejected", async () => {
+    const existing = await characterSvc.createCharacter(orgId, {
+      name: "Real",
+    });
+    const alias = `upd-${crypto.randomUUID().slice(0, 6)}`;
+    const created = await svc.createScript(orgId, {
+      alias,
+      name: "upd",
+      startNodeId: "start",
+      nodes: [
+        {
+          id: "start",
+          speaker: { characterId: existing.id, side: "left" },
+          content: "a",
+        },
+      ],
+    });
+    const ghostId = crypto.randomUUID();
+    await expect(
+      svc.updateScript(orgId, created.id, {
+        nodes: [
+          {
+            id: "start",
+            speaker: { characterId: ghostId, side: "left" },
+            content: "a",
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "dialogue.unknown_character" });
   });
 });

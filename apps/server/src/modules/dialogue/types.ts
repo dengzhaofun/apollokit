@@ -23,13 +23,30 @@ export type DialogueOption = {
 
 export type DialogueSpeakerSide = "left" | "right";
 
+/**
+ * Authored speaker. One of two shapes:
+ *   - `characterId` present → references `character_definitions.id`.
+ *     The dialogue service validates the id on every write and, on
+ *     read, pulls name/avatarUrl from the character row so renaming a
+ *     character updates all scripts that reference it.
+ *   - `characterId` absent → inline speaker (free-text name + avatar).
+ *     Kept for system/narration lines that don't warrant a character
+ *     entry and for backwards compatibility with scripts authored
+ *     before the character module existed.
+ *
+ * The validator enforces that one of `characterId` or `name` is present.
+ * `side` is always required.
+ */
+export type DialogueSpeaker = {
+  characterId?: string;
+  name?: string;
+  avatarUrl?: string;
+  side: DialogueSpeakerSide;
+};
+
 export type DialogueNode = {
   id: string;
-  speaker: {
-    name: string;
-    avatarUrl?: string;
-    side: DialogueSpeakerSide;
-  };
+  speaker: DialogueSpeaker;
   content: string;
   /**
    * Default next node when this node has no `options`. Omit to end the
@@ -56,13 +73,28 @@ export type DialogueTriggerCondition =
 // ─── Client-facing node view ────────────────────────────────────
 
 /**
+ * Flattened speaker delivered to the client. If the authored speaker
+ * carried a `characterId`, the service resolves it server-side and
+ * writes `name` / `avatarUrl` from the character row; the `characterId`
+ * itself is intentionally NOT exposed — the client shouldn't need it.
+ *
+ * Inline speakers (no `characterId`) pass through untouched.
+ */
+export type ClientDialogueSpeaker = {
+  name: string;
+  avatarUrl?: string;
+  side: DialogueSpeakerSide;
+};
+
+/**
  * Node payload returned to the client. Same shape as the authored node
  * minus `onEnter` (server-only — those rewards are granted server-side
- * before the response is sent, so the client doesn't need to know).
+ * before the response is sent, so the client doesn't need to know), and
+ * with the speaker flattened (see `ClientDialogueSpeaker`).
  */
 export type ClientDialogueNode = {
   id: string;
-  speaker: DialogueNode["speaker"];
+  speaker: ClientDialogueSpeaker;
   content: string;
   next?: string;
   options?: Array<Omit<DialogueOption, "rewards">>;

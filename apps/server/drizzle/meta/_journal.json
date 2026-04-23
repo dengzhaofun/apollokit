@@ -292,15 +292,8 @@
     {
       "idx": 41,
       "version": "7",
-      "when": 1776937035224,
-      "tag": "0041_short_bishop",
-      "breakpoints": true
-    },
-    {
-      "idx": 42,
-      "version": "7",
-      "when": 1776938593220,
-      "tag": "0042_slippery_santa_claus",
+      "when": 1776928641340,
+      "tag": "0041_tense_stephen_strange",
       "breakpoints": true
     }
   ]
