@@ -288,6 +288,13 @@
       "when": 1776852808313,
       "tag": "0040_natural_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1776928641340,
+      "tag": "0041_tense_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

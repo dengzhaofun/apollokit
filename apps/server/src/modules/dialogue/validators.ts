@@ -23,9 +23,33 @@ const NodeIdSchema = z
     message: "node id must be alphanumeric plus '-' or '_'",
   });
 
-const SpeakerSchema = z.object({
-  name: z.string().min(1).max(128),
-  avatarUrl: z.string().url().max(2048).optional(),
+/**
+ * Authored speaker. Either `characterId` (reference to
+ * character_definitions) or `name` (inline) must be present — one is
+ * required, both may coexist (e.g. override the character's display
+ * name for this line), but at least one must resolve to a non-empty
+ * display name.
+ */
+const SpeakerSchema = z
+  .object({
+    characterId: z.string().uuid().optional(),
+    name: z.string().min(1).max(128).optional(),
+    avatarUrl: z.string().url().max(2048).optional(),
+    side: z.enum(["left", "right"]),
+  })
+  .refine((s) => Boolean(s.characterId) || Boolean(s.name), {
+    message: "speaker must have either characterId or inline name",
+    path: ["name"],
+  });
+
+/**
+ * Shape of the speaker delivered on the client-side node view — server
+ * resolves `characterId` before serialization so `name` is always
+ * present on the wire.
+ */
+const ClientSpeakerSchema = z.object({
+  name: z.string(),
+  avatarUrl: z.string().optional(),
   side: z.enum(["left", "right"]),
 });
 
@@ -149,7 +173,7 @@ const ClientOptionSchema = z
 const ClientNodeSchema = z
   .object({
     id: z.string(),
-    speaker: SpeakerSchema,
+    speaker: ClientSpeakerSchema,
     content: z.string(),
     next: z.string().optional(),
     options: z.array(ClientOptionSchema).optional(),

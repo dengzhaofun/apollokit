@@ -11,13 +11,22 @@ export interface DialogueOption {
   rewards?: RewardEntry[]
 }
 
+/**
+ * Authored speaker. Either `characterId` (reference to a row in
+ * `/api/character/characters`) or `name` (inline) must be present.
+ * When both are set, inline `name`/`avatarUrl` override the character
+ * for this node only. `side` is always required.
+ */
+export interface DialogueSpeaker {
+  characterId?: string
+  name?: string
+  avatarUrl?: string
+  side: DialogueSpeakerSide
+}
+
 export interface DialogueNode {
   id: string
-  speaker: {
-    name: string
-    avatarUrl?: string
-    side: DialogueSpeakerSide
-  }
+  speaker: DialogueSpeaker
   content: string
   next?: string
   options?: DialogueOption[]

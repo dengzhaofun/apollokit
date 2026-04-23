@@ -26,6 +26,7 @@ import {
   cdkeyRouter,
   cdkeyClientRouter,
 } from "./modules/cdkey";
+import { characterRouter } from "./modules/character";
 import { checkInRouter, checkInClientRouter } from "./modules/check-in";
 import {
   clientCredentialRouter,
@@ -214,6 +215,7 @@ app.route("/api/announcement", announcementRouter);
 app.route("/api/banner", bannerRouter);
 app.route("/api/battle-pass", battlePassRouter);
 app.route("/api/cdkey", cdkeyRouter);
+app.route("/api/character", characterRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
 app.route("/api/end-user", endUserRouter);
