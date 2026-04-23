@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { FileStack, Plus, RotateCw, Webhook } from "lucide-react"
+import { FileStack, Plus, RotateCw } from "lucide-react"
 import { toast } from "sonner"
 
 import { ActivityTable } from "#/components/activity/ActivityTable"
@@ -31,12 +31,6 @@ function ActivityListPage() {
               {m.activity_action_templates()}
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/activity/webhooks">
-              <Webhook className="size-4" />
-              Webhook endpoints
-            </Link>
-          </Button>
           <WriteGate>
             <Button
               variant="outline"
@@ -49,7 +43,6 @@ function ActivityListPage() {
                     m.activity_tick_success({
                       advanced: r.advanced,
                       scheduleFired: r.scheduleFired,
-                      webhooksDelivered: r.webhooksDelivered,
                       errors: r.errors,
                     }),
                   )

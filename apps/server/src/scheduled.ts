@@ -9,8 +9,11 @@
  * Responsibilities per tick:
  *   1. Leaderboard settlement — close any cycleKey whose window has
  *      passed, write a snapshot row, and dispatch tier rewards.
- *   (Future phases will add: activity state advancement, activity
- *    schedule firing, webhook delivery retry, etc.)
+ *   2. Activity lifecycle advancement + schedule firing.
+ *   3. Assist-pool expiration.
+ *   4. Webhook delivery — pick up pending/failed rows whose backoff
+ *      has elapsed, POST to the subscriber, record outcome.
+ *   5. Webhook cleanup — sweep old succeeded/dead delivery rows.
  *
  * Failure isolation: each top-level task is wrapped in try/catch so a
  * single failing task does not abort the tick. Errors are logged and
@@ -21,6 +24,7 @@ import { requestContext } from "./lib/request-context";
 import { activityService } from "./modules/activity";
 import { assistPoolService } from "./modules/assist-pool";
 import { leaderboardService } from "./modules/leaderboard";
+import { webhooksService } from "./modules/webhooks";
 
 export type ScheduledEvent = {
   cron: string;
@@ -54,6 +58,16 @@ export async function scheduled(
     ctx.waitUntil(
       runTask("assist_pool.expireOverdue", () =>
         assistPoolService.expireOverdue({ now }),
+      ),
+    );
+    ctx.waitUntil(
+      runTask("webhooks.deliverPending", () =>
+        webhooksService.deliverPending(),
+      ),
+    );
+    ctx.waitUntil(
+      runTask("webhooks.cleanupOldDeliveries", () =>
+        webhooksService.cleanupOldDeliveries(),
       ),
     );
   });

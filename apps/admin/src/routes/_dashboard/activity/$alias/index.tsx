@@ -718,7 +718,6 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 <SelectItem value="emit_bus_event">emit_bus_event</SelectItem>
                 <SelectItem value="grant_reward">grant_reward</SelectItem>
                 <SelectItem value="broadcast_mail">broadcast_mail</SelectItem>
-                <SelectItem value="webhook_call">webhook_call</SelectItem>
               </SelectContent>
             </Select>
           </div>

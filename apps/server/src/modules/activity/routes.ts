@@ -24,7 +24,6 @@ import {
   CreateActivityTemplateBody,
   CreateNodeSchema,
   CreateScheduleSchema,
-  CreateWebhookEndpointBody,
   IdParam,
   JoinActivityBody,
   KeyParam,
@@ -593,7 +592,6 @@ activityRouter.openapi(
               .object({
                 advanced: z.number().int(),
                 scheduleFired: z.number().int(),
-                webhooksDelivered: z.number().int(),
                 errors: z.number().int(),
               })
               .openapi("ActivityTickResult"),)
@@ -606,64 +604,6 @@ activityRouter.openapi(
   async (c) => {
     const result = await activityService.tickDue({});
     return c.json(ok(result), 200);
-  },
-);
-
-// ─── Webhook endpoints ──────────────────────────────────────────
-
-activityRouter.openapi(
-  createAdminRoute({
-    method: "post",
-    path: "/webhook-endpoints",
-    tags: [TAG],
-    summary: "Create a webhook endpoint",
-    request: {
-      body: {
-        content: { "application/json": { schema: CreateWebhookEndpointBody } },
-      },
-    },
-    responses: {
-      201: {
-        description: "Created",
-        content: {
-          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
-        },
-      },
-      ...commonErrorResponses,
-    },
-  }),
-  async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
-    const body = c.req.valid("json");
-    const result = await activityService.createWebhookEndpoint(orgId, body);
-    return c.json(ok(result), 201);
-  },
-);
-
-activityRouter.openapi(
-  createAdminRoute({
-    method: "get",
-    path: "/webhook-endpoints",
-    tags: [TAG],
-    summary: "List webhook endpoints",
-    responses: {
-      200: {
-        description: "OK",
-        content: {
-          "application/json": {
-            schema: envelopeOf(z.object({
-              items: z.array(z.record(z.string(), z.unknown())),
-            }),)
-          },
-        },
-      },
-      ...commonErrorResponses,
-    },
-  }),
-  async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await activityService.listWebhookEndpoints(orgId);
-    return c.json(ok({ items: rows }), 200);
   },
 );
 
@@ -831,19 +771,3 @@ activityRouter.openapi(
   },
 );
 
-activityRouter.openapi(
-  createAdminRoute({
-    method: "delete",
-    path: "/webhook-endpoints/{id}",
-    tags: [TAG],
-    summary: "Delete a webhook endpoint",
-    request: { params: IdParam },
-    responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
-  }),
-  async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
-    const { id } = c.req.valid("param");
-    await activityService.deleteWebhookEndpoint(orgId, id);
-    return c.json(ok(null), 200);
-  },
-);

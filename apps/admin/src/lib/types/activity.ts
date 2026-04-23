@@ -30,7 +30,6 @@ export type NodeType =
 export type TriggerKind = "once_at" | "relative_offset" | "cron"
 
 export type ActionType =
-  | "webhook_call"
   | "emit_bus_event"
   | "grant_reward"
   | "broadcast_mail"
@@ -201,18 +200,6 @@ export interface ActivityViewForUser {
   }>
 }
 
-export interface WebhookEndpoint {
-  id: string
-  organizationId: string
-  alias: string
-  url: string
-  secret: string
-  enabled: boolean
-  retryPolicy: { maxAttempts: number; backoffBaseSeconds: number }
-  createdAt: string
-  updatedAt: string
-}
-
 export type ActivityTemplateDurationSpec = {
   teaseSeconds: number
   activeSeconds: number
@@ -291,14 +278,6 @@ export interface CreateActivityTemplateInput {
   schedulesBlueprint?: ActivityScheduleBlueprint[]
   autoPublish?: boolean
   enabled?: boolean
-}
-
-export interface CreateWebhookEndpointInput {
-  alias: string
-  url: string
-  secret: string
-  enabled?: boolean
-  retryPolicy?: { maxAttempts: number; backoffBaseSeconds: number }
 }
 
 export interface CreateScheduleInput {

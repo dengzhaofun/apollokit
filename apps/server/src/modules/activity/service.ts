@@ -42,8 +42,6 @@
  *
  *   - `cron`-kind schedules: nextFireAt recomputation
  *   - `set_flag` action
- *   - webhook_deliveries retry loop (scheduler exists, retry body does
- *     the HTTP call synchronously in MVP)
  *   - board_game / gacha kind handlers
  *   - activity → entity_instances cleanup (needs entity schema bump)
  *   - Unit tests (noted separately)
@@ -69,8 +67,6 @@ import {
   activityTemplates,
   activityUserProgress,
   activityUserRewards,
-  webhookDeliveries,
-  webhookEndpoints,
   type ActivityNodeBlueprint,
   type ActivityScheduleBlueprint,
   type ActivityTemplateDurationSpec,
@@ -965,68 +961,6 @@ export function createActivityService(
       };
     },
 
-    // ─── Webhook endpoints ──────────────────────────────────────
-
-    async createWebhookEndpoint(
-      organizationId: string,
-      input: {
-        alias: string;
-        url: string;
-        secret: string;
-        enabled?: boolean;
-        retryPolicy?: { maxAttempts: number; backoffBaseSeconds: number };
-      },
-    ) {
-      try {
-        const [row] = await db
-          .insert(webhookEndpoints)
-          .values({
-            organizationId,
-            alias: input.alias,
-            url: input.url,
-            secret: input.secret,
-            enabled: input.enabled ?? true,
-            retryPolicy:
-              input.retryPolicy ?? { maxAttempts: 5, backoffBaseSeconds: 60 },
-          })
-          .returning();
-        return row!;
-      } catch (err) {
-        if (isUniqueViolation(err)) {
-          throw new ActivityInvalidInput(
-            `webhook endpoint alias already in use: ${input.alias}`,
-          );
-        }
-        throw err;
-      }
-    },
-
-    async listWebhookEndpoints(organizationId: string) {
-      return db
-        .select()
-        .from(webhookEndpoints)
-        .where(eq(webhookEndpoints.organizationId, organizationId))
-        .orderBy(desc(webhookEndpoints.createdAt));
-    },
-
-    async deleteWebhookEndpoint(
-      organizationId: string,
-      id: string,
-    ): Promise<void> {
-      const deleted = await db
-        .delete(webhookEndpoints)
-        .where(
-          and(
-            eq(webhookEndpoints.id, id),
-            eq(webhookEndpoints.organizationId, organizationId),
-          ),
-        )
-        .returning({ id: webhookEndpoints.id });
-      if (deleted.length === 0) {
-        throw new ActivityInvalidInput(`webhook endpoint not found: ${id}`);
-      }
-    },
-
     // ─── Analytics ──────────────────────────────────────────────
 
     /**
@@ -1484,19 +1418,16 @@ export function createActivityService(
      *   1. Advance persisted status on any activity whose derived
      *      state differs.
      *   2. Fire matured schedules.
-     *   3. Deliver pending webhook_deliveries.
      */
     async tickDue(params: { now?: Date } = {}): Promise<{
       advanced: number;
       scheduleFired: number;
-      webhooksDelivered: number;
       templatesSpawned: number;
       errors: number;
     }> {
       const now = params.now ?? new Date();
       let advanced = 0;
       let scheduleFired = 0;
-      let webhooksDelivered = 0;
       let errors = 0;
 
       // ─── Pass 0 — spawn template instances ─────────────────────
@@ -1628,44 +1559,9 @@ export function createActivityService(
         }
       }
 
-      // ─── Pass 3 — deliver pending webhooks ───────────────────
-      const pending = await db
-        .select()
-        .from(webhookDeliveries)
-        .where(
-          and(
-            eq(webhookDeliveries.status, "pending"),
-            lte(webhookDeliveries.nextAttemptAt, now),
-          ),
-        )
-        .limit(50);
-
-      for (const w of pending) {
-        try {
-          // Atomic claim.
-          const [locked] = await db
-            .update(webhookDeliveries)
-            .set({ status: "in_flight" })
-            .where(
-              and(
-                eq(webhookDeliveries.id, w.id),
-                eq(webhookDeliveries.status, "pending"),
-              ),
-            )
-            .returning();
-          if (!locked) continue;
-          const delivered = await deliverWebhook(db, locked, now);
-          if (delivered) webhooksDelivered++;
-        } catch (err) {
-          errors++;
-          console.error(`[activity] webhook deliver failed id=${w.id}:`, err);
-        }
-      }
-
       return {
         advanced,
         scheduleFired,
-        webhooksDelivered,
         templatesSpawned,
         errors,
       };
@@ -1857,155 +1753,11 @@ async function fireSchedule(params: {
       break;
     }
 
-    case "webhook_call": {
-      const endpointAlias = cfg.endpointAlias as string | undefined;
-      if (!endpointAlias) {
-        console.warn(
-          `[activity] webhook_call without endpointAlias: schedule=${schedule.id}`,
-        );
-        break;
-      }
-      await db.insert(webhookDeliveries).values({
-        organizationId: schedule.organizationId,
-        endpointAlias,
-        eventName: "activity.schedule.fired",
-        payload: {
-          activityId: schedule.activityId,
-          scheduleAlias: schedule.alias,
-          firedAt: now.toISOString(),
-          ...cfg,
-        },
-        sourceScheduleId: schedule.id,
-        nextAttemptAt: now,
-      });
-      break;
-    }
-
     case "set_flag":
     default:
       console.warn(
         `[activity] action_type=${schedule.actionType} not implemented in MVP`,
       );
-  }
-}
-
-async function deliverWebhook(
-  db: AppDeps["db"],
-  delivery: {
-    id: string;
-    organizationId: string;
-    endpointAlias: string;
-    eventName: string;
-    payload: Record<string, unknown>;
-    attempt: number;
-  },
-  now: Date,
-): Promise<boolean> {
-  const endpointRows = await db
-    .select()
-    .from(webhookEndpoints)
-    .where(
-      and(
-        eq(webhookEndpoints.organizationId, delivery.organizationId),
-        eq(webhookEndpoints.alias, delivery.endpointAlias),
-        eq(webhookEndpoints.enabled, true),
-      ),
-    )
-    .limit(1);
-  const endpoint = endpointRows[0];
-  if (!endpoint) {
-    await db
-      .update(webhookDeliveries)
-      .set({
-        status: "failed_final",
-        lastError: "endpoint not found or disabled",
-      })
-      .where(eq(webhookDeliveries.id, delivery.id));
-    return false;
-  }
-
-  const body = JSON.stringify(delivery.payload);
-  const signature = await hmacHex(endpoint.secret, body);
-
-  try {
-    const res = await fetch(endpoint.url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-apollo-event": delivery.eventName,
-        "x-apollo-signature": `sha256=${signature}`,
-        "x-apollo-delivery-id": delivery.id,
-      },
-      body,
-    });
-    if (res.status >= 200 && res.status < 300) {
-      await db
-        .update(webhookDeliveries)
-        .set({
-          status: "succeeded",
-          lastStatusCode: res.status,
-          responseBodyPreview: await limitedText(res, 512),
-        })
-        .where(eq(webhookDeliveries.id, delivery.id));
-      return true;
-    }
-    throw new Error(`status ${res.status}`);
-  } catch (err) {
-    const nextAttempt = delivery.attempt + 1;
-    const maxAttempts =
-      (endpoint.retryPolicy as { maxAttempts?: number } | null | undefined)
-        ?.maxAttempts ?? 5;
-    if (nextAttempt >= maxAttempts) {
-      await db
-        .update(webhookDeliveries)
-        .set({
-          status: "failed_final",
-          attempt: nextAttempt,
-          lastError: (err as Error).message,
-        })
-        .where(eq(webhookDeliveries.id, delivery.id));
-      return false;
-    }
-    const backoffBase =
-      (endpoint.retryPolicy as { backoffBaseSeconds?: number } | null | undefined)
-        ?.backoffBaseSeconds ?? 60;
-    const wait = backoffBase * Math.pow(2, nextAttempt) * 1000;
-    await db
-      .update(webhookDeliveries)
-      .set({
-        status: "pending",
-        attempt: nextAttempt,
-        lastError: (err as Error).message,
-        nextAttemptAt: new Date(now.getTime() + wait),
-      })
-      .where(eq(webhookDeliveries.id, delivery.id));
-    return false;
-  }
-}
-
-async function hmacHex(secret: string, body: string): Promise<string> {
-  const keyBytes = new TextEncoder().encode(secret);
-  const bodyBytes = new TextEncoder().encode(body);
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyBytes,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, bodyBytes);
-  const bytes = new Uint8Array(sig);
-  let hex = "";
-  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
-  return hex;
-}
-
-async function limitedText(res: Response, limit: number): Promise<string> {
-  try {
-    const txt = await res.text();
-    return txt.slice(0, limit);
-  } catch {
-    return "";
   }
 }
 

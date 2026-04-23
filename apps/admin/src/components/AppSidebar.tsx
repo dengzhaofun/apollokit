@@ -39,6 +39,7 @@ import {
   Trophy,
   UserPlus,
   Users,
+  Webhook,
   type LucideIcon,
 } from "lucide-react"
 
@@ -104,6 +105,7 @@ type NavItem = {
     | "/api-keys"
     | "/organization-settings"
     | "/badge"
+    | "/webhooks"
   icon: LucideIcon
 }
 
@@ -217,6 +219,8 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_api_keys, to: "/api-keys", icon: KeyRound },
         // 事件中心:事件 schema / 生产消费拓扑 / 订阅健康 / 回放(二期扩展)
         { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
+        // Webhooks:让外部系统通过 HTTP 订阅内部事件,每组织最多 5 个端点
+        { title: m.nav_webhooks, to: "/webhooks", icon: Webhook },
       ],
     },
   ]

@@ -192,7 +192,7 @@ curl -X POST https://api.example.com/api/badge/preview \
 - **可水平拆分**:三表都是 (orgId, endUserId) 前缀主键,未来可按 orgId 分片
 - **无事务依赖**:所有写操作是单原子 UPSERT with `ON CONFLICT`,neon-http 无事务约束
 - **Redis cacheVersion**:MAX(updatedAt) 戳嵌入 KV key,写入自动失效,不需要 prefix delete
-- **Webhook 可选集成**:apollokit 平台已有 `webhook_endpoints` / `webhook_deliveries` 表,客户可订阅业务事件并自己决定是否调 `POST /api/badge/signal` —— **不属于本模块**
+- **Webhook 可选集成**:apollokit 平台已有 `webhooks_endpoints` / `webhooks_deliveries` 表(见 `src/modules/webhooks/`),客户可订阅业务事件并自己决定是否调 `POST /api/badge/signal` —— **不属于本模块**
 
 ## 路由总览
 

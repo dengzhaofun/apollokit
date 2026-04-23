@@ -8,7 +8,6 @@ import type {
   ActivityCurrency,
   ActivityMilestoneTier,
   ActivityNodeUnlockRule,
-  WebhookEndpoint,
 } from "../../schema/activity";
 
 export type {
@@ -21,7 +20,6 @@ export type {
   ActivityCurrency,
   ActivityMilestoneTier,
   ActivityNodeUnlockRule,
-  WebhookEndpoint,
 };
 
 export const ACTIVITY_KINDS = [
@@ -73,7 +71,6 @@ export const TRIGGER_KINDS = [
 export type TriggerKind = (typeof TRIGGER_KINDS)[number];
 
 export const ACTION_TYPES = [
-  "webhook_call",
   "emit_bus_event",
   "grant_reward",
   "broadcast_mail",

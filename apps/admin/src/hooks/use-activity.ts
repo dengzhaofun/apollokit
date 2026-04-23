@@ -11,9 +11,7 @@ import type {
   CreateActivityTemplateInput,
   CreateNodeInput,
   CreateScheduleInput,
-  CreateWebhookEndpointInput,
   UpdateActivityInput,
-  WebhookEndpoint,
 } from "#/lib/types/activity"
 
 const KEY = ["activities"] as const
@@ -175,39 +173,6 @@ export function useActivityForUser(activityKey: string, endUserId: string) {
   })
 }
 
-// ─── Webhook endpoints ─────────────────────────────────────────────
-
-const WEBHOOK_KEY = ["activity-webhooks"] as const
-
-export function useWebhookEndpoints() {
-  return useQuery({
-    queryKey: WEBHOOK_KEY,
-    queryFn: () =>
-      api.get<{ items: WebhookEndpoint[] }>(
-        "/api/activity/webhook-endpoints",
-      ),
-    select: (d) => d.items,
-  })
-}
-
-export function useCreateWebhookEndpoint() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateWebhookEndpointInput) =>
-      api.post<WebhookEndpoint>("/api/activity/webhook-endpoints", input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: WEBHOOK_KEY }),
-  })
-}
-
-export function useDeleteWebhookEndpoint() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) =>
-      api.delete(`/api/activity/webhook-endpoints/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: WEBHOOK_KEY }),
-  })
-}
-
 // ─── Templates (recurring activities) ─────────────────────────────
 
 const TEMPLATES_KEY = ["activity-templates"] as const
@@ -280,7 +245,6 @@ export function useActivityTickRun() {
       api.post<{
         advanced: number
         scheduleFired: number
-        webhooksDelivered: number
         errors: number
       }>("/api/activity/tick/run"),
     onSuccess: () => qc.invalidateQueries(),
