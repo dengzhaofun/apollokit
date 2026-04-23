@@ -47,6 +47,28 @@ export class TaskInvalidInput extends ModuleError {
   }
 }
 
+/**
+ * 抛出条件:`task.createDefinition` / `updateDefinition` 传入的 `eventName`
+ * 不在 event-catalog 的 `capability=task-trigger` 集合里(即该事件不会被
+ * EventBus 路由到 `task.processEvent`,绑定后永远不会触发)。
+ *
+ * 典型误用:把 HTTP 请求路径名(`http.request`)/ platform 事件 / analytics-only
+ * 内部事件(leaderboard.contributed 等)当成 eventName 绑到 task definition 上。
+ *
+ * 避免"绑错静默失败",所以在 admin API 入口就拒。错误消息里带一条引导 URL,
+ * 让 admin 直接看到合法事件清单。
+ */
+export class TaskInvalidEventBinding extends ModuleError {
+  constructor(eventName: string) {
+    super(
+      "task.invalid_event_binding",
+      400,
+      `eventName '${eventName}' is not a task-trigger event — see GET /api/event-catalog?capability=task-trigger for the valid set`,
+    );
+    this.name = "TaskInvalidEventBinding";
+  }
+}
+
 export class TaskNotCompleted extends ModuleError {
   constructor() {
     super("task.not_completed", 409, "task is not completed yet");
