@@ -255,21 +255,6 @@ export const CreateActivityTemplateBody = z
   })
   .openapi("ActivityTemplateCreate");
 
-export const CreateWebhookEndpointBody = z
-  .object({
-    alias: z.string().min(1).max(64).regex(AliasRegex),
-    url: z.string().url(),
-    secret: z.string().min(16).max(256),
-    enabled: z.boolean().default(true).optional(),
-    retryPolicy: z
-      .object({
-        maxAttempts: z.number().int().min(1).max(20),
-        backoffBaseSeconds: z.number().int().min(1).max(3600),
-      })
-      .optional(),
-  })
-  .openapi("CreateWebhookEndpoint");
-
 export const KeyParam = z.object({
   key: z.string().min(1).openapi({ param: { name: "key", in: "path" } }),
 });

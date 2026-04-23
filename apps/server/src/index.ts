@@ -106,6 +106,7 @@ import {
 } from "./modules/task";
 import { eventCatalogRouter } from "./modules/event-catalog";
 import { rankClientRouter, rankRouter } from "./modules/rank";
+import { webhooksRouter } from "./modules/webhooks";
 import { health } from "./routes/health";
 import { scheduled } from "./scheduled";
 
@@ -244,6 +245,7 @@ app.route("/api/activity", activityRouter);
 app.route("/api/assist-pool", assistPoolRouter);
 app.route("/api/event-catalog", eventCatalogRouter);
 app.route("/api/rank", rankRouter);
+app.route("/api/webhooks", webhooksRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);

@@ -6,7 +6,8 @@
  * `events.emit(type, payload)` after their primary write succeeds.
  *
  * This is deliberately NOT a durable queue. For cross-worker delivery or
- * persistent retry, use the webhook pathway with `webhook_deliveries`.
+ * persistent retry, use the webhooks module (`src/modules/webhooks/`),
+ * which owns its own `webhooks_deliveries` queue.
  * Use this bus only for side effects that are OK to miss on cold start.
  *
  * Extending the type map:

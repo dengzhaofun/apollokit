@@ -330,12 +330,14 @@ export const activityPointLogs = pgTable(
  *                         (or .end_at / .visible_at per `offsetFrom`)
  *   - `cron`            — (phase 3) repeatable via cron_expr
  *
- * Five `actionType`s (MVP supports the first four):
- *   - `webhook_call`    — HTTP POST to a configured webhook endpoint
+ * Four `actionType`s (MVP supports the first three):
  *   - `emit_bus_event`  — emit a local runtime event (in-worker)
  *   - `grant_reward`    — grant RewardEntry[] to all participants
  *   - `broadcast_mail`  — multicast a mail message to all participants
  *   - `set_flag`        — (phase 3) flip a flag in kind_metadata
+ *
+ * External webhook delivery has moved out of activity into a dedicated
+ * module; see `src/modules/webhooks/`.
  *
  * `nextFireAt` is the scheduler's pre-computed wake-up time. The cron
  * handler scans `enabled AND nextFireAt <= now` and fires everything
@@ -382,88 +384,6 @@ export const activitySchedules = pgTable(
     index("activity_schedules_due_idx")
       .on(table.enabled, table.nextFireAt)
       .where(sql`enabled = true`),
-  ],
-);
-
-/**
- * Webhook endpoints — one row per org-level delivery target.
- *
- * Shared across schedule dispatch today, open for other use-cases
- * later (e.g. lottery result pushes). Secrets are plain text for MVP;
- * a follow-up will re-use `lib/crypto.ts` to wrap at rest.
- */
-export const webhookEndpoints = pgTable(
-  "webhook_endpoints",
-  {
-    id: uuid("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
-      .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
-    alias: text("alias").notNull(),
-    url: text("url").notNull(),
-    secret: text("secret").notNull(),
-    enabled: boolean("enabled").default(true).notNull(),
-    retryPolicy: jsonb("retry_policy")
-      .$type<{ maxAttempts: number; backoffBaseSeconds: number }>()
-      .default({ maxAttempts: 5, backoffBaseSeconds: 60 })
-      .notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex("webhook_endpoints_org_alias_uidx").on(
-      table.organizationId,
-      table.alias,
-    ),
-  ],
-);
-
-/**
- * Webhook delivery queue — durable retry backing for `webhook_call`
- * schedule actions and any other webhook sender that needs at-least-once
- * semantics.
- *
- * Scan pattern: `status = 'pending' AND next_attempt_at <= now()`,
- * locked by an atomic `UPDATE ... SET status='in_flight' WHERE ...
- * RETURNING` to prevent two cron ticks double-delivering.
- */
-export const webhookDeliveries = pgTable(
-  "webhook_deliveries",
-  {
-    id: uuid("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
-    endpointAlias: text("endpoint_alias").notNull(),
-    eventName: text("event_name").notNull(),
-    payload: jsonb("payload")
-      .$type<Record<string, unknown>>()
-      .notNull(),
-    sourceScheduleId: uuid("source_schedule_id"),
-    attempt: integer("attempt").default(0).notNull(),
-    nextAttemptAt: timestamp("next_attempt_at").defaultNow().notNull(),
-    lastError: text("last_error"),
-    lastStatusCode: integer("last_status_code"),
-    status: text("status").default("pending").notNull(), // "pending"|"in_flight"|"succeeded"|"failed_final"
-    responseBodyPreview: text("response_body_preview"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("webhook_deliveries_due_idx")
-      .on(table.status, table.nextAttemptAt)
-      .where(sql`status in ('pending', 'in_flight')`),
-    index("webhook_deliveries_source_schedule_idx").on(
-      table.sourceScheduleId,
-    ),
   ],
 );
 
@@ -612,6 +532,4 @@ export type ActivityUserProgressRow =
 export type ActivityUserReward = typeof activityUserRewards.$inferSelect;
 export type ActivityPointLog = typeof activityPointLogs.$inferSelect;
 export type ActivitySchedule = typeof activitySchedules.$inferSelect;
-export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
-export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
 
