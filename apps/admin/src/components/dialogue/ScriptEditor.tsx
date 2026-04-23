@@ -16,6 +16,8 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
+import { useCharacters } from "#/hooks/use-character"
+import type { Character } from "#/lib/types/character"
 import type {
   CreateDialogueScriptInput,
   DialogueNode,
@@ -52,6 +54,9 @@ export function ScriptEditor({
   submitLabel,
   isPending,
 }: ScriptEditorProps) {
+  // Fetched once for the whole editor so every NodeCard's speaker
+  // picker shares the same list without N+1 round-trips.
+  const { data: characters } = useCharacters()
   const [alias, setAlias] = useState(initial?.alias ?? "")
   const [name, setName] = useState(initial?.name ?? "")
   const [description, setDescription] = useState(initial?.description ?? "")
@@ -92,6 +97,12 @@ export function ScriptEditor({
       if (!n.id) return m.dialogue_error_name_required()
       if (ids.has(n.id)) return m.dialogue_error_duplicate_node_id()
       ids.add(n.id)
+      // speaker must carry a characterId or an inline name — this is
+      // what the server validator enforces with .refine(), we mirror
+      // it client-side so submit doesn't bounce on a 400.
+      if (!n.speaker.characterId && !n.speaker.name?.trim()) {
+        return m.dialogue_error_name_required()
+      }
     }
     if (!ids.has(startNodeId)) return m.dialogue_error_start_node_invalid()
     for (const n of nodes) {
@@ -227,6 +238,7 @@ export function ScriptEditor({
               key={index}
               node={node}
               nodeIds={nodeIdOptions}
+              characters={characters ?? []}
               onChange={(patch) => updateNode(index, patch)}
               onRemove={() => removeNode(index)}
             />
@@ -250,21 +262,33 @@ export function ScriptEditor({
 interface NodeCardProps {
   node: DialogueNode
   nodeIds: string[]
+  characters: Character[]
   onChange: (patch: Partial<DialogueNode>) => void
   onRemove: () => void
 }
 
 const NEXT_NONE = "__none__"
+const SPEAKER_MODE_CHARACTER = "character"
+const SPEAKER_MODE_INLINE = "inline"
 
 function NodeCard({
   node,
   nodeIds,
+  characters,
   onChange,
   onRemove,
 }: NodeCardProps) {
   function updateOptions(next: DialogueOption[] | undefined) {
     onChange({ options: next })
   }
+
+  // Mode is derived from speaker shape, not stored separately — keeps
+  // the source of truth in one place and auto-adjusts if the speaker
+  // object is mutated by other code paths (e.g. paste-from-JSON in the
+  // future).
+  const speakerMode = node.speaker.characterId
+    ? SPEAKER_MODE_CHARACTER
+    : SPEAKER_MODE_INLINE
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
@@ -288,57 +312,157 @@ function NodeCard({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {m.dialogue_node_speaker_name()}
-          </Label>
-          <Input
-            value={node.speaker.name}
-            onChange={(e) =>
-              onChange({
-                speaker: { ...node.speaker, name: e.target.value },
-              })
-            }
-          />
+      {/* ── Speaker ────────────────────────────────────── */}
+      <div className="space-y-3 rounded-md border p-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="space-y-1">
+            <Label className="text-xs">
+              {m.dialogue_node_speaker_mode()}
+            </Label>
+            <Select
+              value={speakerMode}
+              onValueChange={(v) => {
+                if (v === SPEAKER_MODE_CHARACTER) {
+                  // Switching TO character mode: clear inline
+                  // name/avatar so the server-side flatten
+                  // unambiguously uses the character's current fields.
+                  onChange({
+                    speaker: {
+                      side: node.speaker.side,
+                      characterId: node.speaker.characterId,
+                    },
+                  })
+                } else {
+                  // Switching TO inline mode: drop the characterId
+                  // reference; seed name from whatever was shown.
+                  onChange({
+                    speaker: {
+                      side: node.speaker.side,
+                      name: node.speaker.name ?? "",
+                      avatarUrl: node.speaker.avatarUrl,
+                    },
+                  })
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SPEAKER_MODE_CHARACTER}>
+                  {m.dialogue_node_speaker_mode_character()}
+                </SelectItem>
+                <SelectItem value={SPEAKER_MODE_INLINE}>
+                  {m.dialogue_node_speaker_mode_inline()}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">
+              {m.dialogue_node_speaker_side()}
+            </Label>
+            <Select
+              value={node.speaker.side}
+              onValueChange={(v) =>
+                onChange({
+                  speaker: {
+                    ...node.speaker,
+                    side: v as DialogueSpeakerSide,
+                  },
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">{m.dialogue_side_left()}</SelectItem>
+                <SelectItem value="right">
+                  {m.dialogue_side_right()}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {m.dialogue_node_speaker_avatar()}
-          </Label>
-          <MediaPickerDialog
-            value={node.speaker.avatarUrl ?? null}
-            onChange={(url) =>
-              onChange({
-                speaker: {
-                  ...node.speaker,
-                  avatarUrl: url || undefined,
-                },
-              })
-            }
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {m.dialogue_node_speaker_side()}
-          </Label>
-          <Select
-            value={node.speaker.side}
-            onValueChange={(v) =>
-              onChange({
-                speaker: { ...node.speaker, side: v as DialogueSpeakerSide },
-              })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="left">{m.dialogue_side_left()}</SelectItem>
-              <SelectItem value="right">{m.dialogue_side_right()}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
+        {speakerMode === SPEAKER_MODE_CHARACTER ? (
+          <div className="space-y-1">
+            <Label className="text-xs">
+              {m.dialogue_node_speaker_character()}
+            </Label>
+            <Select
+              value={node.speaker.characterId ?? ""}
+              onValueChange={(v) =>
+                onChange({
+                  speaker: {
+                    ...node.speaker,
+                    characterId: v,
+                    // Pin the picker to one source — clear any inline
+                    // override the user may have previously entered.
+                    name: undefined,
+                    avatarUrl: undefined,
+                  },
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={m.dialogue_node_speaker_character_placeholder()}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {characters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                    {c.alias ? (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {c.alias}
+                      </span>
+                    ) : null}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {characters.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {m.dialogue_node_speaker_no_characters_tip()}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {m.dialogue_node_speaker_name()}
+              </Label>
+              <Input
+                value={node.speaker.name ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    speaker: { ...node.speaker, name: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {m.dialogue_node_speaker_avatar()}
+              </Label>
+              <MediaPickerDialog
+                value={node.speaker.avatarUrl ?? null}
+                onChange={(url) =>
+                  onChange({
+                    speaker: {
+                      ...node.speaker,
+                      avatarUrl: url || undefined,
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1">

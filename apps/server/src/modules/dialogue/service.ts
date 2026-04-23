@@ -70,6 +70,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { getTraceId } from "../../lib/request-context";
+import { characterDefinitions } from "../../schema/character";
 import { itemDefinitions, itemGrantLogs } from "../../schema/item";
 import {
   dialogueProgress,
@@ -87,10 +88,12 @@ import {
   DialogueScriptAliasConflict,
   DialogueScriptInactive,
   DialogueScriptNotFound,
+  DialogueUnknownCharacter,
   DialogueUnknownReward,
 } from "./errors";
 import type {
   ClientDialogueNode,
+  ClientDialogueSpeaker,
   DialogueNode,
   DialogueOption,
   DialogueProgress,
@@ -102,6 +105,18 @@ import type {
   CreateDialogueScriptInput,
   UpdateDialogueScriptInput,
 } from "./validators";
+
+/**
+ * Minimal view of a character row used when flattening speakers on the
+ * read path. Inlined so the dialogue service doesn't take a module-level
+ * dependency on character's service layer — we read the table directly,
+ * same style as the existing itemDefinitions reads for reward validation.
+ */
+type SpeakerCharacter = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+};
 
 // `analytics` optional: used to emit purely observational events
 // (dialogue.started / advanced / reset) direct-to-writer, bypassing the
@@ -124,12 +139,48 @@ function optionSourceId(
   return `${scriptId}:${endUserId}:${fromNodeId}:${optionId}`;
 }
 
-function toClientNode(node: DialogueNode): ClientDialogueNode {
+function resolveSpeaker(
+  authored: DialogueNode["speaker"],
+  characters: Map<string, SpeakerCharacter>,
+): ClientDialogueSpeaker {
+  if (authored.characterId) {
+    const char = characters.get(authored.characterId);
+    // Missing character at read time: fall back to whatever inline data
+    // the author provided. If nothing's there, surface the id so support
+    // can spot the dangling reference in the wild — the write path
+    // already enforces existence, so this branch only triggers when a
+    // character was deleted after the script was authored.
+    if (char) {
+      return {
+        name: authored.name ?? char.name,
+        avatarUrl: authored.avatarUrl ?? char.avatarUrl ?? undefined,
+        side: authored.side,
+      };
+    }
+    return {
+      name: authored.name ?? `character:${authored.characterId}`,
+      avatarUrl: authored.avatarUrl,
+      side: authored.side,
+    };
+  }
+  // Inline speaker — `name` is enforced by the validator when
+  // characterId is absent, so this `??` is belt-and-braces.
+  return {
+    name: authored.name ?? "",
+    avatarUrl: authored.avatarUrl,
+    side: authored.side,
+  };
+}
+
+function toClientNode(
+  node: DialogueNode,
+  characters: Map<string, SpeakerCharacter>,
+): ClientDialogueNode {
   const hasOptions = node.options && node.options.length > 0;
   const isTerminal = !hasOptions && !node.next;
   return {
     id: node.id,
-    speaker: node.speaker,
+    speaker: resolveSpeaker(node.speaker, characters),
     content: node.content,
     next: node.next,
     options: node.options?.map((o) => ({
@@ -140,6 +191,14 @@ function toClientNode(node: DialogueNode): ClientDialogueNode {
     })),
     isTerminal,
   };
+}
+
+function collectSpeakerCharacterIds(nodes: DialogueNode[]): string[] {
+  const ids = new Set<string>();
+  for (const n of nodes) {
+    if (n.speaker.characterId) ids.add(n.speaker.characterId);
+  }
+  return Array.from(ids);
 }
 
 function validateGraph(
@@ -248,6 +307,60 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     for (const id of ids) {
       if (!known.has(id)) throw new DialogueUnknownReward(id);
     }
+  }
+
+  /**
+   * Validate speaker.characterId references on a write path. Reads
+   * character_definitions directly rather than depending on
+   * characterService — mirrors the existing reward validation above,
+   * avoids a cross-module service handle for a single table read.
+   */
+  async function assertSpeakerCharactersExist(
+    organizationId: string,
+    nodes: DialogueNode[],
+  ): Promise<void> {
+    const ids = collectSpeakerCharacterIds(nodes);
+    if (ids.length === 0) return;
+    const rows = await db
+      .select({ id: characterDefinitions.id })
+      .from(characterDefinitions)
+      .where(
+        and(
+          eq(characterDefinitions.organizationId, organizationId),
+          inArray(characterDefinitions.id, ids),
+        ),
+      );
+    const known = new Set(rows.map((r) => r.id));
+    for (const id of ids) {
+      if (!known.has(id)) throw new DialogueUnknownCharacter(id);
+    }
+  }
+
+  /**
+   * Batch-fetch characters referenced by a script. Called once per
+   * /start, /advance, /reset response so the current node (and any
+   * history re-read) has a fresh view of each speaker.
+   */
+  async function loadCharactersForScript(
+    organizationId: string,
+    script: DialogueScript,
+  ): Promise<Map<string, SpeakerCharacter>> {
+    const ids = collectSpeakerCharacterIds(script.nodes);
+    if (ids.length === 0) return new Map();
+    const rows = await db
+      .select({
+        id: characterDefinitions.id,
+        name: characterDefinitions.name,
+        avatarUrl: characterDefinitions.avatarUrl,
+      })
+      .from(characterDefinitions)
+      .where(
+        and(
+          eq(characterDefinitions.organizationId, organizationId),
+          inArray(characterDefinitions.id, ids),
+        ),
+      );
+    return new Map(rows.map((r) => [r.id, r]));
   }
 
   async function loadScriptById(
@@ -367,9 +480,10 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     script: DialogueScript,
     progress: DialogueProgress,
     granted: DialogueRewardGrant[],
+    characters: Map<string, SpeakerCharacter>,
   ): DialogueSessionView {
     const currentNode = progress.currentNodeId
-      ? toClientNode(findNode(script, progress.currentNodeId))
+      ? toClientNode(findNode(script, progress.currentNodeId), characters)
       : null;
     return {
       scriptId: script.id,
@@ -390,6 +504,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     ): Promise<DialogueScript> {
       const nodes = input.nodes as DialogueNode[];
       validateGraph(input.startNodeId, nodes);
+      await assertSpeakerCharactersExist(organizationId, nodes);
       await assertRewardDefinitionsExist(organizationId, nodes);
 
       try {
@@ -435,6 +550,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       if (input.nodes !== undefined || input.startNodeId !== undefined) {
         validateGraph(mergedStart, mergedNodes);
         if (input.nodes !== undefined) {
+          await assertSpeakerCharactersExist(organizationId, mergedNodes);
           await assertRewardDefinitionsExist(organizationId, mergedNodes);
         }
       }
@@ -523,6 +639,9 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
 
       const startNode = findNode(script, script.startNodeId);
       const granted: DialogueRewardGrant[] = [];
+      // Pulled once per request so every speaker flatten in this call
+      // (current node, re-read fallbacks) sees the same snapshot.
+      const characters = await loadCharactersForScript(organizationId, script);
 
       // Upsert-first path: if a progress row exists, don't overwrite it.
       const existing = await loadProgress(
@@ -531,7 +650,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         script.id,
       );
       if (existing) {
-        return buildSessionView(script, existing, granted);
+        return buildSessionView(script, existing, granted, characters);
       }
 
       // Fresh start — insert; on unique-violation, re-read and return.
@@ -573,7 +692,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
           grantedCount: granted.length,
         });
 
-        return buildSessionView(script, row, granted);
+        return buildSessionView(script, row, granted, characters);
       } catch (err) {
         if (!isUniqueViolation(err)) throw err;
         const fallback = await loadProgress(
@@ -582,7 +701,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
           script.id,
         );
         if (!fallback) throw err;
-        return buildSessionView(script, fallback, granted);
+        return buildSessionView(script, fallback, granted, characters);
       }
     },
 
@@ -743,7 +862,8 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         grantedCount: granted.length,
       });
 
-      return buildSessionView(script, effectiveProgress, granted);
+      const characters = await loadCharactersForScript(organizationId, script);
+      return buildSessionView(script, effectiveProgress, granted, characters);
     },
 
     /**
@@ -789,7 +909,8 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         scriptAlias: script.alias,
       });
 
-      return buildSessionView(script, row, []);
+      const characters = await loadCharactersForScript(organizationId, script);
+      return buildSessionView(script, row, [], characters);
     },
   };
 }

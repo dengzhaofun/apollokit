@@ -9,6 +9,7 @@ import {
   Coins,
   Contact,
   Dices,
+  Drama,
   FolderOpen,
   HeartHandshake,
   GalleryHorizontal,
@@ -79,6 +80,7 @@ type NavItem = {
     | "/friend-gift"
     | "/task"
     | "/media-library"
+    | "/character"
     | "/dialogue"
     | "/collection"
     | "/level"
@@ -143,6 +145,7 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_content,
       items: [
         { title: m.nav_media_library, to: "/media-library", icon: FolderOpen },
+        { title: m.nav_character, to: "/character", icon: Drama },
         { title: m.nav_dialogue, to: "/dialogue", icon: MessagesSquare },
         { title: m.nav_collection, to: "/collection", icon: BookOpen },
         { title: m.nav_level, to: "/level", icon: Map },

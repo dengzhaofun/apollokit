@@ -6,6 +6,7 @@ export * from "./auth";
 export * from "./banner";
 export * from "./battle-pass";
 export * from "./cdkey";
+export * from "./character";
 export * from "./check-in";
 export * from "./client-credential";
 export * from "./end-user-auth";
