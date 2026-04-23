@@ -22,6 +22,7 @@ import {
   Medal,
   Megaphone,
   Radio,
+  Bell,
   Mail,
   Map,
   MessagesSquare,
@@ -102,6 +103,7 @@ type NavItem = {
     | "/end-user"
     | "/api-keys"
     | "/organization-settings"
+    | "/badge"
   icon: LucideIcon
 }
 
@@ -173,6 +175,7 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_assist_pool, to: "/assist-pool", icon: HeartHandshake },
         { title: m.nav_gift, to: "/friend-gift", icon: Gift },
         { title: m.nav_task, to: "/task", icon: ListTodo },
+        { title: m.nav_badge, to: "/badge", icon: Bell },
       ],
     },
     {
