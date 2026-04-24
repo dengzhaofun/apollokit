@@ -8,6 +8,10 @@
   --ak-glow-1: color-mix(in oklch, var(--ak-accent) 30%, transparent);
   --ak-glow-2: color-mix(in oklch, var(--ak-accent-2) 24%, transparent);
   --ak-glow-3: color-mix(in oklch, var(--ak-accent-3) 22%, transparent);
+  /* Clip stray horizontal overflow from decorative blurs/glows on mobile.
+     `clip` (unlike `hidden`) doesn't create a scroll container, so the
+     sticky TopNav keeps working. */
+  overflow-x: clip;
 }
 
 :is(.dark) .ak-landing {
