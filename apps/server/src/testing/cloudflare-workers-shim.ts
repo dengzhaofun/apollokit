@@ -35,6 +35,15 @@ export const env = {
   get INVITE_FROM_ADDRESS() {
     return process.env.INVITE_FROM_ADDRESS ?? "invites@localhost";
   },
+  get TINYBIRD_TOKEN() {
+    return process.env.TINYBIRD_TOKEN!;
+  },
+  get TINYBIRD_URL() {
+    return process.env.TINYBIRD_URL!;
+  },
+  get TINYBIRD_WORKSPACE_ID() {
+    return process.env.TINYBIRD_WORKSPACE_ID!;
+  },
   // EMAIL binding is intentionally omitted — tests run against a
   // real Neon branch but never through a real Email Service. The
   // mailer falls back to `console.log` when this is undefined, which

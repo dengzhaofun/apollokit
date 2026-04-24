@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectOk } from "../../testing/envelope";
 import { eventCatalogService } from "./index";
 
 const ORIGIN = "http://localhost:8787";
@@ -101,17 +102,13 @@ describe("event-catalog routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: {
-        items: Array<{ name: string; source: string; owner: string | null }>;
-      };
-    };
-    const lc = env.data.items.find((i) => i.name === "level.cleared");
+    const data = await expectOk<{
+      items: Array<{ name: string; source: string; owner: string | null }>;
+    }>(res);
+    const lc = data.items.find((i) => i.name === "level.cleared");
     expect(lc).toBeDefined();
     expect(lc!.source).toBe("internal");
     expect(lc!.owner).toBe("level");
-    expect(env.code).toBe("ok");
   });
 
   test("GET /api/event-catalog/:name returns a single internal event", async () => {
@@ -119,17 +116,14 @@ describe("event-catalog routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: {
-        name: string;
-        source: string;
-        fields: Array<{ path: string }>;
-      };
-    };
-    expect(env.data.name).toBe("level.cleared");
-    expect(env.data.source).toBe("internal");
-    expect(env.data.fields.map((f) => f.path)).toContain("stars");
+    const data = await expectOk<{
+      name: string;
+      source: string;
+      fields: Array<{ path: string }>;
+    }>(res);
+    expect(data.name).toBe("level.cleared");
+    expect(data.source).toBe("internal");
+    expect(data.fields.map((f) => f.path)).toContain("stars");
   });
 
   test("GET /api/event-catalog/:name 404 for unknown external event", async () => {
@@ -169,17 +163,14 @@ describe("event-catalog routes", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: {
-        status: string;
-        description: string;
-        fields: Array<{ path: string; required: boolean }>;
-      };
-    };
-    expect(env.data.status).toBe("canonical");
-    expect(env.data.description).toBe("User signed in");
-    expect(env.data.fields[0]).toEqual({
+    const data = await expectOk<{
+      status: string;
+      description: string;
+      fields: Array<{ path: string; required: boolean }>;
+    }>(res);
+    expect(data.status).toBe("canonical");
+    expect(data.description).toBe("User signed in");
+    expect(data.fields[0]).toEqual({
       path: "ts",
       type: "number",
       required: true,

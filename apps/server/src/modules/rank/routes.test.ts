@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -158,7 +159,11 @@ describe("rank admin routes — tier config CRUD happy path", () => {
       }),
     });
     expect(createRes.status).toBe(201);
-    const created = (await createRes.json()) as { id: string; alias: string; tiers: unknown[] };
+    const created = await expectOk<{
+      id: string;
+      alias: string;
+      tiers: unknown[];
+    }>(createRes);
     expect(created.alias).toBe("route_cfg");
     expect(created.tiers).toHaveLength(2);
 
@@ -166,7 +171,7 @@ describe("rank admin routes — tier config CRUD happy path", () => {
       headers: { cookie: fx.cookie },
     });
     expect(listRes.status).toBe(200);
-    const list = (await listRes.json()) as { items: Array<{ alias: string }> };
+    const list = await expectOk<{ items: Array<{ alias: string }> }>(listRes);
     expect(list.items.some((i) => i.alias === "route_cfg")).toBe(true);
 
     const getRes = await app.request("/api/rank/tier-configs/route_cfg", {
@@ -204,7 +209,7 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(cfg.status).toBe(201);
-    const cfgBody = (await cfg.json()) as { id: string };
+    const cfgBody = await expectOk<{ id: string }>(cfg);
 
     const season = await app.request("/api/rank/seasons", {
       method: "POST",
@@ -218,7 +223,7 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(season.status).toBe(201);
-    const seasonBody = (await season.json()) as { id: string };
+    const seasonBody = await expectOk<{ id: string }>(season);
     seasonId = seasonBody.id;
 
     const activate = await app.request(
@@ -251,17 +256,14 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: {
-        matchId: string;
-        alreadySettled: boolean;
-        participants: Array<{ endUserId: string; mmrAfter: number }>;
-      };
-    };
-    expect(env.data.alreadySettled).toBe(false);
-    expect(env.data.participants).toHaveLength(2);
-    const winner = env.data.participants.find((p) => p.endUserId === "route-a")!;
+    const data = await expectOk<{
+      matchId: string;
+      alreadySettled: boolean;
+      participants: Array<{ endUserId: string; mmrAfter: number }>;
+    }>(res);
+    expect(data.alreadySettled).toBe(false);
+    expect(data.participants).toHaveLength(2);
+    const winner = data.participants.find((p) => p.endUserId === "route-a")!;
     expect(winner.mmrAfter).toBeGreaterThan(1000);
   });
 
@@ -279,7 +281,7 @@ describe("rank admin routes — /settle end-to-end", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as { code: string; data: { alreadySettled: boolean } };
-    expect(env.data.alreadySettled).toBe(true);
+    const data = await expectOk<{ alreadySettled: boolean }>(res);
+    expect(data.alreadySettled).toBe(true);
   });
 });

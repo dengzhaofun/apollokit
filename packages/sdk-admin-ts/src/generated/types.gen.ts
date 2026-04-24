@@ -120,6 +120,192 @@ export type ApiNullEnvelope = {
     requestId: string;
 };
 
+export type BadgeNodeList = {
+    items: Array<BadgeNode>;
+};
+
+export type BadgeNodeCreateRequest = {
+    key: string;
+    parentKey?: string | null;
+    displayType: 'dot' | 'number' | 'new' | 'hot' | 'exclamation' | 'gift';
+    displayLabelKey?: string | null;
+    signalMatchMode: 'exact' | 'prefix' | 'none';
+    signalKey?: string | null;
+    signalKeyPrefix?: string | null;
+    aggregation?: 'sum' | 'any' | 'max' | 'none';
+    dismissMode?: 'auto' | 'manual' | 'version' | 'daily' | 'session' | 'cooldown';
+    dismissConfig?: {
+        [key: string]: unknown;
+    } | null;
+    visibilityRule?: {
+        [key: string]: unknown;
+    } | null;
+    sortOrder?: number;
+    isEnabled?: boolean;
+};
+
+export type BadgeNode = {
+    id: string;
+    organizationId: string;
+    key: string;
+    parentKey: string | null;
+    displayType: string;
+    displayLabelKey: string | null;
+    signalMatchMode: string;
+    signalKey: string | null;
+    signalKeyPrefix: string | null;
+    aggregation: string;
+    dismissMode: string;
+    dismissConfig: {
+        [key: string]: unknown;
+    } | null;
+    visibilityRule: {
+        [key: string]: unknown;
+    } | null;
+    sortOrder: number;
+    isEnabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type BadgeNodeUpdateRequest = {
+    parentKey?: string | null;
+    displayType?: 'dot' | 'number' | 'new' | 'hot' | 'exclamation' | 'gift';
+    displayLabelKey?: string | null;
+    signalMatchMode?: 'exact' | 'prefix' | 'none';
+    signalKey?: string | null;
+    signalKeyPrefix?: string | null;
+    aggregation?: 'sum' | 'any' | 'max' | 'none';
+    dismissMode?: 'auto' | 'manual' | 'version' | 'daily' | 'session' | 'cooldown';
+    dismissConfig?: {
+        [key: string]: unknown;
+    } | null;
+    visibilityRule?: {
+        [key: string]: unknown;
+    } | null;
+    sortOrder?: number;
+    isEnabled?: boolean;
+};
+
+export type BadgeValidateTreeResponse = {
+    valid: boolean;
+    errors: Array<{
+        kind: 'cycle' | 'dangling_parent' | 'invalid_binding';
+        nodeKey: string;
+        message: string;
+    }>;
+};
+
+export type BadgeTemplateList = {
+    templates: Array<{
+        id: string;
+        label: string;
+        description: string;
+        displayType: string;
+        aggregation: string;
+        dismissMode: string;
+        signalMatchMode: string;
+        requires: Array<'signalKey' | 'signalKeyPrefix'>;
+    }>;
+};
+
+export type BadgeFromTemplateInput = {
+    templateId: string;
+    key: string;
+    parentKey?: string | null;
+    displayLabelKey?: string | null;
+    signalKey?: string | null;
+    signalKeyPrefix?: string | null;
+    sortOrder?: number;
+};
+
+export type BadgeSignalInput = {
+    endUserId: string;
+    signalKey: string;
+    mode: 'set' | 'add' | 'clear';
+    count?: number;
+    version?: string | null;
+    meta?: {
+        [key: string]: unknown;
+    } | null;
+    tooltipKey?: string | null;
+    expiresAt?: string | null;
+};
+
+export type BadgeSignalWriteResult = {
+    endUserId: string;
+    signalKey: string;
+    count: number;
+    version: string | null;
+    firstAppearedAt: string | null;
+    updatedAt: string;
+};
+
+export type BadgeSignalBatchInput = {
+    inputs: Array<BadgeSignalInput>;
+};
+
+export type BadgeSignalBatchResult = {
+    results: Array<BadgeSignalWriteResult>;
+};
+
+export type BadgePreviewInput = {
+    endUserId: string;
+    rootKey?: string | null;
+    explain?: boolean;
+};
+
+export type BadgePreviewResponse = {
+    rootKey: string | null;
+    serverTimestamp: string;
+    nodes: Array<BadgeTreeNode>;
+    rawSignals: Array<{
+        signalKey: string;
+        count: number;
+        version: string | null;
+        firstAppearedAt: string | null;
+        expiresAt: string | null;
+        meta: {
+            [key: string]: unknown;
+        } | null;
+        updatedAt: string;
+    }>;
+    rawDismissals: Array<{
+        nodeKey: string;
+        dismissedAt: string;
+        dismissedVersion: string | null;
+        periodKey: string | null;
+        sessionId: string | null;
+    }>;
+};
+
+export type BadgeSignalRegistryList = {
+    items: Array<BadgeSignalRegistryEntry>;
+};
+
+export type BadgeSignalRegistryUpsert = {
+    keyPattern: string;
+    isDynamic?: boolean;
+    label: string;
+    description?: string | null;
+    exampleMeta?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type BadgeSignalRegistryEntry = {
+    organizationId: string;
+    keyPattern: string;
+    isDynamic: boolean;
+    label: string;
+    description: string | null;
+    exampleMeta: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type BannerGroupList = {
     items: Array<BannerGroup>;
 };
@@ -253,6 +439,121 @@ export type BannerUpdateRequest = {
     metadata?: {
         [key: string]: unknown;
     } | null;
+};
+
+export type BattlePassCreateConfig = {
+    activityId: string;
+    code: string;
+    name: string;
+    description?: string | null;
+    maxLevel: number;
+    levelCurve: BattlePassLevelCurve;
+    tiers: Array<BattlePassTier>;
+    levelRewards: Array<BattlePassLevelReward>;
+    bonusMilestones?: Array<BattlePassBonusMilestone>;
+    allowLevelPurchase?: boolean;
+    levelPurchasePriceSku?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type BattlePassConfig = {
+    id: string;
+    organizationId: string;
+    activityId: string;
+    code: string;
+    name: string;
+    description: string | null;
+    maxLevel: number;
+    levelCurve: BattlePassLevelCurve;
+    tiers: Array<BattlePassTier>;
+    levelRewards: Array<BattlePassLevelReward>;
+    bonusMilestones: Array<BattlePassBonusMilestone>;
+    allowLevelPurchase: boolean;
+    levelPurchasePriceSku: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type BattlePassConfigList = {
+    items: Array<BattlePassConfig>;
+};
+
+export type BattlePassUpdateConfig = {
+    name?: string;
+    description?: string | null;
+    maxLevel?: number;
+    levelCurve?: BattlePassLevelCurve;
+    tiers?: Array<BattlePassTier>;
+    levelRewards?: Array<BattlePassLevelReward>;
+    bonusMilestones?: Array<BattlePassBonusMilestone>;
+    allowLevelPurchase?: boolean;
+    levelPurchasePriceSku?: string | null;
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type BattlePassBindTasks = {
+    bindings: Array<{
+        taskDefinitionId: string;
+        xpReward: number;
+        category: 'daily' | 'weekly' | 'season' | 'event';
+        weekIndex?: number | null;
+        sortOrder?: number;
+    }>;
+};
+
+export type BattlePassSeasonTaskList = {
+    items: Array<BattlePassSeasonTask>;
+};
+
+export type BattlePassGrantTier = {
+    endUserId: string;
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    tierCode: string;
+    source: 'purchase' | 'admin_grant' | 'compensation' | 'promo_code';
+    externalOrderId?: string | null;
+};
+
+export type BattlePassGrantTierOutcome = {
+    idempotent: boolean;
+    ownedTiers: Array<string>;
+};
+
+export type BattlePassAggregateView = {
+    season: {
+        id: string;
+        code: string;
+        name: string;
+        maxLevel: number;
+        tiers: Array<BattlePassTier>;
+        levelCurve: BattlePassLevelCurve;
+    };
+    progress: {
+        currentXp: number;
+        currentLevel: number;
+        xpToNextLevel: number | null;
+        ownedTiers: Array<string>;
+    };
+    claimable: Array<{
+        level: number;
+        tierCode: string;
+        rewardEntries: Array<RewardEntry>;
+    }>;
+    taskBindings: Array<{
+        taskDefinitionId: string;
+        xpReward: number;
+        category: 'daily' | 'weekly' | 'season' | 'event';
+        weekIndex: number | null;
+        sortOrder: number;
+    }>;
 };
 
 export type CdkeyCreateBatch = {
@@ -401,6 +702,57 @@ export type CdkeyRedeemResult = {
         count: number;
     }>;
     logId: string;
+};
+
+export type CharacterList = {
+    items: Array<Character>;
+};
+
+export type CharacterCreateRequest = {
+    alias?: string | null;
+    name: string;
+    description?: string | null;
+    avatarUrl?: string | null;
+    portraitUrl?: string | null;
+    defaultSide?: 'left' | 'right' | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type Character = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    avatarUrl: string | null;
+    portraitUrl: string | null;
+    defaultSide: 'left' | 'right' | null;
+    isActive: boolean;
+    metadata?: unknown;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type CharacterUpdateRequest = {
+    alias?: string | null;
+    name?: string;
+    description?: string | null;
+    avatarUrl?: string | null;
+    portraitUrl?: string | null;
+    defaultSide?: 'left' | 'right' | null;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 export type CheckInCreateConfig = {
@@ -1115,7 +1467,8 @@ export type DialogueScriptCreateRequest = {
     nodes: Array<{
         id: string;
         speaker: {
-            name: string;
+            characterId?: string;
+            name?: string;
             avatarUrl?: string;
             side: 'left' | 'right';
         };
@@ -1190,7 +1543,8 @@ export type DialogueScriptUpdateRequest = {
     nodes?: Array<{
         id: string;
         speaker: {
-            name: string;
+            characterId?: string;
+            name?: string;
             avatarUrl?: string;
             side: 'left' | 'right';
         };
@@ -4257,6 +4611,7 @@ export type ActivityCreate = {
     metadata?: {
         [key: string]: unknown;
     } | null;
+    membership?: ActivityMembershipConfig;
 };
 
 export type Activity = {
@@ -4315,6 +4670,7 @@ export type Activity = {
     metadata: {
         [key: string]: unknown;
     } | null;
+    membership: ActivityMembershipConfig;
     createdAt: string;
     updatedAt: string;
 };
@@ -4369,6 +4725,7 @@ export type ActivityUpdate = {
     metadata?: {
         [key: string]: unknown;
     } | null;
+    membership?: ActivityMembershipConfig;
 };
 
 export type ActivityPublishAction = {
@@ -4414,7 +4771,7 @@ export type ActivityCreateSchedule = {
     offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'reward_end_at' | 'hidden_at' | null;
     offsetSeconds?: number | null;
     cronExpr?: string | null;
-    actionType: 'webhook_call' | 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
+    actionType: 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
     actionConfig?: {
         [key: string]: unknown;
     };
@@ -4423,6 +4780,34 @@ export type ActivityCreateSchedule = {
 
 export type ActivityJoin = {
     endUserId: string;
+};
+
+export type ActivityJoinResult = {
+    id: string;
+    activityId: string;
+    endUserId: string;
+    status: 'joined' | 'completed' | 'dropped' | 'left';
+    joinedAt: string;
+    lastActiveAt: string;
+    activityPoints: number;
+    queueNumber: string | null;
+    queueNumberUsedAt: string | null;
+    leftAt: string | null;
+};
+
+export type ActivityLeave = {
+    endUserId: string;
+};
+
+export type ActivityMemberList = {
+    items: Array<ActivityMember>;
+    nextCursor: string | null;
+};
+
+export type ActivityRedeemQueueResult = {
+    endUserId: string;
+    queueNumber: string;
+    usedAt: string;
 };
 
 export type ActivityAddPoints = {
@@ -4440,19 +4825,7 @@ export type ActivityClaimMilestone = {
 export type ActivityTickResult = {
     advanced: number;
     scheduleFired: number;
-    webhooksDelivered: number;
     errors: number;
-};
-
-export type CreateWebhookEndpoint = {
-    alias: string;
-    url: string;
-    secret: string;
-    enabled?: boolean;
-    retryPolicy?: {
-        maxAttempts: number;
-        backoffBaseSeconds: number;
-    };
 };
 
 export type ActivityAnalytics = {
@@ -4520,7 +4893,7 @@ export type ActivityTemplateCreate = {
         offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'reward_end_at' | 'hidden_at';
         offsetSeconds?: number;
         cronExpr?: string;
-        actionType: 'webhook_call' | 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
+        actionType: 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
         actionConfig?: {
             [key: string]: unknown;
         };
@@ -4661,16 +5034,20 @@ export type AssistPoolContributeResult = {
     rewards: Array<AssistPoolRewardItem> | null;
 };
 
+export type EventCapability = 'task-trigger' | 'analytics';
+
 export type CatalogEventList = {
     items: Array<CatalogEventView>;
 };
 
 export type CatalogEventView = {
     name: string;
-    source: 'internal' | 'external';
+    kind: EventKind;
+    source: 'internal' | 'external' | 'platform';
     owner: string | null;
     description: string | null;
     fields: Array<EventCatalogFieldRow>;
+    capabilities: Array<EventCapability>;
     status: 'inferred' | 'canonical' | null;
     lastSeenAt: string | null;
     sampleEventData: {
@@ -5004,12 +5381,87 @@ export type RankMatchDetail = {
     }>;
 };
 
+export type CreateWebhookEndpoint = {
+    name: string;
+    url: string;
+    description?: string | null;
+    /**
+     * List of subscribed event types. Empty / omitted = subscribe to all events. Wildcard `name.*` matches any event whose type starts with `name.`.
+     */
+    eventTypes?: Array<string>;
+};
+
+export type WebhookEndpointWithSecret = WebhookEndpoint & {
+    /**
+     * Plaintext signing secret — shown only once. Store securely.
+     */
+    secret: string;
+};
+
+export type WebhookEndpointList = {
+    items: Array<WebhookEndpoint>;
+};
+
+export type WebhookEndpoint = {
+    id: string;
+    organizationId: string;
+    name: string;
+    url: string;
+    description: string | null;
+    eventTypes: Array<string>;
+    secretHint: string;
+    status: 'active' | 'disabled' | 'paused_failing';
+    consecutiveFailures: number;
+    lastSuccessAt: string | null;
+    lastFailureAt: string | null;
+    disabledAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UpdateWebhookEndpoint = {
+    name?: string;
+    url?: string;
+    description?: string | null;
+    eventTypes?: Array<string>;
+    /**
+     * Admin can flip between `active` and `disabled`. `paused_failing` is auto-set by the delivery loop and cleared by transitioning back to `active`.
+     */
+    status?: 'active' | 'disabled';
+};
+
+export type WebhookDeliveryList = {
+    items: Array<WebhookDelivery>;
+};
+
+export type WebhookDelivery = {
+    id: string;
+    organizationId: string;
+    endpointId: string;
+    eventId: string;
+    eventType: string;
+    payload: {
+        [key: string]: unknown;
+    };
+    status: 'pending' | 'in_flight' | 'success' | 'failed' | 'dead';
+    attemptCount: number;
+    nextAttemptAt: string | null;
+    lastStatusCode: number | null;
+    lastError: string | null;
+    lastAttemptedAt: string | null;
+    succeededAt: string | null;
+    failedAt: string | null;
+    createdAt: string;
+};
+
 export type EventCatalogFieldRow = {
     path: string;
     type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' | 'unknown';
     description?: string;
     required: boolean;
 };
+
+export type EventKind = 'internal-event' | 'external-event' | 'http-request' | 'platform-event';
 
 export type AssistPoolContribution = {
     id: string;
@@ -5052,6 +5504,27 @@ export type AssistPoolDecayingPolicy = {
     tailRatio: number;
     tailFloor: number;
 };
+
+export type ActivityMember = {
+    endUserId: string;
+    status: 'joined' | 'completed' | 'dropped' | 'left';
+    joinedAt: string;
+    lastActiveAt: string;
+    completedAt: string | null;
+    leftAt: string | null;
+    queueNumber: string | null;
+    queueNumberUsedAt: string | null;
+    activityPoints: number;
+};
+
+export type ActivityMembershipConfig = {
+    leaveAllowed?: boolean;
+    queue?: {
+        enabled: boolean;
+        format: 'numeric' | 'alphanumeric';
+        length: number;
+    };
+} | null;
 
 export type LeaderboardSnapshot = {
     id: string;
@@ -5297,7 +5770,8 @@ export type LinkAction = {
 export type DialogueNode = {
     id: string;
     speaker: {
-        name: string;
+        characterId?: string;
+        name?: string;
         avatarUrl?: string;
         side: 'left' | 'right';
     };
@@ -5375,6 +5849,80 @@ export type CdkeyRedemptionLog = {
         count: number;
     }> | null;
     createdAt: string;
+};
+
+export type BattlePassTier = {
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    code: string;
+    order: number;
+    priceSku: string | null;
+    displayMeta?: {
+        [key: string]: unknown;
+    };
+};
+
+export type BattlePassLevelCurve = {
+    type: 'uniform';
+    xpPerLevel: number;
+} | {
+    type: 'custom';
+    thresholds: Array<number>;
+} | {
+    type: 'arithmetic';
+    base: number;
+    step: number;
+};
+
+export type RewardEntry = {
+    type: 'item' | 'entity' | 'currency';
+    id: string;
+    count: number;
+};
+
+export type BattlePassSeasonTask = {
+    id: string;
+    seasonId: string;
+    taskDefinitionId: string;
+    xpReward: number;
+    category: 'daily' | 'weekly' | 'season' | 'event';
+    weekIndex: number | null;
+    sortOrder: number;
+};
+
+export type BattlePassLevelReward = {
+    level: number;
+    rewards: {
+        [key: string]: Array<RewardEntry>;
+    };
+};
+
+export type BattlePassBonusMilestone = {
+    atLevel: number;
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    requiresTier: string;
+    rewards: Array<RewardEntry>;
+    displayName: string;
+};
+
+export type BadgeTreeNode = {
+    key: string;
+    displayType: string;
+    displayLabelKey: string | null;
+    count: number;
+    version: string | null;
+    firstAppearedAt: string | null;
+    meta: {
+        [key: string]: unknown;
+    } | null;
+    tooltipKey: string | null;
+    children: Array<BadgeTreeNode>;
+    explain?: {
+        [key: string]: unknown;
+    };
 };
 
 export type MetaGetRootData = {
@@ -5674,6 +6222,652 @@ export type AnnouncementAdminPatchByAliasResponses = {
 };
 
 export type AnnouncementAdminPatchByAliasResponse = AnnouncementAdminPatchByAliasResponses[keyof AnnouncementAdminPatchByAliasResponses];
+
+export type BadgeAdminGetNodesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/badge/nodes';
+};
+
+export type BadgeAdminGetNodesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminGetNodesError = BadgeAdminGetNodesErrors[keyof BadgeAdminGetNodesErrors];
+
+export type BadgeAdminGetNodesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeNodeList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminGetNodesResponse = BadgeAdminGetNodesResponses[keyof BadgeAdminGetNodesResponses];
+
+export type BadgeAdminPostNodesData = {
+    body?: BadgeNodeCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/badge/nodes';
+};
+
+export type BadgeAdminPostNodesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostNodesError = BadgeAdminPostNodesErrors[keyof BadgeAdminPostNodesErrors];
+
+export type BadgeAdminPostNodesResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: BadgeNode;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostNodesResponse = BadgeAdminPostNodesResponses[keyof BadgeAdminPostNodesResponses];
+
+export type BadgeAdminDeleteNodesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/badge/nodes/{id}';
+};
+
+export type BadgeAdminDeleteNodesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminDeleteNodesByIdError = BadgeAdminDeleteNodesByIdErrors[keyof BadgeAdminDeleteNodesByIdErrors];
+
+export type BadgeAdminDeleteNodesByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type BadgeAdminDeleteNodesByIdResponse = BadgeAdminDeleteNodesByIdResponses[keyof BadgeAdminDeleteNodesByIdResponses];
+
+export type BadgeAdminPatchNodesByIdData = {
+    body?: BadgeNodeUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/badge/nodes/{id}';
+};
+
+export type BadgeAdminPatchNodesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPatchNodesByIdError = BadgeAdminPatchNodesByIdErrors[keyof BadgeAdminPatchNodesByIdErrors];
+
+export type BadgeAdminPatchNodesByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeNode;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPatchNodesByIdResponse = BadgeAdminPatchNodesByIdResponses[keyof BadgeAdminPatchNodesByIdResponses];
+
+export type BadgeAdminPostNodesValidateTreeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/badge/nodes/validate-tree';
+};
+
+export type BadgeAdminPostNodesValidateTreeErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostNodesValidateTreeError = BadgeAdminPostNodesValidateTreeErrors[keyof BadgeAdminPostNodesValidateTreeErrors];
+
+export type BadgeAdminPostNodesValidateTreeResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeValidateTreeResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostNodesValidateTreeResponse = BadgeAdminPostNodesValidateTreeResponses[keyof BadgeAdminPostNodesValidateTreeResponses];
+
+export type BadgeAdminGetTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/badge/templates';
+};
+
+export type BadgeAdminGetTemplatesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminGetTemplatesError = BadgeAdminGetTemplatesErrors[keyof BadgeAdminGetTemplatesErrors];
+
+export type BadgeAdminGetTemplatesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeTemplateList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminGetTemplatesResponse = BadgeAdminGetTemplatesResponses[keyof BadgeAdminGetTemplatesResponses];
+
+export type BadgeAdminPostNodesFromTemplateData = {
+    body?: BadgeFromTemplateInput;
+    path?: never;
+    query?: never;
+    url: '/api/badge/nodes/from-template';
+};
+
+export type BadgeAdminPostNodesFromTemplateErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostNodesFromTemplateError = BadgeAdminPostNodesFromTemplateErrors[keyof BadgeAdminPostNodesFromTemplateErrors];
+
+export type BadgeAdminPostNodesFromTemplateResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: BadgeNode;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostNodesFromTemplateResponse = BadgeAdminPostNodesFromTemplateResponses[keyof BadgeAdminPostNodesFromTemplateResponses];
+
+export type BadgeAdminPostSignalData = {
+    body?: BadgeSignalInput;
+    path?: never;
+    query?: never;
+    url: '/api/badge/signal';
+};
+
+export type BadgeAdminPostSignalErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostSignalError = BadgeAdminPostSignalErrors[keyof BadgeAdminPostSignalErrors];
+
+export type BadgeAdminPostSignalResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeSignalWriteResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostSignalResponse = BadgeAdminPostSignalResponses[keyof BadgeAdminPostSignalResponses];
+
+export type BadgeAdminPostSignalBatchData = {
+    body?: BadgeSignalBatchInput;
+    path?: never;
+    query?: never;
+    url: '/api/badge/signal/batch';
+};
+
+export type BadgeAdminPostSignalBatchErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostSignalBatchError = BadgeAdminPostSignalBatchErrors[keyof BadgeAdminPostSignalBatchErrors];
+
+export type BadgeAdminPostSignalBatchResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeSignalBatchResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostSignalBatchResponse = BadgeAdminPostSignalBatchResponses[keyof BadgeAdminPostSignalBatchResponses];
+
+export type BadgeAdminPostPreviewData = {
+    body?: BadgePreviewInput;
+    path?: never;
+    query?: never;
+    url: '/api/badge/preview';
+};
+
+export type BadgeAdminPostPreviewErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostPreviewError = BadgeAdminPostPreviewErrors[keyof BadgeAdminPostPreviewErrors];
+
+export type BadgeAdminPostPreviewResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgePreviewResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostPreviewResponse = BadgeAdminPostPreviewResponses[keyof BadgeAdminPostPreviewResponses];
+
+export type BadgeAdminGetSignalRegistryData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/badge/signal-registry';
+};
+
+export type BadgeAdminGetSignalRegistryErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminGetSignalRegistryError = BadgeAdminGetSignalRegistryErrors[keyof BadgeAdminGetSignalRegistryErrors];
+
+export type BadgeAdminGetSignalRegistryResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeSignalRegistryList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminGetSignalRegistryResponse = BadgeAdminGetSignalRegistryResponses[keyof BadgeAdminGetSignalRegistryResponses];
+
+export type BadgeAdminPutSignalRegistryData = {
+    body?: BadgeSignalRegistryUpsert;
+    path?: never;
+    query?: never;
+    url: '/api/badge/signal-registry';
+};
+
+export type BadgeAdminPutSignalRegistryErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPutSignalRegistryError = BadgeAdminPutSignalRegistryErrors[keyof BadgeAdminPutSignalRegistryErrors];
+
+export type BadgeAdminPutSignalRegistryResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeSignalRegistryEntry;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPutSignalRegistryResponse = BadgeAdminPutSignalRegistryResponses[keyof BadgeAdminPutSignalRegistryResponses];
+
+export type BadgeAdminDeleteSignalRegistryByKeypatternData = {
+    body?: never;
+    path: {
+        keyPattern: string;
+    };
+    query?: never;
+    url: '/api/badge/signal-registry/{keyPattern}';
+};
+
+export type BadgeAdminDeleteSignalRegistryByKeypatternErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminDeleteSignalRegistryByKeypatternError = BadgeAdminDeleteSignalRegistryByKeypatternErrors[keyof BadgeAdminDeleteSignalRegistryByKeypatternErrors];
+
+export type BadgeAdminDeleteSignalRegistryByKeypatternResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type BadgeAdminDeleteSignalRegistryByKeypatternResponse = BadgeAdminDeleteSignalRegistryByKeypatternResponses[keyof BadgeAdminDeleteSignalRegistryByKeypatternResponses];
 
 export type BannerAdminGetGroupsData = {
     body?: never;
@@ -6233,6 +7427,486 @@ export type BannerAdminPatchBannersByIdResponses = {
 
 export type BannerAdminPatchBannersByIdResponse = BannerAdminPatchBannersByIdResponses[keyof BannerAdminPatchBannersByIdResponses];
 
+export type BattlePassGetConfigsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/battle-pass/configs';
+};
+
+export type BattlePassGetConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassGetConfigsError = BattlePassGetConfigsErrors[keyof BattlePassGetConfigsErrors];
+
+export type BattlePassGetConfigsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassConfigList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassGetConfigsResponse = BattlePassGetConfigsResponses[keyof BattlePassGetConfigsResponses];
+
+export type BattlePassPostConfigsData = {
+    body?: BattlePassCreateConfig;
+    path?: never;
+    query?: never;
+    url: '/api/battle-pass/configs';
+};
+
+export type BattlePassPostConfigsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassPostConfigsError = BattlePassPostConfigsErrors[keyof BattlePassPostConfigsErrors];
+
+export type BattlePassPostConfigsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: BattlePassConfig;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassPostConfigsResponse = BattlePassPostConfigsResponses[keyof BattlePassPostConfigsResponses];
+
+export type BattlePassDeleteConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Season config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/configs/{id}';
+};
+
+export type BattlePassDeleteConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassDeleteConfigsByIdError = BattlePassDeleteConfigsByIdErrors[keyof BattlePassDeleteConfigsByIdErrors];
+
+export type BattlePassDeleteConfigsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type BattlePassDeleteConfigsByIdResponse = BattlePassDeleteConfigsByIdResponses[keyof BattlePassDeleteConfigsByIdResponses];
+
+export type BattlePassGetConfigsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Season config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/configs/{id}';
+};
+
+export type BattlePassGetConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassGetConfigsByIdError = BattlePassGetConfigsByIdErrors[keyof BattlePassGetConfigsByIdErrors];
+
+export type BattlePassGetConfigsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassConfig;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassGetConfigsByIdResponse = BattlePassGetConfigsByIdResponses[keyof BattlePassGetConfigsByIdResponses];
+
+export type BattlePassPutConfigsByIdData = {
+    body?: BattlePassUpdateConfig;
+    path: {
+        /**
+         * Season config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/configs/{id}';
+};
+
+export type BattlePassPutConfigsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassPutConfigsByIdError = BattlePassPutConfigsByIdErrors[keyof BattlePassPutConfigsByIdErrors];
+
+export type BattlePassPutConfigsByIdResponses = {
+    /**
+     * Updated
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassConfig;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassPutConfigsByIdResponse = BattlePassPutConfigsByIdResponses[keyof BattlePassPutConfigsByIdResponses];
+
+export type BattlePassPostConfigsByIdBindTasksData = {
+    body?: BattlePassBindTasks;
+    path: {
+        /**
+         * Season config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/configs/{id}/bind-tasks';
+};
+
+export type BattlePassPostConfigsByIdBindTasksErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassPostConfigsByIdBindTasksError = BattlePassPostConfigsByIdBindTasksErrors[keyof BattlePassPostConfigsByIdBindTasksErrors];
+
+export type BattlePassPostConfigsByIdBindTasksResponses = {
+    /**
+     * Bindings updated
+     */
+    200: ApiNullEnvelope;
+};
+
+export type BattlePassPostConfigsByIdBindTasksResponse = BattlePassPostConfigsByIdBindTasksResponses[keyof BattlePassPostConfigsByIdBindTasksResponses];
+
+export type BattlePassGetConfigsByIdTasksData = {
+    body?: never;
+    path: {
+        /**
+         * Season config id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/configs/{id}/tasks';
+};
+
+export type BattlePassGetConfigsByIdTasksErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassGetConfigsByIdTasksError = BattlePassGetConfigsByIdTasksErrors[keyof BattlePassGetConfigsByIdTasksErrors];
+
+export type BattlePassGetConfigsByIdTasksResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassSeasonTaskList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassGetConfigsByIdTasksResponse = BattlePassGetConfigsByIdTasksResponses[keyof BattlePassGetConfigsByIdTasksResponses];
+
+export type BattlePassPostBySeasonidGrantTierData = {
+    body?: BattlePassGrantTier;
+    path: {
+        /**
+         * Season config id.
+         */
+        seasonId: string;
+    };
+    query?: never;
+    url: '/api/battle-pass/{seasonId}/grant-tier';
+};
+
+export type BattlePassPostBySeasonidGrantTierErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassPostBySeasonidGrantTierError = BattlePassPostBySeasonidGrantTierErrors[keyof BattlePassPostBySeasonidGrantTierErrors];
+
+export type BattlePassPostBySeasonidGrantTierResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassGrantTierOutcome;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassPostBySeasonidGrantTierResponse = BattlePassPostBySeasonidGrantTierResponses[keyof BattlePassPostBySeasonidGrantTierResponses];
+
+export type BattlePassGetBySeasonidAggregateData = {
+    body?: never;
+    path: {
+        /**
+         * Season config id.
+         */
+        seasonId: string;
+    };
+    query: {
+        /**
+         * The SaaS tenant's business user id — NOT the admin's Better Auth user id.
+         */
+        endUserId: string;
+    };
+    url: '/api/battle-pass/{seasonId}/aggregate';
+};
+
+export type BattlePassGetBySeasonidAggregateErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassGetBySeasonidAggregateError = BattlePassGetBySeasonidAggregateErrors[keyof BattlePassGetBySeasonidAggregateErrors];
+
+export type BattlePassGetBySeasonidAggregateResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassAggregateView;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassGetBySeasonidAggregateResponse = BattlePassGetBySeasonidAggregateResponses[keyof BattlePassGetBySeasonidAggregateResponses];
+
 export type CdkeyBatchesGetBatchesData = {
     body?: never;
     path?: never;
@@ -6770,6 +8444,257 @@ export type CdkeyRedemptionPostRedeemResponses = {
 };
 
 export type CdkeyRedemptionPostRedeemResponse = CdkeyRedemptionPostRedeemResponses[keyof CdkeyRedemptionPostRedeemResponses];
+
+export type CharacterGetCharactersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/character/characters';
+};
+
+export type CharacterGetCharactersErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CharacterGetCharactersError = CharacterGetCharactersErrors[keyof CharacterGetCharactersErrors];
+
+export type CharacterGetCharactersResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CharacterList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CharacterGetCharactersResponse = CharacterGetCharactersResponses[keyof CharacterGetCharactersResponses];
+
+export type CharacterPostCharactersData = {
+    body?: CharacterCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/character/characters';
+};
+
+export type CharacterPostCharactersErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CharacterPostCharactersError = CharacterPostCharactersErrors[keyof CharacterPostCharactersErrors];
+
+export type CharacterPostCharactersResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: Character;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CharacterPostCharactersResponse = CharacterPostCharactersResponses[keyof CharacterPostCharactersResponses];
+
+export type CharacterDeleteCharactersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/character/characters/{id}';
+};
+
+export type CharacterDeleteCharactersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CharacterDeleteCharactersByIdError = CharacterDeleteCharactersByIdErrors[keyof CharacterDeleteCharactersByIdErrors];
+
+export type CharacterDeleteCharactersByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type CharacterDeleteCharactersByIdResponse = CharacterDeleteCharactersByIdResponses[keyof CharacterDeleteCharactersByIdResponses];
+
+export type CharacterGetCharactersByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/character/characters/{id}';
+};
+
+export type CharacterGetCharactersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CharacterGetCharactersByIdError = CharacterGetCharactersByIdErrors[keyof CharacterGetCharactersByIdErrors];
+
+export type CharacterGetCharactersByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Character;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CharacterGetCharactersByIdResponse = CharacterGetCharactersByIdResponses[keyof CharacterGetCharactersByIdResponses];
+
+export type CharacterPatchCharactersByIdData = {
+    body?: CharacterUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/character/characters/{id}';
+};
+
+export type CharacterPatchCharactersByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CharacterPatchCharactersByIdError = CharacterPatchCharactersByIdErrors[keyof CharacterPatchCharactersByIdErrors];
+
+export type CharacterPatchCharactersByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Character;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CharacterPatchCharactersByIdResponse = CharacterPatchCharactersByIdResponses[keyof CharacterPatchCharactersByIdResponses];
 
 export type CheckInGetConfigsData = {
     body?: never;
@@ -20641,15 +22566,174 @@ export type ActivityPostByKeyJoinResponses = {
      */
     200: {
         code: 'ok';
-        data: {
-            [key: string]: unknown;
-        };
+        data: ActivityJoinResult;
         message: string;
         requestId: string;
     };
 };
 
 export type ActivityPostByKeyJoinResponse = ActivityPostByKeyJoinResponses[keyof ActivityPostByKeyJoinResponses];
+
+export type ActivityPostByKeyLeaveData = {
+    body?: ActivityLeave;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/leave';
+};
+
+export type ActivityPostByKeyLeaveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ActivityPostByKeyLeaveError = ActivityPostByKeyLeaveErrors[keyof ActivityPostByKeyLeaveErrors];
+
+export type ActivityPostByKeyLeaveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ActivityJoinResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ActivityPostByKeyLeaveResponse = ActivityPostByKeyLeaveResponses[keyof ActivityPostByKeyLeaveResponses];
+
+export type ActivityGetByKeyMembersData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: {
+        status?: 'joined' | 'completed' | 'dropped' | 'left' | 'all';
+        cursor?: string;
+        limit?: number;
+    };
+    url: '/api/activity/{key}/members';
+};
+
+export type ActivityGetByKeyMembersErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ActivityGetByKeyMembersError = ActivityGetByKeyMembersErrors[keyof ActivityGetByKeyMembersErrors];
+
+export type ActivityGetByKeyMembersResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ActivityMemberList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ActivityGetByKeyMembersResponse = ActivityGetByKeyMembersResponses[keyof ActivityGetByKeyMembersResponses];
+
+export type ActivityPostByKeyMembersByEnduseridRedeemQueueData = {
+    body?: never;
+    path: {
+        key: string;
+        endUserId: string;
+    };
+    query?: never;
+    url: '/api/activity/{key}/members/{endUserId}/redeem-queue';
+};
+
+export type ActivityPostByKeyMembersByEnduseridRedeemQueueErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ActivityPostByKeyMembersByEnduseridRedeemQueueError = ActivityPostByKeyMembersByEnduseridRedeemQueueErrors[keyof ActivityPostByKeyMembersByEnduseridRedeemQueueErrors];
+
+export type ActivityPostByKeyMembersByEnduseridRedeemQueueResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ActivityRedeemQueueResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ActivityPostByKeyMembersByEnduseridRedeemQueueResponse = ActivityPostByKeyMembersByEnduseridRedeemQueueResponses[keyof ActivityPostByKeyMembersByEnduseridRedeemQueueResponses];
 
 export type ActivityPostByKeyAddPointsData = {
     body?: ActivityAddPoints;
@@ -20864,112 +22948,6 @@ export type ActivityPostTickRunResponses = {
 };
 
 export type ActivityPostTickRunResponse = ActivityPostTickRunResponses[keyof ActivityPostTickRunResponses];
-
-export type ActivityGetWebhookEndpointsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/activity/webhook-endpoints';
-};
-
-export type ActivityGetWebhookEndpointsErrors = {
-    /**
-     * Bad request
-     */
-    400: ApiErrorEnvelope;
-    /**
-     * Unauthorized
-     */
-    401: ApiErrorEnvelope;
-    /**
-     * Forbidden
-     */
-    403: ApiErrorEnvelope;
-    /**
-     * Not found
-     */
-    404: ApiErrorEnvelope;
-    /**
-     * Conflict
-     */
-    409: ApiErrorEnvelope;
-    /**
-     * Internal server error
-     */
-    500: ApiErrorEnvelope;
-};
-
-export type ActivityGetWebhookEndpointsError = ActivityGetWebhookEndpointsErrors[keyof ActivityGetWebhookEndpointsErrors];
-
-export type ActivityGetWebhookEndpointsResponses = {
-    /**
-     * OK
-     */
-    200: {
-        code: 'ok';
-        data: {
-            items: Array<{
-                [key: string]: unknown;
-            }>;
-        };
-        message: string;
-        requestId: string;
-    };
-};
-
-export type ActivityGetWebhookEndpointsResponse = ActivityGetWebhookEndpointsResponses[keyof ActivityGetWebhookEndpointsResponses];
-
-export type ActivityPostWebhookEndpointsData = {
-    body?: CreateWebhookEndpoint;
-    path?: never;
-    query?: never;
-    url: '/api/activity/webhook-endpoints';
-};
-
-export type ActivityPostWebhookEndpointsErrors = {
-    /**
-     * Bad request
-     */
-    400: ApiErrorEnvelope;
-    /**
-     * Unauthorized
-     */
-    401: ApiErrorEnvelope;
-    /**
-     * Forbidden
-     */
-    403: ApiErrorEnvelope;
-    /**
-     * Not found
-     */
-    404: ApiErrorEnvelope;
-    /**
-     * Conflict
-     */
-    409: ApiErrorEnvelope;
-    /**
-     * Internal server error
-     */
-    500: ApiErrorEnvelope;
-};
-
-export type ActivityPostWebhookEndpointsError = ActivityPostWebhookEndpointsErrors[keyof ActivityPostWebhookEndpointsErrors];
-
-export type ActivityPostWebhookEndpointsResponses = {
-    /**
-     * Created
-     */
-    201: {
-        code: 'ok';
-        data: {
-            [key: string]: unknown;
-        };
-        message: string;
-        requestId: string;
-    };
-};
-
-export type ActivityPostWebhookEndpointsResponse = ActivityPostWebhookEndpointsResponses[keyof ActivityPostWebhookEndpointsResponses];
 
 export type ActivityGetByKeyAnalyticsData = {
     body?: never;
@@ -21227,53 +23205,6 @@ export type ActivityPostTemplatesByIdInstantiateResponses = {
 };
 
 export type ActivityPostTemplatesByIdInstantiateResponse = ActivityPostTemplatesByIdInstantiateResponses[keyof ActivityPostTemplatesByIdInstantiateResponses];
-
-export type ActivityDeleteWebhookEndpointsByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/activity/webhook-endpoints/{id}';
-};
-
-export type ActivityDeleteWebhookEndpointsByIdErrors = {
-    /**
-     * Bad request
-     */
-    400: ApiErrorEnvelope;
-    /**
-     * Unauthorized
-     */
-    401: ApiErrorEnvelope;
-    /**
-     * Forbidden
-     */
-    403: ApiErrorEnvelope;
-    /**
-     * Not found
-     */
-    404: ApiErrorEnvelope;
-    /**
-     * Conflict
-     */
-    409: ApiErrorEnvelope;
-    /**
-     * Internal server error
-     */
-    500: ApiErrorEnvelope;
-};
-
-export type ActivityDeleteWebhookEndpointsByIdError = ActivityDeleteWebhookEndpointsByIdErrors[keyof ActivityDeleteWebhookEndpointsByIdErrors];
-
-export type ActivityDeleteWebhookEndpointsByIdResponses = {
-    /**
-     * Deleted
-     */
-    200: ApiNullEnvelope;
-};
-
-export type ActivityDeleteWebhookEndpointsByIdResponse = ActivityDeleteWebhookEndpointsByIdResponses[keyof ActivityDeleteWebhookEndpointsByIdResponses];
 
 export type AssistPoolGetConfigsData = {
     body?: never;
@@ -21866,7 +23797,12 @@ export type AssistPoolInstancesPostInstancesByInstanceidForceExpireResponse = As
 export type EventCatalogGetRootData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Filter events by consumer capability. 'task-trigger' = can drive task.processEvent; 'analytics' = visible in analytics pipes.
+         */
+        capability?: EventCapability & unknown;
+    };
     url: '/api/event-catalog';
 };
 
@@ -22850,6 +24786,434 @@ export type RankAdminGetMatchesByIdResponses = {
 };
 
 export type RankAdminGetMatchesByIdResponse = RankAdminGetMatchesByIdResponses[keyof RankAdminGetMatchesByIdResponses];
+
+export type WebhooksGetEndpointsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/webhooks/endpoints';
+};
+
+export type WebhooksGetEndpointsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksGetEndpointsError = WebhooksGetEndpointsErrors[keyof WebhooksGetEndpointsErrors];
+
+export type WebhooksGetEndpointsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: WebhookEndpointList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksGetEndpointsResponse = WebhooksGetEndpointsResponses[keyof WebhooksGetEndpointsResponses];
+
+export type WebhooksPostEndpointsData = {
+    body?: CreateWebhookEndpoint;
+    path?: never;
+    query?: never;
+    url: '/api/webhooks/endpoints';
+};
+
+export type WebhooksPostEndpointsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksPostEndpointsError = WebhooksPostEndpointsErrors[keyof WebhooksPostEndpointsErrors];
+
+export type WebhooksPostEndpointsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: WebhookEndpointWithSecret;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksPostEndpointsResponse = WebhooksPostEndpointsResponses[keyof WebhooksPostEndpointsResponses];
+
+export type WebhooksDeleteEndpointsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Webhook endpoint id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/webhooks/endpoints/{id}';
+};
+
+export type WebhooksDeleteEndpointsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksDeleteEndpointsByIdError = WebhooksDeleteEndpointsByIdErrors[keyof WebhooksDeleteEndpointsByIdErrors];
+
+export type WebhooksDeleteEndpointsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type WebhooksDeleteEndpointsByIdResponse = WebhooksDeleteEndpointsByIdResponses[keyof WebhooksDeleteEndpointsByIdResponses];
+
+export type WebhooksGetEndpointsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Webhook endpoint id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/webhooks/endpoints/{id}';
+};
+
+export type WebhooksGetEndpointsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksGetEndpointsByIdError = WebhooksGetEndpointsByIdErrors[keyof WebhooksGetEndpointsByIdErrors];
+
+export type WebhooksGetEndpointsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: WebhookEndpoint;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksGetEndpointsByIdResponse = WebhooksGetEndpointsByIdResponses[keyof WebhooksGetEndpointsByIdResponses];
+
+export type WebhooksPatchEndpointsByIdData = {
+    body?: UpdateWebhookEndpoint;
+    path: {
+        /**
+         * Webhook endpoint id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/webhooks/endpoints/{id}';
+};
+
+export type WebhooksPatchEndpointsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksPatchEndpointsByIdError = WebhooksPatchEndpointsByIdErrors[keyof WebhooksPatchEndpointsByIdErrors];
+
+export type WebhooksPatchEndpointsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: WebhookEndpoint;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksPatchEndpointsByIdResponse = WebhooksPatchEndpointsByIdResponses[keyof WebhooksPatchEndpointsByIdResponses];
+
+export type WebhooksPostEndpointsByIdRotateSecretData = {
+    body?: never;
+    path: {
+        /**
+         * Webhook endpoint id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/webhooks/endpoints/{id}/rotate-secret';
+};
+
+export type WebhooksPostEndpointsByIdRotateSecretErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksPostEndpointsByIdRotateSecretError = WebhooksPostEndpointsByIdRotateSecretErrors[keyof WebhooksPostEndpointsByIdRotateSecretErrors];
+
+export type WebhooksPostEndpointsByIdRotateSecretResponses = {
+    /**
+     * Rotated
+     */
+    200: {
+        code: 'ok';
+        data: WebhookEndpointWithSecret;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksPostEndpointsByIdRotateSecretResponse = WebhooksPostEndpointsByIdRotateSecretResponses[keyof WebhooksPostEndpointsByIdRotateSecretResponses];
+
+export type WebhooksGetEndpointsByIdDeliveriesData = {
+    body?: never;
+    path: {
+        /**
+         * Webhook endpoint id.
+         */
+        id: string;
+    };
+    query?: {
+        status?: 'pending' | 'in_flight' | 'success' | 'failed' | 'dead';
+        limit?: number;
+    };
+    url: '/api/webhooks/endpoints/{id}/deliveries';
+};
+
+export type WebhooksGetEndpointsByIdDeliveriesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksGetEndpointsByIdDeliveriesError = WebhooksGetEndpointsByIdDeliveriesErrors[keyof WebhooksGetEndpointsByIdDeliveriesErrors];
+
+export type WebhooksGetEndpointsByIdDeliveriesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: WebhookDeliveryList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksGetEndpointsByIdDeliveriesResponse = WebhooksGetEndpointsByIdDeliveriesResponses[keyof WebhooksGetEndpointsByIdDeliveriesResponses];
+
+export type WebhooksPostDeliveriesByIdReplayData = {
+    body?: never;
+    path: {
+        /**
+         * Webhook delivery id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/webhooks/deliveries/{id}/replay';
+};
+
+export type WebhooksPostDeliveriesByIdReplayErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type WebhooksPostDeliveriesByIdReplayError = WebhooksPostDeliveriesByIdReplayErrors[keyof WebhooksPostDeliveriesByIdReplayErrors];
+
+export type WebhooksPostDeliveriesByIdReplayResponses = {
+    /**
+     * Queued
+     */
+    200: {
+        code: 'ok';
+        data: WebhookDelivery;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type WebhooksPostDeliveriesByIdReplayResponse = WebhooksPostDeliveriesByIdReplayResponses[keyof WebhooksPostDeliveriesByIdReplayResponses];
 
 export type ClientOptions = {
     baseUrl: 'http://localhost:8787' | (string & {});

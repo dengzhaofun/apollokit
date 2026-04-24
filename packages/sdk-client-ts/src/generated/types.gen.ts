@@ -18,6 +18,23 @@ export type ApiNullEnvelope = {
     requestId: string;
 };
 
+export type BadgeTreeResponse = {
+    rootKey: string | null;
+    serverTimestamp: string;
+    nodes: Array<BadgeTreeNode>;
+};
+
+export type BadgeDismissInput = {
+    nodeKey: string;
+    version?: string | null;
+};
+
+export type BadgeDismissResult = {
+    nodeKey: string;
+    dismissedAt: string;
+    dismissedVersion: string | null;
+};
+
 export type ClientBannerGroup = {
     id: string;
     alias: string;
@@ -26,6 +43,72 @@ export type ClientBannerGroup = {
     layout: 'carousel' | 'single' | 'grid';
     intervalMs: number;
     banners: Array<ClientBanner>;
+};
+
+export type BattlePassConfig = {
+    id: string;
+    organizationId: string;
+    activityId: string;
+    code: string;
+    name: string;
+    description: string | null;
+    maxLevel: number;
+    levelCurve: BattlePassLevelCurve;
+    tiers: Array<BattlePassTier>;
+    levelRewards: Array<BattlePassLevelReward>;
+    bonusMilestones: Array<BattlePassBonusMilestone>;
+    allowLevelPurchase: boolean;
+    levelPurchasePriceSku: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type BattlePassAggregateView = {
+    season: {
+        id: string;
+        code: string;
+        name: string;
+        maxLevel: number;
+        tiers: Array<BattlePassTier>;
+        levelCurve: BattlePassLevelCurve;
+    };
+    progress: {
+        currentXp: number;
+        currentLevel: number;
+        xpToNextLevel: number | null;
+        ownedTiers: Array<string>;
+    };
+    claimable: Array<{
+        level: number;
+        tierCode: string;
+        rewardEntries: Array<RewardEntry>;
+    }>;
+    taskBindings: Array<{
+        taskDefinitionId: string;
+        xpReward: number;
+        category: 'daily' | 'weekly' | 'season' | 'event';
+        weekIndex: number | null;
+        sortOrder: number;
+    }>;
+};
+
+export type BattlePassClaimLevel = {
+    level: number;
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    tierCode: string;
+};
+
+export type BattlePassClaimResponse = {
+    results: Array<BattlePassClaimOutcome>;
+};
+
+export type BattlePassClaimAll = {
+    [key: string]: unknown;
 };
 
 export type CdkeyClientRedeemRequest = {
@@ -974,6 +1057,7 @@ export type Activity = {
     metadata: {
         [key: string]: unknown;
     } | null;
+    membership: ActivityMembershipConfig;
     createdAt: string;
     updatedAt: string;
 };
@@ -1035,6 +1119,15 @@ export type AssistPoolRewardItem = {
     id: string;
     count: number;
 };
+
+export type ActivityMembershipConfig = {
+    leaveAllowed?: boolean;
+    queue?: {
+        enabled: boolean;
+        format: 'numeric' | 'alphanumeric';
+        length: number;
+    };
+} | null;
 
 export type LeaderboardSnapshot = {
     id: string;
@@ -1515,6 +1608,60 @@ export type CheckInUserState = {
     updatedAt: string;
 };
 
+export type BattlePassClaimOutcome = {
+    level: number;
+    tierCode: string;
+    idempotent: boolean;
+    rewardEntries: Array<RewardEntry>;
+};
+
+export type RewardEntry = {
+    type: 'item' | 'entity' | 'currency';
+    id: string;
+    count: number;
+};
+
+export type BattlePassTier = {
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    code: string;
+    order: number;
+    priceSku: string | null;
+    displayMeta?: {
+        [key: string]: unknown;
+    };
+};
+
+export type BattlePassLevelCurve = {
+    type: 'uniform';
+    xpPerLevel: number;
+} | {
+    type: 'custom';
+    thresholds: Array<number>;
+} | {
+    type: 'arithmetic';
+    base: number;
+    step: number;
+};
+
+export type BattlePassLevelReward = {
+    level: number;
+    rewards: {
+        [key: string]: Array<RewardEntry>;
+    };
+};
+
+export type BattlePassBonusMilestone = {
+    atLevel: number;
+    /**
+     * 档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。
+     */
+    requiresTier: string;
+    rewards: Array<RewardEntry>;
+    displayName: string;
+};
+
 export type ClientBanner = {
     id: string;
     title: string;
@@ -1523,6 +1670,23 @@ export type ClientBanner = {
     altText: string | null;
     linkAction: LinkAction;
     sortOrder: number;
+};
+
+export type BadgeTreeNode = {
+    key: string;
+    displayType: string;
+    displayLabelKey: string | null;
+    count: number;
+    version: string | null;
+    firstAppearedAt: string | null;
+    meta: {
+        [key: string]: unknown;
+    } | null;
+    tooltipKey: string | null;
+    children: Array<BadgeTreeNode>;
+    explain?: {
+        [key: string]: unknown;
+    };
 };
 
 export type ClientAnnouncement = {
@@ -1731,6 +1895,156 @@ export type AnnouncementClientPostByAliasClickResponses = {
 
 export type AnnouncementClientPostByAliasClickResponse = AnnouncementClientPostByAliasClickResponses[keyof AnnouncementClientPostByAliasClickResponses];
 
+export type BadgeClientGetTreeData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Limit the returned tree to the subtree rooted at this node. Omit for the full tree.
+         */
+        rootKey?: string;
+    };
+    url: '/api/client/badge/tree';
+};
+
+export type BadgeClientGetTreeErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeClientGetTreeError = BadgeClientGetTreeErrors[keyof BadgeClientGetTreeErrors];
+
+export type BadgeClientGetTreeResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeTreeResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeClientGetTreeResponse = BadgeClientGetTreeResponses[keyof BadgeClientGetTreeResponses];
+
+export type BadgeClientPostDismissData = {
+    body?: BadgeDismissInput;
+    path?: never;
+    query?: never;
+    url: '/api/client/badge/dismiss';
+};
+
+export type BadgeClientPostDismissErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeClientPostDismissError = BadgeClientPostDismissErrors[keyof BadgeClientPostDismissErrors];
+
+export type BadgeClientPostDismissResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeDismissResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeClientPostDismissResponse = BadgeClientPostDismissResponses[keyof BadgeClientPostDismissResponses];
+
+export type BadgeClientPostResetSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/client/badge/reset-session';
+};
+
+export type BadgeClientPostResetSessionErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeClientPostResetSessionError = BadgeClientPostResetSessionErrors[keyof BadgeClientPostResetSessionErrors];
+
+export type BadgeClientPostResetSessionResponses = {
+    /**
+     * OK
+     */
+    200: ApiNullEnvelope;
+};
+
+export type BadgeClientPostResetSessionResponse = BadgeClientPostResetSessionResponses[keyof BadgeClientPostResetSessionResponses];
+
 export type BannerClientGetGroupsByAliasData = {
     body?: never;
     headers: {
@@ -1796,6 +2110,223 @@ export type BannerClientGetGroupsByAliasResponses = {
 };
 
 export type BannerClientGetGroupsByAliasResponse = BannerClientGetGroupsByAliasResponses[keyof BannerClientGetGroupsByAliasResponses];
+
+export type BattlePassClientGetCurrentData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/client/battle-pass/current';
+};
+
+export type BattlePassClientGetCurrentErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassClientGetCurrentError = BattlePassClientGetCurrentErrors[keyof BattlePassClientGetCurrentErrors];
+
+export type BattlePassClientGetCurrentResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassConfig & ({
+            [key: string]: unknown;
+        } | null);
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassClientGetCurrentResponse = BattlePassClientGetCurrentResponses[keyof BattlePassClientGetCurrentResponses];
+
+export type BattlePassClientGetBySeasonidAggregateData = {
+    body?: never;
+    path: {
+        /**
+         * Season config id.
+         */
+        seasonId: string;
+    };
+    query?: never;
+    url: '/api/client/battle-pass/{seasonId}/aggregate';
+};
+
+export type BattlePassClientGetBySeasonidAggregateErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassClientGetBySeasonidAggregateError = BattlePassClientGetBySeasonidAggregateErrors[keyof BattlePassClientGetBySeasonidAggregateErrors];
+
+export type BattlePassClientGetBySeasonidAggregateResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassAggregateView;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassClientGetBySeasonidAggregateResponse = BattlePassClientGetBySeasonidAggregateResponses[keyof BattlePassClientGetBySeasonidAggregateResponses];
+
+export type BattlePassClientPostBySeasonidClaimData = {
+    body?: BattlePassClaimLevel;
+    path: {
+        /**
+         * Season config id.
+         */
+        seasonId: string;
+    };
+    query?: never;
+    url: '/api/client/battle-pass/{seasonId}/claim';
+};
+
+export type BattlePassClientPostBySeasonidClaimErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassClientPostBySeasonidClaimError = BattlePassClientPostBySeasonidClaimErrors[keyof BattlePassClientPostBySeasonidClaimErrors];
+
+export type BattlePassClientPostBySeasonidClaimResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassClaimResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassClientPostBySeasonidClaimResponse = BattlePassClientPostBySeasonidClaimResponses[keyof BattlePassClientPostBySeasonidClaimResponses];
+
+export type BattlePassClientPostBySeasonidClaimAllData = {
+    body?: BattlePassClaimAll;
+    path: {
+        /**
+         * Season config id.
+         */
+        seasonId: string;
+    };
+    query?: never;
+    url: '/api/client/battle-pass/{seasonId}/claim-all';
+};
+
+export type BattlePassClientPostBySeasonidClaimAllErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BattlePassClientPostBySeasonidClaimAllError = BattlePassClientPostBySeasonidClaimAllErrors[keyof BattlePassClientPostBySeasonidClaimAllErrors];
+
+export type BattlePassClientPostBySeasonidClaimAllResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BattlePassClaimResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BattlePassClientPostBySeasonidClaimAllResponse = BattlePassClientPostBySeasonidClaimAllResponses[keyof BattlePassClientPostBySeasonidClaimAllResponses];
 
 export type CdkeyClientPostRedeemData = {
     body?: CdkeyClientRedeemRequest;

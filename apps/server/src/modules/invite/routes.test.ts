@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -111,12 +112,9 @@ describe("invite admin routes", () => {
       body: JSON.stringify({ enabled: true, codeLength: 8 }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: { codeLength: number; enabled: boolean };
-    };
-    expect(env.data.codeLength).toBe(8);
-    expect(env.data.enabled).toBe(true);
+    const data = await expectOk<{ codeLength: number; enabled: boolean }>(res);
+    expect(data.codeLength).toBe(8);
+    expect(data.enabled).toBe(true);
   });
 
   test("PUT /settings 400 on invalid codeLength", async () => {

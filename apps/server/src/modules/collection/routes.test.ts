@@ -14,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectFail, expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -89,7 +90,7 @@ describe("collection routes", () => {
       }),
     });
     expect(a.status).toBe(201);
-    const album = (await a.json()) as { id: string; alias: string };
+    const album = await expectOk<{ id: string; alias: string }>(a);
     expect(album.alias).toBe("route-dragons");
 
     // 2. Create group under album
@@ -102,7 +103,7 @@ describe("collection routes", () => {
       },
     );
     expect(g.status).toBe(201);
-    const group = (await g.json()) as { id: string };
+    const group = await expectOk<{ id: string }>(g);
 
     // 3. We need an item definition to bind to.
     const defRes = await app.request("/api/item/definitions", {
@@ -115,7 +116,7 @@ describe("collection routes", () => {
       }),
     });
     expect(defRes.status).toBe(201);
-    const def = (await defRes.json()) as { id: string };
+    const def = await expectOk<{ id: string }>(defRes);
 
     // 4. Create entry
     const e = await app.request(
@@ -160,8 +161,7 @@ describe("collection routes", () => {
       }),
     });
     expect(res.status).toBe(409);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("collection.alias_conflict");
+    await expectFail(res, "collection.alias_conflict");
   });
 
   test("unknown album alias → 404", async () => {
@@ -169,7 +169,6 @@ describe("collection routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(404);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("collection.album_not_found");
+    await expectFail(res, "collection.album_not_found");
   });
 });
