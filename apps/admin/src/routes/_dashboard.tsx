@@ -53,8 +53,17 @@ function DashboardLayoutClient() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!isPending && !session) {
+    if (isPending) return
+    if (!session) {
       navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
+      return
+    }
+    // Server-side admin routes gate on `activeOrganizationId` (see
+    // `require-admin-or-api-key.ts`). A session without one 401s every
+    // business endpoint, producing a dashboard full of silent failures.
+    // Send the user to onboarding to create (or pick) an org first.
+    if (!session.session.activeOrganizationId) {
+      navigate({ to: "/onboarding/create-org", replace: true })
     }
   }, [isPending, session, navigate])
 
@@ -67,6 +76,7 @@ function DashboardLayoutClient() {
   }
 
   if (!session) return null
+  if (!session.session.activeOrganizationId) return null
 
   return (
     <SidebarProvider>

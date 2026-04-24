@@ -17,6 +17,17 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "https://apollokit-admin.limitless-ai.workers.dev",
   ],
+  // admin 和 server 分别部署在 workers.dev 的两个子域,而 workers.dev
+  // 在浏览器的 Public Suffix List 里,跨子域被视为跨站,默认 SameSite=Lax
+  // 的 session cookie 不会随 credentials:include 的 fetch 跨站发送。
+  // SameSite=None; Secure; Partitioned 才能让 SPA 正常挂载 session。
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      partitioned: true,
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },
