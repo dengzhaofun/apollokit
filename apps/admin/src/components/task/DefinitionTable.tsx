@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-table"
 import { Link } from "@tanstack/react-router"
 import { format } from "date-fns"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { MoreHorizontal, Pencil } from "lucide-react"
 
 import {
   Table,

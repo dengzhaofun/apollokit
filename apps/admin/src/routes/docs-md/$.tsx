@@ -21,7 +21,9 @@ export const Route = createFileRoute('/docs-md/$')({
         // 喂给 getPage,否则 ['zh','errors'] 会被当成 slug 路径找不到页面。
         const raw = params._splat?.split('/').filter(Boolean) ?? []
         const [first, ...rest] = raw
-        const hasLocale = first && i18n.languages.includes(first)
+        // 宽化 readonly ('zh'|'en')[] 成 string[] 以便用任意字符串查。
+        const langs: readonly string[] = i18n.languages
+        const hasLocale = first && langs.includes(first)
         const locale = hasLocale ? first : i18n.defaultLanguage
         const slugs = hasLocale ? rest : raw
         const page = source.getPage(slugs, locale)

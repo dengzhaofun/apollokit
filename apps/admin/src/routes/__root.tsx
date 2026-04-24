@@ -11,12 +11,17 @@ import appCss from '../styles.css?url'
 
 const THEME_INIT_SCRIPT = `(function(){try{var e=localStorage.getItem("theme")||"system",t="system"===e?window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light":e,r=document.documentElement;r.classList.remove("light","dark");r.classList.add(t);r.style.colorScheme=t}catch(e){}})();`
 
+// `docsI18n.languages` 是 readonly ('zh' | 'en')[],Array.includes 会要求
+// 入参也是 'zh' | 'en'。这里我们只想问"这个任意 string 是不是注册过的
+// locale",所以宽化成 readonly string[] 再查。
+const docsLanguages: readonly string[] = docsI18n.languages
+
 // /docs/{locale}/... 里抽出 locale,不是 docs 路径或第二段不是已注册 locale
 // 都返回 null。独立出来方便 RootDocument 里跟 pathname 一起响应式用。
 function resolveDocsLocale(pathname: string): string | null {
   const m = pathname.match(/^\/docs\/([^/]+)(?:\/|$)/)
   if (!m) return null
-  return docsI18n.languages.includes(m[1]!) ? m[1]! : null
+  return docsLanguages.includes(m[1]!) ? m[1]! : null
 }
 
 // 切语言时要跳的目标 URL。docs 页保留剩余 slug,非 docs 页保持原路径(仅
@@ -26,7 +31,7 @@ function buildLocaleUrl(pathname: string, next: string): string {
   const docsMatch = pathname.match(/^\/docs(?:\/([^/]+))?(\/.*)?$/)
   if (docsMatch) {
     const [, cur, rest = ''] = docsMatch
-    if (cur && docsI18n.languages.includes(cur)) return `/docs/${next}${rest}`
+    if (cur && docsLanguages.includes(cur)) return `/docs/${next}${rest}`
     return `/docs/${next}${pathname.slice('/docs'.length)}`
   }
   return pathname

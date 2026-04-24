@@ -15,6 +15,7 @@ import {
   useTaskCategories,
 } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
+import type { CreateDefinitionInput } from "#/lib/types/task"
 
 export const Route = createFileRoute("/_dashboard/task/$taskId/")({
   component: TaskDetailPage,
@@ -89,7 +90,11 @@ function TaskDetailPage() {
             <TabsContent value="config">
               <div className="rounded-xl border bg-card p-6 shadow-sm">
                 <DefinitionForm
-                  defaultValues={definition}
+                  // TaskDefinition 从 SDK 过来的 period/countingMethod/visibility
+                  // 都是 string,而 CreateDefinitionInput 里是 TaskPeriod/
+                  // CountingMethod/TaskVisibility 联合类型。运行时这些字段
+                  // 永远在联合内,直接转窄类型给 form 用即可。
+                  defaultValues={definition as Partial<CreateDefinitionInput>}
                   categories={categories ?? []}
                   submitLabel={m.common_save()}
                   isPending={updateMutation.isPending}
