@@ -61,6 +61,10 @@ export function Providers({ children }: { children: ReactNode }) {
       <AuthUIProvider
         authClient={authClient}
         localization={localization}
+        // Default is "/" (landing). After sign-in we want the admin
+        // dashboard; `_dashboard.tsx` takes it from there (redirects
+        // to `/onboarding/create-org` if the user has no active org).
+        redirectTo="/dashboard"
         navigate={(href: string) => router.navigate({ to: href })}
         replace={(href: string) => router.navigate({ to: href, replace: true })}
         Link={({ href, ...props }: { href: string } & Record<string, unknown>) => (

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import Landing from "#/components/landing/Landing"
 import { authClient } from "#/lib/auth-client"
@@ -17,13 +17,36 @@ export const Route = createFileRoute("/")({
 })
 
 function IndexPage() {
+  return (
+    <>
+      <SignedInBouncer />
+      <Landing />
+    </>
+  )
+}
+
+/**
+ * Tiny client-only component whose only job is to redirect signed-in
+ * visitors to `/dashboard`. Split out so that `useSession` (which
+ * can't run under Vite SSR due to the dual-React hazard; see
+ * `_dashboard.tsx`) only runs after mount — otherwise the hook
+ * either no-ops or sits at `isPending: true` through the first
+ * paint and the redirect never fires, leaving logged-in users
+ * stuck on the marketing landing.
+ */
+function SignedInBouncer() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  if (!mounted) return null
+  return <SignedInBouncerClient />
+}
+
+function SignedInBouncerClient() {
   const navigate = useNavigate()
   const { data: session, isPending } = authClient.useSession()
 
-  // Redirect logged-in users straight into the dashboard. We don't block the
-  // initial paint on the session probe — anonymous visitors (the audience of
-  // the marketing page) see the landing immediately, which also keeps the
-  // route SEO-friendly. Logged-in users briefly see the landing, then bounce.
   useEffect(() => {
     if (isPending) return
     if (session) {
@@ -31,5 +54,5 @@ function IndexPage() {
     }
   }, [isPending, session, navigate])
 
-  return <Landing />
+  return null
 }
