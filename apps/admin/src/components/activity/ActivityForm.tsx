@@ -13,6 +13,7 @@ import {
 import { Textarea } from "#/components/ui/textarea"
 import type {
   ActivityKind,
+  ActivityMembershipConfig,
   ActivityMilestoneTier,
   CreateActivityInput,
   RewardEntry,
@@ -81,6 +82,9 @@ export function ActivityForm({
         | "purge"
         | "convert"
         | "keep",
+      membershipJson: defaultValues?.membership
+        ? JSON.stringify(defaultValues.membership, null, 2)
+        : "",
     },
     onSubmit: async ({ value }) => {
       let milestoneTiers: ActivityMilestoneTier[] = []
@@ -106,6 +110,15 @@ export function ActivityForm({
         }
       }
 
+      let membership: ActivityMembershipConfig | null = null
+      if (value.membershipJson.trim()) {
+        try {
+          membership = JSON.parse(value.membershipJson) as ActivityMembershipConfig
+        } catch {
+          /* ignore */
+        }
+      }
+
       await onSubmit({
         alias: value.alias,
         name: value.name,
@@ -123,6 +136,7 @@ export function ActivityForm({
         milestoneTiers,
         globalRewards,
         cleanupRule: { mode: value.cleanupMode as "purge" | "convert" | "keep" },
+        membership,
       })
     },
   })
@@ -344,6 +358,25 @@ export function ActivityForm({
               className="font-mono text-xs"
               placeholder='[{"type":"item","id":"trophy-uuid","count":1}]'
             />
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="membershipJson">
+        {(field) => (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={field.name}>Membership (JSON)</Label>
+            <Textarea
+              id={field.name}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              rows={4}
+              className="font-mono text-xs"
+              placeholder={`{"leaveAllowed":true,"queue":{"enabled":false,"format":"numeric","length":4}}`}
+            />
+            <p className="text-xs text-muted-foreground">
+              可选。开启 queue 后 /join 会分配活动内唯一随机号，admin 可核销。
+            </p>
           </div>
         )}
       </form.Field>

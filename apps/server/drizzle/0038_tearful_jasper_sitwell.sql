@@ -1,1 +1,0 @@
-ALTER TABLE "eu_user" ADD COLUMN "disabled" boolean DEFAULT false NOT NULL;

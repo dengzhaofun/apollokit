@@ -69,3 +69,63 @@ export class ActivityAlreadyCompleted extends ModuleError {
     );
   }
 }
+
+export class ActivityMemberNotFound extends ModuleError {
+  constructor(endUserId: string) {
+    super(
+      "activity.member_not_found",
+      404,
+      `activity member not found: ${endUserId}`,
+    );
+  }
+}
+
+export class ActivityLeaveNotAllowed extends ModuleError {
+  constructor() {
+    super(
+      "activity.leave_not_allowed",
+      409,
+      `this activity does not allow members to leave`,
+    );
+  }
+}
+
+export class ActivityQueueNotEnabled extends ModuleError {
+  constructor() {
+    super(
+      "activity.queue_not_enabled",
+      404,
+      `queue numbers are not enabled for this activity`,
+    );
+  }
+}
+
+export class ActivityMemberNoQueueNumber extends ModuleError {
+  constructor(endUserId: string) {
+    super(
+      "activity.member_no_queue_number",
+      404,
+      `member has no queue number: ${endUserId}`,
+    );
+  }
+}
+
+export class ActivityQueueAlreadyRedeemed extends ModuleError {
+  constructor(endUserId: string, usedAt: Date) {
+    super(
+      "activity.queue_already_redeemed",
+      409,
+      `queue number already redeemed at ${usedAt.toISOString()} for ${endUserId}`,
+    );
+  }
+}
+
+export class ActivityQueueNumberExhausted extends ModuleError {
+  constructor() {
+    super(
+      "activity.queue_number_exhausted",
+      500,
+      `failed to allocate a unique queue number after repeated retries; increase queue.length or reduce concurrent joins`,
+    );
+  }
+}

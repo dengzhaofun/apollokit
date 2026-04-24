@@ -105,6 +105,7 @@ activityClientRouter.openapi(
           visibility: r.visibility as "public" | "hidden" | "targeted",
           templateId: r.templateId,
           metadata: r.metadata as Record<string, unknown> | null,
+          membership: r.membership,
           createdAt: r.createdAt.toISOString(),
           updatedAt: r.updatedAt.toISOString(),
         })),

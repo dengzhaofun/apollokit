@@ -28,6 +28,7 @@ import {
   useActivityAnalytics,
   useActivityForUser,
   useActivityLifecycle,
+  useActivityMembers,
   useActivityNodes,
   useActivitySchedules,
   useCreateActivityNode,
@@ -35,11 +36,14 @@ import {
   useDeleteActivity,
   useDeleteActivityNode,
   useDeleteActivitySchedule,
+  useLeaveActivity,
+  useRedeemQueueNumber,
   useUpdateActivity,
   useUpdateActivityNode,
 } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import type {
+  ActivityMemberStatus,
   CreateNodeInput,
   CreateScheduleInput,
 } from "#/lib/types/activity"
@@ -181,6 +185,7 @@ function ActivityDetailPage() {
             <TabsTrigger value="edit">编辑</TabsTrigger>
             <TabsTrigger value="nodes">节点</TabsTrigger>
             <TabsTrigger value="schedules">时间触发器</TabsTrigger>
+            <TabsTrigger value="members">成员</TabsTrigger>
             <TabsTrigger value="analytics">数据</TabsTrigger>
           </TabsList>
 
@@ -219,6 +224,14 @@ function ActivityDetailPage() {
 
           <TabsContent value="schedules" className="mt-4">
             <SchedulesPanel activityKey={alias} />
+          </TabsContent>
+
+          <TabsContent value="members" className="mt-4">
+            <MembersPanel
+              activityKey={alias}
+              queueEnabled={!!activity.membership?.queue?.enabled}
+              leaveAllowed={activity.membership?.leaveAllowed !== false}
+            />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-4">
@@ -918,6 +931,149 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
+    </div>
+  )
+}
+
+function MembersPanel({
+  activityKey,
+  queueEnabled,
+  leaveAllowed,
+}: {
+  activityKey: string
+  queueEnabled: boolean
+  leaveAllowed: boolean
+}) {
+  const [status, setStatus] = useState<ActivityMemberStatus | "all">("all")
+  const { data, isPending, error } = useActivityMembers(activityKey, { status })
+  const leaveMutation = useLeaveActivity(activityKey)
+  const redeemMutation = useRedeemQueueNumber(activityKey)
+
+  if (isPending) {
+    return <div className="text-muted-foreground">加载中...</div>
+  }
+  if (error) {
+    const msg = error instanceof ApiError ? error.body.error : "加载失败"
+    return <div className="text-destructive">{msg}</div>
+  }
+
+  const items = data?.items ?? []
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Label className="text-xs">状态过滤</Label>
+        <Select
+          value={status}
+          onValueChange={(v) => setStatus(v as ActivityMemberStatus | "all")}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部</SelectItem>
+            <SelectItem value="joined">joined</SelectItem>
+            <SelectItem value="completed">completed</SelectItem>
+            <SelectItem value="left">left</SelectItem>
+            <SelectItem value="dropped">dropped</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {items.length} 条
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
+          暂无成员
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-xs">
+              <tr>
+                <th className="px-3 py-2 text-left">endUserId</th>
+                <th className="px-3 py-2 text-left">加入时间</th>
+                <th className="px-3 py-2 text-left">状态</th>
+                <th className="px-3 py-2 text-left">号码</th>
+                <th className="px-3 py-2 text-left">核销时间</th>
+                <th className="px-3 py-2 text-right">积分</th>
+                <th className="px-3 py-2 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((m) => (
+                <tr key={m.endUserId} className="border-t">
+                  <td className="px-3 py-2 font-mono text-xs">{m.endUserId}</td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                    {format(new Date(m.joinedAt), "yyyy-MM-dd HH:mm")}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Badge variant="outline">{m.status}</Badge>
+                  </td>
+                  <td className="px-3 py-2 font-mono">
+                    {m.queueNumber ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                    {m.queueNumberUsedAt
+                      ? format(new Date(m.queueNumberUsedAt), "yyyy-MM-dd HH:mm")
+                      : "—"}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono">
+                    {m.activityPoints.toLocaleString()}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <div className="flex justify-end gap-2">
+                      {queueEnabled &&
+                        m.queueNumber &&
+                        !m.queueNumberUsedAt && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={redeemMutation.isPending}
+                            onClick={async () => {
+                              try {
+                                await redeemMutation.mutateAsync(m.endUserId)
+                                toast.success(`号码 ${m.queueNumber} 已核销`)
+                              } catch (err) {
+                                if (err instanceof ApiError)
+                                  toast.error(err.body.error)
+                                else toast.error("核销失败")
+                              }
+                            }}
+                          >
+                            核销
+                          </Button>
+                        )}
+                      {leaveAllowed && m.status === "joined" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={leaveMutation.isPending}
+                          onClick={async () => {
+                            if (!confirm(`将 ${m.endUserId} 标记为离开？`))
+                              return
+                            try {
+                              await leaveMutation.mutateAsync(m.endUserId)
+                              toast.success("已标记离开")
+                            } catch (err) {
+                              if (err instanceof ApiError)
+                                toast.error(err.body.error)
+                              else toast.error("操作失败")
+                            }
+                          }}
+                        >
+                          离开
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

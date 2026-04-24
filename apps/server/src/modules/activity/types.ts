@@ -1,26 +1,40 @@
 import type {
   ActivityConfig,
   ActivityNode,
-  ActivityUserProgressRow,
+  ActivityMemberRow,
   ActivityUserReward,
   ActivitySchedule,
   ActivityCleanupRule,
   ActivityCurrency,
   ActivityMilestoneTier,
   ActivityNodeUnlockRule,
+  ActivityMembershipConfig,
+  ActivityQueueFormat,
 } from "../../schema/activity";
 
 export type {
   ActivityConfig,
   ActivityNode,
-  ActivityUserProgressRow,
+  ActivityMemberRow,
   ActivityUserReward,
   ActivitySchedule,
   ActivityCleanupRule,
   ActivityCurrency,
   ActivityMilestoneTier,
   ActivityNodeUnlockRule,
+  ActivityMembershipConfig,
+  ActivityQueueFormat,
 };
+
+export const ACTIVITY_MEMBER_STATUSES = [
+  "joined",
+  "completed",
+  "dropped",
+  "left",
+] as const;
+export type ActivityMemberStatus = (typeof ACTIVITY_MEMBER_STATUSES)[number];
+
+export const ACTIVITY_QUEUE_FORMATS = ["numeric", "alphanumeric"] as const;
 
 export const ACTIVITY_KINDS = [
   "generic",
@@ -106,7 +120,7 @@ export type ActivityViewForUser = {
     timeline: ActivityTimeline;
     derivedState: ActivityState;
   };
-  progress: ActivityUserProgressRow | null;
+  progress: ActivityMemberRow | null;
   nodes: Array<{
     node: ActivityNode;
     unlocked: boolean;
