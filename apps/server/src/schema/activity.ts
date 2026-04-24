@@ -18,13 +18,38 @@ import { organization } from "./auth";
 /**
  * Activity currency definition (embedded in activity_configs.currency).
  * Activity points are kept as a single counter in
- * activity_user_progress.activity_points — this jsonb just describes how
+ * activity_members.activity_points — this jsonb just describes how
  * to render it.
  */
 export type ActivityCurrency = {
   alias: string;
   name: string;
   icon?: string | null;
+};
+
+/**
+ * Per-activity membership & optional queue-number config, embedded in
+ * activity_configs.membership.
+ *
+ * `null` means "default policy": leave allowed, no queue number.
+ * `queue.enabled=true` triggers random queue-number allocation on
+ * `join`. The number is unique within the activity (partial unique
+ * index on activity_members(activity_id, queue_number)) and one-shot —
+ * `redeemQueueNumber` marks it used; no "un-redeem" path.
+ *
+ * Why no top-level `enabled` switch? Every join creates a row in
+ * activity_members already; membership is not optional. The optional
+ * bits are *leaving* and *queueing*.
+ */
+export type ActivityQueueFormat = "numeric" | "alphanumeric";
+
+export type ActivityMembershipConfig = {
+  leaveAllowed?: boolean;
+  queue?: {
+    enabled: boolean;
+    format: ActivityQueueFormat;
+    length: number;
+  };
 };
 
 /**
@@ -114,6 +139,9 @@ export const activityConfigs = pgTable(
       .default({ mode: "purge" })
       .notNull(),
     joinRequirement: jsonb("join_requirement"),
+    membership: jsonb("membership")
+      .$type<ActivityMembershipConfig | null>()
+      .default(null),
     visibility: text("visibility").notNull().default("public"), // "public"|"hidden"|"targeted"
     templateId: uuid("template_id"),
     metadata: jsonb("metadata"),
@@ -190,19 +218,37 @@ export const activityNodes = pgTable(
 );
 
 /**
- * Per-player runtime state for an activity.
+ * Activity member — one row per endUserId per activity.
+ *
+ * This table carries both the member identity (endUserId, joinedAt,
+ * status, leftAt, optional queueNumber) AND the member's runtime state
+ * in the activity (activityPoints balance, milestonesAchieved list,
+ * nodeState bag). Combining them keeps all per-player data in one
+ * row — "member" is the primary concept; progress/points are
+ * properties of a member.
  *
  * `activityPoints` is the single counter for the activity's native
  * currency. `milestonesAchieved` is a stringlist of claimed milestone
  * aliases for O(1) "already claimed?" checks. `nodeState` stores per-
  * node runtime data (e.g. board_game position, gacha pity counters).
  *
+ * `queueNumber` is the optional offline queue ticket (enabled when
+ * activityConfigs.membership.queue.enabled). One-shot: once
+ * `queueNumberUsedAt` is set, the ticket is considered redeemed and
+ * cannot be reused. Activity-scoped unique via partial index.
+ *
+ * `status`:
+ *   - "joined"    — active member
+ *   - "completed" — finished whatever the activity considers completion
+ *   - "dropped"   — system-judged (e.g. inactivity, cleanup)
+ *   - "left"      — user actively called leave
+ *
  * `version` enables optimistic-concurrency writes on `nodeState` —
  * neon-http has no transactions, so writers use `UPDATE ... WHERE
  * version = ?` and retry on miss.
  */
-export const activityUserProgress = pgTable(
-  "activity_user_progress",
+export const activityMembers = pgTable(
+  "activity_members",
   {
     id: uuid("id")
       .primaryKey()
@@ -225,8 +271,11 @@ export const activityUserProgress = pgTable(
       .$type<Record<string, unknown>>()
       .default({})
       .notNull(),
-    status: text("status").notNull().default("joined"), // "joined"|"completed"|"dropped"
+    status: text("status").notNull().default("joined"), // "joined"|"completed"|"dropped"|"left"
     completedAt: timestamp("completed_at"),
+    leftAt: timestamp("left_at"),
+    queueNumber: text("queue_number"),
+    queueNumberUsedAt: timestamp("queue_number_used_at"),
     version: integer("version").default(1).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -235,18 +284,23 @@ export const activityUserProgress = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("activity_user_progress_uidx").on(
+    uniqueIndex("activity_members_uidx").on(
       table.activityId,
       table.endUserId,
     ),
-    index("activity_user_progress_activity_status_idx").on(
+    index("activity_members_activity_status_idx").on(
       table.activityId,
       table.status,
     ),
-    index("activity_user_progress_org_user_idx").on(
+    index("activity_members_org_user_idx").on(
       table.organizationId,
       table.endUserId,
     ),
+    // Activity-scoped unique queue number. Partial index avoids
+    // collisions on NULL (most members have no number).
+    uniqueIndex("activity_members_queue_number_uidx")
+      .on(table.activityId, table.queueNumber)
+      .where(sql`queue_number IS NOT NULL`),
   ],
 );
 
@@ -527,8 +581,7 @@ export const activityTemplates = pgTable(
 export type ActivityConfig = typeof activityConfigs.$inferSelect;
 export type ActivityTemplate = typeof activityTemplates.$inferSelect;
 export type ActivityNode = typeof activityNodes.$inferSelect;
-export type ActivityUserProgressRow =
-  typeof activityUserProgress.$inferSelect;
+export type ActivityMemberRow = typeof activityMembers.$inferSelect;
 export type ActivityUserReward = typeof activityUserRewards.$inferSelect;
 export type ActivityPointLog = typeof activityPointLogs.$inferSelect;
 export type ActivitySchedule = typeof activitySchedules.$inferSelect;

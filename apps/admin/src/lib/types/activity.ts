@@ -55,6 +55,19 @@ export interface ActivityCleanupRule {
   conversionMap?: Record<string, RewardEntry[]>
 }
 
+export type ActivityQueueFormat = "numeric" | "alphanumeric"
+
+export interface ActivityMembershipConfig {
+  leaveAllowed?: boolean
+  queue?: {
+    enabled: boolean
+    format: ActivityQueueFormat
+    length: number
+  }
+}
+
+export type ActivityMemberStatus = "joined" | "completed" | "dropped" | "left"
+
 export interface Activity {
   id: string
   organizationId: string
@@ -80,6 +93,7 @@ export interface Activity {
   visibility: ActivityVisibility
   templateId: string | null
   metadata: Record<string, unknown> | null
+  membership: ActivityMembershipConfig | null
   createdAt: string
   updatedAt: string
 }
@@ -140,6 +154,7 @@ export interface CreateActivityInput {
   joinRequirement?: Record<string, unknown> | null
   visibility?: ActivityVisibility
   metadata?: Record<string, unknown> | null
+  membership?: ActivityMembershipConfig | null
 }
 
 export type UpdateActivityInput = Partial<
@@ -158,7 +173,7 @@ export interface CreateNodeInput {
   enabled?: boolean
 }
 
-export interface ActivityUserProgress {
+export interface ActivityMember {
   id: string
   activityId: string
   organizationId: string
@@ -168,12 +183,31 @@ export interface ActivityUserProgress {
   activityPoints: number
   milestonesAchieved: string[]
   nodeState: Record<string, unknown>
-  status: "joined" | "completed" | "dropped"
+  status: ActivityMemberStatus
   completedAt: string | null
+  leftAt: string | null
+  queueNumber: string | null
+  queueNumberUsedAt: string | null
   version: number
   createdAt: string
   updatedAt: string
 }
+
+/** Lightweight row returned by the admin `/api/activity/{key}/members` list. */
+export interface ActivityMemberListItem {
+  endUserId: string
+  status: ActivityMemberStatus
+  joinedAt: string
+  lastActiveAt: string
+  completedAt: string | null
+  leftAt: string | null
+  queueNumber: string | null
+  queueNumberUsedAt: string | null
+  activityPoints: number
+}
+
+/** Backwards-compat alias — the server used to return this shape. */
+export type ActivityUserProgress = ActivityMember
 
 export interface ActivityTimeline {
   state: ActivityState
@@ -190,7 +224,7 @@ export interface ActivityViewForUser {
     timeline: ActivityTimeline
     derivedState: ActivityState
   }
-  progress: ActivityUserProgress | null
+  progress: ActivityMember | null
   nodes: Array<{
     node: ActivityNode
     unlocked: boolean

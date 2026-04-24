@@ -1,3 +1,0 @@
-DROP INDEX "invite_relationships_org_inviter_bound_idx";--> statement-breakpoint
-CREATE INDEX "invite_relationships_org_qualified_idx" ON "invite_relationships" USING btree ("organization_id","qualified_at") WHERE "invite_relationships"."qualified_at" IS NOT NULL;--> statement-breakpoint
-CREATE INDEX "invite_relationships_org_inviter_bound_idx" ON "invite_relationships" USING btree ("organization_id","inviter_end_user_id","bound_at" DESC NULLS LAST);

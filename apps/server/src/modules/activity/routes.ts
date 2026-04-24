@@ -14,7 +14,12 @@ import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
-import type { ActivityConfig } from "../../schema/activity";
+import type {
+  ActivityConfig,
+  ActivityMemberRow,
+  ActivityMembershipConfig,
+} from "../../schema/activity";
+import type { ActivityMemberStatus } from "./types";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
@@ -24,10 +29,16 @@ import {
   CreateActivityTemplateBody,
   CreateNodeSchema,
   CreateScheduleSchema,
+  EndUserIdParam,
   IdParam,
   JoinActivityBody,
+  JoinActivityResponseSchema,
   KeyParam,
+  LeaveActivityBody,
+  MemberListResponseSchema,
+  MembersQuerySchema,
   PublishActivitySchema,
+  RedeemQueueResponseSchema,
   UpdateActivitySchema,
   UpdateNodeSchema,
 } from "./validators";
@@ -70,8 +81,42 @@ function serializeActivity(row: ActivityConfig) {
     visibility: row.visibility as "public" | "hidden" | "targeted",
     templateId: row.templateId,
     metadata: row.metadata as Record<string, unknown> | null,
+    membership: (row.membership as ActivityMembershipConfig | null) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+function serializeMember(row: ActivityMemberRow) {
+  return {
+    endUserId: row.endUserId,
+    status: row.status as ActivityMemberStatus,
+    joinedAt: row.joinedAt.toISOString(),
+    lastActiveAt: row.lastActiveAt.toISOString(),
+    completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    leftAt: row.leftAt ? row.leftAt.toISOString() : null,
+    queueNumber: row.queueNumber,
+    queueNumberUsedAt: row.queueNumberUsedAt
+      ? row.queueNumberUsedAt.toISOString()
+      : null,
+    activityPoints: row.activityPoints,
+  };
+}
+
+function serializeJoinResult(row: ActivityMemberRow) {
+  return {
+    id: row.id,
+    activityId: row.activityId,
+    endUserId: row.endUserId,
+    status: row.status as ActivityMemberStatus,
+    joinedAt: row.joinedAt.toISOString(),
+    lastActiveAt: row.lastActiveAt.toISOString(),
+    activityPoints: row.activityPoints,
+    queueNumber: row.queueNumber,
+    queueNumberUsedAt: row.queueNumberUsedAt
+      ? row.queueNumberUsedAt.toISOString()
+      : null,
+    leftAt: row.leftAt ? row.leftAt.toISOString() : null,
   };
 }
 
@@ -445,7 +490,9 @@ activityRouter.openapi(
       200: {
         description: "OK",
         content: {
-          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
+          "application/json": {
+            schema: envelopeOf(JoinActivityResponseSchema),
+          },
         },
       },
       ...commonErrorResponses,
@@ -460,7 +507,131 @@ activityRouter.openapi(
       activityIdOrAlias: key,
       endUserId: body.endUserId,
     });
-    return c.json(ok(row), 200);
+    return c.json(ok(serializeJoinResult(row)), 200);
+  },
+);
+
+// ─── Member ops: leave / list / redeem queue ────────────────────
+
+activityRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/{key}/leave",
+    tags: [TAG],
+    summary:
+      "Active leave: mark the member as `left` (keeps ledger and queue number).",
+    request: {
+      params: KeyParam,
+      body: { content: { "application/json": { schema: LeaveActivityBody } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(JoinActivityResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await activityService.leaveActivity({
+      organizationId: orgId,
+      activityIdOrAlias: key,
+      endUserId: body.endUserId,
+    });
+    return c.json(ok(serializeJoinResult(row)), 200);
+  },
+);
+
+activityRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/{key}/members",
+    tags: [TAG],
+    summary: "Paginated list of activity members (admin).",
+    request: {
+      params: KeyParam,
+      query: MembersQuerySchema,
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(MemberListResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key } = c.req.valid("param");
+    const { status, cursor, limit } = c.req.valid("query");
+    const result = await activityService.listMembers({
+      organizationId: orgId,
+      activityIdOrAlias: key,
+      status: status ?? "all",
+      cursor: cursor ?? null,
+      limit: limit ?? 50,
+    });
+    return c.json(
+      ok({
+        items: result.items.map(serializeMember),
+        nextCursor: result.nextCursor,
+      }),
+      200,
+    );
+  },
+);
+
+activityRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/{key}/members/{endUserId}/redeem-queue",
+    tags: [TAG],
+    summary: "Redeem (mark used) a member's queue number. One-shot.",
+    request: {
+      params: z.object({
+        key: z.string().openapi({ param: { name: "key", in: "path" } }),
+        endUserId: EndUserIdParam.shape.endUserId,
+      }),
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(RedeemQueueResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = c.var.session!.activeOrganizationId!;
+    const { key, endUserId } = c.req.valid("param");
+    const result = await activityService.redeemQueueNumber({
+      organizationId: orgId,
+      activityIdOrAlias: key,
+      endUserId,
+    });
+    return c.json(
+      ok({
+        endUserId: result.endUserId,
+        queueNumber: result.queueNumber,
+        usedAt: result.usedAt.toISOString(),
+      }),
+      200,
+    );
   },
 );
 

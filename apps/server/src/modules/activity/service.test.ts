@@ -267,6 +267,171 @@ describe("activity service", () => {
     expect(virt2?.resourceActive).toBe(true);
   });
 
+  test("membership: join with queue.enabled allocates a unique number, leave/redeem flows", async () => {
+    const now = new Date();
+    const a = await svc.createActivity(orgId, {
+      alias: "a-mem-queue",
+      name: "Queue",
+      ...times(now),
+      milestoneTiers: [],
+      membership: {
+        leaveAllowed: true,
+        queue: { enabled: true, format: "numeric", length: 4 },
+      },
+    });
+    await svc.publish(orgId, a.alias, now);
+
+    // First join → queue number allocated, 4 digits numeric
+    const r1 = await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "q-u1",
+      now,
+    });
+    expect(r1.queueNumber).not.toBeNull();
+    expect(r1.queueNumber!).toMatch(/^\d{4}$/);
+
+    // Second join for same user → same number (idempotent)
+    const r1b = await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "q-u1",
+      now,
+    });
+    expect(r1b.queueNumber).toBe(r1.queueNumber);
+
+    // Different user → different number
+    const r2 = await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "q-u2",
+      now,
+    });
+    expect(r2.queueNumber).not.toBeNull();
+    expect(r2.queueNumber).not.toBe(r1.queueNumber);
+
+    // Redeem q-u1's queue number — first call succeeds
+    const redeemed = await svc.redeemQueueNumber({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "q-u1",
+    });
+    expect(redeemed.queueNumber).toBe(r1.queueNumber);
+    expect(redeemed.usedAt).toBeInstanceOf(Date);
+
+    // Redeem again → ActivityQueueAlreadyRedeemed
+    await expect(
+      svc.redeemQueueNumber({
+        organizationId: orgId,
+        activityIdOrAlias: a.alias,
+        endUserId: "q-u1",
+      }),
+    ).rejects.toMatchObject({ code: "activity.queue_already_redeemed" });
+
+    // q-u1 leaves — status 'left', queue_number + used_at preserved
+    const left = await svc.leaveActivity({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "q-u1",
+    });
+    expect(left.status).toBe("left");
+    expect(left.leftAt).toBeInstanceOf(Date);
+    expect(left.queueNumber).toBe(r1.queueNumber);
+    expect(left.queueNumberUsedAt).not.toBeNull();
+
+    // listMembers with status filter picks up the 'left' row
+    const onlyLeft = await svc.listMembers({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      status: "left",
+    });
+    expect(onlyLeft.items.length).toBe(1);
+    expect(onlyLeft.items[0]!.endUserId).toBe("q-u1");
+
+    // listMembers 'all' returns both
+    const all = await svc.listMembers({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+    });
+    expect(all.items.length).toBe(2);
+  });
+
+  test("membership: null config → join returns null queueNumber; redeem rejects", async () => {
+    const now = new Date();
+    const a = await svc.createActivity(orgId, {
+      alias: "a-mem-nil",
+      name: "NoMembership",
+      ...times(now),
+      milestoneTiers: [],
+    });
+    await svc.publish(orgId, a.alias, now);
+
+    const r = await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "u",
+      now,
+    });
+    expect(r.queueNumber).toBeNull();
+
+    await expect(
+      svc.redeemQueueNumber({
+        organizationId: orgId,
+        activityIdOrAlias: a.alias,
+        endUserId: "u",
+      }),
+    ).rejects.toMatchObject({ code: "activity.queue_not_enabled" });
+  });
+
+  test("membership: leaveAllowed=false rejects leaveActivity", async () => {
+    const now = new Date();
+    const a = await svc.createActivity(orgId, {
+      alias: "a-mem-nocanleave",
+      name: "NoLeave",
+      ...times(now),
+      milestoneTiers: [],
+      membership: { leaveAllowed: false },
+    });
+    await svc.publish(orgId, a.alias, now);
+    await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "u",
+      now,
+    });
+
+    await expect(
+      svc.leaveActivity({
+        organizationId: orgId,
+        activityIdOrAlias: a.alias,
+        endUserId: "u",
+      }),
+    ).rejects.toMatchObject({ code: "activity.leave_not_allowed" });
+  });
+
+  test("membership: queue disabled → join returns null queueNumber", async () => {
+    const now = new Date();
+    const a = await svc.createActivity(orgId, {
+      alias: "a-mem-queue-off",
+      name: "QueueOff",
+      ...times(now),
+      milestoneTiers: [],
+      membership: {
+        leaveAllowed: true,
+        queue: { enabled: false, format: "alphanumeric", length: 6 },
+      },
+    });
+    await svc.publish(orgId, a.alias, now);
+
+    const r = await svc.join({
+      organizationId: orgId,
+      activityIdOrAlias: a.alias,
+      endUserId: "u",
+      now,
+    });
+    expect(r.queueNumber).toBeNull();
+  });
+
   test("tickDue flips persisted status when derived state moves", async () => {
     // Time window: visible -7d → start -6d → end -4d → rewardEnd -3d →
     // hidden -2d. Publish 5 days ago when state is "active". Then

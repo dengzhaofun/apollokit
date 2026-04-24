@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
  *
  * - `join`                  → unique(activity_id, end_user_id) on
- *                             activity_user_progress. Retry returns the
+ *                             activity_members. Retry returns the
  *                             existing row.
  * - `claimMilestone`        → unique(activity_id, end_user_id,
  *                             reward_key="milestone:<alias>") on
@@ -47,7 +47,7 @@
  *   - Unit tests (noted separately)
  */
 
-import { and, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lte, ne, sql } from "drizzle-orm";
 
 import { assistPoolConfigs } from "../../schema/assist-pool";
 import { bannerGroups } from "../../schema/banner";
@@ -61,12 +61,13 @@ import type { AppDeps } from "../../deps";
 import type { RewardEntry } from "../../lib/rewards";
 import {
   activityConfigs,
+  activityMembers,
   activityNodes,
   activityPointLogs,
   activitySchedules,
   activityTemplates,
-  activityUserProgress,
   activityUserRewards,
+  type ActivityMembershipConfig,
   type ActivityNodeBlueprint,
   type ActivityScheduleBlueprint,
   type ActivityTemplateDurationSpec,
@@ -75,10 +76,16 @@ import {
 import {
   ActivityAliasConflict,
   ActivityInvalidInput,
+  ActivityLeaveNotAllowed,
+  ActivityMemberNoQueueNumber,
+  ActivityMemberNotFound,
   ActivityMilestoneNotFound,
   ActivityMilestoneNotReached,
   ActivityNodeNotFound,
   ActivityNotFound,
+  ActivityQueueAlreadyRedeemed,
+  ActivityQueueNotEnabled,
+  ActivityQueueNumberExhausted,
   ActivityWrongState,
 } from "./errors";
 import {
@@ -94,10 +101,11 @@ import {
 import type {
   ActivityConfig,
   ActivityKind,
+  ActivityMemberRow,
+  ActivityMemberStatus,
   ActivityMilestoneTier,
   ActivityNode,
   ActivityState,
-  ActivityUserProgressRow,
   ActivityViewForUser,
   ActivityVisibility,
 } from "./types";
@@ -266,6 +274,9 @@ export function createActivityService(
               "public") as ActivityVisibility,
             templateId: input.templateId ?? null,
             metadata: input.metadata ?? null,
+            membership:
+              (input.membership as ActivityMembershipConfig | null | undefined) ??
+              null,
           })
           .returning();
         if (!row) throw new Error("insert returned no row");
@@ -313,6 +324,9 @@ export function createActivityService(
       if (patch.visibility !== undefined)
         values.visibility = patch.visibility as ActivityVisibility;
       if (patch.metadata !== undefined) values.metadata = patch.metadata;
+      if (patch.membership !== undefined)
+        values.membership =
+          (patch.membership as ActivityMembershipConfig | null) ?? null;
 
       if (Object.keys(values).length === 0) return existing;
 
@@ -633,7 +647,7 @@ export function createActivityService(
       activityIdOrAlias: string;
       endUserId: string;
       now?: Date;
-    }): Promise<ActivityUserProgressRow> {
+    }): Promise<ActivityMemberRow> {
       const activity = await loadByKey(
         params.organizationId,
         params.activityIdOrAlias,
@@ -644,7 +658,7 @@ export function createActivityService(
         throw new ActivityWrongState("join", state);
       }
       const [row] = await db
-        .insert(activityUserProgress)
+        .insert(activityMembers)
         .values({
           activityId: activity.id,
           organizationId: params.organizationId,
@@ -654,8 +668,8 @@ export function createActivityService(
         })
         .onConflictDoUpdate({
           target: [
-            activityUserProgress.activityId,
-            activityUserProgress.endUserId,
+            activityMembers.activityId,
+            activityMembers.endUserId,
           ],
           set: { lastActiveAt: now },
         })
@@ -667,6 +681,18 @@ export function createActivityService(
       // equality against `now` reliably marks the first-time join.
       const firstTime = row!.joinedAt.getTime() === now.getTime();
 
+      // Allocate a queue number if the activity enables it and the
+      // member doesn't already have one. Random allocation + partial
+      // unique (activity_id, queue_number) — retry on collision.
+      let member = row!;
+      const membership = activity.membership as ActivityMembershipConfig | null;
+      if (
+        membership?.queue?.enabled &&
+        member.queueNumber === null
+      ) {
+        member = await allocateQueueNumber(db, member, membership.queue);
+      }
+
       if (events) {
         await events.emit("activity.joined", {
           organizationId: params.organizationId,
@@ -677,7 +703,171 @@ export function createActivityService(
         });
       }
 
-      return row!;
+      return member;
+    },
+
+    /**
+     * Active leave. Marks `status='left'` and stamps `leftAt`. Keeps
+     * every other column untouched — point balance, milestones already
+     * claimed, and (crucially) the queue number stay on the row so
+     * history and redemption still work after the member leaves.
+     *
+     * Hard delete is NOT used: reward ledger, point ledger, and
+     * milestones-achieved must all stay queryable post-leave.
+     */
+    async leaveActivity(params: {
+      organizationId: string;
+      activityIdOrAlias: string;
+      endUserId: string;
+      now?: Date;
+    }): Promise<ActivityMemberRow> {
+      const activity = await loadByKey(
+        params.organizationId,
+        params.activityIdOrAlias,
+      );
+      const membership = activity.membership as ActivityMembershipConfig | null;
+      if (membership?.leaveAllowed === false) {
+        throw new ActivityLeaveNotAllowed();
+      }
+      const now = params.now ?? new Date();
+      const [row] = await db
+        .update(activityMembers)
+        .set({ status: "left", leftAt: now, lastActiveAt: now })
+        .where(
+          and(
+            eq(activityMembers.activityId, activity.id),
+            eq(activityMembers.endUserId, params.endUserId),
+            eq(activityMembers.status, "joined"),
+          ),
+        )
+        .returning();
+      if (!row) throw new ActivityMemberNotFound(params.endUserId);
+      return row;
+    },
+
+    /**
+     * Admin-triggered queue-number redemption. Flips `queueNumberUsedAt`
+     * from NULL to `now`. One-shot — re-calling returns
+     * `ActivityQueueAlreadyRedeemed` carrying the original used-at
+     * timestamp.
+     */
+    async redeemQueueNumber(params: {
+      organizationId: string;
+      activityIdOrAlias: string;
+      endUserId: string;
+      now?: Date;
+    }): Promise<{ endUserId: string; queueNumber: string; usedAt: Date }> {
+      const activity = await loadByKey(
+        params.organizationId,
+        params.activityIdOrAlias,
+      );
+      const membership = activity.membership as ActivityMembershipConfig | null;
+      if (!membership?.queue?.enabled) {
+        throw new ActivityQueueNotEnabled();
+      }
+      const now = params.now ?? new Date();
+      const [row] = await db
+        .update(activityMembers)
+        .set({ queueNumberUsedAt: now })
+        .where(
+          and(
+            eq(activityMembers.activityId, activity.id),
+            eq(activityMembers.endUserId, params.endUserId),
+            isNotNull(activityMembers.queueNumber),
+            isNull(activityMembers.queueNumberUsedAt),
+          ),
+        )
+        .returning();
+
+      if (row) {
+        return {
+          endUserId: row.endUserId,
+          queueNumber: row.queueNumber!,
+          usedAt: row.queueNumberUsedAt!,
+        };
+      }
+
+      // Zero rows updated — figure out why, to return a precise error.
+      const existing = await db
+        .select()
+        .from(activityMembers)
+        .where(
+          and(
+            eq(activityMembers.activityId, activity.id),
+            eq(activityMembers.endUserId, params.endUserId),
+          ),
+        )
+        .limit(1);
+      const found = existing[0];
+      if (!found) throw new ActivityMemberNotFound(params.endUserId);
+      if (!found.queueNumber) {
+        throw new ActivityMemberNoQueueNumber(params.endUserId);
+      }
+      if (found.queueNumberUsedAt) {
+        throw new ActivityQueueAlreadyRedeemed(
+          params.endUserId,
+          found.queueNumberUsedAt,
+        );
+      }
+      // Defensive fallback — shouldn't reach here under normal state.
+      throw new ActivityMemberNotFound(params.endUserId);
+    },
+
+    /**
+     * Paginated member listing for admin. Cursor is the last row's
+     * `joinedAt|id` composite; `limit` is capped at 200.
+     */
+    async listMembers(params: {
+      organizationId: string;
+      activityIdOrAlias: string;
+      status?: ActivityMemberStatus | "all";
+      cursor?: string | null;
+      limit?: number;
+    }): Promise<{
+      items: ActivityMemberRow[];
+      nextCursor: string | null;
+    }> {
+      const activity = await loadByKey(
+        params.organizationId,
+        params.activityIdOrAlias,
+      );
+      const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+      const statusFilter =
+        params.status && params.status !== "all"
+          ? [eq(activityMembers.status, params.status)]
+          : [];
+      const cursorFilter: ReturnType<typeof sql>[] = [];
+      if (params.cursor) {
+        const [rawTs, rawId] = params.cursor.split("|");
+        const ts = rawTs ? Number(rawTs) : NaN;
+        if (!Number.isFinite(ts) || !rawId) {
+          throw new ActivityInvalidInput(`invalid cursor: ${params.cursor}`);
+        }
+        const cursorDate = new Date(ts);
+        cursorFilter.push(
+          sql`(${activityMembers.joinedAt}, ${activityMembers.id}) < (${cursorDate.toISOString()}::timestamp, ${rawId})`,
+        );
+      }
+      const rows = await db
+        .select()
+        .from(activityMembers)
+        .where(
+          and(
+            eq(activityMembers.activityId, activity.id),
+            ...statusFilter,
+            ...cursorFilter,
+          ),
+        )
+        .orderBy(desc(activityMembers.joinedAt), desc(activityMembers.id))
+        .limit(limit + 1);
+      const hasMore = rows.length > limit;
+      const items = rows.slice(0, limit);
+      const last = items[items.length - 1];
+      const nextCursor =
+        hasMore && last
+          ? `${last.joinedAt.getTime()}|${last.id}`
+          : null;
+      return { items, nextCursor };
     },
 
     /**
@@ -714,7 +904,7 @@ export function createActivityService(
 
       // Upsert progress row with atomic point adjustment.
       const [row] = await db
-        .insert(activityUserProgress)
+        .insert(activityMembers)
         .values({
           activityId: activity.id,
           organizationId: params.organizationId,
@@ -725,11 +915,11 @@ export function createActivityService(
         })
         .onConflictDoUpdate({
           target: [
-            activityUserProgress.activityId,
-            activityUserProgress.endUserId,
+            activityMembers.activityId,
+            activityMembers.endUserId,
           ],
           set: {
-            activityPoints: sql`${activityUserProgress.activityPoints} + ${params.delta}`,
+            activityPoints: sql`${activityMembers.activityPoints} + ${params.delta}`,
             lastActiveAt: now,
           },
         })
@@ -799,11 +989,11 @@ export function createActivityService(
       // Load current points.
       const progressRows = await db
         .select()
-        .from(activityUserProgress)
+        .from(activityMembers)
         .where(
           and(
-            eq(activityUserProgress.activityId, activity.id),
-            eq(activityUserProgress.endUserId, params.endUserId),
+            eq(activityMembers.activityId, activity.id),
+            eq(activityMembers.endUserId, params.endUserId),
           ),
         )
         .limit(1);
@@ -839,11 +1029,11 @@ export function createActivityService(
 
       // Append milestone alias to the cached list (for O(1) reads).
       await db
-        .update(activityUserProgress)
+        .update(activityMembers)
         .set({
-          milestonesAchieved: sql`coalesce(${activityUserProgress.milestonesAchieved}, '[]'::jsonb) || ${JSON.stringify([params.milestoneAlias])}::jsonb`,
+          milestonesAchieved: sql`coalesce(${activityMembers.milestonesAchieved}, '[]'::jsonb) || ${JSON.stringify([params.milestoneAlias])}::jsonb`,
         })
-        .where(eq(activityUserProgress.id, progress.id));
+        .where(eq(activityMembers.id, progress.id));
 
       // Dispatch the rewards via mail (idempotent by rewardKey).
       const mail = mailGetter();
@@ -904,11 +1094,11 @@ export function createActivityService(
       const [progressRows, nodeRows] = await Promise.all([
         db
           .select()
-          .from(activityUserProgress)
+          .from(activityMembers)
           .where(
             and(
-              eq(activityUserProgress.activityId, activity.id),
-              eq(activityUserProgress.endUserId, params.endUserId),
+              eq(activityMembers.activityId, activity.id),
+              eq(activityMembers.endUserId, params.endUserId),
             ),
           )
           .limit(1),
@@ -995,7 +1185,7 @@ export function createActivityService(
         cnt: number;
       }>`
         SELECT status, COUNT(*)::int AS cnt
-        FROM activity_user_progress
+        FROM activity_members
         WHERE activity_id = ${activity.id}
         GROUP BY status
       `);
@@ -1022,7 +1212,7 @@ export function createActivityService(
           AVG(activity_points)::text AS avg,
           MAX(activity_points)::text AS max,
           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY activity_points)::text AS p50
-        FROM activity_user_progress
+        FROM activity_members
         WHERE activity_id = ${activity.id}
       `);
       const stats = statsRaw.rows[0] as {
@@ -1063,7 +1253,7 @@ export function createActivityService(
             ELSE '5000+'
           END AS bucket,
           COUNT(*)::int AS cnt
-        FROM activity_user_progress
+        FROM activity_members
         WHERE activity_id = ${activity.id}
         GROUP BY 1
         ORDER BY 1
@@ -1254,6 +1444,9 @@ export function createActivityService(
             "public",
           templateId: tpl.id,
           metadata: (payload.metadata as Record<string, unknown> | null) ?? null,
+          membership:
+            (payload.membership as ActivityMembershipConfig | null | undefined) ??
+            null,
         })
         .returning();
       if (!row) throw new Error("activity insert returned no row");
@@ -1576,7 +1769,7 @@ export type ActivityService = ReturnType<typeof createActivityService>;
 function isNodeUnlocked(
   node: ActivityNode,
   activity: ActivityConfig,
-  progress: ActivityUserProgressRow | null,
+  progress: ActivityMemberRow | null,
   completed: Set<string>,
   now: Date,
 ): boolean {
@@ -1702,9 +1895,9 @@ async function fireSchedule(params: {
     case "grant_reward": {
       const rewards = (cfg.rewards ?? []) as RewardEntry[];
       const participants = await db
-        .select({ endUserId: activityUserProgress.endUserId })
-        .from(activityUserProgress)
-        .where(eq(activityUserProgress.activityId, schedule.activityId));
+        .select({ endUserId: activityMembers.endUserId })
+        .from(activityMembers)
+        .where(eq(activityMembers.activityId, schedule.activityId));
       const mail = mailGetter();
       if (!mail) break;
       const rewardKey = `schedule:${schedule.alias}`;
@@ -1990,6 +2183,75 @@ function computeIsoWeek(year: number, month: number, day: number): number {
     target.setUTCMonth(0, 1 + ((4 - target.getUTCDay() + 7) % 7));
   }
   return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+}
+
+/**
+ * Allocate a random, activity-unique queue number for a member that
+ * doesn't yet have one. Loops up to MAX_ATTEMPTS times — each attempt
+ * generates a fresh random candidate and does a conditional UPDATE
+ * guarded by the partial unique index (activity_id, queue_number)
+ * WHERE queue_number IS NOT NULL. A unique-violation means we raced
+ * another caller onto the same candidate; pick another and try again.
+ *
+ * Reads the fresh row after success so queue-number idempotence across
+ * concurrent `/join` calls is handled by "queue_number IS NULL" gate
+ * in the UPDATE WHERE clause.
+ */
+async function allocateQueueNumber(
+  db: AppDeps["db"],
+  member: ActivityMemberRow,
+  queue: { format: "numeric" | "alphanumeric"; length: number },
+): Promise<ActivityMemberRow> {
+  const MAX_ATTEMPTS = 5;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    const candidate = generateQueueCandidate(queue.format, queue.length);
+    try {
+      const [row] = await db
+        .update(activityMembers)
+        .set({ queueNumber: candidate })
+        .where(
+          and(
+            eq(activityMembers.id, member.id),
+            isNull(activityMembers.queueNumber),
+          ),
+        )
+        .returning();
+      if (row) return row;
+      // Zero rows: someone else set it first (concurrent join). Read
+      // what's there and return — subsequent callers are idempotent.
+      const fresh = await db
+        .select()
+        .from(activityMembers)
+        .where(eq(activityMembers.id, member.id))
+        .limit(1);
+      if (fresh[0]?.queueNumber) return fresh[0];
+      // Still null? Loop and try again.
+    } catch (err) {
+      if (!isUniqueViolation(err)) throw err;
+      // Candidate collided with an existing member's number — retry.
+    }
+  }
+  throw new ActivityQueueNumberExhausted();
+}
+
+const NUMERIC_ALPHABET = "0123456789";
+// Alphanumeric pool without easily-confused characters: 0 vs O, 1 vs I
+// vs L. Keeps ticket legibility high when operators read them aloud.
+const ALPHANUMERIC_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+function generateQueueCandidate(
+  format: "numeric" | "alphanumeric",
+  length: number,
+): string {
+  const alphabet =
+    format === "numeric" ? NUMERIC_ALPHABET : ALPHANUMERIC_ALPHABET;
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += alphabet[bytes[i]! % alphabet.length];
+  }
+  return out;
 }
 
 /** Detect Postgres unique_violation (SQLSTATE 23505) across driver quirks. */

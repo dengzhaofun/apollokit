@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
 import type {
   Activity,
+  ActivityMemberListItem,
+  ActivityMemberStatus,
   ActivityNode,
   ActivitySchedule,
   ActivityTemplate,
@@ -233,6 +235,57 @@ export function useActivityAnalytics(key: string) {
     queryFn: () =>
       api.get<ActivityAnalytics>(`/api/activity/${key}/analytics`),
     enabled: !!key,
+  })
+}
+
+// ─── Members (participants list + leave + queue redemption) ────────
+
+type MembersPage = {
+  items: ActivityMemberListItem[]
+  nextCursor: string | null
+}
+
+export function useActivityMembers(
+  key: string,
+  opts: { status?: ActivityMemberStatus | "all"; cursor?: string; limit?: number } = {},
+) {
+  const status = opts.status ?? "all"
+  const limit = opts.limit ?? 50
+  return useQuery({
+    queryKey: ["activity-members", key, status, opts.cursor ?? null, limit],
+    queryFn: () => {
+      const params = new URLSearchParams()
+      if (status !== "all") params.set("status", status)
+      if (opts.cursor) params.set("cursor", opts.cursor)
+      params.set("limit", String(limit))
+      const qs = params.toString()
+      return api.get<MembersPage>(
+        `/api/activity/${key}/members${qs ? `?${qs}` : ""}`,
+      )
+    },
+    enabled: !!key,
+  })
+}
+
+export function useLeaveActivity(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (endUserId: string) =>
+      api.post<unknown>(`/api/activity/${activityKey}/leave`, { endUserId }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-members", activityKey] }),
+  })
+}
+
+export function useRedeemQueueNumber(activityKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (endUserId: string) =>
+      api.post<{ endUserId: string; queueNumber: string; usedAt: string }>(
+        `/api/activity/${activityKey}/members/${encodeURIComponent(endUserId)}/redeem-queue`,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["activity-members", activityKey] }),
   })
 }
 

@@ -3,6 +3,8 @@ import { z } from "@hono/zod-openapi";
 import {
   ACTION_TYPES,
   ACTIVITY_KINDS,
+  ACTIVITY_MEMBER_STATUSES,
+  ACTIVITY_QUEUE_FORMATS,
   ACTIVITY_VISIBILITIES,
   CLEANUP_MODES,
   NODE_TYPES,
@@ -43,6 +45,19 @@ const NodeUnlockRuleSchema = z.object({
   relativeToStartSeconds: z.number().int().optional(),
 });
 
+export const MembershipConfigSchema = z
+  .object({
+    leaveAllowed: z.boolean().optional(),
+    queue: z
+      .object({
+        enabled: z.boolean(),
+        format: z.enum(ACTIVITY_QUEUE_FORMATS),
+        length: z.number().int().min(4).max(8),
+      })
+      .optional(),
+  })
+  .openapi("ActivityMembershipConfig");
+
 export const CreateActivitySchema = z
   .object({
     alias: z.string().min(1).max(64).regex(AliasRegex),
@@ -66,6 +81,7 @@ export const CreateActivitySchema = z
     visibility: z.enum(ACTIVITY_VISIBILITIES).default("public").optional(),
     templateId: z.string().uuid().nullable().optional(),
     metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    membership: MembershipConfigSchema.nullable().optional(),
   })
   .openapi("ActivityCreate");
 
@@ -89,6 +105,7 @@ export const UpdateActivitySchema = z
     joinRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
     visibility: z.enum(ACTIVITY_VISIBILITIES).optional(),
     metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    membership: MembershipConfigSchema.nullable().optional(),
   })
   .openapi("ActivityUpdate");
 
@@ -289,13 +306,83 @@ export const ActivityConfigResponseSchema = z
     visibility: z.enum(ACTIVITY_VISIBILITIES),
     templateId: z.string().nullable(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
+    membership: MembershipConfigSchema.nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
   })
   .openapi("Activity");
+
+// ─── Member ops (leave / list / redeem queue) ──────────────────
+
+export const LeaveActivityBody = z
+  .object({
+    endUserId: z.string().min(1).max(256),
+  })
+  .openapi("ActivityLeave");
+
+export const EndUserIdParam = z.object({
+  endUserId: z
+    .string()
+    .min(1)
+    .openapi({ param: { name: "endUserId", in: "path" } }),
+});
+
+export const MembersQuerySchema = z.object({
+  status: z
+    .enum([...ACTIVITY_MEMBER_STATUSES, "all"])
+    .default("all")
+    .optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50).optional(),
+});
+
+export const MemberRowSchema = z
+  .object({
+    endUserId: z.string(),
+    status: z.enum(ACTIVITY_MEMBER_STATUSES),
+    joinedAt: z.string(),
+    lastActiveAt: z.string(),
+    completedAt: z.string().nullable(),
+    leftAt: z.string().nullable(),
+    queueNumber: z.string().nullable(),
+    queueNumberUsedAt: z.string().nullable(),
+    activityPoints: z.number().int(),
+  })
+  .openapi("ActivityMember");
+
+export const MemberListResponseSchema = z
+  .object({
+    items: z.array(MemberRowSchema),
+    nextCursor: z.string().nullable(),
+  })
+  .openapi("ActivityMemberList");
+
+export const RedeemQueueResponseSchema = z
+  .object({
+    endUserId: z.string(),
+    queueNumber: z.string(),
+    usedAt: z.string(),
+  })
+  .openapi("ActivityRedeemQueueResult");
+
+export const JoinActivityResponseSchema = z
+  .object({
+    id: z.string(),
+    activityId: z.string(),
+    endUserId: z.string(),
+    status: z.enum(ACTIVITY_MEMBER_STATUSES),
+    joinedAt: z.string(),
+    lastActiveAt: z.string(),
+    activityPoints: z.number().int(),
+    queueNumber: z.string().nullable(),
+    queueNumberUsedAt: z.string().nullable(),
+    leftAt: z.string().nullable(),
+  })
+  .openapi("ActivityJoinResult");
 
 export type CreateActivityInput = z.input<typeof CreateActivitySchema>;
 export type UpdateActivityInput = z.input<typeof UpdateActivitySchema>;
 export type CreateNodeInput = z.input<typeof CreateNodeSchema>;
 export type UpdateNodeInput = z.input<typeof UpdateNodeSchema>;
 export type CreateScheduleInput = z.input<typeof CreateScheduleSchema>;
+export type MembershipConfigInput = z.input<typeof MembershipConfigSchema>;

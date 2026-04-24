@@ -1,1 +1,0 @@
-ALTER TABLE "task_definitions" ADD COLUMN "filter" text;
