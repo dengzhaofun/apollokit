@@ -14,8 +14,10 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import type {
+  CountingMethod,
   CreateDefinitionInput,
   TaskCategory,
+  TaskPeriod,
   TaskRewardTier,
 } from "#/lib/types/task"
 
@@ -214,7 +216,7 @@ export function DefinitionForm({
               <Label>Period *</Label>
               <Select
                 value={field.state.value}
-                onValueChange={(v) => field.handleChange(v)}
+                onValueChange={(v) => field.handleChange(v as TaskPeriod)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -238,7 +240,7 @@ export function DefinitionForm({
               <Label>Counting Method *</Label>
               <Select
                 value={field.state.value}
-                onValueChange={(v) => field.handleChange(v)}
+                onValueChange={(v) => field.handleChange(v as CountingMethod)}
               >
                 <SelectTrigger>
                   <SelectValue />

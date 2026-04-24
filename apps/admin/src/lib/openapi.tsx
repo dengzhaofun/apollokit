@@ -14,7 +14,7 @@
  */
 
 import type { ComponentType } from "react";
-import { createShikiFactory } from "fumadocs-core/highlight/shiki";
+import { defaultShikiFactory } from "fumadocs-core/highlight/shiki/full";
 import {
   createClientAPIPage,
   type ClientApiPageProps,
@@ -25,8 +25,12 @@ import schema from "../../../server/openapi.json";
 
 export const SCHEMA_KEY = "apollokit";
 
+// fumadocs-core v15+ replaced the zero-arg `createShikiFactory()` with a
+// config-taking variant. We use the pre-built `defaultShikiFactory` (JS
+// regex engine, lazy-imports shiki on first render) — matches how SSR
+// samples on fumadocs.dev wire it.
 const ClientAPIPage = createClientAPIPage({
-  shiki: createShikiFactory(),
+  shiki: defaultShikiFactory,
 }) as ComponentType<ClientApiPageProps>;
 
 interface APIPageProps {

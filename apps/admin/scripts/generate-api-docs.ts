@@ -20,6 +20,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Document } from "fumadocs-openapi";
 import { generateFiles } from "fumadocs-openapi";
 import { createOpenAPI } from "fumadocs-openapi/server";
 
@@ -118,7 +119,10 @@ async function generateForLocale(cfg: LocaleConfig, schemaDoc: OpenAPIDoc) {
   await mkdir(outputDir, { recursive: true });
 
   const openapi = createOpenAPI({
-    input: () => ({ [SCHEMA_KEY]: schemaDoc }),
+    // fumadocs' SchemaMap expects the full OpenAPIV3_2.Document shape. Our
+    // local OpenAPIDoc is a narrower read-only view used only for folder
+    // grouping; the runtime JSON we just loaded is actually a full spec.
+    input: () => ({ [SCHEMA_KEY]: schemaDoc as unknown as Document }),
     // No proxy needed for now — the playground will hit the API directly
     // once we add `playground.proxy` config in source-server.ts. Wire that
     // when we add a /api/openapi-proxy server route in admin.
@@ -240,9 +244,13 @@ function tagToFolder(tag: string): string {
 }
 
 function groupForEntry(
-  entry: { item: { path: string; method: string } },
+  entry: { type: string; item: { method: string; path?: string } },
   doc: OpenAPIDoc,
 ): string {
+  // Our spec exposes no webhooks, so operation is the only case we care
+  // about. Guard anyway — fumadocs narrows `entry` to operation|webhook and
+  // webhook.item has no `path`.
+  if (entry.type !== "operation" || !entry.item.path) return "Misc";
   const op = doc.paths?.[entry.item.path]?.[entry.item.method.toLowerCase()];
   const tag = op?.tags?.[0] ?? "Misc";
   return tagToFolder(tag);

@@ -41,7 +41,9 @@ const getPageData = createServerFn({ method: 'GET' })
   .inputValidator((slugs: string[]) => slugs)
   .handler(async ({ data: rawSlugs }) => {
     const [first, ...rest] = rawSlugs
-    const hasLocale = first && i18n.languages.includes(first)
+    // 宽化 readonly ('zh'|'en')[] 成 string[] 以便用任意字符串查。
+    const langs: readonly string[] = i18n.languages
+    const hasLocale = first && langs.includes(first)
 
     if (!hasLocale) {
       // 兼容旧链接 /docs/foo → /docs/zh/foo

@@ -16,9 +16,6 @@ function stubHandler(kind: ActivityKind): ActivityKindHandler {
     async loadConfig() {
       return null;
     },
-    validateConfig(raw: unknown) {
-      return raw;
-    },
   };
 }
 
