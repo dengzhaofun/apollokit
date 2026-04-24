@@ -100,6 +100,31 @@ Every app must expose scripts named `dev`, `build`, `lint`, `check-types` — th
 
 Do **not** add new turbo tasks without also declaring them in `turbo.json`. `format` is intentionally kept outside turbo (runs directly via prettier at root).
 
+## API response envelope
+
+Every `apps/server` business route — everything under `/api/*` except the Better Auth mounts `/api/auth/*` and `/api/client/auth/*` — returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: "ok"`; module errors carry prefixed codes like `check_in.config_not_found`. DELETE / ack endpoints return HTTP 200 with `data: null` (never 204) so clients unwrap uniformly without branching on status. Full rules and the "how to write a route" checklist live in `apps/server/CLAUDE.md` § "Response envelope" — do not duplicate here.
+
+**Server-side** helpers come from `apps/server/src/lib/response.ts`: `ok()`, `fail()`, `envelopeOf()`, `commonErrorResponses`, `NullDataEnvelopeSchema`. Route factories in `apps/server/src/lib/openapi.ts` already wire the validation and `ModuleError` → envelope error handlers.
+
+**Admin-side** consumers call the server through `apps/admin/src/lib/api-client.ts`, which auto-unwraps `.data` on success and normalizes errors into `ApiError` (carries `code`, `message`, `requestId`). Call sites keep their original "resource object" typings — the envelope is invisible above the wrapper. No app code imports the generated SDK packages directly yet; they exist for future tenant-frontend consumers.
+
+**Test helpers** live at `apps/server/src/testing/envelope.ts`: `expectOk<T>(res)` returns the unwrapped payload and asserts `code === "ok"`; `expectFail(res, code)` asserts a specific error code. Route-layer tests should use these — do not hand-write `body.code === "ok"` + drill `.data`.
+
+**After changing any server route schema**, refresh the OpenAPI + SDK artifacts so the committed specs stay honest:
+
+```bash
+# Start wrangler dev (needs .dev.vars) in one terminal:
+pnpm --filter=server dev
+
+# Then in another terminal:
+pnpm --filter=@repo/sdk-core extract -- --url http://localhost:8787
+pnpm --filter=@repo/sdk-core split
+pnpm --filter=@apollokit/admin generate
+pnpm --filter=@apollokit/client generate
+```
+
+The `--url` mode is required because the in-process extractor trips on `import "cloudflare:workers"` in plain Node. Also overwrite `apps/server/openapi.json` from the running server's `/openapi.json` endpoint — admin docs pages read it directly.
+
 ## Known gotchas
 
 - **admin is Vite, NOT Next.js.** Never apply `@repo/eslint-config/next-js`, never import `next`-only utilities, never extend `@repo/typescript-config/nextjs.json`.

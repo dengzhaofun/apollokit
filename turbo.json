@@ -9,7 +9,9 @@
     "UPSTASH_REDIS_REST_TOKEN",
     "TINYBIRD_TOKEN",
     "TINYBIRD_URL",
-    "TINYBIRD_WORKSPACE_ID"
+    "TINYBIRD_WORKSPACE_ID",
+    "ADMIN_URL",
+    "INVITE_FROM_ADDRESS"
   ],
   "tasks": {
     "build": {

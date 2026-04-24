@@ -12,6 +12,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectFail, expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -107,16 +108,12 @@ describe("mail routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const mailEnv = (await create.json()) as {
-      code: string;
-      data: {
-        id: string;
-        title: string;
-        targetType: string;
-        senderAdminId: string | null;
-      };
-    };
-    const mail = mailEnv.data;
+    const mail = await expectOk<{
+      id: string;
+      title: string;
+      targetType: string;
+      senderAdminId: string | null;
+    }>(create);
     expect(mail.title).toBe("Route Broadcast");
     expect(mail.targetType).toBe("broadcast");
     expect(mail.senderAdminId).toBe(fx.adminUserId);
@@ -125,32 +122,26 @@ describe("mail routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(list.status).toBe(200);
-    const listEnv = (await list.json()) as {
-      code: string;
-      data: {
-        items: { id: string }[];
-        nextCursor: string | null;
-      };
-    };
-    expect(listEnv.data.items.some((i) => i.id === mail.id)).toBe(true);
+    const listData = await expectOk<{
+      items: { id: string }[];
+      nextCursor: string | null;
+    }>(list);
+    expect(listData.items.some((i) => i.id === mail.id)).toBe(true);
 
     const detail = await app.request(`/api/mail/messages/${mail.id}`, {
       headers: { cookie: fx.cookie },
     });
     expect(detail.status).toBe(200);
-    const detailEnv = (await detail.json()) as {
-      code: string;
-      data: {
-        id: string;
-        readCount: number;
-        claimCount: number;
-        targetCount: number | null;
-      };
-    };
-    expect(detailEnv.data.id).toBe(mail.id);
-    expect(detailEnv.data.readCount).toBe(0);
-    expect(detailEnv.data.claimCount).toBe(0);
-    expect(detailEnv.data.targetCount).toBeNull();
+    const detailData = await expectOk<{
+      id: string;
+      readCount: number;
+      claimCount: number;
+      targetCount: number | null;
+    }>(detail);
+    expect(detailData.id).toBe(mail.id);
+    expect(detailData.readCount).toBe(0);
+    expect(detailData.claimCount).toBe(0);
+    expect(detailData.targetCount).toBeNull();
 
     const revoke = await app.request(
       `/api/mail/messages/${mail.id}/revoke`,
@@ -175,8 +166,7 @@ describe("mail routes", () => {
       }),
     });
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("mail.invalid_target");
+    await expectFail(res, "mail.invalid_target");
   });
 
   test("zod validation: unknown targetType → 400", async () => {
@@ -199,8 +189,7 @@ describe("mail routes", () => {
       { headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(404);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("mail.message_not_found");
+    await expectFail(res, "mail.message_not_found");
   });
 
   test("DELETE unknown id → 404", async () => {

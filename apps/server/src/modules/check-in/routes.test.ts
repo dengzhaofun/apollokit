@@ -25,6 +25,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectFail, expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -145,12 +146,8 @@ describe("check-in routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const cfgEnv = (await create.json()) as {
-      code: string;
-      data: { id: string; alias: string };
-    };
-    expect(cfgEnv.code).toBe("ok");
-    expect(cfgEnv.data.alias).toBe("route-happy");
+    const cfg = await expectOk<{ id: string; alias: string }>(create);
+    expect(cfg.alias).toBe("route-happy");
 
     const checkIn = await app.request(
       "/api/check-in/configs/route-happy/check-ins",
@@ -164,17 +161,13 @@ describe("check-in routes", () => {
       },
     );
     expect(checkIn.status).toBe(200);
-    const env = (await checkIn.json()) as {
-      code: string;
-      data: {
-        alreadyCheckedIn: boolean;
-        state: { totalDays: number; currentStreak: number };
-      };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.alreadyCheckedIn).toBe(false);
-    expect(env.data.state.totalDays).toBe(1);
-    expect(env.data.state.currentStreak).toBe(1);
+    const data = await expectOk<{
+      alreadyCheckedIn: boolean;
+      state: { totalDays: number; currentStreak: number };
+    }>(checkIn);
+    expect(data.alreadyCheckedIn).toBe(false);
+    expect(data.state.totalDays).toBe(1);
+    expect(data.state.currentStreak).toBe(1);
 
     const state = await app.request(
       "/api/check-in/configs/route-happy/users/biz-user-route/state",
@@ -228,8 +221,7 @@ describe("check-in routes", () => {
       }),
     });
     expect(res.status).toBe(409);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("check_in.alias_conflict");
+    await expectFail(res, "check_in.alias_conflict");
   });
 
   test("unknown alias → 404 from service layer via onError", async () => {
@@ -245,7 +237,6 @@ describe("check-in routes", () => {
       },
     );
     expect(res.status).toBe(404);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("check_in.config_not_found");
+    await expectFail(res, "check_in.config_not_found");
   });
 });

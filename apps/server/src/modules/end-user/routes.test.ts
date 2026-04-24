@@ -12,6 +12,7 @@ import { db } from "../../db";
 import app from "../../index";
 import { endUserService } from "./index";
 import { organization, user } from "../../schema";
+import { expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -117,13 +118,9 @@ describe("end-user admin routes", () => {
       }),
     });
     expect(res.status).toBe(201);
-    const env = (await res.json()) as {
-      code: string;
-      data: { euUserId: string; created: boolean };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.created).toBe(true);
-    expect(env.data.euUserId).toBeTruthy();
+    const data = await expectOk<{ euUserId: string; created: boolean }>(res);
+    expect(data.created).toBe(true);
+    expect(data.euUserId).toBeTruthy();
   });
 
   test("POST /sync → 200 on merge", async () => {
@@ -137,12 +134,8 @@ describe("end-user admin routes", () => {
       }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: { euUserId: string; created: boolean };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.created).toBe(false);
+    const data = await expectOk<{ euUserId: string; created: boolean }>(res);
+    expect(data.created).toBe(false);
   });
 
   test("POST /sync → 400 on invalid body", async () => {
@@ -159,17 +152,13 @@ describe("end-user admin routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: {
-        items: Array<{ email: string; origin: string }>;
-        total: number;
-      };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.total).toBeGreaterThanOrEqual(1);
+    const data = await expectOk<{
+      items: Array<{ email: string; origin: string }>;
+      total: number;
+    }>(res);
+    expect(data.total).toBeGreaterThanOrEqual(1);
     // All emails should be raw (no {orgId}__ prefix)
-    expect(env.data.items.every((i) => !i.email.includes("__"))).toBe(true);
+    expect(data.items.every((i) => !i.email.includes("__"))).toBe(true);
   });
 
   test("GET /:id → 200 for valid, 404 for unknown", async () => {
@@ -191,12 +180,8 @@ describe("end-user admin routes", () => {
       body: JSON.stringify({ name: "Patched Name" }),
     });
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: { name: string };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.name).toBe("Patched Name");
+    const data = await expectOk<{ name: string }>(res);
+    expect(data.name).toBe("Patched Name");
   });
 
   test("PATCH /:id → 400 on empty body", async () => {
@@ -214,24 +199,16 @@ describe("end-user admin routes", () => {
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(dis.status).toBe(200);
-    const disEnv = (await dis.json()) as {
-      code: string;
-      data: { disabled: boolean };
-    };
-    expect(disEnv.code).toBe("ok");
-    expect(disEnv.data.disabled).toBe(true);
+    const disData = await expectOk<{ disabled: boolean }>(dis);
+    expect(disData.disabled).toBe(true);
 
     const en = await app.request(`/api/end-user/${seededUserId}/enable`, {
       method: "POST",
       headers: { cookie: fx.cookie },
     });
     expect(en.status).toBe(200);
-    const enEnv = (await en.json()) as {
-      code: string;
-      data: { disabled: boolean };
-    };
-    expect(enEnv.code).toBe("ok");
-    expect(enEnv.data.disabled).toBe(false);
+    const enData = await expectOk<{ disabled: boolean }>(en);
+    expect(enData.disabled).toBe(false);
   });
 
   test("POST /:id/sign-out-all → 200", async () => {
@@ -240,12 +217,8 @@ describe("end-user admin routes", () => {
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(200);
-    const env = (await res.json()) as {
-      code: string;
-      data: { revoked: number };
-    };
-    expect(env.code).toBe("ok");
-    expect(typeof env.data.revoked).toBe("number");
+    const data = await expectOk<{ revoked: number }>(res);
+    expect(typeof data.revoked).toBe("number");
   });
 
   test("DELETE /:id → 200 with null data, subsequent GET → 404", async () => {
@@ -259,9 +232,8 @@ describe("end-user admin routes", () => {
       headers: { cookie: fx.cookie },
     });
     expect(del.status).toBe(200);
-    const delEnv = (await del.json()) as { code: string; data: null };
-    expect(delEnv.code).toBe("ok");
-    expect(delEnv.data).toBeNull();
+    const delData = await expectOk<null>(del);
+    expect(delData).toBeNull();
 
     const check = await app.request(`/api/end-user/${created.euUserId}`, {
       headers: { cookie: fx.cookie },

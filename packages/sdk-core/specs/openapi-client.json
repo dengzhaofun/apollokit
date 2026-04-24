@@ -411,6 +411,334 @@
         }
       }
     },
+    "/api/client/badge/tree": {
+      "get": {
+        "tags": [
+          "Badge (Client)"
+        ],
+        "summary": "Fetch the red-dot tree for the calling end user",
+        "operationId": "badge_client_get_tree",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$/i",
+              "description": "Limit the returned tree to the subtree rooted at this node. Omit for the full tree."
+            },
+            "required": false,
+            "description": "Limit the returned tree to the subtree rooted at this node. Omit for the full tree.",
+            "name": "rootKey",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BadgeTreeResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/badge/dismiss": {
+      "post": {
+        "tags": [
+          "Badge (Client)"
+        ],
+        "summary": "Dismiss a red-dot node (mode != auto)",
+        "operationId": "badge_client_post_dismiss",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BadgeDismissInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BadgeDismissResult"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/badge/reset-session": {
+      "post": {
+        "tags": [
+          "Badge (Client)"
+        ],
+        "summary": "Wipe session-mode dismissals for the caller (called on player login)",
+        "operationId": "badge_client_post_reset_session",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/client/banner/groups/{alias}": {
       "get": {
         "tags": [
@@ -482,6 +810,510 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/ClientBannerGroup"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/battle-pass/current": {
+      "get": {
+        "tags": [
+          "Battle Pass (Client)"
+        ],
+        "summary": "Get the currently active battle-pass season (config only)",
+        "operationId": "battle_pass_client_get_current",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/BattlePassConfig"
+                        },
+                        {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        }
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/battle-pass/{seasonId}/aggregate": {
+      "get": {
+        "tags": [
+          "Battle Pass (Client)"
+        ],
+        "summary": "Get the authenticated end user's aggregate battle-pass view",
+        "operationId": "battle_pass_client_get_by_seasonid_aggregate",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Season config id."
+            },
+            "required": true,
+            "description": "Season config id.",
+            "name": "seasonId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BattlePassAggregateView"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/battle-pass/{seasonId}/claim": {
+      "post": {
+        "tags": [
+          "Battle Pass (Client)"
+        ],
+        "summary": "Claim a single level reward for the authenticated end user",
+        "operationId": "battle_pass_client_post_by_seasonid_claim",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Season config id."
+            },
+            "required": true,
+            "description": "Season config id.",
+            "name": "seasonId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BattlePassClaimLevel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BattlePassClaimResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/battle-pass/{seasonId}/claim-all": {
+      "post": {
+        "tags": [
+          "Battle Pass (Client)"
+        ],
+        "summary": "Claim all available level rewards for the authenticated end user",
+        "operationId": "battle_pass_client_post_by_seasonid_claim_all",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Season config id."
+            },
+            "required": true,
+            "description": "Season config id.",
+            "name": "seasonId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BattlePassClaimAll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BattlePassClaimResponse"
                     },
                     "message": {
                       "type": "string"
@@ -17840,6 +18672,74 @@
           "requestId"
         ]
       },
+      "BadgeTreeResponse": {
+        "type": "object",
+        "properties": {
+          "rootKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "serverTimestamp": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BadgeTreeNode"
+            }
+          }
+        },
+        "required": [
+          "rootKey",
+          "serverTimestamp",
+          "nodes"
+        ]
+      },
+      "BadgeDismissInput": {
+        "type": "object",
+        "properties": {
+          "nodeKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$/i"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "nodeKey"
+        ]
+      },
+      "BadgeDismissResult": {
+        "type": "object",
+        "properties": {
+          "nodeKey": {
+            "type": "string"
+          },
+          "dismissedAt": {
+            "type": "string"
+          },
+          "dismissedVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nodeKey",
+          "dismissedAt",
+          "dismissedVersion"
+        ]
+      },
       "ClientBannerGroup": {
         "type": "object",
         "properties": {
@@ -17885,6 +18785,272 @@
           "intervalMs",
           "banners"
         ]
+      },
+      "BattlePassConfig": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "activityId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maxLevel": {
+            "type": "integer"
+          },
+          "levelCurve": {
+            "$ref": "#/components/schemas/BattlePassLevelCurve"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattlePassTier"
+            }
+          },
+          "levelRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattlePassLevelReward"
+            }
+          },
+          "bonusMilestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattlePassBonusMilestone"
+            }
+          },
+          "allowLevelPurchase": {
+            "type": "boolean"
+          },
+          "levelPurchasePriceSku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "activityId",
+          "code",
+          "name",
+          "description",
+          "maxLevel",
+          "levelCurve",
+          "tiers",
+          "levelRewards",
+          "bonusMilestones",
+          "allowLevelPurchase",
+          "levelPurchasePriceSku",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "BattlePassAggregateView": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "maxLevel": {
+                "type": "integer"
+              },
+              "tiers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BattlePassTier"
+                }
+              },
+              "levelCurve": {
+                "$ref": "#/components/schemas/BattlePassLevelCurve"
+              }
+            },
+            "required": [
+              "id",
+              "code",
+              "name",
+              "maxLevel",
+              "tiers",
+              "levelCurve"
+            ]
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "currentXp": {
+                "type": "integer"
+              },
+              "currentLevel": {
+                "type": "integer"
+              },
+              "xpToNextLevel": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "ownedTiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "currentXp",
+              "currentLevel",
+              "xpToNextLevel",
+              "ownedTiers"
+            ]
+          },
+          "claimable": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "tierCode": {
+                  "type": "string"
+                },
+                "rewardEntries": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RewardEntry"
+                  }
+                }
+              },
+              "required": [
+                "level",
+                "tierCode",
+                "rewardEntries"
+              ]
+            }
+          },
+          "taskBindings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "taskDefinitionId": {
+                  "type": "string"
+                },
+                "xpReward": {
+                  "type": "integer"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "daily",
+                    "weekly",
+                    "season",
+                    "event"
+                  ]
+                },
+                "weekIndex": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sortOrder": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "taskDefinitionId",
+                "xpReward",
+                "category",
+                "weekIndex",
+                "sortOrder"
+              ]
+            }
+          }
+        },
+        "required": [
+          "season",
+          "progress",
+          "claimable",
+          "taskBindings"
+        ]
+      },
+      "BattlePassClaimLevel": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "tierCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。"
+          }
+        },
+        "required": [
+          "level",
+          "tierCode"
+        ]
+      },
+      "BattlePassClaimResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattlePassClaimOutcome"
+            }
+          }
+        },
+        "required": [
+          "results"
+        ]
+      },
+      "BattlePassClaimAll": {
+        "type": "object",
+        "properties": {}
       },
       "CdkeyClientRedeemRequest": {
         "type": "object",
@@ -21356,6 +22522,9 @@
             ],
             "additionalProperties": {}
           },
+          "membership": {
+            "$ref": "#/components/schemas/ActivityMembershipConfig"
+          },
           "createdAt": {
             "type": "string"
           },
@@ -21388,6 +22557,7 @@
           "visibility",
           "templateId",
           "metadata",
+          "membership",
           "createdAt",
           "updatedAt"
         ]
@@ -21603,6 +22773,42 @@
           "id",
           "count"
         ]
+      },
+      "ActivityMembershipConfig": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "leaveAllowed": {
+            "type": "boolean"
+          },
+          "queue": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "alphanumeric"
+                ]
+              },
+              "length": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 8
+              }
+            },
+            "required": [
+              "enabled",
+              "format",
+              "length"
+            ]
+          }
+        }
       },
       "LeaderboardSnapshot": {
         "type": "object",
@@ -23083,14 +24289,10 @@
             "type": "object",
             "properties": {
               "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 128
+                "type": "string"
               },
               "avatarUrl": {
-                "type": "string",
-                "maxLength": 2048,
-                "format": "uri"
+                "type": "string"
               },
               "side": {
                 "type": "string",
@@ -23725,6 +24927,214 @@
           "updatedAt"
         ]
       },
+      "BattlePassClaimOutcome": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer"
+          },
+          "tierCode": {
+            "type": "string"
+          },
+          "idempotent": {
+            "type": "boolean"
+          },
+          "rewardEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardEntry"
+            }
+          }
+        },
+        "required": [
+          "level",
+          "tierCode",
+          "idempotent",
+          "rewardEntries"
+        ]
+      },
+      "RewardEntry": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "item",
+              "entity",
+              "currency"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "count"
+        ]
+      },
+      "BattlePassTier": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "priceSku": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayMeta": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "code",
+          "order",
+          "priceSku"
+        ]
+      },
+      "BattlePassLevelCurve": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "uniform"
+                ]
+              },
+              "xpPerLevel": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "type",
+              "xpPerLevel"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "custom"
+                ]
+              },
+              "thresholds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "type",
+              "thresholds"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "arithmetic"
+                ]
+              },
+              "base": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "step": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "base",
+              "step"
+            ]
+          }
+        ]
+      },
+      "BattlePassLevelReward": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "rewards": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RewardEntry"
+              }
+            }
+          }
+        },
+        "required": [
+          "level",
+          "rewards"
+        ]
+      },
+      "BattlePassBonusMilestone": {
+        "type": "object",
+        "properties": {
+          "atLevel": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "requiresTier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
+            "description": "档位 code。[a-z0-9-_] 开头 [a-z0-9-_]。约定 'free' 为免费档。"
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardEntry"
+            },
+            "minItems": 1
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "atLevel",
+          "requiresTier",
+          "rewards",
+          "displayName"
+        ]
+      },
       "ClientBanner": {
         "type": "object",
         "properties": {
@@ -23761,6 +25171,72 @@
           "altText",
           "linkAction",
           "sortOrder"
+        ]
+      },
+      "BadgeTreeNode": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "displayType": {
+            "type": "string"
+          },
+          "displayLabelKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": "integer"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstAppearedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "meta": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "tooltipKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BadgeTreeNode"
+            }
+          },
+          "explain": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "key",
+          "displayType",
+          "displayLabelKey",
+          "count",
+          "version",
+          "firstAppearedAt",
+          "meta",
+          "tooltipKey",
+          "children"
         ]
       },
       "ClientAnnouncement": {

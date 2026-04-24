@@ -20,6 +20,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectFail, expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -163,7 +164,7 @@ describe("assist-pool routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const cfg = (await create.json()) as { id: string; alias: string };
+    const cfg = await expectOk<{ id: string; alias: string }>(create);
     expect(cfg.alias).toBe("route-happy");
 
     const initiate = await app.request("/api/assist-pool/instances", {
@@ -178,11 +179,11 @@ describe("assist-pool routes", () => {
       }),
     });
     expect(initiate.status).toBe(201);
-    const inst = (await initiate.json()) as {
+    const inst = await expectOk<{
       id: string;
       remaining: number;
       status: string;
-    };
+    }>(initiate);
     expect(inst.status).toBe("in_progress");
     expect(inst.remaining).toBe(30);
 
@@ -208,10 +209,10 @@ describe("assist-pool routes", () => {
       { headers: { cookie: fx.cookie } },
     );
     expect(finalRead.status).toBe(200);
-    const finalInst = (await finalRead.json()) as {
+    const finalInst = await expectOk<{
       status: string;
       remaining: number;
-    };
+    }>(finalRead);
     expect(finalInst.status).toBe("completed");
     expect(finalInst.remaining).toBe(0);
   });
@@ -244,8 +245,7 @@ describe("assist-pool routes", () => {
       }),
     });
     expect(dup.status).toBe(409);
-    const body = (await dup.json()) as { code?: string };
-    expect(body.code).toBe("assist_pool.alias_conflict");
+    await expectFail(dup, "assist_pool.alias_conflict");
   });
 
   test("ModuleError mapping: self-assist forbidden → 409", async () => {
@@ -273,7 +273,7 @@ describe("assist-pool routes", () => {
         initiatorEndUserId: "self-u",
       }),
     });
-    const inst = (await init.json()) as { id: string };
+    const inst = await expectOk<{ id: string }>(init);
 
     const selfContrib = await app.request(
       `/api/assist-pool/instances/${inst.id}/contribute`,
@@ -287,8 +287,7 @@ describe("assist-pool routes", () => {
       },
     );
     expect(selfContrib.status).toBe(409);
-    const body = (await selfContrib.json()) as { code?: string };
-    expect(body.code).toBe("assist_pool.self_assist_forbidden");
+    await expectFail(selfContrib, "assist_pool.self_assist_forbidden");
   });
 
   test("force-expire flips status to expired", async () => {
@@ -316,7 +315,7 @@ describe("assist-pool routes", () => {
         initiatorEndUserId: "biz-force",
       }),
     });
-    const inst = (await init.json()) as { id: string };
+    const inst = await expectOk<{ id: string }>(init);
 
     const expire = await app.request(
       `/api/assist-pool/instances/${inst.id}/force-expire`,
@@ -326,8 +325,8 @@ describe("assist-pool routes", () => {
       },
     );
     expect(expire.status).toBe(200);
-    const body = (await expire.json()) as { status: string };
-    expect(body.status).toBe("expired");
+    const expired = await expectOk<{ status: string }>(expire);
+    expect(expired.status).toBe("expired");
 
     // Further contribute calls → 409 instance_expired
     const contrib = await app.request(
@@ -342,8 +341,7 @@ describe("assist-pool routes", () => {
       },
     );
     expect(contrib.status).toBe(409);
-    const errBody = (await contrib.json()) as { code?: string };
-    expect(errBody.code).toBe("assist_pool.instance_expired");
+    await expectFail(contrib, "assist_pool.instance_expired");
   });
 
   test("404 on missing config alias", async () => {
@@ -359,9 +357,7 @@ describe("assist-pool routes", () => {
       { headers: { cookie: fx.cookie } },
     );
     expect(list.status).toBe(200);
-    const body = (await list.json()) as {
-      items: Array<{ status: string }>;
-    };
+    const body = await expectOk<{ items: Array<{ status: string }> }>(list);
     for (const item of body.items) {
       expect(item.status).toBe("in_progress");
     }

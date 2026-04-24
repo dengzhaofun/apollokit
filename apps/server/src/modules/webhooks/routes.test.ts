@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { expectFail, expectOk } from "../../testing/envelope";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -96,23 +97,21 @@ describe("webhooks routes", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const env = (await create.json()) as {
-      code: string;
-      data: { id: string; secret: string; secretHint: string };
-    };
-    expect(env.code).toBe("ok");
-    expect(env.data.secret).toMatch(/^whsec_/);
+    const created = await expectOk<{
+      id: string;
+      secret: string;
+      secretHint: string;
+    }>(create);
+    expect(created.secret).toMatch(/^whsec_/);
 
     const get = await app.request(
-      `/api/webhooks/endpoints/${env.data.id}`,
+      `/api/webhooks/endpoints/${created.id}`,
       { headers: { cookie: fx.cookie } },
     );
     expect(get.status).toBe(200);
-    const getEnv = (await get.json()) as {
-      data: Record<string, unknown>;
-    };
-    expect(getEnv.data.secret).toBeUndefined();
-    expect(getEnv.data.secretHint).toBe(env.data.secretHint);
+    const fetched = await expectOk<Record<string, unknown>>(get);
+    expect(fetched.secret).toBeUndefined();
+    expect(fetched.secretHint).toBe(created.secretHint);
   });
 
   test("POST create with non-https URL → 400 validation", async () => {
@@ -125,8 +124,7 @@ describe("webhooks routes", () => {
       }),
     });
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("validation_error");
+    await expectFail(res, "validation_error");
   });
 
   test("GET unknown id → 404 with typed error code", async () => {
@@ -135,7 +133,6 @@ describe("webhooks routes", () => {
       { headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(404);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe("webhooks.endpoint_not_found");
+    await expectFail(res, "webhooks.endpoint_not_found");
   });
 });
