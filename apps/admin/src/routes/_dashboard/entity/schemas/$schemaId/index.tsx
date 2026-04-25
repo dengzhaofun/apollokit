@@ -58,7 +58,7 @@ function SchemaDetailPage() {
     <>
       <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
-          <Link to="/entity">
+          <Link to="/entity/schemas">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
@@ -90,7 +90,7 @@ function SchemaDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(schema.id)
                       toast.success(m.entity_schema_deleted())
-                      navigate({ to: "/entity" })
+                      navigate({ to: "/entity/schemas" })
                     } catch (err) {
                       if (err instanceof ApiError) toast.error(err.body.error)
                     }

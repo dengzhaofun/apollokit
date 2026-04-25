@@ -25,7 +25,7 @@ function CreateDefinitionPage() {
               try {
                 await createMutation.mutateAsync(values)
                 toast.success(m.item_definition_created())
-                navigate({ to: "/item" })
+                navigate({ to: "/item/definitions" })
               } catch (err) {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)
