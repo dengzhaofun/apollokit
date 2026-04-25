@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowLeftRight,
   BookOpen,
-  Building2,
   CalendarCheck,
   ChevronRight,
   Coins,
@@ -15,7 +14,6 @@ import {
   HeartHandshake,
   GalleryHorizontal,
   Gift,
-  KeyRound,
   LayoutDashboard,
   LineChart,
   ListTodo,
@@ -31,6 +29,7 @@ import {
   PieChart,
   PiggyBank,
   ScrollText,
+  Settings,
   Shield,
   ShoppingCart,
   Sparkles,
@@ -39,7 +38,6 @@ import {
   Trophy,
   UserPlus,
   Users,
-  Webhook,
   type LucideIcon,
 } from "lucide-react"
 
@@ -102,10 +100,8 @@ type NavItem = {
     | "/leaderboard"
     | "/rank"
     | "/end-user"
-    | "/api-keys"
-    | "/organization-settings"
     | "/badge"
-    | "/webhooks"
+    | "/settings"
   icon: LucideIcon
 }
 
@@ -117,7 +113,7 @@ type NavGroup = {
     | "operations"
     | "content"
     | "social"
-    | "system"
+    | "developer"
   label: () => string
   items: NavItem[]
 }
@@ -133,7 +129,7 @@ function getNavGroups(): NavGroup[] {
     },
     {
       // 数据分析组:分析"读"视角 — 数据大盘在 overview,深度分析(用户/模块/活动/日志)集中到这里
-      // 事件管理(schema / 订阅健康 / 回放)是"治理"视角,放在 system 组,不属于这里
+      // 事件管理(schema / 订阅健康 / 回放)是"治理"视角,放在 developer 组,不属于这里
       key: "analytics",
       label: m.nav_group_analytics,
       items: [
@@ -181,9 +177,10 @@ function getNavGroups(): NavGroup[] {
       ],
     },
     {
-      // 事件中心(event-catalog)原本挂在这里,现已迁到 system 组 —
-      // 因为后续要扩展"订阅者健康"、"事件回放"等平台治理能力,
-      // 和 api-keys / 组织设置属于同一个"基础设施治理"语义
+      // 事件中心(event-catalog)在 developer 组,因为它是只读治理看板
+      // (事件 schema / 订阅健康 / 回放),非"配置"语义。
+      // 配置类(组织设置 / API 密钥 / Webhooks / 账号)统一进
+      // /settings 二级页,从 footer 的 Settings 单链或 UserButton 进入。
       key: "content",
       label: m.nav_group_content,
       items: [
@@ -208,19 +205,13 @@ function getNavGroups(): NavGroup[] {
       ],
     },
     {
-      key: "system",
-      label: m.nav_group_system,
+      // Developer 组:平台治理"看板"型页面(只读为主)。
+      // 事件中心、未来的事件回放/订阅者健康/API explorer 都进这里。
+      // 和 /settings 下的"配置"类页面区分开。
+      key: "developer",
+      label: m.nav_group_developer,
       items: [
-        {
-          title: m.nav_organization_settings,
-          to: "/organization-settings",
-          icon: Building2,
-        },
-        { title: m.nav_api_keys, to: "/api-keys", icon: KeyRound },
-        // 事件中心:事件 schema / 生产消费拓扑 / 订阅健康 / 回放(二期扩展)
         { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
-        // Webhooks:让外部系统通过 HTTP 订阅内部事件,每组织最多 5 个端点
-        { title: m.nav_webhooks, to: "/webhooks", icon: Webhook },
       ],
     },
   ]
@@ -302,6 +293,18 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings" || pathname.startsWith("/settings/")}
+              tooltip={m.nav_settings()}
+            >
+              <Link to="/settings">
+                <Settings className="size-4" />
+                <span>{m.nav_settings()}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="flex items-center gap-1 px-1 py-1">
               <LanguageSwitcher />

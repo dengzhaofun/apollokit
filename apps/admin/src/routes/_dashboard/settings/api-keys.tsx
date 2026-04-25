@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Copy, KeyRound, Plus, Trash2 } from "lucide-react"
+import { Copy, Plus, Trash2 } from "lucide-react"
 
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -47,35 +47,31 @@ import {
 import { authClient } from "#/lib/auth-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
-export const Route = createFileRoute("/_dashboard/api-keys/")({
+export const Route = createFileRoute("/_dashboard/settings/api-keys")({
   component: ApiKeysPage,
 })
 
 function ApiKeysPage() {
   return (
-    <>
-      <PageHeaderActions>
-        <KeyRound className="size-4" />
-      </PageHeaderActions>
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <header>
+        <h1 className="text-xl font-semibold">{m.apikeys_title()}</h1>
+      </header>
+      <Tabs defaultValue="admin">
+        <TabsList>
+          <TabsTrigger value="admin">{m.apikeys_admin_keys()}</TabsTrigger>
+          <TabsTrigger value="client">{m.apikeys_client_credentials()}</TabsTrigger>
+        </TabsList>
 
-      <main className="flex-1 p-6">
-        <Tabs defaultValue="admin">
-          <TabsList>
-            <TabsTrigger value="admin">{m.apikeys_admin_keys()}</TabsTrigger>
-            <TabsTrigger value="client">{m.apikeys_client_credentials()}</TabsTrigger>
-          </TabsList>
+        <TabsContent value="admin" className="mt-4">
+          <AdminKeysTab />
+        </TabsContent>
 
-          <TabsContent value="admin" className="mt-4">
-            <AdminKeysTab />
-          </TabsContent>
-
-          <TabsContent value="client" className="mt-4">
-            <ClientCredentialsTab />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </>
+        <TabsContent value="client" className="mt-4">
+          <ClientCredentialsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 

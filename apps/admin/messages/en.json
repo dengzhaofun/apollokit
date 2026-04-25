@@ -1254,7 +1254,8 @@
   "nav_group_operations": "Operations",
   "nav_group_content": "Content",
   "nav_group_social": "Social & Competition",
-  "nav_group_system": "System",
+  "nav_group_developer": "Developer",
+  "command_palette_misc": "Other",
   "nav_user_analytics": "User Analytics",
   "nav_module_analytics": "Module Analytics",
   "nav_activity_analytics": "Activity Analytics",
@@ -1949,5 +1950,11 @@
   "badge_inspector_dismissal_stale": "stale — badge will relight",
   "badge_inspector_dismissal_active": "active — badge suppressed",
   "docs_help_view_docs": "View docs",
-  "docs_help_browse_docs": "Browse docs"
+  "docs_help_browse_docs": "Browse docs",
+  "nav_settings": "Settings",
+  "settings_section_personal": "Personal",
+  "settings_section_organization": "Organization",
+  "settings_account": "Account",
+  "settings_title": "Settings",
+  "settings_account_description": "Manage your profile, email, password, and active sessions."
 }

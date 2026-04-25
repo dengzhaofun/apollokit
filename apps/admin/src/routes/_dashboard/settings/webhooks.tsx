@@ -8,11 +8,9 @@ import {
   RefreshCw,
   RotateCw,
   Trash2,
-  Webhook,
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,7 +68,7 @@ import type {
 } from "#/lib/types/webhooks"
 import * as m from "#/paraglide/messages.js"
 
-export const Route = createFileRoute("/_dashboard/webhooks/")({
+export const Route = createFileRoute("/_dashboard/settings/webhooks")({
   component: WebhooksPage,
 })
 
@@ -83,25 +81,23 @@ function WebhooksPage() {
   } | null>(null)
 
   return (
-    <>
-      <PageHeaderActions>
-        <Webhook className="size-4" />
-        <div className="ml-auto">
-          <WriteGate>
-            <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="size-4" />
-              {m.webhooks_create_endpoint()}
-            </Button>
-          </WriteGate>
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold">{m.webhooks_title()}</h1>
+          <p className="text-sm text-muted-foreground">
+            {m.webhooks_description()}
+          </p>
         </div>
-      </PageHeaderActions>
+        <WriteGate>
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="size-4" />
+            {m.webhooks_create_endpoint()}
+          </Button>
+        </WriteGate>
+      </div>
 
-      <main className="flex-1 p-6">
-        <p className="mb-4 text-sm text-muted-foreground">
-          {m.webhooks_description()}
-        </p>
-
-        {isPending ? (
+      {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.common_loading()}
           </div>
@@ -139,7 +135,6 @@ function WebhooksPage() {
             </Table>
           </div>
         )}
-      </main>
 
       <CreateEndpointDialog
         open={showCreate}
@@ -158,7 +153,7 @@ function WebhooksPage() {
           onClose={() => setCreatedSecret(null)}
         />
       )}
-    </>
+    </div>
   )
 }
 
