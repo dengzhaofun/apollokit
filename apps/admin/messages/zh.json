@@ -1764,5 +1764,7 @@
   "badge_inspector_raw_dismissals": "玩家的 Dismissal",
   "badge_inspector_no_dismissals": "此玩家无消除记录。",
   "badge_inspector_dismissal_stale": "已过期 — 红点会重亮",
-  "badge_inspector_dismissal_active": "仍生效 — 红点被压住"
+  "badge_inspector_dismissal_active": "仍生效 — 红点被压住",
+  "docs_help_view_docs": "查看文档",
+  "docs_help_browse_docs": "浏览文档"
 }
