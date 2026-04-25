@@ -66,16 +66,18 @@ export function SettingsNav() {
       aria-label={m.settings_title()}
       className="w-56 shrink-0 border-r bg-background pr-4"
     >
-      <div className="px-2 py-3">
-        <h2 className="px-2 text-base font-semibold">{m.settings_title()}</h2>
+      <div className="px-2 pb-4">
+        <h2 className="px-3 text-lg font-semibold tracking-tight">
+          {m.settings_title()}
+        </h2>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-5">
         {sections.map((section) => (
           <div key={section.key}>
-            <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="px-3 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
               {section.label()}
             </div>
-            <ul className="flex flex-col gap-0.5">
+            <ul className="flex flex-col gap-px">
               {section.items.map((item) => {
                 const isActive =
                   pathname === item.to || pathname.startsWith(`${item.to}/`)
@@ -84,13 +86,13 @@ export function SettingsNav() {
                     <Link
                       to={item.to}
                       className={cn(
-                        "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
+                        "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors",
                         isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground/80 hover:bg-accent/50 hover:text-foreground",
+                          ? "bg-accent font-medium text-accent-foreground shadow-[inset_2px_0_0_var(--brand)]"
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                       )}
                     >
-                      <item.icon className="size-4" />
+                      <item.icon className={cn("size-4", isActive && "text-brand")} />
                       <span>{item.title()}</span>
                     </Link>
                   </li>
