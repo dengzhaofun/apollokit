@@ -395,6 +395,10 @@ function NodesPanel({
                 <SelectItem value="lottery">lottery 抽奖池</SelectItem>
                 <SelectItem value="banner">banner 轮播图</SelectItem>
                 <SelectItem value="game_board">game_board 小游戏</SelectItem>
+                <SelectItem value="entity_blueprint">entity_blueprint 实体蓝图</SelectItem>
+                <SelectItem value="item_definition">item_definition 物品</SelectItem>
+                <SelectItem value="currency_definition">currency_definition 货币</SelectItem>
+                <SelectItem value="assist_pool">assist_pool 辅助池</SelectItem>
                 <SelectItem value="custom">custom 自定义</SelectItem>
               </SelectContent>
             </Select>
@@ -566,23 +570,30 @@ function NodesPanel({
                       </TooltipContent>
                     </Tooltip>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        if (!confirm(`删除节点 ${n.alias}？`)) return
-                        try {
-                          await deleteMutation.mutateAsync(n.id)
-                          toast.success("节点已删除")
-                        } catch (err) {
-                          if (err instanceof ApiError)
-                            toast.error(err.body.error)
-                          else toast.error("删除失败")
-                        }
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (!confirm(`删除节点 ${n.alias}？`)) return
+                            try {
+                              await deleteMutation.mutateAsync(n.id)
+                              toast.success("节点已删除")
+                            } catch (err) {
+                              if (err instanceof ApiError)
+                                toast.error(err.body.error)
+                              else toast.error("删除失败")
+                            }
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        删除节点不会删除底层资源；资源仍保留在对应模块下
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </li>
               )

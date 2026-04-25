@@ -4,6 +4,13 @@ import { toast } from "sonner"
 import { ConfigForm as CheckInConfigForm } from "#/components/check-in/ConfigForm"
 import { GroupForm as BannerGroupForm } from "#/components/banner/GroupForm"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
+import { DefinitionForm as TaskDefinitionForm } from "#/components/task/DefinitionForm"
+import { ProductForm as ShopProductForm } from "#/components/shop/ProductForm"
+import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
+import { BlueprintForm as EntityBlueprintForm } from "#/components/entity/BlueprintForm"
+import { DefinitionForm as ItemDefinitionForm } from "#/components/item/DefinitionForm"
+import { DefinitionForm as CurrencyDefinitionForm } from "#/components/currency/DefinitionForm"
+import { AssistPoolConfigForm } from "#/components/assist-pool/ConfigForm"
 import { Button } from "#/components/ui/button"
 import {
   Dialog,
@@ -18,27 +25,82 @@ import { Label } from "#/components/ui/label"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
+import { useCreateActivityNode } from "#/hooks/use-activity"
+import { useCreateAssistPoolConfig } from "#/hooks/use-assist-pool"
 import { useCreateBannerGroup } from "#/hooks/use-banner"
 import { useCreateCheckInConfig } from "#/hooks/use-check-in"
+import { useCreateCurrency } from "#/hooks/use-currency"
+import {
+  useCreateEntityBlueprint,
+  useEntitySchema,
+  useEntitySchemas,
+} from "#/hooks/use-entity"
+import { useCreateItemDefinition } from "#/hooks/use-item"
+import { useCreateLeaderboardConfig } from "#/hooks/use-leaderboard"
 import { useCreateLotteryPool } from "#/hooks/use-lottery"
-import { useCreateActivityNode } from "#/hooks/use-activity"
+import { useCreateShopProduct } from "#/hooks/use-shop"
+import { useCreateTaskDefinition, useTaskCategories } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
 import type { NodeType } from "#/lib/types/activity"
 import * as m from "#/paraglide/messages.js"
 
-type Mode = "inline" | "redirect"
+interface NodeTypeOption {
+  value: NodeType
+  label: string
+}
 
-function supportedTypes(): { value: NodeType; label: string; mode: Mode }[] {
+interface NodeTypeGroup {
+  label: string
+  types: NodeTypeOption[]
+}
+
+function getNodeTypeGroups(): NodeTypeGroup[] {
   return [
-    { value: "check_in", label: m.activity_node_type_check_in(), mode: "inline" },
-    { value: "banner", label: m.activity_node_type_banner(), mode: "inline" },
-    { value: "lottery", label: m.activity_node_type_lottery(), mode: "inline" },
-    { value: "task_group", label: m.activity_node_type_task_group(), mode: "redirect" },
-    { value: "exchange", label: m.activity_node_type_exchange(), mode: "redirect" },
+    {
+      label: m.activity_node_group_gameplay(),
+      types: [
+        { value: "check_in", label: m.activity_node_type_check_in() },
+        { value: "task_group", label: m.activity_node_type_task_group() },
+        { value: "lottery", label: m.activity_node_type_lottery() },
+        { value: "leaderboard", label: m.activity_node_type_leaderboard() },
+        { value: "game_board", label: m.activity_node_type_game_board() },
+        { value: "assist_pool", label: m.activity_node_type_assist_pool() },
+      ],
+    },
+    {
+      label: m.activity_node_group_content(),
+      types: [
+        { value: "banner", label: m.activity_node_type_banner() },
+        {
+          value: "entity_blueprint",
+          label: m.activity_node_type_entity_blueprint(),
+        },
+      ],
+    },
+    {
+      label: m.activity_node_group_economy(),
+      types: [
+        { value: "exchange", label: m.activity_node_type_exchange() },
+        {
+          value: "item_definition",
+          label: m.activity_node_type_item_definition(),
+        },
+        {
+          value: "currency_definition",
+          label: m.activity_node_type_currency_definition(),
+        },
+      ],
+    },
+    {
+      label: m.activity_node_group_other(),
+      types: [{ value: "custom", label: m.activity_node_type_custom() }],
+    },
   ]
 }
 
@@ -50,15 +112,14 @@ interface Props {
 }
 
 /**
- * "新建并挂载" — creates the underlying config (bound to the activity
- * via activityId) and then creates the activity node referencing its id.
+ * "新建并挂载" — for each supported nodeType, inline the matching
+ * resource Form, create the resource (with activityId pre-injected),
+ * then create an activity_nodes row pointing at refId.
  *
- * Supported node types in this MVP dialog: check_in, banner, lottery.
- * task_group and exchange have more complex forms (category/category
- * dependencies, reward editor, time-window discriminator) that are
- * awkward to drop in here without scope creep — the admin can still
- * create those via their own module pages (which now have an "关联活动"
- * dropdown) and come back to mount by refId.
+ * The header carries dialog-local state (nodeType, node alias,
+ * orderIndex). Per-nodeType sections receive `nodeAlias` so they can
+ * default the resource alias to the same value when the user leaves
+ * it blank in the body form.
  */
 export function NodeCreatorDialog({
   activityKey,
@@ -67,29 +128,20 @@ export function NodeCreatorDialog({
   onOpenChange,
 }: Props) {
   const [nodeType, setNodeType] = useState<NodeType>("check_in")
-  const [alias, setAlias] = useState("")
+  const [nodeAlias, setNodeAlias] = useState("")
   const [orderIndex, setOrderIndex] = useState(0)
 
   const createNode = useCreateActivityNode(activityKey)
-  const createCheckIn = useCreateCheckInConfig()
-  const createBanner = useCreateBannerGroup()
-  const createLottery = useCreateLotteryPool()
-
-  const anyPending =
-    createNode.isPending ||
-    createCheckIn.isPending ||
-    createBanner.isPending ||
-    createLottery.isPending
 
   function reset() {
     setNodeType("check_in")
-    setAlias("")
+    setNodeAlias("")
     setOrderIndex((n) => n + 1)
   }
 
-  async function mountAfterCreate(refId: string) {
+  async function mountNode(refId: string | null) {
     await createNode.mutateAsync({
-      alias,
+      alias: nodeAlias,
       nodeType,
       refId,
       orderIndex,
@@ -99,11 +151,11 @@ export function NodeCreatorDialog({
     onOpenChange(false)
   }
 
-  const types = supportedTypes()
+  const groups = getNodeTypeGroups()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{m.activity_node_create_title()}</DialogTitle>
           <DialogDescription>
@@ -122,10 +174,15 @@ export function NodeCreatorDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {types.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
+                {groups.map((g) => (
+                  <SelectGroup key={g.label}>
+                    <SelectLabel>{g.label}</SelectLabel>
+                    {g.types.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
@@ -133,10 +190,13 @@ export function NodeCreatorDialog({
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_node_field_alias()}</Label>
             <Input
-              value={alias}
-              onChange={(e) => setAlias(e.target.value.toLowerCase())}
+              value={nodeAlias}
+              onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
               placeholder="day7_checkin"
             />
+            <p className="text-xs text-muted-foreground">
+              {m.activity_node_field_alias_help()}
+            </p>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_node_field_order()}</Label>
@@ -149,87 +209,20 @@ export function NodeCreatorDialog({
         </div>
 
         <div className="rounded-lg border p-4">
-          {nodeType === "check_in" ? (
-            <CheckInConfigForm
-              defaultValues={{ activityId }}
-              isPending={anyPending}
-              submitLabel={m.activity_node_submit_check_in()}
-              onSubmit={async (values) => {
-                if (!alias) {
-                  toast.error(m.activity_node_alias_required())
-                  return
-                }
-                try {
-                  const config = await createCheckIn.mutateAsync({
-                    ...values,
-                    activityId,
-                  })
-                  await mountAfterCreate(config.id)
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.activity_node_create_failed())
-                }
-              }}
-            />
-          ) : nodeType === "banner" ? (
-            <BannerGroupForm
-              submitLabel={m.activity_node_submit_banner()}
-              isPending={anyPending}
-              onSubmit={async (values) => {
-                if (!alias) {
-                  toast.error(m.activity_node_alias_required())
-                  return
-                }
-                try {
-                  const group = await createBanner.mutateAsync({
-                    ...values,
-                    activityId,
-                  })
-                  await mountAfterCreate(group.id)
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.activity_node_create_failed())
-                }
-              }}
-            />
-          ) : nodeType === "lottery" ? (
-            <LotteryPoolForm
-              defaultValues={{ activityId }}
-              isPending={anyPending}
-              submitLabel={m.activity_node_submit_lottery()}
-              onSubmit={async (values) => {
-                if (!alias) {
-                  toast.error(m.activity_node_alias_required())
-                  return
-                }
-                try {
-                  const pool = await createLottery.mutateAsync({
-                    ...values,
-                    activityId,
-                  })
-                  await mountAfterCreate(pool.id)
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.activity_node_create_failed())
-                }
-              }}
-            />
-          ) : nodeType === "task_group" || nodeType === "exchange" ? (
-            <RedirectFlow
-              nodeType={nodeType}
-              activityId={activityId}
-              activityKey={activityKey}
-              alias={alias}
-              orderIndex={orderIndex}
-            />
-          ) : null}
+          <NodeFormSection
+            nodeType={nodeType}
+            activityId={activityId}
+            nodeAlias={nodeAlias}
+            mountNode={mountNode}
+            mountPending={createNode.isPending}
+          />
         </div>
 
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={anyPending}
+            disabled={createNode.isPending}
           >
             {m.common_cancel()}
           </Button>
@@ -239,57 +232,347 @@ export function NodeCreatorDialog({
   )
 }
 
-/**
- * For task_group / exchange we can't reasonably inline the full
- * DefinitionForm / ProductForm here (categories, events, rewards, time
- * windows …). Instead we redirect to the module's own create page with
- * `?activityId=<uuid>&returnTo=/activity/<alias>/mount?alias=<node>&orderIndex=N`.
- * The module create page pre-fills activityId, and on success redirects
- * back to a lightweight mount handler that creates the activity_nodes
- * row with `refId` set to the newly created config id.
- */
-function RedirectFlow({
-  nodeType,
-  activityId,
-  activityKey,
-  alias,
-  orderIndex,
-}: {
-  nodeType: "task_group" | "exchange"
+interface SectionProps {
+  nodeType: NodeType
   activityId: string
-  activityKey: string
-  alias: string
-  orderIndex: number
-}) {
-  const targetPath = nodeType === "task_group" ? "/task/create" : "/shop/create"
-  const moduleName =
-    nodeType === "task_group"
-      ? m.activity_node_redirect_module_task()
-      : m.activity_node_redirect_module_shop()
-  const canJump = alias.length > 0
+  nodeAlias: string
+  mountNode: (refId: string | null) => Promise<void>
+  mountPending: boolean
+}
 
-  function jump() {
-    const returnTo = `/activity/${activityKey}/mount?nodeType=${nodeType}&alias=${encodeURIComponent(
-      alias,
-    )}&orderIndex=${orderIndex}`
-    const url = `${targetPath}?activityId=${activityId}&returnTo=${encodeURIComponent(returnTo)}`
-    window.location.href = url
+function NodeFormSection(props: SectionProps) {
+  function aliasRequired() {
+    if (!props.nodeAlias) {
+      toast.error(m.activity_node_alias_required())
+      return true
+    }
+    return false
   }
 
+  switch (props.nodeType) {
+    case "check_in":
+      return <CheckInSection {...props} aliasRequired={aliasRequired} />
+    case "lottery":
+      return <LotterySection {...props} aliasRequired={aliasRequired} />
+    case "banner":
+      return <BannerSection {...props} aliasRequired={aliasRequired} />
+    case "task_group":
+      return <TaskSection {...props} aliasRequired={aliasRequired} />
+    case "exchange":
+      return <ShopSection {...props} aliasRequired={aliasRequired} />
+    case "leaderboard":
+      return <LeaderboardSection {...props} aliasRequired={aliasRequired} />
+    case "game_board":
+    case "entity_blueprint":
+      return <EntitySection {...props} aliasRequired={aliasRequired} />
+    case "item_definition":
+      return <ItemSection {...props} aliasRequired={aliasRequired} />
+    case "currency_definition":
+      return <CurrencySection {...props} aliasRequired={aliasRequired} />
+    case "assist_pool":
+      return <AssistPoolSection {...props} aliasRequired={aliasRequired} />
+    case "custom":
+      return <CustomSection {...props} aliasRequired={aliasRequired} />
+    default:
+      return null
+  }
+}
+
+type SectionImplProps = SectionProps & { aliasRequired: () => boolean }
+
+function reportError(err: unknown) {
+  if (err instanceof ApiError) toast.error(err.body.error)
+  else toast.error(m.activity_node_create_failed())
+}
+
+function CheckInSection(props: SectionImplProps) {
+  const create = useCreateCheckInConfig()
+  return (
+    <CheckInConfigForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_check_in()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const config = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(config.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function LotterySection(props: SectionImplProps) {
+  const create = useCreateLotteryPool()
+  return (
+    <LotteryPoolForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_lottery()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const pool = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(pool.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function BannerSection(props: SectionImplProps) {
+  const create = useCreateBannerGroup()
+  return (
+    <BannerGroupForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_banner()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const group = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(group.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function TaskSection(props: SectionImplProps) {
+  const create = useCreateTaskDefinition()
+  const { data: categories } = useTaskCategories()
+  return (
+    <TaskDefinitionForm
+      categories={categories ?? []}
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_task_group()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const def = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(def.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function ShopSection(props: SectionImplProps) {
+  const create = useCreateShopProduct()
+  return (
+    <ShopProductForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_exchange()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const product = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(product.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function LeaderboardSection(props: SectionImplProps) {
+  const create = useCreateLeaderboardConfig()
+  return (
+    <LeaderboardConfigForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_leaderboard()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const cfg = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(cfg.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function EntitySection(props: SectionImplProps) {
+  const { data: schemas, isPending: schemasPending } = useEntitySchemas()
+  const [schemaId, setSchemaId] = useState<string>("")
+  const { data: schema } = useEntitySchema(schemaId)
+  const create = useCreateEntityBlueprint()
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-1.5">
+        <Label>{m.activity_node_entity_schema_label()}</Label>
+        <Select value={schemaId} onValueChange={setSchemaId}>
+          <SelectTrigger>
+            <SelectValue
+              placeholder={
+                schemasPending
+                  ? m.activity_node_entity_schema_loading()
+                  : m.activity_node_entity_schema_placeholder()
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {(schemas ?? []).map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {m.activity_node_entity_schema_help()}
+        </p>
+      </div>
+
+      {schema ? (
+        <EntityBlueprintForm
+          schema={schema}
+          defaultValues={{
+            activityId: props.activityId,
+            alias: props.nodeAlias,
+          }}
+          isPending={create.isPending || props.mountPending}
+          submitLabel={m.activity_node_submit_entity_blueprint()}
+          onSubmit={async (values) => {
+            if (props.aliasRequired()) return
+            try {
+              const bp = await create.mutateAsync({
+                ...values,
+                activityId: props.activityId,
+              })
+              await props.mountNode(bp.id)
+            } catch (err) {
+              reportError(err)
+            }
+          }}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function ItemSection(props: SectionImplProps) {
+  const create = useCreateItemDefinition()
+  return (
+    <ItemDefinitionForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_item_definition()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const def = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(def.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function CurrencySection(props: SectionImplProps) {
+  const create = useCreateCurrency()
+  return (
+    <CurrencyDefinitionForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_currency_definition()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const def = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(def.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function AssistPoolSection(props: SectionImplProps) {
+  const create = useCreateAssistPoolConfig()
+  return (
+    <AssistPoolConfigForm
+      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      isPending={create.isPending || props.mountPending}
+      submitLabel={m.activity_node_submit_assist_pool()}
+      onSubmit={async (values) => {
+        if (props.aliasRequired()) return
+        try {
+          const cfg = await create.mutateAsync({
+            ...values,
+            activityId: props.activityId,
+          })
+          await props.mountNode(cfg.id)
+        } catch (err) {
+          reportError(err)
+        }
+      }}
+    />
+  )
+}
+
+function CustomSection(props: SectionImplProps) {
   return (
     <div className="space-y-3 text-sm">
-      <p>{m.activity_node_redirect_intro({ module: moduleName })}</p>
-      <ol className="ml-5 list-decimal space-y-1 text-muted-foreground">
-        <li>{m.activity_node_redirect_step1({ module: moduleName })}</li>
-        <li>{m.activity_node_redirect_step2()}</li>
-        <li>{m.activity_node_redirect_step3()}</li>
-      </ol>
-      <Button onClick={jump} disabled={!canJump}>
-        {m.activity_node_redirect_button({ module: moduleName })}
+      <p className="text-muted-foreground">
+        {m.activity_node_custom_description()}
+      </p>
+      <Button
+        disabled={props.mountPending}
+        onClick={async () => {
+          if (props.aliasRequired()) return
+          try {
+            await props.mountNode(null)
+          } catch (err) {
+            reportError(err)
+          }
+        }}
+      >
+        {m.activity_node_submit_custom()}
       </Button>
-      {!canJump ? (
-        <p className="text-xs text-destructive">{m.activity_node_alias_required()}</p>
-      ) : null}
     </div>
   )
 }

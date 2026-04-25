@@ -1,6 +1,5 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -411,21 +410,6 @@ export function DefinitionForm({
           )}
         </form.Field>
       </div>
-
-      <form.Field name="activityId">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
-            <ActivityPicker
-              value={field.state.value}
-              onChange={(v) => field.handleChange(v)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.task_field_activity_hint()}
-            </p>
-          </div>
-        )}
-      </form.Field>
 
       <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
         <div className="flex items-start justify-between gap-6">
