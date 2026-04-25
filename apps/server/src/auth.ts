@@ -13,21 +13,14 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  // admin 通过 service binding 转发 /api/* 到 server,但转发时 Request
+  // 原封不动透传,Origin header 仍是浏览器最初设的 admin URL —— Better
+  // Auth 依 trustedOrigins 校验敏感操作(sign-in/up/session)的 Origin,
+  // 所以 admin 的 prod URL 和 dev URL 都要列出。
   trustedOrigins: [
     "http://localhost:3000",
     "https://apollokit-admin.limitless-ai.workers.dev",
   ],
-  // admin 和 server 分别部署在 workers.dev 的两个子域,而 workers.dev
-  // 在浏览器的 Public Suffix List 里,跨子域被视为跨站,默认 SameSite=Lax
-  // 的 session cookie 不会随 credentials:include 的 fetch 跨站发送。
-  // SameSite=None; Secure; Partitioned 才能让 SPA 正常挂载 session。
-  advanced: {
-    defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
-      partitioned: true,
-    },
-  },
   emailAndPassword: {
     enabled: true,
   },
