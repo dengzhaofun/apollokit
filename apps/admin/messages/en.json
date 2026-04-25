@@ -1959,8 +1959,6 @@
   "badge_inspector_no_dismissals": "This player has no dismissal records.",
   "badge_inspector_dismissal_stale": "stale — badge will relight",
   "badge_inspector_dismissal_active": "active — badge suppressed",
-  "docs_help_view_docs": "View docs",
-  "docs_help_browse_docs": "Browse docs",
 
   "nav_settings": "Settings",
   "settings_section_personal": "Personal",

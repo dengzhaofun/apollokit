@@ -3,7 +3,6 @@ import { useEffect, useState } from "react"
 
 import { AppSidebar } from "../components/AppSidebar"
 import { CommandPalette } from "../components/CommandPalette"
-import { DocsHelpButton } from "../components/DocsHelpButton"
 import { PAGE_HEADER_SLOT_ID } from "../components/PageHeader"
 import { RouteBreadcrumb } from "../components/RouteBreadcrumb"
 import { authClient } from "../lib/auth-client"
@@ -88,7 +87,6 @@ function DashboardLayoutClient() {
           <Separator orientation="vertical" className="mr-2 h-4" />
           <RouteBreadcrumb />
           <div className="ml-auto flex items-center gap-2">
-            <DocsHelpButton />
             <div
               id={PAGE_HEADER_SLOT_ID}
               className="flex items-center gap-2"
