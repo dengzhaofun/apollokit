@@ -1,6 +1,5 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
@@ -259,21 +258,6 @@ export function ConfigForm({
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
             <Label htmlFor={field.name}>{m.common_active()}</Label>
-          </div>
-        )}
-      </form.Field>
-
-      <form.Field name="activityId">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
-            <ActivityPicker
-              value={field.state.value}
-              onChange={(v) => field.handleChange(v)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.check_in_field_activity_hint()}
-            </p>
           </div>
         )}
       </form.Field>

@@ -1,6 +1,5 @@
 import { useForm } from "@tanstack/react-form"
 
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -290,22 +289,6 @@ export function BlueprintForm({
           )}
         </form.Field>
       </div>
-
-      {/* Activity binding */}
-      <form.Field name="activityId">
-        {(field) => (
-          <div className="space-y-2">
-            <Label>{m.common_link_activity()}</Label>
-            <ActivityPicker
-              value={field.state.value}
-              onChange={(v) => field.handleChange(v)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.common_link_activity_hint()}
-            </p>
-          </div>
-        )}
-      </form.Field>
 
       {/* Submit */}
       <form.Subscribe selector={(s) => s.canSubmit}>

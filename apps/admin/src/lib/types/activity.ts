@@ -25,6 +25,10 @@ export type NodeType =
   | "lottery"
   | "banner"
   | "game_board"
+  | "entity_blueprint"
+  | "item_definition"
+  | "currency_definition"
+  | "assist_pool"
   | "custom"
 
 export type TriggerKind = "once_at" | "relative_offset" | "cron"

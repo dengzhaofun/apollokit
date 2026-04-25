@@ -1,6 +1,5 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -144,21 +143,6 @@ export function DefinitionForm({
             />
             <p className="text-xs text-muted-foreground">
               {m.currency_sort_hint()}
-            </p>
-          </div>
-        )}
-      </form.Field>
-
-      <form.Field name="activityId">
-        {(field) => (
-          <div className="space-y-2">
-            <Label>{m.common_link_activity()}</Label>
-            <ActivityPicker
-              value={field.state.value}
-              onChange={(v) => field.handleChange(v)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.common_link_activity_hint()}
             </p>
           </div>
         )}
