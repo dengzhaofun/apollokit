@@ -218,11 +218,6 @@ function Dashboard() {
                 label={mod.name}
                 value={mod.metric}
                 error
-                hint={
-                  <Badge variant="secondary" className="text-[10px]">
-                    Soon
-                  </Badge>
-                }
               />
             ))}
           </StatGrid>
@@ -237,7 +232,12 @@ function Dashboard() {
 
 /**
  * 还没接数据的占位指标 —— 用 StatCard 的 error 态(dashed border + dash 数字)。
- * 比之前手写的 PlaceholderKpiCard 视觉一致,Loading/Error 切换走 StatCard 内置 API。
+ * 比之前手写的 PlaceholderKpiCard 视觉一致。
+ *
+ * 不在 hint slot 塞长描述("Placeholder — auto-filled..."):
+ *   1. hint 是右上角小角标,塞长文会挤到 label 让 uppercase letter 竖排(移动端尤甚)
+ *   2. dashed border + "—" value 已经清晰传达"未接入"语义,文字重复无收益
+ *   3. 真正想给开发者看的接入状态在下方 TinybirdStatusCard
  */
 function PlaceholderStat({
   label,
@@ -246,19 +246,7 @@ function PlaceholderStat({
   label: string
   icon: LucideIcon
 }) {
-  return (
-    <StatCard
-      label={label}
-      value="—"
-      icon={icon}
-      error
-      hint={
-        <span className="text-[10px] text-muted-foreground">
-          {m.dashboard_placeholder_connecting()}
-        </span>
-      }
-    />
-  )
+  return <StatCard label={label} value="—" icon={icon} error />
 }
 
 function mod_health_footnote() {

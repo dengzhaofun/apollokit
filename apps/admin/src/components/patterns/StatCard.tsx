@@ -68,11 +68,19 @@ export function StatCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {Icon && <Icon className="size-3.5" aria-hidden />}
-          <span>{label}</span>
+        <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {Icon && <Icon className="size-3.5 shrink-0" aria-hidden />}
+          <span className="truncate">{label}</span>
         </div>
-        {hint && <div className="shrink-0 text-muted-foreground">{hint}</div>}
+        {/*
+         * hint 是右上角小角标(如 "UTC+8" / "Beta"),不是装主描述的位置。
+         * 给 max-w 防过长 hint 把 label 挤到换行 / uppercase letter 竖排。
+         */}
+        {hint && (
+          <div className="ml-auto max-w-[55%] shrink-0 truncate text-right text-muted-foreground">
+            {hint}
+          </div>
+        )}
       </div>
 
       <div className="text-3xl font-semibold leading-tight tabular-nums tracking-tight">

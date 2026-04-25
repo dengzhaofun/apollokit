@@ -69,7 +69,14 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-col gap-4", className)}>
-      <div className="flex items-start justify-between gap-4">
+      {/*
+       * 桌面 sm+:title block + actions 横排,actions 靠右
+       * 移动端 <sm:title block 在上,actions 在下,允许 actions 换行 wrap
+       *
+       * 不要给 h1 加 truncate —— 移动端窄屏让标题完整可读;桌面 sm+ 才需要
+       * truncate 防超长名字撑破 layout(name 跟 status badge 同行)。
+       */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-center gap-3">
           {icon && (
             <div
@@ -79,9 +86,9 @@ export function PageHeader({
               {icon}
             </div>
           )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="truncate text-2xl/tight font-semibold tracking-tight">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl/tight font-semibold tracking-tight sm:truncate sm:text-2xl/tight">
                 {title}
               </h1>
               {badge &&
@@ -99,10 +106,12 @@ export function PageHeader({
           </div>
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+            {actions}
+          </div>
         )}
       </div>
-      {tabs && <div className="-mb-px">{tabs}</div>}
+      {tabs && <div className="-mb-px overflow-x-auto">{tabs}</div>}
     </header>
   )
 }

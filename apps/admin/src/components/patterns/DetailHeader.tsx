@@ -52,7 +52,7 @@ export function DetailHeader({
 }: DetailHeaderProps) {
   return (
     <header className={cn("flex flex-col gap-3", className)}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-start gap-3">
           {icon && (
             <div
@@ -64,7 +64,7 @@ export function DetailHeader({
           )}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-2xl/tight font-semibold tracking-tight">
+              <h1 className="text-xl/tight font-semibold tracking-tight sm:truncate sm:text-2xl/tight">
                 {title}
               </h1>
               {subtitle && (
@@ -92,7 +92,9 @@ export function DetailHeader({
           </div>
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+            {actions}
+          </div>
         )}
       </div>
     </header>
