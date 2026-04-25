@@ -1,6 +1,5 @@
 import { useState } from "react"
 
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -22,6 +21,7 @@ import type {
 
 interface GroupFormProps {
   initial?: BannerGroup
+  defaultValues?: Partial<CreateBannerGroupInput>
   onSubmit: (values: CreateBannerGroupInput) => void | Promise<void>
   submitLabel: string
   isPending?: boolean
@@ -29,23 +29,30 @@ interface GroupFormProps {
 
 export function GroupForm({
   initial,
+  defaultValues,
   onSubmit,
   submitLabel,
   isPending,
 }: GroupFormProps) {
-  const [alias, setAlias] = useState(initial?.alias ?? "")
-  const [name, setName] = useState(initial?.name ?? "")
-  const [description, setDescription] = useState(initial?.description ?? "")
+  const [alias, setAlias] = useState(
+    defaultValues?.alias ?? initial?.alias ?? "",
+  )
+  const [name, setName] = useState(defaultValues?.name ?? initial?.name ?? "")
+  const [description, setDescription] = useState(
+    defaultValues?.description ?? initial?.description ?? "",
+  )
   const [layout, setLayout] = useState<BannerLayout>(
-    (initial?.layout as BannerLayout) ?? "carousel",
+    (defaultValues?.layout as BannerLayout) ??
+      (initial?.layout as BannerLayout) ??
+      "carousel",
   )
   const [intervalMs, setIntervalMs] = useState<number>(
-    initial?.intervalMs ?? 4000,
+    defaultValues?.intervalMs ?? initial?.intervalMs ?? 4000,
   )
-  const [isActive, setIsActive] = useState<boolean>(initial?.isActive ?? true)
-  const [activityId, setActivityId] = useState<string | null>(
-    initial?.activityId ?? null,
+  const [isActive, setIsActive] = useState<boolean>(
+    defaultValues?.isActive ?? initial?.isActive ?? true,
   )
+  const activityId = defaultValues?.activityId ?? initial?.activityId ?? null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -135,14 +142,6 @@ export function GroupForm({
           checked={isActive}
           onCheckedChange={setIsActive}
         />
-      </div>
-
-      <div className="space-y-1">
-        <Label>{m.common_link_activity_optional()}</Label>
-        <ActivityPicker value={activityId} onChange={setActivityId} />
-        <p className="text-xs text-muted-foreground">
-          {m.banner_field_activity_hint()}
-        </p>
       </div>
 
       <div className="flex justify-end">

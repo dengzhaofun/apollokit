@@ -51,6 +51,7 @@ export function LeaderboardConfigForm({
       maxEntries: defaultValues?.maxEntries ?? 1000,
       tieBreaker: defaultValues?.tieBreaker ?? ("earliest" as TieBreaker),
       status: defaultValues?.status ?? ("active" as ConfigStatus),
+      activityId: defaultValues?.activityId ?? (null as string | null),
       rewardTiersJson: JSON.stringify(
         defaultValues?.rewardTiers ?? [],
         null,
@@ -77,6 +78,7 @@ export function LeaderboardConfigForm({
         maxEntries: value.maxEntries,
         tieBreaker: value.tieBreaker,
         status: value.status,
+        activityId: value.activityId,
         rewardTiers: tiers,
       })
     },

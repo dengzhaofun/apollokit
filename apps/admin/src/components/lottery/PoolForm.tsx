@@ -1,13 +1,11 @@
 import { useForm } from "@tanstack/react-form"
 
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
 import type { CreatePoolInput } from "#/lib/types/lottery"
-import * as m from "#/paraglide/messages.js"
 
 interface PoolFormProps {
   defaultValues?: Partial<CreatePoolInput>
@@ -142,21 +140,6 @@ export function LotteryPoolForm({
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
             <Label htmlFor={field.name}>Active</Label>
-          </div>
-        )}
-      </form.Field>
-
-      <form.Field name="activityId">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_link_activity_optional()}</Label>
-            <ActivityPicker
-              value={field.state.value}
-              onChange={(v) => field.handleChange(v)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.lottery_field_activity_hint()}
-            </p>
           </div>
         )}
       </form.Field>

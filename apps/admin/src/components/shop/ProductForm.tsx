@@ -1,6 +1,5 @@
 import { useState } from "react"
 
-import { ActivityPicker } from "#/components/activity/ActivityPicker"
 import { ImageListField } from "#/components/forms/ImageListField"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
@@ -118,9 +117,7 @@ export function ProductForm({
   )
   const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
   const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
-  const [activityId, setActivityId] = useState<string | null>(
-    defaultValues?.activityId ?? null,
-  )
+  const activityId = defaultValues?.activityId ?? null
   const [tagIds, setTagIds] = useState<string[]>(defaultValues?.tagIds ?? [])
 
   const [error, setError] = useState<string>("")
@@ -500,14 +497,6 @@ export function ProductForm({
           />
           <Label htmlFor="prod-active">{m.common_active()}</Label>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="prod-activity">{m.shop_field_link_activity()}</Label>
-        <ActivityPicker value={activityId} onChange={setActivityId} />
-        <p className="text-xs text-muted-foreground">
-          {m.shop_field_link_activity_hint()}
-        </p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

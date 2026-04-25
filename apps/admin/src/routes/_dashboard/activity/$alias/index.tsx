@@ -403,6 +403,10 @@ function NodesPanel({
                 <SelectItem value="lottery">{m.activity_nodes_select_lottery()}</SelectItem>
                 <SelectItem value="banner">{m.activity_nodes_select_banner()}</SelectItem>
                 <SelectItem value="game_board">{m.activity_nodes_select_game_board()}</SelectItem>
+                <SelectItem value="entity_blueprint">{m.activity_nodes_select_entity_blueprint()}</SelectItem>
+                <SelectItem value="item_definition">{m.activity_nodes_select_item_definition()}</SelectItem>
+                <SelectItem value="currency_definition">{m.activity_nodes_select_currency_definition()}</SelectItem>
+                <SelectItem value="assist_pool">{m.activity_nodes_select_assist_pool()}</SelectItem>
                 <SelectItem value="custom">{m.activity_nodes_select_custom()}</SelectItem>
               </SelectContent>
             </Select>
@@ -578,28 +582,37 @@ function NodesPanel({
                       </TooltipContent>
                     </Tooltip>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        if (
-                          !confirm(
-                            m.activity_nodes_delete_confirm({ alias: n.alias }),
-                          )
-                        )
-                          return
-                        try {
-                          await deleteMutation.mutateAsync(n.id)
-                          toast.success(m.activity_nodes_delete_success())
-                        } catch (err) {
-                          if (err instanceof ApiError)
-                            toast.error(err.body.error)
-                          else toast.error(m.activity_nodes_delete_failed())
-                        }
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (
+                              !confirm(
+                                m.activity_nodes_delete_confirm({
+                                  alias: n.alias,
+                                }),
+                              )
+                            )
+                              return
+                            try {
+                              await deleteMutation.mutateAsync(n.id)
+                              toast.success(m.activity_nodes_delete_success())
+                            } catch (err) {
+                              if (err instanceof ApiError)
+                                toast.error(err.body.error)
+                              else toast.error(m.activity_nodes_delete_failed())
+                            }
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {m.activity_nodes_delete_tooltip()}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </li>
               )
