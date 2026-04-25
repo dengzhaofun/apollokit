@@ -11,7 +11,8 @@
     "TINYBIRD_URL",
     "TINYBIRD_WORKSPACE_ID",
     "ADMIN_URL",
-    "INVITE_FROM_ADDRESS"
+    "INVITE_FROM_ADDRESS",
+    "OPENROUTER_API_KEY"
   ],
   "tasks": {
     "build": {

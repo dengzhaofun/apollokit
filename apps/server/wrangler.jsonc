@@ -36,6 +36,7 @@
   //   BETTER_AUTH_URL           — base URL the auth handler is served at
   //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)
   //   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST API token
+  //   OPENROUTER_API_KEY        — OpenRouter API key for the AI SDK provider
   //
   // Plain vars (public config; override per-environment as needed):
   //   ADMIN_URL                 — origin of the admin SPA, used to build
