@@ -57,7 +57,7 @@ function CategoryDetailPage() {
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/item">
+              <Link to="/item/categories">
                 <ArrowLeft className="size-4" />
                 {m.common_back()}
               </Link>
@@ -79,7 +79,7 @@ function CategoryDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(category.id)
                     toast.success(m.item_category_deleted())
-                    navigate({ to: "/item" })
+                    navigate({ to: "/item/categories" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

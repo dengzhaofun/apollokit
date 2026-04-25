@@ -66,7 +66,7 @@ function DefinitionDetailPage() {
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/item">
+              <Link to="/item/definitions">
                 <ArrowLeft className="size-4" />
                 {m.common_back()}
               </Link>
@@ -88,7 +88,7 @@ function DefinitionDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(definition.id)
                     toast.success(m.item_definition_deleted())
-                    navigate({ to: "/item" })
+                    navigate({ to: "/item/definitions" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

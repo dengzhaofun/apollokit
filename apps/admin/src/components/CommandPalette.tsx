@@ -84,7 +84,7 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading={m.nav_group_system()}>
+        <CommandGroup heading={m.command_palette_misc()}>
           {locales.filter((l) => l !== currentLocale).map((l) => (
             <CommandItem
               key={`locale-${l}`}

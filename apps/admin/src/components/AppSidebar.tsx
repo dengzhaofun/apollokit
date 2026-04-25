@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowLeftRight,
   BookOpen,
-  Building2,
   CalendarCheck,
   ChevronRight,
   Coins,
@@ -15,7 +14,7 @@ import {
   HeartHandshake,
   GalleryHorizontal,
   Gift,
-  KeyRound,
+  Layers,
   LayoutDashboard,
   LineChart,
   ListTodo,
@@ -31,15 +30,17 @@ import {
   PieChart,
   PiggyBank,
   ScrollText,
+  Settings,
   Shield,
   ShoppingCart,
   Sparkles,
   Swords,
+  Tags,
   Ticket,
   Trophy,
   UserPlus,
   Users,
-  Webhook,
+  Wrench,
   type LucideIcon,
 } from "lucide-react"
 
@@ -57,57 +58,71 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarSeparator,
 } from "#/components/ui/sidebar"
 import { LanguageSwitcher } from "./LanguageSwitcher"
 import ThemeToggle from "./ThemeToggle"
 import * as m from "../paraglide/messages.js"
 
+type NavRoute =
+  | "/dashboard"
+  | "/analytics/users"
+  | "/analytics/modules"
+  | "/analytics/activity"
+  | "/analytics/logs"
+  | "/check-in"
+  | "/item"
+  | "/item/definitions"
+  | "/item/categories"
+  | "/item/tools"
+  | "/currency"
+  | "/entity"
+  | "/entity/schemas"
+  | "/entity/formations"
+  | "/exchange"
+  | "/cdkey"
+  | "/shop"
+  | "/shop/categories"
+  | "/shop/tags"
+  | "/storage-box"
+  | "/mail"
+  | "/banner"
+  | "/announcement"
+  | "/activity"
+  | "/lottery"
+  | "/assist-pool"
+  | "/friend-gift"
+  | "/task"
+  | "/task/categories"
+  | "/media-library"
+  | "/character"
+  | "/dialogue"
+  | "/collection"
+  | "/level"
+  | "/event-catalog"
+  | "/friend"
+  | "/invite"
+  | "/guild"
+  | "/team"
+  | "/leaderboard"
+  | "/rank"
+  | "/end-user"
+  | "/badge"
+  | "/settings"
+  | "/cms"
+
 type NavItem = {
   title: () => string
-  to:
-    | "/dashboard"
-    | "/analytics/users"
-    | "/analytics/modules"
-    | "/analytics/activity"
-    | "/analytics/logs"
-    | "/check-in"
-    | "/item"
-    | "/currency"
-    | "/entity"
-    | "/exchange"
-    | "/cdkey"
-    | "/shop"
-    | "/storage-box"
-    | "/mail"
-    | "/banner"
-    | "/announcement"
-    | "/activity"
-    | "/lottery"
-    | "/assist-pool"
-    | "/friend-gift"
-    | "/task"
-    | "/media-library"
-    | "/character"
-    | "/dialogue"
-    | "/collection"
-    | "/level"
-    | "/event-catalog"
-    | "/friend"
-    | "/invite"
-    | "/guild"
-    | "/team"
-    | "/leaderboard"
-    | "/rank"
-    | "/end-user"
-    | "/api-keys"
-    | "/organization-settings"
-    | "/badge"
-    | "/webhooks"
-    | "/cms"
+  to: NavRoute
   icon: LucideIcon
+  /** 存在则视为父分组,渲染二级菜单。父级 `to` 即点击文字时跳转的"模块默认页"。 */
+  children?: NavItem[]
 }
 
 type NavGroup = {
@@ -118,7 +133,7 @@ type NavGroup = {
     | "operations"
     | "content"
     | "social"
-    | "system"
+    | "developer"
   label: () => string
   items: NavItem[]
 }
@@ -134,7 +149,7 @@ function getNavGroups(): NavGroup[] {
     },
     {
       // 数据分析组:分析"读"视角 — 数据大盘在 overview,深度分析(用户/模块/活动/日志)集中到这里
-      // 事件管理(schema / 订阅健康 / 回放)是"治理"视角,放在 system 组,不属于这里
+      // 事件管理(schema / 订阅健康 / 回放)是"治理"视角,放在 developer 组,不属于这里
       key: "analytics",
       label: m.nav_group_analytics,
       items: [
@@ -156,12 +171,38 @@ function getNavGroups(): NavGroup[] {
       key: "economy",
       label: m.nav_group_economy,
       items: [
-        { title: m.nav_item, to: "/item", icon: Package },
+        {
+          title: m.nav_item,
+          to: "/item",
+          icon: Package,
+          children: [
+            { title: m.nav_item_definitions, to: "/item/definitions", icon: Package },
+            { title: m.nav_item_categories, to: "/item/categories", icon: FolderOpen },
+            { title: m.nav_item_tools, to: "/item/tools", icon: Wrench },
+          ],
+        },
         { title: m.nav_currency, to: "/currency", icon: Coins },
-        { title: m.nav_entity, to: "/entity", icon: Sparkles },
+        {
+          title: m.nav_entity,
+          to: "/entity",
+          icon: Sparkles,
+          children: [
+            { title: m.nav_entity_schemas, to: "/entity/schemas", icon: Layers },
+            { title: m.nav_entity_formations, to: "/entity/formations", icon: Swords },
+          ],
+        },
         { title: m.nav_exchange, to: "/exchange", icon: ArrowLeftRight },
         { title: m.nav_cdkey, to: "/cdkey", icon: Ticket },
-        { title: m.nav_shop, to: "/shop", icon: ShoppingCart },
+        {
+          title: m.nav_shop,
+          to: "/shop",
+          icon: ShoppingCart,
+          children: [
+            { title: m.nav_shop_products, to: "/shop", icon: Package },
+            { title: m.nav_shop_categories, to: "/shop/categories", icon: FolderOpen },
+            { title: m.nav_shop_tags, to: "/shop/tags", icon: Tags },
+          ],
+        },
         { title: m.nav_storage_box, to: "/storage-box", icon: PiggyBank },
         { title: m.nav_mail, to: "/mail", icon: Mail },
       ],
@@ -177,14 +218,23 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_lottery, to: "/lottery", icon: Dices },
         { title: m.nav_assist_pool, to: "/assist-pool", icon: HeartHandshake },
         { title: m.nav_gift, to: "/friend-gift", icon: Gift },
-        { title: m.nav_task, to: "/task", icon: ListTodo },
+        {
+          title: m.nav_task,
+          to: "/task",
+          icon: ListTodo,
+          children: [
+            { title: m.nav_task_list, to: "/task", icon: ListTodo },
+            { title: m.nav_task_categories, to: "/task/categories", icon: FolderOpen },
+          ],
+        },
         { title: m.nav_badge, to: "/badge", icon: Bell },
       ],
     },
     {
-      // 事件中心(event-catalog)原本挂在这里,现已迁到 system 组 —
-      // 因为后续要扩展"订阅者健康"、"事件回放"等平台治理能力,
-      // 和 api-keys / 组织设置属于同一个"基础设施治理"语义
+      // 事件中心(event-catalog)在 developer 组,因为它是只读治理看板
+      // (事件 schema / 订阅健康 / 回放),非"配置"语义。
+      // 配置类(组织设置 / API 密钥 / Webhooks / 账号)统一进
+      // /settings 二级页,从 footer 的 Settings 单链或 UserButton 进入。
       key: "content",
       label: m.nav_group_content,
       items: [
@@ -210,19 +260,13 @@ function getNavGroups(): NavGroup[] {
       ],
     },
     {
-      key: "system",
-      label: m.nav_group_system,
+      // Developer 组:平台治理"看板"型页面(只读为主)。
+      // 事件中心、未来的事件回放/订阅者健康/API explorer 都进这里。
+      // 和 /settings 下的"配置"类页面区分开。
+      key: "developer",
+      label: m.nav_group_developer,
       items: [
-        {
-          title: m.nav_organization_settings,
-          to: "/organization-settings",
-          icon: Building2,
-        },
-        { title: m.nav_api_keys, to: "/api-keys", icon: KeyRound },
-        // 事件中心:事件 schema / 生产消费拓扑 / 订阅健康 / 回放(二期扩展)
         { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
-        // Webhooks:让外部系统通过 HTTP 订阅内部事件,每组织最多 5 个端点
-        { title: m.nav_webhooks, to: "/webhooks", icon: Webhook },
       ],
     },
   ]
@@ -280,17 +324,63 @@ export function AppSidebar() {
                   <SidebarGroupContent>
                     <SidebarMenu>
                       {group.items.map((item) => {
-                        const isActive =
+                        const isItemActive =
                           pathname === item.to || pathname.startsWith(`${item.to}/`)
+                        if (!item.children) {
+                          return (
+                            <SidebarMenuItem key={item.to}>
+                              <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
+                                <Link to={item.to}>
+                                  <item.icon className="size-4" />
+                                  <span>{item.title()}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )
+                        }
                         return (
-                          <SidebarMenuItem key={item.to}>
-                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title()}>
-                              <Link to={item.to}>
-                                <item.icon className="size-4" />
-                                <span>{item.title()}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
+                          <Collapsible
+                            key={item.to}
+                            defaultOpen={isItemActive}
+                            className="group/nav-collapsible"
+                            asChild
+                          >
+                            <SidebarMenuItem>
+                              <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
+                                <Link to={item.to}>
+                                  <item.icon className="size-4" />
+                                  <span>{item.title()}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                              <CollapsibleTrigger asChild>
+                                <SidebarMenuAction
+                                  className="data-[state=open]:rotate-90"
+                                  aria-label="Toggle submenu"
+                                >
+                                  <ChevronRight className="size-4" />
+                                </SidebarMenuAction>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <SidebarMenuSub>
+                                  {item.children.map((child) => {
+                                    const isChildActive =
+                                      pathname === child.to ||
+                                      pathname.startsWith(`${child.to}/`)
+                                    return (
+                                      <SidebarMenuSubItem key={child.to}>
+                                        <SidebarMenuSubButton asChild isActive={isChildActive}>
+                                          <Link to={child.to}>
+                                            <child.icon className="size-4" />
+                                            <span>{child.title()}</span>
+                                          </Link>
+                                        </SidebarMenuSubButton>
+                                      </SidebarMenuSubItem>
+                                    )
+                                  })}
+                                </SidebarMenuSub>
+                              </CollapsibleContent>
+                            </SidebarMenuItem>
+                          </Collapsible>
                         )
                       })}
                     </SidebarMenu>
@@ -304,6 +394,18 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings" || pathname.startsWith("/settings/")}
+              tooltip={m.nav_settings()}
+            >
+              <Link to="/settings">
+                <Settings className="size-4" />
+                <span>{m.nav_settings()}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="flex items-center gap-1 px-1 py-1">
               <LanguageSwitcher />
