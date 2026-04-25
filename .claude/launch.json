@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "server", "dev"],
       "port": 8787
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4567", "--directory", "/Users/dengzhao/.claude/plans/design-mockups"],
+      "port": 4567
     }
   ]
 }

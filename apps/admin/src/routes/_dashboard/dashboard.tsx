@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
 import {
-  Activity,
+  ActivityIcon,
   AlertTriangle,
+  BarChart3Icon,
+  CalendarRangeIcon,
   CheckCircle2,
   CircleDashed,
   Coins,
+  DownloadIcon,
   Gauge,
   PartyPopper,
   Radio,
@@ -18,6 +21,8 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 
+import { Badge } from "#/components/ui/badge"
+import { Button } from "#/components/ui/button"
 import {
   Card,
   CardContent,
@@ -33,7 +38,15 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "#/components/ui/chart"
-import { authClient } from "#/lib/auth-client"
+import {
+  ErrorState,
+  PageBody,
+  PageHeader,
+  PageSection,
+  PageShell,
+  StatCard,
+  StatGrid,
+} from "#/components/patterns"
 import {
   TENANT_PIPES,
   useTenantRequestOverview,
@@ -41,27 +54,38 @@ import {
 } from "#/lib/tinybird"
 import { cn } from "#/lib/utils"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
+
+/**
+ * 临时 i18n 兜底 —— Phase 3 引入了几个 paraglide 没有的新文案。
+ * 后续 i18n team 把这些挪进 paraglide messages,这里就能删。
+ */
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/dashboard")({
   component: Dashboard,
 })
 
 /*
- * 数据大盘 — 第一个真实数据闭环版本。
+ * 数据大盘 —— Phase 3.1 重构版。
+ *
+ * 改动:
+ *   - 统一用 PageShell + PageHeader(brand-soft icon 徽章 + 时间范围 + Export)
+ *   - KPI 全部用 StatCard,delta / sparkline / loading / error 四态走 pattern
+ *   - 模块健康也走 StatCard,告别 dashed border + 单 dash 数字的"未上线感"
+ *   - "Dashboard · Probe User" 那个奇怪的"标题拼用户名"模式去掉,标题归标题
+ *   - Request trend 已在 Phase 1 修过 ErrorState 包装,沿用
  *
  * 当前接入的真实数据:
  *   - KPI「日均请求」「错误率」 → Tinybird `tenant_request_overview`(30 天聚合)
- *   - 「请求趋势图」 → 同上,按日分桶的 requests/errors/p95
+ *   - 「请求趋势图」 → 同上,按日分桶的 requests/errors
  *
  * 仍占位的(二期接入):
  *   - DAU / WAU / MAU / 活跃占比:需要新 pipe `tenant_active_users_daily`
- *     (按 end_user_id 去重,按来源 externalId IS NULL 拆分)
  *   - 今日新增玩家:需要查 Neon `eu_user.createdAt`
  *   - 今日 GMV:需要查 shop 模块交易表
- *   - 模块健康网格:按各模块核心指标接入
  *
- * SSR 注意:recharts 在 SSR 会因 dual-package hazard 报 `Invalid hook call`;
- * 所有含 recharts / Tinybird hook 的节点都走 ClientOnly 包裹,SSR 渲染 skeleton。
+ * SSR 注意:recharts + Tinybird hook 都走 ClientOnly,SSR 渲染 skeleton。
  */
 
 /** 稳定化请求时间窗:向上取整到小时,让同一个小时内 React Query key 稳定。 */
@@ -78,28 +102,13 @@ function useRequestWindow(days: number) {
 const REQUEST_CHART_CONFIG: ChartConfig = {
   requests: {
     label: "请求数",
-    color: "oklch(0.7 0.18 250)",
+    color: "var(--brand)",
   },
   errors: {
     label: "错误数",
-    color: "oklch(0.6 0.22 25)",
+    color: "var(--destructive)",
   },
 }
-
-interface KpiSpec {
-  key: string
-  label: string
-  icon: LucideIcon
-}
-
-const PLACEHOLDER_KPIS: KpiSpec[] = [
-  { key: "dau", label: "", icon: Users },
-  { key: "wau", label: "", icon: Users },
-  { key: "mau", label: "", icon: Users },
-  { key: "newUsers", label: "", icon: UserPlus },
-  { key: "activeRatio", label: "", icon: TrendingUp },
-  { key: "gmv", label: "", icon: Coins },
-]
 
 interface ModuleHealthCard {
   name: string
@@ -116,127 +125,144 @@ const MODULE_HEALTH: ModuleHealthCard[] = [
 ]
 
 function Dashboard() {
-  const { data: session } = authClient.useSession()
-
-  const kpiLabels: Record<string, string> = {
-    dau: m.dashboard_kpi_dau(),
-    wau: m.dashboard_kpi_wau(),
-    mau: m.dashboard_kpi_mau(),
-    newUsers: m.dashboard_kpi_new_users(),
-    activeRatio: m.dashboard_kpi_active_ratio(),
-    requests: m.dashboard_kpi_requests(),
-    errorRate: m.dashboard_kpi_error_rate(),
-    gmv: m.dashboard_kpi_gmv(),
-  }
-
   return (
-    <main className="flex-1 space-y-6 p-6">
-      {/* 页面标题 */}
-      <section>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {m.dashboard_overview_title()}
-          {session?.user.name ? (
-            <span className="ml-2 text-base font-normal text-muted-foreground">
-              · {session.user.name}
-            </span>
-          ) : null}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {m.dashboard_overview_subtitle()}
-        </p>
-      </section>
+    <PageShell>
+      <PageHeader
+        icon={<BarChart3Icon className="size-5" />}
+        title={m.dashboard_overview_title()}
+        description={m.dashboard_overview_subtitle()}
+        actions={
+          <>
+            <Button variant="outline" size="sm">
+              <CalendarRangeIcon />
+              {t("最近 30 天", "Last 30 days")}
+            </Button>
+            <Button variant="outline" size="sm">
+              <DownloadIcon />
+              {t("导出", "Export")}
+            </Button>
+          </>
+        }
+      />
 
-      {/* KPI 卡片网格 —— 6 张 placeholder + 2 张真实(请求域,ClientOnly) */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {PLACEHOLDER_KPIS.map((kpi) => (
-          <PlaceholderKpiCard
-            key={kpi.key}
-            label={kpiLabels[kpi.key]}
-            icon={kpi.icon}
-          />
-        ))}
-        <ClientOnly
-          fallback={
-            <PlaceholderKpiCard
-              label={kpiLabels.requests}
-              icon={Gauge}
-              note={m.dashboard_placeholder_connecting()}
+      <PageBody>
+        {/* KPI 卡片网格 —— 6 张 placeholder + 2 张真实(请求域,ClientOnly) */}
+        <PageSection>
+          <StatGrid columns={4}>
+            <PlaceholderStat label={m.dashboard_kpi_dau()} icon={Users} />
+            <PlaceholderStat label={m.dashboard_kpi_wau()} icon={Users} />
+            <PlaceholderStat label={m.dashboard_kpi_mau()} icon={Users} />
+            <PlaceholderStat label={m.dashboard_kpi_new_users()} icon={UserPlus} />
+            <PlaceholderStat
+              label={m.dashboard_kpi_active_ratio()}
+              icon={TrendingUp}
             />
-          }
-        >
-          <RequestsKpiCard label={kpiLabels.requests} />
-        </ClientOnly>
-        <ClientOnly
-          fallback={
-            <PlaceholderKpiCard
-              label={kpiLabels.errorRate}
-              icon={AlertTriangle}
-              note={m.dashboard_placeholder_connecting()}
-            />
-          }
-        >
-          <ErrorRateKpiCard label={kpiLabels.errorRate} />
-        </ClientOnly>
-      </section>
+            <PlaceholderStat label={m.dashboard_kpi_gmv()} icon={Coins} />
+            <ClientOnly
+              fallback={
+                <PlaceholderStat label={m.dashboard_kpi_requests()} icon={Gauge} />
+              }
+            >
+              <RequestsKpiCard label={m.dashboard_kpi_requests()} />
+            </ClientOnly>
+            <ClientOnly
+              fallback={
+                <PlaceholderStat
+                  label={m.dashboard_kpi_error_rate()}
+                  icon={AlertTriangle}
+                />
+              }
+            >
+              <ErrorRateKpiCard label={m.dashboard_kpi_error_rate()} />
+            </ClientOnly>
+          </StatGrid>
+        </PageSection>
 
-      {/* 请求趋势图 —— 30 天,日桶,real data */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{m.dashboard_requests_trend_title()}</CardTitle>
-          <CardDescription>
-            {m.dashboard_requests_trend_subtitle()}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClientOnly
-            fallback={
-              <div
-                className="aspect-[4/1] w-full min-h-[240px] animate-pulse rounded-md bg-muted/40"
-                aria-label="Loading chart"
+        {/* 请求趋势图 —— 30 天,日桶,real data */}
+        <PageSection>
+          <Card>
+            <CardHeader>
+              <CardTitle>{m.dashboard_requests_trend_title()}</CardTitle>
+              <CardDescription>
+                {m.dashboard_requests_trend_subtitle()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ClientOnly
+                fallback={
+                  <div
+                    className="aspect-[4/1] w-full min-h-[240px] animate-pulse rounded-md bg-muted/40"
+                    aria-label="Loading chart"
+                  />
+                }
+              >
+                <RequestsTrendChart />
+              </ClientOnly>
+            </CardContent>
+          </Card>
+        </PageSection>
+
+        {/* Tinybird 连接状态 */}
+        <TinybirdStatusCard />
+
+        {/* 模块健康 —— 仍是 placeholder,但不再用 dashed-border 单 dash 数字的"已废弃"观感 */}
+        <PageSection
+          title={m.dashboard_module_health_title()}
+          description={m.dashboard_module_health_subtitle()}
+        >
+          <StatGrid columns={5}>
+            {MODULE_HEALTH.map((mod) => (
+              <StatCard
+                key={mod.name}
+                icon={getModuleIcon(mod.name)}
+                label={mod.name}
+                value={mod.metric}
+                error
+                hint={
+                  <Badge variant="secondary" className="text-[10px]">
+                    Soon
+                  </Badge>
+                }
               />
-            }
-          >
-            <RequestsTrendChart />
-          </ClientOnly>
-        </CardContent>
-      </Card>
-
-      {/* Tinybird 连接状态 */}
-      <TinybirdStatusCard />
-
-      {/* 模块健康 —— 仍是 placeholder */}
-      <section>
-        <div className="mb-3">
-          <h3 className="text-lg font-semibold">
-            {m.dashboard_module_health_title()}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {m.dashboard_module_health_subtitle()}
+            ))}
+          </StatGrid>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {mod_health_footnote()}
           </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {MODULE_HEALTH.map((mod) => (
-            <Card key={mod.name} size="sm" className="border-dashed">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center gap-1.5">
-                  <ModuleIcon name={mod.name} />
-                  {mod.name}
-                </CardDescription>
-                <CardTitle className="text-xl tabular-nums text-muted-foreground">
-                  {mod.metric}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-muted-foreground">
-                  {mod.metricLabel}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-    </main>
+        </PageSection>
+      </PageBody>
+    </PageShell>
   )
+}
+
+/**
+ * 还没接数据的占位指标 —— 用 StatCard 的 error 态(dashed border + dash 数字)。
+ * 比之前手写的 PlaceholderKpiCard 视觉一致,Loading/Error 切换走 StatCard 内置 API。
+ */
+function PlaceholderStat({
+  label,
+  icon,
+}: {
+  label: string
+  icon: LucideIcon
+}) {
+  return (
+    <StatCard
+      label={label}
+      value="—"
+      icon={icon}
+      error
+      hint={
+        <span className="text-[10px] text-muted-foreground">
+          {m.dashboard_placeholder_connecting()}
+        </span>
+      }
+    />
+  )
+}
+
+function mod_health_footnote() {
+  return "* 各模块指标接入中 · 接通后这里会自动填上日均完成率 / GMV / 参与率等数字"
 }
 
 // ============================================================================
@@ -257,29 +283,21 @@ function RequestsKpiCard({ label }: { label: string }) {
   const avgPerDay =
     totalRequests != null
       ? Math.round(totalRequests / window.days).toLocaleString()
-      : isLoading
-        ? "…"
-        : "—"
+      : "—"
+
+  // sparkline 用最近 30 天的 daily requests trace
+  const trend = data?.data.map((r) => Number(r.requests || 0)) ?? []
 
   return (
-    <Card size="sm" className={cn("border-dashed", isError && "border-destructive/30")}>
-      <CardHeader className="pb-2">
-        <CardDescription className="flex items-center gap-1.5">
-          <Gauge className="size-3.5" />
-          {label}
-        </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums">
-          {avgPerDay}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-xs text-muted-foreground">
-          {isError
-            ? m.dashboard_tinybird_status_error()
-            : m.dashboard_kpi_requests_window_note()}
-        </p>
-      </CardContent>
-    </Card>
+    <StatCard
+      label={label}
+      value={avgPerDay}
+      icon={Gauge}
+      loading={isLoading}
+      error={isError}
+      trend={trend.length > 1 ? trend : undefined}
+      trendColor="var(--brand)"
+    />
   )
 }
 
@@ -300,50 +318,55 @@ function ErrorRateKpiCard({ label }: { label: string }) {
       ? ((totalErrors / totalRequests) * 100).toFixed(2) + "%"
       : data && totalRequests === 0
         ? "0.00%"
-        : isLoading
-          ? "…"
-          : "—"
+        : "—"
 
-  const colorClass =
-    data && totalRequests > 0 && totalErrors / totalRequests > 0.05
-      ? "text-destructive"
-      : undefined
+  // sparkline 用 daily error rate (errors/requests)
+  const trend =
+    data?.data
+      .map((r) =>
+        Number(r.requests || 0) > 0
+          ? (Number(r.errors || 0) / Number(r.requests || 0)) * 100
+          : 0
+      )
+      ?? []
 
   return (
-    <Card size="sm" className={cn("border-dashed", isError && "border-destructive/30")}>
-      <CardHeader className="pb-2">
-        <CardDescription className="flex items-center gap-1.5">
-          <AlertTriangle className="size-3.5" />
-          {label}
-        </CardDescription>
-        <CardTitle className={cn("text-2xl font-semibold tabular-nums", colorClass)}>
-          {pct}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-xs text-muted-foreground">
-          {isError
-            ? m.dashboard_tinybird_status_error()
-            : m.dashboard_kpi_error_rate_note()}
-        </p>
-      </CardContent>
-    </Card>
+    <StatCard
+      label={label}
+      value={pct}
+      icon={AlertTriangle}
+      loading={isLoading}
+      error={isError}
+      trend={trend.length > 1 ? trend : undefined}
+      trendColor="var(--destructive)"
+    />
   )
 }
 
 function RequestsTrendChart() {
   const window = useRequestWindow(30)
-  const { data, isLoading, isError, error } = useTenantRequestOverview({
+  const { data, isLoading, isError, error, refetch } = useTenantRequestOverview({
     from: window.from,
     to: window.to,
     bucketSeconds: 86_400,
   })
 
   if (isError) {
+    if (typeof window !== "undefined") {
+      console.warn("[dashboard] tenant_request_overview failed:", error)
+    }
     return (
-      <div className="flex aspect-[4/1] min-h-[240px] w-full items-center justify-center rounded-md border border-destructive/30 bg-destructive/5 text-sm text-destructive">
-        {error?.message ?? m.dashboard_tinybird_status_error()}
-      </div>
+      <ErrorState
+        title={m.dashboard_tinybird_status_error()}
+        description={t(
+          "请到 Settings → API Keys 检查 Tinybird 连接,或确认服务端 TINYBIRD_TOKEN 已配置",
+          "Check Settings → API Keys for Tinybird connection, or confirm the server-side TINYBIRD_TOKEN is set."
+        )}
+        onRetry={() => refetch()}
+        retryLabel={t("重试", "Retry")}
+        error={error instanceof Error ? error : null}
+        className="aspect-[4/1] min-h-[240px]"
+      />
     )
   }
 
@@ -417,43 +440,15 @@ function RequestsTrendChart() {
 }
 
 // ============================================================================
-// 小组件:占位 KPI 卡 + module icon + ClientOnly gate + TinybirdStatusCard
+// 小组件:module icon + ClientOnly gate + TinybirdStatusCard
 // ============================================================================
 
-function PlaceholderKpiCard({
-  label,
-  icon: Icon,
-  note,
-}: {
-  label: string
-  icon: LucideIcon
-  note?: string
-}) {
-  return (
-    <Card size="sm" className="border-dashed">
-      <CardHeader className="pb-2">
-        <CardDescription className="flex items-center gap-1.5">
-          <Icon className="size-3.5" />
-          {label}
-        </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums text-muted-foreground">
-          —
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-xs text-muted-foreground">
-          {note ?? m.dashboard_placeholder_connecting()}
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ModuleIcon({ name }: { name: string }) {
-  if (name.includes("商城")) return <ShoppingCart className="size-3.5" />
-  if (name.includes("活动")) return <PartyPopper className="size-3.5" />
-  if (name.includes("签到")) return <Activity className="size-3.5" />
-  return <Gauge className="size-3.5" />
+function getModuleIcon(name: string): LucideIcon {
+  if (name.includes("商城")) return ShoppingCart
+  if (name.includes("活动")) return PartyPopper
+  if (name.includes("签到")) return ActivityIcon
+  if (name.includes("Battle-Pass") || name.includes("战令")) return TrendingUp
+  return Gauge
 }
 
 function ClientOnly({
@@ -481,7 +476,7 @@ function TinybirdStatusCard() {
   return (
     <ClientOnly
       fallback={
-        <Card size="sm" className="border-dashed">
+        <Card size="sm">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5">
               <Radio className="size-3.5" />
@@ -509,7 +504,7 @@ function TinybirdStatusCardInner() {
 
   if (!isLoading && !isError && data) {
     Icon = CheckCircle2
-    iconClass = "text-emerald-500"
+    iconClass = "text-success"
     statusLabel = m.dashboard_tinybird_status_ok()
     detail = (
       <dl className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
@@ -537,13 +532,21 @@ function TinybirdStatusCardInner() {
       error && typeof error === "object" && "message" in error
         ? String((error as { message: unknown }).message)
         : ""
+    // 不再把原始 error.message 直接 dump,折叠到 details
     detail = message ? (
-      <p className="mt-2 font-mono text-xs text-muted-foreground">{message}</p>
+      <details className="mt-2">
+        <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+          {t("技术细节", "Technical details")}
+        </summary>
+        <pre className="mt-1 max-h-24 overflow-auto rounded bg-muted/40 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+          {message}
+        </pre>
+      </details>
     ) : null
   }
 
   return (
-    <Card size="sm" className="border-dashed">
+    <Card size="sm">
       <CardHeader className="pb-2">
         <CardDescription className="flex items-center gap-1.5">
           <Radio className="size-3.5" />

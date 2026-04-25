@@ -7,6 +7,15 @@ import { getLocale } from '../paraglide/runtime.js'
 import { i18n as docsI18n, i18nUI } from '../lib/source'
 import { seo } from '../lib/seo'
 
+// A · Linear-style 字体加载顺序:
+// - Inter Variable:拉丁主字体,带 cv11/ss01/ss03 备选字形
+// - Noto Sans SC Variable:中文 fallback,与 Inter x-height 接近
+// - JetBrains Mono Variable:数字/代码/alias 用等宽
+// 这三个包提供 .css(@font-face),import 后被打进 bundle 自动加载,没必要走 Google Fonts CDN
+import '@fontsource-variable/inter'
+import '@fontsource-variable/noto-sans-sc'
+import '@fontsource-variable/jetbrains-mono'
+
 import appCss from '../styles.css?url'
 
 const THEME_INIT_SCRIPT = `(function(){try{var e=localStorage.getItem("theme")||"system",t="system"===e?window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light":e,r=document.documentElement;r.classList.remove("light","dark");r.classList.add(t);r.style.colorScheme=t}catch(e){}})();`
