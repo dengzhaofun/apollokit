@@ -1,8 +1,18 @@
-import { HeadContent, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
+import { HeadContent, Link, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { RootProvider } from 'fumadocs-ui/provider/tanstack'
+import { CompassIcon } from 'lucide-react'
 import { Providers } from '../providers'
+import { Button } from '../components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../components/ui/empty'
 import { getLocale } from '../paraglide/runtime.js'
 import { i18n as docsI18n, i18nUI } from '../lib/source'
 import { seo } from '../lib/seo'
@@ -68,7 +78,44 @@ export const Route = createRootRoute({
     }
   },
   shellComponent: RootDocument,
+  /*
+   * 全局 404 兜底 —— 任何未知路径(包括手敲错的、过期分享链接、用户输错 alias)
+   * 都走这里,而不是显示 TanStack Router 默认的红字 "Not Found"。
+   * 错误态 / loading 态选择留给具体页面用 ErrorState / Skeleton(更精准),
+   * 不在 root 强加,避免覆盖业务页面已有的细粒度状态处理。
+   */
+  notFoundComponent: NotFoundPage,
 })
+
+function NotFoundPage() {
+  const isZh = getLocale() === 'zh'
+  return (
+    <main className="flex min-h-[80vh] items-center justify-center p-6">
+      <Empty className="max-w-md">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CompassIcon className="size-4" />
+          </EmptyMedia>
+          <EmptyTitle>
+            {isZh ? '页面找不到' : 'Page not found'}
+          </EmptyTitle>
+          <EmptyDescription>
+            {isZh
+              ? '这个链接可能已经过期、被移除,或者是地址敲错了。'
+              : 'This link may be expired, removed, or mistyped.'}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild size="sm">
+            <Link to="/dashboard">
+              {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+            </Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    </main>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   // 两种 i18n 互相隔离:

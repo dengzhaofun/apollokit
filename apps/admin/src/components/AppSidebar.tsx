@@ -315,9 +315,9 @@ export function AppSidebar() {
             >
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex w-full items-center justify-between text-sidebar-foreground/70 hover:text-sidebar-foreground">
+                  <CollapsibleTrigger className="flex w-full items-center justify-between text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/55 hover:text-sidebar-foreground/85">
                     {group.label()}
-                    <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </CollapsibleTrigger>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
@@ -406,8 +406,12 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <div className="flex items-center gap-1 px-1 py-1">
+          {/*
+            Lang + Theme 行 —— collapsed 模式自动隐藏(group-data 选择器),展开时
+            才显示。两个控件共享一行,视觉重心比之前各占一行轻很多。
+          */}
+          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-1 px-1 py-0.5">
               <LanguageSwitcher />
               <ThemeToggle />
             </div>

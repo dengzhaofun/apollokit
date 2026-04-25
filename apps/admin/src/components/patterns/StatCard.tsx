@@ -185,13 +185,15 @@ export function StatGrid({
   columns?: 1 | 2 | 3 | 4 | 5
   className?: string
 }) {
-  // 不能用 grid-cols-${var} 动态类(Tailwind JIT 会扫不到),手列出来
+  // 不能用 grid-cols-${var} 动态类(Tailwind JIT 会扫不到),手列出来。
+  // 4/5 列走 xl(>=1280)断点 —— sidebar 占了 ~256px,lg(1024)下内容区只有
+  // ~770px,4 列每张 ~180px 会让 KPI label 换行,体验差。
   const colClass = {
     1: "grid-cols-1",
     2: "grid-cols-1 sm:grid-cols-2",
     3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-    5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
+    4: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
+    5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5",
   }[columns]
 
   return (

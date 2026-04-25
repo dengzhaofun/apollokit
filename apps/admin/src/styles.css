@@ -276,4 +276,16 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
+  /*
+   * Sidebar active item 左侧 2px 立柱 —— A·Linear 签名细节。
+   * 用 inset box-shadow 而不是 ::before 绝对定位,这样无论 button 父级有没有
+   * overflow:hidden / clip-path 都能稳稳显示。立柱沿 button 内边贴左,2px 宽。
+   *
+   * 只对顶层 menu-button 加,sub-button 不加,避免视觉过重。collapsed("icon")
+   * 模式 button 变方块,立柱也跟着收;视觉合理就保留(不需要专门 hide)。
+   */
+  [data-sidebar="menu-button"][data-active="true"] {
+    box-shadow: inset 2px 0 0 var(--brand);
+  }
 }
