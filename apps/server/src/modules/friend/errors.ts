@@ -3,7 +3,7 @@ import { ModuleError } from "../../lib/errors";
 
 export class FriendSettingsNotFound extends ModuleError {
   constructor() {
-    super("friend.settings_not_found", 404, "friend settings not configured for this organization");
+    super("friend.settings_not_found", 404, "friend settings not configured for this project");
     this.name = "FriendSettingsNotFound";
   }
 }

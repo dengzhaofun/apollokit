@@ -479,7 +479,7 @@ export function createCollectionService(
       .limit(1);
     if (!rows[0]) {
       throw new CollectionInvalidInput(
-        `item definition not found in this organization: ${defId}`,
+        `item definition not found in this project: ${defId}`,
       );
     }
   }

@@ -110,7 +110,7 @@ teamRouter.openapi(
     method: "post",
     path: "/configs",
     tags: [TAG],
-    summary: "Create a team config for the current organization",
+    summary: "Create a team config for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateConfigSchema } },
@@ -139,7 +139,7 @@ teamRouter.openapi(
     method: "get",
     path: "/configs",
     tags: [TAG],
-    summary: "List team configs for the current organization",
+    summary: "List team configs for the current project",
     responses: {
       200: {
         description: "OK",
@@ -244,7 +244,7 @@ teamRouter.openapi(
     method: "get",
     path: "/teams",
     tags: [TAG],
-    summary: "List teams for the current organization",
+    summary: "List teams for the current project",
     request: { query: TeamListQuerySchema },
     responses: {
       200: {

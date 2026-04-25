@@ -28,7 +28,7 @@ export const CreateBannerGroupSchema = z
   .object({
     alias: AliasSchema.nullable().optional().openapi({
       description:
-        "Organization-scoped slug for client lookup. A group without an " +
+        "Project-scoped slug for client lookup. A group without an " +
         "alias is effectively a draft — client API can't resolve it.",
       example: "home-main",
     }),

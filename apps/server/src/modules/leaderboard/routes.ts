@@ -73,7 +73,7 @@ leaderboardRouter.openapi(
     method: "post",
     path: "/configs",
     tags: [TAG],
-    summary: "Create a leaderboard config for the current organization",
+    summary: "Create a leaderboard config for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateConfigSchema } },
@@ -102,7 +102,7 @@ leaderboardRouter.openapi(
     method: "get",
     path: "/configs",
     tags: [TAG],
-    summary: "List leaderboard configs for the current organization",
+    summary: "List leaderboard configs for the current project",
     responses: {
       200: {
         description: "OK",

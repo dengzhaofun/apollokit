@@ -7,8 +7,13 @@
     "analytics",
     "announcement",
     "assist-pool",
+    "badge-(admin)",
+    "badge-(client)",
     "banner",
+    "battle-pass",
+    "battle-pass-(client)",
     "cdkey",
+    "character",
     "check-in",
     "client-credentials",
     "collection",
@@ -33,6 +38,7 @@
     "shop",
     "storage-box",
     "task",
-    "team"
+    "team",
+    "webhooks"
   ]
 }

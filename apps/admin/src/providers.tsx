@@ -14,6 +14,7 @@ import { TooltipProvider } from "./components/ui/tooltip"
 import { authClient } from "./lib/auth-client"
 import { getLocale } from './paraglide/runtime.js'
 import { authLocalizationZh } from './lib/auth-localization-zh'
+import { authLocalizationEn } from './lib/auth-localization-en'
 import * as m from "./paraglide/messages.js"
 
 /**
@@ -55,7 +56,7 @@ const queryClient = new QueryClient({
 
 export function Providers({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const localization = getLocale() === 'zh' ? authLocalizationZh : undefined
+  const localization = getLocale() === 'zh' ? authLocalizationZh : authLocalizationEn
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -64,7 +65,7 @@ export function Providers({ children }: { children: ReactNode }) {
         localization={localization}
         // Default is "/" (landing). After sign-in we want the admin
         // dashboard; `_dashboard.tsx` takes it from there (redirects
-        // to `/onboarding/create-org` if the user has no active org).
+        // to `/onboarding/create-project` if the user has no active project).
         redirectTo="/dashboard"
         // Mount account-scoped views under /settings/* so the UserButton
         // dropdown links to our own settings layout instead of the
@@ -80,7 +81,7 @@ export function Providers({ children }: { children: ReactNode }) {
             SETTINGS: "account",
             SECURITY: "security",
             API_KEYS: "api-keys",
-            ORGANIZATIONS: "organizations",
+            ORGANIZATIONS: "projects",
           },
         }}
         navigate={(href: string) => router.navigate({ to: href })}

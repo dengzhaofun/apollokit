@@ -80,7 +80,7 @@ PATCH /api/event-catalog/{name}   # 仅 external 可编辑,会自动升级为 ca
 |---|---|---|
 | `id` | string | 事件唯一 id,**幂等键**——同一个 id 可能因重试多次投递。 |
 | `name` | string | 事件名。 |
-| `organizationId` | string | 归属租户。 |
+| `organizationId` | string | 所属项目 id。 |
 | `endUserId` | string \| null | 触发事件的终端用户(无则为系统事件)。 |
 | `occurredAt` | ISO8601 | 事件实际发生的时间,不是投递时间。 |
 | `data` | object | 事件特定字段。形状见 `/api/event-catalog/{name}` 的 schema。 |

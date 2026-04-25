@@ -75,7 +75,7 @@ export const requireOrgManage = createMiddleware<HonoEnv>(async (c, next) => {
     return c.json(
       fail(
         FORBIDDEN_CODE,
-        "Your role does not have write permission in this organization.",
+        "Your role does not have write permission in this project.",
       ),
       403,
     );

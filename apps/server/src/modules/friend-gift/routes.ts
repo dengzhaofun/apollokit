@@ -125,7 +125,7 @@ friendGiftRouter.openapi(
     method: "get",
     path: "/settings",
     tags: [TAG],
-    summary: "Get friend gift settings for the current organization",
+    summary: "Get friend gift settings for the current project",
     responses: {
       200: {
         description: "OK",
@@ -212,7 +212,7 @@ friendGiftRouter.openapi(
     method: "get",
     path: "/packages",
     tags: [TAG],
-    summary: "List gift packages for the current organization",
+    summary: "List gift packages for the current project",
     responses: {
       200: {
         description: "OK",
@@ -317,7 +317,7 @@ friendGiftRouter.openapi(
     method: "get",
     path: "/sends",
     tags: [TAG],
-    summary: "List all gift sends for the current organization",
+    summary: "List all gift sends for the current project",
     request: { query: PaginationQuerySchema },
     responses: {
       200: {

@@ -1,0 +1,18 @@
+{
+  "title": "Badge (Admin)",
+  "pages": [
+    "badge_admin_get_nodes",
+    "badge_admin_post_nodes",
+    "badge_admin_patch_nodes_by_id",
+    "badge_admin_delete_nodes_by_id",
+    "badge_admin_post_nodes_validate_tree",
+    "badge_admin_get_templates",
+    "badge_admin_post_nodes_from_template",
+    "badge_admin_post_signal",
+    "badge_admin_post_signal_batch",
+    "badge_admin_post_preview",
+    "badge_admin_get_signal_registry",
+    "badge_admin_put_signal_registry",
+    "badge_admin_delete_signal_registry_by_keypattern"
+  ]
+}

@@ -46,7 +46,7 @@ export class AssistPoolAliasConflict extends ModuleError {
     super(
       "assist_pool.alias_conflict",
       409,
-      `assist-pool alias already in use in this organization: ${alias}`,
+      `assist-pool alias already in use in this project: ${alias}`,
     );
     this.name = "AssistPoolAliasConflict";
   }

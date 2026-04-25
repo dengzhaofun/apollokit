@@ -62,7 +62,7 @@ export const requireClientUser = createMiddleware<HonoEnv>(async (c, next) => {
     if (!sessionOrgId) {
       return c.json(
         {
-          error: "session missing organization binding",
+          error: "session missing project binding",
           requestId: c.get("requestId"),
         },
         401,

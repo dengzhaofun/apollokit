@@ -16,29 +16,29 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 
 /**
- * First-run organization onboarding.
+ * First-run project onboarding.
  *
  * `_dashboard.tsx` redirects here when `session.session.activeOrganizationId`
  * is null. Two sub-cases, handled by the same route:
  *
- *  - User has zero orgs → render the "create your first org" form.
+ *  - User has zero projects → render the "create your first project" form.
  *    On submit: `organization.create` → `organization.setActive` →
  *    refresh session cache (so `activeOrganizationId` propagates without
  *    requiring sign-out) → navigate to `/dashboard`.
- *  - User has ≥1 orgs but session lost the active one (e.g. the old
+ *  - User has ≥1 projects but session lost the active one (e.g. the old
  *    `session.create.before` hook was removed, or Better Auth session
- *    was rebuilt mid-flight) → silently `setActive(firstOrg)` and
+ *    was rebuilt mid-flight) → silently `setActive(firstProject)` and
  *    bounce to `/dashboard`. No UI flash.
  *
  * The page lives OUTSIDE `_dashboard` on purpose: the dashboard layout
- * mounts sidebar + command palette + org-scoped data hooks, all of
+ * mounts sidebar + command palette + project-scoped data hooks, all of
  * which assume `activeOrganizationId` is present. Rendering any part
  * of that shell from an unscoped session is what produces the silent
  * 401 cascade this page exists to prevent.
  */
-export const Route = createFileRoute("/onboarding/create-org")({
-  head: () => seo({ title: "Create organization", noindex: true }),
-  component: CreateOrganizationPage,
+export const Route = createFileRoute("/onboarding/create-project")({
+  head: () => seo({ title: "Create project", noindex: true }),
+  component: CreateProjectPage,
 })
 
 /**
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/onboarding/create-org")({
  * workaround). Render a skeleton on the server + first client tick,
  * then mount the session-aware component.
  */
-function CreateOrganizationPage() {
+function CreateProjectPage() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
@@ -60,7 +60,7 @@ function CreateOrganizationPage() {
       </div>
     )
   }
-  return <CreateOrganizationClient />
+  return <CreateProjectClient />
 }
 
 function slugify(name: string): string {
@@ -70,10 +70,10 @@ function slugify(name: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40)
-  return base ? `${base}-${Date.now().toString(36)}` : `org-${Date.now().toString(36)}`
+  return base ? `${base}-${Date.now().toString(36)}` : `project-${Date.now().toString(36)}`
 }
 
-function CreateOrganizationClient() {
+function CreateProjectClient() {
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [name, setName] = useState("")
@@ -118,7 +118,7 @@ function CreateOrganizationClient() {
         slug: slugify(name),
       })
       if (error || !created) {
-        toast.error(error?.message ?? "Failed to create organization")
+        toast.error(error?.message ?? "Failed to create project")
         setSubmitting(false)
         return
       }
@@ -126,7 +126,7 @@ function CreateOrganizationClient() {
       await authClient.getSession({ query: { disableCookieCache: true } })
       navigate({ to: "/dashboard", replace: true })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create organization")
+      toast.error(err instanceof Error ? err.message : "Failed to create project")
       setSubmitting(false)
     }
   }
@@ -143,18 +143,18 @@ function CreateOrganizationClient() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-4 py-14">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Create your organization</CardTitle>
+          <CardTitle>Create your project</CardTitle>
           <CardDescription>
-            ApolloKit is multi-tenant — every workspace is an organization.
+            ApolloKit is multi-tenant — every workspace is a project.
             Give yours a name to continue.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-6" onSubmit={handleSubmit}>
             <div className="grid gap-2">
-              <Label htmlFor="org-name">Organization name</Label>
+              <Label htmlFor="project-name">Project name</Label>
               <Input
-                id="org-name"
+                id="project-name"
                 autoFocus
                 autoComplete="organization"
                 placeholder="Acme Games"
@@ -166,7 +166,7 @@ function CreateOrganizationClient() {
               />
             </div>
             <Button type="submit" disabled={submitting || !name.trim()}>
-              {submitting ? "Creating…" : "Create organization"}
+              {submitting ? "Creating…" : "Create project"}
             </Button>
           </form>
         </CardContent>

@@ -27,7 +27,7 @@ export class WebhookLimitExceeded extends ModuleError {
     super(
       "webhooks.limit_exceeded",
       409,
-      `webhook endpoint limit reached for this organization (max ${limit})`,
+      `webhook endpoint limit reached for this project (max ${limit})`,
     );
     this.name = "WebhookLimitExceeded";
   }

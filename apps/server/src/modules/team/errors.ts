@@ -84,7 +84,7 @@ export class TeamConfigAliasConflict extends ModuleError {
     super(
       "team.alias_conflict",
       409,
-      `team config alias already in use in this organization: ${alias}`,
+      `team config alias already in use in this project: ${alias}`,
     );
     this.name = "TeamConfigAliasConflict";
   }

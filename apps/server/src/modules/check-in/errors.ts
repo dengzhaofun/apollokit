@@ -27,7 +27,7 @@ export class CheckInAliasConflict extends ModuleError {
     super(
       "check_in.alias_conflict",
       409,
-      `check-in alias already in use in this organization: ${alias}`,
+      `check-in alias already in use in this project: ${alias}`,
     );
     this.name = "CheckInAliasConflict";
   }

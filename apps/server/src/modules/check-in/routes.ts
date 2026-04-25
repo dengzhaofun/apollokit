@@ -123,7 +123,7 @@ checkInRouter.openapi(
     method: "post",
     path: "/configs",
     tags: [TAG],
-    summary: "Create a check-in config for the current organization",
+    summary: "Create a check-in config for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateConfigSchema } },

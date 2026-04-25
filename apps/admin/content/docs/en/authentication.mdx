@@ -5,7 +5,7 @@ icon: KeyRound
 ---
 
 <Callout type="info">
-  Haven't made a first call yet? Read [Quickstart](./quickstart) first. Want to understand why organizations are mandatory? See [Organizations](./organizations). This page focuses on **the three call identities**.
+  Haven't made a first call yet? Read [Quickstart](./quickstart) first. Want to understand why projects are mandatory? See [Projects](./projects). This page focuses on **the three call identities**.
 </Callout>
 
 ApolloKit has two auth systems: **admin authentication** (for SaaS operators) and **client credentials** (for end-user-originated requests).
@@ -16,11 +16,11 @@ ApolloKit has two auth systems: **admin authentication** (for SaaS operators) an
 
 The admin dashboard uses Better Auth session cookies. After login each request automatically carries `Cookie: auth-token=...`.
 
-The session contains `activeOrganizationId`; every business operation is scoped to the current org.
+The session contains `activeOrganizationId`; every business operation is scoped to the current project.
 
 ### Admin API Key
 
-An organization can issue Admin API Keys (prefix `ak_`) for programmatic access to admin APIs.
+A project can issue Admin API Keys (prefix `ak_`) for programmatic access to admin APIs.
 
 ```http
 GET /api/check-in/configs

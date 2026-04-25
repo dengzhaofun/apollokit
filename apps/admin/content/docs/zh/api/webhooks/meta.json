@@ -1,0 +1,13 @@
+{
+  "title": "Webhooks",
+  "pages": [
+    "webhooks_get_endpoints",
+    "webhooks_post_endpoints",
+    "webhooks_get_endpoints_by_id",
+    "webhooks_patch_endpoints_by_id",
+    "webhooks_delete_endpoints_by_id",
+    "webhooks_post_endpoints_by_id_rotate_secret",
+    "webhooks_get_endpoints_by_id_deliveries",
+    "webhooks_post_deliveries_by_id_replay"
+  ]
+}

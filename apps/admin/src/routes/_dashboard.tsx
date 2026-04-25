@@ -62,9 +62,9 @@ function DashboardLayoutClient() {
     // Server-side admin routes gate on `activeOrganizationId` (see
     // `require-admin-or-api-key.ts`). A session without one 401s every
     // business endpoint, producing a dashboard full of silent failures.
-    // Send the user to onboarding to create (or pick) an org first.
+    // Send the user to onboarding to create (or pick) a project first.
     if (!session.session.activeOrganizationId) {
-      navigate({ to: "/onboarding/create-org", replace: true })
+      navigate({ to: "/onboarding/create-project", replace: true })
     }
   }, [isPending, session, navigate])
 

@@ -64,7 +64,7 @@ clientCredentialRouter.openapi(
     method: "post",
     path: "/",
     tags: [TAG],
-    summary: "Create a client credential for the current organization",
+    summary: "Create a client credential for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateCredentialSchema } },
@@ -105,7 +105,7 @@ clientCredentialRouter.openapi(
     method: "get",
     path: "/",
     tags: [TAG],
-    summary: "List client credentials for the current organization",
+    summary: "List client credentials for the current project",
     responses: {
       200: {
         description: "OK",

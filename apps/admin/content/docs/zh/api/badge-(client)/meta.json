@@ -1,0 +1,8 @@
+{
+  "title": "Badge (Client)",
+  "pages": [
+    "badge_client_get_tree",
+    "badge_client_post_dismiss",
+    "badge_client_post_reset_session"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Character",
+  "pages": [
+    "character_get_characters",
+    "character_post_characters",
+    "character_get_characters_by_id",
+    "character_patch_characters_by_id",
+    "character_delete_characters_by_id"
+  ]
+}

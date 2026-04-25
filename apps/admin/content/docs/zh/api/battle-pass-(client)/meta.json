@@ -1,0 +1,9 @@
+{
+  "title": "Battle Pass (Client)",
+  "pages": [
+    "battle_pass_client_get_current",
+    "battle_pass_client_get_by_seasonid_aggregate",
+    "battle_pass_client_post_by_seasonid_claim",
+    "battle_pass_client_post_by_seasonid_claim_all"
+  ]
+}

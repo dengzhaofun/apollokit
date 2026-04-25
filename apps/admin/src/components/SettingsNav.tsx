@@ -8,14 +8,14 @@ type SettingsNavItem = {
   title: () => string
   to:
     | "/settings/account"
-    | "/settings/organization"
+    | "/settings/project"
     | "/settings/api-keys"
     | "/settings/webhooks"
   icon: LucideIcon
 }
 
 type SettingsNavSection = {
-  key: "personal" | "organization"
+  key: "personal" | "project"
   label: () => string
   items: SettingsNavItem[]
 }
@@ -34,12 +34,12 @@ function getSections(): SettingsNavSection[] {
       ],
     },
     {
-      key: "organization",
-      label: m.settings_section_organization,
+      key: "project",
+      label: m.settings_section_project,
       items: [
         {
-          title: m.nav_organization_settings,
-          to: "/settings/organization",
+          title: m.nav_project_settings,
+          to: "/settings/project",
           icon: Building2,
         },
         {
