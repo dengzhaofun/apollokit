@@ -29,7 +29,7 @@ packages/
 Run from repo root:
 
 - `pnpm dev` — turbo runs `dev` in every app with a `dev` script (persistent, not cached). Brings up admin (3000) and server (wrangler 8787) in parallel.
-- `pnpm build` — turbo `build` across the graph. **`apps/server` has no `build` script** — it deploys via wrangler, not turbo. `apps/admin` runs `vite build`.
+- `pnpm build` — turbo `build` across the graph. `apps/admin` runs `vite build`. `apps/server` has a no-op `build` script (just echoes a notice) only to satisfy Cloudflare Workers Builds' user-build-command — actual bundling and deploy are handled by `wrangler deploy`, not turbo.
 - `pnpm lint` — turbo `lint`. Admin and server both participate. `packages/typescript-config` has no lint script.
 - `pnpm check-types` — turbo `check-types`. Both admin and server run `tsc --noEmit`.
 - `pnpm format` — prettier on `**/*.{ts,tsx,md}` (run at root, NOT via turbo).
