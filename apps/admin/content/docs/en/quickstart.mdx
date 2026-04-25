@@ -12,11 +12,11 @@ This chapter walks you from zero to your first working API call. Budget: 5 minut
 - An **end-user ID** to integrate — your player/business identifier. The shape is up to you; ApolloKit treats it as opaque.
 - `curl`
 
-## 1. Create an organization
+## 1. Create a project
 
-After your first admin login the dashboard asks you to create an organization. This is the multi-tenant isolation boundary — all data, credentials and events belong to exactly one org.
+After your first admin login the dashboard asks you to create a project. This is the multi-tenant isolation boundary — all data, credentials and events belong to exactly one project.
 
-See [organizations](./organizations) for details.
+See [projects](./projects) for details.
 
 ## 2. Issue client credentials
 
@@ -96,7 +96,7 @@ More SDK details in [client-sdk](./client-sdk).
 ## 5. Next steps
 
 - Understand the auth system and the three call identities (session / admin API key / client credentials) → [authentication](./authentication)
-- Split traffic across multiple game projects/environments → [organizations](./organizations)
+- Split traffic across multiple games/environments → [projects](./projects)
 - Handle errors and `requestId` → [errors](./errors)
 - Subscribe to events for analytics and external integrations → [webhooks](./webhooks)
 - Browse full endpoint fields → [`/openapi.json`](/openapi.json) or the Scalar UI at [`/docs`](/docs)

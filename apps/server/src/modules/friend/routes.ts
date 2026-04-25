@@ -73,7 +73,7 @@ friendRouter.openapi(
     method: "get",
     path: "/settings",
     tags: [TAG],
-    summary: "Get friend settings for the current organization",
+    summary: "Get friend settings for the current project",
     responses: {
       200: {
         description: "OK",
@@ -98,7 +98,7 @@ friendRouter.openapi(
     method: "put",
     path: "/settings",
     tags: [TAG],
-    summary: "Create or update friend settings for the current organization",
+    summary: "Create or update friend settings for the current project",
     request: {
       body: {
         content: { "application/json": { schema: UpsertSettingsSchema } },
@@ -127,7 +127,7 @@ friendRouter.openapi(
     method: "get",
     path: "/relationships",
     tags: [TAG],
-    summary: "List all friend relationships in this organization (admin)",
+    summary: "List all friend relationships in this project (admin)",
     request: { query: PaginationQuerySchema },
     responses: {
       200: {

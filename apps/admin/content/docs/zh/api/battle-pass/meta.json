@@ -1,0 +1,14 @@
+{
+  "title": "Battle Pass",
+  "pages": [
+    "battle_pass_get_configs",
+    "battle_pass_post_configs",
+    "battle_pass_get_configs_by_id",
+    "battle_pass_delete_configs_by_id",
+    "battle_pass_put_configs_by_id",
+    "battle_pass_post_configs_by_id_bind_tasks",
+    "battle_pass_get_configs_by_id_tasks",
+    "battle_pass_post_by_seasonid_grant_tier",
+    "battle_pass_get_by_seasonid_aggregate"
+  ]
+}

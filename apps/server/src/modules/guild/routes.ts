@@ -189,7 +189,7 @@ guildRouter.openapi(
     method: "get",
     path: "/settings",
     tags: [TAG],
-    summary: "Get guild settings for the current organization",
+    summary: "Get guild settings for the current project",
     responses: {
       200: {
         description: "OK",
@@ -211,7 +211,7 @@ guildRouter.openapi(
     method: "put",
     path: "/settings",
     tags: [TAG],
-    summary: "Upsert guild settings for the current organization",
+    summary: "Upsert guild settings for the current project",
     request: {
       body: {
         content: { "application/json": { schema: UpsertSettingsSchema } },
@@ -240,7 +240,7 @@ guildRouter.openapi(
     method: "get",
     path: "/guilds",
     tags: [TAG],
-    summary: "List guilds for the current organization",
+    summary: "List guilds for the current project",
     request: { query: GuildListQuerySchema },
     responses: {
       200: {

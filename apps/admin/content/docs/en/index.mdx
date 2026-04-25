@@ -13,7 +13,7 @@ ApolloKit is a **game SaaS backend platform** that turns the common "every game 
 <Cards>
   <Card href="./quickstart" title="Quickstart" description="End-to-end integration in 5 minutes" />
   <Card href="./authentication" title="Authentication" description="Session / admin API key / client credentials + HMAC" />
-  <Card href="./organizations" title="Organizations" description="Multi-tenancy, members, roles, credential scoping" />
+  <Card href="./projects" title="Projects" description="Multi-tenancy, members, roles, credential scoping" />
   <Card href="./errors" title="Errors & Troubleshooting" description="Response shape, codes, requestId lookup" />
 </Cards>
 
@@ -53,10 +53,10 @@ ApolloKit is a **game SaaS backend platform** that turns the common "every game 
 
 ## Two user identities
 
-- **Admin user** — authenticated via Better Auth, owns an Organization context.
+- **Admin user** — authenticated via Better Auth, owns a Project context.
 - **End user** — the integrator's own business user, identified by an opaque `endUserId`. ApolloKit does not manage their identity system.
 
-See [organizations](./organizations) and [authentication](./authentication).
+See [projects](./projects) and [authentication](./authentication).
 
 ## Error envelope
 

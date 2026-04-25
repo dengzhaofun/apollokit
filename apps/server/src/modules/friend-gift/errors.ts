@@ -6,7 +6,7 @@ export class FriendGiftSettingsNotFound extends ModuleError {
     super(
       "friend_gift.settings_not_found",
       404,
-      "friend gift settings not configured for this organization",
+      "friend gift settings not configured for this project",
     );
     this.name = "FriendGiftSettingsNotFound";
   }
@@ -108,7 +108,7 @@ export class FriendGiftPackageAliasConflict extends ModuleError {
     super(
       "friend_gift.package_alias_conflict",
       409,
-      `friend gift package alias already in use in this organization: ${alias}`,
+      `friend gift package alias already in use in this project: ${alias}`,
     );
     this.name = "FriendGiftPackageAliasConflict";
   }

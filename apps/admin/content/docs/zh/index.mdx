@@ -11,9 +11,9 @@ ApolloKit 是面向游戏 / 应用的 **SaaS 后端平台**——把「每款游
 ## 先上手
 
 <Cards>
-  <Card href="./quickstart" title="快速开始" description="5 分钟:创建组织 → 签发凭证 → cURL 第一个端点" />
+  <Card href="./quickstart" title="快速开始" description="5 分钟:创建项目 → 签发凭证 → cURL 第一个端点" />
   <Card href="./authentication" title="认证与凭证" description="Session / 管理端 API Key / Client Credentials + HMAC 三种身份" />
-  <Card href="./organizations" title="组织与多租户" description="organization 作为隔离边界、成员、角色、凭证作用域" />
+  <Card href="./projects" title="项目与多租户" description="项目作为隔离边界、成员、角色、凭证作用域" />
   <Card href="./errors" title="错误与排查" description="统一响应体、错误码清单、用 requestId 定位问题" />
 </Cards>
 
@@ -61,10 +61,10 @@ SDK、事件、Webhook — 把 ApolloKit 接进你自己的游戏与数据平台
 
 接入前务必区分清楚:
 
-- **管理端用户(Admin User)**:通过 Better Auth 登录管理台的 SaaS 运营方。拥有 `organizationId` 上下文。
+- **管理端用户(Admin User)**:通过 Better Auth 登录管理台的 SaaS 运营方。拥有 `organizationId` 上下文(产品语义即「项目」)。
 - **终端用户(End User)**:接入方业务系统里的玩家,以不透明的 `endUserId` 标识。ApolloKit **不**管它的身份系统——你把 id 传进来就行。
 
-详细模型见 [organizations](./organizations) 与 [authentication](./authentication)。
+详细模型见 [项目与多租户](./projects) 与 [认证与凭证](./authentication)。
 
 ## 统一错误体
 

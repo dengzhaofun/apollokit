@@ -107,7 +107,7 @@ assistPoolRouter.openapi(
     method: "post",
     path: "/configs",
     tags: [TAG],
-    summary: "Create an assist-pool config for the current organization",
+    summary: "Create an assist-pool config for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateConfigSchema } },

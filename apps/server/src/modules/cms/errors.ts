@@ -21,7 +21,7 @@ export class CmsTypeAliasConflict extends ModuleError {
     super(
       "cms.type_alias_conflict",
       409,
-      `cms type alias already in use in this organization: ${alias}`,
+      `cms type alias already in use in this project: ${alias}`,
     );
     this.name = "CmsTypeAliasConflict";
   }

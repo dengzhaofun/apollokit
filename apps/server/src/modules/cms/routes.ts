@@ -89,7 +89,7 @@ cmsRouter.openapi(
     method: "get",
     path: "/types",
     tags: [TAG],
-    summary: "List CMS types in the current organization",
+    summary: "List CMS types in the current project",
     request: {
       query: z.object({
         status: CmsTypeStatusSchema.optional().openapi({

@@ -29,7 +29,7 @@ export const CreateAnnouncementSchema = z
   .object({
     alias: AliasSchema.openapi({
       description:
-        "Organization-scoped stable slug. Must be unique within the tenant.",
+        "Project-scoped stable slug. Must be unique within the project.",
       example: "maintenance-2026-04-19",
     }),
     kind: KindSchema,

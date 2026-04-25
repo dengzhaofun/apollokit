@@ -130,7 +130,7 @@ webhooksRouter.openapi(
     method: "get",
     path: "/endpoints",
     tags: [TAG],
-    summary: "List webhook endpoints for the current organization",
+    summary: "List webhook endpoints for the current project",
     responses: {
       200: {
         description: "OK",

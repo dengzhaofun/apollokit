@@ -18,7 +18,7 @@ export class BattlePassCodeConflict extends ModuleError {
     super(
       "battle_pass.code_conflict",
       409,
-      `battle pass code already in use in this organization: ${code}`,
+      `battle pass code already in use in this project: ${code}`,
     );
     this.name = "BattlePassCodeConflict";
   }

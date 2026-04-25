@@ -233,7 +233,7 @@ function getNavGroups(): NavGroup[] {
     {
       // 事件中心(event-catalog)在 developer 组,因为它是只读治理看板
       // (事件 schema / 订阅健康 / 回放),非"配置"语义。
-      // 配置类(组织设置 / API 密钥 / Webhooks / 账号)统一进
+      // 配置类(项目设置 / API 密钥 / Webhooks / 账号)统一进
       // /settings 二级页,从 footer 的 Settings 单链或 UserButton 进入。
       key: "content",
       label: m.nav_group_content,

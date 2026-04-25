@@ -12,11 +12,11 @@ icon: Rocket
 - 一个要接入的**终端用户 ID**,也就是你游戏 / 业务系统里的玩家标识。这个 id 的形式由你决定,ApolloKit 对它是不透明的
 - `curl`
 
-## 1. 创建 organization
+## 1. 创建项目
 
-管理台登录后,第一次会让你创建一个 organization。这是多租户隔离的边界——所有数据、凭证、事件都归属到一个 org 下。
+管理台登录后,第一次会让你创建一个项目。这是多租户隔离的边界——所有数据、凭证、事件都归属到一个项目下。
 
-详情见 [organizations](./organizations)。
+详情见 [项目与多租户](./projects)。
 
 ## 2. 签发客户端凭证
 
@@ -96,7 +96,7 @@ console.log(data);
 ## 5. 下一步
 
 - 了解认证体系与三种调用身份(session / 管理端 API key / client credentials)→ [authentication](./authentication)
-- 把调用分发给多个游戏项目/环境 → [organizations](./organizations)
+- 把调用分发给多个游戏/环境 → [项目与多租户](./projects)
 - 处理错误与 `requestId` → [errors](./errors)
 - 订阅业务事件做埋点与外部集成 → [webhooks](./webhooks)
 - 浏览完整端点字段 → [`/openapi.json`](/openapi.json) 或 [`/docs`](/docs) 上的 Scalar UI

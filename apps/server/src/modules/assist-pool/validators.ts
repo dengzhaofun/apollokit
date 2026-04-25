@@ -22,7 +22,7 @@ const AliasSchema = z
   })
   .openapi({
     description:
-      "Optional human-readable key, unique within the organization.",
+      "Optional human-readable key, unique within the project.",
     example: "cut-a-slice",
   });
 

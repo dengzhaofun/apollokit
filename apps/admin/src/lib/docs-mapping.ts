@@ -29,7 +29,7 @@ const DOCS_MAP: Record<string, string | null> = {
   "/leaderboard": "leaderboard",
   "/rank": "rank",
   "/end-user": "end-user",
-  "/settings/organization": "organizations",
+  "/settings/project": "projects",
   "/settings/api-keys": "authentication",
   "/settings/webhooks": "webhooks",
   "/settings/account": null,

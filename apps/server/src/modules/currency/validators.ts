@@ -10,7 +10,7 @@ const AliasSchema = z
     message: "alias must start with [a-z0-9] and contain only [a-z0-9-_]",
   })
   .openapi({
-    description: "Optional human-readable key, unique within the organization.",
+    description: "Optional human-readable key, unique within the project.",
     example: "gem",
   });
 

@@ -91,8 +91,8 @@ function AuthViewPage() {
                 </div>
                 <div className="text-xs text-white/60">
                   {t(
-                    "Better Auth 多组织 + API Keys + Webhooks + 中英双语",
-                    "Better Auth + multi-org + API Keys + Webhooks + zh/en.",
+                    "Better Auth 多项目 + API Keys + Webhooks + 中英双语",
+                    "Better Auth + multi-project + API Keys + Webhooks + zh/en.",
                   )}
                 </div>
               </div>

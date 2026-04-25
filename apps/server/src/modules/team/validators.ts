@@ -29,7 +29,7 @@ const AliasSchema = z
   })
   .openapi({
     description:
-      "Optional human-readable key, unique within the organization.",
+      "Optional human-readable key, unique within the project.",
     example: "5v5-ranked",
   });
 

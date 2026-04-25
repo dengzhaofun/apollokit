@@ -99,7 +99,7 @@ battlePassRouter.openapi(
     method: "get",
     path: "/configs",
     tags: [TAG],
-    summary: "List battle-pass configs in the current organization",
+    summary: "List battle-pass configs in the current project",
     responses: {
       200: {
         description: "OK",

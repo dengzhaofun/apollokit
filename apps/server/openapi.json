@@ -262,7 +262,7 @@
                         "minLength": 1,
                         "maxLength": 128,
                         "pattern": "^[a-z0-9][a-z0-9-_]*$",
-                        "description": "Organization-scoped stable slug. Must be unique within the tenant.",
+                        "description": "Project-scoped stable slug. Must be unique within the project.",
                         "example": "maintenance-2026-04-19"
                     },
                     "kind": {
@@ -1448,7 +1448,7 @@
                         "minLength": 1,
                         "maxLength": 128,
                         "pattern": "^[a-z0-9][a-z0-9-_]*$",
-                        "description": "Organization-scoped slug for client lookup. A group without an alias is effectively a draft \u2014 client API can't resolve it.",
+                        "description": "Project-scoped slug for client lookup. A group without an alias is effectively a draft \u2014 client API can't resolve it.",
                         "example": "home-main"
                     },
                     "name": {
@@ -1517,7 +1517,7 @@
                         "minLength": 1,
                         "maxLength": 128,
                         "pattern": "^[a-z0-9][a-z0-9-_]*$",
-                        "description": "Organization-scoped slug for client lookup. A group without an alias is effectively a draft \u2014 client API can't resolve it.",
+                        "description": "Project-scoped slug for client lookup. A group without an alias is effectively a draft \u2014 client API can't resolve it.",
                         "example": "home-main"
                     },
                     "name": {
@@ -2816,7 +2816,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -2951,7 +2951,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -3619,7 +3619,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "daily"
                     },
                     "description": {
@@ -3724,7 +3724,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "daily"
                     },
                     "description": {
@@ -5607,7 +5607,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gem"
                     },
                     "description": {
@@ -5688,7 +5688,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gem"
                     },
                     "description": {
@@ -8782,7 +8782,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gold"
                     },
                     "icon": {
@@ -8842,7 +8842,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gold"
                     },
                     "icon": {
@@ -8984,7 +8984,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gold"
                     },
                     "categoryId": {
@@ -9091,7 +9091,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "gold"
                     },
                     "categoryId": {
@@ -9485,7 +9485,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -9540,7 +9540,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -10342,7 +10342,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "daily-flower"
                     },
                     "description": {
@@ -10431,7 +10431,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "daily-flower"
                     },
                     "description": {
@@ -11479,7 +11479,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -11599,7 +11599,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "description": {
                         "type": [
@@ -11773,7 +11773,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "baseWeight": {
                         "type": "integer",
@@ -11845,7 +11845,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "baseWeight": {
                         "type": "integer",
@@ -13031,7 +13031,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -13149,7 +13149,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -13272,7 +13272,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -13340,7 +13340,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -13630,7 +13630,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -13881,7 +13881,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization."
+                        "description": "Optional human-readable key, unique within the project."
                     },
                     "name": {
                         "type": "string",
@@ -16675,7 +16675,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "5v5-ranked"
                     },
                     "maxMembers": {
@@ -16739,7 +16739,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "5v5-ranked"
                     },
                     "maxMembers": {
@@ -20703,7 +20703,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "cut-a-slice"
                     },
                     "description": {
@@ -20820,7 +20820,7 @@
                         "minLength": 1,
                         "maxLength": 64,
                         "pattern": "^[a-z0-9][a-z0-9\\-_]*$",
-                        "description": "Optional human-readable key, unique within the organization.",
+                        "description": "Optional human-readable key, unique within the project.",
                         "example": "cut-a-slice"
                     },
                     "description": {
@@ -29440,7 +29440,7 @@
                 "tags": [
                     "Battle Pass"
                 ],
-                "summary": "List battle-pass configs in the current organization",
+                "summary": "List battle-pass configs in the current project",
                 "operationId": "battle_pass_get_configs",
                 "security": [
                     {
@@ -32290,7 +32290,7 @@
                 "tags": [
                     "Check-In"
                 ],
-                "summary": "Create a check-in config for the current organization",
+                "summary": "Create a check-in config for the current project",
                 "operationId": "check_in_post_configs",
                 "security": [
                     {
@@ -33790,7 +33790,7 @@
                 "tags": [
                     "Client Credentials"
                 ],
-                "summary": "Create a client credential for the current organization",
+                "summary": "Create a client credential for the current project",
                 "operationId": "client_credentials_post_root",
                 "security": [
                     {
@@ -33909,7 +33909,7 @@
                 "tags": [
                     "Client Credentials"
                 ],
-                "summary": "List client credentials for the current organization",
+                "summary": "List client credentials for the current project",
                 "operationId": "client_credentials_get_root",
                 "security": [
                     {
@@ -45291,7 +45291,7 @@
                 "tags": [
                     "Friend"
                 ],
-                "summary": "Get friend settings for the current organization",
+                "summary": "Get friend settings for the current project",
                 "operationId": "friend_get_settings",
                 "security": [
                     {
@@ -45401,7 +45401,7 @@
                 "tags": [
                     "Friend"
                 ],
-                "summary": "Create or update friend settings for the current organization",
+                "summary": "Create or update friend settings for the current project",
                 "operationId": "friend_put_settings",
                 "security": [
                     {
@@ -45522,7 +45522,7 @@
                 "tags": [
                     "Friend"
                 ],
-                "summary": "List all friend relationships in this organization (admin)",
+                "summary": "List all friend relationships in this project (admin)",
                 "operationId": "friend_get_relationships",
                 "security": [
                     {
@@ -45766,7 +45766,7 @@
                 "tags": [
                     "Friend Gift"
                 ],
-                "summary": "Get friend gift settings for the current organization",
+                "summary": "Get friend gift settings for the current project",
                 "operationId": "friend_gift_get_settings",
                 "security": [
                     {
@@ -46116,7 +46116,7 @@
                 "tags": [
                     "Friend Gift"
                 ],
-                "summary": "List gift packages for the current organization",
+                "summary": "List gift packages for the current project",
                 "operationId": "friend_gift_get_packages",
                 "security": [
                     {
@@ -46585,7 +46585,7 @@
                 "tags": [
                     "Friend Gift"
                 ],
-                "summary": "List all gift sends for the current organization",
+                "summary": "List all gift sends for the current project",
                 "operationId": "friend_gift_get_sends",
                 "security": [
                     {
@@ -47592,7 +47592,7 @@
                 "tags": [
                     "Guild"
                 ],
-                "summary": "Get guild settings for the current organization",
+                "summary": "Get guild settings for the current project",
                 "operationId": "guild_get_settings",
                 "security": [
                     {
@@ -47702,7 +47702,7 @@
                 "tags": [
                     "Guild"
                 ],
-                "summary": "Upsert guild settings for the current organization",
+                "summary": "Upsert guild settings for the current project",
                 "operationId": "guild_put_settings",
                 "security": [
                     {
@@ -47823,7 +47823,7 @@
                 "tags": [
                     "Guild"
                 ],
-                "summary": "List guilds for the current organization",
+                "summary": "List guilds for the current project",
                 "operationId": "guild_get_guilds",
                 "security": [
                     {
@@ -59038,7 +59038,7 @@
                 "tags": [
                     "Team"
                 ],
-                "summary": "Create a team config for the current organization",
+                "summary": "Create a team config for the current project",
                 "operationId": "team_post_configs",
                 "security": [
                     {
@@ -59157,7 +59157,7 @@
                 "tags": [
                     "Team"
                 ],
-                "summary": "List team configs for the current organization",
+                "summary": "List team configs for the current project",
                 "operationId": "team_get_configs",
                 "security": [
                     {
@@ -59626,7 +59626,7 @@
                 "tags": [
                     "Team"
                 ],
-                "summary": "List teams for the current organization",
+                "summary": "List teams for the current project",
                 "operationId": "team_get_teams",
                 "security": [
                     {
@@ -61729,7 +61729,7 @@
                 "tags": [
                     "Leaderboard"
                 ],
-                "summary": "Create a leaderboard config for the current organization",
+                "summary": "Create a leaderboard config for the current project",
                 "operationId": "leaderboard_post_configs",
                 "security": [
                     {
@@ -61848,7 +61848,7 @@
                 "tags": [
                     "Leaderboard"
                 ],
-                "summary": "List leaderboard configs for the current organization",
+                "summary": "List leaderboard configs for the current project",
                 "operationId": "leaderboard_get_configs",
                 "security": [
                     {
@@ -66267,7 +66267,7 @@
                 "tags": [
                     "Assist Pool"
                 ],
-                "summary": "Create an assist-pool config for the current organization",
+                "summary": "Create an assist-pool config for the current project",
                 "operationId": "assist_pool_post_configs",
                 "security": [
                     {
@@ -70187,7 +70187,7 @@
                 "tags": [
                     "Webhooks"
                 ],
-                "summary": "List webhook endpoints for the current organization",
+                "summary": "List webhook endpoints for the current project",
                 "operationId": "webhooks_get_endpoints",
                 "security": [
                     {

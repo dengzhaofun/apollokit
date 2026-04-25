@@ -80,7 +80,7 @@ Field contract:
 |---|---|---|
 | `id` | string | Unique event id — the **idempotency key**. Retries reuse the same id. |
 | `name` | string | Event name. |
-| `organizationId` | string | Owning tenant. |
+| `organizationId` | string | Owning project id. |
 | `endUserId` | string \| null | Player that triggered the event (null for system events). |
 | `occurredAt` | ISO8601 | When the event actually occurred (not when it was delivered). |
 | `data` | object | Event-specific fields. Schema at `/api/event-catalog/{name}`. |

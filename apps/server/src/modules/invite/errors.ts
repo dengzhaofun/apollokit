@@ -4,7 +4,7 @@ export { ModuleError };
 
 export class InviteDisabled extends ModuleError {
   constructor() {
-    super("invite.disabled", 403, "invite system is disabled for this organization");
+    super("invite.disabled", 403, "invite system is disabled for this project");
     this.name = "InviteDisabled";
   }
 }
