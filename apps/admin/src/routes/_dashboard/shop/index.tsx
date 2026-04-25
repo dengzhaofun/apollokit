@@ -1,10 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { Plus, Tag, Folder } from "lucide-react"
+import { Folder, Plus, ShoppingCartIcon, Tag } from "lucide-react"
 import { useState } from "react"
 
+import {
+  ActivityScopeFilter,
+  scopeToFilter,
+  type ActivityScope,
+} from "#/components/activity/ActivityScopeFilter"
+import {
+  EmptyList,
+  ErrorState,
+  PageBody,
+  PageHeader,
+  PageShell,
+} from "#/components/patterns"
 import { ProductTable } from "#/components/shop/ProductTable"
 import { Button } from "#/components/ui/button"
-import { WriteGate } from "#/components/WriteGate"
 import {
   Select,
   SelectContent,
@@ -12,11 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import {
-  ActivityScopeFilter,
-  scopeToFilter,
-  type ActivityScope,
-} from "#/components/activity/ActivityScopeFilter"
+import { WriteGate } from "#/components/WriteGate"
 import {
   useShopCategories,
   useShopProducts,
@@ -24,8 +31,10 @@ import {
 } from "#/hooks/use-shop"
 import type { ShopProductType } from "#/lib/types/shop"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
+
 export const Route = createFileRoute("/_dashboard/shop/")({
   component: ShopProductsPage,
 })
@@ -44,6 +53,7 @@ function ShopProductsPage() {
     data: products,
     isPending,
     error,
+    refetch,
   } = useShopProducts({
     productType:
       productType === ALL ? undefined : (productType as ShopProductType),
@@ -52,34 +62,48 @@ function ShopProductsPage() {
     ...scopeToFilter(scope),
   })
 
+  const total = products?.length ?? 0
+  const isFiltered = productType !== ALL || categoryId !== ALL || tagId !== ALL
+
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/shop/categories">
-              <Folder className="size-4" />
-              {m.shop_categories()}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/shop/tags">
-              <Tag className="size-4" />
-              {m.shop_tags()}
-            </Link>
-          </Button>
-          <WriteGate>
-            <Button asChild size="sm">
-              <Link to="/shop/create">
-                <Plus className="size-4" />
-                {m.shop_new_product()}
+    <PageShell>
+      <PageHeader
+        icon={<ShoppingCartIcon className="size-5" />}
+        title={t("商城", "Shop")}
+        description={
+          isPending
+            ? t("加载中…", "Loading…")
+            : error
+              ? t("加载失败", "Failed to load")
+              : t(`共 ${total} 个商品`, `${total} products total`)
+        }
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/shop/categories">
+                <Folder />
+                {m.shop_categories()}
               </Link>
             </Button>
-          </WriteGate>
-        </div>
-      </PageHeaderActions>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/shop/tags">
+                <Tag />
+                {m.shop_tags()}
+              </Link>
+            </Button>
+            <WriteGate>
+              <Button asChild size="sm">
+                <Link to="/shop/create">
+                  <Plus />
+                  {m.shop_new_product()}
+                </Link>
+              </Button>
+            </WriteGate>
+          </>
+        }
+      />
 
-      <main className="flex-1 space-y-4 p-6">
+      <PageBody>
         <div className="flex flex-wrap items-end gap-3">
           <FilterSelect
             label={m.shop_filter_type()}
@@ -109,27 +133,58 @@ function ShopProductsPage() {
             onChange={setTagId}
             options={[
               { value: ALL, label: m.shop_filter_all() },
-              ...(tags ?? []).map((t) => ({ value: t.id, label: t.name })),
+              ...(tags ?? []).map((tg) => ({ value: tg.id, label: tg.name })),
             ]}
           />
           <ActivityScopeFilter value={scope} onChange={setScope} />
         </div>
 
         {isPending ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
+          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
             {m.common_loading()}
           </div>
         ) : error ? (
-          <div className="flex h-40 items-center justify-center text-destructive">
-            {m.shop_failed_load_products()} {error.message}
-          </div>
+          <ErrorState
+            title={t("商品加载失败", "Failed to load products")}
+            onRetry={() => refetch()}
+            retryLabel={t("重试", "Retry")}
+            error={error instanceof Error ? error : null}
+          />
+        ) : total === 0 ? (
+          <EmptyList
+            title={
+              isFiltered
+                ? t("没有匹配的商品", "No matching products")
+                : t("还没有商品", "No products yet")
+            }
+            description={
+              isFiltered
+                ? t("调整筛选条件再试。", "Adjust filters and try again.")
+                : t(
+                    "上架第一个商品,设定价格和奖励组合。",
+                    "List your first product with prices and reward bundles.",
+                  )
+            }
+            action={
+              !isFiltered && (
+                <WriteGate>
+                  <Button asChild size="sm">
+                    <Link to="/shop/create">
+                      <Plus />
+                      {m.shop_new_product()}
+                    </Link>
+                  </Button>
+                </WriteGate>
+              )
+            }
+          />
         ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
+          <div className="rounded-lg border bg-card overflow-hidden">
             <ProductTable data={products ?? []} />
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

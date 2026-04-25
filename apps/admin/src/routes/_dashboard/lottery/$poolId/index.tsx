@@ -1,11 +1,26 @@
 import { useState } from "react"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
-import { Pencil, ArrowLeft, Plus } from "lucide-react"
+import {
+  ArrowLeft,
+  CalendarIcon,
+  DicesIcon,
+  Pencil,
+  Plus,
+  TargetIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  DetailHeader,
+  ErrorState,
+  PageBody,
+  PageShell,
+} from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
+import { Skeleton } from "#/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
 import { LotteryDeleteDialog } from "#/components/lottery/DeleteDialog"
 import { TierTable } from "#/components/lottery/TierTable"
@@ -14,6 +29,9 @@ import { PrizeTable } from "#/components/lottery/PrizeTable"
 import { PrizeForm } from "#/components/lottery/PrizeForm"
 import { PityRuleTable } from "#/components/lottery/PityRuleTable"
 import { PityRuleForm } from "#/components/lottery/PityRuleForm"
+import { getLocale } from "#/paraglide/runtime.js"
+
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 import {
   useLotteryPool,
   useUpdateLotteryPool,
@@ -74,67 +92,122 @@ function LotteryPoolDetailPage() {
 
   if (isPending) {
     return (
-      <>
-        <main className="flex h-40 items-center justify-center text-muted-foreground">
-          Loading...
-        </main>
-      </>
+      <PageShell>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-12 rounded-lg" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-7 w-72" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </PageShell>
     )
   }
 
   if (error || !pool) {
     return (
-      <>
-        <main className="flex h-40 items-center justify-center text-destructive">
-          {error?.message ?? "Pool not found"}
-        </main>
-      </>
+      <PageShell>
+        <ErrorState
+          title={t("抽奖池加载失败", "Failed to load lottery pool")}
+          description={t(
+            "可能是这个池被删了,或者网络异常。返回列表重新进入试试。",
+            "The pool may have been removed, or the network is flaky.",
+          )}
+          onRetry={() => window.location.reload()}
+          retryLabel={t("重试", "Retry")}
+          error={error instanceof Error ? error : null}
+        />
+      </PageShell>
     )
   }
 
   return (
-    <>
-      <main className="flex-1 p-6">
-        <div className="mx-auto max-w-4xl space-y-6">
-          {/* Pool header actions */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+    <PageShell>
+      <DetailHeader
+        icon={<DicesIcon className="size-6" />}
+        title={pool.name}
+        subtitle={pool.alias ?? undefined}
+        status={
+          <Badge variant={pool.isActive ? "default" : "outline"}>
+            {pool.isActive ? t("活跃", "Active") : t("禁用", "Inactive")}
+          </Badge>
+        }
+        meta={[
+          {
+            icon: <TargetIcon />,
+            label: pool.globalPullLimit
+              ? `${pool.globalPullCount} / ${pool.globalPullLimit}`
+              : `${pool.globalPullCount} (${t("无上限", "unlimited")})`,
+            key: t("抽取次数", "Pulls"),
+          },
+          {
+            icon: <CalendarIcon />,
+            label: format(new Date(pool.createdAt), "yyyy-MM-dd HH:mm"),
+            key: t("创建时间", "Created"),
+          },
+        ]}
+        actions={
+          <>
+            <Button asChild variant="ghost" size="sm">
               <Link to="/lottery">
-                <ArrowLeft className="size-4" />
-                Back
+                <ArrowLeft />
+                {t("返回", "Back")}
               </Link>
             </Button>
-            <div className="ml-auto flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditing(!editing)}
-              >
-                <Pencil className="size-4" />
-                {editing ? "Cancel" : "Edit"}
-              </Button>
-              <LotteryDeleteDialog
-                name={pool.name}
-                description="This will permanently delete this pool, all tiers, prizes, pity rules, and pull logs. This action cannot be undone."
-                isPending={deletePool.isPending}
-                onConfirm={async () => {
-                  try {
-                    await deletePool.mutateAsync(pool.id)
-                    toast.success("Pool deleted")
-                    navigate({ to: "/lottery" })
-                  } catch (err) {
-                    toast.error(
-                      err instanceof ApiError
-                        ? err.body.error
-                        : "Failed to delete pool",
-                    )
-                  }
-                }}
-              />
-            </div>
-          </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditing(!editing)}
+            >
+              <Pencil />
+              {editing ? t("取消", "Cancel") : t("编辑", "Edit")}
+            </Button>
+            <LotteryDeleteDialog
+              name={pool.name}
+              description={t(
+                "删除会同时清除该抽奖池的所有 tier / prize / pity rule / 抽取日志,不可恢复。",
+                "This permanently deletes the pool, all tiers, prizes, pity rules, and pull logs.",
+              )}
+              isPending={deletePool.isPending}
+              onConfirm={async () => {
+                try {
+                  await deletePool.mutateAsync(pool.id)
+                  toast.success(t("已删除", "Pool deleted"))
+                  navigate({ to: "/lottery" })
+                } catch (err) {
+                  toast.error(
+                    err instanceof ApiError
+                      ? err.body.error
+                      : t("删除失败", "Failed to delete pool"),
+                  )
+                }
+              }}
+            />
+          </>
+        }
+      />
 
-          {/* Pool info/edit */}
+      <PageBody>
+        <Tabs defaultValue="config">
+          <TabsList>
+            <TabsTrigger value="config">{t("配置", "Config")}</TabsTrigger>
+            <TabsTrigger value="tiers">
+              {t("奖项分级", "Tiers")} ({tiers?.length ?? 0})
+            </TabsTrigger>
+            <TabsTrigger value="prizes">
+              {t("奖品", "Prizes")} ({prizes?.length ?? 0})
+            </TabsTrigger>
+            <TabsTrigger value="pity" disabled={!tiers?.length}>
+              {t("保底规则", "Pity rules")} ({pityRules?.length ?? 0})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Config Tab */}
+          <TabsContent value="config" className="mt-4">
           {editing ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <LotteryPoolForm
@@ -215,7 +288,10 @@ function LotteryPoolDetailPage() {
             </div>
           )}
 
-          {/* Tiers Section */}
+          </TabsContent>
+
+          {/* Tiers Tab */}
+          <TabsContent value="tiers" className="mt-4 space-y-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Tiers</h3>
@@ -304,7 +380,10 @@ function LotteryPoolDetailPage() {
             )}
           </div>
 
-          {/* Prizes Section */}
+          </TabsContent>
+
+          {/* Prizes Tab */}
+          <TabsContent value="prizes" className="mt-4 space-y-3">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Prizes</h3>
@@ -401,7 +480,10 @@ function LotteryPoolDetailPage() {
             )}
           </div>
 
-          {/* Pity Rules Section (only show when tiers exist) */}
+          </TabsContent>
+
+          {/* Pity Rules Tab (only when tiers exist) */}
+          <TabsContent value="pity" className="mt-4 space-y-3">
           {tiers && tiers.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -496,9 +578,10 @@ function LotteryPoolDetailPage() {
               )}
             </div>
           )}
-        </div>
-      </main>
-    </>
+          </TabsContent>
+        </Tabs>
+      </PageBody>
+    </PageShell>
   )
 }
 

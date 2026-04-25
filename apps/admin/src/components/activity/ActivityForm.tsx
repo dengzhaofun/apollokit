@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 
+import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -147,97 +148,106 @@ export function ActivityForm({
         e.preventDefault()
         form.handleSubmit()
       }}
-      className="flex flex-col gap-4"
+      className="flex flex-col"
     >
-      <form.Field name="alias">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_alias_label()}</Label>
-            <Input
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) =>
-                field.handleChange(e.target.value.toLowerCase())
-              }
-              placeholder="spring_festival_2026"
-              required
-              disabled={disableAliasEdit}
-            />
-          </div>
-        )}
-      </form.Field>
+      {/* Section 1:基本信息 */}
+      <FormSection
+        title={m.activity_field_alias_label() + " · " + m.activity_field_name()}
+        description="活动的展示文案 + 唯一标识"
+      >
+        <FormGrid cols={2}>
+          <form.Field name="alias">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={field.name}>{m.activity_field_alias_label()}</Label>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onChange={(e) =>
+                    field.handleChange(e.target.value.toLowerCase())
+                  }
+                  placeholder="spring_festival_2026"
+                  required
+                  disabled={disableAliasEdit}
+                />
+              </div>
+            )}
+          </form.Field>
 
-      <form.Field name="name">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_name()}</Label>
-            <Input
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              required
-            />
-          </div>
-        )}
-      </form.Field>
+          <form.Field name="name">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={field.name}>{m.activity_field_name()}</Label>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+          </form.Field>
+        </FormGrid>
 
-      <form.Field name="description">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.common_description()}</Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value ?? ""}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </div>
-        )}
-      </form.Field>
-
-      <div className="grid grid-cols-2 gap-4">
-        <form.Field name="kind">
+        <form.Field name="description">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>{m.activity_field_kind_label()}</Label>
-              <Select
-                value={field.state.value}
-                onValueChange={(v) => field.handleChange(v as ActivityKind)}
-              >
-                <SelectTrigger id={field.name}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="generic">{m.activity_kind_generic()}</SelectItem>
-                  <SelectItem value="check_in_only">check_in_only</SelectItem>
-                  <SelectItem value="board_game">board_game</SelectItem>
-                  <SelectItem value="gacha">gacha</SelectItem>
-                  <SelectItem value="season_pass">season_pass</SelectItem>
-                  <SelectItem value="custom">custom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </form.Field>
-
-        <form.Field name="timezone">
-          {(field) => (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>{m.activity_field_timezone_label()}</Label>
-              <Input
+              <Label htmlFor={field.name}>{m.common_description()}</Label>
+              <Textarea
                 id={field.name}
-                value={field.state.value}
+                value={field.state.value ?? ""}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
             </div>
           )}
         </form.Field>
-      </div>
 
-      <fieldset className="rounded-lg border p-4">
-        <legend className="px-2 text-sm font-medium">
-          {m.activity_lifecycle_legend()}
-        </legend>
-        <div className="grid grid-cols-2 gap-4">
+        <FormGrid cols={2}>
+          <form.Field name="kind">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={field.name}>{m.activity_field_kind_label()}</Label>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(v) => field.handleChange(v as ActivityKind)}
+                >
+                  <SelectTrigger id={field.name}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="generic">{m.activity_kind_generic()}</SelectItem>
+                    <SelectItem value="check_in_only">check_in_only</SelectItem>
+                    <SelectItem value="board_game">board_game</SelectItem>
+                    <SelectItem value="gacha">gacha</SelectItem>
+                    <SelectItem value="season_pass">season_pass</SelectItem>
+                    <SelectItem value="custom">custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="timezone">
+            {(field) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={field.name}>{m.activity_field_timezone_label()}</Label>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              </div>
+            )}
+          </form.Field>
+        </FormGrid>
+      </FormSection>
+
+      {/* Section 2:时间安排 */}
+      <FormSection
+        title={m.activity_lifecycle_legend()}
+        description={m.activity_lifecycle_invariant()}
+      >
+        <FormGrid cols={2}>
           <form.Field name="visibleAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
@@ -308,103 +318,108 @@ export function ActivityForm({
               </div>
             )}
           </form.Field>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {m.activity_lifecycle_invariant()}
-        </p>
-      </fieldset>
+        </FormGrid>
+      </FormSection>
 
-      <form.Field name="currencyJson">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_currency_json()}</Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={3}
-              className="font-mono text-xs"
-              placeholder='{"alias":"festival_point","name":"Festival Points","icon":"🧧"}'
-            />
-          </div>
-        )}
-      </form.Field>
+      {/* Section 3:经济 / 奖励 / 成员配置 —— 全 JSON */}
+      <FormSection
+        title="经济 / 奖励配置"
+        description="货币定义、里程碑奖励、全局奖励、成员管理 —— 全部 JSON 编辑(带语法高亮 + 校验)"
+      >
+        <form.Field name="currencyJson">
+          {(field) => (
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_field_currency_json()}</Label>
+              <JsonEditor
+                value={field.state.value}
+                onChange={(v) => field.handleChange(v)}
+                placeholder='{"alias":"festival_point","name":"Festival Points","icon":"🧧"}'
+                height={120}
+                aria-label={m.activity_field_currency_json()}
+              />
+            </div>
+          )}
+        </form.Field>
 
-      <form.Field name="milestoneTiersJson">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_milestones_json()}</Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={5}
-              className="font-mono text-xs"
-              placeholder='[{"alias":"m1","points":100,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
-            />
-          </div>
-        )}
-      </form.Field>
+        <form.Field name="milestoneTiersJson">
+          {(field) => (
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_field_milestones_json()}</Label>
+              <JsonEditor
+                value={field.state.value}
+                onChange={(v) => field.handleChange(v)}
+                placeholder='[{"alias":"m1","points":100,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
+                height={200}
+                aria-label={m.activity_field_milestones_json()}
+              />
+            </div>
+          )}
+        </form.Field>
 
-      <form.Field name="globalRewardsJson">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_global_rewards_json()}</Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={3}
-              className="font-mono text-xs"
-              placeholder='[{"type":"item","id":"trophy-uuid","count":1}]'
-            />
-          </div>
-        )}
-      </form.Field>
+        <form.Field name="globalRewardsJson">
+          {(field) => (
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_field_global_rewards_json()}</Label>
+              <JsonEditor
+                value={field.state.value}
+                onChange={(v) => field.handleChange(v)}
+                placeholder='[{"type":"item","id":"trophy-uuid","count":1}]'
+                height={140}
+                aria-label={m.activity_field_global_rewards_json()}
+              />
+            </div>
+          )}
+        </form.Field>
 
-      <form.Field name="membershipJson">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_form_membership_json()}</Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={4}
-              className="font-mono text-xs"
-              placeholder={`{"leaveAllowed":true,"queue":{"enabled":false,"format":"numeric","length":4}}`}
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.activity_form_membership_hint()}
-            </p>
-          </div>
-        )}
-      </form.Field>
+        <form.Field name="membershipJson">
+          {(field) => (
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_form_membership_json()}</Label>
+              <JsonEditor
+                value={field.state.value}
+                onChange={(v) => field.handleChange(v)}
+                placeholder={`{"leaveAllowed":true,"queue":{"enabled":false,"format":"numeric","length":4}}`}
+                height={140}
+                aria-label={m.activity_form_membership_json()}
+              />
+              <p className="text-xs text-muted-foreground">
+                {m.activity_form_membership_hint()}
+              </p>
+            </div>
+          )}
+        </form.Field>
+      </FormSection>
 
-      <form.Field name="cleanupMode">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.activity_field_cleanup_mode()}</Label>
-            <Select
-              value={field.state.value}
-              onValueChange={(v) =>
-                field.handleChange(v as "purge" | "convert" | "keep")
-              }
-            >
-              <SelectTrigger id={field.name}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="purge">{m.activity_cleanup_purge()}</SelectItem>
-                <SelectItem value="convert">{m.activity_cleanup_convert()}</SelectItem>
-                <SelectItem value="keep">{m.activity_cleanup_keep()}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </form.Field>
+      {/* Section 4:清理策略 */}
+      <FormSection
+        title={m.activity_field_cleanup_mode()}
+        description="活动结束后玩家持有的活动货币 / 临时道具的去向"
+      >
+        <form.Field name="cleanupMode">
+          {(field) => (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={field.name}>{m.activity_field_cleanup_mode()}</Label>
+              <Select
+                value={field.state.value}
+                onValueChange={(v) =>
+                  field.handleChange(v as "purge" | "convert" | "keep")
+                }
+              >
+                <SelectTrigger id={field.name}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="purge">{m.activity_cleanup_purge()}</SelectItem>
+                  <SelectItem value="convert">{m.activity_cleanup_convert()}</SelectItem>
+                  <SelectItem value="keep">{m.activity_cleanup_keep()}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </form.Field>
+      </FormSection>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-4">
         <Button type="submit" disabled={isPending}>
           {isPending ? m.activity_submitting() : (submitLabel ?? m.common_create())}
         </Button>

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { ScrollText, Search } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import {
   Card,
@@ -50,20 +50,13 @@ export const Route = createFileRoute("/_dashboard/analytics/logs/")({
  */
 function LogsPage() {
   return (
-    <>
-      <PageHeaderActions>
-        <ScrollText className="size-4" />
-      </PageHeaderActions>
-      <main className="flex-1 space-y-6 p-6">
-        <section>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {m.analytics_logs_title()}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {m.analytics_logs_subtitle()}
-          </p>
-        </section>
-
+    <PageShell>
+      <PageHeader
+        icon={<ScrollText className="size-5" />}
+        title={m.analytics_logs_title()}
+        description={m.analytics_logs_subtitle()}
+      />
+      <PageBody>
         <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,380px)]">
           <ClientOnly
             fallback={<SkeletonBlock label={m.common_loading()} tall />}
@@ -74,8 +67,8 @@ function LogsPage() {
             <TraceSearchPanel />
           </ClientOnly>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

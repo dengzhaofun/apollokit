@@ -1,6 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
-import { ArrowLeft, Rocket, Trash2, Undo2, UserSearch } from "lucide-react"
+import {
+  ArrowLeft,
+  CalendarRangeIcon,
+  PartyPopperIcon,
+  Rocket,
+  Trash2,
+  Undo2,
+  UserSearch,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
@@ -9,8 +17,16 @@ import {
   STATE_VARIANT,
 } from "#/components/activity/ActivityTable"
 import { NodeCreatorDialog } from "#/components/activity/NodeCreatorDialog"
+import {
+  confirm,
+  DetailHeader,
+  ErrorState,
+  PageBody,
+  PageShell,
+} from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
+import { Skeleton } from "#/components/ui/skeleton"
 import { Switch } from "#/components/ui/switch"
 import {
   Tooltip,
@@ -47,7 +63,7 @@ import type {
   CreateNodeInput,
   CreateScheduleInput,
 } from "#/lib/types/activity"
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -57,8 +73,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { PageHeaderActions } from "#/components/PageHeader"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
+
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/activity/$alias/")({
   component: ActivityDetailPage,
@@ -74,120 +92,152 @@ function ActivityDetailPage() {
 
   if (isPending) {
     return (
-      <div className="flex h-screen items-center justify-center text-muted-foreground">
-        {m.common_loading()}
-      </div>
+      <PageShell>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-12 rounded-lg" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-7 w-72" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </PageShell>
     )
   }
   if (error || !activity) {
     return (
-      <div className="flex h-screen items-center justify-center text-destructive">
-        {m.common_failed_to_load({
-          resource: m.activity_page_title(),
-          error: error?.message ?? m.common_unknown(),
-        })}
-      </div>
+      <PageShell>
+        <ErrorState
+          title={t("活动加载失败", "Failed to load activity")}
+          description={t(
+            "可能是这个活动被删了,或者网络异常。返回列表重新进入试试。",
+            "The activity may have been removed, or the network is flaky. Try going back to the list.",
+          )}
+          onRetry={() => window.location.reload()}
+          retryLabel={t("重试", "Retry")}
+          error={error instanceof Error ? error : null}
+        />
+      </PageShell>
     )
   }
 
+  // 详情页 actions —— 由 lifecycle 状态决定显示 publish / unpublish / 没有
+  const lifecycleAction =
+    activity.status === "draft" ? (
+      <Button
+        size="sm"
+        disabled={lifecycleMutation.isPending}
+        onClick={async () => {
+          try {
+            await lifecycleMutation.mutateAsync({
+              key: alias,
+              action: "publish",
+            })
+            toast.success(m.activity_detail_publish_success())
+          } catch (err) {
+            if (err instanceof ApiError) toast.error(err.body.error)
+            else toast.error(m.activity_detail_publish_failed())
+          }
+        }}
+      >
+        <Rocket />
+        {m.activity_detail_publish()}
+      </Button>
+    ) : ["scheduled", "teasing"].includes(activity.status) ? (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={lifecycleMutation.isPending}
+        onClick={async () => {
+          try {
+            await lifecycleMutation.mutateAsync({
+              key: alias,
+              action: "unpublish",
+            })
+            toast.success(m.activity_detail_unpublish_success())
+          } catch (err) {
+            if (err instanceof ApiError) toast.error(err.body.error)
+            else toast.error(m.activity_detail_unpublish_failed())
+          }
+        }}
+      >
+        <Undo2 />
+        {m.activity_detail_unpublish()}
+      </Button>
+    ) : null
+
+  // meta row —— 关键标识。当前 Activity 类型上能稳定可读的只有 createdAt;
+  // 其他业务字段(type / 周期 / 节点数等)等 schema 稳定后再加。
+  const meta: { icon: ReactNode; label: ReactNode; key?: ReactNode }[] = []
+  if (activity.createdAt) {
+    meta.push({
+      icon: <CalendarRangeIcon />,
+      label: format(new Date(activity.createdAt), "yyyy-MM-dd HH:mm"),
+      key: t("创建于", "Created"),
+    })
+  }
+
   return (
-    <>
-      <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/activity">
-            <ArrowLeft className="size-4" />
-            {m.common_back()}
-          </Link>
-        </Button>
-        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-          {activity.alias}
-        </code>
-        <Badge variant={STATE_VARIANT[activity.status]} className="ml-2">
-          {STATE_LABELS[activity.status] ? STATE_LABELS[activity.status]() : activity.status}
-        </Badge>
-
-        <div className="ml-auto flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link
-              to="/activity/$alias/users"
-              params={{ alias }}
-            >
-              <UserSearch className="size-4" />
-              {m.activity_detail_view_by_user()}
-            </Link>
-          </Button>
-          {activity.status === "draft" ? (
+    <PageShell>
+      <DetailHeader
+        icon={<PartyPopperIcon className="size-6" />}
+        title={activity.name}
+        subtitle={activity.alias}
+        status={
+          <Badge variant={STATE_VARIANT[activity.status]}>
+            {STATE_LABELS[activity.status] ? STATE_LABELS[activity.status]() : activity.status}
+          </Badge>
+        }
+        meta={meta}
+        actions={
+          <>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/activity">
+                <ArrowLeft />
+                {m.common_back()}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/activity/$alias/users" params={{ alias }}>
+                <UserSearch />
+                {m.activity_detail_view_by_user()}
+              </Link>
+            </Button>
+            {lifecycleAction}
             <Button
+              variant="destructive"
               size="sm"
-              disabled={lifecycleMutation.isPending}
+              disabled={deleteMutation.isPending}
               onClick={async () => {
+                const ok = await confirm({
+                  title: t("删除活动?", "Delete activity?"),
+                  description: m.activity_detail_delete_confirm({ name: activity.name }),
+                  confirmLabel: m.common_delete(),
+                  danger: true,
+                })
+                if (!ok) return
                 try {
-                  await lifecycleMutation.mutateAsync({
-                    key: alias,
-                    action: "publish",
-                  })
-                  toast.success(m.activity_detail_publish_success())
+                  await deleteMutation.mutateAsync(activity.id)
+                  toast.success(m.activity_detail_delete_success())
+                  navigate({ to: "/activity" })
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.activity_detail_publish_failed())
+                  else toast.error(m.activity_detail_delete_failed())
                 }
               }}
             >
-              <Rocket className="size-4" />
-              {m.activity_detail_publish()}
+              <Trash2 />
+              {m.common_delete()}
             </Button>
-          ) : ["scheduled", "teasing"].includes(activity.status) ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={lifecycleMutation.isPending}
-              onClick={async () => {
-                try {
-                  await lifecycleMutation.mutateAsync({
-                    key: alias,
-                    action: "unpublish",
-                  })
-                  toast.success(m.activity_detail_unpublish_success())
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.activity_detail_unpublish_failed())
-                }
-              }}
-            >
-              <Undo2 className="size-4" />
-              {m.activity_detail_unpublish()}
-            </Button>
-          ) : null}
+          </>
+        }
+      />
 
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={deleteMutation.isPending}
-            onClick={async () => {
-              if (
-                !confirm(
-                  m.activity_detail_delete_confirm({ name: activity.name }),
-                )
-              )
-                return
-              try {
-                await deleteMutation.mutateAsync(activity.id)
-                toast.success(m.activity_detail_delete_success())
-                navigate({ to: "/activity" })
-              } catch (err) {
-                if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error(m.activity_detail_delete_failed())
-              }
-            }}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Button>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
-        <Tabs defaultValue="overview" className="mx-auto max-w-4xl">
+      <PageBody>
+        <Tabs defaultValue="overview">
           <TabsList>
             <TabsTrigger value="overview">{m.activity_tab_overview()}</TabsTrigger>
             <TabsTrigger value="edit">{m.activity_tab_edit()}</TabsTrigger>
@@ -246,8 +296,8 @@ function ActivityDetailPage() {
             <AnalyticsPanel activityKey={alias} />
           </TabsContent>
         </Tabs>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 
@@ -588,14 +638,13 @@ function NodesPanel({
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
-                            if (
-                              !confirm(
-                                m.activity_nodes_delete_confirm({
-                                  alias: n.alias,
-                                }),
-                              )
-                            )
-                              return
+                            const ok = await confirm({
+                              title: t("删除节点?", "Delete node?"),
+                              description: m.activity_nodes_delete_confirm({ alias: n.alias }),
+                              confirmLabel: m.common_delete(),
+                              danger: true,
+                            })
+                            if (!ok) return
                             try {
                               await deleteMutation.mutateAsync(n.id)
                               toast.success(m.activity_nodes_delete_success())
@@ -848,14 +897,13 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (
-                        !confirm(
-                          m.activity_schedules_delete_confirm({
-                            alias: s.alias,
-                          }),
-                        )
-                      )
-                        return
+                      const ok = await confirm({
+                        title: t("删除排期?", "Delete schedule?"),
+                        description: m.activity_schedules_delete_confirm({ alias: s.alias }),
+                        confirmLabel: m.common_delete(),
+                        danger: true,
+                      })
+                      if (!ok) return
                       try {
                         await deleteMutation.mutateAsync(s.id)
                         toast.success(m.activity_schedules_delete_success())
@@ -1101,14 +1149,13 @@ function MembersPanel({
                           variant="ghost"
                           disabled={leaveMutation.isPending}
                           onClick={async () => {
-                            if (
-                              !confirm(
-                                m.activity_members_leave_confirm({
-                                  endUserId: member.endUserId,
-                                }),
-                              )
-                            )
-                              return
+                            const ok = await confirm({
+                              title: t("移除成员?", "Remove member?"),
+                              description: m.activity_members_leave_confirm({ endUserId: member.endUserId }),
+                              confirmLabel: m.activity_members_leave(),
+                              danger: true,
+                            })
+                            if (!ok) return
                             try {
                               await leaveMutation.mutateAsync(member.endUserId)
                               toast.success(m.activity_members_leave_success())

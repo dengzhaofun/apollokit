@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
+import { confirm } from "#/components/patterns"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -59,7 +60,13 @@ function TaskDetailPage() {
             size="sm"
             disabled={deleteMutation.isPending}
             onClick={async () => {
-              if (!confirm("Delete this task definition?")) return
+              const ok = await confirm({
+                title: "删除任务定义?",
+                description: `定义 "${definition.name}" 删除后不可恢复,且会同时清除所有关联 assignment。`,
+                confirmLabel: "删除",
+                danger: true,
+              })
+              if (!ok) return
               try {
                 await deleteMutation.mutateAsync(taskId)
                 toast.success("Task deleted")
