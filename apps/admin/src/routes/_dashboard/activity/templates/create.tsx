@@ -19,6 +19,7 @@ import type {
   ActivityTemplateRecurrence,
   CreateActivityTemplateInput,
 } from "#/lib/types/activity"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute(
   "/_dashboard/activity/templates/create",
@@ -31,7 +32,7 @@ function CreateActivityTemplatePage() {
   const mutation = useCreateActivityTemplate()
 
   const [alias, setAlias] = useState("weekly_challenge")
-  const [name, setName] = useState("每周挑战")
+  const [name, setName] = useState<string>(m.activity_template_create_default_name())
   const [description, setDescription] = useState("")
   const [aliasPattern, setAliasPattern] = useState(
     "weekly_challenge_{year}_W{week}",
@@ -56,11 +57,14 @@ function CreateActivityTemplatePage() {
   const [payloadJson, setPayloadJson] = useState(
     JSON.stringify(
       {
-        name: "每周挑战",
-        description: "每周刷新的限时挑战活动",
+        name: m.activity_template_create_default_name(),
+        description: m.activity_template_create_default_description(),
         kind: "generic",
         timezone: "Asia/Shanghai",
-        currency: { alias: "challenge_point", name: "挑战点" },
+        currency: {
+          alias: "challenge_point",
+          name: m.activity_template_create_default_currency_name(),
+        },
         milestoneTiers: [
           {
             alias: "m1",
@@ -91,7 +95,7 @@ function CreateActivityTemplatePage() {
     try {
       templatePayload = JSON.parse(payloadJson)
     } catch {
-      toast.error("templatePayload JSON 解析失败")
+      toast.error(m.activity_template_create_payload_invalid())
       return
     }
 
@@ -101,13 +105,13 @@ function CreateActivityTemplatePage() {
     try {
       nodesBlueprint = JSON.parse(nodesBlueprintJson)
     } catch {
-      toast.error("nodesBlueprint JSON 解析失败")
+      toast.error(m.activity_template_create_nodes_invalid())
       return
     }
     try {
       schedulesBlueprint = JSON.parse(schedulesBlueprintJson)
     } catch {
-      toast.error("schedulesBlueprint JSON 解析失败")
+      toast.error(m.activity_template_create_schedules_invalid())
       return
     }
 
@@ -140,11 +144,11 @@ function CreateActivityTemplatePage() {
 
     try {
       await mutation.mutateAsync(input)
-      toast.success("模板已创建")
+      toast.success(m.activity_template_create_success())
       navigate({ to: "/activity/templates" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
-      else toast.error("创建失败")
+      else toast.error(m.activity_template_create_failed())
     }
   }
 
@@ -157,7 +161,7 @@ function CreateActivityTemplatePage() {
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>模板别名</Label>
+              <Label>{m.activity_template_create_field_alias()}</Label>
               <Input
                 value={alias}
                 onChange={(e) => setAlias(e.target.value.toLowerCase())}
@@ -165,7 +169,7 @@ function CreateActivityTemplatePage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>模板名称</Label>
+              <Label>{m.activity_template_create_field_name()}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -175,7 +179,7 @@ function CreateActivityTemplatePage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>描述</Label>
+            <Label>{m.common_description()}</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -184,22 +188,24 @@ function CreateActivityTemplatePage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>活动 alias 生成模式</Label>
+            <Label>{m.activity_template_create_field_alias_pattern()}</Label>
             <Input
               value={aliasPattern}
               onChange={(e) => setAliasPattern(e.target.value)}
               className="font-mono"
             />
             <p className="text-xs text-muted-foreground">
-              支持 {"{year} {month} {day} {week} {ts}"} 占位符；展开后须在 org 内唯一。
+              {m.activity_template_create_alias_pattern_hint({
+                placeholders: "{year} {month} {day} {week} {ts}",
+              })}
             </p>
           </div>
 
           <fieldset className="rounded-lg border p-4">
-            <legend className="px-2 text-sm font-medium">活动时间段 (相对 startAt)</legend>
+            <legend className="px-2 text-sm font-medium">{m.activity_template_create_duration_legend()}</legend>
             <div className="grid grid-cols-4 gap-3">
               <div className="flex flex-col gap-1.5">
-                <Label>预热小时 (tease)</Label>
+                <Label>{m.activity_template_create_field_tease_hours()}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -208,7 +214,7 @@ function CreateActivityTemplatePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>进行天数 (active)</Label>
+                <Label>{m.activity_template_create_field_active_days()}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -217,7 +223,7 @@ function CreateActivityTemplatePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>领奖小时 (reward)</Label>
+                <Label>{m.activity_template_create_field_reward_hours()}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -226,7 +232,7 @@ function CreateActivityTemplatePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>可见小时 (hidden 前)</Label>
+                <Label>{m.activity_template_create_field_hidden_hours()}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -238,10 +244,10 @@ function CreateActivityTemplatePage() {
           </fieldset>
 
           <fieldset className="rounded-lg border p-4">
-            <legend className="px-2 text-sm font-medium">循环策略</legend>
+            <legend className="px-2 text-sm font-medium">{m.activity_template_create_recurrence_legend()}</legend>
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <Label>循环模式</Label>
+                <Label>{m.activity_template_create_field_recurrence_mode()}</Label>
                 <Select
                   value={mode}
                   onValueChange={(v) => setMode(v as typeof mode)}
@@ -250,16 +256,16 @@ function CreateActivityTemplatePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="weekly">weekly 每周</SelectItem>
-                    <SelectItem value="monthly">monthly 每月</SelectItem>
-                    <SelectItem value="manual">manual 仅手动触发</SelectItem>
+                    <SelectItem value="weekly">{m.activity_template_create_recurrence_weekly()}</SelectItem>
+                    <SelectItem value="monthly">{m.activity_template_create_recurrence_monthly()}</SelectItem>
+                    <SelectItem value="manual">{m.activity_template_create_recurrence_manual()}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {mode === "weekly" ? (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <Label>每周第几天 (0=周日)</Label>
+                    <Label>{m.activity_template_create_field_day_of_week()}</Label>
                     <Input
                       type="number"
                       min={0}
@@ -269,7 +275,7 @@ function CreateActivityTemplatePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>几点 (0-23)</Label>
+                    <Label>{m.activity_template_create_field_hour_of_day()}</Label>
                     <Input
                       type="number"
                       min={0}
@@ -279,7 +285,7 @@ function CreateActivityTemplatePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>时区</Label>
+                    <Label>{m.activity_template_create_field_timezone()}</Label>
                     <Input
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
@@ -290,7 +296,7 @@ function CreateActivityTemplatePage() {
               {mode === "monthly" ? (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <Label>每月第几天 (1-31)</Label>
+                    <Label>{m.activity_template_create_field_day_of_month()}</Label>
                     <Input
                       type="number"
                       min={1}
@@ -300,7 +306,7 @@ function CreateActivityTemplatePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>几点 (0-23)</Label>
+                    <Label>{m.activity_template_create_field_hour_of_day()}</Label>
                     <Input
                       type="number"
                       min={0}
@@ -310,7 +316,7 @@ function CreateActivityTemplatePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>时区</Label>
+                    <Label>{m.activity_template_create_field_timezone()}</Label>
                     <Input
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
@@ -322,7 +328,7 @@ function CreateActivityTemplatePage() {
           </fieldset>
 
           <div className="flex flex-col gap-1.5">
-            <Label>模板 payload (每次实例化复制到新活动的字段, JSON)</Label>
+            <Label>{m.activity_template_create_field_payload()}</Label>
             <Textarea
               value={payloadJson}
               onChange={(e) => setPayloadJson(e.target.value)}
@@ -330,14 +336,12 @@ function CreateActivityTemplatePage() {
               className="font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              支持字段: name / description / kind / timezone / currency /
-              milestoneTiers / globalRewards / kindMetadata / cleanupRule /
-              joinRequirement / visibility / themeColor / bannerImage / metadata
+              {m.activity_template_create_payload_hint()}
             </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>节点蓝图 nodesBlueprint (JSON 数组)</Label>
+            <Label>{m.activity_template_create_field_nodes_blueprint()}</Label>
             <Textarea
               value={nodesBlueprintJson}
               onChange={(e) => setNodesBlueprintJson(e.target.value)}
@@ -346,26 +350,25 @@ function CreateActivityTemplatePage() {
               placeholder='[{"alias":"daily_checkin","nodeType":"check_in","refIdStrategy":"fixed","fixedRefId":"<uuid>","orderIndex":0}]'
             />
             <p className="text-xs text-muted-foreground">
-              每期活动会按此模板自动建节点。<code className="mx-1 rounded bg-muted px-1">refIdStrategy</code>:
+              {m.activity_template_create_nodes_hint_intro()}<code className="mx-1 rounded bg-muted px-1">refIdStrategy</code>:
               {" "}
-              <code className="rounded bg-muted px-1">fixed</code> 共用同一 refId；
-              <code className="rounded bg-muted px-1">omit</code> 虚拟节点无 refId；
-              <code className="rounded bg-muted px-1">link_only</code> 留空等人工挂。
+              <code className="rounded bg-muted px-1">fixed</code>{m.activity_template_create_nodes_hint_fixed()}
+              <code className="rounded bg-muted px-1">omit</code>{m.activity_template_create_nodes_hint_omit()}
+              <code className="rounded bg-muted px-1">link_only</code>{m.activity_template_create_nodes_hint_link_only()}
             </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>时间触发器蓝图 schedulesBlueprint (JSON 数组)</Label>
+            <Label>{m.activity_template_create_field_schedules_blueprint()}</Label>
             <Textarea
               value={schedulesBlueprintJson}
               onChange={(e) => setSchedulesBlueprintJson(e.target.value)}
               rows={6}
               className="font-mono text-xs"
-              placeholder='[{"alias":"mid_alert","triggerKind":"once_at","fireAtOffsetSeconds":43200,"actionType":"broadcast_mail","actionConfig":{"title":"活动过半","content":"..."}}]'
+              placeholder='[{"alias":"mid_alert","triggerKind":"once_at","fireAtOffsetSeconds":43200,"actionType":"broadcast_mail","actionConfig":{"title":"...","content":"..."}}]'
             />
             <p className="text-xs text-muted-foreground">
-              <code className="mx-1 rounded bg-muted px-1">fireAtOffsetSeconds</code>{" "}
-              相对新一期 startAt 的秒偏移（once_at 用）。其他字段沿用 schedules 表意义。
+              <code className="mx-1 rounded bg-muted px-1">fireAtOffsetSeconds</code>{m.activity_template_create_schedules_hint()}
             </p>
           </div>
 
@@ -377,16 +380,16 @@ function CreateActivityTemplatePage() {
               onChange={(e) => setAutoPublish(e.target.checked)}
             />
             <Label htmlFor="autoPublish" className="cursor-pointer">
-              生成后自动发布 (跳过 draft 态)
+              {m.activity_template_create_auto_publish_label()}
             </Label>
             <span className="text-xs text-muted-foreground ml-auto">
-              勾选后每期活动到点即进入时间态，不需要手动点发布。
+              {m.activity_template_create_auto_publish_hint()}
             </span>
           </div>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "提交中…" : "创建模板"}
+              {mutation.isPending ? m.activity_submitting() : m.activity_template_create_submit()}
             </Button>
           </div>
         </form>
