@@ -65,6 +65,23 @@ export function Providers({ children }: { children: ReactNode }) {
         // dashboard; `_dashboard.tsx` takes it from there (redirects
         // to `/onboarding/create-org` if the user has no active org).
         redirectTo="/dashboard"
+        // Mount account-scoped views under /settings/* so the UserButton
+        // dropdown links to our own settings layout instead of the
+        // library default `/account/*` (which doesn't exist here).
+        // SETTINGS defaults to "settings" — we override to "account" to
+        // avoid the double `/settings/settings` segment.
+        // Note: `_dashboard` is a pathless TanStack layout, so the URL
+        // does NOT contain a `/dashboard` prefix. The route file is at
+        // `routes/_dashboard/settings/account.tsx` → URL `/settings/account`.
+        account={{
+          basePath: "/settings",
+          viewPaths: {
+            SETTINGS: "account",
+            SECURITY: "security",
+            API_KEYS: "api-keys",
+            ORGANIZATIONS: "organizations",
+          },
+        }}
         navigate={(href: string) => router.navigate({ to: href })}
         replace={(href: string) => router.navigate({ to: href, replace: true })}
         Link={({ href, ...props }: { href: string } & Record<string, unknown>) => (

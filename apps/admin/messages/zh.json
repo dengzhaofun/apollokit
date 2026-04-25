@@ -1253,7 +1253,8 @@
   "nav_group_operations": "运营活动",
   "nav_group_content": "内容生产",
   "nav_group_social": "社交与竞技",
-  "nav_group_system": "系统设置",
+  "nav_group_developer": "开发者工具",
+  "command_palette_misc": "其它",
   "nav_user_analytics": "用户分析",
   "nav_module_analytics": "模块分析",
   "nav_activity_analytics": "活动分析",
@@ -1766,5 +1767,11 @@
   "badge_inspector_dismissal_stale": "已过期 — 红点会重亮",
   "badge_inspector_dismissal_active": "仍生效 — 红点被压住",
   "docs_help_view_docs": "查看文档",
-  "docs_help_browse_docs": "浏览文档"
+  "docs_help_browse_docs": "浏览文档",
+  "nav_settings": "设置",
+  "settings_section_personal": "个人",
+  "settings_section_organization": "组织",
+  "settings_account": "账号",
+  "settings_title": "设置",
+  "settings_account_description": "管理你的个人资料、邮箱、密码与登录会话。"
 }
