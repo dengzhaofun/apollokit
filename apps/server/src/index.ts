@@ -1,6 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
-import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
@@ -118,24 +117,23 @@ const app = new OpenAPIHono<HonoEnv>({
 app.use("*", requestId());
 app.use("*", logger());
 app.use("*", prettyJSON());
-// `crossOriginResourcePolicy: "cross-origin"` — this worker is
-// intentionally called from different origins (the admin app on a
-// different port/subdomain, tenant frontends on customer domains, the
-// media-library <img> proxy). The default `same-origin` would block
-// those loads despite the CORS config below explicitly allowing them.
+// `crossOriginResourcePolicy: "cross-origin"` — the media-library
+// `<img>` proxy (`/api/media-library/object/...`) is loaded via same-
+// origin admin URL in the main flow, but browsers still mark such
+// sub-resource loads as cross-origin when the request path is served
+// by a different worker underneath service binding. Keep cross-origin
+// so image loads don't get blocked.
 app.use(
   "*",
   secureHeaders({
     crossOriginResourcePolicy: "cross-origin",
   }),
 );
-app.use(
-  "*",
-  cors({
-    origin: (origin) => origin ?? "*",
-    credentials: true,
-  }),
-);
+// No CORS: admin reaches this worker through a service binding (not a
+// browser cross-origin fetch), and no first-party browser consumer of
+// this worker exists yet. If a real cross-origin use-case lands later
+// (e.g. SDK calling `/api/client/auth/*` from a game's web client),
+// re-introduce `cors()` scoped to those paths only.
 
 // Global error handler — returns the standard envelope. Module-level
 // routers handle `ModuleError` in their own `onError` (installed by

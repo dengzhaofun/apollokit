@@ -27,8 +27,8 @@ export interface MediaAsset {
   /**
    * Resolved public URL assembled by the server based on
    * MEDIA_PUBLIC_URL_BASE. May be a relative path (`/api/media-library/
-   * object/...`) when no CDN is configured — the admin api-client
-   * prepends VITE_AUTH_SERVER_URL for those.
+   * object/...`) when no CDN is configured — those are loaded
+   * same-origin (admin forwards `/api/*` to the server worker).
    */
   url: string
   createdAt: string

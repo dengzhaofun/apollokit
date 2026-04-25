@@ -18,8 +18,10 @@
  * envelope assumption is safe here.
  */
 
-const BASE_URL =
-  import.meta.env.VITE_AUTH_SERVER_URL ?? "http://localhost:8787"
+// Same-origin: prod admin worker forwards `/api/*` via service binding;
+// dev vite proxies `/api/*` to localhost:8787. Either way, an empty
+// base means `fetch("/api/...")` works in both worlds.
+const BASE_URL = ""
 
 type ApiErrorBody = {
   /** Backward-compat alias for `message`. */

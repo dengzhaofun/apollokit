@@ -166,9 +166,10 @@ function CodesPane({
   const [count, setCount] = useState(100)
 
   const handleExport = () => {
-    const base =
-      import.meta.env.VITE_AUTH_SERVER_URL ?? "http://localhost:8787"
-    window.open(`${base}/api/cdkey/batches/${batchId}/codes.csv`, "_blank")
+    // Same-origin: admin worker forwards `/api/*` via service binding
+    // (prod) or vite proxies it to localhost:8787 (dev). Either way, an
+    // absolute origin is no longer needed.
+    window.open(`/api/cdkey/batches/${batchId}/codes.csv`, "_blank")
   }
 
   const handleGenerate = async () => {
