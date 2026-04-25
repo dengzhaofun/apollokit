@@ -25,7 +25,7 @@ function CreateCategoryPage() {
               try {
                 await createMutation.mutateAsync(values)
                 toast.success(m.item_category_created())
-                navigate({ to: "/item" })
+                navigate({ to: "/item/categories" })
               } catch (err) {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)

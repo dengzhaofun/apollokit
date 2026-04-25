@@ -21,7 +21,7 @@ function SchemaCreatePage() {
     <>
       <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
-          <Link to="/entity">
+          <Link to="/entity/schemas">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>

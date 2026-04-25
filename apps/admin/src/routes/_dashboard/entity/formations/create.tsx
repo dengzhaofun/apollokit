@@ -40,7 +40,7 @@ function FormationConfigCreatePage() {
           allowDuplicateBlueprints: value.allowDuplicateBlueprints,
         })
         toast.success(m.entity_formation_created())
-        navigate({ to: "/entity" })
+        navigate({ to: "/entity/formations" })
       } catch (err) {
         if (err instanceof ApiError) {
           toast.error(err.body.error)
@@ -55,7 +55,7 @@ function FormationConfigCreatePage() {
     <>
       <PageHeaderActions>
         <Button asChild variant="ghost" size="icon">
-          <Link to="/entity">
+          <Link to="/entity/formations">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>

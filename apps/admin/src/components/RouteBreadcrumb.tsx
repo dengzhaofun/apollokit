@@ -23,6 +23,9 @@ export function RouteBreadcrumb() {
   const group = groups.find((g) => g.items.some((i) => i.to === moduleTo))
   const item = group?.items.find((i) => i.to === moduleTo)
   const tail = segments.slice(1).map((s) => decodeURIComponent(s))
+  // 三级菜单:tail[0] 命中父项的某个 child 时,显示 child.title() 而非 raw segment
+  const childTo = tail.length > 0 ? `${moduleTo}/${tail[0]}` : null
+  const child = item?.children?.find((c) => c.to === childTo)
 
   const onlyDashboard = moduleTo === "/dashboard" && tail.length === 0
 
@@ -65,14 +68,19 @@ export function RouteBreadcrumb() {
 
         {tail.map((seg, idx) => {
           const isLast = idx === tail.length - 1
+          const label = idx === 0 && child ? child.title() : seg
           return (
             <Fragment key={`tail-${idx}-${seg}`}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {isLast ? (
-                  <BreadcrumbPage>{seg}</BreadcrumbPage>
+                  <BreadcrumbPage>{label}</BreadcrumbPage>
+                ) : idx === 0 && child ? (
+                  <BreadcrumbLink asChild>
+                    <Link to={child.to}>{label}</Link>
+                  </BreadcrumbLink>
                 ) : (
-                  <span className="text-muted-foreground">{seg}</span>
+                  <span className="text-muted-foreground">{label}</span>
                 )}
               </BreadcrumbItem>
             </Fragment>
