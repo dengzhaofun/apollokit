@@ -115,6 +115,7 @@ type NavRoute =
   | "/end-user"
   | "/badge"
   | "/settings"
+  | "/cms"
 
 type NavItem = {
   title: () => string
@@ -237,6 +238,7 @@ function getNavGroups(): NavGroup[] {
       key: "content",
       label: m.nav_group_content,
       items: [
+        { title: m.nav_cms, to: "/cms", icon: ScrollText },
         { title: m.nav_media_library, to: "/media-library", icon: FolderOpen },
         { title: m.nav_character, to: "/character", icon: Drama },
         { title: m.nav_dialogue, to: "/dialogue", icon: MessagesSquare },

@@ -10,6 +10,7 @@ export * from "./cdkey";
 export * from "./character";
 export * from "./check-in";
 export * from "./client-credential";
+export * from "./cms";
 export * from "./end-user-auth";
 export * from "./collection";
 export * from "./currency";
