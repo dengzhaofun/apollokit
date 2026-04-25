@@ -12,6 +12,9 @@ import {
 import { getNavGroups } from "./AppSidebar"
 import * as m from "../paraglide/messages.js"
 
+const formatSegment = (s: string) =>
+  s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1)
+
 export function RouteBreadcrumb() {
   const { pathname } = useLocation()
   const groups = getNavGroups()
@@ -46,7 +49,9 @@ export function RouteBreadcrumb() {
           <>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{group.label()}</BreadcrumbPage>
+              <BreadcrumbPage className="text-muted-foreground font-normal">
+                {group.label()}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </>
         )}
@@ -68,7 +73,7 @@ export function RouteBreadcrumb() {
 
         {tail.map((seg, idx) => {
           const isLast = idx === tail.length - 1
-          const label = idx === 0 && child ? child.title() : seg
+          const label = idx === 0 && child ? child.title() : formatSegment(seg)
           return (
             <Fragment key={`tail-${idx}-${seg}`}>
               <BreadcrumbSeparator />
