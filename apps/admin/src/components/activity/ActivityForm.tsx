@@ -324,7 +324,7 @@ export function ActivityForm({
               onChange={(e) => field.handleChange(e.target.value)}
               rows={3}
               className="font-mono text-xs"
-              placeholder='{"alias":"festival_point","name":"春节积分","icon":"🧧"}'
+              placeholder='{"alias":"festival_point","name":"Festival Points","icon":"🧧"}'
             />
           </div>
         )}
@@ -365,7 +365,7 @@ export function ActivityForm({
       <form.Field name="membershipJson">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>Membership (JSON)</Label>
+            <Label htmlFor={field.name}>{m.activity_form_membership_json()}</Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -375,7 +375,7 @@ export function ActivityForm({
               placeholder={`{"leaveAllowed":true,"queue":{"enabled":false,"format":"numeric","length":4}}`}
             />
             <p className="text-xs text-muted-foreground">
-              可选。开启 queue 后 /join 会分配活动内唯一随机号，admin 可核销。
+              {m.activity_form_membership_hint()}
             </p>
           </div>
         )}

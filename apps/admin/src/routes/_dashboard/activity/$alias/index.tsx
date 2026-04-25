@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { PageHeaderActions } from "#/components/PageHeader"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/activity/$alias/")({
   component: ActivityDetailPage,
@@ -74,14 +75,17 @@ function ActivityDetailPage() {
   if (isPending) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
-        加载中…
+        {m.common_loading()}
       </div>
     )
   }
   if (error || !activity) {
     return (
       <div className="flex h-screen items-center justify-center text-destructive">
-        加载失败：{error?.message ?? "未知"}
+        {m.common_failed_to_load({
+          resource: m.activity_page_title(),
+          error: error?.message ?? m.common_unknown(),
+        })}
       </div>
     )
   }
@@ -92,7 +96,7 @@ function ActivityDetailPage() {
         <Button asChild variant="ghost" size="sm">
           <Link to="/activity">
             <ArrowLeft className="size-4" />
-            返回
+            {m.common_back()}
           </Link>
         </Button>
         <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -109,7 +113,7 @@ function ActivityDetailPage() {
               params={{ alias }}
             >
               <UserSearch className="size-4" />
-              按玩家查看
+              {m.activity_detail_view_by_user()}
             </Link>
           </Button>
           {activity.status === "draft" ? (
@@ -122,15 +126,15 @@ function ActivityDetailPage() {
                     key: alias,
                     action: "publish",
                   })
-                  toast.success("已发布，状态将按时间自动推进")
+                  toast.success(m.activity_detail_publish_success())
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error("发布失败")
+                  else toast.error(m.activity_detail_publish_failed())
                 }
               }}
             >
               <Rocket className="size-4" />
-              发布
+              {m.activity_detail_publish()}
             </Button>
           ) : ["scheduled", "teasing"].includes(activity.status) ? (
             <Button
@@ -143,15 +147,15 @@ function ActivityDetailPage() {
                     key: alias,
                     action: "unpublish",
                   })
-                  toast.success("已回到草稿")
+                  toast.success(m.activity_detail_unpublish_success())
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error("下架失败")
+                  else toast.error(m.activity_detail_unpublish_failed())
                 }
               }}
             >
               <Undo2 className="size-4" />
-              撤回到草稿
+              {m.activity_detail_unpublish()}
             </Button>
           ) : null}
 
@@ -160,20 +164,24 @@ function ActivityDetailPage() {
             size="sm"
             disabled={deleteMutation.isPending}
             onClick={async () => {
-              if (!confirm(`确认删除活动 "${activity.name}"？此操作不可恢复。`))
+              if (
+                !confirm(
+                  m.activity_detail_delete_confirm({ name: activity.name }),
+                )
+              )
                 return
               try {
                 await deleteMutation.mutateAsync(activity.id)
-                toast.success("已删除")
+                toast.success(m.activity_detail_delete_success())
                 navigate({ to: "/activity" })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error("删除失败")
+                else toast.error(m.activity_detail_delete_failed())
               }
             }}
           >
             <Trash2 className="size-4" />
-            删除
+            {m.common_delete()}
           </Button>
         </div>
       </PageHeaderActions>
@@ -181,12 +189,12 @@ function ActivityDetailPage() {
       <main className="flex-1 p-6">
         <Tabs defaultValue="overview" className="mx-auto max-w-4xl">
           <TabsList>
-            <TabsTrigger value="overview">概览</TabsTrigger>
-            <TabsTrigger value="edit">编辑</TabsTrigger>
-            <TabsTrigger value="nodes">节点</TabsTrigger>
-            <TabsTrigger value="schedules">时间触发器</TabsTrigger>
-            <TabsTrigger value="members">成员</TabsTrigger>
-            <TabsTrigger value="analytics">数据</TabsTrigger>
+            <TabsTrigger value="overview">{m.activity_tab_overview()}</TabsTrigger>
+            <TabsTrigger value="edit">{m.activity_tab_edit()}</TabsTrigger>
+            <TabsTrigger value="nodes">{m.activity_tab_nodes()}</TabsTrigger>
+            <TabsTrigger value="schedules">{m.activity_tab_schedules()}</TabsTrigger>
+            <TabsTrigger value="members">{m.activity_tab_members()}</TabsTrigger>
+            <TabsTrigger value="analytics">{m.activity_tab_analytics()}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
@@ -199,7 +207,7 @@ function ActivityDetailPage() {
                 defaultValues={activity}
                 disableAliasEdit
                 isPending={updateMutation.isPending}
-                submitLabel="保存修改"
+                submitLabel={m.activity_detail_save_label()}
                 onSubmit={async (values) => {
                   try {
                     const { alias: _alias, ...patch } = values
@@ -208,10 +216,10 @@ function ActivityDetailPage() {
                       id: activity.id,
                       ...patch,
                     })
-                    toast.success("已保存")
+                    toast.success(m.activity_detail_save_success())
                   } catch (err) {
                     if (err instanceof ApiError) toast.error(err.body.error)
-                    else toast.error("保存失败")
+                    else toast.error(m.activity_detail_save_failed())
                   }
                 }}
               />
@@ -253,7 +261,7 @@ function OverviewPanel({
   return (
     <div className="grid gap-4">
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold">时间轴</h2>
+        <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_timeline()}</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <span className="text-muted-foreground">visibleAt: </span>
@@ -285,22 +293,22 @@ function OverviewPanel({
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold">奖励配置</h2>
+        <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_rewards()}</h2>
         <div className="space-y-3 text-sm">
           <div>
-            <div className="text-muted-foreground">里程碑</div>
+            <div className="text-muted-foreground">{m.activity_overview_milestones()}</div>
             <pre className="mt-1 max-h-60 overflow-auto rounded-lg bg-muted p-3 text-xs">
               {JSON.stringify(activity.milestoneTiers, null, 2)}
             </pre>
           </div>
           <div>
-            <div className="text-muted-foreground">通关总奖励</div>
+            <div className="text-muted-foreground">{m.activity_overview_global_rewards()}</div>
             <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-muted p-3 text-xs">
               {JSON.stringify(activity.globalRewards, null, 2)}
             </pre>
           </div>
           <div>
-            <div className="text-muted-foreground">清理策略</div>
+            <div className="text-muted-foreground">{m.activity_overview_cleanup_strategy()}</div>
             <Badge variant="outline" className="mt-1">
               {activity.cleanupRule.mode}
             </Badge>
@@ -357,17 +365,17 @@ function NodesPanel({
 
       <div className="flex justify-end">
         <Button size="sm" onClick={() => setCreatorOpen(true)}>
-          🧩 新建并挂载子配置 (一站式)
+          {m.activity_nodes_create_button()}
         </Button>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h3 className="mb-3 text-sm font-semibold">
-          仅挂载已有配置 (填 refId)
+          {m.activity_nodes_attach_existing_title()}
         </h3>
         <div className="grid grid-cols-4 gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label>别名</Label>
+            <Label>{m.common_alias()}</Label>
             <Input
               value={form.alias}
               onChange={(e) =>
@@ -377,7 +385,7 @@ function NodesPanel({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>类型</Label>
+            <Label>{m.common_type()}</Label>
             <Select
               value={form.nodeType}
               onValueChange={(v) =>
@@ -388,19 +396,19 @@ function NodesPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="check_in">check_in 签到</SelectItem>
-                <SelectItem value="task_group">task_group 任务组</SelectItem>
-                <SelectItem value="exchange">exchange 兑换商店</SelectItem>
-                <SelectItem value="leaderboard">leaderboard 排行榜</SelectItem>
-                <SelectItem value="lottery">lottery 抽奖池</SelectItem>
-                <SelectItem value="banner">banner 轮播图</SelectItem>
-                <SelectItem value="game_board">game_board 小游戏</SelectItem>
-                <SelectItem value="custom">custom 自定义</SelectItem>
+                <SelectItem value="check_in">{m.activity_nodes_select_check_in()}</SelectItem>
+                <SelectItem value="task_group">{m.activity_nodes_select_task_group()}</SelectItem>
+                <SelectItem value="exchange">{m.activity_nodes_select_exchange()}</SelectItem>
+                <SelectItem value="leaderboard">{m.activity_nodes_select_leaderboard()}</SelectItem>
+                <SelectItem value="lottery">{m.activity_nodes_select_lottery()}</SelectItem>
+                <SelectItem value="banner">{m.activity_nodes_select_banner()}</SelectItem>
+                <SelectItem value="game_board">{m.activity_nodes_select_game_board()}</SelectItem>
+                <SelectItem value="custom">{m.activity_nodes_select_custom()}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>refId (可选)</Label>
+            <Label>{m.activity_nodes_field_ref_id()}</Label>
             <Input
               value={form.refId ?? ""}
               onChange={(e) =>
@@ -410,7 +418,7 @@ function NodesPanel({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>排序</Label>
+            <Label>{m.common_sort_order()}</Label>
             <Input
               type="number"
               value={form.orderIndex ?? 0}
@@ -427,7 +435,7 @@ function NodesPanel({
             onClick={async () => {
               try {
                 await createMutation.mutateAsync(form)
-                toast.success("节点已添加")
+                toast.success(m.activity_nodes_create_success())
                 setForm({
                   alias: "",
                   nodeType: form.nodeType,
@@ -436,39 +444,39 @@ function NodesPanel({
                 })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error("添加失败")
+                else toast.error(m.activity_nodes_create_failed())
               }
             }}
           >
-            添加
+            {m.common_add()}
           </Button>
         </div>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">已配置节点</h3>
+        <h3 className="mb-3 text-sm font-semibold">{m.activity_nodes_configured_title()}</h3>
         {isPending ? (
-          <div className="text-muted-foreground">加载中…</div>
+          <div className="text-muted-foreground">{m.common_loading()}</div>
         ) : !nodes || nodes.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground">
-            暂无节点
+            {m.activity_nodes_empty()}
           </div>
         ) : (
           <>
           <div className="mb-3 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <strong>两层开关说明：</strong>
+            <strong>{m.activity_nodes_two_layer_title()}</strong>
             <ul className="ml-5 mt-1 list-disc space-y-0.5">
               <li>
-                <strong>节点启用 (activity_nodes.enabled)</strong>：
-                本活动内的临时开关。关掉只藏这一处挂载，不影响底层资源。
+                <strong>{m.activity_nodes_two_layer_node_term()}</strong>：
+                {m.activity_nodes_two_layer_node_desc()}
               </li>
               <li>
-                <strong>资源状态 (resource.isActive)</strong>：
-                底层资源本身的全局开关。在资源自己的编辑页切换。
+                <strong>{m.activity_nodes_two_layer_resource_term()}</strong>：
+                {m.activity_nodes_two_layer_resource_desc()}
               </li>
               <li>
-                <strong>对玩家可见</strong> = 节点启用 <em>且</em>{" "}
-                资源状态 = true。任一关闭即隐藏。
+                <strong>{m.activity_nodes_two_layer_visible_term()}</strong>{" "}
+                {m.activity_nodes_two_layer_visible_desc()}
               </li>
             </ul>
           </div>
@@ -514,7 +522,7 @@ function NodesPanel({
                               } catch (err) {
                                 if (err instanceof ApiError)
                                   toast.error(err.body.error)
-                                else toast.error("切换失败")
+                                else toast.error(m.activity_nodes_toggle_failed())
                               }
                             }}
                           />
@@ -522,12 +530,12 @@ function NodesPanel({
                             htmlFor={`node-enabled-${n.id}`}
                             className="text-xs text-muted-foreground"
                           >
-                            节点
+                            {m.activity_nodes_switch_label()}
                           </label>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        节点级开关：仅控制这个活动节点是否呈现，不改底层资源
+                        {m.activity_nodes_switch_tooltip()}
                       </TooltipContent>
                     </Tooltip>
 
@@ -537,11 +545,13 @@ function NodesPanel({
                           <Badge
                             variant={resourceActive ? "default" : "outline"}
                           >
-                            资源 {resourceActive ? "启用" : "停用"}
+                            {resourceActive
+                              ? m.activity_nodes_resource_active()
+                              : m.activity_nodes_resource_inactive()}
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                          底层资源 (resource.isActive) 的状态。到资源自己的编辑页切换。
+                          {m.activity_nodes_resource_tooltip()}
                         </TooltipContent>
                       </Tooltip>
                     ) : null}
@@ -551,17 +561,19 @@ function NodesPanel({
                         <Badge
                           variant={effectiveEnabled ? "default" : "destructive"}
                         >
-                          {effectiveEnabled ? "对玩家可见" : "对玩家隐藏"}
+                          {effectiveEnabled
+                            ? m.activity_nodes_player_visible()
+                            : m.activity_nodes_player_hidden()}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        effectiveEnabled = 节点启用 AND 资源启用。
+                        {m.activity_nodes_visibility_tooltip_intro()}
                         {!effectiveEnabled
                           ? !n.enabled && !resourceActive
-                            ? " 当前两者均关闭。"
+                            ? m.activity_nodes_visibility_tooltip_both_off()
                             : !n.enabled
-                              ? " 当前节点开关关闭。"
-                              : " 当前底层资源 isActive=false。"
+                              ? m.activity_nodes_visibility_tooltip_node_off()
+                              : m.activity_nodes_visibility_tooltip_resource_off()
                           : ""}
                       </TooltipContent>
                     </Tooltip>
@@ -570,14 +582,19 @@ function NodesPanel({
                       variant="ghost"
                       size="sm"
                       onClick={async () => {
-                        if (!confirm(`删除节点 ${n.alias}？`)) return
+                        if (
+                          !confirm(
+                            m.activity_nodes_delete_confirm({ alias: n.alias }),
+                          )
+                        )
+                          return
                         try {
                           await deleteMutation.mutateAsync(n.id)
-                          toast.success("节点已删除")
+                          toast.success(m.activity_nodes_delete_success())
                         } catch (err) {
                           if (err instanceof ApiError)
                             toast.error(err.body.error)
-                          else toast.error("删除失败")
+                          else toast.error(m.activity_nodes_delete_failed())
                         }
                       }}
                     >
@@ -613,10 +630,10 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">新增时间触发器</h3>
+        <h3 className="mb-3 text-sm font-semibold">{m.activity_schedules_create_title()}</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label>别名</Label>
+            <Label>{m.common_alias()}</Label>
             <Input
               value={form.alias}
               onChange={(e) =>
@@ -637,17 +654,17 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="once_at">once_at 绝对时间</SelectItem>
+                <SelectItem value="once_at">{m.activity_schedules_trigger_once_at()}</SelectItem>
                 <SelectItem value="relative_offset">
-                  relative_offset 相对活动
+                  {m.activity_schedules_trigger_relative_offset()}
                 </SelectItem>
-                <SelectItem value="cron">cron 表达式 (循环)</SelectItem>
+                <SelectItem value="cron">{m.activity_schedules_trigger_cron()}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {form.triggerKind === "once_at" ? (
             <div className="flex flex-col gap-1.5 col-span-2">
-              <Label>fireAt (绝对时间)</Label>
+              <Label>{m.activity_schedules_field_fire_at()}</Label>
               <Input
                 type="datetime-local"
                 onChange={(e) =>
@@ -664,7 +681,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
           {form.triggerKind === "relative_offset" ? (
             <>
               <div className="flex flex-col gap-1.5">
-                <Label>基准点</Label>
+                <Label>{m.activity_schedules_field_offset_from()}</Label>
                 <Select
                   value={form.offsetFrom ?? "start_at"}
                   onValueChange={(v) =>
@@ -684,7 +701,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>偏移秒数 (正/负均可)</Label>
+                <Label>{m.activity_schedules_field_offset_seconds()}</Label>
                 <Input
                   type="number"
                   onChange={(e) =>
@@ -700,7 +717,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
           ) : null}
           {form.triggerKind === "cron" ? (
             <div className="flex flex-col gap-1.5 col-span-2">
-              <Label>cron 表达式 (按活动时区解释)</Label>
+              <Label>{m.activity_schedules_field_cron_expr()}</Label>
               <Input
                 value={form.cronExpr ?? ""}
                 onChange={(e) =>
@@ -710,9 +727,9 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">
-                5 段格式:{" "}
+                {m.activity_schedules_cron_hint_prefix()}
                 <code className="rounded bg-muted px-1">minute hour dom month dow</code>
-                。活动归档后自动停止。
+                {m.activity_schedules_cron_hint_suffix()}
               </p>
             </div>
           ) : null}
@@ -760,26 +777,26 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
             onClick={async () => {
               try {
                 await createMutation.mutateAsync(form)
-                toast.success("触发器已添加")
+                toast.success(m.activity_schedules_create_success())
                 setForm({ ...form, alias: "" })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error("添加失败")
+                else toast.error(m.activity_schedules_create_failed())
               }
             }}
           >
-            添加
+            {m.common_add()}
           </Button>
         </div>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">已配置触发器</h3>
+        <h3 className="mb-3 text-sm font-semibold">{m.activity_schedules_configured_title()}</h3>
         {isPending ? (
-          <div className="text-muted-foreground">加载中…</div>
+          <div className="text-muted-foreground">{m.common_loading()}</div>
         ) : !schedules || schedules.length === 0 ? (
           <div className="py-6 text-center text-muted-foreground">
-            暂无触发器
+            {m.activity_schedules_empty()}
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -795,33 +812,44 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 <Badge variant="secondary">{s.actionType}</Badge>
                 {s.nextFireAt ? (
                   <span className="text-xs text-muted-foreground">
-                    下次: {format(new Date(s.nextFireAt), "yyyy-MM-dd HH:mm")}
+                    {m.activity_schedules_next_fire({
+                      date: format(new Date(s.nextFireAt), "yyyy-MM-dd HH:mm"),
+                    })}
                   </span>
                 ) : null}
                 {s.lastFiredAt ? (
                   <span className="text-xs text-muted-foreground">
-                    已触发 · {s.lastStatus ?? "?"}
+                    {m.activity_schedules_last_fired({
+                      status: s.lastStatus ?? "?",
+                    })}
                   </span>
                 ) : null}
                 <Badge
                   variant={s.enabled ? "default" : "outline"}
                   className="ml-2"
                 >
-                  {s.enabled ? "启用" : "停用"}
+                  {s.enabled ? m.common_active() : m.common_inactive()}
                 </Badge>
                 <div className="ml-auto">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (!confirm(`删除触发器 ${s.alias}？`)) return
+                      if (
+                        !confirm(
+                          m.activity_schedules_delete_confirm({
+                            alias: s.alias,
+                          }),
+                        )
+                      )
+                        return
                       try {
                         await deleteMutation.mutateAsync(s.id)
-                        toast.success("已删除")
+                        toast.success(m.activity_schedules_delete_success())
                       } catch (err) {
                         if (err instanceof ApiError)
                           toast.error(err.body.error)
-                        else toast.error("删除失败")
+                        else toast.error(m.activity_schedules_delete_failed())
                       }
                     }}
                   >
@@ -843,13 +871,16 @@ function AnalyticsPanel({ activityKey }: { activityKey: string }) {
   if (isPending)
     return (
       <div className="rounded-xl border bg-card p-6 text-muted-foreground shadow-sm">
-        加载中…
+        {m.common_loading()}
       </div>
     )
   if (error)
     return (
       <div className="rounded-xl border bg-card p-6 text-destructive shadow-sm">
-        加载失败：{error.message}
+        {m.common_failed_to_load({
+          resource: m.activity_tab_analytics(),
+          error: error.message,
+        })}
       </div>
     )
   if (!data) return null
@@ -858,21 +889,21 @@ function AnalyticsPanel({ activityKey }: { activityKey: string }) {
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="总参与人数" value={data.participants.toLocaleString()} />
-        <StatCard label="已完成" value={data.completed.toLocaleString()} />
-        <StatCard label="已流失" value={data.dropped.toLocaleString()} />
+        <StatCard label={m.activity_analytics_participants()} value={data.participants.toLocaleString()} />
+        <StatCard label={m.activity_analytics_completed()} value={data.completed.toLocaleString()} />
+        <StatCard label={m.activity_analytics_dropped()} value={data.dropped.toLocaleString()} />
         <StatCard
-          label="积分均值"
+          label={m.activity_analytics_avg_points()}
           value={Math.round(data.avgPoints).toLocaleString()}
         />
-        <StatCard label="积分中位数" value={data.p50Points.toLocaleString()} />
-        <StatCard label="积分最高" value={data.maxPoints.toLocaleString()} />
+        <StatCard label={m.activity_analytics_p50_points()} value={data.p50Points.toLocaleString()} />
+        <StatCard label={m.activity_analytics_max_points()} value={data.maxPoints.toLocaleString()} />
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">积分分布</h3>
+        <h3 className="mb-3 text-sm font-semibold">{m.activity_analytics_points_distribution()}</h3>
         {data.pointsBuckets.length === 0 ? (
-          <div className="text-muted-foreground">无数据</div>
+          <div className="text-muted-foreground">{m.activity_analytics_no_data()}</div>
         ) : (
           <div className="space-y-2">
             {data.pointsBuckets.map((b) => (
@@ -898,24 +929,26 @@ function AnalyticsPanel({ activityKey }: { activityKey: string }) {
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">里程碑领取数</h3>
+        <h3 className="mb-3 text-sm font-semibold">{m.activity_analytics_milestone_claims()}</h3>
         {data.milestoneClaims.length === 0 ? (
-          <div className="text-muted-foreground">暂无领取</div>
+          <div className="text-muted-foreground">{m.activity_analytics_no_claims()}</div>
         ) : (
           <ul className="space-y-2 text-sm">
             {data.milestoneClaims
               .slice()
               .sort((a, b) => b.count - a.count)
-              .map((m) => (
+              .map((mc) => (
                 <li
-                  key={m.milestoneAlias}
+                  key={mc.milestoneAlias}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {m.milestoneAlias}
+                    {mc.milestoneAlias}
                   </code>
                   <span className="ml-auto font-mono">
-                    {m.count.toLocaleString()} 人领取
+                    {m.activity_analytics_claim_count({
+                      count: mc.count.toLocaleString(),
+                    })}
                   </span>
                 </li>
               ))}
@@ -950,10 +983,10 @@ function MembersPanel({
   const redeemMutation = useRedeemQueueNumber(activityKey)
 
   if (isPending) {
-    return <div className="text-muted-foreground">加载中...</div>
+    return <div className="text-muted-foreground">{m.common_loading()}</div>
   }
   if (error) {
-    const msg = error instanceof ApiError ? error.body.error : "加载失败"
+    const msg = error instanceof ApiError ? error.body.error : m.activity_members_load_failed()
     return <div className="text-destructive">{msg}</div>
   }
 
@@ -962,7 +995,7 @@ function MembersPanel({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Label className="text-xs">状态过滤</Label>
+        <Label className="text-xs">{m.activity_members_status_filter()}</Label>
         <Select
           value={status}
           onValueChange={(v) => setStatus(v as ActivityMemberStatus | "all")}
@@ -971,7 +1004,7 @@ function MembersPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部</SelectItem>
+            <SelectItem value="all">{m.activity_members_status_all()}</SelectItem>
             <SelectItem value="joined">joined</SelectItem>
             <SelectItem value="completed">completed</SelectItem>
             <SelectItem value="left">left</SelectItem>
@@ -979,13 +1012,13 @@ function MembersPanel({
           </SelectContent>
         </Select>
         <span className="ml-auto text-xs text-muted-foreground">
-          {items.length} 条
+          {m.activity_members_count_summary({ count: items.length })}
         </span>
       </div>
 
       {items.length === 0 ? (
         <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-          暂无成员
+          {m.activity_members_empty()}
         </div>
       ) : (
         <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
@@ -993,77 +1026,87 @@ function MembersPanel({
             <thead className="bg-muted/40 text-xs">
               <tr>
                 <th className="px-3 py-2 text-left">endUserId</th>
-                <th className="px-3 py-2 text-left">加入时间</th>
-                <th className="px-3 py-2 text-left">状态</th>
-                <th className="px-3 py-2 text-left">号码</th>
-                <th className="px-3 py-2 text-left">核销时间</th>
-                <th className="px-3 py-2 text-right">积分</th>
-                <th className="px-3 py-2 text-right">操作</th>
+                <th className="px-3 py-2 text-left">{m.activity_members_col_joined_at()}</th>
+                <th className="px-3 py-2 text-left">{m.common_status()}</th>
+                <th className="px-3 py-2 text-left">{m.activity_members_col_queue_number()}</th>
+                <th className="px-3 py-2 text-left">{m.activity_members_col_redeemed_at()}</th>
+                <th className="px-3 py-2 text-right">{m.activity_members_col_points()}</th>
+                <th className="px-3 py-2 text-right">{m.common_actions()}</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((m) => (
-                <tr key={m.endUserId} className="border-t">
-                  <td className="px-3 py-2 font-mono text-xs">{m.endUserId}</td>
+              {items.map((member) => (
+                <tr key={member.endUserId} className="border-t">
+                  <td className="px-3 py-2 font-mono text-xs">{member.endUserId}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {format(new Date(m.joinedAt), "yyyy-MM-dd HH:mm")}
+                    {format(new Date(member.joinedAt), "yyyy-MM-dd HH:mm")}
                   </td>
                   <td className="px-3 py-2">
-                    <Badge variant="outline">{m.status}</Badge>
+                    <Badge variant="outline">{member.status}</Badge>
                   </td>
                   <td className="px-3 py-2 font-mono">
-                    {m.queueNumber ?? "—"}
+                    {member.queueNumber ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {m.queueNumberUsedAt
-                      ? format(new Date(m.queueNumberUsedAt), "yyyy-MM-dd HH:mm")
+                    {member.queueNumberUsedAt
+                      ? format(new Date(member.queueNumberUsedAt), "yyyy-MM-dd HH:mm")
                       : "—"}
                   </td>
                   <td className="px-3 py-2 text-right font-mono">
-                    {m.activityPoints.toLocaleString()}
+                    {member.activityPoints.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-2">
                       {queueEnabled &&
-                        m.queueNumber &&
-                        !m.queueNumberUsedAt && (
+                        member.queueNumber &&
+                        !member.queueNumberUsedAt && (
                           <Button
                             size="sm"
                             variant="outline"
                             disabled={redeemMutation.isPending}
                             onClick={async () => {
                               try {
-                                await redeemMutation.mutateAsync(m.endUserId)
-                                toast.success(`号码 ${m.queueNumber} 已核销`)
+                                await redeemMutation.mutateAsync(member.endUserId)
+                                toast.success(
+                                  m.activity_members_redeem_success({
+                                    number: member.queueNumber ?? "",
+                                  }),
+                                )
                               } catch (err) {
                                 if (err instanceof ApiError)
                                   toast.error(err.body.error)
-                                else toast.error("核销失败")
+                                else toast.error(m.activity_members_redeem_failed())
                               }
                             }}
                           >
-                            核销
+                            {m.activity_members_redeem()}
                           </Button>
                         )}
-                      {leaveAllowed && m.status === "joined" && (
+                      {leaveAllowed && member.status === "joined" && (
                         <Button
                           size="sm"
                           variant="ghost"
                           disabled={leaveMutation.isPending}
                           onClick={async () => {
-                            if (!confirm(`将 ${m.endUserId} 标记为离开？`))
+                            if (
+                              !confirm(
+                                m.activity_members_leave_confirm({
+                                  endUserId: member.endUserId,
+                                }),
+                              )
+                            )
                               return
                             try {
-                              await leaveMutation.mutateAsync(m.endUserId)
-                              toast.success("已标记离开")
+                              await leaveMutation.mutateAsync(member.endUserId)
+                              toast.success(m.activity_members_leave_success())
                             } catch (err) {
                               if (err instanceof ApiError)
                                 toast.error(err.body.error)
-                              else toast.error("操作失败")
+                              else toast.error(m.activity_members_leave_failed())
                             }
                           }}
                         >
-                          离开
+                          {m.activity_members_leave()}
                         </Button>
                       )}
                     </div>
