@@ -27,3 +27,6 @@ export { JsonEditor } from "./JsonEditor"
 export type { JsonEditorProps } from "./JsonEditor"
 
 export { FormSection, FormGrid } from "./FormSection"
+
+export { confirm, ConfirmHost } from "./confirm"
+export type { ConfirmInput } from "./confirm"

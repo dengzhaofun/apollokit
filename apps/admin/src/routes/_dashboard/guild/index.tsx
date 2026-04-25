@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
+import { ShieldIcon } from "lucide-react"
 
-import * as m from "#/paraglide/messages.js"
+import {
+  ErrorState,
+  PageBody,
+  PageHeader,
+  PageSection,
+  PageShell,
+} from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
 import {
@@ -12,6 +19,10 @@ import {
   TableRow,
 } from "#/components/ui/table"
 import { useGuildSettings, useGuilds } from "#/hooks/use-guild"
+import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
+
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/guild/")({
   component: GuildPage,
@@ -19,107 +30,136 @@ export const Route = createFileRoute("/_dashboard/guild/")({
 
 function GuildPage() {
   const { data: settings, isPending: settingsLoading } = useGuildSettings()
-  const { data: guilds, isPending: guildsLoading, error: guildsError } = useGuilds()
+  const {
+    data: guilds,
+    isPending: guildsLoading,
+    error: guildsError,
+    refetch,
+  } = useGuilds()
 
   return (
-    <>
-      <main className="flex-1 space-y-6 p-6">
-        {/* Settings card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{m.guild_settings()}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {settingsLoading ? (
-              <p className="text-muted-foreground">{m.common_loading()}</p>
-            ) : settings ? (
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div>
-                  <span className="text-muted-foreground">{m.guild_max_members()}</span>
-                  <p className="font-medium">{settings.maxMembers}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{m.guild_max_officers()}</span>
-                  <p className="font-medium">{settings.maxOfficers}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{m.guild_join_mode()}</span>
-                  <p className="font-medium">{settings.joinMode}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                {m.guild_no_settings()}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+    <PageShell>
+      <PageHeader
+        icon={<ShieldIcon className="size-5" />}
+        title={t("公会", "Guilds")}
+        description={t(
+          "查看公会数据 + 容量限制配置",
+          "Guild data + capacity & join mode settings",
+        )}
+      />
 
-        {/* Guilds table */}
-        <div className="rounded-xl border bg-card shadow-sm">
+      <PageBody>
+        <PageSection title={m.guild_settings()}>
+          <Card>
+            <CardHeader className="sr-only">
+              <CardTitle>{m.guild_settings()}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {settingsLoading ? (
+                <p className="text-muted-foreground">{m.common_loading()}</p>
+              ) : settings ? (
+                <div className="flex flex-wrap gap-8 text-sm">
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {m.guild_max_members()}
+                    </span>
+                    <p className="mt-1 font-mono text-xl font-semibold">
+                      {settings.maxMembers}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {m.guild_max_officers()}
+                    </span>
+                    <p className="mt-1 font-mono text-xl font-semibold">
+                      {settings.maxOfficers}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {m.guild_join_mode()}
+                    </span>
+                    <p className="mt-1 font-medium">
+                      <Badge variant="outline">{settings.joinMode}</Badge>
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">{m.guild_no_settings()}</p>
+              )}
+            </CardContent>
+          </Card>
+        </PageSection>
+
+        <PageSection title={m.guild_guilds()}>
           {guildsLoading ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
+            <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
               {m.common_loading()}
             </div>
           ) : guildsError ? (
-            <div className="flex h-40 items-center justify-center text-destructive">
-              {m.common_failed_to_load({ resource: m.guild_guilds(), error: guildsError.message })}
-            </div>
+            <ErrorState
+              title={t("公会加载失败", "Failed to load guilds")}
+              onRetry={() => refetch()}
+              retryLabel={t("重试", "Retry")}
+              error={guildsError instanceof Error ? guildsError : null}
+            />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Leader</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Join Mode</TableHead>
-                  <TableHead>Active</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {guilds && guilds.length > 0 ? (
-                  guilds.map((guild) => (
-                    <TableRow key={guild.id}>
-                      <TableCell className="font-medium">
-                        {guild.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {guild.leaderUserId}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{guild.level}</TableCell>
-                      <TableCell>
-                        {guild.memberCount} / {guild.maxMembers}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{guild.joinMode}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={guild.isActive ? "default" : "destructive"}
-                        >
-                          {guild.isActive ? "Active" : "Inactive"}
-                        </Badge>
+            <div className="rounded-lg border bg-card overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("名称", "Name")}</TableHead>
+                    <TableHead>{t("会长", "Leader")}</TableHead>
+                    <TableHead>{t("等级", "Level")}</TableHead>
+                    <TableHead>{t("成员", "Members")}</TableHead>
+                    <TableHead>{t("加入方式", "Join Mode")}</TableHead>
+                    <TableHead>{t("状态", "Status")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {guilds && guilds.length > 0 ? (
+                    guilds.map((guild) => (
+                      <TableRow key={guild.id}>
+                        <TableCell className="font-medium">
+                          {guild.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{guild.leaderUserId}</Badge>
+                        </TableCell>
+                        <TableCell className="font-mono">{guild.level}</TableCell>
+                        <TableCell className="font-mono">
+                          {guild.memberCount} / {guild.maxMembers}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{guild.joinMode}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={guild.isActive ? "default" : "destructive"}
+                          >
+                            {guild.isActive
+                              ? t("活跃", "Active")
+                              : t("禁用", "Inactive")}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        {m.guild_no_guilds()}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      {m.guild_no_guilds()}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
-        </div>
-      </main>
-    </>
+        </PageSection>
+      </PageBody>
+    </PageShell>
   )
 }

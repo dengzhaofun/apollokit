@@ -20,6 +20,7 @@ import {
   useUpdateLeaderboardConfig,
 } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
+import { confirm } from "#/components/patterns"
 import { PageHeaderActions } from "#/components/PageHeader"
 
 export const Route = createFileRoute("/_dashboard/leaderboard/$alias/")({
@@ -73,8 +74,13 @@ function LeaderboardDetailPage() {
             size="sm"
             disabled={deleteMutation.isPending}
             onClick={async () => {
-              if (!confirm(`确认删除排行榜 "${config.name}"？此操作不可恢复。`))
-                return
+              const ok = await confirm({
+                title: "删除排行榜?",
+                description: `排行榜 "${config.name}" 删除后,所有历史快照和实时数据都会丢失,不可恢复。`,
+                confirmLabel: "删除",
+                danger: true,
+              })
+              if (!ok) return
               try {
                 await deleteMutation.mutateAsync(config.id)
                 toast.success("已删除")

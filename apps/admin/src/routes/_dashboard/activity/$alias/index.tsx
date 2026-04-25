@@ -18,6 +18,7 @@ import {
 } from "#/components/activity/ActivityTable"
 import { NodeCreatorDialog } from "#/components/activity/NodeCreatorDialog"
 import {
+  confirm,
   DetailHeader,
   ErrorState,
   PageBody,
@@ -211,12 +212,13 @@ function ActivityDetailPage() {
               size="sm"
               disabled={deleteMutation.isPending}
               onClick={async () => {
-                if (
-                  !confirm(
-                    m.activity_detail_delete_confirm({ name: activity.name }),
-                  )
-                )
-                  return
+                const ok = await confirm({
+                  title: t("删除活动?", "Delete activity?"),
+                  description: m.activity_detail_delete_confirm({ name: activity.name }),
+                  confirmLabel: m.common_delete(),
+                  danger: true,
+                })
+                if (!ok) return
                 try {
                   await deleteMutation.mutateAsync(activity.id)
                   toast.success(m.activity_detail_delete_success())
@@ -636,14 +638,13 @@ function NodesPanel({
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
-                            if (
-                              !confirm(
-                                m.activity_nodes_delete_confirm({
-                                  alias: n.alias,
-                                }),
-                              )
-                            )
-                              return
+                            const ok = await confirm({
+                              title: t("删除节点?", "Delete node?"),
+                              description: m.activity_nodes_delete_confirm({ alias: n.alias }),
+                              confirmLabel: m.common_delete(),
+                              danger: true,
+                            })
+                            if (!ok) return
                             try {
                               await deleteMutation.mutateAsync(n.id)
                               toast.success(m.activity_nodes_delete_success())
@@ -896,14 +897,13 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (
-                        !confirm(
-                          m.activity_schedules_delete_confirm({
-                            alias: s.alias,
-                          }),
-                        )
-                      )
-                        return
+                      const ok = await confirm({
+                        title: t("删除排期?", "Delete schedule?"),
+                        description: m.activity_schedules_delete_confirm({ alias: s.alias }),
+                        confirmLabel: m.common_delete(),
+                        danger: true,
+                      })
+                      if (!ok) return
                       try {
                         await deleteMutation.mutateAsync(s.id)
                         toast.success(m.activity_schedules_delete_success())
@@ -1149,14 +1149,13 @@ function MembersPanel({
                           variant="ghost"
                           disabled={leaveMutation.isPending}
                           onClick={async () => {
-                            if (
-                              !confirm(
-                                m.activity_members_leave_confirm({
-                                  endUserId: member.endUserId,
-                                }),
-                              )
-                            )
-                              return
+                            const ok = await confirm({
+                              title: t("移除成员?", "Remove member?"),
+                              description: m.activity_members_leave_confirm({ endUserId: member.endUserId }),
+                              confirmLabel: m.activity_members_leave(),
+                              danger: true,
+                            })
+                            if (!ok) return
                             try {
                               await leaveMutation.mutateAsync(member.endUserId)
                               toast.success(m.activity_members_leave_success())

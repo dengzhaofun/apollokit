@@ -19,8 +19,10 @@ import {
   useInstantiateActivityTemplate,
 } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
+import { confirm } from "#/components/patterns"
 import { PageHeaderActions } from "#/components/PageHeader"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
 
 export const Route = createFileRoute("/_dashboard/activity/templates/")({
   component: ActivityTemplatesPage,
@@ -146,14 +148,13 @@ function ActivityTemplatesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
-                            if (
-                              !confirm(
-                                m.activity_template_delete_confirm({
-                                  alias: t.alias,
-                                }),
-                              )
-                            )
-                              return
+                            const ok = await confirm({
+                              title: getLocale() === "zh" ? "删除模板?" : "Delete template?",
+                              description: m.activity_template_delete_confirm({ alias: t.alias }),
+                              confirmLabel: m.common_delete(),
+                              danger: true,
+                            })
+                            if (!ok) return
                             try {
                               await deleteMutation.mutateAsync(t.id)
                               toast.success(m.activity_template_delete_success())

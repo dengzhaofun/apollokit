@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { LineChart } from "lucide-react"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import {
+  ComingSoon,
+  PageBody,
+  PageHeader,
+  PageShell,
+} from "#/components/patterns"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/analytics/modules/")({
@@ -10,20 +15,17 @@ export const Route = createFileRoute("/_dashboard/analytics/modules/")({
 
 function ModuleAnalyticsPage() {
   return (
-    <>
-      <PageHeaderActions>
-        <LineChart className="size-4" />
-      </PageHeaderActions>
-      <main className="flex-1 p-6">
-        <div className="rounded-xl border border-dashed bg-card p-8 text-card-foreground shadow-sm">
-          <h2 className="mb-2 text-2xl font-bold tracking-tight">
-            {m.analytics_modules_title()}
-          </h2>
-          <p className="text-muted-foreground">
-            {m.analytics_modules_coming_soon()}
-          </p>
-        </div>
-      </main>
-    </>
+    <PageShell>
+      <PageHeader
+        icon={<LineChart className="size-5" />}
+        title={m.analytics_modules_title()}
+      />
+      <PageBody>
+        <ComingSoon
+          title={m.analytics_modules_title()}
+          description={m.analytics_modules_coming_soon()}
+        />
+      </PageBody>
+    </PageShell>
   )
 }

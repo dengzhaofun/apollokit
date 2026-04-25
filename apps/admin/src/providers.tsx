@@ -9,6 +9,7 @@ import { Link, useRouter } from "@tanstack/react-router"
 import type { ReactNode } from "react"
 import { toast, Toaster } from "sonner"
 
+import { ConfirmHost } from "./components/patterns/confirm"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { authClient } from "./lib/auth-client"
 import { getLocale } from './paraglide/runtime.js'
@@ -91,6 +92,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <TooltipProvider>
           {children}
         </TooltipProvider>
+        <ConfirmHost />
         <Toaster />
       </AuthUIProvider>
     </QueryClientProvider>

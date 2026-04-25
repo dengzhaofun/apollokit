@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
+import { confirm } from "#/components/patterns"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -159,7 +160,13 @@ function CategoryRow({
             className="size-8 text-destructive"
             disabled={deleteMutation.isPending}
             onClick={async () => {
-              if (!confirm("Delete this category?")) return
+              const ok = await confirm({
+                title: "删除分类?",
+                description: `分类 "${category.name}" 删除后,关联 task definition 会失去分类绑定。`,
+                confirmLabel: "删除",
+                danger: true,
+              })
+              if (!ok) return
               try {
                 await deleteMutation.mutateAsync(category.id)
                 toast.success("Category deleted")

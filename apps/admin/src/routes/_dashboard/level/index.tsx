@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { Plus, Trash2 } from "lucide-react"
+import { Medal as MedalIcon, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  confirm,
+  EmptyList,
+  ErrorState,
+  PageBody,
+  PageHeader,
+  PageShell,
+} from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -15,44 +23,71 @@ import {
 import { useDeleteLevelConfig, useLevelConfigs } from "#/hooks/use-level"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
+
 export const Route = createFileRoute("/_dashboard/level/")({
   component: LevelListPage,
 })
 
 function LevelListPage() {
-  const { data: items, isPending, error } = useLevelConfigs()
+  const { data: items, isPending, error, refetch } = useLevelConfigs()
   const deleteMutation = useDeleteLevelConfig()
+  const total = items?.length ?? 0
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+    <PageShell>
+      <PageHeader
+        icon={<MedalIcon className="size-5" />}
+        title={t("等级配置", "Level configs")}
+        description={
+          isPending
+            ? t("加载中…", "Loading…")
+            : error
+              ? t("加载失败", "Failed to load")
+              : t(`共 ${total} 个等级体系`, `${total} configs total`)
+        }
+        actions={
           <Button asChild size="sm">
             <Link to="/level/create">
-              <Plus className="size-4" />
+              <Plus />
               {m.level_new_config()}
             </Link>
           </Button>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         {isPending ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
+          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
             {m.common_loading()}
           </div>
         ) : error ? (
-          <div className="flex h-40 items-center justify-center text-destructive">
-            {m.level_failed_load()} {error.message}
-          </div>
-        ) : !items?.length ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
-            {m.level_empty()}
-          </div>
+          <ErrorState
+            title={t("等级配置加载失败", "Failed to load level configs")}
+            onRetry={() => refetch()}
+            retryLabel={t("重试", "Retry")}
+            error={error instanceof Error ? error : null}
+          />
+        ) : total === 0 ? (
+          <EmptyList
+            title={t("还没有等级配置", "No level configs yet")}
+            description={t(
+              "创建第一个等级体系,定义 stages / levels / 解锁规则。",
+              "Create your first level config to define stages and unlock rules.",
+            )}
+            action={
+              <Button asChild size="sm">
+                <Link to="/level/create">
+                  <Plus />
+                  {m.level_new_config()}
+                </Link>
+              </Button>
+            }
+          />
         ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
+          <div className="rounded-lg border bg-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -67,7 +102,7 @@ function LevelListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((cfg) => (
+                {items!.map((cfg) => (
                   <TableRow key={cfg.id}>
                     <TableCell className="font-medium">
                       <Link
@@ -89,9 +124,7 @@ function LevelListPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={cfg.isActive ? "default" : "outline"}
-                      >
+                      <Badge variant={cfg.isActive ? "default" : "outline"}>
                         {cfg.isActive
                           ? m.common_active()
                           : m.common_inactive()}
@@ -112,6 +145,16 @@ function LevelListPage() {
                         size="sm"
                         disabled={deleteMutation.isPending}
                         onClick={async () => {
+                          const ok = await confirm({
+                            title: t("删除等级配置?", "Delete level config?"),
+                            description: t(
+                              `配置 "${cfg.name}" 删除后,关联的 stages / levels / 玩家进度都会丢失。`,
+                              `Config "${cfg.name}" will lose all stages, levels, and player progress.`,
+                            ),
+                            confirmLabel: m.common_delete(),
+                            danger: true,
+                          })
+                          if (!ok) return
                           try {
                             await deleteMutation.mutateAsync(cfg.id)
                             toast.success(m.level_config_deleted())
@@ -131,7 +174,7 @@ function LevelListPage() {
             </Table>
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
