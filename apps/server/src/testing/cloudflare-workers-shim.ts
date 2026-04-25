@@ -44,6 +44,9 @@ export const env = {
   get TINYBIRD_WORKSPACE_ID() {
     return process.env.TINYBIRD_WORKSPACE_ID!;
   },
+  get OPENROUTER_API_KEY() {
+    return process.env.OPENROUTER_API_KEY!;
+  },
   // EMAIL binding is intentionally omitted — tests run against a
   // real Neon branch but never through a real Email Service. The
   // mailer falls back to `console.log` when this is undefined, which

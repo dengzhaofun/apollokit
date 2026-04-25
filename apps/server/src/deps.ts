@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 
 import { db } from "./db";
+import { createAIProvider, type AIProvider } from "./lib/ai";
 import {
   createAnalyticsService,
   type AnalyticsService,
@@ -31,6 +32,7 @@ export type AppDeps = {
   storage: ObjectStorage;
   analytics: AnalyticsService;
   eventCatalog: EventCatalogService;
+  ai: AIProvider;
   // logger: typeof logger;
   // behaviorLog: typeof behaviorLog;
 };
@@ -54,6 +56,10 @@ export const deps: AppDeps = {
   analytics: createLazyAnalytics(),
   // Event catalog only depends on `db` — safe to construct eagerly.
   eventCatalog: createEventCatalogService({ db }),
+  // AI provider lazily constructs the OpenRouter client on first call,
+  // so importing this module under Node (e.g. drizzle-kit) doesn't need
+  // OPENROUTER_API_KEY to be present.
+  ai: createAIProvider(),
 };
 
 /**

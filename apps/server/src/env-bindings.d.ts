@@ -13,5 +13,6 @@ declare namespace Cloudflare {
     TINYBIRD_TOKEN: string;
     TINYBIRD_URL: string;
     TINYBIRD_WORKSPACE_ID: string;
+    OPENROUTER_API_KEY: string;
   }
 }
