@@ -12,6 +12,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import {
   RATING_STRATEGIES,
   SEASON_STATUSES,
@@ -448,6 +449,10 @@ export const ListSeasonsQuerySchema = z.object({
     .enum(SEASON_STATUSES)
     .optional()
     .openapi({ param: { name: "status", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
 });
 
 export const ListPlayersQuerySchema = z.object({
@@ -503,9 +508,9 @@ export const RankTierConfigResponseSchema = z
   })
   .openapi("RankTierConfig");
 
-export const RankTierConfigListResponseSchema = z
-  .object({ items: z.array(RankTierConfigResponseSchema) })
-  .openapi("RankTierConfigList");
+export const RankTierConfigListResponseSchema = pageOf(RankTierConfigResponseSchema).openapi(
+  "RankTierConfigList",
+);
 
 export const RankSeasonResponseSchema = z
   .object({
@@ -525,9 +530,9 @@ export const RankSeasonResponseSchema = z
   })
   .openapi("RankSeason");
 
-export const RankSeasonListResponseSchema = z
-  .object({ items: z.array(RankSeasonResponseSchema) })
-  .openapi("RankSeasonList");
+export const RankSeasonListResponseSchema = pageOf(RankSeasonResponseSchema).openapi(
+  "RankSeasonList",
+);
 
 export const PlayerRankViewResponseSchema = z
   .object({

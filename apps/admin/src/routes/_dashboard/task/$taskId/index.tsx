@@ -13,7 +13,7 @@ import {
   useTaskDefinition,
   useUpdateTaskDefinition,
   useDeleteTaskDefinition,
-  useTaskCategories,
+  useAllTaskCategories,
 } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
 import type { CreateDefinitionInput } from "#/lib/types/task"
@@ -26,7 +26,7 @@ function TaskDetailPage() {
   const { taskId } = Route.useParams()
   const navigate = useNavigate()
   const { data: definition, isPending, error } = useTaskDefinition(taskId)
-  const { data: categories } = useTaskCategories()
+  const { data: categories } = useAllTaskCategories()
   const updateMutation = useUpdateTaskDefinition()
   const deleteMutation = useDeleteTaskDefinition()
 

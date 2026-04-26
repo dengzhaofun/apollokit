@@ -1,85 +1,98 @@
 import { Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import { useMemo } from "react"
 
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
-import * as m from "#/paraglide/messages.js"
+import { useBannerGroups } from "#/hooks/use-banner"
 import type { BannerGroup } from "#/lib/types/banner"
+import * as m from "#/paraglide/messages.js"
 
-interface GroupTableProps {
-  data: BannerGroup[]
+const columnHelper = createColumnHelper<BannerGroup>()
+
+function useColumns(): ColumnDef<BannerGroup, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.common_name(),
+        cell: (info) => (
+          <Link
+            to="/banner/$groupId"
+            params={{ groupId: info.row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.common_alias(),
+        cell: (info) => {
+          const alias = info.getValue()
+          return alias ? (
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
+          ) : (
+            <Badge variant="outline">{m.banner_draft_badge()}</Badge>
+          )
+        },
+      }),
+      columnHelper.accessor("layout", {
+        header: () => m.banner_field_layout(),
+        cell: (info) => (
+          <Badge variant="secondary">
+            {info.getValue() === "carousel"
+              ? m.banner_layout_carousel()
+              : info.getValue() === "single"
+                ? m.banner_layout_single()
+                : m.banner_layout_grid()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("isActive", {
+        header: () => m.common_status(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "outline"}>
+            {info.getValue() ? m.banner_status_active() : m.banner_status_inactive()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("updatedAt", {
+        header: () => m.common_updated(),
+        cell: (info) => (
+          <span className="text-muted-foreground">
+            {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
+          </span>
+        ),
+      }),
+    ],
+    [],
+  ) as ColumnDef<BannerGroup, unknown>[]
 }
 
-export function GroupTable({ data }: GroupTableProps) {
+interface Props {
+  activityId?: string
+  includeActivity?: boolean
+}
+
+export function GroupTable(props: Props = {}) {
+  const list = useBannerGroups(props)
+  const columns = useColumns()
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{m.common_name()}</TableHead>
-          <TableHead>{m.common_alias()}</TableHead>
-          <TableHead>{m.banner_field_layout()}</TableHead>
-          <TableHead>{m.common_status()}</TableHead>
-          <TableHead>{m.common_updated()}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={5} className="h-24 text-center">
-              {m.banner_empty()}
-            </TableCell>
-          </TableRow>
-        ) : (
-          data.map((g) => (
-            <TableRow key={g.id}>
-              <TableCell>
-                <Link
-                  to="/banner/$groupId"
-                  params={{ groupId: g.id }}
-                  className="font-medium hover:underline"
-                >
-                  {g.name}
-                </Link>
-              </TableCell>
-              <TableCell>
-                {g.alias ? (
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {g.alias}
-                  </code>
-                ) : (
-                  <Badge variant="outline">{m.banner_draft_badge()}</Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">
-                  {g.layout === "carousel"
-                    ? m.banner_layout_carousel()
-                    : g.layout === "single"
-                      ? m.banner_layout_single()
-                      : m.banner_layout_grid()}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant={g.isActive ? "default" : "outline"}>
-                  {g.isActive
-                    ? m.banner_status_active()
-                    : m.banner_status_inactive()}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {format(new Date(g.updatedAt), "yyyy-MM-dd HH:mm")}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={list.items}
+      isLoading={list.isLoading}
+      getRowId={(row) => row.id}
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
+    />
   )
 }

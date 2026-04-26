@@ -141,8 +141,8 @@ describe("friend-gift service", () => {
 
   test("listPackages returns all packages", async () => {
     const pkgs = await svc.listPackages(orgId);
-    expect(pkgs.length).toBeGreaterThanOrEqual(1);
-    expect(pkgs.some((p) => p.id === packageId)).toBe(true);
+    expect(pkgs.items.length).toBeGreaterThanOrEqual(1);
+    expect(pkgs.items.some((p) => p.id === packageId)).toBe(true);
   });
 
   test("updatePackage updates fields", async () => {
@@ -361,14 +361,14 @@ describe("friend-gift service", () => {
 
   test("listSends returns all gift sends", async () => {
     const sends = await svc.listSends(orgId);
-    expect(sends.length).toBeGreaterThanOrEqual(1);
+    expect(sends.items.length).toBeGreaterThanOrEqual(1);
     // All belong to our org
-    expect(sends.every((s) => s.organizationId === orgId)).toBe(true);
+    expect(sends.items.every((s) => s.organizationId === orgId)).toBe(true);
   });
 
   test("listSends respects pagination", async () => {
-    const page = await svc.listSends(orgId, { limit: 1, offset: 0 });
-    expect(page.length).toBeLessThanOrEqual(1);
+    const page = await svc.listSends(orgId, { limit: 1 });
+    expect(page.items.length).toBeLessThanOrEqual(1);
   });
 
   test("getSend returns a specific send", async () => {

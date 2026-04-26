@@ -1,20 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   Character,
-  CharacterListResponse,
   CreateCharacterInput,
   UpdateCharacterInput,
 } from "#/lib/types/character"
 
 const CHARACTERS_KEY = ["characters"] as const
 
-export function useCharacters() {
-  return useQuery({
+/** Paginated characters — for the admin table. */
+export function useCharacters(initialPageSize = 50) {
+  return useCursorList<Character>({
     queryKey: CHARACTERS_KEY,
-    queryFn: () => api.get<CharacterListResponse>("/api/character/characters"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<Character>>(
+        `/api/character/characters?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllCharacters() {
+  return useQuery({
+    queryKey: [...CHARACTERS_KEY, "all"],
+    queryFn: () =>
+      api
+        .get<Page<Character>>(`/api/character/characters?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 

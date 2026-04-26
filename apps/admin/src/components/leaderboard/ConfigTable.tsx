@@ -10,6 +10,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "#/components/ui/empty"
+import { useLeaderboardConfigs } from "#/hooks/use-leaderboard"
 import type { LeaderboardConfig } from "#/lib/types/leaderboard"
 import * as m from "#/paraglide/messages.js"
 
@@ -72,18 +73,14 @@ const columns = [
   }),
 ]
 
-export function LeaderboardConfigTable({
-  data,
-  isLoading,
-}: {
-  data: LeaderboardConfig[]
-  isLoading?: boolean
-}) {
+export function LeaderboardConfigTable() {
+  const list = useLeaderboardConfigs()
   return (
     <DataTable
       columns={columns}
-      data={data}
-      isLoading={isLoading}
+      data={list.items}
+      isLoading={list.isLoading}
+      getRowId={(row) => row.id}
       empty={
         <Empty className="border-0">
           <EmptyHeader>
@@ -92,6 +89,15 @@ export function LeaderboardConfigTable({
           </EmptyHeader>
         </Empty>
       }
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
     />
   )
 }

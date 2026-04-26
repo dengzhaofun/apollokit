@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_dashboard/task/categories/")({
 })
 
 function CategoriesPage() {
-  const { data: categories, isPending, error } = useTaskCategories()
+  const list = useTaskCategories()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<TaskCategory | null>(null)
 
@@ -74,46 +74,64 @@ function CategoriesPage() {
         </div>
       </PageHeaderActions>
 
-      <main className="flex-1 p-6">
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
-            {m.common_loading()}
-          </div>
-        ) : error ? (
-          <div className="flex h-40 items-center justify-center text-destructive">
-            Failed to load categories: {error.message}
-          </div>
-        ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
-            <Table>
-              <TableHeader>
+      <main className="flex-1 space-y-3 p-6">
+        <div className="rounded-xl border bg-card shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{m.common_name()}</TableHead>
+                <TableHead>{m.common_alias()}</TableHead>
+                <TableHead>Scope</TableHead>
+                <TableHead>{m.common_status()}</TableHead>
+                <TableHead>Sort</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.isLoading ? (
                 <TableRow>
-                  <TableHead>{m.common_name()}</TableHead>
-                  <TableHead>{m.common_alias()}</TableHead>
-                  <TableHead>Scope</TableHead>
-                  <TableHead>{m.common_status()}</TableHead>
-                  <TableHead>Sort</TableHead>
-                  <TableHead></TableHead>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    {m.common_loading()}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(categories ?? []).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      No categories yet.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  (categories ?? []).map((cat) => (
-                    <CategoryRow
-                      key={cat.id}
-                      category={cat}
-                      onEdit={() => { setEditing(cat); setOpen(true) }}
-                    />
-                  ))
-                )}
-              </TableBody>
-            </Table>
+              ) : list.items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    No categories yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                list.items.map((cat) => (
+                  <CategoryRow
+                    key={cat.id}
+                    category={cat}
+                    onEdit={() => { setEditing(cat); setOpen(true) }}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {/* Minimal cursor pager — categories rarely span multiple pages,
+            but support next/prev so > 50 categories don't get truncated. */}
+        {(list.canPrev || list.canNext) && (
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={list.prevPage}
+              disabled={!list.canPrev || list.isLoading}
+            >
+              {m.data_table_prev()}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={list.nextPage}
+              disabled={!list.canNext || list.isLoading}
+            >
+              {m.data_table_next()}
+            </Button>
           </div>
         )}
       </main>

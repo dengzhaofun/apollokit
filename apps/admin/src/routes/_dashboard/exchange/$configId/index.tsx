@@ -14,7 +14,6 @@ import {
   useExchangeConfig,
   useUpdateExchangeConfig,
   useDeleteExchangeConfig,
-  useExchangeOptions,
 } from "#/hooks/use-exchange"
 import { ApiError } from "#/lib/api-client"
 
@@ -28,8 +27,6 @@ function ExchangeConfigDetailPage() {
   const [editing, setEditing] = useState(false)
 
   const { data: config, isPending, error } = useExchangeConfig(configId)
-  const { data: options, isPending: optionsPending } =
-    useExchangeOptions(configId)
   const updateMutation = useUpdateExchangeConfig()
   const deleteMutation = useDeleteExchangeConfig()
 
@@ -178,15 +175,7 @@ function ExchangeConfigDetailPage() {
                 </Link>
               </Button>
             </div>
-            {optionsPending ? (
-              <div className="flex h-24 items-center justify-center text-muted-foreground">
-                {m.common_loading()}
-              </div>
-            ) : (
-              <div className="rounded-xl border bg-card shadow-sm">
-                <OptionTable data={options ?? []} />
-              </div>
-            )}
+            <OptionTable configKey={configId} />
           </div>
         </div>
       </main>

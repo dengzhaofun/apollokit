@@ -23,15 +23,15 @@ export interface EndUser {
 
 export interface EndUserListResponse {
   items: EndUser[]
-  total: number
+  nextCursor: string | null
 }
 
 export interface ListEndUsersQuery {
   search?: string
   origin?: EndUserOrigin
   disabled?: boolean
+  cursor?: string
   limit?: number
-  offset?: number
 }
 
 export interface UpdateEndUserInput {

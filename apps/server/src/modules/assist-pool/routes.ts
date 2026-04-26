@@ -155,11 +155,17 @@ assistPoolRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
-    const rows = await assistPoolService.listConfigs(orgId, {
+    const page = await assistPoolService.listConfigs(orgId, {
       activityId: q.activityId,
       includeActivity: q.includeActivity === "true",
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

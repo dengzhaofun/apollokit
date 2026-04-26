@@ -115,6 +115,7 @@ mailRouter.openapi(
       limit: query.limit,
       cursor: query.cursor,
       targetType: query.targetType,
+      q: query.q,
     });
     return c.json(ok({ items: items.map(serializeMessage), nextCursor }), 200,);
   },

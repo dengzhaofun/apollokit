@@ -35,9 +35,16 @@
  * methods.
  */
 
-import { and, desc, eq, gt, ilike, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, isNull, lte, or, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { announcements } from "../../schema/announcement";
 import {
   AnnouncementAliasConflict,
@@ -159,9 +166,10 @@ export function createAnnouncementService(d: AnnouncementDeps) {
 
     async list(
       organizationId: string,
-      filter: ListAnnouncementsQuery = {},
-    ): Promise<Announcement[]> {
-      const conds = [eq(announcements.organizationId, organizationId)];
+      filter: ListAnnouncementsQuery & PageParams = {},
+    ): Promise<Page<Announcement>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(announcements.organizationId, organizationId)];
       if (filter.kind) conds.push(eq(announcements.kind, filter.kind));
       if (filter.isActive === "true")
         conds.push(eq(announcements.isActive, true));
@@ -175,14 +183,15 @@ export function createAnnouncementService(d: AnnouncementDeps) {
         );
         if (qCond) conds.push(qCond);
       }
-      return db
+      const seek = cursorWhere(filter.cursor, announcements.createdAt, announcements.id);
+      if (seek) conds.push(seek);
+      const rows = await db
         .select()
         .from(announcements)
         .where(and(...conds))
-        .orderBy(
-          desc(announcements.priority),
-          desc(announcements.createdAt),
-        );
+        .orderBy(desc(announcements.createdAt), desc(announcements.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getByAlias(

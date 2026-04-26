@@ -161,7 +161,7 @@ describe("shop service", () => {
       categoryId: cat.id,
       tagId: tag.id,
     });
-    expect(filtered.some((p) => p.id === prod.id)).toBe(true);
+    expect(filtered.items.some((p) => p.id === prod.id)).toBe(true);
   });
 
   // ─── Purchase: timeWindowType = none (happy path + balances) ──

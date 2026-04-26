@@ -13,9 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
-import { useCurrencies } from "#/hooks/use-currency"
+import { useAllCurrencies } from "#/hooks/use-currency"
 import {
-  useStorageBoxConfigs,
+  useAllStorageBoxConfigs,
   useUserDeposits,
   useWithdraw,
 } from "#/hooks/use-storage-box"
@@ -26,8 +26,8 @@ export function StorageBoxDepositLookup() {
   const [input, setInput] = useState("")
   const [endUserId, setEndUserId] = useState("")
   const { data: deposits, isPending, error } = useUserDeposits(endUserId)
-  const { data: configs } = useStorageBoxConfigs()
-  const { data: defs } = useCurrencies()
+  const { data: configs } = useAllStorageBoxConfigs()
+  const { data: defs } = useAllCurrencies()
   const withdraw = useWithdraw()
 
   const configById = new Map((configs ?? []).map((c) => [c.id, c]))

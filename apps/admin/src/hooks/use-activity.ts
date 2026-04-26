@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   Activity,
   ActivityMemberListItem,
@@ -18,11 +19,24 @@ import type {
 
 const KEY = ["activities"] as const
 
-export function useActivities() {
-  return useQuery({
+/** Paginated activities — for the admin ActivityTable. */
+export function useActivities(initialPageSize = 50) {
+  return useCursorList<Activity>({
     queryKey: KEY,
-    queryFn: () => api.get<{ items: Activity[] }>("/api/activity"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<Activity>>(`/api/activity?${buildQs({ cursor, limit, q })}`),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllActivities() {
+  return useQuery({
+    queryKey: [...KEY, "all"],
+    queryFn: () =>
+      api
+        .get<Page<Activity>>(`/api/activity?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 

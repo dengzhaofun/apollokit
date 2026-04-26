@@ -12,6 +12,8 @@
  */
 
 import { z } from "@hono/zod-openapi";
+
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -221,6 +223,7 @@ rankRouter.openapi(
     path: "/tier-configs",
     tags: [TAG],
     summary: "List tier configs",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -233,8 +236,11 @@ rankRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await rankService.listTierConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeTierConfig) }), 200);
+    const page = await rankService.listTierConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeTierConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -360,8 +366,11 @@ rankRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const filter = c.req.valid("query");
-    const rows = await rankService.listSeasons(orgId, filter);
-    return c.json(ok({ items: rows.map(serializeSeason) }), 200);
+    const page = await rankService.listSeasons(orgId, filter);
+    return c.json(
+      ok({ items: page.items.map(serializeSeason), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

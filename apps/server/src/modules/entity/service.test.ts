@@ -98,9 +98,9 @@ describe("entity service — Phase 1 CRUD", () => {
   });
 
   test("listSchemas", async () => {
-    const rows = await svc.listSchemas(orgId);
-    expect(rows.length).toBeGreaterThanOrEqual(2);
-    const names = rows.map((r) => r.name);
+    const page = await svc.listSchemas(orgId);
+    expect(page.items.length).toBeGreaterThanOrEqual(2);
+    const names = page.items.map((r) => r.name);
     expect(names).toContain("英雄");
     expect(names).toContain("武器");
   });
@@ -208,21 +208,21 @@ describe("entity service — Phase 1 CRUD", () => {
   });
 
   test("listBlueprints — all", async () => {
-    const rows = await svc.listBlueprints(orgId);
-    expect(rows.length).toBeGreaterThanOrEqual(3);
+    const page = await svc.listBlueprints(orgId);
+    expect(page.items.length).toBeGreaterThanOrEqual(3);
   });
 
   test("listBlueprints — filter by schemaId", async () => {
     const heroBlueprints = await svc.listBlueprints(orgId, {
       schemaId: heroSchemaId,
     });
-    expect(heroBlueprints.every((r) => r.schemaId === heroSchemaId)).toBe(true);
-    expect(heroBlueprints.length).toBe(2);
+    expect(heroBlueprints.items.every((r) => r.schemaId === heroSchemaId)).toBe(true);
+    expect(heroBlueprints.items.length).toBe(2);
 
     const weaponBlueprints = await svc.listBlueprints(orgId, {
       schemaId: weaponSchemaId,
     });
-    expect(weaponBlueprints.length).toBe(1);
+    expect(weaponBlueprints.items.length).toBe(1);
   });
 
   test("getBlueprint — by alias", async () => {
@@ -338,8 +338,8 @@ describe("entity service — Phase 1 CRUD", () => {
   });
 
   test("listFormationConfigs", async () => {
-    const rows = await svc.listFormationConfigs(orgId);
-    expect(rows.length).toBe(1);
+    const page = await svc.listFormationConfigs(orgId);
+    expect(page.items.length).toBe(1);
   });
 
   test("getFormationConfig — by alias", async () => {

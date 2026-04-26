@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   EndUser,
-  EndUserListResponse,
-  ListEndUsersQuery,
+  EndUserOrigin,
   SignOutAllResponse,
   SyncEndUserInput,
   SyncEndUserResponse,
@@ -13,31 +13,35 @@ import type {
 
 const END_USERS_KEY = ["end-user"] as const
 
-function buildQuery(filter: ListEndUsersQuery | undefined): string {
-  if (!filter) return ""
-  const p = new URLSearchParams()
-  if (filter.search) p.set("search", filter.search)
-  if (filter.origin) p.set("origin", filter.origin)
-  if (filter.disabled !== undefined) p.set("disabled", String(filter.disabled))
-  if (filter.limit) p.set("limit", String(filter.limit))
-  if (filter.offset) p.set("offset", String(filter.offset))
-  const qs = p.toString()
-  return qs ? `?${qs}` : ""
-}
-
-export function useEndUsers(filter: ListEndUsersQuery = {}) {
-  const qs = buildQuery(filter)
-  return useQuery({
+/**
+ * Paginated end-users — server-side cursor pagination + search filter.
+ * The `q` of useCursorList maps to the legacy `search` query param.
+ */
+export function useEndUsers(
+  opts: {
+    initialPageSize?: number
+    origin?: EndUserOrigin
+    disabled?: boolean
+  } = {},
+) {
+  const { initialPageSize = 50, origin, disabled } = opts
+  return useCursorList<EndUser>({
     queryKey: [
       ...END_USERS_KEY,
       "list",
-      filter.search ?? null,
-      filter.origin ?? null,
-      filter.disabled ?? null,
-      filter.limit ?? null,
-      filter.offset ?? null,
+      { origin: origin ?? null, disabled: disabled ?? null },
     ],
-    queryFn: () => api.get<EndUserListResponse>(`/api/end-user${qs}`),
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<EndUser>>(
+        `/api/end-user?${buildQs({
+          cursor,
+          limit,
+          search: q,
+          origin,
+          disabled: disabled == null ? undefined : String(disabled),
+        })}`,
+      ),
+    initialPageSize,
   })
 }
 

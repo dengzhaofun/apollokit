@@ -21,6 +21,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf, PaginationQuerySchema } from "../../lib/pagination";
+
 // ─── Primitives ──────────────────────────────────────────────────
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -538,6 +540,11 @@ export const ListProductsQuerySchema = z
       description:
         "When 'true', include activity-scoped products in the result. Default lists standalone products only.",
     }),
+    cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+    limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+      param: { name: "limit", in: "query" },
+    }),
+    q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
   })
   .openapi("ShopListProductsQuery");
 
@@ -766,13 +773,11 @@ export const CategoryTreeResponseSchema = z
   .object({ items: z.array(ShopCategoryTreeNodeSchema) })
   .openapi("ShopCategoryTree");
 
-export const TagListResponseSchema = z
-  .object({ items: z.array(ShopTagResponseSchema) })
-  .openapi("ShopTagList");
+export const TagListResponseSchema = pageOf(ShopTagResponseSchema).openapi("ShopTagList");
 
-export const ProductListResponseSchema = z
-  .object({ items: z.array(ShopProductResponseSchema) })
-  .openapi("ShopProductList");
+export const ProductListResponseSchema = pageOf(ShopProductResponseSchema).openapi(
+  "ShopProductList",
+);
 
 export const GrowthStageListResponseSchema = z
   .object({ items: z.array(ShopGrowthStageResponseSchema) })

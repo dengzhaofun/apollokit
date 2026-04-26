@@ -63,7 +63,11 @@ activityClientRouter.openapi(
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const now = new Date();
-    const rows = await activityService.listActivities(orgId);
+    // Client view fetches a single high-cap page — players don't paginate
+    // the activity list, the server is expected to return the visible set
+    // in one shot. If a tenant ever has > 200 *active* activities for a
+    // single end-user, this should be revisited.
+    const { items: rows } = await activityService.listActivities(orgId, { limit: 200 });
     // Only return things the player can see — anything past visible_at
     // and before hidden_at, and not draft.
     const visible = rows.filter(

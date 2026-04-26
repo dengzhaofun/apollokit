@@ -1,26 +1,70 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { Plus } from "lucide-react"
+import { useMemo } from "react"
 
 import * as m from "#/paraglide/messages.js"
+import { DataTable } from "#/components/data-table/DataTable"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
 import { useTeamConfigs } from "#/hooks/use-team"
+import type { TeamConfig } from "#/lib/types/team"
 
 export const Route = createFileRoute("/_dashboard/team/")({
   component: TeamPage,
 })
 
+const columnHelper = createColumnHelper<TeamConfig>()
+
+function useColumns(): ColumnDef<TeamConfig, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.common_name(),
+        cell: (info) => (
+          <Link
+            to="/team/$configId"
+            params={{ configId: info.row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.common_alias(),
+        cell: (info) => info.getValue() ?? "-",
+      }),
+      columnHelper.accessor("maxMembers", { header: () => m.team_max_members() }),
+      columnHelper.accessor("autoDissolveOnLeaderLeave", {
+        header: () => m.team_auto_dissolve(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "secondary"}>
+            {info.getValue() ? "Yes" : "No"}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("allowQuickMatch", {
+        header: () => m.team_quick_match(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "secondary"}>
+            {info.getValue() ? "Yes" : "No"}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("createdAt", {
+        header: () => m.common_created(),
+        cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      }),
+    ],
+    [],
+  ) as ColumnDef<TeamConfig, unknown>[]
+}
+
 function TeamPage() {
-  const { data: configs, isPending, error } = useTeamConfigs()
+  const list = useTeamConfigs()
+  const columns = useColumns()
 
   return (
     <>
@@ -36,81 +80,21 @@ function TeamPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <div className="rounded-xl border bg-card shadow-sm">
-          {isPending ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
-              {m.common_loading()}
-            </div>
-          ) : error ? (
-            <div className="flex h-40 items-center justify-center text-destructive">
-              {m.common_failed_to_load({ resource: m.team_title(), error: error.message })}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m.common_name()}</TableHead>
-                  <TableHead>{m.common_alias()}</TableHead>
-                  <TableHead>{m.team_max_members()}</TableHead>
-                  <TableHead>{m.team_auto_dissolve()}</TableHead>
-                  <TableHead>{m.team_quick_match()}</TableHead>
-                  <TableHead>{m.common_created()}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {configs && configs.length > 0 ? (
-                  configs.map((cfg) => (
-                    <TableRow key={cfg.id}>
-                      <TableCell className="font-medium">
-                        <Link
-                          to="/team/$configId"
-                          params={{ configId: cfg.id }}
-                          className="hover:underline"
-                        >
-                          {cfg.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{cfg.alias ?? "-"}</TableCell>
-                      <TableCell>{cfg.maxMembers}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            cfg.autoDissolveOnLeaderLeave
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {cfg.autoDissolveOnLeaderLeave ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            cfg.allowQuickMatch ? "default" : "secondary"
-                          }
-                        >
-                          {cfg.allowQuickMatch ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(cfg.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      {m.team_no_configs()}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+        <DataTable
+          columns={columns}
+          data={list.items}
+          isLoading={list.isLoading}
+          getRowId={(row) => row.id}
+          pageIndex={list.pageIndex}
+          canPrev={list.canPrev}
+          canNext={list.canNext}
+          onNextPage={list.nextPage}
+          onPrevPage={list.prevPage}
+          pageSize={list.pageSize}
+          onPageSizeChange={list.setPageSize}
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+        />
       </main>
     </>
   )

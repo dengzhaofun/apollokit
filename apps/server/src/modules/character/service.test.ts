@@ -39,7 +39,7 @@ describe("character service — CRUD", () => {
     expect(got.name).toBe("Village Chief");
 
     const list = await svc.listCharacters(orgId);
-    expect(list.some((c) => c.id === created.id)).toBe(true);
+    expect(list.items.some((c) => c.id === created.id)).toBe(true);
   });
 
   test("alias null is allowed; partial unique index lets multiple nullish coexist", async () => {
@@ -116,7 +116,7 @@ describe("character service — org isolation", () => {
     await svc.createCharacter(orgA, { name: "only-a-1" });
     await svc.createCharacter(orgA, { name: "only-a-2" });
     const bList = await svc.listCharacters(orgB);
-    const bNames = bList.map((c) => c.name);
+    const bNames = bList.items.map((c) => c.name);
     expect(bNames).not.toContain("only-a-1");
     expect(bNames).not.toContain("only-a-2");
   });

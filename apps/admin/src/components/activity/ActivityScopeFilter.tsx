@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { useActivities } from "#/hooks/use-activity"
+import { useAllActivities } from "#/hooks/use-activity"
 import * as m from "#/paraglide/messages.js"
 
 export type ActivityScope =
@@ -35,7 +35,7 @@ export function ActivityScopeFilter({
   onChange: (scope: ActivityScope) => void
   label?: string
 }) {
-  const { data: activities } = useActivities()
+  const { data: activities } = useAllActivities()
   const selectValue =
     value.kind === "standalone"
       ? STANDALONE

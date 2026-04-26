@@ -46,7 +46,7 @@ describe("currency service", () => {
       expect(gem.activityId).toBeNull();
 
       const list = await svc.listDefinitions(orgId);
-      expect(list.some((c) => c.id === gem.id)).toBe(true);
+      expect(list.items.some((c) => c.id === gem.id)).toBe(true);
 
       const viaAlias = await svc.getDefinition(orgId, "cur-gem");
       expect(viaAlias.id).toBe(gem.id);
@@ -86,13 +86,13 @@ describe("currency service", () => {
         activityId: fakeActivityId,
       });
       const permOnly = await svc.listDefinitions(orgId, { activityId: null });
-      expect(permOnly.every((c) => c.activityId === null)).toBe(true);
+      expect(permOnly.items.every((c) => c.activityId === null)).toBe(true);
 
       const scoped = await svc.listDefinitions(orgId, {
         activityId: fakeActivityId,
       });
-      expect(scoped.map((c) => c.id)).toContain(bound.id);
-      expect(scoped.every((c) => c.activityId === fakeActivityId)).toBe(true);
+      expect(scoped.items.map((c) => c.id)).toContain(bound.id);
+      expect(scoped.items.every((c) => c.activityId === fakeActivityId)).toBe(true);
     });
 
     test("delete removes the row", async () => {

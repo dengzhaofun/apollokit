@@ -83,15 +83,15 @@ describe("assist-pool service", () => {
       activityId: scopedId,
     });
     const standalone = await svc.listConfigs(orgId);
-    const aliases = new Set(standalone.map((r) => r.alias));
+    const aliases = new Set(standalone.items.map((r) => r.alias));
     expect(aliases.has("scope-standalone")).toBe(true);
     expect(aliases.has("scope-activity")).toBe(false);
 
     const all = await svc.listConfigs(orgId, { includeActivity: true });
-    expect(new Set(all.map((r) => r.alias)).has("scope-activity")).toBe(true);
+    expect(new Set(all.items.map((r) => r.alias)).has("scope-activity")).toBe(true);
 
     const only = await svc.listConfigs(orgId, { activityId: scopedId });
-    expect(only.map((r) => r.alias)).toEqual(["scope-activity"]);
+    expect(only.items.map((r) => r.alias)).toEqual(["scope-activity"]);
   });
 
   test("initiate + contribute reaches completion exactly at target", async () => {

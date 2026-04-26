@@ -18,7 +18,7 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
   useEntitySchema,
-  useEntityBlueprints,
+  useAllEntityBlueprints,
   useDeleteEntitySchema,
 } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
@@ -35,7 +35,7 @@ function SchemaDetailPage() {
   const { schemaId } = Route.useParams()
   const navigate = useNavigate()
   const { data: schema, isPending, error } = useEntitySchema(schemaId)
-  const { data: blueprints } = useEntityBlueprints(schemaId)
+  const { data: blueprints } = useAllEntityBlueprints({ schemaId })
   const deleteMutation = useDeleteEntitySchema()
 
   if (isPending) {

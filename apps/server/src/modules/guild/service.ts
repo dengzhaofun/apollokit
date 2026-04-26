@@ -25,9 +25,16 @@
  * guild_members joined to guild_guilds.isActive before adding a member.
  */
 
-import { and, count, desc, eq, ilike, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   guildContributionLogs,
   guildGuilds,
@@ -435,36 +442,27 @@ export function createGuildService(d: GuildDeps) {
 
     async listGuilds(
       orgId: string,
-      opts?: { search?: string; limit?: number; offset?: number },
-    ): Promise<{ items: Guild[]; total: number }> {
-      const limit = opts?.limit ?? 20;
-      const offset = opts?.offset ?? 0;
-
-      const conditions = [
+      opts: PageParams & { search?: string } = {},
+    ): Promise<Page<Guild>> {
+      const limit = clampLimit(opts.limit);
+      // `search` is the legacy alias; `q` is the new standard. Honor both.
+      const searchTerm = opts.q ?? opts.search;
+      const conditions: SQL[] = [
         eq(guildGuilds.organizationId, orgId),
         eq(guildGuilds.isActive, true),
       ];
-      if (opts?.search) {
-        conditions.push(ilike(guildGuilds.name, `%${opts.search}%`));
+      if (searchTerm) {
+        conditions.push(ilike(guildGuilds.name, `%${searchTerm}%`));
       }
-
-      const where = and(...conditions);
-
-      const [items, totalResult] = await Promise.all([
-        db
-          .select()
-          .from(guildGuilds)
-          .where(where)
-          .orderBy(desc(guildGuilds.createdAt))
-          .limit(limit)
-          .offset(offset),
-        db
-          .select({ count: count() })
-          .from(guildGuilds)
-          .where(where),
-      ]);
-
-      return { items, total: totalResult[0]?.count ?? 0 };
+      const seek = cursorWhere(opts.cursor, guildGuilds.createdAt, guildGuilds.id);
+      if (seek) conditions.push(seek);
+      const rows = await db
+        .select()
+        .from(guildGuilds)
+        .where(and(...conditions))
+        .orderBy(desc(guildGuilds.createdAt), desc(guildGuilds.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async updateGuild(

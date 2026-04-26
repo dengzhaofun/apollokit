@@ -5,7 +5,10 @@
  * routers — serialize → call service → onError maps ModuleError to JSON.
  */
 
+import { z } from "@hono/zod-openapi";
+
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
@@ -86,6 +89,18 @@ bannerRouter.openapi(
     path: "/groups",
     tags: [TAG],
     summary: "List all banner groups for the active org",
+    request: {
+      query: PaginationQuerySchema.merge(
+        z.object({
+          activityId: z.string().uuid().optional().openapi({
+            param: { name: "activityId", in: "query" },
+          }),
+          includeActivity: z.enum(["true", "false"]).optional().openapi({
+            param: { name: "includeActivity", in: "query" },
+          }),
+        }),
+      ),
+    },
     responses: {
       200: {
         description: "OK",
@@ -98,13 +113,18 @@ bannerRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const activityId = c.req.query("activityId") ?? undefined;
-    const includeActivity = c.req.query("includeActivity") === "true";
-    const items = await bannerService.listGroups(orgId, {
-      activityId,
-      includeActivity,
+    const q = c.req.valid("query");
+    const page = await bannerService.listGroups(orgId, {
+      activityId: q.activityId,
+      includeActivity: q.includeActivity === "true",
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: items.map(serializeGroup) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeGroup), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -218,7 +238,7 @@ bannerRouter.openapi(
     path: "/groups/{groupId}/banners",
     tags: [TAG],
     summary: "List banners inside a group",
-    request: { params: GroupIdParamSchema },
+    request: { params: GroupIdParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -230,8 +250,11 @@ bannerRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { groupId } = c.req.valid("param");
-    const rows = await bannerService.listBanners(orgId, groupId);
-    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
+    const page = await bannerService.listBanners(orgId, groupId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeBanner), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -289,7 +312,8 @@ bannerRouter.openapi(
     const { groupId } = c.req.valid("param");
     const { bannerIds } = c.req.valid("json");
     const rows = await bannerService.reorderBanners(orgId, groupId, bannerIds);
-    return c.json(ok({ items: rows.map(serializeBanner) }), 200);
+    // Reorder returns the full new order; null cursor since it's a one-shot.
+    return c.json(ok({ items: rows.map(serializeBanner), nextCursor: null }), 200);
   },
 );
 

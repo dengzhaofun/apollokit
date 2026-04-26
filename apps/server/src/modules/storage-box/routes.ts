@@ -9,6 +9,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -146,6 +147,7 @@ storageBoxRouter.openapi(
     path: "/configs",
     tags: [TAG_CFG],
     summary: "List storage box configs",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -156,8 +158,11 @@ storageBoxRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await storageBoxService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    const page = await storageBoxService.listConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

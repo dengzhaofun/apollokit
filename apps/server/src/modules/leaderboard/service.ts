@@ -43,9 +43,16 @@
  *   4. Trims / purges the Redis ZSET so the next cycle starts fresh.
  */
 
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 
 // Augment the runtime event-bus type map. Other modules can subscribe
 // to `leaderboard.contributed` without reaching into this service.
@@ -402,18 +409,28 @@ export function createLeaderboardService(
 
     async listConfigs(
       organizationId: string,
-      filter?: { metricKey?: string; status?: ConfigStatus },
-    ): Promise<LeaderboardConfig[]> {
-      const conds = [eq(leaderboardConfigs.organizationId, organizationId)];
-      if (filter?.metricKey)
+      filter: PageParams & { metricKey?: string; status?: ConfigStatus } = {},
+    ): Promise<Page<LeaderboardConfig>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(leaderboardConfigs.organizationId, organizationId)];
+      if (filter.metricKey)
         conds.push(eq(leaderboardConfigs.metricKey, filter.metricKey));
-      if (filter?.status)
+      if (filter.status)
         conds.push(eq(leaderboardConfigs.status, filter.status));
-      return db
+      const seek = cursorWhere(filter.cursor, leaderboardConfigs.createdAt, leaderboardConfigs.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(leaderboardConfigs.name, pat), ilike(leaderboardConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(leaderboardConfigs)
         .where(and(...conds))
-        .orderBy(desc(leaderboardConfigs.createdAt));
+        .orderBy(desc(leaderboardConfigs.createdAt), desc(leaderboardConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getConfig(

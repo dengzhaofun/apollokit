@@ -62,11 +62,8 @@ describe("cdkey service", () => {
       initialCount: 10,
     });
     expect(batch.codeType).toBe("unique");
-    const { items, total } = await svc.listCodes(orgId, batch.id, {
-      limit: 50,
-      offset: 0,
-    });
-    expect(total).toBe(10);
+    const { items } = await svc.listCodes(orgId, batch.id, { limit: 50 });
+    expect(items.length).toBe(10);
     expect(items.every((c) => c.status === "pending")).toBe(true);
   });
 
@@ -82,11 +79,8 @@ describe("cdkey service", () => {
       count: 7,
     });
     expect(generated).toBe(7);
-    const { total } = await svc.listCodes(orgId, batch.id, {
-      limit: 500,
-      offset: 0,
-    });
-    expect(total).toBe(10);
+    const { items } = await svc.listCodes(orgId, batch.id, { limit: 200 });
+    expect(items.length).toBe(10);
   });
 
   test("updateBatch patches fields", async () => {
@@ -115,7 +109,7 @@ describe("cdkey service", () => {
     });
     await svc.deleteBatch(orgId, batch.id);
     const list = await svc.listBatches(orgId);
-    expect(list.some((b) => b.id === batch.id)).toBe(false);
+    expect(list.items.some((b) => b.id === batch.id)).toBe(false);
   });
 
   // ─── Universal redeem happy + limits ───────────────────────
@@ -225,10 +219,7 @@ describe("cdkey service", () => {
       reward: [{ type: "item" as const, id: goldId, count: 5 }],
       initialCount: 3,
     });
-    const { items } = await svc.listCodes(orgId, batch.id, {
-      limit: 10,
-      offset: 0,
-    });
+    const { items } = await svc.listCodes(orgId, batch.id, { limit: 10 });
     const firstCode = items[0]!.code;
 
     const r = await svc.redeem({
@@ -260,10 +251,7 @@ describe("cdkey service", () => {
       reward: [{ type: "item" as const, id: goldId, count: 1 }],
       initialCount: 2,
     });
-    const { items } = await svc.listCodes(orgId, batch.id, {
-      limit: 10,
-      offset: 0,
-    });
+    const { items } = await svc.listCodes(orgId, batch.id, { limit: 10 });
     await svc.revokeCode(orgId, items[0]!.id);
 
     await expect(

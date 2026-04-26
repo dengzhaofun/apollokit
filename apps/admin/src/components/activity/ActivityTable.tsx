@@ -1,21 +1,11 @@
 import { Link } from "@tanstack/react-router"
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import { useMemo } from "react"
 
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
+import { useActivities } from "#/hooks/use-activity"
 import type { Activity, ActivityState } from "#/lib/types/activity"
 import * as m from "#/paraglide/messages.js"
 
@@ -41,109 +31,90 @@ const STATE_LABELS: Record<ActivityState, () => string> = {
 
 const columnHelper = createColumnHelper<Activity>()
 
-const columns = [
-  columnHelper.accessor("name", {
-    header: () => m.common_name(),
-    cell: (info) => (
-      <Link
-        to="/activity/$alias"
-        params={{ alias: info.row.original.alias }}
-        className="font-medium hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor("alias", {
-    header: () => m.common_alias(),
-    cell: (info) => (
-      <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-        {info.getValue()}
-      </code>
-    ),
-  }),
-  columnHelper.accessor("kind", {
-    header: () => m.common_type(),
-    cell: (info) => <Badge variant="outline">{info.getValue()}</Badge>,
-  }),
-  columnHelper.accessor("status", {
-    header: () => m.common_status(),
-    cell: (info) => {
-      const s = info.getValue()
-      return (
-        <Badge variant={STATE_VARIANT[s]}>
-          {STATE_LABELS[s] ? STATE_LABELS[s]() : s}
-        </Badge>
-      )
-    },
-  }),
-  columnHelper.accessor("visibleAt", {
-    header: () => m.activity_col_visible_at(),
-    cell: (info) => (
-      <span className="text-xs text-muted-foreground">
-        {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
-      </span>
-    ),
-  }),
-  columnHelper.accessor("startAt", {
-    header: () => m.activity_col_start_at(),
-    cell: (info) => (
-      <span className="text-xs text-muted-foreground">
-        {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
-      </span>
-    ),
-  }),
-  columnHelper.accessor("endAt", {
-    header: () => m.activity_col_end_at(),
-    cell: (info) => (
-      <span className="text-xs text-muted-foreground">
-        {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
-      </span>
-    ),
-  }),
-]
+function useColumns(): ColumnDef<Activity, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.common_name(),
+        cell: (info) => (
+          <Link
+            to="/activity/$alias"
+            params={{ alias: info.row.original.alias }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.common_alias(),
+        cell: (info) => (
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{info.getValue()}</code>
+        ),
+      }),
+      columnHelper.accessor("kind", {
+        header: () => m.common_type(),
+        cell: (info) => <Badge variant="outline">{info.getValue()}</Badge>,
+      }),
+      columnHelper.accessor("status", {
+        header: () => m.common_status(),
+        cell: (info) => {
+          const s = info.getValue()
+          return (
+            <Badge variant={STATE_VARIANT[s]}>
+              {STATE_LABELS[s] ? STATE_LABELS[s]() : s}
+            </Badge>
+          )
+        },
+      }),
+      columnHelper.accessor("visibleAt", {
+        header: () => m.activity_col_visible_at(),
+        cell: (info) => (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("startAt", {
+        header: () => m.activity_col_start_at(),
+        cell: (info) => (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("endAt", {
+        header: () => m.activity_col_end_at(),
+        cell: (info) => (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
+          </span>
+        ),
+      }),
+    ],
+    [],
+  ) as ColumnDef<Activity, unknown>[]
+}
 
-export function ActivityTable({ data }: { data: Activity[] }) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
+export function ActivityTable() {
+  const list = useActivities()
+  const columns = useColumns()
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((hg) => (
-          <TableRow key={hg.id}>
-            {hg.headers.map((h) => (
-              <TableHead key={h.id}>
-                {h.isPlaceholder
-                  ? null
-                  : flexRender(h.column.columnDef.header, h.getContext())}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length ? (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
-              {m.activity_table_empty()}
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={list.items}
+      isLoading={list.isLoading}
+      getRowId={(row) => row.id}
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
+    />
   )
 }
 

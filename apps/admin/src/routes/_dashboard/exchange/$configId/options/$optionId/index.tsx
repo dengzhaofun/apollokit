@@ -13,7 +13,7 @@ import { ExecutePanel } from "#/components/exchange/ExecutePanel"
 import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import type { RewardEntry } from "#/lib/types/rewards"
 import {
-  useExchangeOptions,
+  useAllExchangeOptions,
   useUpdateExchangeOption,
   useDeleteExchangeOption,
 } from "#/hooks/use-exchange"
@@ -30,7 +30,7 @@ function OptionDetailPage() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
 
-  const { data: options, isPending, error } = useExchangeOptions(configId)
+  const { data: options, isPending, error } = useAllExchangeOptions(configId)
   const option = options?.find((o) => o.id === optionId)
   const updateMutation = useUpdateExchangeOption()
   const deleteMutation = useDeleteExchangeOption()

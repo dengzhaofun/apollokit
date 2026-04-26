@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateCurrencyInput,
   CurrencyBalance,
@@ -20,23 +21,48 @@ const LEDGER_KEY = ["currency-ledger"] as const
 
 // ─── Definitions ──────────────────────────────────────────────────
 
-export function useCurrencies(filter?: {
-  activityId?: string | null
-  isActive?: boolean
-}) {
-  const params = new URLSearchParams()
-  if (filter?.activityId !== undefined) {
-    params.set("activityId", filter.activityId === null ? "" : filter.activityId)
-  }
-  if (filter?.isActive !== undefined) {
-    params.set("isActive", filter.isActive ? "true" : "false")
-  }
-  const qs = params.toString() ? `?${params.toString()}` : ""
+/** Paginated currencies list — wired into <DataTable />. */
+export function useCurrencies(
+  opts: {
+    initialPageSize?: number
+    activityId?: string | null
+    isActive?: boolean
+  } = {},
+) {
+  const { initialPageSize = 50, activityId, isActive } = opts
+  return useCursorList<CurrencyDefinition>({
+    queryKey: [...DEFINITIONS_KEY, { activityId: activityId ?? null, isActive: isActive ?? null }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CurrencyDefinition>>(
+        `/api/currency/definitions?${buildQs({
+          cursor,
+          limit,
+          q,
+          activityId: activityId === null ? "" : activityId,
+          isActive: isActive == null ? undefined : isActive ? "true" : "false",
+        })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (limit 200 server-cap). */
+export function useAllCurrencies(
+  opts: { activityId?: string | null; isActive?: boolean } = {},
+) {
+  const { activityId, isActive } = opts
   return useQuery({
-    queryKey: [...DEFINITIONS_KEY, qs],
+    queryKey: [...DEFINITIONS_KEY, "all", { activityId: activityId ?? null, isActive: isActive ?? null }],
     queryFn: () =>
-      api.get<{ items: CurrencyDefinition[] }>(`/api/currency/definitions${qs}`),
-    select: (data) => data.items,
+      api
+        .get<Page<CurrencyDefinition>>(
+          `/api/currency/definitions?${buildQs({
+            limit: 200,
+            activityId: activityId === null ? "" : activityId,
+            isActive: isActive == null ? undefined : isActive ? "true" : "false",
+          })}`,
+        )
+        .then((p) => p.items),
   })
 }
 

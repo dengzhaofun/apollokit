@@ -1,14 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   AssignBatchResponse,
   AssignTaskInput,
   AssignmentListResponse,
-  CategoryListResponse,
   CreateCategoryInput,
   CreateDefinitionInput,
-  DefinitionListResponse,
   TaskCategory,
   TaskDefinition,
   UpdateCategoryInput,
@@ -22,11 +21,26 @@ const definitionKey = (key: string) => ["task-definition", key] as const
 
 // ─── Categories ──────────────────────────────────────────────────
 
-export function useTaskCategories() {
-  return useQuery({
+/** Paginated task categories — for the admin categories table. */
+export function useTaskCategories(initialPageSize = 50) {
+  return useCursorList<TaskCategory>({
     queryKey: CATEGORIES_KEY,
-    queryFn: () => api.get<CategoryListResponse>("/api/task/categories"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<TaskCategory>>(
+        `/api/task/categories?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllTaskCategories() {
+  return useQuery({
+    queryKey: [...CATEGORIES_KEY, "all"],
+    queryFn: () =>
+      api
+        .get<Page<TaskCategory>>(`/api/task/categories?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 
@@ -69,30 +83,76 @@ export function useDeleteTaskCategory() {
 
 // ─── Definitions ─────────────────────────────────────────────────
 
-export function useTaskDefinitions(filters?: {
-  categoryId?: string
-  period?: string
-  activityId?: string
-  includeActivity?: boolean
-}) {
-  const params = new URLSearchParams()
-  if (filters?.categoryId) params.set("categoryId", filters.categoryId)
-  if (filters?.period) params.set("period", filters.period)
-  if (filters?.activityId) params.set("activityId", filters.activityId)
-  if (filters?.includeActivity) params.set("includeActivity", "true")
-  const qs = params.toString()
-  const path = `/api/task/definitions${qs ? `?${qs}` : ""}`
+/** Paginated task definitions — for the admin definitions table. */
+export function useTaskDefinitions(
+  opts: {
+    categoryId?: string
+    period?: string
+    activityId?: string
+    includeActivity?: boolean
+    initialPageSize?: number
+  } = {},
+) {
+  const { categoryId, period, activityId, includeActivity, initialPageSize = 50 } = opts
+  return useCursorList<TaskDefinition>({
+    queryKey: [
+      ...DEFINITIONS_KEY,
+      {
+        categoryId: categoryId ?? null,
+        period: period ?? null,
+        activityId: activityId ?? null,
+        includeActivity: !!includeActivity,
+      },
+    ],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<TaskDefinition>>(
+        `/api/task/definitions?${buildQs({
+          cursor,
+          limit,
+          q,
+          categoryId,
+          period,
+          activityId,
+          includeActivity: includeActivity ? "true" : undefined,
+        })}`,
+      ),
+    initialPageSize,
+  })
+}
 
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllTaskDefinitions(
+  opts: {
+    categoryId?: string
+    period?: string
+    activityId?: string
+    includeActivity?: boolean
+  } = {},
+) {
+  const { categoryId, period, activityId, includeActivity } = opts
   return useQuery({
     queryKey: [
       ...DEFINITIONS_KEY,
-      filters?.categoryId,
-      filters?.period,
-      filters?.activityId,
-      !!filters?.includeActivity,
+      "all",
+      {
+        categoryId: categoryId ?? null,
+        period: period ?? null,
+        activityId: activityId ?? null,
+        includeActivity: !!includeActivity,
+      },
     ],
-    queryFn: () => api.get<DefinitionListResponse>(path),
-    select: (data) => data.items,
+    queryFn: () =>
+      api
+        .get<Page<TaskDefinition>>(
+          `/api/task/definitions?${buildQs({
+            limit: 200,
+            categoryId,
+            period,
+            activityId,
+            includeActivity: includeActivity ? "true" : undefined,
+          })}`,
+        )
+        .then((p) => p.items),
   })
 }
 

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "#/components/ui/card"
-import { useCmsTypes } from "#/hooks/use-cms"
+import { useAllCmsTypes } from "#/hooks/use-cms"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/cms/")({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_dashboard/cms/")({
 })
 
 function CmsTypesPage() {
-  const { data: types, isPending, error } = useCmsTypes()
+  const { data: types, isPending, error } = useAllCmsTypes()
 
   return (
     <>

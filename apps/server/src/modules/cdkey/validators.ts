@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const AliasSchema = z
@@ -119,14 +121,20 @@ export type GenerateCodesInput = z.input<typeof GenerateCodesSchema>;
 
 export const CodeListQuerySchema = z.object({
   status: z.enum(["pending", "redeemed", "revoked", "active"]).optional(),
-  limit: z.coerce.number().int().positive().max(500).default(50).optional(),
-  offset: z.coerce.number().int().min(0).default(0).optional(),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
 
 export const LogListQuerySchema = z.object({
   status: z.enum(["success", "failed"]).optional(),
-  limit: z.coerce.number().int().positive().max(500).default(50).optional(),
-  offset: z.coerce.number().int().min(0).default(0).optional(),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
 
 // ─── Redeem ────────────────────────────────────────────────────
@@ -198,9 +206,9 @@ export const BatchResponseSchema = z
   })
   .openapi("CdkeyBatch");
 
-export const BatchListResponseSchema = z
-  .object({ items: z.array(BatchResponseSchema) })
-  .openapi("CdkeyBatchList");
+export const BatchListResponseSchema = pageOf(BatchResponseSchema).openapi(
+  "CdkeyBatchList",
+);
 
 export const CodeResponseSchema = z
   .object({
@@ -215,12 +223,7 @@ export const CodeResponseSchema = z
   })
   .openapi("CdkeyCode");
 
-export const CodeListResponseSchema = z
-  .object({
-    items: z.array(CodeResponseSchema),
-    total: z.number().int(),
-  })
-  .openapi("CdkeyCodeList");
+export const CodeListResponseSchema = pageOf(CodeResponseSchema).openapi("CdkeyCodeList");
 
 export const GenerateCodesResponseSchema = z
   .object({ generated: z.number().int() })
@@ -254,10 +257,7 @@ export const LogResponseSchema = z
   })
   .openapi("CdkeyRedemptionLog");
 
-export const LogListResponseSchema = z
-  .object({
-    items: z.array(LogResponseSchema),
-    total: z.number().int(),
-  })
-  .openapi("CdkeyRedemptionLogList");
+export const LogListResponseSchema = pageOf(LogResponseSchema).openapi(
+  "CdkeyRedemptionLogList",
+);
 

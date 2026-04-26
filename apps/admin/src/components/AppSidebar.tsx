@@ -1,5 +1,6 @@
 import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
 import { Link, useLocation } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
 import {
   Activity,
   ArrowLeftRight,
@@ -272,6 +273,70 @@ function getNavGroups(): NavGroup[] {
   ]
 }
 
+/**
+ * 二级菜单父项 — 点击文字「跳转模块默认页 + 自动展开子菜单」,
+ * 右侧 chevron 用于「不跳转、单独折叠」。Collapsible 受控,以便点 Link 时
+ * 主动 setOpen(true);路由变化导致 active 时也自动打开。
+ */
+function NavParentItem({
+  item,
+  isItemActive,
+  pathname,
+}: {
+  item: NavItem
+  isItemActive: boolean
+  pathname: string
+}) {
+  const [open, setOpen] = useState(isItemActive)
+  useEffect(() => {
+    if (isItemActive) setOpen(true)
+  }, [isItemActive])
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="group/nav-collapsible"
+      asChild
+    >
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
+          <Link to={item.to} onClick={() => setOpen(true)}>
+            <item.icon className="size-4" />
+            <span>{item.title()}</span>
+          </Link>
+        </SidebarMenuButton>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuAction
+            className="data-[state=open]:rotate-90"
+            aria-label="Toggle submenu"
+          >
+            <ChevronRight className="size-4" />
+          </SidebarMenuAction>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.children?.map((child) => {
+              const isChildActive =
+                pathname === child.to || pathname.startsWith(`${child.to}/`)
+              return (
+                <SidebarMenuSubItem key={child.to}>
+                  <SidebarMenuSubButton asChild isActive={isChildActive}>
+                    <Link to={child.to}>
+                      <child.icon className="size-4" />
+                      <span>{child.title()}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              )
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  )
+}
+
 export function AppSidebar() {
   const groups = getNavGroups()
   const { pathname } = useLocation()
@@ -339,48 +404,12 @@ export function AppSidebar() {
                           )
                         }
                         return (
-                          <Collapsible
+                          <NavParentItem
                             key={item.to}
-                            defaultOpen={isItemActive}
-                            className="group/nav-collapsible"
-                            asChild
-                          >
-                            <SidebarMenuItem>
-                              <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
-                                <Link to={item.to}>
-                                  <item.icon className="size-4" />
-                                  <span>{item.title()}</span>
-                                </Link>
-                              </SidebarMenuButton>
-                              <CollapsibleTrigger asChild>
-                                <SidebarMenuAction
-                                  className="data-[state=open]:rotate-90"
-                                  aria-label="Toggle submenu"
-                                >
-                                  <ChevronRight className="size-4" />
-                                </SidebarMenuAction>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                <SidebarMenuSub>
-                                  {item.children.map((child) => {
-                                    const isChildActive =
-                                      pathname === child.to ||
-                                      pathname.startsWith(`${child.to}/`)
-                                    return (
-                                      <SidebarMenuSubItem key={child.to}>
-                                        <SidebarMenuSubButton asChild isActive={isChildActive}>
-                                          <Link to={child.to}>
-                                            <child.icon className="size-4" />
-                                            <span>{child.title()}</span>
-                                          </Link>
-                                        </SidebarMenuSubButton>
-                                      </SidebarMenuSubItem>
-                                    )
-                                  })}
-                                </SidebarMenuSub>
-                              </CollapsibleContent>
-                            </SidebarMenuItem>
-                          </Collapsible>
+                            item={item}
+                            isItemActive={isItemActive}
+                            pathname={pathname}
+                          />
                         )
                       })}
                     </SidebarMenu>

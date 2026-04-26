@@ -48,7 +48,7 @@ import {
   useUpdateCollectionGroup,
   useUpdateCollectionMilestone,
 } from "#/hooks/use-collection"
-import { useItemDefinitions } from "#/hooks/use-item"
+import { useAllItemDefinitions } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
 import type {
   CollectionEntry,
@@ -82,7 +82,7 @@ function CollectionAlbumDetailPage() {
   const { data: groups = [] } = useCollectionGroups(albumId)
   const { data: entries = [] } = useCollectionEntries(albumId)
   const { data: milestones = [] } = useCollectionMilestones(albumId)
-  const { data: itemDefs = [] } = useItemDefinitions()
+  const { data: itemDefs = [] } = useAllItemDefinitions()
 
   const deleteAlbumMutation = useDeleteCollectionAlbum()
 

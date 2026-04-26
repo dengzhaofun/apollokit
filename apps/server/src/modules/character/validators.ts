@@ -6,6 +6,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { CHARACTER_SIDES } from "./types";
 
 const AliasSchema = z
@@ -67,6 +68,6 @@ export const CharacterResponseSchema = z
   })
   .openapi("Character");
 
-export const CharacterListResponseSchema = z
-  .object({ items: z.array(CharacterResponseSchema) })
-  .openapi("CharacterList");
+export const CharacterListResponseSchema = pageOf(CharacterResponseSchema).openapi(
+  "CharacterList",
+);

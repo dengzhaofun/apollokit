@@ -71,9 +71,16 @@
  * concurrency — only the winner sees a RETURNING row.
  */
 
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   levelConfigs,
   levelStages,
@@ -401,12 +408,24 @@ export function createLevelService(
 
   async function listConfigs(
     organizationId: string,
-  ): Promise<LevelConfig[]> {
-    return db
+    params: PageParams = {},
+  ): Promise<Page<LevelConfig>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(levelConfigs.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, levelConfigs.createdAt, levelConfigs.id);
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(levelConfigs.name, pat), ilike(levelConfigs.alias, pat));
+      if (search) conds.push(search);
+    }
+    const rows = await db
       .select()
       .from(levelConfigs)
-      .where(eq(levelConfigs.organizationId, organizationId))
-      .orderBy(asc(levelConfigs.sortOrder), desc(levelConfigs.createdAt));
+      .where(and(...conds))
+      .orderBy(desc(levelConfigs.createdAt), desc(levelConfigs.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getConfig(

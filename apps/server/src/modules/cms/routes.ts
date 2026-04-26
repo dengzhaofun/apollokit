@@ -12,6 +12,8 @@
  */
 
 import { z } from "@hono/zod-openapi";
+
+import { PaginationQuerySchema } from "../../lib/pagination";
 import {
   NullDataEnvelopeSchema,
   commonErrorResponses,
@@ -91,11 +93,13 @@ cmsRouter.openapi(
     tags: [TAG],
     summary: "List CMS types in the current project",
     request: {
-      query: z.object({
-        status: CmsTypeStatusSchema.optional().openapi({
-          param: { name: "status", in: "query" },
+      query: PaginationQuerySchema.merge(
+        z.object({
+          status: CmsTypeStatusSchema.optional().openapi({
+            param: { name: "status", in: "query" },
+          }),
         }),
-      }),
+      ),
     },
     responses: {
       200: {
@@ -110,8 +114,16 @@ cmsRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
-    const rows = await cmsService.listTypes(orgId, { status: q.status });
-    return c.json(ok({ items: rows.map(serializeType) }), 200);
+    const page = await cmsService.listTypes(orgId, {
+      status: q.status,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
+    });
+    return c.json(
+      ok({ items: page.items.map(serializeType), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -252,18 +264,18 @@ cmsRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { typeAlias } = c.req.valid("param");
     const q = c.req.valid("query");
-    const result = await cmsService.listEntries(orgId, typeAlias, {
+    const page = await cmsService.listEntries(orgId, typeAlias, {
       status: q.status,
       groupKey: q.groupKey,
       tag: q.tag,
       q: q.q,
+      cursor: q.cursor,
       limit: q.limit,
-      offset: q.offset,
     });
     return c.json(
       ok({
-        items: result.items.map(serializeEntry),
-        total: result.total,
+        items: page.items.map(serializeEntry),
+        nextCursor: page.nextCursor,
       }),
       200,
     );

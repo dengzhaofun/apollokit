@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   ExchangeConfig,
   ExchangeOption,
@@ -16,12 +17,26 @@ const CONFIGS_KEY = ["exchange-configs"] as const
 
 // ─── Configs ──────────────────────────────────────────────────────
 
-export function useExchangeConfigs() {
-  return useQuery({
+/** Paginated configs — for the admin ConfigTable. */
+export function useExchangeConfigs(initialPageSize = 50) {
+  return useCursorList<ExchangeConfig>({
     queryKey: CONFIGS_KEY,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<ExchangeConfig>>(
+        `/api/exchange/configs?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllExchangeConfigs() {
+  return useQuery({
+    queryKey: [...CONFIGS_KEY, "all"],
     queryFn: () =>
-      api.get<{ items: ExchangeConfig[] }>("/api/exchange/configs"),
-    select: (data) => data.items,
+      api
+        .get<Page<ExchangeConfig>>(`/api/exchange/configs?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 
@@ -61,14 +76,29 @@ export function useDeleteExchangeConfig() {
 
 // ─── Options ──────────────────────────────────────────────────────
 
-export function useExchangeOptions(configKey: string) {
-  return useQuery({
+/** Paginated options under one config — for the OptionTable. */
+export function useExchangeOptions(configKey: string, initialPageSize = 50) {
+  return useCursorList<ExchangeOption>({
     queryKey: ["exchange-options", configKey],
-    queryFn: () =>
-      api.get<{ items: ExchangeOption[] }>(
-        `/api/exchange/configs/${configKey}/options`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<ExchangeOption>>(
+        `/api/exchange/configs/${configKey}/options?${buildQs({ cursor, limit, q })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+    enabled: !!configKey,
+  })
+}
+
+/** Non-paginated convenience for option selectors. */
+export function useAllExchangeOptions(configKey: string) {
+  return useQuery({
+    queryKey: ["exchange-options", configKey, "all"],
+    queryFn: () =>
+      api
+        .get<Page<ExchangeOption>>(
+          `/api/exchange/configs/${configKey}/options?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
     enabled: !!configKey,
   })
 }

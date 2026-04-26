@@ -18,7 +18,15 @@
  * See the plan document for concurrency analysis and risk discussion.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 
 import type { AppDeps } from "../../deps";
 import type { RewardEntry } from "../../lib/rewards";
@@ -266,12 +274,26 @@ export function createExchangeService(
       if (deleted.length === 0) throw new ExchangeConfigNotFound(id);
     },
 
-    async listConfigs(organizationId: string): Promise<ExchangeConfig[]> {
-      return db
+    async listConfigs(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<ExchangeConfig>> {
+      const limit = clampLimit(params.limit);
+      const conditions: SQL[] = [eq(exchangeConfigs.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, exchangeConfigs.createdAt, exchangeConfigs.id);
+      if (seek) conditions.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(exchangeConfigs.name, pat), ilike(exchangeConfigs.alias, pat));
+        if (search) conditions.push(search);
+      }
+      const rows = await db
         .select()
         .from(exchangeConfigs)
-        .where(eq(exchangeConfigs.organizationId, organizationId))
-        .orderBy(desc(exchangeConfigs.createdAt));
+        .where(and(...conditions))
+        .orderBy(desc(exchangeConfigs.createdAt), desc(exchangeConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getConfig(
@@ -363,13 +385,23 @@ export function createExchangeService(
     async listOptions(
       organizationId: string,
       configKey: string,
-    ): Promise<ExchangeOption[]> {
+      params: PageParams = {},
+    ): Promise<Page<ExchangeOption>> {
       const config = await loadConfigByKey(organizationId, configKey);
-      return db
+      const limit = clampLimit(params.limit);
+      const conditions: SQL[] = [eq(exchangeOptions.configId, config.id)];
+      const seek = cursorWhere(params.cursor, exchangeOptions.createdAt, exchangeOptions.id);
+      if (seek) conditions.push(seek);
+      if (params.q) {
+        conditions.push(ilike(exchangeOptions.name, `%${params.q}%`));
+      }
+      const rows = await db
         .select()
         .from(exchangeOptions)
-        .where(eq(exchangeOptions.configId, config.id))
-        .orderBy(exchangeOptions.sortOrder, exchangeOptions.createdAt);
+        .where(and(...conditions))
+        .orderBy(desc(exchangeOptions.createdAt), desc(exchangeOptions.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getOption(optionId: string): Promise<ExchangeOption> {

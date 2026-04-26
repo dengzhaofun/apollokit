@@ -9,6 +9,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -154,6 +155,7 @@ entityRouter.openapi(
     path: "/schemas",
     tags: [TAG_SCHEMA],
     summary: "List all entity schemas",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -166,8 +168,11 @@ entityRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await entityService.listSchemas(orgId);
-    return c.json(ok(rows.map(serializeSchema)), 200);
+    const page = await entityService.listSchemas(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeSchema), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -284,9 +289,13 @@ entityRouter.openapi(
     tags: [TAG_BLUEPRINT],
     summary: "List all blueprints (optionally filtered by schemaId)",
     request: {
-      query: z.object({
-        schemaId: z.string().uuid().optional(),
-      }),
+      query: PaginationQuerySchema.merge(
+        z.object({
+          schemaId: z.string().uuid().optional().openapi({
+            param: { name: "schemaId", in: "query" },
+          }),
+        }),
+      ),
     },
     responses: {
       200: {
@@ -300,9 +309,17 @@ entityRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const { schemaId } = c.req.valid("query");
-    const rows = await entityService.listBlueprints(orgId, { schemaId });
-    return c.json(ok(rows.map(serializeBlueprint)), 200);
+    const q = c.req.valid("query");
+    const page = await entityService.listBlueprints(orgId, {
+      schemaId: q.schemaId,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
+    });
+    return c.json(
+      ok({ items: page.items.map(serializeBlueprint), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -534,6 +551,7 @@ entityRouter.openapi(
     path: "/formation-configs",
     tags: [TAG_FORMATION],
     summary: "List all formation configs",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -548,8 +566,11 @@ entityRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await entityService.listFormationConfigs(orgId);
-    return c.json(ok(rows.map(serializeFormationConfig)), 200);
+    const page = await entityService.listFormationConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeFormationConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

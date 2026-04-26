@@ -5,6 +5,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -17,6 +18,7 @@ import {
   CreateDefinitionSchema,
   DeductItemsSchema,
   DeductResultSchema,
+  DefinitionListQuerySchema,
   DefinitionListResponseSchema,
   EndUserIdParamSchema,
   GrantItemsSchema,
@@ -136,6 +138,7 @@ itemRouter.openapi(
     path: "/categories",
     tags: [TAG_CAT],
     summary: "List item categories",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -146,8 +149,12 @@ itemRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await itemService.listCategories(orgId);
-    return c.json(ok({ items: rows.map(serializeCategory) }), 200);
+    const q = c.req.valid("query");
+    const page = await itemService.listCategories(orgId, q);
+    return c.json(
+      ok({ items: page.items.map(serializeCategory), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -259,6 +266,7 @@ itemRouter.openapi(
     path: "/definitions",
     tags: [TAG_DEF],
     summary: "List item definitions",
+    request: { query: PaginationQuerySchema.merge(DefinitionListQuerySchema) },
     responses: {
       200: {
         description: "OK",
@@ -271,8 +279,18 @@ itemRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await itemService.listDefinitions(orgId);
-    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
+    const q = c.req.valid("query");
+    const page = await itemService.listDefinitions(orgId, {
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
+      categoryId: q.categoryId,
+      activityId: q.activityId,
+    });
+    return c.json(
+      ok({ items: page.items.map(serializeDefinition), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CmsEntry,
   CmsType,
@@ -17,12 +18,30 @@ const entriesKey = (typeAlias: string) => ["cms-entries", typeAlias] as const
 
 // ─── Types ───────────────────────────────────────────────────────
 
-export function useCmsTypes(filter: { status?: CmsTypeStatus } = {}) {
-  const qs = filter.status ? `?status=${filter.status}` : ""
+/** Paginated CMS types — for the admin types table. */
+export function useCmsTypes(
+  opts: { status?: CmsTypeStatus; initialPageSize?: number } = {},
+) {
+  const { status, initialPageSize = 50 } = opts
+  return useCursorList<CmsType>({
+    queryKey: [...TYPES_KEY, { status: status ?? null }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CmsType>>(
+        `/api/cms/types?${buildQs({ cursor, limit, q, status })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllCmsTypes(opts: { status?: CmsTypeStatus } = {}) {
+  const { status } = opts
   return useQuery({
-    queryKey: [...TYPES_KEY, filter.status ?? "all"],
-    queryFn: () => api.get<{ items: CmsType[] }>(`/api/cms/types${qs}`),
-    select: (data) => data.items,
+    queryKey: [...TYPES_KEY, "all", { status: status ?? null }],
+    queryFn: () =>
+      api
+        .get<Page<CmsType>>(`/api/cms/types?${buildQs({ limit: 200, status })}`)
+        .then((p) => p.items),
   })
 }
 
@@ -70,24 +89,31 @@ export function useDeleteCmsType() {
 
 // ─── Entries ─────────────────────────────────────────────────────
 
+/** Paginated CMS entries under a type — for the admin entries table. */
 export function useCmsEntries(
   typeAlias: string | undefined,
-  filter: ListEntriesFilter = {},
+  filter: Omit<ListEntriesFilter, "limit" | "offset" | "q"> & {
+    initialPageSize?: number
+  } = {},
 ) {
-  const params = new URLSearchParams()
-  if (filter.status) params.set("status", filter.status)
-  if (filter.groupKey) params.set("groupKey", filter.groupKey)
-  if (filter.tag) params.set("tag", filter.tag)
-  if (filter.q) params.set("q", filter.q)
-  if (filter.limit) params.set("limit", String(filter.limit))
-  if (filter.offset) params.set("offset", String(filter.offset))
-  const qs = params.toString()
-  return useQuery({
-    queryKey: [...entriesKey(typeAlias ?? ""), filter],
-    queryFn: () =>
-      api.get<{ items: CmsEntry[]; total: number }>(
-        `/api/cms/types/${typeAlias}/entries${qs ? `?${qs}` : ""}`,
+  const { status, groupKey, tag, initialPageSize = 50 } = filter
+  return useCursorList<CmsEntry>({
+    queryKey: [
+      ...entriesKey(typeAlias ?? ""),
+      { status: status ?? null, groupKey: groupKey ?? null, tag: tag ?? null },
+    ],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CmsEntry>>(
+        `/api/cms/types/${typeAlias}/entries?${buildQs({
+          cursor,
+          limit,
+          q,
+          status,
+          groupKey,
+          tag,
+        })}`,
       ),
+    initialPageSize,
     enabled: !!typeAlias,
   })
 }

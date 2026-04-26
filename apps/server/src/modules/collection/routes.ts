@@ -10,6 +10,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -223,6 +224,7 @@ collectionRouter.openapi(
     path: "/albums",
     tags: [TAG],
     summary: "List collection albums",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -233,8 +235,11 @@ collectionRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await collectionService.listAlbums(orgId);
-    return c.json(ok({ items: rows.map(serializeAlbum) }), 200);
+    const page = await collectionService.listAlbums(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeAlbum), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

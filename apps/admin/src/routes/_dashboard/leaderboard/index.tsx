@@ -3,19 +3,9 @@ import { Plus, RotateCw, TrophyIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { LeaderboardConfigTable } from "#/components/leaderboard/ConfigTable"
-import {
-  confirm,
-  EmptyList,
-  ErrorState,
-  PageBody,
-  PageHeader,
-  PageShell,
-} from "#/components/patterns"
+import { confirm, PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import {
-  useLeaderboardConfigs,
-  useRunLeaderboardSettle,
-} from "#/hooks/use-leaderboard"
+import { useRunLeaderboardSettle } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
 import { getLocale } from "#/paraglide/runtime.js"
 
@@ -26,22 +16,14 @@ export const Route = createFileRoute("/_dashboard/leaderboard/")({
 })
 
 function LeaderboardListPage() {
-  const { data: configs, isPending, error, refetch } = useLeaderboardConfigs()
   const settleMutation = useRunLeaderboardSettle()
-  const total = configs?.length ?? 0
 
   return (
     <PageShell>
       <PageHeader
         icon={<TrophyIcon className="size-5" />}
         title={t("排行榜", "Leaderboards")}
-        description={
-          isPending
-            ? t("加载中…", "Loading…")
-            : error
-              ? t("加载失败", "Failed to load")
-              : t(`共 ${total} 个榜单`, `${total} leaderboards total`)
-        }
+        description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
         actions={
           <>
             <Button
@@ -86,38 +68,7 @@ function LeaderboardListPage() {
       />
 
       <PageBody>
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
-            {t("加载中…", "Loading…")}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title={t("榜单加载失败", "Failed to load leaderboards")}
-            onRetry={() => refetch()}
-            retryLabel={t("重试", "Retry")}
-            error={error instanceof Error ? error : null}
-          />
-        ) : total === 0 ? (
-          <EmptyList
-            title={t("还没有榜单", "No leaderboards yet")}
-            description={t(
-              "创建第一个榜单,设置周期、排序规则、奖励配置。",
-              "Create your first leaderboard with cycle, ranking rules, and rewards.",
-            )}
-            action={
-              <Button asChild size="sm">
-                <Link to="/leaderboard/create">
-                  <Plus />
-                  {t("新建榜单", "New leaderboard")}
-                </Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <LeaderboardConfigTable data={configs ?? []} />
-          </div>
-        )}
+        <LeaderboardConfigTable />
       </PageBody>
     </PageShell>
   )

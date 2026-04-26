@@ -23,9 +23,14 @@
  * take the tenant's values verbatim.
  */
 
-import { and, asc, count, desc, eq, gt, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, like, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+} from "../../lib/pagination";
 import { scopeEmail, unscopeEmail } from "../../end-user-auth";
 import {
   euAccount,
@@ -199,13 +204,12 @@ export function createEndUserService(deps: EndUserDeps) {
     },
 
     async list(orgId: string, filter: ListFilter = {}): Promise<ListResult> {
-      const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
-      const offset = Math.max(filter.offset ?? 0, 0);
+      const limit = clampLimit(filter.limit);
 
       // Origin filter needs a sub-select since origin is derived from
       // eu_account presence. Plain `like`/`eq` predicates compose on
       // the base table, origin is expressed as an EXISTS.
-      const baseWhere = [eq(euUser.organizationId, orgId)];
+      const baseWhere: SQL[] = [eq(euUser.organizationId, orgId)];
       if (filter.search) {
         const pat = `%${filter.search}%`;
         baseWhere.push(
@@ -228,20 +232,19 @@ export function createEndUserService(deps: EndUserDeps) {
           sql`NOT EXISTS (SELECT 1 FROM ${euAccount} WHERE ${euAccount.userId} = ${euUser.id} AND ${euAccount.providerId} = 'credential')`,
         );
       }
+      const seek = cursorWhere(filter.cursor, euUser.createdAt, euUser.id);
+      if (seek) baseWhere.push(seek);
       const where = and(...baseWhere);
 
-      const rows = await db
+      const rawRows = await db
         .select()
         .from(euUser)
         .where(where)
-        .orderBy(desc(euUser.createdAt), asc(euUser.id))
-        .limit(limit)
-        .offset(offset);
+        .orderBy(desc(euUser.createdAt), desc(euUser.id))
+        .limit(limit + 1);
 
-      const [{ n }] = (await db
-        .select({ n: count() })
-        .from(euUser)
-        .where(where)) as [{ n: number }];
+      const page = buildPage(rawRows, limit);
+      const rows = page.items;
 
       // Batch-fetch origin + live session counts for just the rows on
       // this page. Two extra queries instead of per-row scalar
@@ -283,7 +286,7 @@ export function createEndUserService(deps: EndUserDeps) {
         }),
       );
 
-      return { items, total: Number(n) };
+      return { items, nextCursor: page.nextCursor };
     },
 
     async get(orgId: string, id: string): Promise<EndUserView> {

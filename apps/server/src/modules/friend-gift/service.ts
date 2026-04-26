@@ -38,9 +38,16 @@
  * This keeps the service testable and avoids circular import issues.
  */
 
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   friendGiftDailyStates,
   friendGiftPackages,
@@ -275,19 +282,27 @@ export function createFriendGiftService(
 
     async listPackages(
       organizationId: string,
-      opts?: { activeOnly?: boolean },
-    ): Promise<FriendGiftPackage[]> {
-      const conditions = [
-        eq(friendGiftPackages.organizationId, organizationId),
-      ];
-      if (opts?.activeOnly) {
+      opts: PageParams & { activeOnly?: boolean } = {},
+    ): Promise<Page<FriendGiftPackage>> {
+      const limit = clampLimit(opts.limit);
+      const conditions: SQL[] = [eq(friendGiftPackages.organizationId, organizationId)];
+      if (opts.activeOnly) {
         conditions.push(eq(friendGiftPackages.isActive, true));
       }
-      return db
+      const seek = cursorWhere(opts.cursor, friendGiftPackages.createdAt, friendGiftPackages.id);
+      if (seek) conditions.push(seek);
+      if (opts.q) {
+        const pat = `%${opts.q}%`;
+        const search = or(ilike(friendGiftPackages.name, pat), ilike(friendGiftPackages.alias, pat));
+        if (search) conditions.push(search);
+      }
+      const rows = await db
         .select()
         .from(friendGiftPackages)
         .where(and(...conditions))
-        .orderBy(asc(friendGiftPackages.sortOrder), desc(friendGiftPackages.createdAt));
+        .orderBy(desc(friendGiftPackages.createdAt), desc(friendGiftPackages.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async updatePackage(
@@ -653,17 +668,19 @@ export function createFriendGiftService(
 
     async listSends(
       organizationId: string,
-      opts?: { limit?: number; offset?: number },
-    ): Promise<FriendGiftSend[]> {
-      const limit = opts?.limit ?? 20;
-      const offset = opts?.offset ?? 0;
-      return db
+      opts: PageParams = {},
+    ): Promise<Page<FriendGiftSend>> {
+      const limit = clampLimit(opts.limit);
+      const conds: SQL[] = [eq(friendGiftSends.organizationId, organizationId)];
+      const seek = cursorWhere(opts.cursor, friendGiftSends.createdAt, friendGiftSends.id);
+      if (seek) conds.push(seek);
+      const rows = await db
         .select()
         .from(friendGiftSends)
-        .where(eq(friendGiftSends.organizationId, organizationId))
-        .orderBy(desc(friendGiftSends.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .where(and(...conds))
+        .orderBy(desc(friendGiftSends.createdAt), desc(friendGiftSends.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getSend(

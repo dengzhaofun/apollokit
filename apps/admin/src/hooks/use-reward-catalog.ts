@@ -1,7 +1,7 @@
 import { useMemo } from "react"
-import { useCurrencies } from "#/hooks/use-currency"
-import { useEntityBlueprints } from "#/hooks/use-entity"
-import { useItemDefinitions } from "#/hooks/use-item"
+import { useAllCurrencies } from "#/hooks/use-currency"
+import { useAllEntityBlueprints } from "#/hooks/use-entity"
+import { useAllItemDefinitions } from "#/hooks/use-item"
 import type { RewardType } from "#/lib/types/rewards"
 
 export interface RewardCatalogOption {
@@ -25,9 +25,9 @@ export interface RewardCatalogOption {
  * tables.
  */
 export function useRewardCatalog() {
-  const { data: items, isPending: itemsPending } = useItemDefinitions()
-  const { data: currencies, isPending: currenciesPending } = useCurrencies()
-  const { data: blueprints, isPending: entitiesPending } = useEntityBlueprints()
+  const { data: items, isPending: itemsPending } = useAllItemDefinitions()
+  const { data: currencies, isPending: currenciesPending } = useAllCurrencies()
+  const { data: blueprints, isPending: entitiesPending } = useAllEntityBlueprints()
 
   const value = useMemo(() => {
     const itemOpts: RewardCatalogOption[] = (items ?? []).map((d) => ({

@@ -173,7 +173,7 @@ describe("rank service — tier config CRUD", () => {
   test("listTierConfigs returns all configs for the org", async () => {
     await svc.createTierConfig(orgId, standardConfigInput("casual_3v3"));
     const all = await svc.listTierConfigs(orgId);
-    const aliases = all.map((x) => x.config.alias).sort();
+    const aliases = all.items.map((x) => x.config.alias).sort();
     expect(aliases).toEqual(["casual_3v3", "classic_5v5"]);
   });
 });
@@ -212,8 +212,8 @@ describe("rank service — season lifecycle", () => {
 
   test("activateSeason flips upcoming → active", async () => {
     const season = await svc.listSeasons(orgId, { status: "upcoming" });
-    expect(season).toHaveLength(1);
-    const activated = await svc.activateSeason(orgId, season[0]!.id);
+    expect(season.items).toHaveLength(1);
+    const activated = await svc.activateSeason(orgId, season.items[0]!.id);
     expect(activated.status).toBe("active");
   });
 
@@ -231,7 +231,7 @@ describe("rank service — season lifecycle", () => {
   });
 
   test("finalizeSeason flips active → finished and is idempotent", async () => {
-    const [active] = await svc.listSeasons(orgId, { status: "active" });
+    const [active] = (await svc.listSeasons(orgId, { status: "active" })).items;
     expect(active).toBeDefined();
     const first = await svc.finalizeSeason(orgId, active!.id);
     expect(first.snapshotCount).toBeGreaterThanOrEqual(0);

@@ -80,9 +80,9 @@ describe("level service", () => {
         alias: "lv-side-quests",
       });
       const list = await svc.listConfigs(orgId);
-      expect(list.length).toBeGreaterThanOrEqual(2);
-      expect(list.some((c) => c.alias === "lv-main-story")).toBe(true);
-      expect(list.some((c) => c.alias === "lv-side-quests")).toBe(true);
+      expect(list.items.length).toBeGreaterThanOrEqual(2);
+      expect(list.items.some((c) => c.alias === "lv-main-story")).toBe(true);
+      expect(list.items.some((c) => c.alias === "lv-side-quests")).toBe(true);
     });
 
     test("gets config by id", async () => {

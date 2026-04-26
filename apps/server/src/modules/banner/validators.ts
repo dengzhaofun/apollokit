@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { LinkActionSchema } from "../link/validators";
 import {
   BANNER_LAYOUTS,
@@ -163,17 +164,11 @@ export const BannerResponseSchema = z
   })
   .openapi("Banner");
 
-export const BannerGroupListResponseSchema = z
-  .object({
-    items: z.array(BannerGroupResponseSchema),
-  })
-  .openapi("BannerGroupList");
+export const BannerGroupListResponseSchema = pageOf(BannerGroupResponseSchema).openapi(
+  "BannerGroupList",
+);
 
-export const BannerListResponseSchema = z
-  .object({
-    items: z.array(BannerResponseSchema),
-  })
-  .openapi("BannerList");
+export const BannerListResponseSchema = pageOf(BannerResponseSchema).openapi("BannerList");
 
 // ─── Response shapes (client) ──────────────────────────────────
 

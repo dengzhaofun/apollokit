@@ -252,9 +252,17 @@ guildRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const { search, limit, offset } = c.req.valid("query");
-    const result = await guildService.listGuilds(orgId, { search, limit, offset });
-    return c.json(ok({ items: result.items.map(serializeGuild), total: result.total }), 200,);
+    const q = c.req.valid("query");
+    const page = await guildService.listGuilds(orgId, {
+      search: q.search,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
+    });
+    return c.json(
+      ok({ items: page.items.map(serializeGuild), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

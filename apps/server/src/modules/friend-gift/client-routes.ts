@@ -120,10 +120,12 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const rows = await friendGiftService.listPackages(orgId, {
+    // Client view: fetch up to the server cap; the client app doesn't paginate.
+    const page = await friendGiftService.listPackages(orgId, {
       activeOnly: true,
+      limit: 200,
     });
-    return c.json(ok({ items: rows.map(serializePackage) }), 200);
+    return c.json(ok({ items: page.items.map(serializePackage), nextCursor: page.nextCursor }), 200);
   },
 );
 
@@ -183,7 +185,7 @@ friendGiftClientRouter.openapi(
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listInbox(orgId, endUserId);
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
   },
 );
 
@@ -209,7 +211,7 @@ friendGiftClientRouter.openapi(
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
     const rows = await friendGiftService.listSent(orgId, endUserId);
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
   },
 );
 

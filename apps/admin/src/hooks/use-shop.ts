@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateShopCategoryInput,
   CreateShopGrowthStageInput,
@@ -97,11 +98,24 @@ export function useDeleteShopCategory() {
 
 // ─── Tags ────────────────────────────────────────────────────────
 
-export function useShopTags() {
-  return useQuery({
+/** Paginated tags — for the admin TagTable. */
+export function useShopTags(initialPageSize = 50) {
+  return useCursorList<ShopTag>({
     queryKey: TAGS_KEY,
-    queryFn: () => api.get<{ items: ShopTag[] }>("/api/shop/tags"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<ShopTag>>(`/api/shop/tags?${buildQs({ cursor, limit, q })}`),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated all-tags fetch for selectors (200 cap). */
+export function useAllShopTags() {
+  return useQuery({
+    queryKey: [...TAGS_KEY, "all"],
+    queryFn: () =>
+      api
+        .get<Page<ShopTag>>(`/api/shop/tags?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 
@@ -141,29 +155,34 @@ export function useDeleteShopTag() {
 
 // ─── Products ────────────────────────────────────────────────────
 
-function buildProductsQueryString(query: ShopListProductsQuery): string {
-  const params = new URLSearchParams()
-  if (query.categoryId) params.set("categoryId", query.categoryId)
-  if (query.tagId) params.set("tagId", query.tagId)
-  if (query.productType) params.set("productType", query.productType)
-  if (typeof query.isActive === "boolean")
-    params.set("isActive", String(query.isActive))
-  if (query.includeDescendantCategories)
-    params.set("includeDescendantCategories", "true")
-  if (query.activityId) params.set("activityId", query.activityId)
-  if (query.includeActivity) params.set("includeActivity", "true")
-  const s = params.toString()
-  return s ? `?${s}` : ""
-}
+type ShopProductFilterRest = Omit<ShopListProductsQuery, "limit" | "cursor" | "q">
 
-export function useShopProducts(query: ShopListProductsQuery = {}) {
-  return useQuery({
-    queryKey: [...PRODUCTS_KEY, query],
-    queryFn: () =>
-      api.get<{ items: ShopProduct[] }>(
-        `/api/shop/products${buildProductsQueryString(query)}`,
+/** Paginated products — for the admin ProductTable. */
+export function useShopProducts(
+  filter: ShopProductFilterRest & { initialPageSize?: number } = {},
+) {
+  const { initialPageSize = 50, ...rest } = filter
+  return useCursorList<ShopProduct>({
+    queryKey: [...PRODUCTS_KEY, rest],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<ShopProduct>>(
+        `/api/shop/products?${buildQs({
+          cursor,
+          limit,
+          q,
+          categoryId: rest.categoryId,
+          tagId: rest.tagId,
+          productType: rest.productType,
+          isActive:
+            rest.isActive == null ? undefined : String(rest.isActive),
+          includeDescendantCategories: rest.includeDescendantCategories
+            ? "true"
+            : undefined,
+          activityId: rest.activityId,
+          includeActivity: rest.includeActivity ? "true" : undefined,
+        })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
   })
 }
 

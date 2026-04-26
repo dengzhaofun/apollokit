@@ -1,24 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { HeartHandshakeIcon, Plus } from "lucide-react"
+import { useMemo } from "react"
 
-import {
-  EmptyList,
-  ErrorState,
-  PageBody,
-  PageHeader,
-  PageShell,
-} from "#/components/patterns"
+import { DataTable } from "#/components/data-table/DataTable"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
 import { useAssistPoolConfigs } from "#/hooks/use-assist-pool"
-import type { AssistContributionPolicy } from "#/lib/types/assist-pool"
+import type {
+  AssistContributionPolicy,
+  AssistPoolConfig,
+} from "#/lib/types/assist-pool"
 import * as m from "#/paraglide/messages.js"
 import { getLocale } from "#/paraglide/runtime.js"
 
@@ -39,22 +31,51 @@ function formatPolicy(p: AssistContributionPolicy): string {
   }
 }
 
+const columnHelper = createColumnHelper<AssistPoolConfig>()
+
+function useColumns(): ColumnDef<AssistPoolConfig, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.assistpool_col_name(),
+        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.assistpool_col_alias(),
+        cell: (info) => (
+          <span className="text-muted-foreground">{info.getValue() ?? "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("mode", { header: () => m.assistpool_col_mode() }),
+      columnHelper.accessor("targetAmount", {
+        header: () => m.assistpool_col_target(),
+      }),
+      columnHelper.accessor("contributionPolicy", {
+        header: () => m.assistpool_col_policy(),
+        cell: (info) => (
+          <span className="font-mono text-xs">{formatPolicy(info.getValue())}</span>
+        ),
+      }),
+      columnHelper.accessor("expiresInSeconds", { header: () => m.assistpool_col_ttl() }),
+      columnHelper.accessor("isActive", {
+        header: () => m.assistpool_col_active(),
+        cell: (info) => (info.getValue() ? m.assistpool_yes() : m.assistpool_no()),
+      }),
+    ],
+    [],
+  ) as ColumnDef<AssistPoolConfig, unknown>[]
+}
+
 function AssistPoolListPage() {
-  const { data: configs, isPending, error, refetch } = useAssistPoolConfigs()
-  const total = configs?.length ?? 0
+  const list = useAssistPoolConfigs()
+  const columns = useColumns()
 
   return (
     <PageShell>
       <PageHeader
         icon={<HeartHandshakeIcon className="size-5" />}
         title={t("助力池", "Assist pools")}
-        description={
-          isPending
-            ? t("加载中…", "Loading…")
-            : error
-              ? t("加载失败", "Failed to load")
-              : t(`共 ${total} 个助力池`, `${total} pools total`)
-        }
+        description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
         actions={
           <Button asChild size="sm">
             <Link to="/assist-pool/create">
@@ -66,69 +87,21 @@ function AssistPoolListPage() {
       />
 
       <PageBody>
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
-            {m.common_loading()}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title={t("助力池加载失败", "Failed to load assist pools")}
-            onRetry={() => refetch()}
-            retryLabel={t("重试", "Retry")}
-            error={error instanceof Error ? error : null}
-          />
-        ) : total === 0 ? (
-          <EmptyList
-            title={t("还没有助力池", "No assist pools yet")}
-            description={t(
-              "创建第一个助力池,聚合好友 / 公会贡献达成共同目标。",
-              "Create your first pool to aggregate friend or guild contributions toward a shared goal.",
-            )}
-            action={
-              <Button asChild size="sm">
-                <Link to="/assist-pool/create">
-                  <Plus />
-                  {m.assistpool_new_config()}
-                </Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m.assistpool_col_name()}</TableHead>
-                  <TableHead>{m.assistpool_col_alias()}</TableHead>
-                  <TableHead>{m.assistpool_col_mode()}</TableHead>
-                  <TableHead>{m.assistpool_col_target()}</TableHead>
-                  <TableHead>{m.assistpool_col_policy()}</TableHead>
-                  <TableHead>{m.assistpool_col_ttl()}</TableHead>
-                  <TableHead>{m.assistpool_col_active()}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {configs!.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.alias ?? "—"}
-                    </TableCell>
-                    <TableCell>{c.mode}</TableCell>
-                    <TableCell>{c.targetAmount}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {formatPolicy(c.contributionPolicy)}
-                    </TableCell>
-                    <TableCell>{c.expiresInSeconds}</TableCell>
-                    <TableCell>
-                      {c.isActive ? m.assistpool_yes() : m.assistpool_no()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={list.items}
+          isLoading={list.isLoading}
+          getRowId={(row) => row.id}
+          pageIndex={list.pageIndex}
+          canPrev={list.canPrev}
+          canNext={list.canNext}
+          onNextPage={list.nextPage}
+          onPrevPage={list.prevPage}
+          pageSize={list.pageSize}
+          onPageSizeChange={list.setPageSize}
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+        />
       </PageBody>
     </PageShell>
   )

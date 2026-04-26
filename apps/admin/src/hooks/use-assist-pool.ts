@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   AssistPoolConfig,
   AssistPoolInstance,
@@ -12,24 +13,27 @@ import type {
 const CONFIGS_KEY = ["assist-pool-configs"] as const
 const INSTANCES_KEY = ["assist-pool-instances"] as const
 
+/** Paginated configs — for the admin pool table. */
 export function useAssistPoolConfigs(
-  filter: { activityId?: string; includeActivity?: boolean } = {},
+  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
 ) {
-  const params = new URLSearchParams()
-  if (filter.activityId) params.set("activityId", filter.activityId)
-  if (filter.includeActivity) params.set("includeActivity", "true")
-  const qs = params.toString()
-  return useQuery({
+  const { activityId, includeActivity, initialPageSize = 50 } = opts
+  return useCursorList<AssistPoolConfig>({
     queryKey: [
       ...CONFIGS_KEY,
-      filter.activityId ?? null,
-      !!filter.includeActivity,
+      { activityId: activityId ?? null, includeActivity: !!includeActivity },
     ],
-    queryFn: () =>
-      api.get<{ items: AssistPoolConfig[] }>(
-        `/api/assist-pool/configs${qs ? `?${qs}` : ""}`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<AssistPoolConfig>>(
+        `/api/assist-pool/configs?${buildQs({
+          cursor,
+          limit,
+          q,
+          activityId,
+          includeActivity: includeActivity ? "true" : undefined,
+        })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
   })
 }
 

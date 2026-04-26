@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const AliasSchema = z
@@ -393,21 +395,21 @@ export const PullResultResponseSchema = z
   })
   .openapi("LotteryPullResult");
 
-export const PoolListResponseSchema = z
-  .object({ items: z.array(LotteryPoolResponseSchema) })
-  .openapi("LotteryPoolList");
+export const PoolListResponseSchema = pageOf(LotteryPoolResponseSchema).openapi(
+  "LotteryPoolList",
+);
 
-export const TierListResponseSchema = z
-  .object({ items: z.array(LotteryTierResponseSchema) })
-  .openapi("LotteryTierList");
+export const TierListResponseSchema = pageOf(LotteryTierResponseSchema).openapi(
+  "LotteryTierList",
+);
 
-export const PrizeListResponseSchema = z
-  .object({ items: z.array(LotteryPrizeResponseSchema) })
-  .openapi("LotteryPrizeList");
+export const PrizeListResponseSchema = pageOf(LotteryPrizeResponseSchema).openapi(
+  "LotteryPrizeList",
+);
 
-export const PityRuleListResponseSchema = z
-  .object({ items: z.array(LotteryPityRuleResponseSchema) })
-  .openapi("LotteryPityRuleList");
+export const PityRuleListResponseSchema = pageOf(LotteryPityRuleResponseSchema).openapi(
+  "LotteryPityRuleList",
+);
 
 export const PullLogResponseSchema = z
   .object({

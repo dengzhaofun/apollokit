@@ -1,15 +1,30 @@
+/**
+ * Generic shadcn + tanstack-table list component — server-paginated.
+ *
+ * Every list page in admin uses cursor pagination against the backend's
+ * `?cursor&limit&q` contract (see `apps/server/src/lib/pagination.ts`).
+ * The table itself does NO client-side filtering or sorting — the
+ * server is the source of truth for both. This is what makes the
+ * dashboard scale: a 100k-row table never lands in the browser.
+ *
+ * The caller's job: pass the current page's rows + `nextCursor` +
+ * pagination callbacks. The `useCursorList` hook in
+ * `#/hooks/use-cursor-list` does that boilerplate.
+ *
+ * Sorting: client-side sort is disabled. If a module needs sorted
+ * output, the server's list service returns rows in its canonical
+ * order (e.g. `(createdAt DESC, id DESC)` — see lib/pagination.ts).
+ */
+
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type Row,
 } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, ChevronsUpDown, Search } from "lucide-react"
-import { type ReactNode, useState } from "react"
+import { Search } from "lucide-react"
+import { type ReactNode } from "react"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -40,73 +55,85 @@ import * as m from "#/paraglide/messages.js"
 interface Props<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[]
+  /** Rows for the current page only — never the full dataset. */
   data: T[]
   isLoading?: boolean
+  /** Custom empty-state node. Falls back to a generic "no matches". */
   empty?: ReactNode
   /** Optional left-side content next to the search box (e.g. filters). */
   toolbar?: ReactNode
-  /** Hide the built-in search box if the caller wants their own. */
+
+  // ─── Pagination (server-driven cursor) ─────────────────────────────
+  /** Current page index, 1-based, for display only. */
+  pageIndex: number
+  /** Whether a "previous" navigation is possible (i.e. not on first page). */
+  canPrev: boolean
+  /** Whether a "next" navigation is possible (server returned a nextCursor). */
+  canNext: boolean
+  onNextPage: () => void
+  onPrevPage: () => void
+  /** Page size (rows-per-page select). */
+  pageSize: number
+  onPageSizeChange: (size: number) => void
+
+  // ─── Search (server-driven) ─────────────────────────────────────────
+  /** Hide the built-in search box if the route doesn't support `q`. */
   showSearch?: boolean
-  /** Initial page size, defaults to 20. */
-  pageSize?: number
-  /** Custom rowId for stable selection / persistence. */
+  /** Current search term — controlled input so route can debounce. */
+  searchValue?: string
+  onSearchChange?: (value: string) => void
+
+  /** Custom rowId for stable selection. */
   getRowId?: (row: T, index: number) => string
 }
 
-/**
- * Generic shadcn + tanstack-table list component. Wraps the boilerplate
- * (sort headers, pagination, global filter, loading skeleton, empty
- * state) so list pages only declare columns + data.
- *
- * Server-side pagination is not implemented here yet — all rows are
- * passed in and filtered/paginated client-side. Modules with thousands
- * of rows should switch to manual pagination later.
- */
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200] as const
+
 export function DataTable<T>({
   columns,
   data,
   isLoading,
   empty,
   toolbar,
+  pageIndex,
+  canPrev,
+  canNext,
+  onNextPage,
+  onPrevPage,
+  pageSize,
+  onPageSizeChange,
   showSearch = true,
-  pageSize = 20,
+  searchValue,
+  onSearchChange,
   getRowId,
 }: Props<T>) {
-  const [globalFilter, setGlobalFilter] = useState("")
-
   const table = useReactTable({
     data,
     columns,
     getRowId,
-    state: { globalFilter },
-    onGlobalFilterChange: setGlobalFilter,
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize } },
   })
 
   const rows = table.getRowModel().rows
-  const pageCount = table.getPageCount()
-  const pageIndex = table.getState().pagination.pageIndex
-  const totalRows = table.getFilteredRowModel().rows.length
 
   return (
     <div className="space-y-3">
       {(showSearch || toolbar) && (
         <div className="flex items-center gap-2">
-          {showSearch && (
+          {showSearch && onSearchChange ? (
             <div className="relative flex-1 max-w-sm">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
+                value={searchValue ?? ""}
+                onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={m.data_table_search_placeholder()}
                 className="pl-8"
               />
             </div>
-          )}
+          ) : null}
           {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
         </div>
       )}
@@ -116,32 +143,13 @@ export function DataTable<T>({
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
-                {hg.headers.map((h) => {
-                  const canSort = h.column.getCanSort()
-                  const sortDir = h.column.getIsSorted()
-                  return (
-                    <TableHead key={h.id}>
-                      {h.isPlaceholder ? null : canSort ? (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 hover:text-foreground"
-                          onClick={h.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(h.column.columnDef.header, h.getContext())}
-                          {sortDir === "asc" ? (
-                            <ArrowUp className="size-3" />
-                          ) : sortDir === "desc" ? (
-                            <ArrowDown className="size-3" />
-                          ) : (
-                            <ChevronsUpDown className="size-3 opacity-40" />
-                          )}
-                        </button>
-                      ) : (
-                        flexRender(h.column.columnDef.header, h.getContext())
-                      )}
-                    </TableHead>
-                  )
-                })}
+                {hg.headers.map((h) => (
+                  <TableHead key={h.id}>
+                    {h.isPlaceholder
+                      ? null
+                      : flexRender(h.column.columnDef.header, h.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -186,51 +194,48 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            {m.data_table_pagination_summary({
-              page: pageIndex + 1,
-              total: pageCount,
-              count: totalRows,
-            })}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs">{m.data_table_page_size()}</span>
-            <Select
-              value={String(table.getState().pagination.pageSize)}
-              onValueChange={(v) => table.setPageSize(Number(v))}
-            >
-              <SelectTrigger className="h-8 w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 50, 100].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              {m.data_table_prev()}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              {m.data_table_next()}
-            </Button>
-          </div>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {m.data_table_pagination_summary({
+            page: pageIndex,
+            count: rows.length,
+          })}
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs">{m.data_table_page_size()}</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => onPageSizeChange(Number(v))}
+          >
+            <SelectTrigger className="h-8 w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPrevPage}
+            disabled={!canPrev || isLoading}
+          >
+            {m.data_table_prev()}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onNextPage}
+            disabled={!canNext || isLoading}
+          >
+            {m.data_table_next()}
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   )
 }

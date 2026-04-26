@@ -40,9 +40,16 @@
  * not a unique constraint.
  */
 
-import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { banners, bannerGroups } from "../../schema/banner";
 import type { LinkAction } from "../link/types";
 import {
@@ -282,19 +289,29 @@ export function createBannerService(d: BannerDeps) {
      */
     async listGroups(
       organizationId: string,
-      filter?: { includeActivity?: boolean; activityId?: string },
-    ): Promise<BannerGroup[]> {
-      const conds = [eq(bannerGroups.organizationId, organizationId)];
-      if (filter?.activityId) {
+      filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
+    ): Promise<Page<BannerGroup>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(bannerGroups.organizationId, organizationId)];
+      if (filter.activityId) {
         conds.push(eq(bannerGroups.activityId, filter.activityId));
-      } else if (!filter?.includeActivity) {
+      } else if (!filter.includeActivity) {
         conds.push(isNull(bannerGroups.activityId));
       }
-      return db
+      const seek = cursorWhere(filter.cursor, bannerGroups.createdAt, bannerGroups.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(bannerGroups.name, pat), ilike(bannerGroups.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(bannerGroups)
         .where(and(...conds))
-        .orderBy(asc(bannerGroups.createdAt));
+        .orderBy(desc(bannerGroups.createdAt), desc(bannerGroups.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getGroup(
@@ -454,18 +471,26 @@ export function createBannerService(d: BannerDeps) {
     async listBanners(
       organizationId: string,
       groupId: string,
-    ): Promise<Banner[]> {
+      params: PageParams = {},
+    ): Promise<Page<Banner>> {
       await loadGroupById(organizationId, groupId);
-      return db
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [
+        eq(banners.organizationId, organizationId),
+        eq(banners.groupId, groupId),
+      ];
+      const seek = cursorWhere(params.cursor, banners.createdAt, banners.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        conds.push(ilike(banners.title, `%${params.q}%`));
+      }
+      const rows = await db
         .select()
         .from(banners)
-        .where(
-          and(
-            eq(banners.organizationId, organizationId),
-            eq(banners.groupId, groupId),
-          ),
-        )
-        .orderBy(asc(banners.sortOrder), asc(banners.createdAt));
+        .where(and(...conds))
+        .orderBy(desc(banners.createdAt), desc(banners.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getBanner(

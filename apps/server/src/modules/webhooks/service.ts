@@ -48,9 +48,16 @@
  * `active`.
  */
 
-import { and, asc, desc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, lte, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { decrypt, encrypt } from "../../lib/crypto";
 import { webhooksDeliveries, webhooksEndpoints } from "../../schema/webhooks";
 import {
@@ -186,13 +193,23 @@ export function createWebhooksService(
 
     async listEndpoints(
       organizationId: string,
-    ): Promise<WebhooksEndpointView[]> {
+      params: PageParams = {},
+    ): Promise<Page<WebhooksEndpointView>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(webhooksEndpoints.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, webhooksEndpoints.createdAt, webhooksEndpoints.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        conds.push(ilike(webhooksEndpoints.name, `%${params.q}%`));
+      }
       const rows = await db
         .select()
         .from(webhooksEndpoints)
-        .where(eq(webhooksEndpoints.organizationId, organizationId))
-        .orderBy(desc(webhooksEndpoints.createdAt));
-      return rows.map(toView);
+        .where(and(...conds))
+        .orderBy(desc(webhooksEndpoints.createdAt), desc(webhooksEndpoints.id))
+        .limit(limit + 1);
+      const page = buildPage(rows, limit);
+      return { items: page.items.map(toView), nextCursor: page.nextCursor };
     },
 
     async getEndpoint(
@@ -383,22 +400,30 @@ export function createWebhooksService(
     async listDeliveries(
       organizationId: string,
       endpointId: string,
-      filter: { status?: WebhooksDelivery["status"]; limit?: number } = {},
-    ): Promise<WebhooksDelivery[]> {
+      filter: PageParams & { status?: WebhooksDelivery["status"] } = {},
+    ): Promise<Page<WebhooksDelivery>> {
       await loadEndpoint(organizationId, endpointId);
-      const conds = [
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [
         eq(webhooksDeliveries.organizationId, organizationId),
         eq(webhooksDeliveries.endpointId, endpointId),
       ];
       if (filter.status) {
         conds.push(eq(webhooksDeliveries.status, filter.status));
       }
-      return db
+      const seek = cursorWhere(
+        filter.cursor,
+        webhooksDeliveries.createdAt,
+        webhooksDeliveries.id,
+      );
+      if (seek) conds.push(seek);
+      const rows = await db
         .select()
         .from(webhooksDeliveries)
         .where(and(...conds))
-        .orderBy(desc(webhooksDeliveries.createdAt))
-        .limit(filter.limit ?? 50);
+        .orderBy(desc(webhooksDeliveries.createdAt), desc(webhooksDeliveries.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getDelivery(

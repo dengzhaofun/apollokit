@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { CreateTagInlineForm, TagList } from "#/components/shop/TagList"
 import { Button } from "#/components/ui/button"
-import { useCreateShopTag, useShopTags } from "#/hooks/use-shop"
+import { useAllShopTags, useCreateShopTag } from "#/hooks/use-shop"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_dashboard/shop/tags/")({
 })
 
 function ShopTagsPage() {
-  const { data: tags, isPending, error } = useShopTags()
+  const { data: tags, isPending, error } = useAllShopTags()
   const createMutation = useCreateShopTag()
 
   return (

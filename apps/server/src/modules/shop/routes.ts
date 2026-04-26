@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -382,6 +383,7 @@ shopRouter.openapi(
     path: "/tags",
     tags: [TAG_TAG],
     summary: "List shop tags",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -392,8 +394,11 @@ shopRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await shopService.listTags(orgId);
-    return c.json(ok({ items: rows.map(serializeTag) }), 200);
+    const page = await shopService.listTags(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeTag), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -509,8 +514,11 @@ shopRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await shopService.listProducts(orgId, c.req.valid("query"));
-    return c.json(ok({ items: rows.map(serializeProduct) }), 200);
+    const page = await shopService.listProducts(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeProduct), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

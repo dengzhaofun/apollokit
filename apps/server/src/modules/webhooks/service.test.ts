@@ -74,9 +74,9 @@ describe("webhooks service — CRUD", () => {
     expect((endpoint as unknown as { secretCiphertext?: string }).secretCiphertext).toBeUndefined();
 
     const list = await svc.listEndpoints(orgId);
-    expect(list.find((e) => e.id === endpoint.id)).toBeDefined();
+    expect(list.items.find((e) => e.id === endpoint.id)).toBeDefined();
     expect(
-      (list[0] as unknown as { secretCiphertext?: string }).secretCiphertext,
+      (list.items[0] as unknown as { secretCiphertext?: string }).secretCiphertext,
     ).toBeUndefined();
   });
 
@@ -296,7 +296,7 @@ describe("webhooks service — dispatch + delivery", () => {
     t += 10 * 60_000; // jump past the default backoff
     await svc.deliverPending(); // attempt 2 → dead (maxAttempts=2)
 
-    const deliveries = await svc.listDeliveries(orgId, endpoint.id, {});
+    const deliveries = (await svc.listDeliveries(orgId, endpoint.id, {})).items;
     expect(deliveries[0]?.status).toBe("dead");
     expect(deliveries[0]?.attemptCount).toBeGreaterThanOrEqual(2);
 
@@ -318,7 +318,7 @@ describe("webhooks service — dispatch + delivery", () => {
       payload: { v: 1 },
     });
     await svc.deliverPending();
-    const [succeeded] = await svc.listDeliveries(orgId, endpoint.id, {});
+    const [succeeded] = (await svc.listDeliveries(orgId, endpoint.id, {})).items;
     expect(succeeded?.status).toBe("success");
 
     const replay = await svc.replayDelivery(orgId, succeeded!.id);

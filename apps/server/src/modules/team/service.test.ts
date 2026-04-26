@@ -75,7 +75,7 @@ describe("team service", () => {
 
     test("listConfigs returns all configs", async () => {
       // At least the configs created by earlier tests exist
-      const list = await svc.listConfigs(orgId);
+      const list = (await svc.listConfigs(orgId)).items;
       expect(list.length).toBeGreaterThanOrEqual(3);
       // Ordered by createdAt desc
       for (let i = 1; i < list.length; i++) {
@@ -655,8 +655,8 @@ describe("team service", () => {
         configKey: cfg.id,
         status: "open",
       });
-      expect(result.items.length).toBeGreaterThanOrEqual(2);
-      expect(result.total).toBeGreaterThanOrEqual(2);
+      const initialCount = result.items.length;
+      expect(initialCount).toBeGreaterThanOrEqual(2);
 
       // Dissolve one and filter by open status
       await svc.dissolveTeam(orgId, team1.id, "tm-u56");
@@ -665,7 +665,7 @@ describe("team service", () => {
         status: "open",
       });
       // At least one less open team for this config
-      expect(afterDissolve.total).toBeLessThan(result.total);
+      expect(afterDissolve.items.length).toBeLessThan(initialCount);
     });
 
     test("listTeams pagination works", async () => {
@@ -681,15 +681,14 @@ describe("team service", () => {
       const page1 = await svc.listTeams(orgId, {
         configKey: cfg.id,
         limit: 2,
-        offset: 0,
       });
       expect(page1.items.length).toBe(2);
-      expect(page1.total).toBeGreaterThanOrEqual(3);
+      expect(page1.nextCursor).not.toBeNull();
 
       const page2 = await svc.listTeams(orgId, {
         configKey: cfg.id,
         limit: 2,
-        offset: 2,
+        cursor: page1.nextCursor ?? undefined,
       });
       expect(page2.items.length).toBeGreaterThanOrEqual(1);
     });

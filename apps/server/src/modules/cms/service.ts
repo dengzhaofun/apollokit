@@ -25,9 +25,16 @@
  *     mutations (publish flips, data edits).
  */
 
-import { and, desc, eq, ilike, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   cmsEntries,
   cmsTypes,
@@ -282,17 +289,27 @@ export function createCmsService(d: CmsDeps) {
 
     async listTypes(
       organizationId: string,
-      filter?: { status?: "active" | "archived" },
-    ): Promise<CmsType[]> {
-      const conds = [eq(cmsTypes.organizationId, organizationId)];
-      if (filter?.status) {
+      filter: PageParams & { status?: "active" | "archived" } = {},
+    ): Promise<Page<CmsType>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(cmsTypes.organizationId, organizationId)];
+      if (filter.status) {
         conds.push(eq(cmsTypes.status, filter.status));
       }
-      return db
+      const seek = cursorWhere(filter.cursor, cmsTypes.createdAt, cmsTypes.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(cmsTypes.name, pat), ilike(cmsTypes.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(cmsTypes)
         .where(and(...conds))
-        .orderBy(desc(cmsTypes.updatedAt));
+        .orderBy(desc(cmsTypes.createdAt), desc(cmsTypes.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Entry CRUD ─────────────────────────────────────────────
@@ -537,54 +554,44 @@ export function createCmsService(d: CmsDeps) {
     async listEntries(
       organizationId: string,
       typeAlias: string,
-      filter?: {
+      filter: PageParams & {
         status?: CmsEntryStatus;
         groupKey?: string;
         tag?: string;
-        q?: string;
-        limit?: number;
-        offset?: number;
-      },
-    ): Promise<{ items: CmsEntry[]; total: number }> {
+      } = {},
+    ): Promise<Page<CmsEntry>> {
       // Confirm the type exists; surfaces a clean 404 if the caller
       // typo'd the alias.
       await loadTypeByAlias(organizationId, typeAlias);
 
-      const conds = [
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [
         eq(cmsEntries.organizationId, organizationId),
         eq(cmsEntries.typeAlias, typeAlias),
       ];
-      if (filter?.status) {
+      if (filter.status) {
         conds.push(eq(cmsEntries.status, filter.status));
       }
-      if (filter?.groupKey) {
+      if (filter.groupKey) {
         conds.push(eq(cmsEntries.groupKey, filter.groupKey));
       }
-      if (filter?.tag) {
+      if (filter.tag) {
         conds.push(sql`${cmsEntries.tags} @> ARRAY[${filter.tag}]::text[]`);
       }
-      if (filter?.q) {
+      if (filter.q) {
         conds.push(ilike(cmsEntries.alias, `${filter.q}%`));
       }
+      const seek = cursorWhere(filter.cursor, cmsEntries.createdAt, cmsEntries.id);
+      if (seek) conds.push(seek);
 
-      const limit = filter?.limit ?? 50;
-      const offset = filter?.offset ?? 0;
-
-      const items = await db
+      const rows = await db
         .select()
         .from(cmsEntries)
         .where(and(...conds))
-        .orderBy(desc(cmsEntries.updatedAt))
-        .limit(limit)
-        .offset(offset);
+        .orderBy(desc(cmsEntries.createdAt), desc(cmsEntries.id))
+        .limit(limit + 1);
 
-      const totalRows = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(cmsEntries)
-        .where(and(...conds));
-      const total = totalRows[0]?.count ?? 0;
-
-      return { items, total };
+      return buildPage(rows, limit);
     },
 
     // ─── Client-route reads (status === "published") ────────────

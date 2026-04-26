@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateFriendGiftPackageInput,
   FriendGiftPackage,
@@ -30,12 +31,28 @@ export function useUpsertFriendGiftSettings() {
   })
 }
 
-export function useFriendGiftPackages() {
-  return useQuery({
+/** Paginated friend-gift packages — for the admin packages table. */
+export function useFriendGiftPackages(initialPageSize = 50) {
+  return useCursorList<FriendGiftPackage>({
     queryKey: PACKAGES_KEY,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<FriendGiftPackage>>(
+        `/api/friend-gift/packages?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllFriendGiftPackages() {
+  return useQuery({
+    queryKey: [...PACKAGES_KEY, "all"],
     queryFn: () =>
-      api.get<{ items: FriendGiftPackage[] }>("/api/friend-gift/packages"),
-    select: (data) => data.items,
+      api
+        .get<Page<FriendGiftPackage>>(
+          `/api/friend-gift/packages?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
   })
 }
 
@@ -80,11 +97,14 @@ export function useDeleteFriendGiftPackage() {
   })
 }
 
-export function useFriendGiftSends() {
-  return useQuery({
+/** Paginated friend-gift sends — admin audit log. */
+export function useFriendGiftSends(initialPageSize = 50) {
+  return useCursorList<FriendGiftSend>({
     queryKey: SENDS_KEY,
-    queryFn: () =>
-      api.get<{ items: FriendGiftSend[] }>("/api/friend-gift/sends"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<FriendGiftSend>>(
+        `/api/friend-gift/sends?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
   })
 }

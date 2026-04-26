@@ -17,9 +17,16 @@
  * retries or reports conflict on zero affected rows.
  */
 
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   entityActionLogs,
   entityBlueprints,
@@ -236,12 +243,26 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       );
   }
 
-  async function listSchemas(organizationId: string): Promise<EntitySchema[]> {
-    return db
+  async function listSchemas(
+    organizationId: string,
+    params: PageParams = {},
+  ): Promise<Page<EntitySchema>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(entitySchemas.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, entitySchemas.createdAt, entitySchemas.id);
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(entitySchemas.name, pat), ilike(entitySchemas.alias, pat));
+      if (search) conds.push(search);
+    }
+    const rows = await db
       .select()
       .from(entitySchemas)
-      .where(eq(entitySchemas.organizationId, organizationId))
-      .orderBy(asc(entitySchemas.sortOrder), asc(entitySchemas.name));
+      .where(and(...conds))
+      .orderBy(desc(entitySchemas.createdAt), desc(entitySchemas.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getSchema(
@@ -387,24 +408,34 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
 
   async function listBlueprints(
     organizationId: string,
-    opts?: { schemaId?: string; activityId?: string | null },
-  ): Promise<EntityBlueprint[]> {
-    const conditions = [eq(entityBlueprints.organizationId, organizationId)];
-    if (opts?.schemaId) {
+    opts: PageParams & { schemaId?: string; activityId?: string | null } = {},
+  ): Promise<Page<EntityBlueprint>> {
+    const limit = clampLimit(opts.limit);
+    const conditions: SQL[] = [eq(entityBlueprints.organizationId, organizationId)];
+    if (opts.schemaId) {
       conditions.push(eq(entityBlueprints.schemaId, opts.schemaId));
     }
-    if (opts?.activityId !== undefined) {
+    if (opts.activityId !== undefined) {
       if (opts.activityId === null) {
         conditions.push(sql`${entityBlueprints.activityId} IS NULL`);
       } else {
         conditions.push(eq(entityBlueprints.activityId, opts.activityId));
       }
     }
-    return db
+    const seek = cursorWhere(opts.cursor, entityBlueprints.createdAt, entityBlueprints.id);
+    if (seek) conditions.push(seek);
+    if (opts.q) {
+      const pat = `%${opts.q}%`;
+      const search = or(ilike(entityBlueprints.name, pat), ilike(entityBlueprints.alias, pat));
+      if (search) conditions.push(search);
+    }
+    const rows = await db
       .select()
       .from(entityBlueprints)
       .where(and(...conditions))
-      .orderBy(asc(entityBlueprints.sortOrder), asc(entityBlueprints.name));
+      .orderBy(desc(entityBlueprints.createdAt), desc(entityBlueprints.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getBlueprint(
@@ -660,12 +691,31 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
 
   async function listFormationConfigs(
     organizationId: string,
-  ): Promise<EntityFormationConfig[]> {
-    return db
+    params: PageParams = {},
+  ): Promise<Page<EntityFormationConfig>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(entityFormationConfigs.organizationId, organizationId)];
+    const seek = cursorWhere(
+      params.cursor,
+      entityFormationConfigs.createdAt,
+      entityFormationConfigs.id,
+    );
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(
+        ilike(entityFormationConfigs.name, pat),
+        ilike(entityFormationConfigs.alias, pat),
+      );
+      if (search) conds.push(search);
+    }
+    const rows = await db
       .select()
       .from(entityFormationConfigs)
-      .where(eq(entityFormationConfigs.organizationId, organizationId))
-      .orderBy(asc(entityFormationConfigs.name));
+      .where(and(...conds))
+      .orderBy(desc(entityFormationConfigs.createdAt), desc(entityFormationConfigs.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getFormationConfig(

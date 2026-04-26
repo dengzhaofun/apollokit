@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -140,6 +141,7 @@ teamRouter.openapi(
     path: "/configs",
     tags: [TAG],
     summary: "List team configs for the current project",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -150,8 +152,11 @@ teamRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await teamService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    const page = await teamService.listConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -257,13 +262,17 @@ teamRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const query = c.req.valid("query");
-    const result = await teamService.listTeams(orgId, {
+    const page = await teamService.listTeams(orgId, {
       configKey: query.configKey,
       status: query.status,
+      cursor: query.cursor,
       limit: query.limit,
-      offset: query.offset,
+      q: query.q,
     });
-    return c.json(ok({ items: result.items.map(serializeTeam), total: result.total }), 200,);
+    return c.json(
+      ok({ items: page.items.map(serializeTeam), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

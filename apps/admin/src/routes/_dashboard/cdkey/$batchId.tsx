@@ -160,7 +160,7 @@ function CodesPane({
   batchId: string
   isUniversal: boolean
 }) {
-  const { data, isPending } = useCdkeyCodes(batchId, { limit: 200 })
+  const list = useCdkeyCodes(batchId)
   const generate = useGenerateCdkeyCodes()
   const revoke = useRevokeCdkeyCode()
   const [count, setCount] = useState(100)
@@ -237,20 +237,20 @@ function CodesPane({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending ? (
+            {list.isLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
                   {m.common_loading()}
                 </TableCell>
               </TableRow>
-            ) : !data?.items.length ? (
+            ) : !list.items.length ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
                   {m.cdkey_no_codes()}
                 </TableCell>
               </TableRow>
             ) : (
-              data.items.map((c) => (
+              list.items.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
                     <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -301,7 +301,7 @@ function CodesPane({
 }
 
 function LogsPane({ batchId }: { batchId: string }) {
-  const { data, isPending } = useCdkeyLogs(batchId, { limit: 200 })
+  const list = useCdkeyLogs(batchId)
 
   return (
     <div className="rounded-xl border bg-card shadow-sm">
@@ -317,20 +317,20 @@ function LogsPane({ batchId }: { batchId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isPending ? (
+          {list.isLoading ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
                 {m.common_loading()}
               </TableCell>
             </TableRow>
-          ) : !data?.items.length ? (
+          ) : !list.items.length ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center">
                 {m.cdkey_no_logs()}
               </TableCell>
             </TableRow>
           ) : (
-            data.items.map((log) => (
+            list.items.map((log) => (
               <TableRow key={log.id}>
                 <TableCell>
                   {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss")}

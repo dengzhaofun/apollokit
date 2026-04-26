@@ -5,7 +5,10 @@
  * session cookie or an admin API key (ak_).
  */
 
+import { z } from "@hono/zod-openapi";
+
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -175,6 +178,7 @@ taskRouter.openapi(
     path: "/categories",
     tags: [TAG_CAT],
     summary: "List task categories",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -187,8 +191,11 @@ taskRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await taskService.listCategories(orgId);
-    return c.json(ok({ items: rows.map(serializeCategory) }), 200);
+    const page = await taskService.listCategories(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeCategory), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -303,6 +310,26 @@ taskRouter.openapi(
     path: "/definitions",
     tags: [TAG_DEF],
     summary: "List task definitions",
+    request: {
+      query: PaginationQuerySchema.merge(
+        z.object({
+          categoryId: z.string().uuid().optional().openapi({
+            param: { name: "categoryId", in: "query" },
+          }),
+          period: z.string().optional().openapi({ param: { name: "period", in: "query" } }),
+          parentId: z.string().optional().openapi({
+            param: { name: "parentId", in: "query" },
+            description: "Pass 'null' for top-level tasks only.",
+          }),
+          activityId: z.string().uuid().optional().openapi({
+            param: { name: "activityId", in: "query" },
+          }),
+          includeActivity: z.enum(["true", "false"]).optional().openapi({
+            param: { name: "includeActivity", in: "query" },
+          }),
+        }),
+      ),
+    },
     responses: {
       200: {
         description: "OK",
@@ -315,19 +342,21 @@ taskRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const categoryId = c.req.query("categoryId") ?? undefined;
-    const period = c.req.query("period") ?? undefined;
-    const parentId = c.req.query("parentId");
-    const activityId = c.req.query("activityId") ?? undefined;
-    const includeActivity = c.req.query("includeActivity") === "true";
-    const rows = await taskService.listDefinitions(orgId, {
-      categoryId,
-      period,
-      parentId: parentId === undefined ? undefined : parentId === "null" ? null : parentId,
-      activityId,
-      includeActivity,
+    const q = c.req.valid("query");
+    const page = await taskService.listDefinitions(orgId, {
+      categoryId: q.categoryId,
+      period: q.period,
+      parentId: q.parentId === undefined ? undefined : q.parentId === "null" ? null : q.parentId,
+      activityId: q.activityId,
+      includeActivity: q.includeActivity === "true",
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeDefinition), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

@@ -207,7 +207,8 @@ levelClientRouter.openapi(
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
     const endUserId = c.var.endUserId!;
-    const configs = await levelService.listConfigs(orgId);
+    // Client view: fetch up to the server cap; client doesn't paginate.
+    const { items: configs } = await levelService.listConfigs(orgId, { limit: 200 });
 
     // Build per-user summaries by fetching overview for each config
     const items = await Promise.all(

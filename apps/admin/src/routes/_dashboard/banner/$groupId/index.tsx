@@ -18,7 +18,7 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
   useBannerGroup,
-  useBanners,
+  useAllBanners,
   useDeleteBanner,
   useDeleteBannerGroup,
   useReorderBanners,
@@ -35,7 +35,7 @@ function BannerGroupDetailPage() {
   const { groupId } = Route.useParams()
   const navigate = useNavigate()
   const { data: group } = useBannerGroup(groupId)
-  const { data: banners, isPending, error } = useBanners(groupId)
+  const { data: banners, isPending, error } = useAllBanners(groupId)
   const reorderMutation = useReorderBanners()
   const deleteBannerMutation = useDeleteBanner()
   const deleteGroupMutation = useDeleteBannerGroup()

@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 /**
  * Input schema for POST /api/end-user/sync.
  *
@@ -45,8 +47,8 @@ export const ListEndUsersQuerySchema = z
       .enum(["true", "false"])
       .transform((v) => v === "true")
       .optional(),
-    limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-    offset: z.coerce.number().int().min(0).optional().default(0),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(200).optional(),
   })
   .openapi("ListEndUsersQuery");
 
@@ -66,12 +68,9 @@ export const EndUserViewSchema = z
   })
   .openapi("EndUserView");
 
-export const EndUserListResponseSchema = z
-  .object({
-    items: z.array(EndUserViewSchema),
-    total: z.number().int(),
-  })
-  .openapi("EndUserListResponse");
+export const EndUserListResponseSchema = pageOf(EndUserViewSchema).openapi(
+  "EndUserListResponse",
+);
 
 export const UpdateEndUserSchema = z
   .object({

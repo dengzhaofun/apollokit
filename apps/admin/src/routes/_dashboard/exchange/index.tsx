@@ -5,15 +5,12 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { ExchangeConfigTable } from "#/components/exchange/ConfigTable"
-import { useExchangeConfigs } from "#/hooks/use-exchange"
 
 export const Route = createFileRoute("/_dashboard/exchange/")({
   component: ExchangeListPage,
 })
 
 function ExchangeListPage() {
-  const { data: configs, isPending, error } = useExchangeConfigs()
-
   return (
     <>
       <PageHeaderActions>
@@ -28,19 +25,7 @@ function ExchangeListPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
-            {m.common_loading()}
-          </div>
-        ) : error ? (
-          <div className="flex h-40 items-center justify-center text-destructive">
-            {m.exchange_failed_load_configs()} {error.message}
-          </div>
-        ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
-            <ExchangeConfigTable data={configs ?? []} />
-          </div>
-        )}
+        <ExchangeConfigTable />
       </main>
     </>
   )

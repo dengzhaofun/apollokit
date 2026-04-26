@@ -36,7 +36,10 @@ function TeamDetailPage() {
   const [editing, setEditing] = useState(false)
 
   const { data: config, isPending, error } = useTeamConfig(configId)
-  const { data: allTeams } = useTeams()
+  // Server filters by configKey so the page only sees this config's teams.
+  // Capped at the first page (50); add full pagination if a single config
+  // ever has hundreds of active teams.
+  const teamsList = useTeams({ configKey: configId })
   const updateMutation = useUpdateTeamConfig()
   const deleteMutation = useDeleteTeamConfig()
 
@@ -97,7 +100,7 @@ function TeamDetailPage() {
     }
   }
 
-  const configTeams = allTeams?.filter((t) => t.configId === configId) ?? []
+  const configTeams = teamsList.items
 
   if (isPending) {
     return (

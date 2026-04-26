@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const AliasSchema = z
@@ -151,9 +153,9 @@ export const ConfigResponseSchema = z
   })
   .openapi("StorageBoxConfig");
 
-export const ConfigListResponseSchema = z
-  .object({ items: z.array(ConfigResponseSchema) })
-  .openapi("StorageBoxConfigList");
+export const ConfigListResponseSchema = pageOf(ConfigResponseSchema).openapi(
+  "StorageBoxConfigList",
+);
 
 export const DepositViewSchema = z
   .object({

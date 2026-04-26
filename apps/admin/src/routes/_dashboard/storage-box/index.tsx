@@ -5,7 +5,6 @@ import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { StorageBoxConfigTable } from "#/components/storage-box/StorageBoxConfigTable"
 import { StorageBoxDepositLookup } from "#/components/storage-box/StorageBoxDepositLookup"
-import { useStorageBoxConfigs } from "#/hooks/use-storage-box"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/storage-box/")({
@@ -13,8 +12,6 @@ export const Route = createFileRoute("/_dashboard/storage-box/")({
 })
 
 function StorageBoxListPage() {
-  const { data: configs, isPending, error } = useStorageBoxConfigs()
-
   return (
     <>
       <main className="flex-1 p-6">
@@ -33,19 +30,7 @@ function StorageBoxListPage() {
           </div>
 
           <TabsContent value="configs" className="mt-4">
-            {isPending ? (
-              <div className="flex h-40 items-center justify-center text-muted-foreground">
-                {m.common_loading()}
-              </div>
-            ) : error ? (
-              <div className="flex h-40 items-center justify-center text-destructive">
-                {m.common_failed_to_load({ resource: m.storage_box_page_title(), error: error.message })}
-              </div>
-            ) : (
-              <div className="rounded-xl border bg-card shadow-sm">
-                <StorageBoxConfigTable data={configs ?? []} />
-              </div>
-            )}
+            <StorageBoxConfigTable />
           </TabsContent>
 
           <TabsContent value="deposits" className="mt-4">

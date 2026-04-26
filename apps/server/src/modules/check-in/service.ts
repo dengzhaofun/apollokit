@@ -49,9 +49,17 @@
  * record at the end — nothing else needs to change.
  */
 
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  buildPageBy,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import type { RewardEntry } from "../../lib/rewards";
 import {
   checkInConfigs,
@@ -271,19 +279,29 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
      */
     async listConfigs(
       organizationId: string,
-      filter?: { includeActivity?: boolean; activityId?: string },
-    ): Promise<CheckInConfig[]> {
-      const conds = [eq(checkInConfigs.organizationId, organizationId)];
-      if (filter?.activityId) {
+      filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
+    ): Promise<Page<CheckInConfig>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(checkInConfigs.organizationId, organizationId)];
+      if (filter.activityId) {
         conds.push(eq(checkInConfigs.activityId, filter.activityId));
-      } else if (!filter?.includeActivity) {
+      } else if (!filter.includeActivity) {
         conds.push(isNull(checkInConfigs.activityId));
       }
-      return db
+      const seek = cursorWhere(filter.cursor, checkInConfigs.createdAt, checkInConfigs.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(checkInConfigs.name, pat), ilike(checkInConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(checkInConfigs)
         .where(and(...conds))
-        .orderBy(desc(checkInConfigs.createdAt));
+        .orderBy(desc(checkInConfigs.createdAt), desc(checkInConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getConfig(
@@ -296,16 +314,32 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     async listUserStates(params: {
       organizationId: string;
       configKey: string;
-    }): Promise<CheckInUserState[]> {
+    } & PageParams): Promise<Page<CheckInUserState>> {
       const config = await loadConfigByKey(
         params.organizationId,
         params.configKey,
       );
-      return db
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(checkInUserStates.configId, config.id)];
+      const seek = cursorWhere(
+        params.cursor,
+        checkInUserStates.createdAt,
+        checkInUserStates.endUserId,
+      );
+      if (seek) conds.push(seek);
+      if (params.q) {
+        conds.push(ilike(checkInUserStates.endUserId, `%${params.q}%`));
+      }
+      const rows = await db
         .select()
         .from(checkInUserStates)
-        .where(eq(checkInUserStates.configId, config.id))
-        .orderBy(desc(checkInUserStates.lastCheckInAt));
+        .where(and(...conds))
+        .orderBy(desc(checkInUserStates.createdAt), desc(checkInUserStates.endUserId))
+        .limit(limit + 1);
+      return buildPageBy(rows, limit, (r) => ({
+        createdAt: r.createdAt,
+        id: r.endUserId,
+      }));
     },
 
     async getUserState(params: {

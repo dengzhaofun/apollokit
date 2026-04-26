@@ -209,8 +209,7 @@ describe("end-user service — list / get / update", () => {
   });
 
   test("list returns all 5 with correct origin labels", async () => {
-    const { items, total } = await svc.list(orgId);
-    expect(total).toBe(5);
+    const { items } = await svc.list(orgId);
     expect(items).toHaveLength(5);
     expect(items.filter((i) => i.origin === "managed")).toHaveLength(2);
     expect(items.filter((i) => i.origin === "synced")).toHaveLength(3);
@@ -218,29 +217,30 @@ describe("end-user service — list / get / update", () => {
 
   test("list filters by origin=managed", async () => {
     const r = await svc.list(orgId, { origin: "managed" });
-    expect(r.total).toBe(2);
+    expect(r.items).toHaveLength(2);
     expect(r.items.every((i) => i.origin === "managed")).toBe(true);
   });
 
   test("list filters by origin=synced", async () => {
     const r = await svc.list(orgId, { origin: "synced" });
-    expect(r.total).toBe(3);
+    expect(r.items).toHaveLength(3);
   });
 
   test("list search matches email and name substring", async () => {
     const byName = await svc.list(orgId, { search: "S Two" });
-    expect(byName.total).toBe(1);
+    expect(byName.items).toHaveLength(1);
     const byEmail = await svc.list(orgId, { search: "s1@example" });
-    expect(byEmail.total).toBe(1);
+    expect(byEmail.items).toHaveLength(1);
     const byExternal = await svc.list(orgId, { search: "u_s3" });
-    expect(byExternal.total).toBe(1);
+    expect(byExternal.items).toHaveLength(1);
   });
 
-  test("list paginates", async () => {
-    const first = await svc.list(orgId, { limit: 2, offset: 0 });
-    const second = await svc.list(orgId, { limit: 2, offset: 2 });
+  test("list paginates with cursor", async () => {
+    const first = await svc.list(orgId, { limit: 2 });
     expect(first.items).toHaveLength(2);
-    expect(second.items).toHaveLength(2);
+    expect(first.nextCursor).not.toBeNull();
+    const second = await svc.list(orgId, { limit: 2, cursor: first.nextCursor ?? undefined });
+    expect(second.items.length).toBeGreaterThanOrEqual(1);
     expect(first.items.map((i) => i.id)).not.toEqual(
       second.items.map((i) => i.id),
     );
@@ -374,8 +374,8 @@ describe("end-user service — tenant isolation", () => {
     expect(a.items.every((i) => i.email === "twin@example.com")).toBe(true);
     expect(b.items.every((i) => i.email === "twin@example.com")).toBe(true);
     // Each org sees exactly its own row
-    expect(a.total).toBe(1);
-    expect(b.total).toBe(1);
+    expect(a.items).toHaveLength(1);
+    expect(b.items).toHaveLength(1);
   });
 
   test("get with orgA's id from orgB scope throws not found", async () => {
