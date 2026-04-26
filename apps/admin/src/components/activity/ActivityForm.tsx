@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form"
 
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -374,7 +375,10 @@ export function ActivityForm({
         <form.Field name="membershipJson">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label>{m.activity_form_membership_json()}</Label>
+              <Label className="inline-flex items-center gap-1.5">
+                {m.activity_form_membership_json()}
+                <FieldHint>{m.activity_form_membership_hint()}</FieldHint>
+              </Label>
               <JsonEditor
                 value={field.state.value}
                 onChange={(v) => field.handleChange(v)}
@@ -382,9 +386,6 @@ export function ActivityForm({
                 height={140}
                 aria-label={m.activity_form_membership_json()}
               />
-              <p className="text-xs text-muted-foreground">
-                {m.activity_form_membership_hint()}
-              </p>
             </div>
           )}
         </form.Field>

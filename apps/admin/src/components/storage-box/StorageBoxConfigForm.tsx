@@ -4,6 +4,7 @@ import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Checkbox } from "#/components/ui/checkbox"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -121,7 +122,10 @@ export function StorageBoxConfigForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_alias()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.common_alias()}
+              <FieldHint>{m.storage_box_field_alias_hint()}</FieldHint>
+            </Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -129,9 +133,6 @@ export function StorageBoxConfigForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={m.storage_box_field_alias_placeholder()}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.storage_box_field_alias_hint()}
-            </p>
           </div>
         )}
       </form.Field>
@@ -243,7 +244,10 @@ export function StorageBoxConfigForm({
         <form.Field name="ratePercent">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>{m.storage_box_field_interest_rate_label()}</Label>
+              <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                {m.storage_box_field_interest_rate_label()}
+                <FieldHint>{m.storage_box_field_interest_hint()}</FieldHint>
+              </Label>
               <Input
                 id={field.name}
                 type="number"
@@ -253,9 +257,6 @@ export function StorageBoxConfigForm({
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(Number(e.target.value))}
               />
-              <p className="text-xs text-muted-foreground">
-                {m.storage_box_field_interest_hint()}
-              </p>
             </div>
           )}
         </form.Field>

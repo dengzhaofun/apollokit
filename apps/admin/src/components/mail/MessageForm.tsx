@@ -3,6 +3,7 @@ import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -140,7 +141,10 @@ export function MessageForm({
       <form.Field name="targetType">
         {(field) => (
           <div className="space-y-2">
-            <Label>{m.mail_field_target_type()} *</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              {m.mail_field_target_type()} *
+              <FieldHint>{m.mail_field_target_hint()}</FieldHint>
+            </Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v as MailTargetType)}
@@ -157,9 +161,6 @@ export function MessageForm({
                 </SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              {m.mail_field_target_hint()}
-            </p>
           </div>
         )}
       </form.Field>
@@ -170,8 +171,9 @@ export function MessageForm({
             <form.Field name="recipientsRaw">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="mail-recipients">
+                  <Label htmlFor="mail-recipients" className="inline-flex items-center gap-1.5">
                     {m.mail_field_recipients()} *
+                    <FieldHint>{m.mail_field_recipients_hint()}</FieldHint>
                   </Label>
                   <Textarea
                     id="mail-recipients"
@@ -181,9 +183,6 @@ export function MessageForm({
                     onChange={(e) => field.handleChange(e.target.value)}
                     placeholder="user-1, user-2&#10;user-3"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {m.mail_field_recipients_hint()}
-                  </p>
                 </div>
               )}
             </form.Field>
@@ -205,12 +204,10 @@ export function MessageForm({
       <form.Field name="requireRead">
         {(field) => (
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label>{m.mail_field_require_read()}</Label>
-              <p className="text-xs text-muted-foreground">
-                {m.mail_field_require_read_hint()}
-              </p>
-            </div>
+            <Label className="inline-flex items-center gap-1.5">
+              {m.mail_field_require_read()}
+              <FieldHint>{m.mail_field_require_read_hint()}</FieldHint>
+            </Label>
             <Switch
               checked={field.state.value}
               onCheckedChange={(v) => field.handleChange(v === true)}
@@ -222,7 +219,10 @@ export function MessageForm({
       <form.Field name="expiresAt">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor="mail-expires">{m.mail_field_expires_at()}</Label>
+            <Label htmlFor="mail-expires" className="inline-flex items-center gap-1.5">
+              {m.mail_field_expires_at()}
+              <FieldHint>{m.mail_field_expires_at_hint()}</FieldHint>
+            </Label>
             <Input
               id="mail-expires"
               type="datetime-local"
@@ -230,9 +230,6 @@ export function MessageForm({
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.mail_field_expires_at_hint()}
-            </p>
           </div>
         )}
       </form.Field>

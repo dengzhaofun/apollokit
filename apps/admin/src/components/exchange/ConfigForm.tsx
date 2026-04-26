@@ -80,11 +80,8 @@ export function ExchangeConfigForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. spring-exchange"
+              placeholder="e.g. spring-exchange (lowercase, digits, hyphens, underscores)"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
           </div>
         )}
       </form.Field>

@@ -3,6 +3,7 @@ import { useState } from "react"
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
@@ -110,7 +111,10 @@ export function OptionForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="opt-userLimit">{m.exchange_user_limit()}</Label>
+          <Label htmlFor="opt-userLimit" className="inline-flex items-center gap-1.5">
+            {m.exchange_user_limit()}
+            <FieldHint>Max times per user. Empty = unlimited.</FieldHint>
+          </Label>
           <Input
             id="opt-userLimit"
             type="number"
@@ -121,12 +125,12 @@ export function OptionForm({
             }
             placeholder={m.common_unlimited()}
           />
-          <p className="text-xs text-muted-foreground">
-            Max times per user. Empty = unlimited.
-          </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="opt-globalLimit">{m.exchange_global_limit()}</Label>
+          <Label htmlFor="opt-globalLimit" className="inline-flex items-center gap-1.5">
+            {m.exchange_global_limit()}
+            <FieldHint>Total exchanges allowed. Empty = unlimited.</FieldHint>
+          </Label>
           <Input
             id="opt-globalLimit"
             type="number"
@@ -137,9 +141,6 @@ export function OptionForm({
             }
             placeholder={m.common_unlimited()}
           />
-          <p className="text-xs text-muted-foreground">
-            Total exchanges allowed. Empty = unlimited.
-          </p>
         </div>
       </div>
 

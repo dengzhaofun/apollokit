@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -147,11 +148,8 @@ export function ConfigForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. daily"
+              placeholder="e.g. daily (lowercase, digits, hyphens, underscores)"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
           </div>
         )}
       </form.Field>
@@ -175,7 +173,12 @@ export function ConfigForm({
       <form.Field name="resetMode">
         {(field) => (
           <div className="space-y-2">
-            <Label>{m.checkin_reset_mode()} *</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              {m.checkin_reset_mode()} *
+              <FieldHint>
+                How the check-in cycle resets: never, weekly, or monthly.
+              </FieldHint>
+            </Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v as ResetMode)}
@@ -191,9 +194,6 @@ export function ConfigForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              How the check-in cycle resets: never, weekly, or monthly.
-            </p>
           </div>
         )}
       </form.Field>
@@ -230,7 +230,12 @@ export function ConfigForm({
       <form.Field name="target">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.checkin_target()} ({m.checkin_days()})</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.checkin_target()} ({m.checkin_days()})
+              <FieldHint>
+                Optional per-cycle goal. Leave empty for no target.
+              </FieldHint>
+            </Label>
             <Input
               id={field.name}
               type="number"
@@ -242,9 +247,6 @@ export function ConfigForm({
               }
               placeholder="Optional goal per cycle"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional per-cycle goal. Leave empty for no target.
-            </p>
           </div>
         )}
       </form.Field>

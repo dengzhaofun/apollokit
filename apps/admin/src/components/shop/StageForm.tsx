@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -148,7 +149,10 @@ export function StageForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="stage-config">{m.shop_trigger_config()}</Label>
+        <Label htmlFor="stage-config" className="inline-flex items-center gap-1.5">
+          {m.shop_trigger_config()}
+          <FieldHint>{m.shop_trigger_config_hint()}</FieldHint>
+        </Label>
         <Textarea
           id="stage-config"
           value={triggerConfigText}
@@ -157,9 +161,6 @@ export function StageForm({
           placeholder='{ "itemDefinitionId": "<uuid>", "threshold": 1000 }'
           className="font-mono text-xs"
         />
-        <p className="text-xs text-muted-foreground">
-          {m.shop_trigger_config_hint()}
-        </p>
       </div>
 
       <RewardEntryEditor

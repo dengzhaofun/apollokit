@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -75,7 +76,10 @@ export function RewardEntryEditor({
 
   return (
     <div className="space-y-3">
-      <Label>{label}</Label>
+      <Label className="inline-flex items-center gap-1.5">
+        {label}
+        {hint ? <FieldHint>{hint}</FieldHint> : null}
+      </Label>
       {entries.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {m.reward_entry_empty_hint()}
@@ -171,7 +175,6 @@ export function RewardEntryEditor({
         <Plus className="size-4" />
         {m.reward_entry_add()}
       </Button>
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   )
 }

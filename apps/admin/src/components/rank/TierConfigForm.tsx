@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Switch } from "#/components/ui/switch"
@@ -163,7 +164,10 @@ export function TierConfigForm({
       {/* Identity */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="alias">{m.rank_config_alias()}</Label>
+          <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+            {m.rank_config_alias()}
+            <FieldHint>{m.rank_config_alias_help()}</FieldHint>
+          </Label>
           <Input
             id="alias"
             required
@@ -173,9 +177,6 @@ export function TierConfigForm({
             placeholder={m.rank_config_alias_placeholder()}
             disabled={!!initial}
           />
-          <p className="text-xs text-muted-foreground">
-            {m.rank_config_alias_help()}
-          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="name">{m.rank_config_name()}</Label>
@@ -215,7 +216,10 @@ export function TierConfigForm({
         </h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <Label htmlFor="baseK">{m.rank_config_base_k()}</Label>
+            <Label htmlFor="baseK" className="inline-flex items-center gap-1.5">
+              {m.rank_config_base_k()}
+              <FieldHint>{m.rank_config_base_k_help()}</FieldHint>
+            </Label>
             <Input
               id="baseK"
               type="number"
@@ -224,9 +228,6 @@ export function TierConfigForm({
               value={baseK}
               onChange={(e) => setBaseK(Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.rank_config_base_k_help()}
-            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="initialMmr">{m.rank_config_initial_mmr()}</Label>
@@ -240,7 +241,10 @@ export function TierConfigForm({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="perfWeight">{m.rank_config_perf_weight()}</Label>
+            <Label htmlFor="perfWeight" className="inline-flex items-center gap-1.5">
+              {m.rank_config_perf_weight()}
+              <FieldHint>{m.rank_config_perf_weight_help()}</FieldHint>
+            </Label>
             <Input
               id="perfWeight"
               type="number"
@@ -250,9 +254,6 @@ export function TierConfigForm({
               value={perfWeight}
               onChange={(e) => setPerfWeight(Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.rank_config_perf_weight_help()}
-            </p>
           </div>
         </div>
       </div>

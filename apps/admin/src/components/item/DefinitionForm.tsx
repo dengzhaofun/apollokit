@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -130,11 +131,8 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. gold"
+              placeholder="e.g. gold (lowercase, digits, hyphens, underscores)"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
           </div>
         )}
       </form.Field>
@@ -199,10 +197,12 @@ export function DefinitionForm({
               checked={field.state.value}
               onCheckedChange={(checked) => field.handleChange(checked === true)}
             />
-            <Label htmlFor={field.name}>{m.item_stackable()}</Label>
-            <p className="text-xs text-muted-foreground">
-              Stackable items can share inventory rows. Non-stackable items get one row per instance.
-            </p>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.item_stackable()}
+              <FieldHint>
+                Stackable items can share inventory rows. Non-stackable items get one row per instance.
+              </FieldHint>
+            </Label>
           </div>
         )}
       </form.Field>
@@ -213,7 +213,12 @@ export function DefinitionForm({
             <form.Field name="stackLimit">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Stack Limit</Label>
+                  <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                    Stack Limit
+                    <FieldHint>
+                      Max quantity per stack. Empty = unlimited (currency behavior).
+                    </FieldHint>
+                  </Label>
                   <Input
                     id={field.name}
                     type="number"
@@ -225,9 +230,6 @@ export function DefinitionForm({
                     }
                     placeholder="Leave empty for unlimited (currency)"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Max quantity per stack. Empty = unlimited (currency behavior).
-                  </p>
                 </div>
               )}
             </form.Field>
@@ -238,7 +240,12 @@ export function DefinitionForm({
       <form.Field name="holdLimit">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.item_hold_limit()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.item_hold_limit()}
+              <FieldHint>
+                Max total quantity a user can hold. 1 = unique item. Empty = unlimited.
+              </FieldHint>
+            </Label>
             <Input
               id={field.name}
               type="number"
@@ -250,9 +257,6 @@ export function DefinitionForm({
               }
               placeholder="Leave empty for unlimited"
             />
-            <p className="text-xs text-muted-foreground">
-              Max total quantity a user can hold. 1 = unique item. Empty = unlimited.
-            </p>
           </div>
         )}
       </form.Field>
@@ -260,7 +264,12 @@ export function DefinitionForm({
       <form.Field name="lotteryPoolId">
         {(field) => (
           <div className="space-y-2">
-            <Label>Lottery Pool</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              Lottery Pool
+              <FieldHint>
+                Link to a lottery pool to make this item openable (e.g. treasure chest).
+              </FieldHint>
+            </Label>
             <Select
               value={field.state.value}
               onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
@@ -277,9 +286,6 @@ export function DefinitionForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Link to a lottery pool to make this item openable (e.g. treasure chest).
-            </p>
           </div>
         )}
       </form.Field>

@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form"
 
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -115,7 +116,10 @@ export function CharacterForm({
         <form.Field name="alias">
           {(field) => (
             <div className="space-y-1">
-              <Label htmlFor="alias">{m.character_field_alias()}</Label>
+              <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+                {m.character_field_alias()}
+                <FieldHint>{m.character_field_alias_hint()}</FieldHint>
+              </Label>
               <Input
                 id="alias"
                 value={field.state.value}
@@ -123,9 +127,6 @@ export function CharacterForm({
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder={m.character_field_alias_placeholder()}
               />
-              <p className="text-xs text-muted-foreground">
-                {m.character_field_alias_hint()}
-              </p>
             </div>
           )}
         </form.Field>

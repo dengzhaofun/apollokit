@@ -14,6 +14,7 @@ import { useState } from "react"
 
 import { SchemaBuilder } from "#/components/cms/SchemaBuilder"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -94,7 +95,10 @@ export function TypeForm({
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="alias">{m.common_alias()} *</Label>
+            <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+              {m.common_alias()} *
+              <FieldHint>{m.cms_type_alias_hint()}</FieldHint>
+            </Label>
             <Input
               id="alias"
               required
@@ -103,9 +107,6 @@ export function TypeForm({
               onChange={(e) => setAlias(e.target.value)}
               placeholder="blog-post"
             />
-            <p className="text-xs text-muted-foreground">
-              {m.cms_type_alias_hint()}
-            </p>
           </div>
           <div className="space-y-1">
             <Label htmlFor="name">{m.common_name()} *</Label>
@@ -131,16 +132,16 @@ export function TypeForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="groupOptions">{m.cms_type_group_options()}</Label>
+            <Label htmlFor="groupOptions" className="inline-flex items-center gap-1.5">
+              {m.cms_type_group_options()}
+              <FieldHint>{m.cms_type_group_options_hint()}</FieldHint>
+            </Label>
             <Input
               id="groupOptions"
               value={groupOptionsText}
               onChange={(e) => setGroupOptionsText(e.target.value)}
               placeholder="home-feed, support, billing"
             />
-            <p className="text-xs text-muted-foreground">
-              {m.cms_type_group_options_hint()}
-            </p>
           </div>
           {initial ? (
             <div className="space-y-1">

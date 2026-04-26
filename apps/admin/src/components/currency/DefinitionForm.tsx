@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -109,7 +110,10 @@ export function DefinitionForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_alias()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.common_alias()}
+              <FieldHint>{m.currency_alias_hint()}</FieldHint>
+            </Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -117,9 +121,6 @@ export function DefinitionForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="e.g. gem"
             />
-            <p className="text-xs text-muted-foreground">
-              {m.currency_alias_hint()}
-            </p>
           </div>
         )}
       </form.Field>
@@ -155,7 +156,10 @@ export function DefinitionForm({
       <form.Field name="sortOrder">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.currency_sort_order()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.currency_sort_order()}
+              <FieldHint>{m.currency_sort_hint()}</FieldHint>
+            </Label>
             <Input
               id={field.name}
               type="number"
@@ -163,9 +167,6 @@ export function DefinitionForm({
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.currency_sort_hint()}
-            </p>
           </div>
         )}
       </form.Field>

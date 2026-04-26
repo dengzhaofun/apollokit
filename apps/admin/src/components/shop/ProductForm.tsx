@@ -4,6 +4,7 @@ import { ImageListField } from "#/components/forms/ImageListField"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -223,18 +224,21 @@ export function ProductForm({
             />
           </div>
           <div className="space-y-2">
-            <Label>{m.shop_gallery_images()}</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              {m.shop_gallery_images()}
+              <FieldHint>{m.shop_gallery_hint()}</FieldHint>
+            </Label>
             <ImageListField value={galleryImages} onChange={setGalleryImages} />
-            <p className="text-xs text-muted-foreground">
-              {m.shop_gallery_hint()}
-            </p>
           </div>
         </div>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase text-muted-foreground">
+        <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase text-muted-foreground">
           {m.shop_product_type()}
+          {productType === "growth_pack" ? (
+            <FieldHint>{m.shop_reward_items_hint()}</FieldHint>
+          ) : null}
         </h2>
         <Select
           value={productType}
@@ -250,11 +254,6 @@ export function ProductForm({
             </SelectItem>
           </SelectContent>
         </Select>
-        {productType === "growth_pack" ? (
-          <p className="text-xs text-muted-foreground">
-            {m.shop_reward_items_hint()}
-          </p>
-        ) : null}
       </section>
 
       <section className="space-y-6">

@@ -3,6 +3,7 @@ import { useState } from "react"
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import type { CreateRewardInput } from "#/lib/types/check-in-reward"
@@ -49,7 +50,10 @@ export function RewardForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="reward-day">Day Number *</Label>
+        <Label htmlFor="reward-day" className="inline-flex items-center gap-1.5">
+          Day Number *
+          <FieldHint>Which consecutive check-in day triggers this reward.</FieldHint>
+        </Label>
         <Input
           id="reward-day"
           type="number"
@@ -58,9 +62,6 @@ export function RewardForm({
           onChange={(e) => setDayNumber(Number(e.target.value))}
         />
         {dayError && <p className="text-sm text-destructive">{dayError}</p>}
-        <p className="text-xs text-muted-foreground">
-          Which consecutive check-in day triggers this reward.
-        </p>
       </div>
 
       <RewardEntryEditor

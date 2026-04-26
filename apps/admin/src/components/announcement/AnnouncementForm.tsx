@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form"
 
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -134,7 +135,10 @@ export function AnnouncementForm({
           >
             {(field) => (
               <div className="space-y-1">
-                <Label htmlFor="alias">{m.announcement_field_alias()}</Label>
+                <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+                  {m.announcement_field_alias()}
+                  <FieldHint>{m.announcement_field_alias_hint()}</FieldHint>
+                </Label>
                 <Input
                   id="alias"
                   required
@@ -144,9 +148,6 @@ export function AnnouncementForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                   placeholder="maintenance-2026-04-19"
                 />
-                <p className="text-xs text-muted-foreground">
-                  {m.announcement_field_alias_hint()}
-                </p>
               </div>
             )}
           </form.Field>
@@ -306,8 +307,9 @@ export function AnnouncementForm({
           <form.Field name="priority">
             {(field) => (
               <div className="space-y-1">
-                <Label htmlFor="priority">
+                <Label htmlFor="priority" className="inline-flex items-center gap-1.5">
                   {m.announcement_field_priority()}
+                  <FieldHint>{m.announcement_field_priority_hint()}</FieldHint>
                 </Label>
                 <Input
                   id="priority"
@@ -318,9 +320,6 @@ export function AnnouncementForm({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(Number(e.target.value) || 0)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {m.announcement_field_priority_hint()}
-                </p>
               </div>
             )}
           </form.Field>
@@ -351,8 +350,9 @@ export function AnnouncementForm({
           <form.Field name="visibleFrom">
             {(field) => (
               <div className="space-y-1">
-                <Label htmlFor="visibleFrom">
+                <Label htmlFor="visibleFrom" className="inline-flex items-center gap-1.5">
                   {m.announcement_field_visible_from()}
+                  <FieldHint>{m.announcement_field_visible_from_hint()}</FieldHint>
                 </Label>
                 <Input
                   id="visibleFrom"
@@ -361,17 +361,15 @@ export function AnnouncementForm({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {m.announcement_field_visible_from_hint()}
-                </p>
               </div>
             )}
           </form.Field>
           <form.Field name="visibleUntil">
             {(field) => (
               <div className="space-y-1">
-                <Label htmlFor="visibleUntil">
+                <Label htmlFor="visibleUntil" className="inline-flex items-center gap-1.5">
                   {m.announcement_field_visible_until()}
+                  <FieldHint>{m.announcement_field_visible_until_hint()}</FieldHint>
                 </Label>
                 <Input
                   id="visibleUntil"
@@ -380,9 +378,6 @@ export function AnnouncementForm({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {m.announcement_field_visible_until_hint()}
-                </p>
               </div>
             )}
           </form.Field>

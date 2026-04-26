@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -146,7 +147,10 @@ export function AssistPoolConfigForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor="alias">{m.assistpool_alias_optional()}</Label>
+            <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+              {m.assistpool_alias_optional()}
+              <FieldHint>{m.assistpool_alias_help()}</FieldHint>
+            </Label>
             <Input
               id="alias"
               value={field.state.value}
@@ -154,9 +158,6 @@ export function AssistPoolConfigForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={m.assistpool_alias_placeholder()}
             />
-            <p className="text-xs text-muted-foreground">
-              {m.assistpool_alias_help()}
-            </p>
           </div>
         )}
       </form.Field>
@@ -413,14 +414,10 @@ export function AssistPoolConfigForm({
       <form.Field name="initiatorCanAssist">
         {(field) => (
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label htmlFor="initiator-can-assist">
-                {m.assistpool_initiator_can_assist()}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {m.assistpool_initiator_can_assist_help()}
-              </p>
-            </div>
+            <Label htmlFor="initiator-can-assist" className="inline-flex items-center gap-1.5">
+              {m.assistpool_initiator_can_assist()}
+              <FieldHint>{m.assistpool_initiator_can_assist_help()}</FieldHint>
+            </Label>
             <Switch
               id="initiator-can-assist"
               checked={field.state.value}
@@ -433,12 +430,10 @@ export function AssistPoolConfigForm({
       <form.Field name="isActive">
         {(field) => (
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label htmlFor="active">{m.assistpool_active()}</Label>
-              <p className="text-xs text-muted-foreground">
-                {m.assistpool_active_help()}
-              </p>
-            </div>
+            <Label htmlFor="active" className="inline-flex items-center gap-1.5">
+              {m.assistpool_active()}
+              <FieldHint>{m.assistpool_active_help()}</FieldHint>
+            </Label>
             <Switch
               id="active"
               checked={field.state.value}

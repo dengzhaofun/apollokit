@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
@@ -161,11 +162,8 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. win-3-battles"
+              placeholder="e.g. win-3-battles (lowercase, digits, hyphens, underscores)"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
           </div>
         )}
       </form.Field>
@@ -273,16 +271,18 @@ export function DefinitionForm({
       <form.Field name="eventName">
         {(field) => (
           <div className="space-y-2">
-            <Label>Event Name</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              Event Name
+              <FieldHint>
+                Required for event_count and event_value methods.
+              </FieldHint>
+            </Label>
             <Input
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="e.g. purchase, login, battle_win"
             />
-            <p className="text-xs text-muted-foreground">
-              Required for event_count and event_value methods.
-            </p>
           </div>
         )}
       </form.Field>
@@ -290,16 +290,18 @@ export function DefinitionForm({
       <form.Field name="eventValueField">
         {(field) => (
           <div className="space-y-2">
-            <Label>Event Value Field</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              Event Value Field
+              <FieldHint>
+                Dot-path into event data for event_value counting.
+              </FieldHint>
+            </Label>
             <Input
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="e.g. amount"
             />
-            <p className="text-xs text-muted-foreground">
-              Dot-path into event data for event_value counting.
-            </p>
           </div>
         )}
       </form.Field>
@@ -314,7 +316,14 @@ export function DefinitionForm({
             <form.Field name="filter">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Filter Expression</Label>
+                  <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                    Filter Expression
+                    <FieldHint>
+                      {m.task_field_filter_hint()}
+                      {" "}
+                      {m.task_field_filter_syntax_hint()}
+                    </FieldHint>
+                  </Label>
                   <Textarea
                     id={field.name}
                     value={field.state.value}
@@ -324,11 +333,6 @@ export function DefinitionForm({
                     className="font-mono text-xs"
                     placeholder={'monsterId == "dragon" and stats.level >= 10'}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {m.task_field_filter_hint()}
-                    {" "}
-                    {m.task_field_filter_syntax_hint()}
-                  </p>
                 </div>
               )}
             </form.Field>
@@ -340,7 +344,12 @@ export function DefinitionForm({
         <form.Field name="parentProgressValue">
           {(field) => (
             <div className="space-y-2">
-              <Label>Parent Progress Value</Label>
+              <Label className="inline-flex items-center gap-1.5">
+                Parent Progress Value
+                <FieldHint>
+                  Progress contributed to parent task on completion.
+                </FieldHint>
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -348,9 +357,6 @@ export function DefinitionForm({
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(Number(e.target.value))}
               />
-              <p className="text-xs text-muted-foreground">
-                Progress contributed to parent task on completion.
-              </p>
             </div>
           )}
         </form.Field>
@@ -414,10 +420,10 @@ export function DefinitionForm({
       <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
         <div className="flex items-start justify-between gap-6">
           <div className="space-y-1">
-            <Label>{m.task_visibility_label()}</Label>
-            <p className="text-xs text-muted-foreground">
-              {m.task_visibility_hint()}
-            </p>
+            <Label className="inline-flex items-center gap-1.5">
+              {m.task_visibility_label()}
+              <FieldHint>{m.task_visibility_hint()}</FieldHint>
+            </Label>
           </div>
           <form.Field name="visibility">
             {(field) => (
@@ -449,8 +455,9 @@ export function DefinitionForm({
               <form.Field name="defaultAssignmentTtlSeconds">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>
+                    <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
                       {m.task_default_ttl_label()}
+                      <FieldHint>{m.task_default_ttl_hint()}</FieldHint>
                     </Label>
                     <Input
                       id={field.name}
@@ -464,9 +471,6 @@ export function DefinitionForm({
                         field.handleChange(v === "" ? "" : Number(v))
                       }}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {m.task_default_ttl_hint()}
-                    </p>
                   </div>
                 )}
               </form.Field>
@@ -478,7 +482,10 @@ export function DefinitionForm({
       <form.Field name="rewardTiersJson">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.task_field_reward_tiers_label()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.task_field_reward_tiers_label()}
+              <FieldHint>{m.task_field_reward_tiers_hint()}</FieldHint>
+            </Label>
             <Textarea
               id={field.name}
               value={field.state.value}
@@ -488,9 +495,6 @@ export function DefinitionForm({
               className="font-mono text-xs"
               placeholder='[{"alias":"tier-1","threshold":3,"rewards":[{"type":"item","id":"gold-uuid","count":100}]}]'
             />
-            <p className="text-xs text-muted-foreground">
-              {m.task_field_reward_tiers_hint()}
-            </p>
           </div>
         )}
       </form.Field>
