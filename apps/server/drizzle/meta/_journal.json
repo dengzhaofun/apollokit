@@ -15,6 +15,13 @@
       "when": 1777101577720,
       "tag": "0001_superb_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777196225719,
+      "tag": "0002_red_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }
