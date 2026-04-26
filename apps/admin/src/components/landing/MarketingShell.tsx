@@ -1,8 +1,12 @@
 import { Link } from "@tanstack/react-router"
 import { ArrowRight, Github } from "lucide-react"
 
+import { ConsentSettingsButton } from "#/components/consent/ConsentLayer"
 import ThemeToggle from "#/components/ThemeToggle"
 import { Button } from "#/components/ui/button"
+import { getLocale } from "#/paraglide/runtime.js"
+
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 import "./landing.css"
 
@@ -79,32 +83,96 @@ function TopNav() {
 function Footer() {
   return (
     <footer className="border-t border-border/60 py-12">
-      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
-        <div className="flex items-center gap-2 font-black tracking-tight">
-          <span className="grid size-7 overflow-hidden place-items-center rounded-lg bg-white">
-            <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
-          </span>
-          <span>ApolloKit</span>
-          <span className="ml-3 text-sm font-normal text-muted-foreground">
-            · 通用游戏后端，一个 SDK 接入就够
-          </span>
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 md:grid-cols-[2fr_1fr_1fr_1fr]">
+        {/* Brand 列 */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 font-black tracking-tight">
+            <span className="grid size-7 overflow-hidden place-items-center rounded-lg bg-white">
+              <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
+            </span>
+            <span>ApolloKit</span>
+          </div>
+          <p className="max-w-xs text-sm text-muted-foreground">
+            {t("通用游戏后端,一个 SDK 接入就够。", "Universal game backend — one SDK away.")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} ApolloKit
+          </p>
         </div>
-        <div className="flex items-center gap-5 text-sm text-muted-foreground">
-          <a href="/pricing" className="hover:text-foreground">
-            定价
-          </a>
-          <a href="/docs" className="hover:text-foreground">
-            文档
-          </a>
-          <a
-            href="https://github.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 hover:text-foreground"
-          >
-            <Github className="size-4" /> GitHub
-          </a>
-          <span>© {new Date().getFullYear()} ApolloKit</span>
+
+        {/* 产品列 */}
+        <div className="space-y-3 text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("产品", "Product")}
+          </h3>
+          <ul className="space-y-2 text-muted-foreground">
+            <li>
+              <a href="/pricing" className="hover:text-foreground">
+                {t("定价", "Pricing")}
+              </a>
+            </li>
+            <li>
+              <a href="/docs" className="hover:text-foreground">
+                {t("文档", "Docs")}
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://github.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 hover:text-foreground"
+              >
+                <Github className="size-4" /> GitHub
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* 法律列 */}
+        <div className="space-y-3 text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("法律", "Legal")}
+          </h3>
+          <ul className="space-y-2 text-muted-foreground">
+            <li>
+              <a href="/privacy" className="hover:text-foreground">
+                {t("隐私政策", "Privacy")}
+              </a>
+            </li>
+            <li>
+              <a href="/terms" className="hover:text-foreground">
+                {t("服务条款", "Terms")}
+              </a>
+            </li>
+            <li>
+              <a href="/privacy#cookies" className="hover:text-foreground">
+                {t("Cookie 政策", "Cookies")}
+              </a>
+            </li>
+            <li>
+              <a href="/subprocessors" className="hover:text-foreground">
+                {t("子处理者", "Subprocessors")}
+              </a>
+            </li>
+            <li>
+              <a href="/dpa" className="hover:text-foreground">
+                {t("DPA", "DPA")}
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* 偏好列 */}
+        <div className="space-y-3 text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("偏好", "Preferences")}
+          </h3>
+          <div className="-ml-3">
+            <ConsentSettingsButton>
+              {t("Cookie 设置", "Cookie settings")}
+            </ConsentSettingsButton>
+          </div>
         </div>
       </div>
     </footer>

@@ -5,6 +5,7 @@ import { RootProvider } from 'fumadocs-ui/provider/tanstack'
 import { CompassIcon } from 'lucide-react'
 import { Providers } from '../providers'
 import { Button } from '../components/ui/button'
+import { ConsentLayer } from '../components/consent/ConsentLayer'
 import {
   Empty,
   EmptyContent,
@@ -27,6 +28,9 @@ import '@fontsource-variable/noto-sans-sc'
 import '@fontsource-variable/jetbrains-mono'
 
 import appCss from '../styles.css?url'
+// c15t cookie banner / dialog 样式。必须排在 appCss 之后,Tailwind v4 token
+// 顺序敏感(参考 c15t v1.7 changelog)。
+import c15tCss from '@c15t/react/styles.css?url'
 
 const THEME_INIT_SCRIPT = `(function(){try{var e=localStorage.getItem("theme")||"system",t="system"===e?window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light":e,r=document.documentElement;r.classList.remove("light","dark");r.classList.add(t);r.style.colorScheme=t}catch(e){}})();`
 
@@ -70,6 +74,7 @@ export const Route = createRootRoute({
       ],
       links: [
         { rel: 'stylesheet', href: appCss },
+        { rel: 'stylesheet', href: c15tCss },
         { rel: 'icon', href: '/favicon.ico' },
         { rel: 'apple-touch-icon', href: '/logo192.png' },
         { rel: 'manifest', href: '/manifest.json' },
@@ -167,7 +172,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           }}
         >
           <Providers>
-            {children}
+            <ConsentLayer>{children}</ConsentLayer>
           </Providers>
         </RootProvider>
         <TanStackDevtools
