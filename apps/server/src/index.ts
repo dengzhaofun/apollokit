@@ -69,6 +69,7 @@ import {
   lotteryClientRouter,
 } from "./modules/lottery";
 import { mailRouter, mailClientRouter } from "./modules/mail";
+import { navigationRouter } from "./modules/navigation";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
@@ -234,6 +235,7 @@ app.route("/api/invite", inviteRouter);
 app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
+app.route("/api/navigation", navigationRouter);
 app.route("/api/shop", shopRouter);
 app.route("/api/storage-box", storageBoxRouter);
 app.route("/api/media-library", mediaLibraryRouter);

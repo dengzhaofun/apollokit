@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 
 import { AppSidebar } from "../components/AppSidebar"
 import { CommandPalette } from "../components/CommandPalette"
+import { CommandPaletteProvider } from "../components/command-palette-context"
 import { PAGE_HEADER_SLOT_ID } from "../components/PageHeader"
 import { RouteBreadcrumb } from "../components/RouteBreadcrumb"
 import { authClient } from "../lib/auth-client"
@@ -79,23 +80,25 @@ function DashboardLayoutClient() {
   if (!session.session.activeOrganizationId) return null
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <RouteBreadcrumb />
-          <div className="ml-auto flex items-center gap-2">
-            <div
-              id={PAGE_HEADER_SLOT_ID}
-              className="flex items-center gap-2"
-            />
-          </div>
-        </header>
-        <Outlet />
-      </SidebarInset>
-      <CommandPalette />
-    </SidebarProvider>
+    <CommandPaletteProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <RouteBreadcrumb />
+            <div className="ml-auto flex items-center gap-2">
+              <div
+                id={PAGE_HEADER_SLOT_ID}
+                className="flex items-center gap-2"
+              />
+            </div>
+          </header>
+          <Outlet />
+        </SidebarInset>
+        <CommandPalette />
+      </SidebarProvider>
+    </CommandPaletteProvider>
   )
 }

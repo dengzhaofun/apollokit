@@ -57,7 +57,16 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/*
+          The cmdk context (`Command` aka `CommandPrimitive`) MUST wrap
+          all `CommandInput` / `CommandList` / `CommandGroup` /
+          `CommandItem` children — otherwise their internal
+          `useSyncExternalStore(state.subscribe, …)` call hits an
+          undefined context and throws "Cannot read properties of
+          undefined (reading 'subscribe')". The shadcn upstream pattern
+          includes this wrapper here.
+        */}
+        <Command className="rounded-none">{children}</Command>
       </DialogContent>
     </Dialog>
   )

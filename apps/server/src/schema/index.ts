@@ -20,6 +20,7 @@ export * from "./item";
 export * from "./invite";
 export * from "./lottery";
 export * from "./mail";
+export * from "./navigation";
 export * from "./shop";
 export * from "./friend";
 export * from "./guild";
