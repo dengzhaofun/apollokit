@@ -19,6 +19,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { RESET_MODES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -344,14 +345,10 @@ export const RewardListResponseSchema = z
   })
   .openapi("CheckInRewardList");
 
-export const ConfigListResponseSchema = z
-  .object({
-    items: z.array(CheckInConfigResponseSchema),
-  })
-  .openapi("CheckInConfigList");
+export const ConfigListResponseSchema = pageOf(CheckInConfigResponseSchema).openapi(
+  "CheckInConfigList",
+);
 
-export const UserStateListResponseSchema = z
-  .object({
-    items: z.array(CheckInUserStateSchema),
-  })
-  .openapi("CheckInUserStateList");
+export const UserStateListResponseSchema = pageOf(CheckInUserStateSchema).openapi(
+  "CheckInUserStateList",
+);

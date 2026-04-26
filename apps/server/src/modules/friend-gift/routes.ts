@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -19,7 +20,6 @@ import {
   PackageIdParamSchema,
   PackageListResponseSchema,
   PackageResponseSchema,
-  PaginationQuerySchema,
   SendIdParamSchema,
   SettingsResponseSchema,
   UpdatePackageSchema,
@@ -213,6 +213,7 @@ friendGiftRouter.openapi(
     path: "/packages",
     tags: [TAG],
     summary: "List gift packages for the current project",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -223,8 +224,11 @@ friendGiftRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await friendGiftService.listPackages(orgId);
-    return c.json(ok({ items: rows.map(serializePackage) }), 200);
+    const page = await friendGiftService.listPackages(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializePackage), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -329,9 +333,11 @@ friendGiftRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const { limit, offset } = c.req.valid("query");
-    const rows = await friendGiftService.listSends(orgId, { limit, offset });
-    return c.json(ok({ items: rows.map(serializeSend) }), 200);
+    const page = await friendGiftService.listSends(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeSend), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

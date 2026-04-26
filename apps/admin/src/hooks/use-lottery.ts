@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   LotteryPool,
   LotteryTier,
@@ -24,20 +25,44 @@ const POOLS_KEY = ["lottery-pools"] as const
 
 // ─── Pools ───────────────────────────────────────────────────────
 
+/** Paginated pools — for the admin pool list page. */
 export function useLotteryPools(
-  filter: { activityId?: string; includeActivity?: boolean } = {},
+  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
 ) {
-  const params = new URLSearchParams()
-  if (filter.activityId) params.set("activityId", filter.activityId)
-  if (filter.includeActivity) params.set("includeActivity", "true")
-  const qs = params.toString()
-  return useQuery({
-    queryKey: [...POOLS_KEY, filter.activityId ?? null, !!filter.includeActivity],
-    queryFn: () =>
-      api.get<{ items: LotteryPool[] }>(
-        `/api/lottery/pools${qs ? `?${qs}` : ""}`,
+  const { activityId, includeActivity, initialPageSize = 50 } = opts
+  return useCursorList<LotteryPool>({
+    queryKey: [...POOLS_KEY, { activityId: activityId ?? null, includeActivity: !!includeActivity }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<LotteryPool>>(
+        `/api/lottery/pools?${buildQs({
+          cursor,
+          limit,
+          q,
+          activityId,
+          includeActivity: includeActivity ? "true" : undefined,
+        })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllLotteryPools(
+  opts: { activityId?: string; includeActivity?: boolean } = {},
+) {
+  const { activityId, includeActivity } = opts
+  return useQuery({
+    queryKey: [...POOLS_KEY, "all", { activityId: activityId ?? null, includeActivity: !!includeActivity }],
+    queryFn: () =>
+      api
+        .get<Page<LotteryPool>>(
+          `/api/lottery/pools?${buildQs({
+            limit: 200,
+            activityId,
+            includeActivity: includeActivity ? "true" : undefined,
+          })}`,
+        )
+        .then((p) => p.items),
   })
 }
 
@@ -77,14 +102,29 @@ export function useDeleteLotteryPool() {
 
 // ─── Tiers ───────────────────────────────────────────────────────
 
-export function useLotteryTiers(poolKey: string) {
-  return useQuery({
+/** Paginated tiers under one pool — for TierTable. */
+export function useLotteryTiers(poolKey: string, initialPageSize = 50) {
+  return useCursorList<LotteryTier>({
     queryKey: ["lottery-tiers", poolKey],
-    queryFn: () =>
-      api.get<{ items: LotteryTier[] }>(
-        `/api/lottery/pools/${poolKey}/tiers`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<LotteryTier>>(
+        `/api/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+    enabled: !!poolKey,
+  })
+}
+
+/** Non-paginated convenience for selectors. */
+export function useAllLotteryTiers(poolKey: string) {
+  return useQuery({
+    queryKey: ["lottery-tiers", poolKey, "all"],
+    queryFn: () =>
+      api
+        .get<Page<LotteryTier>>(
+          `/api/lottery/pools/${poolKey}/tiers?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
     enabled: !!poolKey,
   })
 }
@@ -127,14 +167,29 @@ export function useDeleteLotteryTier() {
 
 // ─── Prizes ──────────────────────────────────────────────────────
 
-export function useLotteryPrizes(poolKey: string) {
-  return useQuery({
+/** Paginated prizes under one pool — for PrizeTable. */
+export function useLotteryPrizes(poolKey: string, initialPageSize = 50) {
+  return useCursorList<LotteryPrize>({
     queryKey: ["lottery-prizes", poolKey],
-    queryFn: () =>
-      api.get<{ items: LotteryPrize[] }>(
-        `/api/lottery/pools/${poolKey}/prizes`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<LotteryPrize>>(
+        `/api/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+    enabled: !!poolKey,
+  })
+}
+
+/** Non-paginated convenience for embedded views. */
+export function useAllLotteryPrizes(poolKey: string) {
+  return useQuery({
+    queryKey: ["lottery-prizes", poolKey, "all"],
+    queryFn: () =>
+      api
+        .get<Page<LotteryPrize>>(
+          `/api/lottery/pools/${poolKey}/prizes?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
     enabled: !!poolKey,
   })
 }
@@ -182,14 +237,29 @@ export function useDeleteLotteryPrize() {
 
 // ─── Pity Rules ──────────────────────────────────────────────────
 
-export function useLotteryPityRules(poolKey: string) {
-  return useQuery({
+/** Paginated pity rules under one pool — for PityRuleTable. */
+export function useLotteryPityRules(poolKey: string, initialPageSize = 50) {
+  return useCursorList<LotteryPityRule>({
     queryKey: ["lottery-pity-rules", poolKey],
-    queryFn: () =>
-      api.get<{ items: LotteryPityRule[] }>(
-        `/api/lottery/pools/${poolKey}/pity-rules`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<LotteryPityRule>>(
+        `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+    enabled: !!poolKey,
+  })
+}
+
+/** Non-paginated convenience for embedded views. */
+export function useAllLotteryPityRules(poolKey: string) {
+  return useQuery({
+    queryKey: ["lottery-pity-rules", poolKey, "all"],
+    queryFn: () =>
+      api
+        .get<Page<LotteryPityRule>>(
+          `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
     enabled: !!poolKey,
   })
 }

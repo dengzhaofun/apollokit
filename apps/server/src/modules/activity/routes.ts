@@ -9,6 +9,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { PaginationQuerySchema, pageOf } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -159,12 +160,13 @@ activityRouter.openapi(
     path: "/",
     tags: [TAG],
     summary: "List activities",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
         content: {
           "application/json": {
-            schema: envelopeOf(z.object({ items: z.array(ActivityConfigResponseSchema) }),)
+            schema: envelopeOf(pageOf(ActivityConfigResponseSchema)),
           },
         },
       },
@@ -173,8 +175,11 @@ activityRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await activityService.listActivities(orgId);
-    return c.json(ok({ items: rows.map(serializeActivity) }), 200);
+    const page = await activityService.listActivities(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeActivity), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

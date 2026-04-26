@@ -16,6 +16,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { CLAIM_TYPES, LEVEL_STATUSES } from "./types";
 
 // ─── Shared helpers ──────────────────────────────────────────────
@@ -130,11 +131,9 @@ export const ConfigResponseSchema = z
   })
   .openapi("LevelConfig");
 
-export const ConfigListResponseSchema = z
-  .object({
-    items: z.array(ConfigResponseSchema),
-  })
-  .openapi("LevelConfigList");
+export const ConfigListResponseSchema = pageOf(ConfigResponseSchema).openapi(
+  "LevelConfigList",
+);
 
 // ─── Stage CRUD ──────────────────────────────────────────────────
 

@@ -10,19 +10,10 @@ import {
 } from "#/components/activity/ActivityScopeFilter"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
 import { LotteryPoolTable } from "#/components/lottery/PoolTable"
-import {
-  EmptyList,
-  ErrorState,
-  PageBody,
-  PageHeader,
-  PageShell,
-} from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDialog } from "#/components/ui/form-dialog"
-import {
-  useCreateLotteryPool,
-  useLotteryPools,
-} from "#/hooks/use-lottery"
+import { useCreateLotteryPool } from "#/hooks/use-lottery"
 import { ApiError } from "#/lib/api-client"
 import {
   closedModal,
@@ -53,23 +44,14 @@ function LotteryListPage() {
   }
 
   const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
-  const { data: pools, isPending, error, refetch } = useLotteryPools(
-    scopeToFilter(scope),
-  )
-  const total = pools?.length ?? 0
+  const filter = scopeToFilter(scope)
 
   return (
     <PageShell>
       <PageHeader
         icon={<DicesIcon className="size-5" />}
         title={t("抽奖池", "Lottery pools")}
-        description={
-          isPending
-            ? t("加载中…", "Loading…")
-            : error
-              ? t("加载失败", "Failed to load")
-              : t(`共 ${total} 个抽奖池`, `${total} pools total`)
-        }
+        description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
         actions={
           <>
             <ActivityScopeFilter value={scope} onChange={setScope} />
@@ -82,36 +64,10 @@ function LotteryListPage() {
       />
 
       <PageBody>
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
-            {t("加载中…", "Loading…")}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title={t("抽奖池加载失败", "Failed to load lottery pools")}
-            onRetry={() => refetch()}
-            retryLabel={t("重试", "Retry")}
-            error={error instanceof Error ? error : null}
-          />
-        ) : total === 0 ? (
-          <EmptyList
-            title={t("还没有抽奖池", "No lottery pools yet")}
-            description={t(
-              "创建第一个抽奖池,设置奖品和概率分布。",
-              "Create your first pool with prize tiers and probability distribution.",
-            )}
-            action={
-              <Button size="sm" onClick={openCreate}>
-                <Plus />
-                {t("新建抽奖池", "New pool")}
-              </Button>
-            }
-          />
-        ) : (
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <LotteryPoolTable data={pools ?? []} />
-          </div>
-        )}
+        <LotteryPoolTable
+          activityId={filter.activityId}
+          includeActivity={filter.includeActivity}
+        />
       </PageBody>
 
       {modal === "create" ? (

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateWebhookEndpointInput,
   UpdateWebhookEndpointInput,
@@ -14,12 +15,15 @@ const ENDPOINTS_KEY = ["webhooks", "endpoints"] as const
 const deliveriesKey = (endpointId: string) =>
   ["webhooks", "deliveries", endpointId] as const
 
-export function useWebhookEndpoints() {
-  return useQuery({
+/** Paginated webhook endpoints — for the admin endpoints table. */
+export function useWebhookEndpoints(initialPageSize = 50) {
+  return useCursorList<WebhookEndpoint>({
     queryKey: ENDPOINTS_KEY,
-    queryFn: () =>
-      api.get<{ items: WebhookEndpoint[] }>("/api/webhooks/endpoints"),
-    select: (d) => d.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<WebhookEndpoint>>(
+        `/api/webhooks/endpoints?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
   })
 }
 
@@ -63,22 +67,34 @@ export function useDeleteWebhookEndpoint() {
   })
 }
 
+/**
+ * Single-page deliveries fetch — drives the modal table.
+ *
+ * Deliveries inside the endpoint dialog are read-mostly debug data; we render the first
+ * page only (limit-capped) instead of cursor-paging the dialog. Bumping limit when users
+ * hit the cap is fine for now.
+ */
 export function useWebhookDeliveries(
   endpointId: string,
   filter: { status?: WebhookDeliveryStatus; limit?: number } = {},
   opts: { enabled?: boolean } = {},
 ) {
-  const params = new URLSearchParams()
-  if (filter.status) params.set("status", filter.status)
-  if (filter.limit) params.set("limit", String(filter.limit))
-  const query = params.toString() ? `?${params.toString()}` : ""
+  const limit = filter.limit ?? 100
   return useQuery({
-    queryKey: [...deliveriesKey(endpointId), filter.status ?? "all", filter.limit ?? 50],
+    queryKey: [
+      ...deliveriesKey(endpointId),
+      filter.status ?? "all",
+      limit,
+    ],
     queryFn: () =>
-      api.get<{ items: WebhookDelivery[] }>(
-        `/api/webhooks/endpoints/${endpointId}/deliveries${query}`,
-      ),
-    select: (d) => d.items,
+      api
+        .get<Page<WebhookDelivery>>(
+          `/api/webhooks/endpoints/${endpointId}/deliveries?${buildQs({
+            status: filter.status,
+            limit,
+          })}`,
+        )
+        .then((p) => p.items),
     enabled: !!endpointId && opts.enabled !== false,
   })
 }

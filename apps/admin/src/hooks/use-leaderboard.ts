@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateLeaderboardInput,
   LeaderboardConfig,
@@ -11,12 +12,15 @@ import type {
 
 const CONFIGS_KEY = ["leaderboard-configs"] as const
 
-export function useLeaderboardConfigs() {
-  return useQuery({
+/** Paginated leaderboard configs — for the admin ConfigTable. */
+export function useLeaderboardConfigs(initialPageSize = 50) {
+  return useCursorList<LeaderboardConfig>({
     queryKey: CONFIGS_KEY,
-    queryFn: () =>
-      api.get<{ items: LeaderboardConfig[] }>("/api/leaderboard/configs"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<LeaderboardConfig>>(
+        `/api/leaderboard/configs?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
   })
 }
 

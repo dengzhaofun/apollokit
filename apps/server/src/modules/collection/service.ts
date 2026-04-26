@@ -66,9 +66,16 @@
  * loser sees `inserted=false` and reports "already done".
  */
 
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   collectionAlbums,
   collectionEntries,
@@ -351,12 +358,24 @@ export function createCollectionService(
 
   async function listAlbums(
     organizationId: string,
-  ): Promise<CollectionAlbum[]> {
-    return db
+    params: PageParams = {},
+  ): Promise<Page<CollectionAlbum>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(collectionAlbums.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, collectionAlbums.createdAt, collectionAlbums.id);
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(collectionAlbums.name, pat), ilike(collectionAlbums.alias, pat));
+      if (search) conds.push(search);
+    }
+    const rows = await db
       .select()
       .from(collectionAlbums)
-      .where(eq(collectionAlbums.organizationId, organizationId))
-      .orderBy(collectionAlbums.sortOrder, desc(collectionAlbums.createdAt));
+      .where(and(...conds))
+      .orderBy(desc(collectionAlbums.createdAt), desc(collectionAlbums.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getAlbum(
@@ -1477,7 +1496,8 @@ export function createCollectionService(
     organizationId: string;
     endUserId: string;
   }) {
-    const albums = await listAlbums(params.organizationId);
+    // Client view: fetch up to the server cap; client doesn't paginate.
+    const { items: albums } = await listAlbums(params.organizationId, { limit: 200 });
     const result = [];
     for (const album of albums) {
       const [unlockedMap, claimedMap, entryCountRow] = await Promise.all([

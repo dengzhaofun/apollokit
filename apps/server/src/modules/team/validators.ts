@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { INVITATION_STATUSES, MEMBER_ROLES, TEAM_STATUSES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -132,14 +133,11 @@ export const TeamListQuerySchema = z.object({
     param: { name: "status", in: "query" },
     description: "Filter by team status.",
   }),
-  limit: z.coerce.number().int().positive().max(100).default(50).openapi({
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
     param: { name: "limit", in: "query" },
-    description: "Page size.",
   }),
-  offset: z.coerce.number().int().min(0).default(0).openapi({
-    param: { name: "offset", in: "query" },
-    description: "Pagination offset.",
-  }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
 
 // ─── Request body schemas ────────────────────────────────────────
@@ -245,15 +243,8 @@ export const InvitationResponseSchema = z
   .openapi("TeamInvitation");
 
 
-export const ConfigListResponseSchema = z
-  .object({
-    items: z.array(ConfigResponseSchema),
-  })
-  .openapi("TeamConfigList");
+export const ConfigListResponseSchema = pageOf(ConfigResponseSchema).openapi(
+  "TeamConfigList",
+);
 
-export const TeamListResponseSchema = z
-  .object({
-    items: z.array(TeamResponseSchema),
-    total: z.number().int(),
-  })
-  .openapi("TeamList");
+export const TeamListResponseSchema = pageOf(TeamResponseSchema).openapi("TeamList");

@@ -17,8 +17,8 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
-import { useItemCategories } from "#/hooks/use-item"
-import { useLotteryPools } from "#/hooks/use-lottery"
+import { useAllItemCategories } from "#/hooks/use-item"
+import { useAllLotteryPools } from "#/hooks/use-lottery"
 import type { CreateDefinitionInput } from "#/lib/types/item"
 
 interface DefinitionFormProps {
@@ -40,8 +40,8 @@ export function DefinitionForm({
   hideSubmitButton,
   onStateChange,
 }: DefinitionFormProps) {
-  const { data: categories } = useItemCategories()
-  const { data: pools } = useLotteryPools()
+  const { data: categories } = useAllItemCategories()
+  const { data: pools } = useAllLotteryPools()
 
   const form = useForm({
     defaultValues: {

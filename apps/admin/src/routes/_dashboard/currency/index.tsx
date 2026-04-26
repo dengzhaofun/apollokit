@@ -13,8 +13,8 @@ import { DefinitionForm } from "#/components/currency/DefinitionForm"
 import { DefinitionTable } from "#/components/currency/DefinitionTable"
 import { LedgerTable } from "#/components/currency/LedgerTable"
 import {
+  useAllCurrencies,
   useCreateCurrency,
-  useCurrencies,
   useCurrency,
   useCurrencyLedger,
   useUpdateCurrency,
@@ -46,11 +46,8 @@ function CurrencyListPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const {
-    data: currencies,
-    isPending: defPending,
-    error: defError,
-  } = useCurrencies()
+  // Selector dropdown for the ledger filter — needs all currencies at once.
+  const { data: allCurrencies } = useAllCurrencies()
 
   const [ledgerUser, setLedgerUser] = useState("")
   const [ledgerCurrency, setLedgerCurrency] = useState("")
@@ -66,9 +63,9 @@ function CurrencyListPage() {
 
   const currencyNameById = useMemo(() => {
     const map = new Map<string, string>()
-    for (const c of currencies ?? []) map.set(c.id, c.name)
+    for (const c of allCurrencies ?? []) map.set(c.id, c.name)
     return map
-  }, [currencies])
+  }, [allCurrencies])
 
   return (
     <>
@@ -90,19 +87,7 @@ function CurrencyListPage() {
           </div>
 
           <TabsContent value="definitions" className="mt-6">
-            <div className="rounded-xl border bg-card shadow-sm">
-              {defPending ? (
-                <div className="p-6 text-sm text-muted-foreground">
-                  {m.common_loading()}
-                </div>
-              ) : defError ? (
-                <div className="p-6 text-sm text-destructive">
-                  {defError.message}
-                </div>
-              ) : (
-                <DefinitionTable data={currencies ?? []} />
-              )}
-            </div>
+            <DefinitionTable />
           </TabsContent>
 
           <TabsContent value="ledger" className="mt-6 space-y-4">
@@ -127,7 +112,7 @@ function CurrencyListPage() {
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                 >
                   <option value="">{m.currency_filter_all()}</option>
-                  {(currencies ?? []).map((c) => (
+                  {(allCurrencies ?? []).map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>

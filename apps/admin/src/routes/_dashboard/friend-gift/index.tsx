@@ -1,35 +1,74 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { Plus } from "lucide-react"
+import { useMemo } from "react"
 
 import * as m from "#/paraglide/messages.js"
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
-import {
   useFriendGiftPackages,
   useFriendGiftSettings,
 } from "#/hooks/use-friend-gift"
+import type { FriendGiftPackage } from "#/lib/types/friend-gift"
 
 export const Route = createFileRoute("/_dashboard/friend-gift/")({
   component: FriendGiftPage,
 })
 
+const columnHelper = createColumnHelper<FriendGiftPackage>()
+
+function useColumns(): ColumnDef<FriendGiftPackage, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.common_name(),
+        cell: (info) => (
+          <Link
+            to="/friend-gift/packages/$packageId"
+            params={{ packageId: info.row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.common_alias(),
+        cell: (info) => info.getValue() ?? "-",
+      }),
+      columnHelper.accessor("giftItems", {
+        header: () => m.gift_items_count(),
+        cell: (info) => (
+          <Badge variant="secondary">
+            {info.getValue().length} item{info.getValue().length !== 1 ? "s" : ""}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("isActive", {
+        header: () => m.common_status(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "destructive"}>
+            {info.getValue() ? m.common_active() : m.common_inactive()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("sortOrder", { header: () => m.common_sort_order() }),
+      columnHelper.accessor("createdAt", {
+        header: () => m.common_created(),
+        cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      }),
+    ],
+    [],
+  ) as ColumnDef<FriendGiftPackage, unknown>[]
+}
+
 function FriendGiftPage() {
-  const { data: settings, isPending: settingsLoading } =
-    useFriendGiftSettings()
-  const {
-    data: packages,
-    isPending: pkgLoading,
-    error: pkgError,
-  } = useFriendGiftPackages()
+  const { data: settings, isPending: settingsLoading } = useFriendGiftSettings()
+  const list = useFriendGiftPackages()
+  const columns = useColumns()
 
   return (
     <>
@@ -62,9 +101,7 @@ function FriendGiftPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">
-                {m.gift_no_settings()}
-              </p>
+              <p className="text-muted-foreground">{m.gift_no_settings()}</p>
             )}
           </CardContent>
         </Card>
@@ -80,75 +117,21 @@ function FriendGiftPage() {
           </Button>
         </div>
 
-        {/* Packages table */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          {pkgLoading ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
-              {m.common_loading()}
-            </div>
-          ) : pkgError ? (
-            <div className="flex h-40 items-center justify-center text-destructive">
-              {m.common_failed_to_load({ resource: m.gift_packages(), error: pkgError.message })}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m.common_name()}</TableHead>
-                  <TableHead>{m.common_alias()}</TableHead>
-                  <TableHead>{m.gift_items_count()}</TableHead>
-                  <TableHead>{m.common_status()}</TableHead>
-                  <TableHead>{m.common_sort_order()}</TableHead>
-                  <TableHead>{m.common_created()}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {packages && packages.length > 0 ? (
-                  packages.map((pkg) => (
-                    <TableRow key={pkg.id}>
-                      <TableCell className="font-medium">
-                        <Link
-                          to="/friend-gift/packages/$packageId"
-                          params={{ packageId: pkg.id }}
-                          className="hover:underline"
-                        >
-                          {pkg.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{pkg.alias ?? "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {pkg.giftItems.length} item
-                          {pkg.giftItems.length !== 1 ? "s" : ""}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={pkg.isActive ? "default" : "destructive"}
-                        >
-                          {pkg.isActive ? m.common_active() : m.common_inactive()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{pkg.sortOrder}</TableCell>
-                      <TableCell>
-                        {new Date(pkg.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      {m.gift_no_packages()}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+        <DataTable
+          columns={columns}
+          data={list.items}
+          isLoading={list.isLoading}
+          getRowId={(row) => row.id}
+          pageIndex={list.pageIndex}
+          canPrev={list.canPrev}
+          canNext={list.canNext}
+          onNextPage={list.nextPage}
+          onPrevPage={list.prevPage}
+          pageSize={list.pageSize}
+          onPageSizeChange={list.setPageSize}
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+        />
       </main>
     </>
   )

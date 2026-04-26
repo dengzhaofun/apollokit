@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const AliasSchema = z
@@ -129,6 +131,11 @@ export const DefinitionListQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .openapi({ param: { name: "isActive", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
 
 export const LedgerQuerySchema = z.object({
@@ -178,9 +185,9 @@ export const CurrencyDefinitionResponseSchema = z
   })
   .openapi("CurrencyDefinition");
 
-export const DefinitionListResponseSchema = z
-  .object({ items: z.array(CurrencyDefinitionResponseSchema) })
-  .openapi("CurrencyDefinitionList");
+export const DefinitionListResponseSchema = pageOf(CurrencyDefinitionResponseSchema).openapi(
+  "CurrencyDefinitionList",
+);
 
 export const WalletViewSchema = z
   .object({

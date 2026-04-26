@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   Banner,
   BannerGroup,
-  BannerGroupListResponse,
   BannerListResponse,
   CreateBannerGroupInput,
   CreateBannerInput,
@@ -18,20 +18,44 @@ const bannersKey = (groupId: string) =>
 
 // ─── Groups ────────────────────────────────────────────────────
 
+/** Paginated banner groups — for the admin groups table. */
 export function useBannerGroups(
-  filter: { activityId?: string; includeActivity?: boolean } = {},
+  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
 ) {
-  const params = new URLSearchParams()
-  if (filter.activityId) params.set("activityId", filter.activityId)
-  if (filter.includeActivity) params.set("includeActivity", "true")
-  const qs = params.toString()
-  return useQuery({
-    queryKey: [...GROUPS_KEY, filter.activityId ?? null, !!filter.includeActivity],
-    queryFn: () =>
-      api.get<BannerGroupListResponse>(
-        `/api/banner/groups${qs ? `?${qs}` : ""}`,
+  const { activityId, includeActivity, initialPageSize = 50 } = opts
+  return useCursorList<BannerGroup>({
+    queryKey: [...GROUPS_KEY, { activityId: activityId ?? null, includeActivity: !!includeActivity }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<BannerGroup>>(
+        `/api/banner/groups?${buildQs({
+          cursor,
+          limit,
+          q,
+          activityId,
+          includeActivity: includeActivity ? "true" : undefined,
+        })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllBannerGroups(
+  opts: { activityId?: string; includeActivity?: boolean } = {},
+) {
+  const { activityId, includeActivity } = opts
+  return useQuery({
+    queryKey: [...GROUPS_KEY, "all", { activityId: activityId ?? null, includeActivity: !!includeActivity }],
+    queryFn: () =>
+      api
+        .get<Page<BannerGroup>>(
+          `/api/banner/groups?${buildQs({
+            limit: 200,
+            activityId,
+            includeActivity: includeActivity ? "true" : undefined,
+          })}`,
+        )
+        .then((p) => p.items),
   })
 }
 
@@ -76,14 +100,29 @@ export function useDeleteBannerGroup() {
 
 // ─── Banners within a group ────────────────────────────────────
 
-export function useBanners(groupId: string) {
-  return useQuery({
+/** Paginated banners under a group — for the in-page list/table. */
+export function useBanners(groupId: string, initialPageSize = 50) {
+  return useCursorList<Banner>({
     queryKey: bannersKey(groupId),
-    queryFn: () =>
-      api.get<BannerListResponse>(
-        `/api/banner/groups/${groupId}/banners`,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<Banner>>(
+        `/api/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q })}`,
       ),
-    select: (data) => data.items,
+    initialPageSize,
+    enabled: !!groupId,
+  })
+}
+
+/** Non-paginated convenience used by reorder/preview flows. */
+export function useAllBanners(groupId: string) {
+  return useQuery({
+    queryKey: [...bannersKey(groupId), "all"],
+    queryFn: () =>
+      api
+        .get<Page<Banner>>(
+          `/api/banner/groups/${groupId}/banners?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
     enabled: !!groupId,
   })
 }

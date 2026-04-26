@@ -69,9 +69,17 @@
  * `finalizeSeason` emits `rank.season_finalized` once.
  */
 
-import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  buildPageBy,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   rankMatchParticipants,
   rankMatches,
@@ -437,18 +445,32 @@ export function createRankService(
 
   async function listTierConfigs(
     organizationId: string,
-  ): Promise<Array<{ config: RankTierConfig; tiers: RankTier[] }>> {
+    params: PageParams = {},
+  ): Promise<Page<{ config: RankTierConfig; tiers: RankTier[] }>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(rankTierConfigs.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, rankTierConfigs.createdAt, rankTierConfigs.id);
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(rankTierConfigs.name, pat), ilike(rankTierConfigs.alias, pat));
+      if (search) conds.push(search);
+    }
     const configs = await db
       .select()
       .from(rankTierConfigs)
-      .where(eq(rankTierConfigs.organizationId, organizationId))
-      .orderBy(desc(rankTierConfigs.createdAt));
-    const result: Array<{ config: RankTierConfig; tiers: RankTier[] }> = [];
+      .where(and(...conds))
+      .orderBy(desc(rankTierConfigs.createdAt), desc(rankTierConfigs.id))
+      .limit(limit + 1);
+    const enriched: Array<{ config: RankTierConfig; tiers: RankTier[] }> = [];
     for (const c of configs) {
       const tiers = await loadTiersOrdered(c.id);
-      result.push({ config: c, tiers });
+      enriched.push({ config: c, tiers });
     }
-    return result;
+    return buildPageBy(enriched, limit, (e) => ({
+      createdAt: e.config.createdAt,
+      id: e.config.id,
+    }));
   }
 
   async function getTierConfig(
@@ -604,17 +626,22 @@ export function createRankService(
 
   async function listSeasons(
     organizationId: string,
-    filter?: { tierConfigId?: string; status?: SeasonStatus },
-  ): Promise<RankSeason[]> {
-    const conds = [eq(rankSeasons.organizationId, organizationId)];
-    if (filter?.tierConfigId)
+    filter: PageParams & { tierConfigId?: string; status?: SeasonStatus } = {},
+  ): Promise<Page<RankSeason>> {
+    const limit = clampLimit(filter.limit);
+    const conds: SQL[] = [eq(rankSeasons.organizationId, organizationId)];
+    if (filter.tierConfigId)
       conds.push(eq(rankSeasons.tierConfigId, filter.tierConfigId));
-    if (filter?.status) conds.push(eq(rankSeasons.status, filter.status));
-    return db
+    if (filter.status) conds.push(eq(rankSeasons.status, filter.status));
+    const seek = cursorWhere(filter.cursor, rankSeasons.createdAt, rankSeasons.id);
+    if (seek) conds.push(seek);
+    const rows = await db
       .select()
       .from(rankSeasons)
       .where(and(...conds))
-      .orderBy(desc(rankSeasons.startAt));
+      .orderBy(desc(rankSeasons.createdAt), desc(rankSeasons.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   /**

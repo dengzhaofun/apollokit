@@ -47,7 +47,15 @@
  *   - Unit tests (noted separately)
  */
 
-import { and, desc, eq, inArray, isNotNull, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
+
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 
 import { assistPoolConfigs } from "../../schema/assist-pool";
 import { bannerGroups } from "../../schema/banner";
@@ -379,16 +387,26 @@ export function createActivityService(
 
     async listActivities(
       organizationId: string,
-      filter?: { status?: ActivityState; kind?: ActivityKind },
-    ): Promise<ActivityConfig[]> {
-      const conds = [eq(activityConfigs.organizationId, organizationId)];
-      if (filter?.status) conds.push(eq(activityConfigs.status, filter.status));
-      if (filter?.kind) conds.push(eq(activityConfigs.kind, filter.kind));
-      return db
+      filter: PageParams & { status?: ActivityState; kind?: ActivityKind } = {},
+    ): Promise<Page<ActivityConfig>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(activityConfigs.organizationId, organizationId)];
+      if (filter.status) conds.push(eq(activityConfigs.status, filter.status));
+      if (filter.kind) conds.push(eq(activityConfigs.kind, filter.kind));
+      const seek = cursorWhere(filter.cursor, activityConfigs.createdAt, activityConfigs.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(activityConfigs.name, pat), ilike(activityConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(activityConfigs)
         .where(and(...conds))
-        .orderBy(desc(activityConfigs.startAt));
+        .orderBy(desc(activityConfigs.createdAt), desc(activityConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Lifecycle transitions ───────────────────────────────────

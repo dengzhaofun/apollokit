@@ -12,6 +12,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import {
   AGGREGATION_MODES,
   CONFIG_STATUSES,
@@ -281,9 +282,9 @@ export const LeaderboardConfigResponseSchema = z
   })
   .openapi("LeaderboardConfig");
 
-export const ConfigListResponseSchema = z
-  .object({ items: z.array(LeaderboardConfigResponseSchema) })
-  .openapi("LeaderboardConfigList");
+export const ConfigListResponseSchema = pageOf(LeaderboardConfigResponseSchema).openapi(
+  "LeaderboardConfigList",
+);
 
 const RankingSchema = z.object({
   rank: z.number().int(),

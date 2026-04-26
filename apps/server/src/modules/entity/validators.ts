@@ -8,6 +8,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const MetadataSchema = z
@@ -326,7 +328,9 @@ export const SchemaResponseSchema = z
   })
   .openapi("EntitySchema");
 
-export const SchemaListResponseSchema = z.array(SchemaResponseSchema);
+export const SchemaListResponseSchema = pageOf(SchemaResponseSchema).openapi(
+  "EntitySchemaList",
+);
 
 export const BlueprintResponseSchema = z
   .object({
@@ -356,7 +360,9 @@ export const BlueprintResponseSchema = z
   })
   .openapi("EntityBlueprint");
 
-export const BlueprintListResponseSchema = z.array(BlueprintResponseSchema);
+export const BlueprintListResponseSchema = pageOf(BlueprintResponseSchema).openapi(
+  "EntityBlueprintList",
+);
 
 export const SkinResponseSchema = z
   .object({
@@ -395,8 +401,8 @@ export const FormationConfigResponseSchema = z
   })
   .openapi("EntityFormationConfig");
 
-export const FormationConfigListResponseSchema = z.array(
-  FormationConfigResponseSchema,
+export const FormationConfigListResponseSchema = pageOf(FormationConfigResponseSchema).openapi(
+  "EntityFormationConfigList",
 );
 
 // ─── Export input types ─────────────────────────────────────────

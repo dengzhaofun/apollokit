@@ -9,6 +9,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { ASSIST_POLICY_KINDS, ASSIST_POOL_MODES, ASSIST_POOL_STATUSES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -210,6 +211,11 @@ export const ListConfigsQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .openapi({ param: { name: "includeActivity", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
 
 // ─── Response shapes ───────────────────────────────────────────────
@@ -279,9 +285,9 @@ export const AssistPoolContributeResultSchema = z
   })
   .openapi("AssistPoolContributeResult");
 
-export const AssistPoolConfigListSchema = z
-  .object({ items: z.array(AssistPoolConfigResponseSchema) })
-  .openapi("AssistPoolConfigList");
+export const AssistPoolConfigListSchema = pageOf(AssistPoolConfigResponseSchema).openapi(
+  "AssistPoolConfigList",
+);
 
 export const AssistPoolInstanceListSchema = z
   .object({ items: z.array(AssistPoolInstanceResponseSchema) })

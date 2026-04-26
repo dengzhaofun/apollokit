@@ -36,15 +36,15 @@ import {
   useLotteryPool,
   useUpdateLotteryPool,
   useDeleteLotteryPool,
-  useLotteryTiers,
+  useAllLotteryTiers,
   useCreateLotteryTier,
   useUpdateLotteryTier,
   useDeleteLotteryTier,
-  useLotteryPrizes,
+  useAllLotteryPrizes,
   useCreateLotteryPrize,
   useUpdateLotteryPrize,
   useDeleteLotteryPrize,
-  useLotteryPityRules,
+  useAllLotteryPityRules,
   useCreateLotteryPityRule,
   useUpdateLotteryPityRule,
   useDeleteLotteryPityRule,
@@ -67,7 +67,7 @@ function LotteryPoolDetailPage() {
   const deletePool = useDeleteLotteryPool()
 
   // Tiers
-  const { data: tiers, isPending: tiersPending } = useLotteryTiers(poolId)
+  const { data: tiers, isPending: tiersPending } = useAllLotteryTiers(poolId)
   const createTier = useCreateLotteryTier()
   const updateTier = useUpdateLotteryTier()
   const deleteTier = useDeleteLotteryTier()
@@ -75,7 +75,7 @@ function LotteryPoolDetailPage() {
   const [editingTier, setEditingTier] = useState<LotteryTier | null>(null)
 
   // Prizes
-  const { data: prizes, isPending: prizesPending } = useLotteryPrizes(poolId)
+  const { data: prizes, isPending: prizesPending } = useAllLotteryPrizes(poolId)
   const createPrize = useCreateLotteryPrize()
   const updatePrize = useUpdateLotteryPrize()
   const deletePrize = useDeleteLotteryPrize()
@@ -83,7 +83,7 @@ function LotteryPoolDetailPage() {
   const [editingPrize, setEditingPrize] = useState<LotteryPrize | null>(null)
 
   // Pity Rules
-  const { data: pityRules, isPending: pityPending } = useLotteryPityRules(poolId)
+  const { data: pityRules, isPending: pityPending } = useAllLotteryPityRules(poolId)
   const createPityRule = useCreateLotteryPityRule()
   const updatePityRule = useUpdateLotteryPityRule()
   const deletePityRule = useDeleteLotteryPityRule()

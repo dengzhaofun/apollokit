@@ -1,23 +1,17 @@
 /**
- * Entry list — minimal table with status badge, group, tags, updated time.
- *
- * Clicking a row navigates to the entry edit page. Filtering /
- * pagination is handled by the parent route via TanStack Query params.
+ * Entry list — paginated table over /api/cms/types/{typeAlias}/entries.
+ * Status / group / tag filters are passed in by the parent route page.
  */
 
 import { Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
+import { useMemo } from "react"
 
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
-import * as m from "#/paraglide/messages.js"
+import { useCmsEntries } from "#/hooks/use-cms"
 import type { CmsEntry, CmsEntryStatus } from "#/lib/types/cms"
+import * as m from "#/paraglide/messages.js"
 
 const STATUS_VARIANT: Record<
   CmsEntryStatus,
@@ -28,68 +22,92 @@ const STATUS_VARIANT: Record<
   archived: "secondary",
 }
 
-export function EntryTable({
-  typeAlias,
-  data,
-}: {
+const columnHelper = createColumnHelper<CmsEntry>()
+
+function useColumns(typeAlias: string): ColumnDef<CmsEntry, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("alias", {
+        header: () => m.common_alias(),
+        cell: (info) => (
+          <Link
+            to="/cms/$typeAlias/$entryAlias"
+            params={{ typeAlias, entryAlias: info.getValue() }}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("status", {
+        header: () => m.common_status(),
+        cell: (info) => (
+          <Badge variant={STATUS_VARIANT[info.getValue()]}>{info.getValue()}</Badge>
+        ),
+      }),
+      columnHelper.accessor("groupKey", {
+        header: () => m.cms_entry_group(),
+        cell: (info) => (
+          <span className="text-muted-foreground">{info.getValue() ?? "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("tags", {
+        header: () => m.cms_entry_tags(),
+        cell: (info) => {
+          const tags = info.getValue()
+          return (
+            <div className="flex flex-wrap gap-1">
+              {tags.length === 0 ? (
+                <span className="text-muted-foreground">—</span>
+              ) : (
+                tags.map((t) => (
+                  <Badge key={t} variant="outline" className="text-xs">
+                    {t}
+                  </Badge>
+                ))
+              )}
+            </div>
+          )
+        },
+      }),
+      columnHelper.accessor("updatedAt", {
+        header: () => m.common_updated(),
+        cell: (info) => (
+          <span className="text-xs text-muted-foreground">
+            {new Date(info.getValue()).toLocaleString()}
+          </span>
+        ),
+      }),
+    ],
+    [typeAlias],
+  ) as ColumnDef<CmsEntry, unknown>[]
+}
+
+interface Props {
   typeAlias: string
-  data: CmsEntry[]
-}) {
-  if (data.length === 0) {
-    return (
-      <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-        {m.cms_entry_list_empty()}
-      </div>
-    )
-  }
+  status?: CmsEntryStatus
+  groupKey?: string
+  tag?: string
+}
+
+export function EntryTable({ typeAlias, status, groupKey, tag }: Props) {
+  const list = useCmsEntries(typeAlias, { status, groupKey, tag })
+  const columns = useColumns(typeAlias)
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{m.common_alias()}</TableHead>
-          <TableHead>{m.common_status()}</TableHead>
-          <TableHead>{m.cms_entry_group()}</TableHead>
-          <TableHead>{m.cms_entry_tags()}</TableHead>
-          <TableHead>{m.common_updated()}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((e) => (
-          <TableRow key={e.id} className="hover:bg-muted/50">
-            <TableCell>
-              <Link
-                to="/cms/$typeAlias/$entryAlias"
-                params={{ typeAlias, entryAlias: e.alias }}
-                className="font-medium underline-offset-4 hover:underline"
-              >
-                {e.alias}
-              </Link>
-            </TableCell>
-            <TableCell>
-              <Badge variant={STATUS_VARIANT[e.status]}>{e.status}</Badge>
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {e.groupKey ?? "—"}
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {e.tags.length === 0 ? (
-                  <span className="text-muted-foreground">—</span>
-                ) : (
-                  e.tags.map((t) => (
-                    <Badge key={t} variant="outline" className="text-xs">
-                      {t}
-                    </Badge>
-                  ))
-                )}
-              </div>
-            </TableCell>
-            <TableCell className="text-xs text-muted-foreground">
-              {new Date(e.updatedAt).toLocaleString()}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={list.items}
+      isLoading={list.isLoading}
+      getRowId={(row) => row.id}
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
+    />
   )
 }

@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import {
   ANNOUNCEMENT_KINDS,
   ANNOUNCEMENT_SEVERITIES,
@@ -73,6 +74,10 @@ export const ListAnnouncementsQuerySchema = z.object({
       param: { name: "q", in: "query" },
       description: "Case-insensitive substring match on alias / title.",
     }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
 });
 
 export type ListAnnouncementsQuery = z.input<
@@ -111,9 +116,9 @@ export const AnnouncementResponseSchema = z
   })
   .openapi("Announcement");
 
-export const AnnouncementListResponseSchema = z
-  .object({ items: z.array(AnnouncementResponseSchema) })
-  .openapi("AnnouncementList");
+export const AnnouncementListResponseSchema = pageOf(AnnouncementResponseSchema).openapi(
+  "AnnouncementList",
+);
 
 export const ClientAnnouncementSchema = z
   .object({

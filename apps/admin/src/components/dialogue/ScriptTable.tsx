@@ -1,85 +1,96 @@
 import { Link } from "@tanstack/react-router"
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import { useMemo } from "react"
 
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
-import * as m from "#/paraglide/messages.js"
+import { useDialogueScripts } from "#/hooks/use-dialogue"
 import type { DialogueScript } from "#/lib/types/dialogue"
+import * as m from "#/paraglide/messages.js"
 
-interface ScriptTableProps {
-  data: DialogueScript[]
+const columnHelper = createColumnHelper<DialogueScript>()
+
+function useColumns(): ColumnDef<DialogueScript, unknown>[] {
+  return useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: () => m.dialogue_col_name(),
+        cell: (info) => (
+          <Link
+            to="/dialogue/$scriptId"
+            params={{ scriptId: info.row.original.id }}
+            className="font-medium hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("alias", {
+        header: () => m.dialogue_col_alias(),
+        cell: (info) => {
+          const alias = info.getValue()
+          return alias ? (
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{alias}</code>
+          ) : (
+            <Badge variant="outline">{m.dialogue_draft_badge()}</Badge>
+          )
+        },
+      }),
+      columnHelper.accessor("nodes", {
+        header: () => m.dialogue_col_nodes(),
+        cell: (info) => (
+          <span className="text-muted-foreground">{info.getValue().length}</span>
+        ),
+      }),
+      columnHelper.accessor("repeatable", {
+        header: () => m.dialogue_col_repeatable(),
+        cell: (info) =>
+          info.getValue() ? (
+            <Badge variant="secondary">✓</Badge>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      }),
+      columnHelper.accessor("isActive", {
+        header: () => m.dialogue_col_status(),
+        cell: (info) => (
+          <Badge variant={info.getValue() ? "default" : "outline"}>
+            {info.getValue() ? m.common_active() : m.common_inactive()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("updatedAt", {
+        header: () => m.common_updated(),
+        cell: (info) => (
+          <span className="text-muted-foreground">
+            {format(new Date(info.getValue()), "yyyy-MM-dd HH:mm")}
+          </span>
+        ),
+      }),
+    ],
+    [],
+  ) as ColumnDef<DialogueScript, unknown>[]
 }
 
-export function ScriptTable({ data }: ScriptTableProps) {
+export function ScriptTable() {
+  const list = useDialogueScripts()
+  const columns = useColumns()
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{m.dialogue_col_name()}</TableHead>
-          <TableHead>{m.dialogue_col_alias()}</TableHead>
-          <TableHead>{m.dialogue_col_nodes()}</TableHead>
-          <TableHead>{m.dialogue_col_repeatable()}</TableHead>
-          <TableHead>{m.dialogue_col_status()}</TableHead>
-          <TableHead>{m.common_updated()}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center">
-              {m.dialogue_empty()}
-            </TableCell>
-          </TableRow>
-        ) : (
-          data.map((s) => (
-            <TableRow key={s.id}>
-              <TableCell>
-                <Link
-                  to="/dialogue/$scriptId"
-                  params={{ scriptId: s.id }}
-                  className="font-medium hover:underline"
-                >
-                  {s.name}
-                </Link>
-              </TableCell>
-              <TableCell>
-                {s.alias ? (
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {s.alias}
-                  </code>
-                ) : (
-                  <Badge variant="outline">{m.dialogue_draft_badge()}</Badge>
-                )}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {s.nodes.length}
-              </TableCell>
-              <TableCell>
-                {s.repeatable ? (
-                  <Badge variant="secondary">✓</Badge>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant={s.isActive ? "default" : "outline"}>
-                  {s.isActive ? m.common_active() : m.common_inactive()}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {format(new Date(s.updatedAt), "yyyy-MM-dd HH:mm")}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={list.items}
+      isLoading={list.isLoading}
+      getRowId={(row) => row.id}
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
+    />
   )
 }

@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -51,6 +52,7 @@ dialogueRouter.openapi(
     path: "/scripts",
     tags: [TAG],
     summary: "List dialogue scripts",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -63,8 +65,11 @@ dialogueRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const items = await dialogueService.listScripts(orgId);
-    return c.json(ok({ items: items.map(serializeScript) }), 200);
+    const page = await dialogueService.listScripts(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeScript), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

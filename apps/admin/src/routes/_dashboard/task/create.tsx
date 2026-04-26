@@ -3,7 +3,7 @@ import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
 import { DefinitionForm } from "#/components/task/DefinitionForm"
-import { useCreateTaskDefinition, useTaskCategories } from "#/hooks/use-task"
+import { useCreateTaskDefinition, useAllTaskCategories } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
 
 export const Route = createFileRoute("/_dashboard/task/create")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_dashboard/task/create")({
 function TaskCreatePage() {
   const navigate = useNavigate()
   const createMutation = useCreateTaskDefinition()
-  const { data: categories } = useTaskCategories()
+  const { data: categories } = useAllTaskCategories()
 
   return (
     <>

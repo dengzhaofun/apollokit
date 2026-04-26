@@ -38,9 +38,16 @@
  *    the subtree using a recursive CTE — SQL is generated inline.
  */
 
-import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   shopCategories,
   shopGrowthStageClaims,
@@ -483,12 +490,40 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (deleted.length === 0) throw new ShopTagNotFound(id);
   }
 
-  async function listTags(organizationId: string): Promise<ShopTag[]> {
+  /**
+   * Non-paginated all-tags fetch — used internally by ProductForm
+   * dropdowns and (until UI is ready) the TagTable. Limit is implied
+   * by the tenant's tag count (typically < 50).
+   */
+  async function listAllTags(organizationId: string): Promise<ShopTag[]> {
     return db
       .select()
       .from(shopTags)
       .where(eq(shopTags.organizationId, organizationId))
       .orderBy(asc(shopTags.sortOrder), asc(shopTags.createdAt));
+  }
+
+  /** Paginated tags list — for the admin TagTable. */
+  async function listTags(
+    organizationId: string,
+    params: PageParams = {},
+  ): Promise<Page<ShopTag>> {
+    const limit = clampLimit(params.limit);
+    const conditions: SQL[] = [eq(shopTags.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, shopTags.createdAt, shopTags.id);
+    if (seek) conditions.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(shopTags.name, pat), ilike(shopTags.alias, pat));
+      if (search) conditions.push(search);
+    }
+    const rows = await db
+      .select()
+      .from(shopTags)
+      .where(and(...conditions))
+      .orderBy(desc(shopTags.createdAt), desc(shopTags.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getTag(
@@ -689,8 +724,8 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
   async function listProducts(
     organizationId: string,
-    query: ListProductsQuery = {},
-  ): Promise<Array<ShopProduct & { tags: ShopTag[] }>> {
+    query: ListProductsQuery & PageParams = {},
+  ): Promise<Page<ShopProduct & { tags: ShopTag[] }>> {
     // Resolve categoryIds if includeDescendantCategories=true
     let categoryIds: string[] | null = null;
     if (query.categoryId) {
@@ -760,14 +795,28 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       );
     }
 
+    const limit = clampLimit(query.limit);
+    const seek = cursorWhere(query.cursor, shopProducts.createdAt, shopProducts.id);
+    if (seek) conds.push(seek);
+    if (query.q) {
+      const pat = `%${query.q}%`;
+      const search = or(ilike(shopProducts.name, pat), ilike(shopProducts.alias, pat));
+      if (search) conds.push(search);
+    }
+
     const rows = await db
       .select()
       .from(shopProducts)
       .where(and(...conds))
-      .orderBy(asc(shopProducts.sortOrder), desc(shopProducts.createdAt));
+      .orderBy(desc(shopProducts.createdAt), desc(shopProducts.id))
+      .limit(limit + 1);
 
-    const tagsMap = await loadProductTags(rows.map((r) => r.id));
-    return rows.map((r) => ({ ...r, tags: tagsMap.get(r.id) ?? [] }));
+    const page = buildPage(rows, limit);
+    const tagsMap = await loadProductTags(page.items.map((r) => r.id));
+    return {
+      items: page.items.map((r) => ({ ...r, tags: tagsMap.get(r.id) ?? [] })),
+      nextCursor: page.nextCursor,
+    };
   }
 
   // ─── Growth stages ───────────────────────────────────────────────
@@ -1535,12 +1584,18 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     query?: ListUserProductsQuery;
   }): Promise<UserProductView[]> {
     const now = params.now ?? new Date();
-    const products = await listProducts(params.organizationId, {
-      ...(params.query?.categoryId ? { categoryId: params.query.categoryId } : {}),
-      ...(params.query?.tagId ? { tagId: params.query.tagId } : {}),
-      ...(params.query?.productType ? { productType: params.query.productType } : {}),
-      isActive: "true",
-    });
+    const products = (
+      await listProducts(params.organizationId, {
+        ...(params.query?.categoryId ? { categoryId: params.query.categoryId } : {}),
+        ...(params.query?.tagId ? { tagId: params.query.tagId } : {}),
+        ...(params.query?.productType ? { productType: params.query.productType } : {}),
+        isActive: "true",
+        // End-user product list is bounded by what's currently active in scope
+        // for one user — practically << 200. Bumping limit so we don't lose
+        // products to pagination on this internal call.
+        limit: 200,
+      })
+    ).items;
 
     // Bulk-fetch user states for these products.
     const productIds = products.map((p) => p.id);
@@ -1640,6 +1695,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     updateTag,
     deleteTag,
     listTags,
+    listAllTags,
     getTag,
     // products
     createProduct,

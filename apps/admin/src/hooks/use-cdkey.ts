@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CdkeyBatch,
   CdkeyCode,
@@ -13,11 +14,15 @@ const BATCHES_KEY = ["cdkey-batches"] as const
 
 // ─── Batches ──────────────────────────────────────────────────────
 
-export function useCdkeyBatches() {
-  return useQuery({
+/** Paginated batches — for the admin BatchTable. */
+export function useCdkeyBatches(initialPageSize = 50) {
+  return useCursorList<CdkeyBatch>({
     queryKey: BATCHES_KEY,
-    queryFn: () => api.get<{ items: CdkeyBatch[] }>("/api/cdkey/batches"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CdkeyBatch>>(
+        `/api/cdkey/batches?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
   })
 }
 
@@ -57,21 +62,19 @@ export function useDeleteCdkeyBatch() {
 
 // ─── Codes ─────────────────────────────────────────────────────────
 
+/** Paginated codes under one batch. */
 export function useCdkeyCodes(
   batchId: string,
-  opts: { status?: string; limit?: number; offset?: number } = {},
+  opts: { status?: string; initialPageSize?: number } = {},
 ) {
-  const params = new URLSearchParams()
-  if (opts.status) params.set("status", opts.status)
-  if (opts.limit != null) params.set("limit", String(opts.limit))
-  if (opts.offset != null) params.set("offset", String(opts.offset))
-  const qs = params.toString() ? `?${params}` : ""
-  return useQuery({
-    queryKey: ["cdkey-codes", batchId, opts],
-    queryFn: () =>
-      api.get<{ items: CdkeyCode[]; total: number }>(
-        `/api/cdkey/batches/${batchId}/codes${qs}`,
+  const { status, initialPageSize = 50 } = opts
+  return useCursorList<CdkeyCode>({
+    queryKey: ["cdkey-codes", batchId, { status: status ?? null }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CdkeyCode>>(
+        `/api/cdkey/batches/${batchId}/codes?${buildQs({ cursor, limit, q, status })}`,
       ),
+    initialPageSize,
     enabled: !!batchId,
   })
 }
@@ -102,21 +105,19 @@ export function useRevokeCdkeyCode() {
 
 // ─── Logs ──────────────────────────────────────────────────────────
 
+/** Paginated redemption logs under one batch. */
 export function useCdkeyLogs(
   batchId: string,
-  opts: { status?: string; limit?: number; offset?: number } = {},
+  opts: { status?: string; initialPageSize?: number } = {},
 ) {
-  const params = new URLSearchParams()
-  if (opts.status) params.set("status", opts.status)
-  if (opts.limit != null) params.set("limit", String(opts.limit))
-  if (opts.offset != null) params.set("offset", String(opts.offset))
-  const qs = params.toString() ? `?${params}` : ""
-  return useQuery({
-    queryKey: ["cdkey-logs", batchId, opts],
-    queryFn: () =>
-      api.get<{ items: CdkeyRedemptionLog[]; total: number }>(
-        `/api/cdkey/batches/${batchId}/logs${qs}`,
+  const { status, initialPageSize = 50 } = opts
+  return useCursorList<CdkeyRedemptionLog>({
+    queryKey: ["cdkey-logs", batchId, { status: status ?? null }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<CdkeyRedemptionLog>>(
+        `/api/cdkey/batches/${batchId}/logs?${buildQs({ cursor, limit, q, status })}`,
       ),
+    initialPageSize,
     enabled: !!batchId,
   })
 }

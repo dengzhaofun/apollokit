@@ -36,9 +36,16 @@
  * post-state — no SELECT … FOR UPDATE, no transactions.
  */
 
-import { and, count, desc, eq, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { grantRewards, type RewardEntry } from "../../lib/rewards";
 import {
   type AssistContributionPolicy,
@@ -410,19 +417,29 @@ export function createAssistPoolService(
 
     async listConfigs(
       organizationId: string,
-      filter?: { includeActivity?: boolean; activityId?: string },
-    ): Promise<AssistPoolConfig[]> {
-      const conds = [eq(assistPoolConfigs.organizationId, organizationId)];
-      if (filter?.activityId) {
+      filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
+    ): Promise<Page<AssistPoolConfig>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(assistPoolConfigs.organizationId, organizationId)];
+      if (filter.activityId) {
         conds.push(eq(assistPoolConfigs.activityId, filter.activityId));
-      } else if (!filter?.includeActivity) {
+      } else if (!filter.includeActivity) {
         conds.push(sql`${assistPoolConfigs.activityId} IS NULL`);
       }
-      return db
+      const seek = cursorWhere(filter.cursor, assistPoolConfigs.createdAt, assistPoolConfigs.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(assistPoolConfigs.name, pat), ilike(assistPoolConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(assistPoolConfigs)
         .where(and(...conds))
-        .orderBy(desc(assistPoolConfigs.createdAt));
+        .orderBy(desc(assistPoolConfigs.createdAt), desc(assistPoolConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getConfig(

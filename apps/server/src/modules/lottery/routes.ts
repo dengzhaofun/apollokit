@@ -2,7 +2,10 @@
  * Admin-facing HTTP routes for the lottery module.
  */
 
+import { z } from "@hono/zod-openapi";
+
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -259,6 +262,18 @@ lotteryRouter.openapi(
     path: "/pools",
     tags: [TAG_POOL],
     summary: "List lottery pools",
+    request: {
+      query: PaginationQuerySchema.merge(
+        z.object({
+          activityId: z.string().uuid().optional().openapi({
+            param: { name: "activityId", in: "query" },
+          }),
+          includeActivity: z.enum(["true", "false"]).optional().openapi({
+            param: { name: "includeActivity", in: "query" },
+          }),
+        }),
+      ),
+    },
     responses: {
       200: {
         description: "OK",
@@ -269,13 +284,18 @@ lotteryRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const activityId = c.req.query("activityId") ?? undefined;
-    const includeActivity = c.req.query("includeActivity") === "true";
-    const rows = await lotteryService.listPools(orgId, {
-      activityId,
-      includeActivity,
+    const q = c.req.valid("query");
+    const page = await lotteryService.listPools(orgId, {
+      activityId: q.activityId,
+      includeActivity: q.includeActivity === "true",
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: rows.map(serializePool) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializePool), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -389,7 +409,7 @@ lotteryRouter.openapi(
     path: "/pools/{poolKey}/tiers",
     tags: [TAG_TIER],
     summary: "List tiers for a pool",
-    request: { params: PoolKeyParamSchema },
+    request: { params: PoolKeyParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -401,8 +421,11 @@ lotteryRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
-    const rows = await lotteryService.listTiers(orgId, poolKey);
-    return c.json(ok({ items: rows.map(serializeTier) }), 200);
+    const page = await lotteryService.listTiers(orgId, poolKey, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeTier), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -529,7 +552,7 @@ lotteryRouter.openapi(
     path: "/pools/{poolKey}/prizes",
     tags: [TAG_PRIZE],
     summary: "List all prizes in a pool",
-    request: { params: PoolKeyParamSchema },
+    request: { params: PoolKeyParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -541,8 +564,11 @@ lotteryRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
-    const rows = await lotteryService.listPrizes(orgId, poolKey);
-    return c.json(ok({ items: rows.map(serializePrize) }), 200);
+    const page = await lotteryService.listPrizes(orgId, poolKey, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializePrize), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -641,7 +667,7 @@ lotteryRouter.openapi(
     path: "/pools/{poolKey}/pity-rules",
     tags: [TAG_PITY],
     summary: "List pity rules for a pool",
-    request: { params: PoolKeyParamSchema },
+    request: { params: PoolKeyParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -655,8 +681,11 @@ lotteryRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { poolKey } = c.req.valid("param");
-    const rows = await lotteryService.listPityRules(orgId, poolKey);
-    return c.json(ok({ items: rows.map(serializePityRule) }), 200);
+    const page = await lotteryService.listPityRules(orgId, poolKey, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializePityRule), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

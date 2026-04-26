@@ -106,8 +106,8 @@ describe("task service", () => {
 
     test("list categories", async () => {
       const cats = await svc.listCategories(orgId);
-      expect(cats.length).toBeGreaterThanOrEqual(1);
-      expect(cats.some((c) => c.id === catId)).toBe(true);
+      expect(cats.items.length).toBeGreaterThanOrEqual(1);
+      expect(cats.items.some((c) => c.id === catId)).toBe(true);
     });
 
     test("get category", async () => {

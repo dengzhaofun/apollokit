@@ -151,13 +151,19 @@ currencyRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const { activityId, isActive } = c.req.valid("query");
-    const rows = await currencyService.listDefinitions(orgId, {
+    const { activityId, isActive, cursor, limit, q } = c.req.valid("query");
+    const page = await currencyService.listDefinitions(orgId, {
       activityId,
       isActive:
         isActive === undefined ? undefined : isActive === "true" ? true : false,
+      cursor,
+      limit,
+      q,
     });
-    return c.json(ok({ items: rows.map(serializeDefinition) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeDefinition), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

@@ -1,21 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateDialogueScriptInput,
   DialogueScript,
-  DialogueScriptListResponse,
   UpdateDialogueScriptInput,
 } from "#/lib/types/dialogue"
 
 const SCRIPTS_KEY = ["dialogue-scripts"] as const
 
-export function useDialogueScripts() {
-  return useQuery({
+/** Paginated dialogue scripts — for the admin scripts table. */
+export function useDialogueScripts(initialPageSize = 50) {
+  return useCursorList<DialogueScript>({
     queryKey: SCRIPTS_KEY,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<DialogueScript>>(
+        `/api/dialogue/scripts?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllDialogueScripts() {
+  return useQuery({
+    queryKey: [...SCRIPTS_KEY, "all"],
     queryFn: () =>
-      api.get<DialogueScriptListResponse>("/api/dialogue/scripts"),
-    select: (data) => data.items,
+      api
+        .get<Page<DialogueScript>>(`/api/dialogue/scripts?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 

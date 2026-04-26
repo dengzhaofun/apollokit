@@ -14,6 +14,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -165,6 +166,11 @@ checkInRouter.openapi(
           .enum(["true", "false"])
           .optional()
           .openapi({ param: { name: "includeActivity", in: "query" } }),
+        cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+        limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+          param: { name: "limit", in: "query" },
+        }),
+        q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
       }),
     },
     responses: {
@@ -178,11 +184,17 @@ checkInRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const q = c.req.valid("query");
-    const rows = await checkInService.listConfigs(orgId, {
+    const page = await checkInService.listConfigs(orgId, {
       activityId: q.activityId,
       includeActivity: q.includeActivity === "true",
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -271,14 +283,14 @@ checkInRouter.openapi(
   },
 );
 
-// GET /check-in/configs/:key/users — list user states
+// GET /check-in/configs/:key/users — list user states (paginated)
 checkInRouter.openapi(
   createAdminRoute({
     method: "get",
     path: "/configs/{key}/users",
     tags: [TAG],
     summary: "List all user states for a check-in config",
-    request: { params: ConfigKeyParamSchema },
+    request: { params: ConfigKeyParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -292,11 +304,18 @@ checkInRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
-    const rows = await checkInService.listUserStates({
+    const q = c.req.valid("query");
+    const page = await checkInService.listUserStates({
       organizationId: orgId,
       configKey: key,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: rows.map(serializeState) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeState), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

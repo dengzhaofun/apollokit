@@ -285,11 +285,11 @@ describe("check-in service", () => {
   });
 
   test("listConfigs is scoped to organization", async () => {
-    const rows = await svc.listConfigs(orgId);
+    const page = await svc.listConfigs(orgId);
     // Every config we created above should be visible and all rows must
     // belong to the current test org.
-    expect(rows.length).toBeGreaterThan(0);
-    for (const row of rows) {
+    expect(page.items.length).toBeGreaterThan(0);
+    for (const row of page.items) {
       expect(row.organizationId).toBe(orgId);
     }
   });

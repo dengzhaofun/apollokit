@@ -222,7 +222,7 @@ describe("banner service", () => {
     });
     await svc.deleteGroup(orgId, group.id);
     const list = await svc.listGroups(orgId);
-    expect(list.find((g) => g.id === group.id)).toBeUndefined();
+    expect(list.items.find((g) => g.id === group.id)).toBeUndefined();
   });
 
   test("inactive group returns empty banners instead of 404", async () => {

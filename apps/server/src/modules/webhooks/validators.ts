@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { DELIVERY_STATUSES, ENDPOINT_STATUSES } from "./types";
 
 const NameSchema = z.string().min(1).max(200).openapi({
@@ -104,6 +105,7 @@ export const ListDeliveriesQuerySchema = z.object({
     .enum(DELIVERY_STATUSES)
     .optional()
     .openapi({ param: { name: "status", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
   limit: z.coerce
     .number()
     .int()
@@ -141,9 +143,9 @@ export const EndpointWithSecretResponseSchema = EndpointResponseSchema.extend({
   }),
 }).openapi("WebhookEndpointWithSecret");
 
-export const EndpointListResponseSchema = z
-  .object({ items: z.array(EndpointResponseSchema) })
-  .openapi("WebhookEndpointList");
+export const EndpointListResponseSchema = pageOf(EndpointResponseSchema).openapi(
+  "WebhookEndpointList",
+);
 
 export const DeliveryResponseSchema = z
   .object({
@@ -165,6 +167,6 @@ export const DeliveryResponseSchema = z
   })
   .openapi("WebhookDelivery");
 
-export const DeliveryListResponseSchema = z
-  .object({ items: z.array(DeliveryResponseSchema) })
-  .openapi("WebhookDeliveryList");
+export const DeliveryListResponseSchema = pageOf(DeliveryResponseSchema).openapi(
+  "WebhookDeliveryList",
+);

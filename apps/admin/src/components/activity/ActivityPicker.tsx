@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { useActivities } from "#/hooks/use-activity"
+import { useAllActivities } from "#/hooks/use-activity"
 import * as m from "#/paraglide/messages.js"
 
 const UNBOUND = "__none__"
@@ -21,7 +21,7 @@ interface Props {
 
 /**
  * Dropdown that lets the admin bind a standalone config to an activity
- * (or clear the binding). Loaded lazily via `useActivities()`; while the
+ * (or clear the binding). Loaded lazily via `useAllActivities()`; while the
  * list is loading the picker shows a disabled placeholder, so forms can
  * render immediately without a skeleton.
  *
@@ -35,7 +35,7 @@ export function ActivityPicker({
   placeholder,
   hideArchived = true,
 }: Props) {
-  const { data: activities, isPending } = useActivities()
+  const { data: activities, isPending } = useAllActivities()
   const items = (activities ?? []).filter((a) =>
     hideArchived ? a.status !== "archived" : true,
   )

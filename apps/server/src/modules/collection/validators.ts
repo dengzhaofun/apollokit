@@ -12,6 +12,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { ALBUM_SCOPES, MILESTONE_SCOPES, TRIGGER_TYPES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -328,11 +329,9 @@ export const AlbumResponseSchema = z
   })
   .openapi("CollectionAlbum");
 
-export const AlbumListResponseSchema = z
-  .object({
-    items: z.array(AlbumResponseSchema),
-  })
-  .openapi("CollectionAlbumList");
+export const AlbumListResponseSchema = pageOf(AlbumResponseSchema).openapi(
+  "CollectionAlbumList",
+);
 
 export const GroupResponseSchema = z
   .object({

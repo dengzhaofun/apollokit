@@ -56,9 +56,9 @@ describe("exchange service", () => {
   test("listConfigs returns configs for org", async () => {
     await svc.createConfig(orgId, { name: "List A", alias: "list-a" });
     await svc.createConfig(orgId, { name: "List B", alias: "list-b" });
-    const rows = await svc.listConfigs(orgId);
-    expect(rows.length).toBeGreaterThanOrEqual(2);
-    for (const row of rows) {
+    const page = await svc.listConfigs(orgId);
+    expect(page.items.length).toBeGreaterThanOrEqual(2);
+    for (const row of page.items) {
       expect(row.organizationId).toBe(orgId);
     }
   });
@@ -128,7 +128,7 @@ describe("exchange service", () => {
 
     // list
     const opts = await svc.listOptions(orgId, "opt-crud");
-    expect(opts.some((o) => o.id === opt.id)).toBe(true);
+    expect(opts.items.some((o) => o.id === opt.id)).toBe(true);
 
     // update
     const updated = await svc.updateOption(orgId, opt.id, {
@@ -141,7 +141,7 @@ describe("exchange service", () => {
     // delete
     await svc.deleteOption(orgId, opt.id);
     const after = await svc.listOptions(orgId, "opt-crud");
-    expect(after.some((o) => o.id === opt.id)).toBe(false);
+    expect(after.items.some((o) => o.id === opt.id)).toBe(false);
   });
 
   // ─── Execute exchange — happy path ──────────────────────────
@@ -488,7 +488,7 @@ describe("exchange service", () => {
 
     // Verify option exists
     const before = await svc.listOptions(orgId, cfg.id);
-    expect(before.length).toBe(1);
+    expect(before.items.length).toBe(1);
 
     // Delete config
     await svc.deleteConfig(orgId, cfg.id);

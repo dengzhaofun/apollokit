@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { GUILD_ROLES, JOIN_MODES, REQUEST_STATUSES, REQUEST_TYPES } from "./types";
 
 // ─── Shared building blocks ────────────────────────────────────────
@@ -114,12 +115,7 @@ export const GuildResponseSchema = z
   })
   .openapi("Guild");
 
-export const GuildListResponseSchema = z
-  .object({
-    items: z.array(GuildResponseSchema),
-    total: z.number().int(),
-  })
-  .openapi("GuildList");
+export const GuildListResponseSchema = pageOf(GuildResponseSchema).openapi("GuildList");
 
 // ─── Members ───────────────────────────────────────────────────────
 
@@ -255,24 +251,13 @@ export const MemberUserIdParamSchema = z.object({
 export const GuildListQuerySchema = z.object({
   search: z.string().optional().openapi({
     param: { name: "search", in: "query" },
-    description: "Search by guild name.",
+    description: "Search by guild name (legacy alias for q).",
   }),
-  limit: z
-    .string()
-    .optional()
-    .transform((v) => (v ? parseInt(v, 10) : 20))
-    .openapi({
-      param: { name: "limit", in: "query" },
-      description: "Page size (default 20).",
-    }),
-  offset: z
-    .string()
-    .optional()
-    .transform((v) => (v ? parseInt(v, 10) : 0))
-    .openapi({
-      param: { name: "offset", in: "query" },
-      description: "Pagination offset (default 0).",
-    }),
+  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
+  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+    param: { name: "limit", in: "query" },
+  }),
 });
 
 export const ContributionListQuerySchema = z.object({

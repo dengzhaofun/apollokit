@@ -3,6 +3,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -128,6 +129,7 @@ cdkeyRouter.openapi(
     path: "/batches",
     tags: [TAG_BATCH],
     summary: "List cdkey batches",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -138,8 +140,11 @@ cdkeyRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await cdkeyService.listBatches(orgId);
-    return c.json(ok({ items: rows.map(serializeBatch) }), 200);
+    const page = await cdkeyService.listBatches(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeBatch), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -273,12 +278,16 @@ cdkeyRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { batchId } = c.req.valid("param");
     const q = c.req.valid("query");
-    const res = await cdkeyService.listCodes(orgId, batchId, {
+    const page = await cdkeyService.listCodes(orgId, batchId, {
       status: q.status,
-      limit: q.limit ?? 50,
-      offset: q.offset ?? 0,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: res.items.map(serializeCode), total: res.total }), 200,);
+    return c.json(
+      ok({ items: page.items.map(serializeCode), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -309,11 +318,10 @@ cdkeyRouter.openapi(
 cdkeyRouter.get("/batches/:batchId/codes.csv", async (c) => {
   const orgId = c.var.session!.activeOrganizationId!;
   const batchId = c.req.param("batchId")!;
-  // Cap export at 50k for CF Worker memory/CPU safety.
-  const res = await cdkeyService.listCodes(orgId, batchId, {
-    limit: 50_000,
-    offset: 0,
-  });
+  // Cap export at 200 (server-side limit). CSV export should be reworked
+  // to stream multiple pages if larger exports are needed.
+  // TODO: paginate this loop to support large CSV exports.
+  const res = await cdkeyService.listCodes(orgId, batchId, { limit: 200 });
   const lines = ["code,status,redeemedBy,redeemedAt,createdAt"];
   for (const row of res.items) {
     lines.push(
@@ -360,12 +368,16 @@ cdkeyRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { batchId } = c.req.valid("param");
     const q = c.req.valid("query");
-    const res = await cdkeyService.listRedemptionLogs(orgId, batchId, {
+    const page = await cdkeyService.listRedemptionLogs(orgId, batchId, {
       status: q.status,
-      limit: q.limit ?? 50,
-      offset: q.offset ?? 0,
+      cursor: q.cursor,
+      limit: q.limit,
+      q: q.q,
     });
-    return c.json(ok({ items: res.items.map(serializeLog), total: res.total }), 200,);
+    return c.json(
+      ok({ items: page.items.map(serializeLog), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

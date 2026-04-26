@@ -66,9 +66,16 @@
  * reward loops around replay.
  */
 
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { getTraceId } from "../../lib/request-context";
 import { characterDefinitions } from "../../schema/character";
 import { itemDefinitions, itemGrantLogs } from "../../schema/item";
@@ -603,11 +610,26 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       if (deleted.length === 0) throw new DialogueScriptNotFound(id);
     },
 
-    async listScripts(organizationId: string): Promise<DialogueScript[]> {
-      return db
+    async listScripts(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<DialogueScript>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(dialogueScripts.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, dialogueScripts.createdAt, dialogueScripts.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(dialogueScripts.name, pat), ilike(dialogueScripts.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(dialogueScripts)
-        .where(eq(dialogueScripts.organizationId, organizationId));
+        .where(and(...conds))
+        .orderBy(desc(dialogueScripts.createdAt), desc(dialogueScripts.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getScript(

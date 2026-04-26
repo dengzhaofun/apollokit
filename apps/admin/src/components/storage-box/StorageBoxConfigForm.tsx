@@ -15,7 +15,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import { useCurrencies } from "#/hooks/use-currency"
+import { useAllCurrencies } from "#/hooks/use-currency"
 import type {
   CreateStorageBoxConfigInput,
   StorageBoxType,
@@ -35,7 +35,7 @@ export function StorageBoxConfigForm({
   isPending,
   submitLabel,
 }: Props) {
-  const { data: currencies } = useCurrencies()
+  const { data: currencies } = useAllCurrencies()
 
   const form = useForm({
     defaultValues: {

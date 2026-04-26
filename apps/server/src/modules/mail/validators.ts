@@ -73,6 +73,10 @@ export const ListMailQuerySchema = z.object({
   targetType: TargetTypeSchema.optional().openapi({
     param: { name: "targetType", in: "query" },
   }),
+  q: z.string().optional().openapi({
+    param: { name: "q", in: "query" },
+    description: "Search by message title (case-insensitive).",
+  }),
 });
 
 export const InboxQuerySchema = z.object({

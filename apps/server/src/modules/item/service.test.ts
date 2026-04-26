@@ -46,8 +46,8 @@ describe("item service", () => {
       expect(cat.isActive).toBe(true);
       expect(cat.organizationId).toBe(orgId);
 
-      const list = await svc.listCategories(orgId);
-      expect(list.some((c) => c.id === cat.id)).toBe(true);
+      const page = await svc.listCategories(orgId);
+      expect(page.items.some((c) => c.id === cat.id)).toBe(true);
     });
 
     test("get category by alias", async () => {

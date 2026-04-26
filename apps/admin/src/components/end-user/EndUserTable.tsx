@@ -1,14 +1,15 @@
 /**
- * Table for the end-user list page. Wraps the shared `DataTable` with
- * the column definitions for a player row.
+ * Self-contained end-user list table — server-side cursor pagination
+ * (drives `useEndUsers`) plus the standard <DataTable /> wrapper.
  */
-import type { ColumnDef } from "@tanstack/react-table"
 import { Link } from "@tanstack/react-router"
+import type { ColumnDef } from "@tanstack/react-table"
 import { Ban, CheckCircle2, Crown, LinkIcon } from "lucide-react"
 
 import { Badge } from "#/components/ui/badge"
 import { DataTable } from "#/components/data-table/DataTable"
-import type { EndUser } from "#/lib/types/end-user"
+import { useEndUsers } from "#/hooks/use-end-user"
+import type { EndUser, EndUserOrigin } from "#/lib/types/end-user"
 import * as m from "#/paraglide/messages.js"
 
 function formatDate(iso: string): string {
@@ -100,23 +101,29 @@ const columns: ColumnDef<EndUser>[] = [
 ]
 
 interface Props {
-  data: EndUser[]
-  isLoading?: boolean
+  origin?: EndUserOrigin
+  disabled?: boolean
   toolbar?: React.ReactNode
 }
 
-export function EndUserTable({ data, isLoading, toolbar }: Props) {
-  // `showSearch={false}` — the list page renders its own search box
-  // that drives server-side filters; we don't want DataTable's
-  // client-side filter shadowing it.
+export function EndUserTable({ origin, disabled, toolbar }: Props = {}) {
+  const list = useEndUsers({ origin, disabled })
   return (
     <DataTable
       columns={columns}
-      data={data}
-      isLoading={isLoading}
+      data={list.items}
+      isLoading={list.isLoading}
       toolbar={toolbar}
-      showSearch={false}
       getRowId={(r) => r.id}
+      pageIndex={list.pageIndex}
+      canPrev={list.canPrev}
+      canNext={list.canNext}
+      onNextPage={list.nextPage}
+      onPrevPage={list.prevPage}
+      pageSize={list.pageSize}
+      onPageSizeChange={list.setPageSize}
+      searchValue={list.searchInput}
+      onSearchChange={list.setSearchInput}
     />
   )
 }

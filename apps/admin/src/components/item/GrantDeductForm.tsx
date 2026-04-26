@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
-import { useItemDefinitions, useGrantItems, useDeductItems } from "#/hooks/use-item"
+import { useAllItemDefinitions, useGrantItems, useDeductItems } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
 import type { ItemEntry } from "#/lib/types/item"
 
@@ -99,7 +99,7 @@ function ItemEntryEditor({
 }
 
 export function GrantDeductForm() {
-  const { data: definitions } = useItemDefinitions()
+  const { data: definitions } = useAllItemDefinitions()
   const grantMutation = useGrantItems()
   const deductMutation = useDeductItems()
 

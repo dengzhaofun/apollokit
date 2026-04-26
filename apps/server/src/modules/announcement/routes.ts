@@ -75,8 +75,11 @@ announcementRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const filter = c.req.valid("query");
-    const items = await announcementService.list(orgId, filter);
-    return c.json(ok({ items: items.map(serialize) }), 200);
+    const page = await announcementService.list(orgId, filter);
+    return c.json(
+      ok({ items: page.items.map(serialize), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

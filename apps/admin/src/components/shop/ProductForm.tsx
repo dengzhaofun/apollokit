@@ -15,10 +15,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import {
-  useShopCategories,
-  useShopTags,
-} from "#/hooks/use-shop"
+import { useAllShopTags, useShopCategories } from "#/hooks/use-shop"
 import type { RewardEntry } from "#/lib/types/rewards"
 import type {
   CreateShopProductInput,
@@ -62,7 +59,7 @@ export function ProductForm({
   submitLabel,
 }: ProductFormProps) {
   const { data: categories } = useShopCategories()
-  const { data: tags } = useShopTags()
+  const { data: tags } = useAllShopTags()
 
   const [name, setName] = useState(defaultValues?.name ?? "")
   const [alias, setAlias] = useState(defaultValues?.alias ?? "")

@@ -23,9 +23,16 @@
  *    needing compare-and-set semantics can extend the `WHERE`.
  */
 
-import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   currencies,
   currencyLedger,
@@ -207,24 +214,34 @@ export function createCurrencyService(d: CurrencyDeps) {
 
     async listDefinitions(
       organizationId: string,
-      opts?: { activityId?: string | null; isActive?: boolean },
-    ): Promise<CurrencyDefinition[]> {
-      const conditions = [eq(currencies.organizationId, organizationId)];
-      if (opts?.activityId !== undefined) {
+      opts: PageParams & { activityId?: string | null; isActive?: boolean } = {},
+    ): Promise<Page<CurrencyDefinition>> {
+      const limit = clampLimit(opts.limit);
+      const conditions: SQL[] = [eq(currencies.organizationId, organizationId)];
+      if (opts.activityId !== undefined) {
         if (opts.activityId === null) {
           conditions.push(sql`${currencies.activityId} IS NULL`);
         } else {
           conditions.push(eq(currencies.activityId, opts.activityId));
         }
       }
-      if (opts?.isActive !== undefined) {
+      if (opts.isActive !== undefined) {
         conditions.push(eq(currencies.isActive, opts.isActive));
       }
-      return db
+      const seek = cursorWhere(opts.cursor, currencies.createdAt, currencies.id);
+      if (seek) conditions.push(seek);
+      if (opts.q) {
+        const pat = `%${opts.q}%`;
+        const search = or(ilike(currencies.name, pat), ilike(currencies.alias, pat));
+        if (search) conditions.push(search);
+      }
+      const rows = await db
         .select()
         .from(currencies)
         .where(and(...conditions))
-        .orderBy(desc(currencies.createdAt));
+        .orderBy(desc(currencies.createdAt), desc(currencies.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getDefinition(

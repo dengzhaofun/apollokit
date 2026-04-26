@@ -37,13 +37,13 @@ export type ListFilter = {
   search?: string;
   origin?: "managed" | "synced";
   disabled?: boolean;
+  cursor?: string;
   limit?: number;
-  offset?: number;
 };
 
 export type ListResult = {
   items: EndUserView[];
-  total: number;
+  nextCursor: string | null;
 };
 
 export type UpdateEndUserInput = {

@@ -292,7 +292,7 @@ describe("cms service", () => {
     expect(fetchedById.alias).toBe("post-a");
 
     const list = await svc.listTypes(orgId);
-    expect(list.find((t) => t.alias === "post-a")).toBeDefined();
+    expect(list.items.find((t) => t.alias === "post-a")).toBeDefined();
   });
 
   test("createType duplicate alias → CmsTypeAliasConflict", async () => {
@@ -530,7 +530,7 @@ describe("cms service", () => {
         CmsTypeNotFound,
       );
       const list = await svc.listTypes(otherOrg);
-      expect(list.find((t) => t.alias === "iso-test")).toBeUndefined();
+      expect(list.items.find((t) => t.alias === "iso-test")).toBeUndefined();
     } finally {
       await deleteTestOrg(otherOrg);
     }

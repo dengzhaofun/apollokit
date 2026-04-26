@@ -50,7 +50,7 @@
  * short-circuits on "already in grant_log".
  */
 
-import { and, desc, eq, gt, gte, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, ilike, isNull, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { mailMessages, mailUserStates } from "../../schema/mail";
@@ -314,7 +314,12 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
 
     async listMessages(
       organizationId: string,
-      query: { limit?: number; cursor?: string; targetType?: MailTargetType },
+      query: {
+        limit?: number;
+        cursor?: string;
+        targetType?: MailTargetType;
+        q?: string;
+      },
     ): Promise<{ items: MailMessage[]; nextCursor: string | null }> {
       const limit = query.limit ?? 50;
       const cursorDate = query.cursor ? new Date(query.cursor) : null;
@@ -325,6 +330,9 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       }
       if (cursorDate) {
         conditions.push(sql`${mailMessages.sentAt} < ${cursorDate}`);
+      }
+      if (query.q) {
+        conditions.push(ilike(mailMessages.title, `%${query.q}%`));
       }
 
       const rows = await db

@@ -3,6 +3,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
@@ -128,6 +129,7 @@ exchangeRouter.openapi(
     path: "/configs",
     tags: [TAG_CFG],
     summary: "List exchange configs",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -138,8 +140,11 @@ exchangeRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await exchangeService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    const page = await exchangeService.listConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -253,7 +258,7 @@ exchangeRouter.openapi(
     path: "/configs/{configKey}/options",
     tags: [TAG_OPT],
     summary: "List exchange options for a config",
-    request: { params: ConfigKeyParamSchema },
+    request: { params: ConfigKeyParamSchema, query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -265,8 +270,11 @@ exchangeRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { configKey } = c.req.valid("param");
-    const rows = await exchangeService.listOptions(orgId, configKey);
-    return c.json(ok({ items: rows.map(serializeOption) }), 200);
+    const page = await exchangeService.listOptions(orgId, configKey, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeOption), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

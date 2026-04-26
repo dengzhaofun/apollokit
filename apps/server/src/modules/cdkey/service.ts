@@ -31,9 +31,16 @@
  * also be recorded idempotently); operator picks it up from failed logs.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { getTraceId } from "../../lib/request-context";
 import {
   generateCdkeyCode,
@@ -334,12 +341,26 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
       if (deleted.length === 0) throw new CdkeyBatchNotFound(key);
     },
 
-    async listBatches(organizationId: string): Promise<CdkeyBatch[]> {
-      return db
+    async listBatches(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<CdkeyBatch>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(cdkeyBatches.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, cdkeyBatches.createdAt, cdkeyBatches.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(cdkeyBatches.name, pat), ilike(cdkeyBatches.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(cdkeyBatches)
-        .where(eq(cdkeyBatches.organizationId, organizationId))
-        .orderBy(desc(cdkeyBatches.createdAt));
+        .where(and(...conds))
+        .orderBy(desc(cdkeyBatches.createdAt), desc(cdkeyBatches.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getBatch(organizationId: string, key: string): Promise<CdkeyBatch> {
@@ -394,28 +415,27 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     async listCodes(
       organizationId: string,
       batchId: string,
-      opts: { status?: string; limit: number; offset: number },
-    ): Promise<{ items: CdkeyCode[]; total: number }> {
+      opts: PageParams & { status?: string } = {},
+    ): Promise<Page<CdkeyCode>> {
       const batch = await loadBatchByKey(organizationId, batchId);
-      const base = and(
+      const limit = clampLimit(opts.limit);
+      const conds: SQL[] = [
         eq(cdkeyCodes.organizationId, organizationId),
         eq(cdkeyCodes.batchId, batch.id),
-      );
-      const whereClause = opts.status
-        ? and(base, eq(cdkeyCodes.status, opts.status))
-        : base;
-      const items = await db
+      ];
+      if (opts.status) conds.push(eq(cdkeyCodes.status, opts.status));
+      const seek = cursorWhere(opts.cursor, cdkeyCodes.createdAt, cdkeyCodes.id);
+      if (seek) conds.push(seek);
+      if (opts.q) {
+        conds.push(ilike(cdkeyCodes.code, `%${opts.q}%`));
+      }
+      const rows = await db
         .select()
         .from(cdkeyCodes)
-        .where(whereClause)
-        .orderBy(desc(cdkeyCodes.createdAt))
-        .limit(opts.limit)
-        .offset(opts.offset);
-      const [countRow] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(cdkeyCodes)
-        .where(whereClause);
-      return { items, total: countRow?.count ?? 0 };
+        .where(and(...conds))
+        .orderBy(desc(cdkeyCodes.createdAt), desc(cdkeyCodes.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async revokeCode(
@@ -439,28 +459,31 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     async listRedemptionLogs(
       organizationId: string,
       batchId: string,
-      opts: { status?: string; limit: number; offset: number },
-    ): Promise<{ items: CdkeyRedemptionLog[]; total: number }> {
+      opts: PageParams & { status?: string } = {},
+    ): Promise<Page<CdkeyRedemptionLog>> {
       const batch = await loadBatchByKey(organizationId, batchId);
-      const base = and(
+      const limit = clampLimit(opts.limit);
+      const conds: SQL[] = [
         eq(cdkeyRedemptionLogs.organizationId, organizationId),
         eq(cdkeyRedemptionLogs.batchId, batch.id),
+      ];
+      if (opts.status) conds.push(eq(cdkeyRedemptionLogs.status, opts.status));
+      const seek = cursorWhere(
+        opts.cursor,
+        cdkeyRedemptionLogs.createdAt,
+        cdkeyRedemptionLogs.id,
       );
-      const whereClause = opts.status
-        ? and(base, eq(cdkeyRedemptionLogs.status, opts.status))
-        : base;
-      const items = await db
+      if (seek) conds.push(seek);
+      if (opts.q) {
+        conds.push(ilike(cdkeyRedemptionLogs.code, `%${opts.q}%`));
+      }
+      const rows = await db
         .select()
         .from(cdkeyRedemptionLogs)
-        .where(whereClause)
-        .orderBy(desc(cdkeyRedemptionLogs.createdAt))
-        .limit(opts.limit)
-        .offset(opts.offset);
-      const [countRow] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(cdkeyRedemptionLogs)
-        .where(whereClause);
-      return { items, total: countRow?.count ?? 0 };
+        .where(and(...conds))
+        .orderBy(desc(cdkeyRedemptionLogs.createdAt), desc(cdkeyRedemptionLogs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Redeem ────────────────────────────────────────────────

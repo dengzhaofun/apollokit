@@ -93,8 +93,7 @@ describe("guild service", () => {
   });
 
   test("7. listGuilds returns guilds (paginated)", async () => {
-    const result = await svc.listGuilds(orgId, { limit: 10, offset: 0 });
-    expect(result.total).toBeGreaterThanOrEqual(1);
+    const result = await svc.listGuilds(orgId, { limit: 10 });
     expect(result.items.length).toBeGreaterThanOrEqual(1);
     const found = result.items.find((g) => g.id === guildId);
     expect(found).toBeDefined();

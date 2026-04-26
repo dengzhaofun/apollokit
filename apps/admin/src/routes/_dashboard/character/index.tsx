@@ -5,18 +5,11 @@ import { toast } from "sonner"
 
 import { CharacterForm } from "#/components/character/CharacterForm"
 import { CharacterTable } from "#/components/character/CharacterTable"
-import {
-  EmptyList,
-  ErrorState,
-  PageBody,
-  PageHeader,
-  PageShell,
-} from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
 import {
   useCharacter,
-  useCharacters,
   useCreateCharacter,
   useUpdateCharacter,
 } from "#/hooks/use-character"
@@ -50,21 +43,12 @@ function CharacterListPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const { data: items, isPending, error, refetch } = useCharacters()
-  const total = items?.length ?? 0
-
   return (
     <PageShell>
       <PageHeader
         icon={<ContactIcon className="size-5" />}
         title={t("角色", "Characters")}
-        description={
-          isPending
-            ? t("加载中…", "Loading…")
-            : error
-              ? t("加载失败", "Failed to load")
-              : t(`共 ${total} 个角色`, `${total} characters total`)
-        }
+        description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus />
@@ -74,36 +58,7 @@ function CharacterListPage() {
       />
 
       <PageBody>
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
-            {m.common_loading()}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title={t("角色加载失败", "Failed to load characters")}
-            onRetry={() => refetch()}
-            retryLabel={t("重试", "Retry")}
-            error={error instanceof Error ? error : null}
-          />
-        ) : total === 0 ? (
-          <EmptyList
-            title={t("还没有角色", "No characters yet")}
-            description={t(
-              "创建第一个角色,作为剧情对话和图鉴的基础。",
-              "Create your first character as the basis for dialogues and collections.",
-            )}
-            action={
-              <Button size="sm" onClick={openCreate}>
-                <Plus />
-                {m.character_new()}
-              </Button>
-            }
-          />
-        ) : (
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <CharacterTable data={items ?? []} />
-          </div>
-        )}
+        <CharacterTable />
       </PageBody>
 
       {modal === "create" ? (

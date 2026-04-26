@@ -48,9 +48,9 @@ describe("lottery service", () => {
   test("listPools returns pools for org", async () => {
     await svc.createPool(orgId, { name: "Pool A", alias: "pool-a" });
     await svc.createPool(orgId, { name: "Pool B", alias: "pool-b" });
-    const rows = await svc.listPools(orgId);
-    expect(rows.length).toBeGreaterThanOrEqual(2);
-    for (const row of rows) {
+    const page = await svc.listPools(orgId);
+    expect(page.items.length).toBeGreaterThanOrEqual(2);
+    for (const row of page.items) {
       expect(row.organizationId).toBe(orgId);
     }
   });
@@ -107,8 +107,8 @@ describe("lottery service", () => {
     expect(ssr.poolId).toBe(pool.id);
 
     const tiers = await svc.listTiers(orgId, pool.id);
-    expect(tiers.length).toBe(2);
-    expect(tiers.map((t) => t.name).sort()).toEqual(["SR", "SSR"]);
+    expect(tiers.items.length).toBe(2);
+    expect(tiers.items.map((t) => t.name).sort()).toEqual(["SR", "SSR"]);
   });
 
   test("updateTier and deleteTier", async () => {
@@ -126,7 +126,7 @@ describe("lottery service", () => {
 
     await svc.deleteTier(orgId, tier.id);
     const tiers = await svc.listTiers(orgId, pool.id);
-    expect(tiers.find((t) => t.id === tier.id)).toBeUndefined();
+    expect(tiers.items.find((t) => t.id === tier.id)).toBeUndefined();
   });
 
   // ─── Prize CRUD ─────────────────────────────────────────────
@@ -153,7 +153,7 @@ describe("lottery service", () => {
     expect(prize.rewardItems).toHaveLength(1);
 
     const prizes = await svc.listPrizes(orgId, pool.id);
-    expect(prizes.some((p) => p.id === prize.id)).toBe(true);
+    expect(prizes.items.some((p) => p.id === prize.id)).toBe(true);
   });
 
   test("updatePrize and deletePrize", async () => {
@@ -171,7 +171,7 @@ describe("lottery service", () => {
 
     await svc.deletePrize(orgId, prize.id);
     const prizes = await svc.listPrizes(orgId, pool.id);
-    expect(prizes.find((p) => p.id === prize.id)).toBeUndefined();
+    expect(prizes.items.find((p) => p.id === prize.id)).toBeUndefined();
   });
 
   // ─── Pity Rule CRUD ────────────────────────────────────────
@@ -196,7 +196,7 @@ describe("lottery service", () => {
     expect(rule.softPityStartAt).toBe(74);
 
     const rules = await svc.listPityRules(orgId, pool.id);
-    expect(rules.some((r) => r.id === rule.id)).toBe(true);
+    expect(rules.items.some((r) => r.id === rule.id)).toBe(true);
   });
 
   test("pity rule conflict for same pool+tier", async () => {

@@ -73,7 +73,7 @@ export const Route = createFileRoute("/_dashboard/settings/webhooks")({
 })
 
 function WebhooksPage() {
-  const { data: endpoints, isPending, error } = useWebhookEndpoints()
+  const list = useWebhookEndpoints()
   const [showCreate, setShowCreate] = useState(false)
   const [createdSecret, setCreatedSecret] = useState<{
     name: string
@@ -97,43 +97,65 @@ function WebhooksPage() {
         </WriteGate>
       </div>
 
-      {isPending ? (
+      {list.isLoading ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.common_loading()}
           </div>
-        ) : error ? (
+        ) : list.error ? (
           <div className="flex h-40 items-center justify-center text-destructive">
             {m.common_failed_to_load({
               resource: m.webhooks_title(),
-              error: error.message,
+              error: list.error.message,
             })}
           </div>
-        ) : !endpoints?.length ? (
+        ) : list.items.length === 0 ? (
           <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
             {m.webhooks_no_endpoints()}
           </div>
         ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m.webhooks_column_name()}</TableHead>
-                  <TableHead>{m.webhooks_column_url()}</TableHead>
-                  <TableHead>{m.webhooks_column_events()}</TableHead>
-                  <TableHead>{m.webhooks_column_status()}</TableHead>
-                  <TableHead>{m.webhooks_column_last_delivery()}</TableHead>
-                  <TableHead className="w-40 text-right">
-                    {m.webhooks_column_actions()}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {endpoints.map((e) => (
-                  <EndpointRow key={e.id} endpoint={e} />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <>
+            <div className="rounded-xl border bg-card shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{m.webhooks_column_name()}</TableHead>
+                    <TableHead>{m.webhooks_column_url()}</TableHead>
+                    <TableHead>{m.webhooks_column_events()}</TableHead>
+                    <TableHead>{m.webhooks_column_status()}</TableHead>
+                    <TableHead>{m.webhooks_column_last_delivery()}</TableHead>
+                    <TableHead className="w-40 text-right">
+                      {m.webhooks_column_actions()}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {list.items.map((e) => (
+                    <EndpointRow key={e.id} endpoint={e} />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {(list.canPrev || list.canNext) && (
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={list.prevPage}
+                  disabled={!list.canPrev || list.isFetching}
+                >
+                  {m.data_table_prev()}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={list.nextPage}
+                  disabled={!list.canNext || list.isFetching}
+                >
+                  {m.data_table_next()}
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
       <CreateEndpointDialog

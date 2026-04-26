@@ -28,9 +28,16 @@
  * unique index on (configId, endUserId, active) can close the gap if needed.
  */
 
-import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   teamConfigs,
   teamInvitations,
@@ -265,12 +272,26 @@ export function createTeamService(d: TeamDeps) {
       return loadConfigByKey(organizationId, idOrAlias);
     },
 
-    async listConfigs(organizationId: string): Promise<TeamConfig[]> {
-      return db
+    async listConfigs(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<TeamConfig>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(teamConfigs.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, teamConfigs.createdAt, teamConfigs.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(teamConfigs.name, pat), ilike(teamConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(teamConfigs)
-        .where(eq(teamConfigs.organizationId, organizationId))
-        .orderBy(desc(teamConfigs.createdAt));
+        .where(and(...conds))
+        .orderBy(desc(teamConfigs.createdAt), desc(teamConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async updateConfig(
@@ -384,42 +405,32 @@ export function createTeamService(d: TeamDeps) {
 
     async listTeams(
       organizationId: string,
-      opts?: {
+      opts: PageParams & {
         configKey?: string;
         status?: TeamStatus;
-        limit?: number;
-        offset?: number;
-      },
-    ): Promise<{ items: Team[]; total: number }> {
-      const conditions = [eq(teamTeams.organizationId, organizationId)];
+      } = {},
+    ): Promise<Page<Team>> {
+      const limit = clampLimit(opts.limit);
+      const conditions: SQL[] = [eq(teamTeams.organizationId, organizationId)];
 
-      if (opts?.configKey) {
+      if (opts.configKey) {
         const config = await loadConfigByKey(organizationId, opts.configKey);
         conditions.push(eq(teamTeams.configId, config.id));
       }
-      if (opts?.status) {
+      if (opts.status) {
         conditions.push(eq(teamTeams.status, opts.status));
       }
+      const seek = cursorWhere(opts.cursor, teamTeams.createdAt, teamTeams.id);
+      if (seek) conditions.push(seek);
+      // teamTeams has no display-name column to search; q is ignored.
 
-      const where = and(...conditions);
-      const limit = opts?.limit ?? 50;
-      const offset = opts?.offset ?? 0;
-
-      const [items, countResult] = await Promise.all([
-        db
-          .select()
-          .from(teamTeams)
-          .where(where)
-          .orderBy(desc(teamTeams.createdAt))
-          .limit(limit)
-          .offset(offset),
-        db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(teamTeams)
-          .where(where),
-      ]);
-
-      return { items, total: countResult[0]?.count ?? 0 };
+      const rows = await db
+        .select()
+        .from(teamTeams)
+        .where(and(...conditions))
+        .orderBy(desc(teamTeams.createdAt), desc(teamTeams.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getMyTeam(

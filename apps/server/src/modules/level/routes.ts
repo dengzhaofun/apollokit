@@ -10,6 +10,8 @@
  */
 
 import { z } from "@hono/zod-openapi";
+
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -160,6 +162,7 @@ levelRouter.openapi(
     path: "/configs",
     tags: [TAG],
     summary: "List level configs",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -170,8 +173,11 @@ levelRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await levelService.listConfigs(orgId);
-    return c.json(ok({ items: rows.map(serializeConfig) }), 200);
+    const page = await levelService.listConfigs(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

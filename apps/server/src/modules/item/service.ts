@@ -22,9 +22,16 @@
  *    admin grants and system rewards (check-in, exchange) call it.
  */
 
-import { and, desc, eq, sql, sum } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql, sum, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   itemCategories,
   itemDefinitions,
@@ -470,12 +477,30 @@ export function createItemService(d: ItemDeps) {
       if (deleted.length === 0) throw new ItemCategoryNotFound(id);
     },
 
-    async listCategories(organizationId: string): Promise<ItemCategory[]> {
-      return db
+    async listCategories(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<ItemCategory>> {
+      const limit = clampLimit(params.limit);
+      const conditions: SQL[] = [eq(itemCategories.organizationId, organizationId)];
+      const seek = cursorWhere(
+        params.cursor,
+        itemCategories.createdAt,
+        itemCategories.id,
+      );
+      if (seek) conditions.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(itemCategories.name, pat), ilike(itemCategories.alias, pat));
+        if (search) conditions.push(search);
+      }
+      const rows = await db
         .select()
         .from(itemCategories)
-        .where(eq(itemCategories.organizationId, organizationId))
-        .orderBy(itemCategories.sortOrder, itemCategories.createdAt);
+        .where(and(...conditions))
+        .orderBy(desc(itemCategories.createdAt), desc(itemCategories.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getCategory(
@@ -587,24 +612,38 @@ export function createItemService(d: ItemDeps) {
 
     async listDefinitions(
       organizationId: string,
-      opts?: { categoryId?: string; activityId?: string | null },
-    ): Promise<ItemDefinition[]> {
-      const conditions = [eq(itemDefinitions.organizationId, organizationId)];
-      if (opts?.categoryId) {
+      opts: PageParams & { categoryId?: string; activityId?: string | null } = {},
+    ): Promise<Page<ItemDefinition>> {
+      const limit = clampLimit(opts.limit);
+      const conditions: SQL[] = [eq(itemDefinitions.organizationId, organizationId)];
+      if (opts.categoryId) {
         conditions.push(eq(itemDefinitions.categoryId, opts.categoryId));
       }
-      if (opts?.activityId !== undefined) {
+      if (opts.activityId !== undefined) {
         if (opts.activityId === null) {
           conditions.push(sql`${itemDefinitions.activityId} IS NULL`);
         } else {
           conditions.push(eq(itemDefinitions.activityId, opts.activityId));
         }
       }
-      return db
+      const seek = cursorWhere(
+        opts.cursor,
+        itemDefinitions.createdAt,
+        itemDefinitions.id,
+      );
+      if (seek) conditions.push(seek);
+      if (opts.q) {
+        const pat = `%${opts.q}%`;
+        const search = or(ilike(itemDefinitions.name, pat), ilike(itemDefinitions.alias, pat));
+        if (search) conditions.push(search);
+      }
+      const rows = await db
         .select()
         .from(itemDefinitions)
         .where(and(...conditions))
-        .orderBy(desc(itemDefinitions.createdAt));
+        .orderBy(desc(itemDefinitions.createdAt), desc(itemDefinitions.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getDefinition(

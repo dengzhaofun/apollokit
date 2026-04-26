@@ -236,10 +236,9 @@ describe("cms admin routes", () => {
     expect(list.status).toBe(200);
     const lr = await expectOk<{
       items: Array<{ alias: string; status: string }>;
-      total: number;
+      nextCursor: string | null;
     }>(list);
     expect(lr.items.find((x) => x.alias === "first")).toBeDefined();
-    expect(lr.total).toBeGreaterThanOrEqual(1);
   });
 
   test("PATCH entry with stale version → 409", async () => {

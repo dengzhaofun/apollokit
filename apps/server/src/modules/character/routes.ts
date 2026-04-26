@@ -7,6 +7,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { PaginationQuerySchema } from "../../lib/pagination";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import {
   NullDataEnvelopeSchema,
@@ -56,6 +57,7 @@ characterRouter.openapi(
     path: "/characters",
     tags: [TAG],
     summary: "List characters",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -68,8 +70,11 @@ characterRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const items = await characterService.listCharacters(orgId);
-    return c.json(ok({ items: items.map(serializeCharacter) }), 200);
+    const page = await characterService.listCharacters(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeCharacter), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

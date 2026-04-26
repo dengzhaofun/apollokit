@@ -6,6 +6,7 @@
  * POST `/endpoints` and POST `/endpoints/{id}/rotate-secret`.
  */
 
+import { PaginationQuerySchema } from "../../lib/pagination";
 import {
   NullDataEnvelopeSchema,
   commonErrorResponses,
@@ -131,6 +132,7 @@ webhooksRouter.openapi(
     path: "/endpoints",
     tags: [TAG],
     summary: "List webhook endpoints for the current project",
+    request: { query: PaginationQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -145,8 +147,11 @@ webhooksRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const rows = await webhooksService.listEndpoints(orgId);
-    return c.json(ok({ items: rows.map(serializeEndpoint) }), 200);
+    const page = await webhooksService.listEndpoints(orgId, c.req.valid("query"));
+    return c.json(
+      ok({ items: page.items.map(serializeEndpoint), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 
@@ -291,11 +296,15 @@ webhooksRouter.openapi(
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
     const q = c.req.valid("query");
-    const rows = await webhooksService.listDeliveries(orgId, id, {
+    const page = await webhooksService.listDeliveries(orgId, id, {
       status: q.status,
+      cursor: q.cursor,
       limit: q.limit,
     });
-    return c.json(ok({ items: rows.map(serializeDelivery) }), 200);
+    return c.json(
+      ok({ items: page.items.map(serializeDelivery), nextCursor: page.nextCursor }),
+      200,
+    );
   },
 );
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateStorageBoxConfigInput,
   DepositInput,
@@ -16,12 +17,28 @@ const DEPOSITS_KEY = ["storage-box-deposits"] as const
 
 // ─── Configs ──────────────────────────────────────────────────────
 
-export function useStorageBoxConfigs() {
-  return useQuery({
+/** Paginated configs — for the admin StorageBoxConfigTable. */
+export function useStorageBoxConfigs(initialPageSize = 50) {
+  return useCursorList<StorageBoxConfig>({
     queryKey: CONFIGS_KEY,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<StorageBoxConfig>>(
+        `/api/storage-box/configs?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllStorageBoxConfigs() {
+  return useQuery({
+    queryKey: [...CONFIGS_KEY, "all"],
     queryFn: () =>
-      api.get<{ items: StorageBoxConfig[] }>("/api/storage-box/configs"),
-    select: (data) => data.items,
+      api
+        .get<Page<StorageBoxConfig>>(
+          `/api/storage-box/configs?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
   })
 }
 

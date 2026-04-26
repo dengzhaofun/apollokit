@@ -14,7 +14,6 @@ import { UserStatesTable } from "#/components/check-in/UserStatesTable"
 import { RewardsSection } from "#/components/check-in/RewardsSection"
 import {
   useCheckInConfig,
-  useCheckInUserStates,
   useUpdateCheckInConfig,
   useDeleteCheckInConfig,
 } from "#/hooks/use-check-in"
@@ -54,8 +53,6 @@ function CheckInDetailPage() {
   const WEEK_DAY_LABELS = getWeekDayLabels()
 
   const { data: config, isPending, error } = useCheckInConfig(configId)
-  const { data: userStates, isPending: userStatesPending } =
-    useCheckInUserStates(configId)
   const updateMutation = useUpdateCheckInConfig()
   const deleteMutation = useDeleteCheckInConfig()
 
@@ -229,15 +226,7 @@ function CheckInDetailPage() {
           {/* User States (read-only) */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">{m.checkin_checkin_users()}</h3>
-            {userStatesPending ? (
-              <div className="flex h-24 items-center justify-center text-muted-foreground">
-                {m.common_loading()}
-              </div>
-            ) : (
-              <div className="rounded-xl border bg-card shadow-sm">
-                <UserStatesTable data={userStates ?? []} />
-              </div>
-            )}
+            <UserStatesTable configKey={configId} />
           </div>
         </div>
       </main>

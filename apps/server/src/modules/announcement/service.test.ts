@@ -333,17 +333,17 @@ describe("announcement service", () => {
       );
 
       const onlyModal = await svc.list(scratch, { kind: "modal" });
-      expect(onlyModal.map((r) => r.alias).sort()).toEqual(
+      expect(onlyModal.items.map((r) => r.alias).sort()).toEqual(
         ["list-modal-off", "list-modal-on"].sort(),
       );
 
       const onlyActive = await svc.list(scratch, { isActive: "true" });
-      expect(onlyActive.map((r) => r.alias).sort()).toEqual(
+      expect(onlyActive.items.map((r) => r.alias).sort()).toEqual(
         ["list-feed", "list-modal-on"].sort(),
       );
 
       const bySearch = await svc.list(scratch, { q: "feed" });
-      expect(bySearch.map((r) => r.alias)).toEqual(["list-feed"]);
+      expect(bySearch.items.map((r) => r.alias)).toEqual(["list-feed"]);
     } finally {
       await deleteTestOrg(scratch);
     }

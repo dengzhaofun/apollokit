@@ -31,9 +31,16 @@
  *    `accruedInterest + projectInterest(...)`.
  */
 
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { getTraceId } from "../../lib/request-context";
 import { currencies } from "../../schema/currency";
 import {
@@ -311,12 +318,26 @@ export function createStorageBoxService(
       if (deleted.length === 0) throw new StorageBoxConfigNotFound(id);
     },
 
-    async listConfigs(organizationId: string): Promise<StorageBoxConfig[]> {
-      return db
+    async listConfigs(
+      organizationId: string,
+      params: PageParams = {},
+    ): Promise<Page<StorageBoxConfig>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(storageBoxConfigs.organizationId, organizationId)];
+      const seek = cursorWhere(params.cursor, storageBoxConfigs.createdAt, storageBoxConfigs.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(storageBoxConfigs.name, pat), ilike(storageBoxConfigs.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(storageBoxConfigs)
-        .where(eq(storageBoxConfigs.organizationId, organizationId))
-        .orderBy(storageBoxConfigs.sortOrder, desc(storageBoxConfigs.createdAt));
+        .where(and(...conds))
+        .orderBy(desc(storageBoxConfigs.createdAt), desc(storageBoxConfigs.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getConfig(

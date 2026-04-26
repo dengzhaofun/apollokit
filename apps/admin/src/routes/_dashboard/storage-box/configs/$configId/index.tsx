@@ -13,7 +13,7 @@ import {
   useStorageBoxConfig,
   useUpdateStorageBoxConfig,
 } from "#/hooks/use-storage-box"
-import { useItemDefinitions } from "#/hooks/use-item"
+import { useAllItemDefinitions } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
@@ -29,7 +29,7 @@ function StorageBoxConfigDetailPage() {
   const [editing, setEditing] = useState(false)
 
   const { data: config, isPending, error } = useStorageBoxConfig(configId)
-  const { data: defs } = useItemDefinitions()
+  const { data: defs } = useAllItemDefinitions()
   const updateMutation = useUpdateStorageBoxConfig()
   const deleteMutation = useDeleteStorageBoxConfig()
 

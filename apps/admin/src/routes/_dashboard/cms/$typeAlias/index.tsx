@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { useCmsEntries, useCmsType } from "#/hooks/use-cms"
+import { useCmsType } from "#/hooks/use-cms"
 import * as m from "#/paraglide/messages.js"
 import type { CmsEntryStatus } from "#/lib/types/cms"
 
@@ -29,14 +29,6 @@ function CmsEntryListPage() {
   const [status, setStatus] = useState<CmsEntryStatus | "__all">("__all")
   const [groupKey, setGroupKey] = useState<string>("")
   const [tag, setTag] = useState<string>("")
-  const [q, setQ] = useState<string>("")
-
-  const { data, isPending, error } = useCmsEntries(typeAlias, {
-    status: status === "__all" ? undefined : status,
-    groupKey: groupKey || undefined,
-    tag: tag || undefined,
-    q: q || undefined,
-  })
 
   const groupOptions = type?.groupOptions ?? null
 
@@ -45,20 +37,14 @@ function CmsEntryListPage() {
       <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link
-              to="/cms/types/$alias"
-              params={{ alias: typeAlias }}
-            >
+            <Link to="/cms/types/$alias" params={{ alias: typeAlias }}>
               <Settings className="size-4" />
               {m.cms_entry_edit_type()}
             </Link>
           </Button>
           <WriteGate>
             <Button asChild size="sm">
-              <Link
-                to="/cms/$typeAlias/create"
-                params={{ typeAlias }}
-              >
+              <Link to="/cms/$typeAlias/create" params={{ typeAlias }}>
                 <Plus className="size-4" />
                 {m.cms_entry_new()}
               </Link>
@@ -80,7 +66,7 @@ function CmsEntryListPage() {
             ) : null}
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             <Select
               value={status}
               onValueChange={(v) => setStatus(v as CmsEntryStatus | "__all")}
@@ -130,30 +116,15 @@ function CmsEntryListPage() {
               value={tag}
               onChange={(e) => setTag(e.target.value)}
             />
-            <Input
-              placeholder={m.cms_filter_alias_placeholder()}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
           </div>
         </div>
 
-        <div className="rounded-xl border bg-card shadow-sm">
-          {isPending ? (
-            <div className="flex h-32 items-center justify-center text-muted-foreground">
-              {m.common_loading()}
-            </div>
-          ) : error ? (
-            <div className="flex h-32 items-center justify-center text-destructive">
-              {error.message}
-            </div>
-          ) : (
-            <EntryTable
-              typeAlias={typeAlias}
-              data={data?.items ?? []}
-            />
-          )}
-        </div>
+        <EntryTable
+          typeAlias={typeAlias}
+          status={status === "__all" ? undefined : status}
+          groupKey={groupKey || undefined}
+          tag={tag || undefined}
+        />
       </main>
     </>
   )

@@ -154,9 +154,9 @@ describe("end-user admin routes", () => {
     expect(res.status).toBe(200);
     const data = await expectOk<{
       items: Array<{ email: string; origin: string }>;
-      total: number;
+      nextCursor: string | null;
     }>(res);
-    expect(data.total).toBeGreaterThanOrEqual(1);
+    expect(data.items.length).toBeGreaterThanOrEqual(1);
     // All emails should be raw (no {orgId}__ prefix)
     expect(data.items.every((i) => !i.email.includes("__"))).toBe(true);
   });

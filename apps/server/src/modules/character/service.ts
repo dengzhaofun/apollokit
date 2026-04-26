@@ -12,9 +12,16 @@
  * receives `db` through `Pick<AppDeps, "db">`. See apps/server/CLAUDE.md.
  */
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { characterDefinitions } from "../../schema/character";
 import {
   CharacterAliasConflict,
@@ -143,11 +150,28 @@ export function createCharacterService(d: CharacterDeps) {
 
     async listCharacters(
       organizationId: string,
-    ): Promise<CharacterDefinition[]> {
-      return db
+      params: PageParams = {},
+    ): Promise<Page<CharacterDefinition>> {
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(characterDefinitions.organizationId, organizationId)];
+      const seek = cursorWhere(
+        params.cursor,
+        characterDefinitions.createdAt,
+        characterDefinitions.id,
+      );
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(characterDefinitions.name, pat), ilike(characterDefinitions.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(characterDefinitions)
-        .where(eq(characterDefinitions.organizationId, organizationId));
+        .where(and(...conds))
+        .orderBy(desc(characterDefinitions.createdAt), desc(characterDefinitions.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getCharacter(

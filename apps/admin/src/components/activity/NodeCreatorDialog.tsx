@@ -39,13 +39,13 @@ import { useCreateCurrency } from "#/hooks/use-currency"
 import {
   useCreateEntityBlueprint,
   useEntitySchema,
-  useEntitySchemas,
+  useAllEntitySchemas,
 } from "#/hooks/use-entity"
 import { useCreateItemDefinition } from "#/hooks/use-item"
 import { useCreateLeaderboardConfig } from "#/hooks/use-leaderboard"
 import { useCreateLotteryPool } from "#/hooks/use-lottery"
 import { useCreateShopProduct } from "#/hooks/use-shop"
-import { useCreateTaskDefinition, useTaskCategories } from "#/hooks/use-task"
+import { useCreateTaskDefinition, useAllTaskCategories } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
 import type { NodeType } from "#/lib/types/activity"
 import * as m from "#/paraglide/messages.js"
@@ -356,7 +356,7 @@ function BannerSection(props: SectionImplProps) {
 
 function TaskSection(props: SectionImplProps) {
   const create = useCreateTaskDefinition()
-  const { data: categories } = useTaskCategories()
+  const { data: categories } = useAllTaskCategories()
   return (
     <TaskDefinitionForm
       categories={categories ?? []}
@@ -426,7 +426,7 @@ function LeaderboardSection(props: SectionImplProps) {
 }
 
 function EntitySection(props: SectionImplProps) {
-  const { data: schemas, isPending: schemasPending } = useEntitySchemas()
+  const { data: schemas, isPending: schemasPending } = useAllEntitySchemas()
   const [schemaId, setSchemaId] = useState<string>("")
   const { data: schema } = useEntitySchema(schemaId)
   const create = useCreateEntityBlueprint()

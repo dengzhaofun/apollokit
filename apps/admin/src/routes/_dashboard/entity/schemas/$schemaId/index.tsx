@@ -27,10 +27,10 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Textarea } from "#/components/ui/textarea"
 import {
-  useEntitySchema,
-  useEntityBlueprints,
+  useAllEntityBlueprints,
   useCreateEntityBlueprint,
   useDeleteEntitySchema,
+  useEntitySchema,
 } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import {
@@ -57,7 +57,7 @@ function SchemaDetailPage() {
   const navigate = useNavigate()
   const navigateLocal = useNavigate({ from: Route.fullPath })
   const { data: schema, isPending, error } = useEntitySchema(schemaId)
-  const { data: blueprints } = useEntityBlueprints(schemaId)
+  const { data: blueprints } = useAllEntityBlueprints({ schemaId })
   const deleteMutation = useDeleteEntitySchema()
 
   function closeModal() {

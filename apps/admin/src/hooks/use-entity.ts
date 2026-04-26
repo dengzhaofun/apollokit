@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   EntitySchema,
   EntityBlueprint,
@@ -22,10 +23,24 @@ const FORMATION_CONFIGS_KEY = ["entity-formation-configs"] as const
 
 // ─── Schemas ─────────────────────────────────────────────────────
 
-export function useEntitySchemas() {
-  return useQuery({
+/** Paginated entity schemas — for the SchemaTable. */
+export function useEntitySchemas(initialPageSize = 50) {
+  return useCursorList<EntitySchema>({
     queryKey: SCHEMAS_KEY,
-    queryFn: () => api.get<EntitySchema[]>("/api/entity/schemas"),
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<EntitySchema>>(`/api/entity/schemas?${buildQs({ cursor, limit, q })}`),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllEntitySchemas() {
+  return useQuery({
+    queryKey: [...SCHEMAS_KEY, "all"],
+    queryFn: () =>
+      api
+        .get<Page<EntitySchema>>(`/api/entity/schemas?${buildQs({ limit: 200 })}`)
+        .then((p) => p.items),
   })
 }
 
@@ -65,13 +80,31 @@ export function useDeleteEntitySchema() {
 
 // ─── Blueprints ──────────────────────────────────────────────────
 
-export function useEntityBlueprints(schemaId?: string) {
+export function useEntityBlueprints(
+  opts: { schemaId?: string; initialPageSize?: number } = {},
+) {
+  const { schemaId, initialPageSize = 50 } = opts
+  return useCursorList<EntityBlueprint>({
+    queryKey: [...BLUEPRINTS_KEY, { schemaId: schemaId ?? null }],
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<EntityBlueprint>>(
+        `/api/entity/blueprints?${buildQs({ cursor, limit, q, schemaId })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllEntityBlueprints(opts: { schemaId?: string } = {}) {
+  const { schemaId } = opts
   return useQuery({
-    queryKey: [...BLUEPRINTS_KEY, schemaId],
-    queryFn: () => {
-      const params = schemaId ? `?schemaId=${schemaId}` : ""
-      return api.get<EntityBlueprint[]>(`/api/entity/blueprints${params}`)
-    },
+    queryKey: [...BLUEPRINTS_KEY, "all", { schemaId: schemaId ?? null }],
+    queryFn: () =>
+      api
+        .get<Page<EntityBlueprint>>(
+          `/api/entity/blueprints?${buildQs({ limit: 200, schemaId })}`,
+        )
+        .then((p) => p.items),
   })
 }
 
@@ -161,11 +194,28 @@ export function useDeleteEntitySkin() {
 
 // ─── Formation Configs ───────────────────────────────────────────
 
-export function useEntityFormationConfigs() {
-  return useQuery({
+/** Paginated formation configs — for the FormationConfigTable. */
+export function useEntityFormationConfigs(initialPageSize = 50) {
+  return useCursorList<EntityFormationConfig>({
     queryKey: FORMATION_CONFIGS_KEY,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<EntityFormationConfig>>(
+        `/api/entity/formation-configs?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
+  })
+}
+
+/** Non-paginated convenience for selectors (200 cap). */
+export function useAllEntityFormationConfigs() {
+  return useQuery({
+    queryKey: [...FORMATION_CONFIGS_KEY, "all"],
     queryFn: () =>
-      api.get<EntityFormationConfig[]>("/api/entity/formation-configs"),
+      api
+        .get<Page<EntityFormationConfig>>(
+          `/api/entity/formation-configs?${buildQs({ limit: 200 })}`,
+        )
+        .then((p) => p.items),
   })
 }
 

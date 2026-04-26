@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { compileTaskFilter, FILTER_MAX_LENGTH } from "./filter";
 import {
   CATEGORY_SCOPES,
@@ -455,9 +456,9 @@ export const CategoryResponseSchema = z
   })
   .openapi("TaskCategory");
 
-export const CategoryListResponseSchema = z
-  .object({ items: z.array(CategoryResponseSchema) })
-  .openapi("TaskCategoryList");
+export const CategoryListResponseSchema = pageOf(CategoryResponseSchema).openapi(
+  "TaskCategoryList",
+);
 
 export const DefinitionResponseSchema = z
   .object({
@@ -501,9 +502,9 @@ export const DefinitionResponseSchema = z
   })
   .openapi("TaskDefinition");
 
-export const DefinitionListResponseSchema = z
-  .object({ items: z.array(DefinitionResponseSchema) })
-  .openapi("TaskDefinitionList");
+export const DefinitionListResponseSchema = pageOf(DefinitionResponseSchema).openapi(
+  "TaskDefinitionList",
+);
 
 export const ClientTaskViewSchema = z
   .object({

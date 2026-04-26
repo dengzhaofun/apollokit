@@ -16,7 +16,7 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import { useCharacters } from "#/hooks/use-character"
+import { useAllCharacters } from "#/hooks/use-character"
 import type { Character } from "#/lib/types/character"
 import type {
   CreateDialogueScriptInput,
@@ -56,7 +56,7 @@ export function ScriptEditor({
 }: ScriptEditorProps) {
   // Fetched once for the whole editor so every NodeCard's speaker
   // picker shares the same list without N+1 round-trips.
-  const { data: characters } = useCharacters()
+  const { data: characters } = useAllCharacters()
   const [alias, setAlias] = useState(initial?.alias ?? "")
   const [name, setName] = useState(initial?.name ?? "")
   const [description, setDescription] = useState(initial?.description ?? "")

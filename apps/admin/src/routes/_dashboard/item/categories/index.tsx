@@ -12,7 +12,6 @@ import { CategoryForm } from "#/components/item/CategoryForm"
 import { CategoryTable } from "#/components/item/CategoryTable"
 import {
   useCreateItemCategory,
-  useItemCategories,
   useItemCategory,
   useUpdateItemCategory,
 } from "#/hooks/use-item"
@@ -27,7 +26,6 @@ export const Route = createFileRoute("/_dashboard/item/categories/")({
 })
 
 function ItemCategoriesPage() {
-  const { data: categories, isPending, error } = useItemCategories()
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
@@ -56,19 +54,7 @@ function ItemCategoriesPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
-            {m.common_loading()}
-          </div>
-        ) : error ? (
-          <div className="flex h-40 items-center justify-center text-destructive">
-            {m.item_failed_load_categories()} {error.message}
-          </div>
-        ) : (
-          <div className="rounded-xl border bg-card shadow-sm">
-            <CategoryTable data={categories ?? []} />
-          </div>
-        )}
+        <CategoryTable />
       </main>
 
       {modal === "create" ? (

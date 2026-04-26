@@ -9,9 +9,16 @@
  * Phase 2: Event processing, progress tracking, reward claiming.
  */
 
-import { and, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import { getTraceId } from "../../lib/request-context";
 import {
   taskCategories,
@@ -257,12 +264,24 @@ export function createTaskService(
 
   async function listCategories(
     organizationId: string,
-  ): Promise<TaskCategory[]> {
-    return db
+    params: PageParams = {},
+  ): Promise<Page<TaskCategory>> {
+    const limit = clampLimit(params.limit);
+    const conds: SQL[] = [eq(taskCategories.organizationId, organizationId)];
+    const seek = cursorWhere(params.cursor, taskCategories.createdAt, taskCategories.id);
+    if (seek) conds.push(seek);
+    if (params.q) {
+      const pat = `%${params.q}%`;
+      const search = or(ilike(taskCategories.name, pat), ilike(taskCategories.alias, pat));
+      if (search) conds.push(search);
+    }
+    const rows = await db
       .select()
       .from(taskCategories)
-      .where(eq(taskCategories.organizationId, organizationId))
-      .orderBy(taskCategories.sortOrder);
+      .where(and(...conds))
+      .orderBy(desc(taskCategories.createdAt), desc(taskCategories.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getCategory(
@@ -359,7 +378,7 @@ export function createTaskService(
 
   async function listDefinitions(
     organizationId: string,
-    filters?: {
+    filters: PageParams & {
       categoryId?: string;
       period?: string;
       parentId?: string | null;
@@ -372,32 +391,42 @@ export function createTaskService(
        */
       activityId?: string;
       includeActivity?: boolean;
-    },
-  ): Promise<TaskDefinition[]> {
-    const conditions = [eq(taskDefinitions.organizationId, organizationId)];
-    if (filters?.categoryId) {
+    } = {},
+  ): Promise<Page<TaskDefinition>> {
+    const limit = clampLimit(filters.limit);
+    const conditions: SQL[] = [eq(taskDefinitions.organizationId, organizationId)];
+    if (filters.categoryId) {
       conditions.push(eq(taskDefinitions.categoryId, filters.categoryId));
     }
-    if (filters?.period) {
+    if (filters.period) {
       conditions.push(eq(taskDefinitions.period, filters.period));
     }
-    if (filters?.parentId !== undefined) {
+    if (filters.parentId !== undefined) {
       if (filters.parentId === null) {
         conditions.push(isNull(taskDefinitions.parentId));
       } else {
         conditions.push(eq(taskDefinitions.parentId, filters.parentId));
       }
     }
-    if (filters?.activityId) {
+    if (filters.activityId) {
       conditions.push(eq(taskDefinitions.activityId, filters.activityId));
-    } else if (!filters?.includeActivity) {
+    } else if (!filters.includeActivity) {
       conditions.push(isNull(taskDefinitions.activityId));
     }
-    return db
+    const seek = cursorWhere(filters.cursor, taskDefinitions.createdAt, taskDefinitions.id);
+    if (seek) conditions.push(seek);
+    if (filters.q) {
+      const pat = `%${filters.q}%`;
+      const search = or(ilike(taskDefinitions.name, pat), ilike(taskDefinitions.alias, pat));
+      if (search) conditions.push(search);
+    }
+    const rows = await db
       .select()
       .from(taskDefinitions)
       .where(and(...conditions))
-      .orderBy(taskDefinitions.sortOrder);
+      .orderBy(desc(taskDefinitions.createdAt), desc(taskDefinitions.id))
+      .limit(limit + 1);
+    return buildPage(rows, limit);
   }
 
   async function getDefinition(

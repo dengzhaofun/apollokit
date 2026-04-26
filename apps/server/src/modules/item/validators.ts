@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const AliasSchema = z
@@ -270,17 +272,41 @@ export const BalanceResponseSchema = z
   })
   .openapi("ItemBalance");
 
-export const CategoryListResponseSchema = z
-  .object({ items: z.array(ItemCategoryResponseSchema) })
-  .openapi("ItemCategoryList");
+export const CategoryListResponseSchema = pageOf(ItemCategoryResponseSchema).openapi(
+  "ItemCategoryList",
+);
 
-export const DefinitionListResponseSchema = z
-  .object({ items: z.array(ItemDefinitionResponseSchema) })
-  .openapi("ItemDefinitionList");
+export const DefinitionListResponseSchema = pageOf(ItemDefinitionResponseSchema).openapi(
+  "ItemDefinitionList",
+);
 
+// Inventory listing is per-user and bounded by definitions, so it stays
+// non-paginated for now (a single user's inventory is small).
 export const InventoryListResponseSchema = z
   .object({ items: z.array(InventoryViewSchema) })
   .openapi("ItemInventoryList");
+
+/**
+ * Optional category-list filter that piggybacks on the standard
+ * pagination query. `definitions` accepts the same `?cursor&limit&q`
+ * plus a `categoryId` filter — see `DefinitionListQuerySchema` below.
+ */
+export const DefinitionListQuerySchema = z
+  .object({
+    categoryId: z.string().uuid().optional().openapi({
+      param: { name: "categoryId", in: "query" },
+      description: "Filter by category id.",
+    }),
+    activityId: z
+      .string()
+      .uuid()
+      .optional()
+      .openapi({
+        param: { name: "activityId", in: "query" },
+        description: "Filter by activity id (use empty string for permanent only).",
+      }),
+  })
+  .openapi("ItemDefinitionListQuery");
 
 // ─── Use Item ─────────────────────────────────────────────────────
 

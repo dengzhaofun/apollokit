@@ -19,9 +19,9 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
 import {
+  useAllBanners,
   useBanner,
   useBannerGroup,
-  useBanners,
   useCreateBanner,
   useDeleteBanner,
   useDeleteBannerGroup,
@@ -51,7 +51,7 @@ function BannerGroupDetailPage() {
   const navigate = useNavigate()
   const navigateLocal = useNavigate({ from: Route.fullPath })
   const { data: group } = useBannerGroup(groupId)
-  const { data: banners, isPending, error } = useBanners(groupId)
+  const { data: banners, isPending, error } = useAllBanners(groupId)
   const reorderMutation = useReorderBanners()
   const deleteBannerMutation = useDeleteBanner()
   const deleteGroupMutation = useDeleteBannerGroup()

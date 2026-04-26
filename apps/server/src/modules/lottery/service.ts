@@ -18,9 +18,16 @@
  * state written once at the end.
  */
 
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import {
+  buildPage,
+  clampLimit,
+  cursorWhere,
+  type Page,
+  type PageParams,
+} from "../../lib/pagination";
 import {
   lotteryPools,
   lotteryTiers,
@@ -333,19 +340,29 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
      */
     async listPools(
       organizationId: string,
-      filter?: { includeActivity?: boolean; activityId?: string },
-    ): Promise<LotteryPool[]> {
-      const conds = [eq(lotteryPools.organizationId, organizationId)];
-      if (filter?.activityId) {
+      filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
+    ): Promise<Page<LotteryPool>> {
+      const limit = clampLimit(filter.limit);
+      const conds: SQL[] = [eq(lotteryPools.organizationId, organizationId)];
+      if (filter.activityId) {
         conds.push(eq(lotteryPools.activityId, filter.activityId));
-      } else if (!filter?.includeActivity) {
+      } else if (!filter.includeActivity) {
         conds.push(isNull(lotteryPools.activityId));
       }
-      return db
+      const seek = cursorWhere(filter.cursor, lotteryPools.createdAt, lotteryPools.id);
+      if (seek) conds.push(seek);
+      if (filter.q) {
+        const pat = `%${filter.q}%`;
+        const search = or(ilike(lotteryPools.name, pat), ilike(lotteryPools.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(lotteryPools)
         .where(and(...conds))
-        .orderBy(desc(lotteryPools.createdAt));
+        .orderBy(desc(lotteryPools.createdAt), desc(lotteryPools.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     async getPool(
@@ -445,13 +462,25 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     async listTiers(
       organizationId: string,
       poolKey: string,
-    ): Promise<LotteryTier[]> {
+      params: PageParams = {},
+    ): Promise<Page<LotteryTier>> {
       const pool = await loadPoolByKey(organizationId, poolKey);
-      return db
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(lotteryTiers.poolId, pool.id)];
+      const seek = cursorWhere(params.cursor, lotteryTiers.createdAt, lotteryTiers.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        const pat = `%${params.q}%`;
+        const search = or(ilike(lotteryTiers.name, pat), ilike(lotteryTiers.alias, pat));
+        if (search) conds.push(search);
+      }
+      const rows = await db
         .select()
         .from(lotteryTiers)
-        .where(eq(lotteryTiers.poolId, pool.id))
-        .orderBy(lotteryTiers.sortOrder, lotteryTiers.createdAt);
+        .where(and(...conds))
+        .orderBy(desc(lotteryTiers.createdAt), desc(lotteryTiers.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Prize CRUD ────────────────────────────────────────────
@@ -554,13 +583,23 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     async listPrizes(
       organizationId: string,
       poolKey: string,
-    ): Promise<LotteryPrize[]> {
+      params: PageParams = {},
+    ): Promise<Page<LotteryPrize>> {
       const pool = await loadPoolByKey(organizationId, poolKey);
-      return db
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(lotteryPrizes.poolId, pool.id)];
+      const seek = cursorWhere(params.cursor, lotteryPrizes.createdAt, lotteryPrizes.id);
+      if (seek) conds.push(seek);
+      if (params.q) {
+        conds.push(ilike(lotteryPrizes.name, `%${params.q}%`));
+      }
+      const rows = await db
         .select()
         .from(lotteryPrizes)
-        .where(eq(lotteryPrizes.poolId, pool.id))
-        .orderBy(lotteryPrizes.sortOrder, lotteryPrizes.createdAt);
+        .where(and(...conds))
+        .orderBy(desc(lotteryPrizes.createdAt), desc(lotteryPrizes.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Pity Rule CRUD ────────────────────────────────────────
@@ -661,12 +700,20 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     async listPityRules(
       organizationId: string,
       poolKey: string,
-    ): Promise<LotteryPityRule[]> {
+      params: PageParams = {},
+    ): Promise<Page<LotteryPityRule>> {
       const pool = await loadPoolByKey(organizationId, poolKey);
-      return db
+      const limit = clampLimit(params.limit);
+      const conds: SQL[] = [eq(lotteryPityRules.poolId, pool.id)];
+      const seek = cursorWhere(params.cursor, lotteryPityRules.createdAt, lotteryPityRules.id);
+      if (seek) conds.push(seek);
+      const rows = await db
         .select()
         .from(lotteryPityRules)
-        .where(eq(lotteryPityRules.poolId, pool.id));
+        .where(and(...conds))
+        .orderBy(desc(lotteryPityRules.createdAt), desc(lotteryPityRules.id))
+        .limit(limit + 1);
+      return buildPage(rows, limit);
     },
 
     // ─── Pull execution ────────────────────────────────────────

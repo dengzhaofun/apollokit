@@ -9,6 +9,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { CMS_FIELD_TYPES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -166,11 +167,7 @@ export const CmsTypeResponseSchema = z
   })
   .openapi("CmsType");
 
-export const CmsTypeListResponseSchema = z
-  .object({
-    items: z.array(CmsTypeResponseSchema),
-  })
-  .openapi("CmsTypeList");
+export const CmsTypeListResponseSchema = pageOf(CmsTypeResponseSchema).openapi("CmsTypeList");
 
 // ─── Entry-level CRUD ───────────────────────────────────────────────
 
@@ -259,16 +256,9 @@ export const ListEntriesQuerySchema = z.object({
     .int()
     .min(1)
     .max(200)
-    .default(50)
     .optional()
     .openapi({ param: { name: "limit", in: "query" } }),
-  offset: z.coerce
-    .number()
-    .int()
-    .nonnegative()
-    .default(0)
-    .optional()
-    .openapi({ param: { name: "offset", in: "query" } }),
+  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
 });
 
 export const CmsEntryResponseSchema = z
@@ -290,12 +280,9 @@ export const CmsEntryResponseSchema = z
   })
   .openapi("CmsEntry");
 
-export const CmsEntryListResponseSchema = z
-  .object({
-    items: z.array(CmsEntryResponseSchema),
-    total: z.number().int().nonnegative(),
-  })
-  .openapi("CmsEntryList");
+export const CmsEntryListResponseSchema = pageOf(CmsEntryResponseSchema).openapi(
+  "CmsEntryList",
+);
 
 // ─── Client-route response (sanitized) ──────────────────────────────
 

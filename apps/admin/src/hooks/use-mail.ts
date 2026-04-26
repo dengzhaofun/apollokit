@@ -1,20 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
 import type {
   CreateMailInput,
-  MailListResponse,
   MailMessage,
   MailMessageWithStats,
 } from "#/lib/types/mail"
 
 const MESSAGES_KEY = ["mail-messages"] as const
 
-export function useMailMessages() {
-  return useQuery({
+/** Paginated mail messages — for the admin MessageTable. */
+export function useMailMessages(initialPageSize = 50) {
+  return useCursorList<MailMessage>({
     queryKey: MESSAGES_KEY,
-    queryFn: () => api.get<MailListResponse>("/api/mail/messages"),
-    select: (data) => data.items,
+    fetchPage: ({ cursor, limit, q }) =>
+      api.get<Page<MailMessage>>(
+        `/api/mail/messages?${buildQs({ cursor, limit, q })}`,
+      ),
+    initialPageSize,
   })
 }
 

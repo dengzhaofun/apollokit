@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
+
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
 const MetadataSchema = z
@@ -203,17 +205,13 @@ export const DailyStatusResponseSchema = z
   })
   .openapi("FriendGiftDailyStatus");
 
-export const PackageListResponseSchema = z
-  .object({
-    items: z.array(PackageResponseSchema),
-  })
-  .openapi("FriendGiftPackageList");
+export const PackageListResponseSchema = pageOf(PackageResponseSchema).openapi(
+  "FriendGiftPackageList",
+);
 
-export const GiftSendListResponseSchema = z
-  .object({
-    items: z.array(GiftSendResponseSchema),
-  })
-  .openapi("FriendGiftSendList");
+export const GiftSendListResponseSchema = pageOf(GiftSendResponseSchema).openapi(
+  "FriendGiftSendList",
+);
 
 
 // ─── Client-route body schemas ───────────────────────────────────

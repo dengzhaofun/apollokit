@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { pageOf } from "../../lib/pagination";
 import { LinkActionSchema } from "../link/validators";
 
 const AliasSchema = z
@@ -157,9 +158,9 @@ export const DialogueScriptResponseSchema = z
   })
   .openapi("DialogueScript");
 
-export const DialogueScriptListResponseSchema = z
-  .object({ items: z.array(DialogueScriptResponseSchema) })
-  .openapi("DialogueScriptList");
+export const DialogueScriptListResponseSchema = pageOf(DialogueScriptResponseSchema).openapi(
+  "DialogueScriptList",
+);
 
 const ClientOptionSchema = z
   .object({
