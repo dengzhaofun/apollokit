@@ -42,12 +42,12 @@ function AuthViewPage() {
 
         {/* 顶部:logo + 产品名 */}
         <div className="relative flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-[oklch(0.67_0.22_290)] to-[oklch(0.55_0.20_250)] font-bold shadow-lg shadow-black/30">
-            A
+          <div className="flex size-10 items-center justify-center overflow-hidden rounded-lg bg-white shadow-lg shadow-black/30">
+            <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
           </div>
           <div>
             <div className="text-base font-semibold tracking-tight">
-              apollokit
+              ApolloKit
             </div>
             <div className="text-xs text-white/60">
               {t("游戏运营 SaaS", "Game Ops SaaS")}
@@ -118,7 +118,7 @@ function AuthViewPage() {
 
         {/* 底部:版权 / 链接 */}
         <div className="relative flex items-center justify-between text-xs text-white/50">
-          <span>© 2026 apollokit</span>
+          <span>© 2026 ApolloKit</span>
           <div className="flex gap-4">
             <a href="/privacy" className="hover:text-white">
               {t("隐私", "Privacy")}
@@ -135,11 +135,11 @@ function AuthViewPage() {
         <div className="w-full max-w-md">
           {/* 移动端 logo —— lg 隐藏(左 hero 已有) */}
           <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex size-8 items-center justify-center rounded-md bg-gradient-to-br from-[oklch(0.67_0.22_290)] to-[oklch(0.55_0.20_250)] text-sm font-bold text-white">
-              A
+            <div className="flex size-8 items-center justify-center overflow-hidden rounded-md">
+              <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
             </div>
             <span className="text-base font-semibold tracking-tight">
-              apollokit
+              ApolloKit
             </span>
           </div>
           <AuthView pathname={authView} />
