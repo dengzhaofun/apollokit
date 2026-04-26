@@ -1,6 +1,10 @@
 import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import {
+  FormStateBridge,
+  type FormBridgeState,
+} from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
@@ -12,6 +16,9 @@ interface PoolFormProps {
   onSubmit: (values: CreatePoolInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  id?: string
+  hideSubmitButton?: boolean
+  onStateChange?: (state: FormBridgeState) => void
 }
 
 export function LotteryPoolForm({
@@ -19,6 +26,9 @@ export function LotteryPoolForm({
   onSubmit,
   isPending,
   submitLabel = "Create",
+  id,
+  hideSubmitButton,
+  onStateChange,
 }: PoolFormProps) {
   const form = useForm({
     defaultValues: {
@@ -44,6 +54,7 @@ export function LotteryPoolForm({
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -51,6 +62,18 @@ export function LotteryPoolForm({
       }}
       className="space-y-6"
     >
+      {onStateChange ? (
+        <form.Subscribe
+          selector={(s) => ({
+            canSubmit: s.canSubmit,
+            isDirty: s.isDirty,
+            isSubmitting: s.isSubmitting,
+          })}
+        >
+          {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
+        </form.Subscribe>
+      ) : null}
+
       <form.Field
         name="name"
         validators={{
@@ -144,13 +167,15 @@ export function LotteryPoolForm({
         )}
       </form.Field>
 
-      <form.Subscribe selector={(s) => s.canSubmit}>
-        {(canSubmit) => (
-          <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "Saving..." : submitLabel}
-          </Button>
-        )}
-      </form.Subscribe>
+      {hideSubmitButton ? null : (
+        <form.Subscribe selector={(s) => s.canSubmit}>
+          {(canSubmit) => (
+            <Button type="submit" disabled={!canSubmit || isPending}>
+              {isPending ? "Saving..." : submitLabel}
+            </Button>
+          )}
+        </form.Subscribe>
+      )}
     </form>
   )
 }

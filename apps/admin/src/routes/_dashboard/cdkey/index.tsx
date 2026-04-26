@@ -1,11 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState } from "react"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
+import { CdkeyBatchForm } from "#/components/cdkey/BatchForm"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
+import { FormDrawer } from "#/components/ui/form-drawer"
 import { WriteGate } from "#/components/WriteGate"
 import {
   Table,
@@ -15,13 +19,33 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
-import { useCdkeyBatches } from "#/hooks/use-cdkey"
+import { useCdkeyBatches, useCreateCdkeyBatch } from "#/hooks/use-cdkey"
+import { ApiError } from "#/lib/api-client"
+import {
+  closedModal,
+  modalSearchSchema,
+  openCreateModal,
+} from "#/lib/modal-search"
+
+const FORM_ID = "cdkey-batch-form"
 
 export const Route = createFileRoute("/_dashboard/cdkey/")({
   component: CdkeyListPage,
+  validateSearch: modalSearchSchema,
 })
 
 function CdkeyListPage() {
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const modal = search.modal
+
+  function closeModal() {
+    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+  }
+  function openCreate() {
+    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+  }
+
   const { data: batches, isPending, error } = useCdkeyBatches()
 
   return (
@@ -29,11 +53,9 @@ function CdkeyListPage() {
       <PageHeaderActions>
         <div className="ml-auto">
           <WriteGate>
-            <Button asChild size="sm">
-              <Link to="/cdkey/create">
-                <Plus className="size-4" />
-                {m.cdkey_new_batch()}
-              </Link>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="size-4" />
+              {m.cdkey_new_batch()}
             </Button>
           </WriteGate>
         </div>
@@ -118,6 +140,67 @@ function CdkeyListPage() {
           </div>
         )}
       </main>
+
+      {modal === "create" ? <CreateBatchDrawer onClose={closeModal} /> : null}
     </>
+  )
+}
+
+function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate()
+  const mutation = useCreateCdkeyBatch()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !mutation.isPending}
+      title={m.cdkey_new_batch()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!formState.canSubmit || mutation.isPending}
+          >
+            {mutation.isPending ? m.common_saving() : m.common_create()}
+          </Button>
+        </>
+      }
+    >
+      <CdkeyBatchForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={mutation.isPending}
+        submitLabel={m.common_create()}
+        onSubmit={async (input) => {
+          try {
+            const created = await mutation.mutateAsync(input)
+            toast.success(m.cdkey_batch_created())
+            onClose()
+            void navigate({
+              to: "/cdkey/$batchId",
+              params: { batchId: created.id },
+            })
+          } catch (err) {
+            toast.error(
+              err instanceof ApiError ? err.body.error : m.cdkey_failed_create(),
+            )
+          }
+        }}
+      />
+    </FormDrawer>
   )
 }

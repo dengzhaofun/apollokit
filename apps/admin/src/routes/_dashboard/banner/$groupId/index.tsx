@@ -3,6 +3,7 @@ import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { BannerForm } from "#/components/banner/BannerForm"
 import { BannerTable } from "#/components/banner/BannerTable"
 import {
   AlertDialog,
@@ -16,24 +17,39 @@ import {
 } from "#/components/ui/alert-dialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
+import { FormDrawer } from "#/components/ui/form-drawer"
 import {
+  useBanner,
   useBannerGroup,
   useBanners,
+  useCreateBanner,
   useDeleteBanner,
   useDeleteBannerGroup,
   useReorderBanners,
+  useUpdateBanner,
 } from "#/hooks/use-banner"
 import { ApiError } from "#/lib/api-client"
+import {
+  closedModal,
+  modalSearchSchema,
+  openCreateChildModal,
+} from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 
 import { PageHeaderActions } from "#/components/PageHeader"
+
+const FORM_ID = "banner-item-form"
+
 export const Route = createFileRoute("/_dashboard/banner/$groupId/")({
   component: BannerGroupDetailPage,
+  validateSearch: modalSearchSchema,
 })
 
 function BannerGroupDetailPage() {
   const { groupId } = Route.useParams()
+  const search = Route.useSearch()
   const navigate = useNavigate()
+  const navigateLocal = useNavigate({ from: Route.fullPath })
   const { data: group } = useBannerGroup(groupId)
   const { data: banners, isPending, error } = useBanners(groupId)
   const reorderMutation = useReorderBanners()
@@ -41,6 +57,21 @@ function BannerGroupDetailPage() {
   const deleteGroupMutation = useDeleteBannerGroup()
   const [groupDeleteOpen, setGroupDeleteOpen] = useState(false)
   const [bannerDeleteId, setBannerDeleteId] = useState<string | null>(null)
+
+  const bannerModal =
+    search.kind === "banner" && (search.modal === "create" || search.modal === "edit")
+      ? search.modal
+      : undefined
+  const editingBannerId = bannerModal === "edit" ? search.id : undefined
+
+  function closeBannerModal() {
+    void navigateLocal({ search: (prev) => ({ ...prev, ...closedModal }) })
+  }
+  function openCreateBanner() {
+    void navigateLocal({
+      search: (prev) => ({ ...prev, ...openCreateChildModal("banner") }),
+    })
+  }
 
   async function handleMove(bannerId: string, direction: "up" | "down") {
     if (!banners) return
@@ -118,14 +149,9 @@ function BannerGroupDetailPage() {
             <Trash2 className="size-4" />
             {m.common_delete()}
           </Button>
-          <Button asChild size="sm">
-            <Link
-              to="/banner/$groupId/banners/create"
-              params={{ groupId }}
-            >
-              <Plus className="size-4" />
-              {m.banner_new_banner()}
-            </Link>
+          <Button size="sm" onClick={openCreateBanner}>
+            <Plus className="size-4" />
+            {m.banner_new_banner()}
           </Button>
         </div>
       </PageHeaderActions>
@@ -223,6 +249,17 @@ function BannerGroupDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {bannerModal === "create" ? (
+        <CreateBannerDrawer groupId={groupId} onClose={closeBannerModal} />
+      ) : null}
+      {bannerModal === "edit" && editingBannerId ? (
+        <EditBannerDrawer
+          groupId={groupId}
+          bannerId={editingBannerId}
+          onClose={closeBannerModal}
+        />
+      ) : null}
+
       <AlertDialog open={groupDeleteOpen} onOpenChange={setGroupDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -245,5 +282,143 @@ function BannerGroupDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+function CreateBannerDrawer({
+  groupId,
+  onClose,
+}: {
+  groupId: string
+  onClose: () => void
+}) {
+  const mutation = useCreateBanner()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !mutation.isPending}
+      title={m.banner_new_banner()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!formState.canSubmit || mutation.isPending}
+          >
+            {mutation.isPending ? m.common_saving() : m.common_create()}
+          </Button>
+        </>
+      }
+    >
+      <BannerForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={mutation.isPending}
+        submitLabel={m.common_create()}
+        onSubmit={async (values) => {
+          try {
+            await mutation.mutateAsync({ groupId, input: values })
+            toast.success(m.banner_banner_created())
+            onClose()
+          } catch (err) {
+            toast.error(
+              err instanceof ApiError ? err.body.error : m.banner_failed_create_banner(),
+            )
+          }
+        }}
+      />
+    </FormDrawer>
+  )
+}
+
+function EditBannerDrawer({
+  groupId,
+  bannerId,
+  onClose,
+}: {
+  groupId: string
+  bannerId: string
+  onClose: () => void
+}) {
+  const { data: banner, isPending: loading, error } = useBanner(bannerId)
+  const mutation = useUpdateBanner()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !mutation.isPending}
+      title={m.common_edit()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!banner || !formState.canSubmit || mutation.isPending}
+          >
+            {mutation.isPending ? m.common_saving() : m.common_save_changes()}
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          {m.common_loading()}
+        </div>
+      ) : error || !banner ? (
+        <div className="py-10 text-center text-sm text-destructive">
+          {error?.message ?? "Banner not found"}
+        </div>
+      ) : (
+        <BannerForm
+          id={FORM_ID}
+          hideSubmitButton
+          onStateChange={setFormState}
+          initial={banner}
+          isPending={mutation.isPending}
+          submitLabel={m.common_save_changes()}
+          onSubmit={async (values) => {
+            try {
+              await mutation.mutateAsync({
+                id: banner.id,
+                groupId,
+                input: values,
+              })
+              toast.success("Banner updated")
+              onClose()
+            } catch (err) {
+              toast.error(
+                err instanceof ApiError ? err.body.error : "Failed to update",
+              )
+            }
+          }}
+        />
+      )}
+    </FormDrawer>
   )
 }

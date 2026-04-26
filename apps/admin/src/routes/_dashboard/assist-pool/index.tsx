@@ -1,6 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState } from "react"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { HeartHandshakeIcon, Plus } from "lucide-react"
+import { toast } from "sonner"
 
+import { AssistPoolConfigForm } from "#/components/assist-pool/ConfigForm"
 import {
   EmptyList,
   ErrorState,
@@ -9,6 +12,7 @@ import {
   PageShell,
 } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
+import { FormDrawer } from "#/components/ui/form-drawer"
 import {
   Table,
   TableBody,
@@ -17,15 +21,29 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
-import { useAssistPoolConfigs } from "#/hooks/use-assist-pool"
+import {
+  useAssistPoolConfig,
+  useAssistPoolConfigs,
+  useCreateAssistPoolConfig,
+  useUpdateAssistPoolConfig,
+} from "#/hooks/use-assist-pool"
+import { ApiError } from "#/lib/api-client"
+import {
+  closedModal,
+  modalSearchSchema,
+  openCreateModal,
+  openEditModal,
+} from "#/lib/modal-search"
 import type { AssistContributionPolicy } from "#/lib/types/assist-pool"
 import * as m from "#/paraglide/messages.js"
 import { getLocale } from "#/paraglide/runtime.js"
 
 const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
+const FORM_ID = "assist-pool-config-form"
 
 export const Route = createFileRoute("/_dashboard/assist-pool/")({
   component: AssistPoolListPage,
+  validateSearch: modalSearchSchema,
 })
 
 function formatPolicy(p: AssistContributionPolicy): string {
@@ -40,6 +58,18 @@ function formatPolicy(p: AssistContributionPolicy): string {
 }
 
 function AssistPoolListPage() {
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const modal = search.modal
+  const editingId = modal === "edit" ? search.id : undefined
+
+  function closeModal() {
+    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+  }
+  function openCreate() {
+    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+  }
+
   const { data: configs, isPending, error, refetch } = useAssistPoolConfigs()
   const total = configs?.length ?? 0
 
@@ -56,11 +86,9 @@ function AssistPoolListPage() {
               : t(`共 ${total} 个助力池`, `${total} pools total`)
         }
         actions={
-          <Button asChild size="sm">
-            <Link to="/assist-pool/create">
-              <Plus />
-              {m.assistpool_new_config()}
-            </Link>
+          <Button size="sm" onClick={openCreate}>
+            <Plus />
+            {m.assistpool_new_config()}
           </Button>
         }
       />
@@ -85,11 +113,9 @@ function AssistPoolListPage() {
               "Create your first pool to aggregate friend or guild contributions toward a shared goal.",
             )}
             action={
-              <Button asChild size="sm">
-                <Link to="/assist-pool/create">
-                  <Plus />
-                  {m.assistpool_new_config()}
-                </Link>
+              <Button size="sm" onClick={openCreate}>
+                <Plus />
+                {m.assistpool_new_config()}
               </Button>
             }
           />
@@ -110,7 +136,15 @@ function AssistPoolListPage() {
               <TableBody>
                 {configs!.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        to="/assist-pool"
+                        search={(prev) => ({ ...prev, ...openEditModal(c.id) })}
+                        className="hover:underline"
+                      >
+                        {c.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {c.alias ?? "—"}
                     </TableCell>
@@ -130,6 +164,154 @@ function AssistPoolListPage() {
           </div>
         )}
       </PageBody>
+
+      {modal === "create" ? (
+        <CreateAssistPoolDrawer onClose={closeModal} />
+      ) : null}
+      {modal === "edit" && editingId ? (
+        <EditAssistPoolDrawer id={editingId} onClose={closeModal} />
+      ) : null}
     </PageShell>
+  )
+}
+
+interface DrawerShellProps {
+  onClose: () => void
+}
+
+function CreateAssistPoolDrawer({ onClose }: DrawerShellProps) {
+  const createMutation = useCreateAssistPoolConfig()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !createMutation.isPending}
+      title={m.assistpool_new_config()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!formState.canSubmit || createMutation.isPending}
+          >
+            {createMutation.isPending ? m.common_saving() : m.assistpool_create()}
+          </Button>
+        </>
+      }
+    >
+      <AssistPoolConfigForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={createMutation.isPending}
+        onSubmit={async (values) => {
+          try {
+            await createMutation.mutateAsync(values)
+            toast.success(m.assistpool_created())
+            onClose()
+          } catch (err) {
+            toast.error(
+              err instanceof ApiError
+                ? err.body.error
+                : m.assistpool_failed_create(),
+            )
+          }
+        }}
+      />
+    </FormDrawer>
+  )
+}
+
+function EditAssistPoolDrawer({
+  id,
+  onClose,
+}: DrawerShellProps & { id: string }) {
+  const { data: cfg, isPending: loading, error } = useAssistPoolConfig(id)
+  const updateMutation = useUpdateAssistPoolConfig()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !updateMutation.isPending}
+      title={m.common_edit()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!cfg || !formState.canSubmit || updateMutation.isPending}
+          >
+            {updateMutation.isPending
+              ? m.common_saving()
+              : m.common_save_changes()}
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          {m.common_loading()}
+        </div>
+      ) : error || !cfg ? (
+        <div className="py-10 text-center text-sm text-destructive">
+          {error?.message ?? "Pool not found"}
+        </div>
+      ) : (
+        <AssistPoolConfigForm
+          id={FORM_ID}
+          hideSubmitButton
+          onStateChange={setFormState}
+          defaultValues={{
+            name: cfg.name,
+            alias: cfg.alias,
+            description: cfg.description,
+            mode: cfg.mode,
+            targetAmount: cfg.targetAmount,
+            contributionPolicy: cfg.contributionPolicy,
+            perAssisterLimit: cfg.perAssisterLimit,
+            initiatorCanAssist: cfg.initiatorCanAssist,
+            expiresInSeconds: cfg.expiresInSeconds,
+            isActive: cfg.isActive,
+            activityId: cfg.activityId,
+          }}
+          isPending={updateMutation.isPending}
+          onSubmit={async (values) => {
+            try {
+              await updateMutation.mutateAsync({ id: cfg.id, ...values })
+              toast.success("Pool updated")
+              onClose()
+            } catch (err) {
+              toast.error(
+                err instanceof ApiError ? err.body.error : "Failed to update",
+              )
+            }
+          }}
+        />
+      )}
+    </FormDrawer>
   )
 }

@@ -1,30 +1,27 @@
 import { useForm } from "@tanstack/react-form"
+
 import * as m from "#/paraglide/messages.js"
-import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { Checkbox } from "#/components/ui/checkbox"
 import {
   FormStateBridge,
   type FormBridgeState,
 } from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
-import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
-import type { CreateCategoryInput } from "#/lib/types/item"
+import type { CreateTeamConfigInput } from "#/lib/types/team"
 
-interface CategoryFormProps {
-  defaultValues?: Partial<CreateCategoryInput>
-  onSubmit: (values: CreateCategoryInput) => void | Promise<void>
+interface TeamConfigFormProps {
+  defaultValues?: Partial<CreateTeamConfigInput>
+  onSubmit: (values: CreateTeamConfigInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
-  /** Apply to the <form> element so external buttons can use `form="..."`. */
   id?: string
-  /** Hide the inline submit button — useful when an external footer hosts it. */
   hideSubmitButton?: boolean
-  /** Receive form state for driving an external submit button or dirty-close gate. */
   onStateChange?: (state: FormBridgeState) => void
 }
 
-export function CategoryForm({
+export function TeamConfigForm({
   defaultValues,
   onSubmit,
   isPending,
@@ -32,24 +29,23 @@ export function CategoryForm({
   id,
   hideSubmitButton,
   onStateChange,
-}: CategoryFormProps) {
+}: TeamConfigFormProps) {
   const form = useForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
       alias: defaultValues?.alias ?? "",
-      icon: defaultValues?.icon ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
-      isActive: defaultValues?.isActive ?? true,
+      maxMembers: defaultValues?.maxMembers ?? 4,
+      autoDissolveOnLeaderLeave: defaultValues?.autoDissolveOnLeaderLeave ?? false,
+      allowQuickMatch: defaultValues?.allowQuickMatch ?? false,
     },
     onSubmit: async ({ value }) => {
-      const input: CreateCategoryInput = {
+      await onSubmit({
         name: value.name,
         alias: value.alias || null,
-        icon: value.icon || null,
-        sortOrder: value.sortOrder,
-        isActive: value.isActive,
-      }
-      await onSubmit(input)
+        maxMembers: value.maxMembers,
+        autoDissolveOnLeaderLeave: value.autoDissolveOnLeaderLeave,
+        allowQuickMatch: value.allowQuickMatch,
+      })
     },
   })
 
@@ -61,7 +57,7 @@ export function CategoryForm({
         e.stopPropagation()
         form.handleSubmit()
       }}
-      className="space-y-6"
+      className="space-y-4"
     >
       {onStateChange ? (
         <form.Subscribe
@@ -74,11 +70,11 @@ export function CategoryForm({
           {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
         </form.Subscribe>
       ) : null}
+
       <form.Field
         name="name"
         validators={{
-          onChange: ({ value }) =>
-            !value ? "Name is required" : value.length > 200 ? "Max 200 characters" : undefined,
+          onChange: ({ value }) => (!value ? "Name is required" : undefined),
         }}
       >
         {(field) => (
@@ -89,7 +85,7 @@ export function CategoryForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. Currency"
+              required
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -107,34 +103,19 @@ export function CategoryForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. currency"
-            />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
-          </div>
-        )}
-      </form.Field>
-
-      <form.Field name="icon">
-        {(field) => (
-          <div className="space-y-2">
-            <Label>{m.common_icon()}</Label>
-            <MediaPickerDialog
-              value={field.state.value || null}
-              onChange={(url) => field.handleChange(url)}
             />
           </div>
         )}
       </form.Field>
 
-      <form.Field name="sortOrder">
+      <form.Field name="maxMembers">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_sort_order()}</Label>
+            <Label htmlFor={field.name}>{m.team_max_members()}</Label>
             <Input
               id={field.name}
               type="number"
+              min={1}
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(Number(e.target.value))}
@@ -143,15 +124,28 @@ export function CategoryForm({
         )}
       </form.Field>
 
-      <form.Field name="isActive">
+      <form.Field name="autoDissolveOnLeaderLeave">
         {(field) => (
-          <div className="flex items-center gap-3">
-            <Switch
+          <div className="flex items-center gap-2">
+            <Checkbox
               id={field.name}
               checked={field.state.value}
-              onCheckedChange={(checked) => field.handleChange(checked === true)}
+              onCheckedChange={(v) => field.handleChange(v === true)}
             />
-            <Label htmlFor={field.name}>{m.common_active()}</Label>
+            <Label htmlFor={field.name}>{m.team_auto_dissolve()}</Label>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="allowQuickMatch">
+        {(field) => (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={field.name}
+              checked={field.state.value}
+              onCheckedChange={(v) => field.handleChange(v === true)}
+            />
+            <Label htmlFor={field.name}>{m.team_quick_match()}</Label>
           </div>
         )}
       </form.Field>
@@ -160,7 +154,7 @@ export function CategoryForm({
         <form.Subscribe selector={(s) => s.canSubmit}>
           {(canSubmit) => (
             <Button type="submit" disabled={!canSubmit || isPending}>
-              {isPending ? "Saving..." : (submitLabel ?? m.common_create())}
+              {isPending ? m.common_saving() : (submitLabel ?? m.common_create())}
             </Button>
           )}
         </form.Subscribe>
@@ -168,4 +162,3 @@ export function CategoryForm({
     </form>
   )
 }
-
