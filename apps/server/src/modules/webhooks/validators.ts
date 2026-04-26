@@ -7,7 +7,9 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { webhooksDeliveries } from "../../schema/webhooks";
 import { DELIVERY_STATUSES, ENDPOINT_STATUSES } from "./types";
 
 const NameSchema = z.string().min(1).max(200).openapi({
@@ -100,20 +102,14 @@ export const DeliveryIdParamSchema = z.object({
   }),
 });
 
-export const ListDeliveriesQuerySchema = z.object({
-  status: z
-    .enum(DELIVERY_STATUSES)
-    .optional()
-    .openapi({ param: { name: "status", in: "query" } }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(200)
-    .optional()
-    .openapi({ param: { name: "limit", in: "query" } }),
-});
+export const webhookDeliveryFilters = defineListFilter({
+  status: f.enumOf(DELIVERY_STATUSES, { column: webhooksDeliveries.status }),
+  eventType: f.string({ column: webhooksDeliveries.eventType, ops: ["eq"] }),
+}).build();
+
+export const ListDeliveriesQuerySchema = webhookDeliveryFilters.querySchema.openapi(
+  "ListWebhookDeliveriesQuery",
+);
 
 // ─── Response shapes ────────────────────────────────────────────────
 

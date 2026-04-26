@@ -64,7 +64,11 @@ import type {
   TeamStatus,
   TeamWithMembers,
 } from "./types";
-import type { CreateConfigInput, UpdateConfigInput } from "./validators";
+import {
+  teamFilters,
+  type CreateConfigInput,
+  type UpdateConfigInput,
+} from "./validators";
 
 type TeamDeps = Pick<AppDeps, "db">;
 
@@ -411,23 +415,22 @@ export function createTeamService(d: TeamDeps) {
       } = {},
     ): Promise<Page<Team>> {
       const limit = clampLimit(opts.limit);
-      const conditions: SQL[] = [eq(teamTeams.organizationId, organizationId)];
-
-      if (opts.configKey) {
-        const config = await loadConfigByKey(organizationId, opts.configKey);
-        conditions.push(eq(teamTeams.configId, config.id));
-      }
-      if (opts.status) {
-        conditions.push(eq(teamTeams.status, opts.status));
-      }
-      const seek = cursorWhere(opts.cursor, teamTeams.createdAt, teamTeams.id);
-      if (seek) conditions.push(seek);
-      // teamTeams has no display-name column to search; q is ignored.
-
+      // configKey requires an async lookup (id-or-alias → configId), so
+      // it stays out of the DSL and is composed here. status flows
+      // through the DSL as a flat enum.
+      const configIdCond = opts.configKey
+        ? eq(teamTeams.configId, (await loadConfigByKey(organizationId, opts.configKey)).id)
+        : undefined;
+      const where = and(
+        eq(teamTeams.organizationId, organizationId),
+        configIdCond,
+        teamFilters.where(opts as Record<string, unknown>),
+        cursorWhere(opts.cursor, teamTeams.createdAt, teamTeams.id),
+      );
       const rows = await db
         .select()
         .from(teamTeams)
-        .where(and(...conditions))
+        .where(where)
         .orderBy(desc(teamTeams.createdAt), desc(teamTeams.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

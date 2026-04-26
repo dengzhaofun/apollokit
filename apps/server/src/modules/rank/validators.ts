@@ -12,7 +12,9 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { rankSeasons } from "../../schema/rank";
 import {
   RATING_STRATEGIES,
   SEASON_STATUSES,
@@ -439,21 +441,16 @@ export const SeasonIdEndUserParamSchema = z.object({
     .openapi({ param: { name: "endUserId", in: "path" } }),
 });
 
-export const ListSeasonsQuerySchema = z.object({
-  tierConfigId: z
-    .string()
-    .uuid()
-    .optional()
-    .openapi({ param: { name: "tierConfigId", in: "query" } }),
-  status: z
-    .enum(SEASON_STATUSES)
-    .optional()
-    .openapi({ param: { name: "status", in: "query" } }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
-  }),
-});
+export const rankSeasonFilters = defineListFilter({
+  tierConfigId: f.uuid({ column: rankSeasons.tierConfigId }),
+  status: f.enumOf(SEASON_STATUSES, { column: rankSeasons.status }),
+})
+  .search({ columns: [rankSeasons.name, rankSeasons.alias] })
+  .build();
+
+export const ListSeasonsQuerySchema = rankSeasonFilters.querySchema.openapi(
+  "ListRankSeasonsQuery",
+);
 
 export const ListPlayersQuerySchema = z.object({
   tierId: z

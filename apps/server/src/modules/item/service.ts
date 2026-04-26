@@ -55,11 +55,12 @@ import type {
   ItemCategory,
   ItemDefinition,
 } from "./types";
-import type {
-  CreateCategoryInput,
-  CreateDefinitionInput,
-  UpdateCategoryInput,
-  UpdateDefinitionInput,
+import {
+  itemDefinitionFilters,
+  type CreateCategoryInput,
+  type CreateDefinitionInput,
+  type UpdateCategoryInput,
+  type UpdateDefinitionInput,
 } from "./validators";
 
 type ItemDeps = Pick<AppDeps, "db">;
@@ -615,32 +616,32 @@ export function createItemService(d: ItemDeps) {
       opts: PageParams & { categoryId?: string; activityId?: string | null } = {},
     ): Promise<Page<ItemDefinition>> {
       const limit = clampLimit(opts.limit);
-      const conditions: SQL[] = [eq(itemDefinitions.organizationId, organizationId)];
-      if (opts.categoryId) {
-        conditions.push(eq(itemDefinitions.categoryId, opts.categoryId));
-      }
-      if (opts.activityId !== undefined) {
-        if (opts.activityId === null) {
-          conditions.push(sql`${itemDefinitions.activityId} IS NULL`);
-        } else {
-          conditions.push(eq(itemDefinitions.activityId, opts.activityId));
-        }
-      }
-      const seek = cursorWhere(
-        opts.cursor,
-        itemDefinitions.createdAt,
-        itemDefinitions.id,
+      // Routes pass the parsed query through as `Record<string, unknown>`;
+      // legacy callers may still pass `activityId: null` to mean
+      // "permanent only". Normalise so the DSL sees the canonical
+      // "null" sentinel string.
+      const filterInput = {
+        ...opts,
+        activityId:
+          opts.activityId === null
+            ? "null"
+            : opts.activityId === undefined
+              ? undefined
+              : opts.activityId,
+      } as Record<string, unknown>;
+      const where = and(
+        eq(itemDefinitions.organizationId, organizationId),
+        itemDefinitionFilters.where(filterInput),
+        cursorWhere(
+          opts.cursor,
+          itemDefinitions.createdAt,
+          itemDefinitions.id,
+        ),
       );
-      if (seek) conditions.push(seek);
-      if (opts.q) {
-        const pat = `%${opts.q}%`;
-        const search = or(ilike(itemDefinitions.name, pat), ilike(itemDefinitions.alias, pat));
-        if (search) conditions.push(search);
-      }
       const rows = await db
         .select()
         .from(itemDefinitions)
-        .where(and(...conditions))
+        .where(where)
         .orderBy(desc(itemDefinitions.createdAt), desc(itemDefinitions.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

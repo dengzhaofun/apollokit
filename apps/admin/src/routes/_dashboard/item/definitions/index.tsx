@@ -19,6 +19,7 @@ import {
   useUpdateItemDefinition,
 } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -32,7 +33,7 @@ const FORM_ID = "item-definition-form"
 
 export const Route = createFileRoute("/_dashboard/item/definitions/")({
   component: ItemDefinitionsPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function ItemDefinitionsPage() {
@@ -68,7 +69,7 @@ function ItemDefinitionsPage() {
       />
 
       <PageBody>
-        <DefinitionTable />
+        <DefinitionTable route={Route} />
       </PageBody>
 
       {modal === "create" ? (

@@ -16,6 +16,7 @@ import { FormDrawer } from "#/components/ui/form-drawer"
 import { WriteGate } from "#/components/WriteGate"
 import { useCreateCheckInConfig } from "#/hooks/use-check-in"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -29,7 +30,7 @@ const FORM_ID = "check-in-config-form"
 
 export const Route = createFileRoute("/_dashboard/check-in/")({
   component: CheckInListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function CheckInListPage() {
@@ -74,6 +75,7 @@ function CheckInListPage() {
 
       <PageBody>
         <ConfigTable
+          route={Route}
           activityId={filter.activityId}
           includeActivity={filter.includeActivity}
         />

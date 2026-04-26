@@ -13,7 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useStorageBoxConfigs } from "#/hooks/use-storage-box"
+import {
+  STORAGE_BOX_CONFIG_FILTER_DEFS,
+  useStorageBoxConfigs,
+} from "#/hooks/use-storage-box"
 import type { StorageBoxConfig } from "#/lib/types/storage-box"
 import * as m from "#/paraglide/messages.js"
 
@@ -134,24 +137,34 @@ function useColumns(): ColumnDef<StorageBoxConfig, unknown>[] {
   ) as ColumnDef<StorageBoxConfig, unknown>[]
 }
 
-export function StorageBoxConfigTable() {
-  const list = useStorageBoxConfigs()
+interface Props {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
+}
+
+export function StorageBoxConfigTable({ route }: Props) {
+  const list = useStorageBoxConfigs(route)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={STORAGE_BOX_CONFIG_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

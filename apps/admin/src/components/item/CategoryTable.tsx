@@ -106,25 +106,21 @@ function useColumns(): ColumnDef<ItemCategory, unknown>[] {
   ) as ColumnDef<ItemCategory, unknown>[]
 }
 
-export function CategoryTable() {
-  const list = useItemCategories()
+interface CategoryTableProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
+}
+
+export function CategoryTable({ route }: CategoryTableProps) {
+  const list = useItemCategories(route)
   const columns = useColumns()
 
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      {...list.tableProps}
     />
   )
 }

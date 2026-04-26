@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateShopCategoryInput,
   CreateShopGrowthStageInput,
@@ -98,13 +103,19 @@ export function useDeleteShopCategory() {
 
 // ─── Tags ────────────────────────────────────────────────────────
 
-/** Paginated tags — for the admin TagTable. */
-export function useShopTags(initialPageSize = 50) {
-  return useCursorList<ShopTag>({
+export const SHOP_TAG_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated tags — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useShopTags(route: any) {
+  return useListSearch<ShopTag>({
+    route,
     queryKey: TAGS_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
-      api.get<Page<ShopTag>>(`/api/shop/tags?${buildQs({ cursor, limit, q })}`),
-    initialPageSize,
+    filterDefs: SHOP_TAG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
+      api.get<Page<ShopTag>>(
+        `/api/shop/tags?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+      ),
   })
 }
 
@@ -157,32 +168,38 @@ export function useDeleteShopTag() {
 
 type ShopProductFilterRest = Omit<ShopListProductsQuery, "limit" | "cursor" | "q">
 
-/** Paginated products — for the admin ProductTable. */
+export const SHOP_PRODUCT_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated products — URL-driven. */
 export function useShopProducts(
-  filter: ShopProductFilterRest & { initialPageSize?: number } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: ShopProductFilterRest = {},
 ) {
-  const { initialPageSize = 50, ...rest } = filter
-  return useCursorList<ShopProduct>({
-    queryKey: [...PRODUCTS_KEY, rest],
-    fetchPage: ({ cursor, limit, q }) =>
+  return useListSearch<ShopProduct>({
+    route,
+    queryKey: [...PRODUCTS_KEY, extraQuery],
+    filterDefs: SHOP_PRODUCT_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ShopProduct>>(
         `/api/shop/products?${buildQs({
           cursor,
           limit,
           q,
-          categoryId: rest.categoryId,
-          tagId: rest.tagId,
-          productType: rest.productType,
+          adv,
+          ...filters,
+          categoryId: extraQuery.categoryId,
+          tagId: extraQuery.tagId,
+          productType: extraQuery.productType,
           isActive:
-            rest.isActive == null ? undefined : String(rest.isActive),
-          includeDescendantCategories: rest.includeDescendantCategories
+            extraQuery.isActive == null ? undefined : String(extraQuery.isActive),
+          includeDescendantCategories: extraQuery.includeDescendantCategories
             ? "true"
             : undefined,
-          activityId: rest.activityId,
-          includeActivity: rest.includeActivity ? "true" : undefined,
+          activityId: extraQuery.activityId,
+          includeActivity: extraQuery.includeActivity ? "true" : undefined,
         })}`,
       ),
-    initialPageSize,
   })
 }
 

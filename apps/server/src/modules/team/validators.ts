@@ -7,7 +7,9 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { teamTeams } from "../../schema/team";
 import { INVITATION_STATUSES, MEMBER_ROLES, TEAM_STATUSES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -124,21 +126,27 @@ export const ConfigAliasQuerySchema = z.object({
   }),
 });
 
-export const TeamListQuerySchema = z.object({
+/**
+ * Team list filter — `configKey` is an id-or-alias that the service
+ * resolves into `configId` via `loadConfigByKey` (an async DB call,
+ * not a static column lookup), so it's NOT part of the DSL spec; it
+ * stays as a hand-written WHERE in the service. Only `status` (a
+ * direct enum column) goes through the DSL here.
+ */
+export const teamFilters = defineListFilter({
+  status: f.enumOf(TEAM_STATUSES, { column: teamTeams.status }),
+}).build();
+
+const ConfigKeyQueryFragment = z.object({
   configKey: z.string().min(1).optional().openapi({
     param: { name: "configKey", in: "query" },
     description: "Filter by config id or alias.",
   }),
-  status: z.enum(TEAM_STATUSES).optional().openapi({
-    param: { name: "status", in: "query" },
-    description: "Filter by team status.",
-  }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
-  }),
-  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
 });
+
+export const TeamListQuerySchema = teamFilters.querySchema
+  .merge(ConfigKeyQueryFragment)
+  .openapi("TeamListQuery");
 
 // ─── Request body schemas ────────────────────────────────────────
 

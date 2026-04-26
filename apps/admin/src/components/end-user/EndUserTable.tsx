@@ -1,6 +1,17 @@
 /**
  * Self-contained end-user list table — server-side cursor pagination
- * (drives `useEndUsers`) plus the standard <DataTable /> wrapper.
+ * driven by `useEndUsers(route)`, which reads/writes URL search params.
+ *
+ * The table consumes:
+ *   - `tableProps` for pagination + search wiring
+ *   - `filters / filterValues / setFilter / resetFilters` for the
+ *     faceted filter toolbar
+ *   - `mode / setMode / advanced / setAdvanced` for advanced query
+ *     builder mode
+ *
+ * All of those are produced by the hook from a single declarative
+ * spec (`END_USER_FILTER_DEFS`) — no per-page state, no manual prop
+ * forwarding.
  */
 import { Link } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -8,8 +19,8 @@ import { Ban, CheckCircle2, Crown, LinkIcon } from "lucide-react"
 
 import { Badge } from "#/components/ui/badge"
 import { DataTable } from "#/components/data-table/DataTable"
-import { useEndUsers } from "#/hooks/use-end-user"
-import type { EndUser, EndUserOrigin } from "#/lib/types/end-user"
+import { END_USER_FILTER_DEFS, useEndUsers } from "#/hooks/use-end-user"
+import type { EndUser } from "#/lib/types/end-user"
 import * as m from "#/paraglide/messages.js"
 
 function formatDate(iso: string): string {
@@ -101,29 +112,34 @@ const columns: ColumnDef<EndUser>[] = [
 ]
 
 interface Props {
-  origin?: EndUserOrigin
-  disabled?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
   toolbar?: React.ReactNode
 }
 
-export function EndUserTable({ origin, disabled, toolbar }: Props = {}) {
-  const list = useEndUsers({ origin, disabled })
+export function EndUserTable({ route, toolbar }: Props) {
+  const list = useEndUsers(route)
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       toolbar={toolbar}
       getRowId={(r) => r.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={END_USER_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

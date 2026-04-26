@@ -1,6 +1,9 @@
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { currencies } from "../../schema/currency";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
@@ -121,22 +124,23 @@ export const CurrencyIdParamSchema = z.object({
   }),
 });
 
-export const DefinitionListQuerySchema = z.object({
-  activityId: z.string().uuid().nullable().optional().openapi({
-    param: { name: "activityId", in: "query" },
-    description:
-      "Filter by linked activity. Pass 'null' to filter for permanent-only.",
+export const currencyDefinitionFilters = defineListFilter({
+  activityId: f.string({
+    column: currencies.activityId,
+    where: (v: string) =>
+      v === "null"
+        ? sql`${currencies.activityId} IS NULL`
+        : sql`${currencies.activityId} = ${v}`,
   }),
-  isActive: z
-    .enum(["true", "false"])
-    .optional()
-    .openapi({ param: { name: "isActive", in: "query" } }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
-  }),
-  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
-});
+  isActive: f.boolean({ column: currencies.isActive }),
+})
+  .search({
+    columns: [currencies.name, currencies.alias],
+  })
+  .build();
+
+export const DefinitionListQuerySchema =
+  currencyDefinitionFilters.querySchema.openapi("CurrencyDefinitionListQuery");
 
 export const LedgerQuerySchema = z.object({
   endUserId: z.string().min(1).max(256).optional().openapi({

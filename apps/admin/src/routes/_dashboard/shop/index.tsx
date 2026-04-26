@@ -37,6 +37,7 @@ import {
   useShopCategories,
 } from "#/hooks/use-shop"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -51,7 +52,7 @@ const FORM_ID = "shop-product-mini-create-form"
 
 export const Route = createFileRoute("/_dashboard/shop/")({
   component: ShopProductsPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 const ALL = "__all__"
@@ -145,6 +146,7 @@ function ShopProductsPage() {
         </div>
 
         <ProductTable
+          route={Route}
           productType={productType === ALL ? undefined : (productType as ShopProductType)}
           categoryId={categoryId === ALL ? undefined : categoryId}
           tagId={tagId === ALL ? undefined : tagId}

@@ -13,7 +13,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useTaskDefinitions } from "#/hooks/use-task"
+import { useQuery, type QueryKey } from "@tanstack/react-query"
+import { api } from "#/lib/api-client"
+import {
+  qs as buildQs,
+  type Page,
+} from "#/hooks/use-list-search"
 import type { TaskDefinition } from "#/lib/types/task"
 import * as m from "#/paraglide/messages.js"
 
@@ -112,24 +117,60 @@ interface Props {
   includeActivity?: boolean
 }
 
-export function DefinitionTable(props: Props = {}) {
-  const list = useTaskDefinitions(props)
+/**
+ * Per-tab task-definitions table.
+ *
+ * The task index page renders this table inside multiple tabs (one
+ * per category) on a single route. URL-driven pagination/search would
+ * collide across tabs (the active tab's filter would clobber the
+ * others on remount). We deliberately keep this table on a plain
+ * `useQuery` (no cursor stack, no URL state) so each tab is fully
+ * independent — at the cost of "refresh remembers page state" on
+ * this page only. Migrating to URL state requires a route restructure
+ * (one route per category, or scoped URL keys per tab) and is tracked
+ * as a follow-up.
+ */
+export function DefinitionTable({
+  categoryId,
+  activityId,
+  includeActivity,
+}: Props = {}) {
+  const queryKey: QueryKey = [
+    "task-definitions",
+    {
+      categoryId: categoryId ?? null,
+      activityId: activityId ?? null,
+      includeActivity: !!includeActivity,
+    },
+  ]
+  const query = useQuery({
+    queryKey,
+    queryFn: () =>
+      api.get<Page<TaskDefinition>>(
+        `/api/task/definitions?${buildQs({
+          limit: 50,
+          categoryId,
+          activityId,
+          includeActivity: includeActivity ? "true" : undefined,
+        })}`,
+      ),
+  })
   const columns = useColumns()
+  const items = query.data?.items ?? []
   return (
     <DataTable
       columns={columns}
-      data={list.items}
-      isLoading={list.isLoading}
+      data={items}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      pageIndex={1}
+      canPrev={false}
+      canNext={!!query.data?.nextCursor}
+      onNextPage={() => {}}
+      onPrevPage={() => {}}
+      pageSize={50}
+      onPageSizeChange={() => {}}
+      isLoading={query.isPending}
+      showSearch={false}
     />
   )
 }

@@ -76,10 +76,12 @@ import type {
   CdkeyRedemptionLog,
 } from "./types";
 import type { ItemService } from "../item";
-import type {
-  CreateBatchInput,
-  GenerateCodesInput,
-  UpdateBatchInput,
+import {
+  cdkeyCodeFilters,
+  cdkeyLogFilters,
+  type CreateBatchInput,
+  type GenerateCodesInput,
+  type UpdateBatchInput,
 } from "./validators";
 
 // `analytics` optional — used to emit the pure observational
@@ -419,20 +421,16 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     ): Promise<Page<CdkeyCode>> {
       const batch = await loadBatchByKey(organizationId, batchId);
       const limit = clampLimit(opts.limit);
-      const conds: SQL[] = [
+      const where = and(
         eq(cdkeyCodes.organizationId, organizationId),
         eq(cdkeyCodes.batchId, batch.id),
-      ];
-      if (opts.status) conds.push(eq(cdkeyCodes.status, opts.status));
-      const seek = cursorWhere(opts.cursor, cdkeyCodes.createdAt, cdkeyCodes.id);
-      if (seek) conds.push(seek);
-      if (opts.q) {
-        conds.push(ilike(cdkeyCodes.code, `%${opts.q}%`));
-      }
+        cdkeyCodeFilters.where(opts as Record<string, unknown>),
+        cursorWhere(opts.cursor, cdkeyCodes.createdAt, cdkeyCodes.id),
+      );
       const rows = await db
         .select()
         .from(cdkeyCodes)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(cdkeyCodes.createdAt), desc(cdkeyCodes.id))
         .limit(limit + 1);
       return buildPage(rows, limit);
@@ -463,25 +461,24 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     ): Promise<Page<CdkeyRedemptionLog>> {
       const batch = await loadBatchByKey(organizationId, batchId);
       const limit = clampLimit(opts.limit);
-      const conds: SQL[] = [
+      const where = and(
         eq(cdkeyRedemptionLogs.organizationId, organizationId),
         eq(cdkeyRedemptionLogs.batchId, batch.id),
-      ];
-      if (opts.status) conds.push(eq(cdkeyRedemptionLogs.status, opts.status));
-      const seek = cursorWhere(
-        opts.cursor,
-        cdkeyRedemptionLogs.createdAt,
-        cdkeyRedemptionLogs.id,
+        cdkeyLogFilters.where(opts as Record<string, unknown>),
+        cursorWhere(
+          opts.cursor,
+          cdkeyRedemptionLogs.createdAt,
+          cdkeyRedemptionLogs.id,
+        ),
       );
-      if (seek) conds.push(seek);
-      if (opts.q) {
-        conds.push(ilike(cdkeyRedemptionLogs.code, `%${opts.q}%`));
-      }
       const rows = await db
         .select()
         .from(cdkeyRedemptionLogs)
-        .where(and(...conds))
-        .orderBy(desc(cdkeyRedemptionLogs.createdAt), desc(cdkeyRedemptionLogs.id))
+        .where(where)
+        .orderBy(
+          desc(cdkeyRedemptionLogs.createdAt),
+          desc(cdkeyRedemptionLogs.id),
+        )
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

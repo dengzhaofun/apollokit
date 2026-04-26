@@ -4,6 +4,7 @@ import { Ban, Download } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -34,6 +35,7 @@ import { ApiError } from "#/lib/api-client"
 
 export const Route = createFileRoute("/_dashboard/cdkey/$batchId")({
   component: CdkeyBatchDetailPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function CdkeyBatchDetailPage() {
@@ -160,7 +162,13 @@ function CodesPane({
   batchId: string
   isUniversal: boolean
 }) {
-  const list = useCdkeyCodes(batchId)
+  // NOTE: Codes and Logs panes share the same URL search params (status,
+  // cursor, q, etc.) because they live on the same route. Switching tabs
+  // does not remap the keys — a `status=success` set in Logs would feed
+  // the Codes query (which only accepts pending/redeemed/revoked/active)
+  // and the server will 400 it. Acceptable as a follow-up; users typically
+  // reset filters when switching tabs.
+  const list = useCdkeyCodes(batchId, Route)
   const generate = useGenerateCdkeyCodes()
   const revoke = useRevokeCdkeyCode()
   const [count, setCount] = useState(100)
@@ -301,7 +309,7 @@ function CodesPane({
 }
 
 function LogsPane({ batchId }: { batchId: string }) {
-  const list = useCdkeyLogs(batchId)
+  const list = useCdkeyLogs(batchId, Route)
 
   return (
     <div className="rounded-xl border bg-card shadow-sm">

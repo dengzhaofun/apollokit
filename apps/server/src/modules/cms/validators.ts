@@ -8,8 +8,11 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { cmsEntries, cmsTypes } from "../../schema/cms";
 import { CMS_FIELD_TYPES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -222,6 +225,29 @@ export const CmsEntryAliasParamSchema = z.object({
     param: { name: "entryAlias", in: "path" },
   }),
 });
+
+export const cmsTypeFilters = defineListFilter({
+  status: f.enumOf(["active", "archived"], { column: cmsTypes.status }),
+})
+  .search({ columns: [cmsTypes.name, cmsTypes.alias] })
+  .build();
+
+export const ListCmsTypesQuerySchema = cmsTypeFilters.querySchema.openapi(
+  "ListCmsTypesQuery",
+);
+
+export const cmsEntryFilters = defineListFilter({
+  status: f.enumOf(["draft", "published", "archived"], {
+    column: cmsEntries.status,
+  }),
+  groupKey: f.string({ column: cmsEntries.groupKey, ops: ["eq"] }),
+  tag: f.string({
+    column: cmsEntries.alias,
+    where: (v: string) => sql`${cmsEntries.tags} @> ARRAY[${v}]::text[]`,
+  }),
+})
+  .search({ columns: [cmsEntries.alias] })
+  .build();
 
 export const ListEntriesQuerySchema = z.object({
   status: CmsEntryStatusSchema.optional().openapi({

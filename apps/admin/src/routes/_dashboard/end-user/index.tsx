@@ -1,90 +1,63 @@
 /**
  * End-user list page — admin view of the players in the current org.
  *
- * Server-side cursor pagination + search live inside <EndUserTable />.
- * This page only owns the origin / status filter dropdowns and forwards
- * them into the table.
+ * Server-side cursor pagination + faceted filters + advanced query
+ * builder all driven from URL search params (so refresh / share /
+ * back-button all "just work"). The page itself is intentionally
+ * tiny — `<EndUserTable />` reads the route handle and the rest is
+ * driven by `useListSearch` inside `useEndUsers`.
  */
 import { createFileRoute } from "@tanstack/react-router"
 import { UsersIcon } from "lucide-react"
-import { useState } from "react"
+import { z } from "zod"
 
 import { EndUserTable } from "#/components/end-user/EndUserTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select"
-import type { EndUserOrigin } from "#/lib/types/end-user"
-import * as m from "#/paraglide/messages.js"
+import { listSearchSchema } from "#/lib/list-search"
+import { modalSearchSchema } from "#/lib/modal-search"
 import { getLocale } from "#/paraglide/runtime.js"
 
 const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
+/**
+ * Per-module filter schema — keys MUST match the server's
+ * `endUserFilters` declaration. Layered onto the standard
+ * `modalSearchSchema` + `listSearchSchema` so URL-encoded filters are
+ * validated end-to-end (no silent passthrough for typos).
+ */
+const endUserFilterSchema = z
+  .object({
+    origin: z.enum(["managed", "synced"]).optional(),
+    disabled: z.coerce.boolean().optional(),
+    emailVerified: z.coerce.boolean().optional(),
+    externalId: z.string().optional(),
+    createdAtGte: z.string().optional(),
+    createdAtLte: z.string().optional(),
+  })
+  .passthrough()
+
 export const Route = createFileRoute("/_dashboard/end-user/")({
+  validateSearch: modalSearchSchema
+    .merge(listSearchSchema)
+    .merge(endUserFilterSchema)
+    .passthrough(),
   component: EndUsersPage,
 })
 
-type OriginFilter = EndUserOrigin | "all"
-type StatusFilter = "all" | "enabled" | "disabled"
-
 function EndUsersPage() {
-  const [origin, setOrigin] = useState<OriginFilter>("all")
-  const [status, setStatus] = useState<StatusFilter>("all")
-
   return (
     <PageShell>
       <PageHeader
         icon={<UsersIcon className="size-5" />}
         title={t("玩家", "End users")}
-        description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
+        description={t(
+          "搜索 / 筛选 / 翻页均走服务端，全部状态写入 URL。",
+          "Search, filter, and pagination are server-driven; all state lives in the URL.",
+        )}
       />
 
       <PageBody>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={origin}
-            onValueChange={(v) => setOrigin(v as OriginFilter)}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{m.end_user_filter_all()}</SelectItem>
-              <SelectItem value="managed">
-                {m.end_user_filter_origin_managed()}
-              </SelectItem>
-              <SelectItem value="synced">
-                {m.end_user_filter_origin_synced()}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={status}
-            onValueChange={(v) => setStatus(v as StatusFilter)}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{m.end_user_filter_all()}</SelectItem>
-              <SelectItem value="enabled">
-                {m.end_user_filter_enabled_only()}
-              </SelectItem>
-              <SelectItem value="disabled">
-                {m.end_user_filter_disabled_only()}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <EndUserTable
-          origin={origin === "all" ? undefined : origin}
-          disabled={status === "all" ? undefined : status === "disabled"}
-        />
+        <EndUserTable route={Route} />
       </PageBody>
     </PageShell>
   )

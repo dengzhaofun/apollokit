@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateWebhookEndpointInput,
   UpdateWebhookEndpointInput,
@@ -15,17 +20,42 @@ const ENDPOINTS_KEY = ["webhooks", "endpoints"] as const
 const deliveriesKey = (endpointId: string) =>
   ["webhooks", "deliveries", endpointId] as const
 
-/** Paginated webhook endpoints — for the admin endpoints table. */
-export function useWebhookEndpoints(initialPageSize = 50) {
-  return useCursorList<WebhookEndpoint>({
+export const WEBHOOK_ENDPOINT_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated webhook endpoints — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useWebhookEndpoints(route: any) {
+  return useListSearch<WebhookEndpoint>({
+    route,
     queryKey: ENDPOINTS_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: WEBHOOK_ENDPOINT_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<WebhookEndpoint>>(
-        `/api/webhooks/endpoints?${buildQs({ cursor, limit, q })}`,
+        `/api/webhooks/endpoints?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
+
+export const WEBHOOK_DELIVERY_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "pending", label: "Pending" },
+      { value: "in_flight", label: "In flight" },
+      { value: "success", label: "Success" },
+      { value: "failed", label: "Failed" },
+      { value: "dead", label: "Dead" },
+    ],
+  },
+  {
+    id: "eventType",
+    label: "Event type",
+    type: "select",
+    options: [],
+  },
+]
 
 export function useCreateWebhookEndpoint() {
   const qc = useQueryClient()

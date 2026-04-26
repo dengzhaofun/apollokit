@@ -8,8 +8,11 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { assistPoolConfigs } from "../../schema/assist-pool";
 import { ASSIST_POLICY_KINDS, ASSIST_POOL_MODES, ASSIST_POOL_STATUSES } from "./types";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -201,22 +204,31 @@ export const ListInstancesQuerySchema = z.object({
     .openapi({ param: { name: "limit", in: "query" } }),
 });
 
-export const ListConfigsQuerySchema = z.object({
-  activityId: z
-    .string()
-    .uuid()
-    .optional()
-    .openapi({ param: { name: "activityId", in: "query" } }),
-  includeActivity: z
-    .enum(["true", "false"])
-    .optional()
-    .openapi({ param: { name: "includeActivity", in: "query" } }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
+/**
+ * Assist-pool config list filter — `activityId` accepts a uuid OR the
+ * literal "null" sentinel to mean "permanent only" (no linked activity).
+ * The legacy `includeActivity=true` knob disabled the implicit
+ * `activityId IS NULL` filter; the route now translates that into the
+ * DSL by simply omitting `activityId`, since the DSL has no implicit
+ * default.
+ */
+export const assistPoolConfigFilters = defineListFilter({
+  activityId: f.string({
+    column: assistPoolConfigs.activityId,
+    where: (v: string) =>
+      v === "null"
+        ? sql`${assistPoolConfigs.activityId} IS NULL`
+        : sql`${assistPoolConfigs.activityId} = ${v}`,
   }),
-  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
-});
+})
+  .search({
+    columns: [assistPoolConfigs.name, assistPoolConfigs.alias],
+  })
+  .build();
+
+export const ListConfigsQuerySchema = assistPoolConfigFilters.querySchema.openapi(
+  "ListAssistPoolConfigsQuery",
+);
 
 // ─── Response shapes ───────────────────────────────────────────────
 

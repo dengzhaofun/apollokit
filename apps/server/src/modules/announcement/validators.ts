@@ -1,6 +1,8 @@
 import { z } from "@hono/zod-openapi";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { announcements } from "../../schema/announcement";
 import {
   ANNOUNCEMENT_KINDS,
   ANNOUNCEMENT_SEVERITIES,
@@ -58,27 +60,18 @@ export type UpdateAnnouncementInput = z.input<typeof UpdateAnnouncementSchema>;
 
 // ─── List query ─────────────────────────────────────────────────
 
-export const ListAnnouncementsQuerySchema = z.object({
-  kind: KindSchema.optional().openapi({
-    param: { name: "kind", in: "query" },
+export const announcementFilters = defineListFilter({
+  kind: f.enumOf(ANNOUNCEMENT_KINDS, { column: announcements.kind }),
+  isActive: f.boolean({ column: announcements.isActive }),
+  severity: f.enumOf(ANNOUNCEMENT_SEVERITIES, {
+    column: announcements.severity,
   }),
-  isActive: z
-    .enum(["true", "false"])
-    .optional()
-    .openapi({ param: { name: "isActive", in: "query" } }),
-  q: z
-    .string()
-    .max(200)
-    .optional()
-    .openapi({
-      param: { name: "q", in: "query" },
-      description: "Case-insensitive substring match on alias / title.",
-    }),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
-  }),
-});
+})
+  .search({ columns: [announcements.alias, announcements.title] })
+  .build();
+
+export const ListAnnouncementsQuerySchema =
+  announcementFilters.querySchema.openapi("ListAnnouncementsQuery");
 
 export type ListAnnouncementsQuery = z.input<
   typeof ListAnnouncementsQuerySchema

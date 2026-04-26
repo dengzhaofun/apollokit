@@ -5,7 +5,7 @@ import { useMemo } from "react"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import { useCharacters } from "#/hooks/use-character"
+import { CHARACTER_FILTER_DEFS, useCharacters } from "#/hooks/use-character"
 import { resolveAssetUrl } from "#/lib/api-client"
 import { openEditModal } from "#/lib/modal-search"
 import type { Character } from "#/lib/types/character"
@@ -84,24 +84,34 @@ function useColumns(): ColumnDef<Character, unknown>[] {
   ) as ColumnDef<Character, unknown>[]
 }
 
-export function CharacterTable() {
-  const list = useCharacters()
+interface Props {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
+}
+
+export function CharacterTable({ route }: Props) {
+  const list = useCharacters(route)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={CHARACTER_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

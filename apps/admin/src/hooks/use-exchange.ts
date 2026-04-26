@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   ExchangeConfig,
   ExchangeOption,
@@ -17,15 +22,19 @@ const CONFIGS_KEY = ["exchange-configs"] as const
 
 // ─── Configs ──────────────────────────────────────────────────────
 
-/** Paginated configs — for the admin ConfigTable. */
-export function useExchangeConfigs(initialPageSize = 50) {
-  return useCursorList<ExchangeConfig>({
+export const EXCHANGE_CONFIG_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated configs — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useExchangeConfigs(route: any) {
+  return useListSearch<ExchangeConfig>({
+    route,
     queryKey: CONFIGS_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: EXCHANGE_CONFIG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExchangeConfig>>(
-        `/api/exchange/configs?${buildQs({ cursor, limit, q })}`,
+        `/api/exchange/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -76,15 +85,19 @@ export function useDeleteExchangeConfig() {
 
 // ─── Options ──────────────────────────────────────────────────────
 
-/** Paginated options under one config — for the OptionTable. */
-export function useExchangeOptions(configKey: string, initialPageSize = 50) {
-  return useCursorList<ExchangeOption>({
+export const EXCHANGE_OPTION_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated options under one config — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useExchangeOptions(configKey: string, route: any) {
+  return useListSearch<ExchangeOption>({
+    route,
     queryKey: ["exchange-options", configKey],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: EXCHANGE_OPTION_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExchangeOption>>(
-        `/api/exchange/configs/${configKey}/options?${buildQs({ cursor, limit, q })}`,
+        `/api/exchange/configs/${configKey}/options?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!configKey,
   })
 }

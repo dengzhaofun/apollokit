@@ -30,6 +30,8 @@ import {
   DefinitionListResponseSchema,
   DefinitionResponseSchema,
   ListAssignmentsQuerySchema,
+  ListTaskCategoriesQuerySchema,
+  ListTaskDefinitionsQuerySchema,
   RevokeAssignmentParamsSchema,
   UpdateCategorySchema,
   UpdateDefinitionSchema,
@@ -178,7 +180,7 @@ taskRouter.openapi(
     path: "/categories",
     tags: [TAG_CAT],
     summary: "List task categories",
-    request: { query: PaginationQuerySchema },
+    request: { query: ListTaskCategoriesQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -191,7 +193,8 @@ taskRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const page = await taskService.listCategories(orgId, c.req.valid("query"));
+    const q = c.req.valid("query") as Record<string, unknown>;
+    const page = await taskService.listCategories(orgId, q);
     return c.json(
       ok({ items: page.items.map(serializeCategory), nextCursor: page.nextCursor }),
       200,
@@ -310,26 +313,7 @@ taskRouter.openapi(
     path: "/definitions",
     tags: [TAG_DEF],
     summary: "List task definitions",
-    request: {
-      query: PaginationQuerySchema.merge(
-        z.object({
-          categoryId: z.string().uuid().optional().openapi({
-            param: { name: "categoryId", in: "query" },
-          }),
-          period: z.string().optional().openapi({ param: { name: "period", in: "query" } }),
-          parentId: z.string().optional().openapi({
-            param: { name: "parentId", in: "query" },
-            description: "Pass 'null' for top-level tasks only.",
-          }),
-          activityId: z.string().uuid().optional().openapi({
-            param: { name: "activityId", in: "query" },
-          }),
-          includeActivity: z.enum(["true", "false"]).optional().openapi({
-            param: { name: "includeActivity", in: "query" },
-          }),
-        }),
-      ),
-    },
+    request: { query: ListTaskDefinitionsQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -342,17 +326,11 @@ taskRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const q = c.req.valid("query");
-    const page = await taskService.listDefinitions(orgId, {
-      categoryId: q.categoryId,
-      period: q.period,
-      parentId: q.parentId === undefined ? undefined : q.parentId === "null" ? null : q.parentId,
-      activityId: q.activityId,
-      includeActivity: q.includeActivity === "true",
-      cursor: q.cursor,
-      limit: q.limit,
-      q: q.q,
-    });
+    const q = c.req.valid("query") as Record<string, unknown>;
+    // Pass through wholesale — service.listDefinitions normalises the
+    // legacy `parentId: null` / `includeActivity` semantics into the
+    // DSL's flat sentinel strings.
+    const page = await taskService.listDefinitions(orgId, q);
     return c.json(
       ok({ items: page.items.map(serializeDefinition), nextCursor: page.nextCursor }),
       200,

@@ -33,10 +33,25 @@ export type EndUserView = {
   updatedAt: string;
 };
 
+/**
+ * Parsed shape of `request.query` for the list endpoint, after zod
+ * validation by `endUserFilters.querySchema`. The DSL produces this
+ * shape; service.ts just forwards it to `endUserFilters.where(...)`.
+ *
+ * `q` replaces the legacy `search` param — the DSL standardises every
+ * module's free-text search on `q` (see `apps/server/src/lib/pagination.ts`).
+ * Admin sends `?q=...` and the SDK / fetch layer sends the same.
+ */
 export type ListFilter = {
-  search?: string;
+  q?: string;
   origin?: "managed" | "synced";
   disabled?: boolean;
+  emailVerified?: boolean;
+  externalId?: string;
+  createdAtGte?: Date;
+  createdAtLte?: Date;
+  /** Advanced AST (base64url JSON). Mutually exclusive with basic filters. */
+  adv?: string;
   cursor?: string;
   limit?: number;
 };

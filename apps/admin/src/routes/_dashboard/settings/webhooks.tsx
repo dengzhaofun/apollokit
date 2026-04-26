@@ -60,6 +60,7 @@ import {
   useWebhookEndpoints,
 } from "#/hooks/use-webhooks"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import type {
   WebhookDelivery,
   WebhookDeliveryStatus,
@@ -70,10 +71,11 @@ import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/settings/webhooks")({
   component: WebhooksPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function WebhooksPage() {
-  const list = useWebhookEndpoints()
+  const list = useWebhookEndpoints(Route)
   const [showCreate, setShowCreate] = useState(false)
   const [createdSecret, setCreatedSecret] = useState<{
     name: string

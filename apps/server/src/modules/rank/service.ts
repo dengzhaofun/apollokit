@@ -118,13 +118,14 @@ import type {
   SeasonStatus,
   TierProtectionRules,
 } from "./types";
-import type {
-  AdjustPlayerInput,
-  CreateSeasonInput,
-  CreateTierConfigInput,
-  SettleMatchInput,
-  UpdateSeasonInput,
-  UpdateTierConfigInput,
+import {
+  rankSeasonFilters,
+  type AdjustPlayerInput,
+  type CreateSeasonInput,
+  type CreateTierConfigInput,
+  type SettleMatchInput,
+  type UpdateSeasonInput,
+  type UpdateTierConfigInput,
 } from "./validators";
 
 // ─── Extend event-bus type map for rank-domain events ────────────
@@ -629,16 +630,15 @@ export function createRankService(
     filter: PageParams & { tierConfigId?: string; status?: SeasonStatus } = {},
   ): Promise<Page<RankSeason>> {
     const limit = clampLimit(filter.limit);
-    const conds: SQL[] = [eq(rankSeasons.organizationId, organizationId)];
-    if (filter.tierConfigId)
-      conds.push(eq(rankSeasons.tierConfigId, filter.tierConfigId));
-    if (filter.status) conds.push(eq(rankSeasons.status, filter.status));
-    const seek = cursorWhere(filter.cursor, rankSeasons.createdAt, rankSeasons.id);
-    if (seek) conds.push(seek);
+    const where = and(
+      eq(rankSeasons.organizationId, organizationId),
+      rankSeasonFilters.where(filter as Record<string, unknown>),
+      cursorWhere(filter.cursor, rankSeasons.createdAt, rankSeasons.id),
+    );
     const rows = await db
       .select()
       .from(rankSeasons)
-      .where(and(...conds))
+      .where(where)
       .orderBy(desc(rankSeasons.createdAt), desc(rankSeasons.id))
       .limit(limit + 1);
     return buildPage(rows, limit);

@@ -19,6 +19,7 @@ import {
   useUpdateBannerGroup,
 } from "#/hooks/use-banner"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -32,7 +33,7 @@ const FORM_ID = "banner-group-form"
 
 export const Route = createFileRoute("/_dashboard/banner/")({
   component: BannerListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function BannerListPage() {
@@ -70,6 +71,7 @@ function BannerListPage() {
 
       <PageBody>
         <GroupTable
+          route={Route}
           activityId={filter.activityId}
           includeActivity={filter.includeActivity}
         />

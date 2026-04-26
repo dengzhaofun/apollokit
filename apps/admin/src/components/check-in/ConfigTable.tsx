@@ -13,7 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useCheckInConfigs } from "#/hooks/use-check-in"
+import {
+  CHECK_IN_CONFIG_FILTER_DEFS,
+  useCheckInConfigs,
+} from "#/hooks/use-check-in"
 import type { CheckInConfig } from "#/lib/types/check-in"
 import * as m from "#/paraglide/messages.js"
 
@@ -131,26 +134,33 @@ interface Props {
   /** Pass an activity scope filter — see useCheckInConfigs. */
   activityId?: string
   includeActivity?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function ConfigTable(props: Props = {}) {
-  const list = useCheckInConfigs(props)
+export function ConfigTable({ route, ...rest }: Props) {
+  const list = useCheckInConfigs(route, rest)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={CHECK_IN_CONFIG_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

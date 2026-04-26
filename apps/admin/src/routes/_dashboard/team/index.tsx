@@ -18,6 +18,7 @@ import {
   useUpdateTeamConfig,
 } from "#/hooks/use-team"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -30,7 +31,7 @@ const FORM_ID = "team-config-form"
 
 export const Route = createFileRoute("/_dashboard/team/")({
   component: TeamPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 const columnHelper = createColumnHelper<TeamConfig>()
@@ -93,7 +94,7 @@ function TeamPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const list = useTeamConfigs()
+  const list = useTeamConfigs(Route)
   const columns = useColumns()
 
   return (

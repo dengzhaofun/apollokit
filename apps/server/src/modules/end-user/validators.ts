@@ -1,6 +1,9 @@
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { euAccount, euUser } from "../../schema/end-user-auth";
 
 /**
  * Input schema for POST /api/end-user/sync.
@@ -39,18 +42,42 @@ export const EndUserIdParamSchema = z
   })
   .openapi("EndUserIdParam");
 
-export const ListEndUsersQuerySchema = z
-  .object({
-    search: z.string().min(1).max(255).optional(),
-    origin: z.enum(["managed", "synced"]).optional(),
-    disabled: z
-      .enum(["true", "false"])
-      .transform((v) => v === "true")
-      .optional(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(200).optional(),
+/**
+ * Module filter handle — single source of truth for end-user list
+ * filters. Drives both the route's request.query schema (server) and
+ * the admin page's `validateSearch` schema (admin imports
+ * `endUserFilters.adminQueryFragment`'s shape via `EndUserFilterShape`
+ * below).
+ *
+ * `origin` is derived from a join (presence/absence of a credential
+ * row in `eu_account`) rather than a column on `eu_user`, so it goes
+ * through the custom `where` callback. Every other field maps to a
+ * column directly.
+ */
+export const endUserFilters = defineListFilter({
+  origin: f.enumOf(["managed", "synced"], {
+    where: (v) =>
+      v === "managed"
+        ? sql`EXISTS (SELECT 1 FROM ${euAccount} WHERE ${euAccount.userId} = ${euUser.id} AND ${euAccount.providerId} = 'credential')`
+        : sql`NOT EXISTS (SELECT 1 FROM ${euAccount} WHERE ${euAccount.userId} = ${euUser.id} AND ${euAccount.providerId} = 'credential')`,
+  }),
+  disabled: f.boolean({ column: euUser.disabled }),
+  emailVerified: f.boolean({ column: euUser.emailVerified }),
+  externalId: f.string({ column: euUser.externalId, ops: ["eq", "contains"] }),
+  createdAt: f.dateRange({ column: euUser.createdAt }),
+})
+  .search({
+    // pg_trgm GIN indexes exist on (name, email) — see drizzle/0002_pg_trgm_search_indexes.sql.
+    // externalId is included for correctness but seq-scans (no trgm index on it yet);
+    // trgm mode keeps the planner using the indexed columns when the term matches them.
+    columns: [euUser.name, euUser.email, euUser.externalId],
+    mode: "trgm",
   })
-  .openapi("ListEndUsersQuery");
+  .build();
+
+export const ListEndUsersQuerySchema = endUserFilters.querySchema.openapi(
+  "ListEndUsersQuery",
+);
 
 export const EndUserViewSchema = z
   .object({

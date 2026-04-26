@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateCurrencyInput,
   CurrencyBalance,
@@ -21,28 +26,43 @@ const LEDGER_KEY = ["currency-ledger"] as const
 
 // ─── Definitions ──────────────────────────────────────────────────
 
-/** Paginated currencies list — wired into <DataTable />. */
-export function useCurrencies(
-  opts: {
-    initialPageSize?: number
-    activityId?: string | null
-    isActive?: boolean
-  } = {},
-) {
-  const { initialPageSize = 50, activityId, isActive } = opts
-  return useCursorList<CurrencyDefinition>({
-    queryKey: [...DEFINITIONS_KEY, { activityId: activityId ?? null, isActive: isActive ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+/**
+ * Filter defs for the currency-definitions list. Mirrors the server's
+ * `currencyDefinitionFilters` (validators.ts).
+ */
+export const CURRENCY_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "isActive",
+    label: "Status",
+    type: "boolean",
+    trueLabel: "Active",
+    falseLabel: "Inactive",
+  },
+  {
+    id: "activityId",
+    label: "Activity",
+    type: "select",
+    options: [{ value: "null", label: "Permanent only" }],
+  },
+]
+
+/** URL-driven currencies list — wired into <DataTable />. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCurrencies(route: any) {
+  return useListSearch<CurrencyDefinition>({
+    route,
+    queryKey: DEFINITIONS_KEY,
+    filterDefs: CURRENCY_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CurrencyDefinition>>(
         `/api/currency/definitions?${buildQs({
           cursor,
           limit,
           q,
-          activityId: activityId === null ? "" : activityId,
-          isActive: isActive == null ? undefined : isActive ? "true" : "false",
+          adv,
+          ...filters,
         })}`,
       ),
-    initialPageSize,
   })
 }
 

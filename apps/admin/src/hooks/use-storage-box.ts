@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateStorageBoxConfigInput,
   DepositInput,
@@ -17,15 +22,19 @@ const DEPOSITS_KEY = ["storage-box-deposits"] as const
 
 // ─── Configs ──────────────────────────────────────────────────────
 
-/** Paginated configs — for the admin StorageBoxConfigTable. */
-export function useStorageBoxConfigs(initialPageSize = 50) {
-  return useCursorList<StorageBoxConfig>({
+export const STORAGE_BOX_CONFIG_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated configs — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useStorageBoxConfigs(route: any) {
+  return useListSearch<StorageBoxConfig>({
+    route,
     queryKey: CONFIGS_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: STORAGE_BOX_CONFIG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<StorageBoxConfig>>(
-        `/api/storage-box/configs?${buildQs({ cursor, limit, q })}`,
+        `/api/storage-box/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 

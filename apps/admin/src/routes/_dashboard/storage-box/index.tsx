@@ -5,10 +5,12 @@ import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { StorageBoxConfigTable } from "#/components/storage-box/StorageBoxConfigTable"
 import { StorageBoxDepositLookup } from "#/components/storage-box/StorageBoxDepositLookup"
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/storage-box/")({
   component: StorageBoxListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function StorageBoxListPage() {
@@ -30,7 +32,7 @@ function StorageBoxListPage() {
           </div>
 
           <TabsContent value="configs" className="mt-4">
-            <StorageBoxConfigTable />
+            <StorageBoxConfigTable route={Route} />
           </TabsContent>
 
           <TabsContent value="deposits" className="mt-4">

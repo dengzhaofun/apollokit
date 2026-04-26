@@ -6,8 +6,11 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { taskCategories, taskDefinitions } from "../../schema/task";
 import { compileTaskFilter, FILTER_MAX_LENGTH } from "./filter";
 import {
   CATEGORY_SCOPES,
@@ -16,6 +19,54 @@ import {
   TASK_PERIODS,
   TASK_VISIBILITIES,
 } from "./types";
+
+// ─── List filters ──────────────────────────────────────────────────
+
+export const taskCategoryFilters = defineListFilter({
+  scope: f.enumOf(CATEGORY_SCOPES, { column: taskCategories.scope }),
+  isActive: f.boolean({ column: taskCategories.isActive }),
+})
+  .search({ columns: [taskCategories.name, taskCategories.alias] })
+  .build();
+
+export const ListTaskCategoriesQuerySchema =
+  taskCategoryFilters.querySchema.openapi("ListTaskCategoriesQuery");
+
+export const taskDefinitionFilters = defineListFilter({
+  categoryId: f.uuid({ column: taskDefinitions.categoryId }),
+  period: f.enumOf(TASK_PERIODS, { column: taskDefinitions.period }),
+  countingMethod: f.enumOf(COUNTING_METHODS, {
+    column: taskDefinitions.countingMethod,
+  }),
+  visibility: f.enumOf(TASK_VISIBILITIES, {
+    column: taskDefinitions.visibility,
+  }),
+  isActive: f.boolean({ column: taskDefinitions.isActive }),
+  isHidden: f.boolean({ column: taskDefinitions.isHidden }),
+  parentId: f.string({
+    column: taskDefinitions.parentId,
+    where: (v: string) =>
+      v === "null"
+        ? sql`${taskDefinitions.parentId} IS NULL`
+        : sql`${taskDefinitions.parentId} = ${v}`,
+  }),
+  activityId: f.string({
+    column: taskDefinitions.activityId,
+    where: (v: string) =>
+      v === "null"
+        ? sql`${taskDefinitions.activityId} IS NULL`
+        : sql`${taskDefinitions.activityId} = ${v}`,
+  }),
+})
+  .search({
+    columns: [taskDefinitions.name, taskDefinitions.alias],
+    // pg_trgm GIN index exists — see drizzle/0002_pg_trgm_search_indexes.sql.
+    mode: "trgm",
+  })
+  .build();
+
+export const ListTaskDefinitionsQuerySchema =
+  taskDefinitionFilters.querySchema.openapi("ListTaskDefinitionsQuery");
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 

@@ -16,11 +16,13 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { useCmsType } from "#/hooks/use-cms"
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 import type { CmsEntryStatus } from "#/lib/types/cms"
 
 export const Route = createFileRoute("/_dashboard/cms/$typeAlias/")({
   component: CmsEntryListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function CmsEntryListPage() {
@@ -124,6 +126,7 @@ function CmsEntryListPage() {
           status={status === "__all" ? undefined : status}
           groupKey={groupKey || undefined}
           tag={tag || undefined}
+          route={Route}
         />
       </main>
     </>

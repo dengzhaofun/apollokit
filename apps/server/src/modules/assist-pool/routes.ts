@@ -154,13 +154,14 @@ assistPoolRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const q = c.req.valid("query");
+    // The DSL doesn't model `includeActivity`'s "switch off the
+    // implicit IS NULL filter" semantic — service layer translates it.
+    const raw = c.req.valid("query") as Record<string, unknown> & {
+      includeActivity?: string;
+    };
     const page = await assistPoolService.listConfigs(orgId, {
-      activityId: q.activityId,
-      includeActivity: q.includeActivity === "true",
-      cursor: q.cursor,
-      limit: q.limit,
-      q: q.q,
+      ...raw,
+      includeActivity: raw.includeActivity === "true",
     });
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),

@@ -12,10 +12,12 @@ import {
   useFriendGiftPackages,
   useFriendGiftSettings,
 } from "#/hooks/use-friend-gift"
+import { listSearchSchema } from "#/lib/list-search"
 import type { FriendGiftPackage } from "#/lib/types/friend-gift"
 
 export const Route = createFileRoute("/_dashboard/friend-gift/")({
   component: FriendGiftPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 const columnHelper = createColumnHelper<FriendGiftPackage>()
@@ -67,7 +69,7 @@ function useColumns(): ColumnDef<FriendGiftPackage, unknown>[] {
 
 function FriendGiftPage() {
   const { data: settings, isPending: settingsLoading } = useFriendGiftSettings()
-  const list = useFriendGiftPackages()
+  const list = useFriendGiftPackages(Route)
   const columns = useColumns()
 
   return (
@@ -120,17 +122,8 @@ function FriendGiftPage() {
         <DataTable
           columns={columns}
           data={list.items}
-          isLoading={list.isLoading}
           getRowId={(row) => row.id}
-          pageIndex={list.pageIndex}
-          canPrev={list.canPrev}
-          canNext={list.canNext}
-          onNextPage={list.nextPage}
-          onPrevPage={list.prevPage}
-          pageSize={list.pageSize}
-          onPageSizeChange={list.setPageSize}
-          searchValue={list.searchInput}
-          onSearchChange={list.setSearchInput}
+          {...list.tableProps}
         />
       </main>
     </>

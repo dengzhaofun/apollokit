@@ -53,9 +53,10 @@ import type {
   LedgerQuery,
   WalletView,
 } from "./types";
-import type {
-  CreateCurrencyInput,
-  UpdateCurrencyInput,
+import {
+  currencyDefinitionFilters,
+  type CreateCurrencyInput,
+  type UpdateCurrencyInput,
 } from "./validators";
 
 type CurrencyDeps = Pick<AppDeps, "db">;
@@ -217,28 +218,26 @@ export function createCurrencyService(d: CurrencyDeps) {
       opts: PageParams & { activityId?: string | null; isActive?: boolean } = {},
     ): Promise<Page<CurrencyDefinition>> {
       const limit = clampLimit(opts.limit);
-      const conditions: SQL[] = [eq(currencies.organizationId, organizationId)];
-      if (opts.activityId !== undefined) {
-        if (opts.activityId === null) {
-          conditions.push(sql`${currencies.activityId} IS NULL`);
-        } else {
-          conditions.push(eq(currencies.activityId, opts.activityId));
-        }
-      }
-      if (opts.isActive !== undefined) {
-        conditions.push(eq(currencies.isActive, opts.isActive));
-      }
-      const seek = cursorWhere(opts.cursor, currencies.createdAt, currencies.id);
-      if (seek) conditions.push(seek);
-      if (opts.q) {
-        const pat = `%${opts.q}%`;
-        const search = or(ilike(currencies.name, pat), ilike(currencies.alias, pat));
-        if (search) conditions.push(search);
-      }
+      // Normalise legacy `activityId: null` callers to the DSL's
+      // canonical "null" sentinel so the same WHERE branch fires.
+      const filterInput = {
+        ...opts,
+        activityId:
+          opts.activityId === null
+            ? "null"
+            : opts.activityId === undefined
+              ? undefined
+              : opts.activityId,
+      } as Record<string, unknown>;
+      const where = and(
+        eq(currencies.organizationId, organizationId),
+        currencyDefinitionFilters.where(filterInput),
+        cursorWhere(opts.cursor, currencies.createdAt, currencies.id),
+      );
       const rows = await db
         .select()
         .from(currencies)
-        .where(and(...conditions))
+        .where(where)
         .orderBy(desc(currencies.createdAt), desc(currencies.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

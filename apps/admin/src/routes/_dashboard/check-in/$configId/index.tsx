@@ -18,6 +18,7 @@ import {
   useDeleteCheckInConfig,
 } from "#/hooks/use-check-in"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 
 
 function getResetModeLabels(): Record<string, string> {
@@ -42,6 +43,7 @@ function getWeekDayLabels(): string[] {
 
 export const Route = createFileRoute("/_dashboard/check-in/$configId/")({
   component: CheckInDetailPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function CheckInDetailPage() {
@@ -226,7 +228,7 @@ function CheckInDetailPage() {
           {/* User States (read-only) */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">{m.checkin_checkin_users()}</h3>
-            <UserStatesTable configKey={configId} />
+            <UserStatesTable configKey={configId} route={Route} />
           </div>
         </div>
       </main>

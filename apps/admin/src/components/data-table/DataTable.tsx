@@ -2,14 +2,21 @@
  * Generic shadcn + tanstack-table list component — server-paginated.
  *
  * Every list page in admin uses cursor pagination against the backend's
- * `?cursor&limit&q` contract (see `apps/server/src/lib/pagination.ts`).
- * The table itself does NO client-side filtering or sorting — the
- * server is the source of truth for both. This is what makes the
- * dashboard scale: a 100k-row table never lands in the browser.
+ * `?cursor&limit&q&...filters&adv` contract (see
+ * `apps/server/src/lib/pagination.ts` + `list-filter.ts`). The table
+ * itself does NO client-side filtering or sorting — the server is the
+ * source of truth for both. This is what makes the dashboard scale: a
+ * 100k-row table never lands in the browser.
  *
- * The caller's job: pass the current page's rows + `nextCursor` +
- * pagination callbacks. The `useCursorList` hook in
- * `#/hooks/use-cursor-list` does that boilerplate.
+ * The caller's job is small:
+ *   - pass current page rows + `nextCursor` + pagination callbacks
+ *   - pass `filterDefs` describing which filter facets the toolbar
+ *     should render, and the current values + setters
+ *   - optionally enable Advanced mode for nested AND/OR queries
+ *
+ * The `useListSearch` hook in `#/hooks/use-list-search` produces the
+ * exact prop bag this component expects via `list.tableProps` plus
+ * `list.filters / setFilter / mode / setMode / advanced / setAdvanced`.
  *
  * Sorting: client-side sort is disabled. If a module needs sorted
  * output, the server's list service returns rows in its canonical
@@ -52,6 +59,12 @@ import {
 } from "#/components/ui/table"
 import * as m from "#/paraglide/messages.js"
 
+import { DataTableAdvancedFilter } from "./DataTableAdvancedFilter"
+import { DataTableFilterToolbar } from "./DataTableFilterToolbar"
+
+import type { FilterDef, FilterValue } from "#/hooks/use-list-search"
+import type { RuleGroupType } from "#/components/ui/query-builder"
+
 interface Props<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[]
@@ -60,7 +73,7 @@ interface Props<T> {
   isLoading?: boolean
   /** Custom empty-state node. Falls back to a generic "no matches". */
   empty?: ReactNode
-  /** Optional left-side content next to the search box (e.g. filters). */
+  /** Optional left-side content next to the search box (e.g. extra buttons). */
   toolbar?: ReactNode
 
   // ─── Pagination (server-driven cursor) ─────────────────────────────
@@ -82,6 +95,28 @@ interface Props<T> {
   /** Current search term — controlled input so route can debounce. */
   searchValue?: string
   onSearchChange?: (value: string) => void
+
+  // ─── Filters (faceted + advanced) ───────────────────────────────────
+  /** Declarative filter spec — drives the toolbar's facets and the
+   *  advanced QueryBuilder's field list. */
+  filters?: FilterDef[]
+  /** Current filter values, keyed by filter id. */
+  filterValues?: Record<string, FilterValue["value"]>
+  /** Set a single filter id to a new value (undefined to clear). */
+  onFilterChange?: (id: string, value: FilterValue["value"]) => void
+  /** Reset all filters at once. */
+  onResetFilters?: () => void
+  /** True when at least one filter has a non-empty value. */
+  hasActiveFilters?: boolean
+  /** Number of currently-active filters (badge display). */
+  activeFilterCount?: number
+
+  /** Toolbar mode toggle. Pass undefined to hide the toggle entirely. */
+  mode?: "basic" | "advanced"
+  onModeChange?: (mode: "basic" | "advanced") => void
+  /** Advanced AST (react-querybuilder format) — controlled. */
+  advancedQuery?: RuleGroupType | undefined
+  onAdvancedQueryChange?: (next: RuleGroupType) => void
 
   /** Custom rowId for stable selection. */
   getRowId?: (row: T, index: number) => string
@@ -105,6 +140,16 @@ export function DataTable<T>({
   showSearch = true,
   searchValue,
   onSearchChange,
+  filters,
+  filterValues,
+  onFilterChange,
+  onResetFilters,
+  hasActiveFilters,
+  activeFilterCount,
+  mode,
+  onModeChange,
+  advancedQuery,
+  onAdvancedQueryChange,
   getRowId,
 }: Props<T>) {
   const table = useReactTable({
@@ -118,6 +163,13 @@ export function DataTable<T>({
   })
 
   const rows = table.getRowModel().rows
+
+  // Filter toolbar is rendered when there are filters OR the caller
+  // wired up a mode toggle. Otherwise we skip the row entirely.
+  const hasFilters = !!(filters && filters.length > 0)
+  const hasModeToggle = !!(mode && onModeChange)
+  const showFilterRow = hasFilters || hasModeToggle
+  const isAdvanced = mode === "advanced"
 
   return (
     <div className="space-y-3">
@@ -137,6 +189,29 @@ export function DataTable<T>({
           {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
         </div>
       )}
+
+      {showFilterRow ? (
+        <DataTableFilterToolbar
+          filterDefs={filters ?? []}
+          filterValues={filterValues ?? {}}
+          onFilterChange={onFilterChange ?? (() => {})}
+          onResetFilters={onResetFilters ?? (() => {})}
+          hasActiveFilters={!!hasActiveFilters}
+          activeFilterCount={activeFilterCount ?? 0}
+          mode={mode ?? "basic"}
+          onModeChange={onModeChange ?? (() => {})}
+          showAdvancedToggle={hasModeToggle}
+        />
+      ) : null}
+
+      {isAdvanced && hasFilters && onAdvancedQueryChange && onModeChange ? (
+        <DataTableAdvancedFilter
+          filterDefs={filters!}
+          query={advancedQuery}
+          onChange={onAdvancedQueryChange}
+          onClear={() => onModeChange("basic")}
+        />
+      ) : null}
 
       <div className="rounded-xl border bg-card shadow-sm">
         <Table>

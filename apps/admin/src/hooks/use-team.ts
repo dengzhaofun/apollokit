@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateTeamConfigInput,
   Team,
@@ -12,13 +17,19 @@ import type {
 const CONFIGS_KEY = ["team-configs"] as const
 const TEAMS_KEY = ["teams"] as const
 
-/** Paginated team configs — for the admin configs table. */
-export function useTeamConfigs(initialPageSize = 50) {
-  return useCursorList<TeamConfig>({
+export const TEAM_CONFIG_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated team configs — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useTeamConfigs(route: any) {
+  return useListSearch<TeamConfig>({
+    route,
     queryKey: CONFIGS_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
-      api.get<Page<TeamConfig>>(`/api/team/configs?${buildQs({ cursor, limit, q })}`),
-    initialPageSize,
+    filterDefs: TEAM_CONFIG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
+      api.get<Page<TeamConfig>>(
+        `/api/team/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+      ),
   })
 }
 
@@ -67,18 +78,48 @@ export function useDeleteTeamConfig() {
   })
 }
 
-/** Paginated teams — supports configKey + status filters. */
+export const TEAM_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "open", label: "Open" },
+      { value: "closed", label: "Closed" },
+      { value: "in_game", label: "In game" },
+      { value: "dissolved", label: "Dissolved" },
+    ],
+  },
+]
+
+/**
+ * Paginated teams — URL-driven for status/q/cursor.
+ *
+ * `configKey` is passed via `extraQuery` (route-level scope, not a
+ * URL filter) so per-config team lists keep their own URL state without
+ * needing the parent to encode the configKey itself.
+ */
 export function useTeams(
-  opts: { configKey?: string; status?: string; initialPageSize?: number } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: { configKey?: string } = {},
 ) {
-  const { configKey, status, initialPageSize = 50 } = opts
-  return useCursorList<Team>({
-    queryKey: [...TEAMS_KEY, { configKey: configKey ?? null, status: status ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+  const { configKey } = extraQuery
+  return useListSearch<Team>({
+    route,
+    queryKey: [...TEAMS_KEY, { configKey: configKey ?? null }],
+    filterDefs: TEAM_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Team>>(
-        `/api/team/teams?${buildQs({ cursor, limit, q, configKey, status })}`,
+        `/api/team/teams?${buildQs({
+          cursor,
+          limit,
+          q,
+          adv,
+          ...filters,
+          configKey,
+        })}`,
       ),
-    initialPageSize,
   })
 }
 

@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   AdjustRankPlayerInput,
   CreateRankSeasonInput,
@@ -11,7 +17,6 @@ import type {
   RankPlayerListResponse,
   RankPlayerView,
   RankSeason,
-  RankSeasonListResponse,
   RankTierConfig,
   RankTierConfigListResponse,
   UpdateRankSeasonInput,
@@ -86,21 +91,36 @@ export function useDeleteRankTierConfig() {
 
 // ─── Seasons ─────────────────────────────────────────────────────
 
-export function useRankSeasons(filter: {
-  tierConfigId?: string
-  status?: "upcoming" | "active" | "finished"
-} = {}) {
-  const params = new URLSearchParams()
-  if (filter.tierConfigId) params.set("tierConfigId", filter.tierConfigId)
-  if (filter.status) params.set("status", filter.status)
-  const qs = params.toString()
-  return useQuery({
-    queryKey: [...SEASONS_KEY, filter.tierConfigId ?? null, filter.status ?? null],
-    queryFn: () =>
-      api.get<RankSeasonListResponse>(
-        `/api/rank/seasons${qs ? `?${qs}` : ""}`,
+export const RANK_SEASON_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "upcoming", label: "Upcoming" },
+      { value: "active", label: "Active" },
+      { value: "finished", label: "Finished" },
+    ],
+  },
+  {
+    id: "tierConfigId",
+    label: "Tier config",
+    type: "select",
+    options: [],
+  },
+]
+
+/** Paginated rank seasons — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useRankSeasons(route: any) {
+  return useListSearch<RankSeason>({
+    route,
+    queryKey: SEASONS_KEY,
+    filterDefs: RANK_SEASON_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
+      api.get<Page<RankSeason>>(
+        `/api/rank/seasons?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    select: (data) => data.items,
   })
 }
 

@@ -5,9 +5,11 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { FormationConfigTable } from "#/components/entity/FormationConfigTable"
+import { listSearchSchema } from "#/lib/list-search"
 
 export const Route = createFileRoute("/_dashboard/entity/formations/")({
   component: EntityFormationsPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function EntityFormationsPage() {
@@ -25,7 +27,7 @@ function EntityFormationsPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <FormationConfigTable />
+        <FormationConfigTable route={Route} />
       </main>
     </>
   )

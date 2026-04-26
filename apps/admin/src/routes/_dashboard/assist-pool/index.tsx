@@ -10,12 +10,14 @@ import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
 import {
+  ASSIST_POOL_CONFIG_FILTER_DEFS,
   useAssistPoolConfig,
   useAssistPoolConfigs,
   useCreateAssistPoolConfig,
   useUpdateAssistPoolConfig,
 } from "#/hooks/use-assist-pool"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -34,7 +36,7 @@ const FORM_ID = "assist-pool-config-form"
 
 export const Route = createFileRoute("/_dashboard/assist-pool/")({
   component: AssistPoolListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function formatPolicy(p: AssistContributionPolicy): string {
@@ -104,7 +106,7 @@ function AssistPoolListPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const list = useAssistPoolConfigs()
+  const list = useAssistPoolConfigs(Route)
   const columns = useColumns()
 
   return (
@@ -125,17 +127,22 @@ function AssistPoolListPage() {
         <DataTable
           columns={columns}
           data={list.items}
-          isLoading={list.isLoading}
           getRowId={(row) => row.id}
-          pageIndex={list.pageIndex}
-          canPrev={list.canPrev}
-          canNext={list.canNext}
-          onNextPage={list.nextPage}
-          onPrevPage={list.prevPage}
-          pageSize={list.pageSize}
-          onPageSizeChange={list.setPageSize}
-          searchValue={list.searchInput}
-          onSearchChange={list.setSearchInput}
+          filters={ASSIST_POOL_CONFIG_FILTER_DEFS}
+          filterValues={list.filters}
+          onFilterChange={list.setFilter}
+          onResetFilters={list.resetFilters}
+          hasActiveFilters={list.hasActiveFilters}
+          activeFilterCount={list.activeFilterCount}
+          mode={list.mode}
+          onModeChange={list.setMode}
+          advancedQuery={
+            list.advanced as
+              | import("#/components/ui/query-builder").RuleGroupType
+              | undefined
+          }
+          onAdvancedQueryChange={list.setAdvanced}
+          {...list.tableProps}
         />
       </PageBody>
 

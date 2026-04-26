@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   Activity,
   ActivityMemberListItem,
@@ -19,13 +24,19 @@ import type {
 
 const KEY = ["activities"] as const
 
-/** Paginated activities — for the admin ActivityTable. */
-export function useActivities(initialPageSize = 50) {
-  return useCursorList<Activity>({
+export const ACTIVITY_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated activities — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useActivities(route: any) {
+  return useListSearch<Activity>({
+    route,
     queryKey: KEY,
-    fetchPage: ({ cursor, limit, q }) =>
-      api.get<Page<Activity>>(`/api/activity?${buildQs({ cursor, limit, q })}`),
-    initialPageSize,
+    filterDefs: ACTIVITY_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
+      api.get<Page<Activity>>(
+        `/api/activity?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+      ),
   })
 }
 

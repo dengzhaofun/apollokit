@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CdkeyBatch,
   CdkeyCode,
@@ -14,15 +19,19 @@ const BATCHES_KEY = ["cdkey-batches"] as const
 
 // ─── Batches ──────────────────────────────────────────────────────
 
-/** Paginated batches — for the admin BatchTable. */
-export function useCdkeyBatches(initialPageSize = 50) {
-  return useCursorList<CdkeyBatch>({
+export const CDKEY_BATCH_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated batches — for the admin BatchTable. URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCdkeyBatches(route: any) {
+  return useListSearch<CdkeyBatch>({
+    route,
     queryKey: BATCHES_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: CDKEY_BATCH_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyBatch>>(
-        `/api/cdkey/batches?${buildQs({ cursor, limit, q })}`,
+        `/api/cdkey/batches?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -62,19 +71,31 @@ export function useDeleteCdkeyBatch() {
 
 // ─── Codes ─────────────────────────────────────────────────────────
 
-/** Paginated codes under one batch. */
-export function useCdkeyCodes(
-  batchId: string,
-  opts: { status?: string; initialPageSize?: number } = {},
-) {
-  const { status, initialPageSize = 50 } = opts
-  return useCursorList<CdkeyCode>({
-    queryKey: ["cdkey-codes", batchId, { status: status ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+export const CDKEY_CODE_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "pending", label: "Pending" },
+      { value: "redeemed", label: "Redeemed" },
+      { value: "revoked", label: "Revoked" },
+      { value: "active", label: "Active" },
+    ],
+  },
+]
+
+/** Paginated codes under one batch. URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCdkeyCodes(batchId: string, route: any) {
+  return useListSearch<CdkeyCode>({
+    route,
+    queryKey: ["cdkey-codes", batchId],
+    filterDefs: CDKEY_CODE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyCode>>(
-        `/api/cdkey/batches/${batchId}/codes?${buildQs({ cursor, limit, q, status })}`,
+        `/api/cdkey/batches/${batchId}/codes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!batchId,
   })
 }
@@ -105,19 +126,29 @@ export function useRevokeCdkeyCode() {
 
 // ─── Logs ──────────────────────────────────────────────────────────
 
-/** Paginated redemption logs under one batch. */
-export function useCdkeyLogs(
-  batchId: string,
-  opts: { status?: string; initialPageSize?: number } = {},
-) {
-  const { status, initialPageSize = 50 } = opts
-  return useCursorList<CdkeyRedemptionLog>({
-    queryKey: ["cdkey-logs", batchId, { status: status ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+export const CDKEY_LOG_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "success", label: "Success" },
+      { value: "failed", label: "Failed" },
+    ],
+  },
+]
+
+/** Paginated redemption logs under one batch. URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCdkeyLogs(batchId: string, route: any) {
+  return useListSearch<CdkeyRedemptionLog>({
+    route,
+    queryKey: ["cdkey-logs", batchId],
+    filterDefs: CDKEY_LOG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyRedemptionLog>>(
-        `/api/cdkey/batches/${batchId}/logs?${buildQs({ cursor, limit, q, status })}`,
+        `/api/cdkey/batches/${batchId}/logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!batchId,
   })
 }

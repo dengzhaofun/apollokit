@@ -1,6 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import {
+  cdkeyCodes,
+  cdkeyRedemptionLogs,
+} from "../../schema/cdkey";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
@@ -119,23 +124,29 @@ export const GenerateCodesSchema = z
 
 export type GenerateCodesInput = z.input<typeof GenerateCodesSchema>;
 
-export const CodeListQuerySchema = z.object({
-  status: z.enum(["pending", "redeemed", "revoked", "active"]).optional(),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
+export const cdkeyCodeFilters = defineListFilter({
+  status: f.enumOf(["pending", "redeemed", "revoked", "active"], {
+    column: cdkeyCodes.status,
   }),
-  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
-});
+})
+  .search({ columns: [cdkeyCodes.code] })
+  .build();
 
-export const LogListQuerySchema = z.object({
-  status: z.enum(["success", "failed"]).optional(),
-  cursor: z.string().optional().openapi({ param: { name: "cursor", in: "query" } }),
-  limit: z.coerce.number().int().min(1).max(200).optional().openapi({
-    param: { name: "limit", in: "query" },
+export const CodeListQuerySchema = cdkeyCodeFilters.querySchema.openapi(
+  "CdkeyCodeListQuery",
+);
+
+export const cdkeyLogFilters = defineListFilter({
+  status: f.enumOf(["success", "failed"], {
+    column: cdkeyRedemptionLogs.status,
   }),
-  q: z.string().optional().openapi({ param: { name: "q", in: "query" } }),
-});
+})
+  .search({ columns: [cdkeyRedemptionLogs.code] })
+  .build();
+
+export const LogListQuerySchema = cdkeyLogFilters.querySchema.openapi(
+  "CdkeyLogListQuery",
+);
 
 // ─── Redeem ────────────────────────────────────────────────────
 
