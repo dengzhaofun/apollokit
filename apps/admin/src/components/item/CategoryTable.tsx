@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
 import { useItemCategories } from "#/hooks/use-item"
+import { openEditModal } from "#/lib/modal-search"
 import type { ItemCategory } from "#/lib/types/item"
 import * as m from "#/paraglide/messages.js"
 
@@ -31,8 +32,8 @@ function ActionsCell({ category }: { category: ItemCategory }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link
-            to="/item/categories/$categoryId"
-            params={{ categoryId: category.id }}
+            to="/item/categories"
+            search={(prev) => ({ ...prev, ...openEditModal(category.id) })}
           >
             <Pencil className="size-4" />
             {m.common_edit()}
@@ -60,8 +61,8 @@ function useColumns(): ColumnDef<ItemCategory, unknown>[] {
         header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/item/categories/$categoryId"
-            params={{ categoryId: info.row.original.id }}
+            to="/item/categories"
+            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

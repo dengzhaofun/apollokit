@@ -1,72 +1,15 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { ArrowLeft } from "lucide-react"
-import { toast } from "sonner"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 
-import { BannerForm } from "#/components/banner/BannerForm"
-import { Button } from "#/components/ui/button"
-import { useBanner, useUpdateBanner } from "#/hooks/use-banner"
-import { ApiError } from "#/lib/api-client"
-import * as m from "#/paraglide/messages.js"
+import { openEditChildModal } from "#/lib/modal-search"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/banner/$groupId/banners/$bannerId",
 )({
-  component: BannerEditPage,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/banner/$groupId",
+      params: { groupId: params.groupId },
+      search: openEditChildModal("banner", params.bannerId),
+    })
+  },
 })
-
-function BannerEditPage() {
-  const { groupId, bannerId } = Route.useParams()
-  const navigate = useNavigate()
-  const { data: banner, isPending } = useBanner(bannerId)
-  const mutation = useUpdateBanner()
-
-  return (
-    <>
-      <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link
-            to="/banner/$groupId"
-            params={{ groupId }}
-          >
-            <ArrowLeft className="size-4" />
-            {m.banner_back_to_group()}
-          </Link>
-        </Button>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
-        <div className="mx-auto max-w-3xl rounded-xl border bg-card p-6 shadow-sm">
-          {isPending || !banner ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
-              {m.common_loading()}
-            </div>
-          ) : (
-            <BannerForm
-              initial={banner}
-              isPending={mutation.isPending}
-              submitLabel={m.common_save_changes()}
-              onSubmit={async (values) => {
-                try {
-                  await mutation.mutateAsync({
-                    id: bannerId,
-                    groupId,
-                    input: values,
-                  })
-                  toast.success(m.banner_banner_updated())
-                  navigate({
-                    to: "/banner/$groupId",
-                    params: { groupId },
-                  })
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error(m.banner_failed_update_banner())
-                }
-              }}
-            />
-          )}
-        </div>
-      </main>
-    </>
-  )
-}

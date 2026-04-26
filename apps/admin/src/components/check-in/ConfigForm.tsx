@@ -1,6 +1,10 @@
 import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
+import {
+  FormStateBridge,
+  type FormBridgeState,
+} from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import {
@@ -44,6 +48,9 @@ interface ConfigFormProps {
   onSubmit: (values: CreateConfigInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  id?: string
+  hideSubmitButton?: boolean
+  onStateChange?: (state: FormBridgeState) => void
 }
 
 export function ConfigForm({
@@ -51,6 +58,9 @@ export function ConfigForm({
   onSubmit,
   isPending,
   submitLabel = m.common_create(),
+  id,
+  hideSubmitButton,
+  onStateChange,
 }: ConfigFormProps) {
   const RESET_MODE_LABELS = getResetModeLabels()
   const WEEK_DAY_LABELS = getWeekDayLabels()
@@ -84,6 +94,7 @@ export function ConfigForm({
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -91,6 +102,18 @@ export function ConfigForm({
       }}
       className="space-y-6"
     >
+      {onStateChange ? (
+        <form.Subscribe
+          selector={(s) => ({
+            canSubmit: s.canSubmit,
+            isDirty: s.isDirty,
+            isSubmitting: s.isSubmitting,
+          })}
+        >
+          {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
+        </form.Subscribe>
+      ) : null}
+
       <form.Field
         name="name"
         validators={{
@@ -262,13 +285,15 @@ export function ConfigForm({
         )}
       </form.Field>
 
-      <form.Subscribe selector={(s) => s.canSubmit}>
-        {(canSubmit) => (
-          <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "Saving..." : submitLabel}
-          </Button>
-        )}
-      </form.Subscribe>
+      {hideSubmitButton ? null : (
+        <form.Subscribe selector={(s) => s.canSubmit}>
+          {(canSubmit) => (
+            <Button type="submit" disabled={!canSubmit || isPending}>
+              {isPending ? "Saving..." : submitLabel}
+            </Button>
+          )}
+        </form.Subscribe>
+      )}
     </form>
   )
 }

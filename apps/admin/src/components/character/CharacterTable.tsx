@@ -7,6 +7,7 @@ import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
 import { useCharacters } from "#/hooks/use-character"
 import { resolveAssetUrl } from "#/lib/api-client"
+import { openEditModal } from "#/lib/modal-search"
 import type { Character } from "#/lib/types/character"
 import * as m from "#/paraglide/messages.js"
 
@@ -34,8 +35,8 @@ function useColumns(): ColumnDef<Character, unknown>[] {
         header: () => m.character_col_name(),
         cell: (info) => (
           <Link
-            to="/character/$characterId"
-            params={{ characterId: info.row.original.id }}
+            to="/character"
+            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

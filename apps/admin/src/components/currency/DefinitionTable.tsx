@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
 import { useCurrencies } from "#/hooks/use-currency"
+import { openEditModal } from "#/lib/modal-search"
 import type { CurrencyDefinition } from "#/lib/types/currency"
 import * as m from "#/paraglide/messages.js"
 
@@ -30,7 +31,10 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link to="/currency/$currencyId" params={{ currencyId: def.id }}>
+          <Link
+            to="/currency"
+            search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
+          >
             <Pencil className="size-4" />
             {m.common_edit()}
           </Link>
@@ -57,8 +61,8 @@ function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
         header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/currency/$currencyId"
-            params={{ currencyId: info.row.original.id }}
+            to="/currency"
+            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

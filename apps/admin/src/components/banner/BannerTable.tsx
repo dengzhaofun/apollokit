@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { openEditChildModal } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 import type { Banner } from "#/lib/types/banner"
 import { describeLinkAction } from "#/lib/types/link"
@@ -154,8 +155,9 @@ export function BannerTable({
                       asChild
                     >
                       <Link
-                        to="/banner/$groupId/banners/$bannerId"
-                        params={{ groupId, bannerId: row.id }}
+                        to="/banner/$groupId"
+                        params={{ groupId }}
+                        search={(prev) => ({ ...prev, ...openEditChildModal("banner", row.id) })}
                         title={m.common_edit()}
                       >
                         <Pencil className="size-4" />

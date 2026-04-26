@@ -1,27 +1,50 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState } from "react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
+import { FormDrawer } from "#/components/ui/form-drawer"
 import { WriteGate } from "#/components/WriteGate"
+import { MessageForm } from "#/components/mail/MessageForm"
 import { MessageTable } from "#/components/mail/MessageTable"
+import { useCreateMailMessage } from "#/hooks/use-mail"
+import { ApiError } from "#/lib/api-client"
+import {
+  closedModal,
+  modalSearchSchema,
+  openCreateModal,
+} from "#/lib/modal-search"
+
+const FORM_ID = "mail-message-form"
 
 export const Route = createFileRoute("/_dashboard/mail/")({
   component: MailListPage,
+  validateSearch: modalSearchSchema,
 })
 
 function MailListPage() {
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const modal = search.modal
+
+  function closeModal() {
+    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+  }
+  function openCreate() {
+    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+  }
+
   return (
     <>
       <PageHeaderActions>
         <div className="ml-auto">
           <WriteGate>
-            <Button asChild size="sm">
-              <Link to="/mail/create">
-                <Plus className="size-4" />
-                {m.mail_new_message()}
-              </Link>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="size-4" />
+              {m.mail_new_message()}
             </Button>
           </WriteGate>
         </div>
@@ -30,6 +53,62 @@ function MailListPage() {
       <main className="flex-1 p-6">
         <MessageTable />
       </main>
+
+      {modal === "create" ? <CreateMailDrawer onClose={closeModal} /> : null}
     </>
+  )
+}
+
+function CreateMailDrawer({ onClose }: { onClose: () => void }) {
+  const mutation = useCreateMailMessage()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDrawer
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !mutation.isPending}
+      title={m.mail_new_message()}
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!formState.canSubmit || mutation.isPending}
+          >
+            {mutation.isPending ? m.common_saving() : m.common_create()}
+          </Button>
+        </>
+      }
+    >
+      <MessageForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={mutation.isPending}
+        submitLabel={m.common_create()}
+        onSubmit={async (values) => {
+          try {
+            await mutation.mutateAsync(values)
+            toast.success("Mail sent")
+            onClose()
+          } catch (err) {
+            toast.error(
+              err instanceof ApiError ? err.body.error : "Failed to send mail",
+            )
+          }
+        }}
+      />
+    </FormDrawer>
   )
 }
