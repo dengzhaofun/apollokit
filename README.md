@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./apps/admin/public/logo-wordmark.png" alt="ApolloKit" width="420" />
+<img src="./apps/admin/brand/logo-wordmark.png" alt="ApolloKit" width="420" />
 
 # ApolloKit
 
