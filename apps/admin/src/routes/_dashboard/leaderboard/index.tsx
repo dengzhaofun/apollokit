@@ -7,12 +7,14 @@ import { confirm, PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { useRunLeaderboardSettle } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import { getLocale } from "#/paraglide/runtime.js"
 
 const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/leaderboard/")({
   component: LeaderboardListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function LeaderboardListPage() {
@@ -68,7 +70,7 @@ function LeaderboardListPage() {
       />
 
       <PageBody>
-        <LeaderboardConfigTable />
+        <LeaderboardConfigTable route={Route} />
       </PageBody>
     </PageShell>
   )

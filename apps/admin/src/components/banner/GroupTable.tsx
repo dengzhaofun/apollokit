@@ -5,7 +5,7 @@ import { useMemo } from "react"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import { useBannerGroups } from "#/hooks/use-banner"
+import { BANNER_GROUP_FILTER_DEFS, useBannerGroups } from "#/hooks/use-banner"
 import type { BannerGroup } from "#/lib/types/banner"
 import * as m from "#/paraglide/messages.js"
 
@@ -73,26 +73,33 @@ function useColumns(): ColumnDef<BannerGroup, unknown>[] {
 interface Props {
   activityId?: string
   includeActivity?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function GroupTable(props: Props = {}) {
-  const list = useBannerGroups(props)
+export function GroupTable({ route, ...rest }: Props) {
+  const list = useBannerGroups(route, rest)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={BANNER_GROUP_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

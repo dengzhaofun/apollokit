@@ -5,9 +5,11 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { ExchangeConfigTable } from "#/components/exchange/ConfigTable"
+import { listSearchSchema } from "#/lib/list-search"
 
 export const Route = createFileRoute("/_dashboard/exchange/")({
   component: ExchangeListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function ExchangeListPage() {
@@ -25,7 +27,7 @@ function ExchangeListPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <ExchangeConfigTable />
+        <ExchangeConfigTable route={Route} />
       </main>
     </>
   )

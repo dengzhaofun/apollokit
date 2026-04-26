@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   Banner,
   BannerGroup,
@@ -18,24 +23,34 @@ const bannersKey = (groupId: string) =>
 
 // ─── Groups ────────────────────────────────────────────────────
 
-/** Paginated banner groups — for the admin groups table. */
+export const BANNER_GROUP_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated banner groups — URL-driven. */
 export function useBannerGroups(
-  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
-  const { activityId, includeActivity, initialPageSize = 50 } = opts
-  return useCursorList<BannerGroup>({
-    queryKey: [...GROUPS_KEY, { activityId: activityId ?? null, includeActivity: !!includeActivity }],
-    fetchPage: ({ cursor, limit, q }) =>
+  const { activityId, includeActivity } = extraQuery
+  return useListSearch<BannerGroup>({
+    route,
+    queryKey: [
+      ...GROUPS_KEY,
+      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+    ],
+    filterDefs: BANNER_GROUP_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<BannerGroup>>(
         `/api/banner/groups?${buildQs({
           cursor,
           limit,
           q,
+          adv,
+          ...filters,
           activityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -100,15 +115,19 @@ export function useDeleteBannerGroup() {
 
 // ─── Banners within a group ────────────────────────────────────
 
-/** Paginated banners under a group — for the in-page list/table. */
-export function useBanners(groupId: string, initialPageSize = 50) {
-  return useCursorList<Banner>({
+export const BANNER_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated banners under a group — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useBanners(groupId: string, route: any) {
+  return useListSearch<Banner>({
+    route,
     queryKey: bannersKey(groupId),
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: BANNER_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Banner>>(
-        `/api/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q })}`,
+        `/api/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!groupId,
   })
 }

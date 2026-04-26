@@ -12,7 +12,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useExchangeOptions } from "#/hooks/use-exchange"
+import {
+  EXCHANGE_OPTION_FILTER_DEFS,
+  useExchangeOptions,
+} from "#/hooks/use-exchange"
 import type { ExchangeOption } from "#/lib/types/exchange"
 import * as m from "#/paraglide/messages.js"
 
@@ -122,26 +125,33 @@ function useColumns(): ColumnDef<ExchangeOption, unknown>[] {
 
 interface Props {
   configKey: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function OptionTable({ configKey }: Props) {
-  const list = useExchangeOptions(configKey)
+export function OptionTable({ configKey, route }: Props) {
+  const list = useExchangeOptions(configKey, route)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={EXCHANGE_OPTION_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

@@ -56,7 +56,11 @@ import type {
   TaskUserAssignment,
   TaskUserProgress,
 } from "./types";
-import { ASSIGNMENT_BATCH_MAX } from "./validators";
+import {
+  ASSIGNMENT_BATCH_MAX,
+  taskCategoryFilters,
+  taskDefinitionFilters,
+} from "./validators";
 import type {
   CreateCategoryInput,
   CreateDefinitionInput,
@@ -267,18 +271,15 @@ export function createTaskService(
     params: PageParams = {},
   ): Promise<Page<TaskCategory>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(taskCategories.organizationId, organizationId)];
-    const seek = cursorWhere(params.cursor, taskCategories.createdAt, taskCategories.id);
-    if (seek) conds.push(seek);
-    if (params.q) {
-      const pat = `%${params.q}%`;
-      const search = or(ilike(taskCategories.name, pat), ilike(taskCategories.alias, pat));
-      if (search) conds.push(search);
-    }
+    const where = and(
+      eq(taskCategories.organizationId, organizationId),
+      taskCategoryFilters.where(params as Record<string, unknown>),
+      cursorWhere(params.cursor, taskCategories.createdAt, taskCategories.id),
+    );
     const rows = await db
       .select()
       .from(taskCategories)
-      .where(and(...conds))
+      .where(where)
       .orderBy(desc(taskCategories.createdAt), desc(taskCategories.id))
       .limit(limit + 1);
     return buildPage(rows, limit);
@@ -385,45 +386,37 @@ export function createTaskService(
       /**
        * Activity scoping. Defaults to "standalone only" so the main
        * task admin page isn't polluted by per-activity copies.
-       *   - activityId set   → only that activity's tasks
-       *   - includeActivity true → standalone + all activity tasks
-       *   - neither set       → activityId IS NULL (standalone only)
+       *   - activityId set        → only that activity's tasks
+       *   - includeActivity true  → standalone + all activity tasks
+       *   - neither set           → activityId IS NULL (standalone only)
        */
       activityId?: string;
       includeActivity?: boolean;
     } = {},
   ): Promise<Page<TaskDefinition>> {
     const limit = clampLimit(filters.limit);
-    const conditions: SQL[] = [eq(taskDefinitions.organizationId, organizationId)];
-    if (filters.categoryId) {
-      conditions.push(eq(taskDefinitions.categoryId, filters.categoryId));
+    // Normalise legacy callers (parentId: null, includeActivity true,
+    // activityId undefined "standalone only") to the DSL's flat string
+    // sentinels so the same WHERE branches fire from either entry point.
+    const filterInput: Record<string, unknown> = { ...filters };
+    if (filters.parentId === null) filterInput.parentId = "null";
+    if (!filters.activityId && !filters.includeActivity) {
+      filterInput.activityId = "null";
     }
-    if (filters.period) {
-      conditions.push(eq(taskDefinitions.period, filters.period));
-    }
-    if (filters.parentId !== undefined) {
-      if (filters.parentId === null) {
-        conditions.push(isNull(taskDefinitions.parentId));
-      } else {
-        conditions.push(eq(taskDefinitions.parentId, filters.parentId));
-      }
-    }
-    if (filters.activityId) {
-      conditions.push(eq(taskDefinitions.activityId, filters.activityId));
-    } else if (!filters.includeActivity) {
-      conditions.push(isNull(taskDefinitions.activityId));
-    }
-    const seek = cursorWhere(filters.cursor, taskDefinitions.createdAt, taskDefinitions.id);
-    if (seek) conditions.push(seek);
-    if (filters.q) {
-      const pat = `%${filters.q}%`;
-      const search = or(ilike(taskDefinitions.name, pat), ilike(taskDefinitions.alias, pat));
-      if (search) conditions.push(search);
-    }
+    delete filterInput.includeActivity;
+    const where = and(
+      eq(taskDefinitions.organizationId, organizationId),
+      taskDefinitionFilters.where(filterInput),
+      cursorWhere(
+        filters.cursor,
+        taskDefinitions.createdAt,
+        taskDefinitions.id,
+      ),
+    );
     const rows = await db
       .select()
       .from(taskDefinitions)
-      .where(and(...conditions))
+      .where(where)
       .orderBy(desc(taskDefinitions.createdAt), desc(taskDefinitions.id))
       .limit(limit + 1);
     return buildPage(rows, limit);

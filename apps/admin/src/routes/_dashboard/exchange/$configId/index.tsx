@@ -16,9 +16,11 @@ import {
   useDeleteExchangeConfig,
 } from "#/hooks/use-exchange"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 
 export const Route = createFileRoute("/_dashboard/exchange/$configId/")({
   component: ExchangeConfigDetailPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function ExchangeConfigDetailPage() {
@@ -175,7 +177,7 @@ function ExchangeConfigDetailPage() {
                 </Link>
               </Button>
             </div>
-            <OptionTable configKey={configId} />
+            <OptionTable configKey={configId} route={Route} />
           </div>
         </div>
       </main>

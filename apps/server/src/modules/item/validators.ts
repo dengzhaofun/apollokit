@@ -1,6 +1,9 @@
 import { z } from "@hono/zod-openapi";
+import { sql } from "drizzle-orm";
 
+import { defineListFilter, f } from "../../lib/list-filter";
 import { pageOf } from "../../lib/pagination";
+import { itemDefinitions } from "../../schema/item";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
 
@@ -287,26 +290,30 @@ export const InventoryListResponseSchema = z
   .openapi("ItemInventoryList");
 
 /**
- * Optional category-list filter that piggybacks on the standard
- * pagination query. `definitions` accepts the same `?cursor&limit&q`
- * plus a `categoryId` filter — see `DefinitionListQuerySchema` below.
+ * Item-definitions list filter spec — drives the route's query
+ * schema, the service's WHERE composition, and the admin's faceted
+ * filter UI. `activityId` accepts a uuid OR the literal string "null"
+ * to mean "permanent only" (no linked activity).
  */
-export const DefinitionListQuerySchema = z
-  .object({
-    categoryId: z.string().uuid().optional().openapi({
-      param: { name: "categoryId", in: "query" },
-      description: "Filter by category id.",
-    }),
-    activityId: z
-      .string()
-      .uuid()
-      .optional()
-      .openapi({
-        param: { name: "activityId", in: "query" },
-        description: "Filter by activity id (use empty string for permanent only).",
-      }),
+export const itemDefinitionFilters = defineListFilter({
+  categoryId: f.uuid({ column: itemDefinitions.categoryId }),
+  activityId: f.string({
+    column: itemDefinitions.activityId,
+    where: (v: string) =>
+      v === "null"
+        ? sql`${itemDefinitions.activityId} IS NULL`
+        : sql`${itemDefinitions.activityId} = ${v}`,
+  }),
+})
+  .search({
+    columns: [itemDefinitions.name, itemDefinitions.alias],
+    // pg_trgm GIN index exists — see drizzle/0002_pg_trgm_search_indexes.sql.
+    mode: "trgm",
   })
-  .openapi("ItemDefinitionListQuery");
+  .build();
+
+export const DefinitionListQuerySchema =
+  itemDefinitionFilters.querySchema.openapi("ItemDefinitionListQuery");
 
 // ─── Use Item ─────────────────────────────────────────────────────
 

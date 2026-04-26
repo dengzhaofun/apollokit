@@ -9,7 +9,7 @@ import { useMemo } from "react"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
-import { useCmsEntries } from "#/hooks/use-cms"
+import { CMS_ENTRY_FILTER_DEFS, useCmsEntries } from "#/hooks/use-cms"
 import type { CmsEntry, CmsEntryStatus } from "#/lib/types/cms"
 import * as m from "#/paraglide/messages.js"
 
@@ -88,26 +88,33 @@ interface Props {
   status?: CmsEntryStatus
   groupKey?: string
   tag?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function EntryTable({ typeAlias, status, groupKey, tag }: Props) {
-  const list = useCmsEntries(typeAlias, { status, groupKey, tag })
+export function EntryTable({ typeAlias, status, groupKey, tag, route }: Props) {
+  const list = useCmsEntries(typeAlias, route, { status, groupKey, tag })
   const columns = useColumns(typeAlias)
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={CMS_ENTRY_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { useCursorList, qs, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   ItemCategory,
   ItemDefinition,
@@ -21,19 +26,25 @@ const DEFINITIONS_KEY = ["item-definitions"] as const
 
 // ─── Categories ───────────────────────────────────────────────────
 
+// Item categories has no extra filters server-side beyond `q`; the
+// faceted toolbar is empty and the Advanced toggle is hidden.
+export const ITEM_CATEGORY_FILTER_DEFS: FilterDef[] = []
+
 /**
- * Paginated item categories list — wired into <DataTable /> via the
- * standard `useCursorList` shape. Each call site decides its own
- * `initialPageSize`.
+ * Paginated item categories list — URL-driven via `useListSearch`.
+ * Pass the route handle so search/cursor/pageSize land in URL search
+ * params (refresh-safe, shareable).
  */
-export function useItemCategories(initialPageSize = 50) {
-  return useCursorList<ItemCategory>({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useItemCategories(route: any) {
+  return useListSearch<ItemCategory>({
+    route,
     queryKey: CATEGORIES_KEY,
+    filterDefs: ITEM_CATEGORY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<ItemCategory>>(
         `/api/item/categories?${qs({ cursor, limit, q })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -89,17 +100,46 @@ export function useDeleteItemCategory() {
 
 // ─── Definitions ──────────────────────────────────────────────────
 
-export function useItemDefinitions(
-  opts: { initialPageSize?: number; categoryId?: string } = {},
-) {
-  const { initialPageSize = 50, categoryId } = opts
-  return useCursorList<ItemDefinition>({
-    queryKey: [...DEFINITIONS_KEY, { categoryId: categoryId ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+/**
+ * Item definitions filter defs. Mirrors the server's
+ * `itemDefinitionFilters` declaration; the categoryId values come from
+ * `useAllItemCategories()` at the call site so the dropdown is populated
+ * with the actual categories available in the current org.
+ */
+export function buildItemDefinitionFilterDefs(
+  categories: { id: string; name: string }[] | undefined,
+): FilterDef[] {
+  return [
+    {
+      id: "categoryId",
+      label: "Category",
+      type: "select",
+      options: (categories ?? []).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
+    },
+    {
+      id: "activityId",
+      label: "Activity",
+      type: "select",
+      options: [
+        { value: "null", label: "Permanent only" },
+      ],
+    },
+  ]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useItemDefinitions(route: any, filterDefs: FilterDef[]) {
+  return useListSearch<ItemDefinition>({
+    route,
+    queryKey: DEFINITIONS_KEY,
+    filterDefs,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ItemDefinition>>(
-        `/api/item/definitions?${qs({ cursor, limit, q, categoryId })}`,
+        `/api/item/definitions?${qs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 

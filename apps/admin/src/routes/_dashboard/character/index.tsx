@@ -14,6 +14,7 @@ import {
   useUpdateCharacter,
 } from "#/hooks/use-character"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -27,7 +28,7 @@ const FORM_ID = "character-form"
 
 export const Route = createFileRoute("/_dashboard/character/")({
   component: CharacterListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function CharacterListPage() {
@@ -58,7 +59,7 @@ function CharacterListPage() {
       />
 
       <PageBody>
-        <CharacterTable />
+        <CharacterTable route={Route} />
       </PageBody>
 
       {modal === "create" ? (

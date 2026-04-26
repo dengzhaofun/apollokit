@@ -227,11 +227,11 @@ describe("end-user service — list / get / update", () => {
   });
 
   test("list search matches email and name substring", async () => {
-    const byName = await svc.list(orgId, { search: "S Two" });
+    const byName = await svc.list(orgId, { q: "S Two" });
     expect(byName.items).toHaveLength(1);
-    const byEmail = await svc.list(orgId, { search: "s1@example" });
+    const byEmail = await svc.list(orgId, { q: "s1@example" });
     expect(byEmail.items).toHaveLength(1);
-    const byExternal = await svc.list(orgId, { search: "u_s3" });
+    const byExternal = await svc.list(orgId, { q: "u_s3" });
     expect(byExternal.items).toHaveLength(1);
   });
 

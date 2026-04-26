@@ -35,7 +35,7 @@
  * methods.
  */
 
-import { and, desc, eq, gt, ilike, isNull, lte, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, lte, or, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
@@ -57,10 +57,11 @@ import type {
   AnnouncementSeverity,
   ClientAnnouncement,
 } from "./types";
-import type {
-  CreateAnnouncementInput,
-  ListAnnouncementsQuery,
-  UpdateAnnouncementInput,
+import {
+  announcementFilters,
+  type CreateAnnouncementInput,
+  type ListAnnouncementsQuery,
+  type UpdateAnnouncementInput,
 } from "./validators";
 
 // `events` is optional so existing / future tests that pass only { db }
@@ -169,26 +170,15 @@ export function createAnnouncementService(d: AnnouncementDeps) {
       filter: ListAnnouncementsQuery & PageParams = {},
     ): Promise<Page<Announcement>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(announcements.organizationId, organizationId)];
-      if (filter.kind) conds.push(eq(announcements.kind, filter.kind));
-      if (filter.isActive === "true")
-        conds.push(eq(announcements.isActive, true));
-      if (filter.isActive === "false")
-        conds.push(eq(announcements.isActive, false));
-      if (filter.q) {
-        const pattern = `%${filter.q}%`;
-        const qCond = or(
-          ilike(announcements.alias, pattern),
-          ilike(announcements.title, pattern),
-        );
-        if (qCond) conds.push(qCond);
-      }
-      const seek = cursorWhere(filter.cursor, announcements.createdAt, announcements.id);
-      if (seek) conds.push(seek);
+      const where = and(
+        eq(announcements.organizationId, organizationId),
+        announcementFilters.where(filter as Record<string, unknown>),
+        cursorWhere(filter.cursor, announcements.createdAt, announcements.id),
+      );
       const rows = await db
         .select()
         .from(announcements)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(announcements.createdAt), desc(announcements.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

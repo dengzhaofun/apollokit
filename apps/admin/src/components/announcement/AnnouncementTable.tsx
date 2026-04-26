@@ -1,15 +1,13 @@
 import { Link } from "@tanstack/react-router"
+import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 
+import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "#/components/ui/table"
+  ANNOUNCEMENT_FILTER_DEFS,
+  useAnnouncements,
+} from "#/hooks/use-announcement"
 import { openEditModal } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 import type {
@@ -17,10 +15,6 @@ import type {
   AnnouncementKind,
   AnnouncementSeverity,
 } from "#/lib/types/announcement"
-
-interface AnnouncementTableProps {
-  data: Announcement[]
-}
 
 function kindLabel(k: AnnouncementKind): string {
   switch (k) {
@@ -64,70 +58,106 @@ function formatWindow(from: string | null, until: string | null): string {
   return `${f} → ${u}`
 }
 
-export function AnnouncementTable({ data }: AnnouncementTableProps) {
+const columns: ColumnDef<Announcement>[] = [
+  {
+    accessorKey: "alias",
+    header: () => m.announcement_col_alias_title(),
+    cell: ({ row }) => (
+      <Link
+        to="/announcement"
+        search={(prev) => ({ ...prev, ...openEditModal(row.original.alias) })}
+        className="block"
+      >
+        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+          {row.original.alias}
+        </code>
+        <div className="mt-1 font-medium hover:underline">
+          {row.original.title}
+        </div>
+      </Link>
+    ),
+  },
+  {
+    accessorKey: "kind",
+    header: () => m.announcement_col_kind(),
+    cell: ({ row }) => (
+      <Badge variant="outline">{kindLabel(row.original.kind)}</Badge>
+    ),
+  },
+  {
+    accessorKey: "severity",
+    header: () => m.announcement_col_severity(),
+    cell: ({ row }) => (
+      <Badge variant={SEVERITY_VARIANT[row.original.severity]}>
+        {severityLabel(row.original.severity)}
+      </Badge>
+    ),
+  },
+  {
+    id: "window",
+    header: () => m.announcement_col_window(),
+    cell: ({ row }) => (
+      <span className="text-xs text-muted-foreground">
+        {formatWindow(row.original.visibleFrom, row.original.visibleUntil)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "priority",
+    header: () => m.announcement_col_priority(),
+    cell: ({ row }) => (
+      <span className="text-center tabular-nums">{row.original.priority}</span>
+    ),
+  },
+  {
+    accessorKey: "isActive",
+    header: () => m.announcement_col_status(),
+    cell: ({ row }) => (
+      <Badge variant={row.original.isActive ? "default" : "outline"}>
+        {row.original.isActive
+          ? m.announcement_status_active()
+          : m.announcement_status_inactive()}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: () => m.announcement_col_updated(),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground tabular-nums text-sm">
+        {format(new Date(row.original.updatedAt), "yyyy-MM-dd HH:mm")}
+      </span>
+    ),
+  },
+]
+
+interface Props {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
+}
+
+export function AnnouncementTable({ route }: Props) {
+  const list = useAnnouncements(route)
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{m.announcement_col_alias_title()}</TableHead>
-          <TableHead>{m.announcement_col_kind()}</TableHead>
-          <TableHead>{m.announcement_col_severity()}</TableHead>
-          <TableHead>{m.announcement_col_window()}</TableHead>
-          <TableHead>{m.announcement_col_priority()}</TableHead>
-          <TableHead>{m.announcement_col_status()}</TableHead>
-          <TableHead>{m.announcement_col_updated()}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={7} className="h-24 text-center">
-              {m.announcement_empty()}
-            </TableCell>
-          </TableRow>
-        ) : (
-          data.map((a) => (
-            <TableRow key={a.id}>
-              <TableCell>
-                <Link
-                  to="/announcement"
-                  search={(prev) => ({ ...prev, ...openEditModal(a.alias) })}
-                  className="block"
-                >
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {a.alias}
-                  </code>
-                  <div className="mt-1 font-medium hover:underline">
-                    {a.title}
-                  </div>
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{kindLabel(a.kind)}</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant={SEVERITY_VARIANT[a.severity]}>
-                  {severityLabel(a.severity)}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-xs text-muted-foreground">
-                {formatWindow(a.visibleFrom, a.visibleUntil)}
-              </TableCell>
-              <TableCell className="text-center">{a.priority}</TableCell>
-              <TableCell>
-                <Badge variant={a.isActive ? "default" : "outline"}>
-                  {a.isActive
-                    ? m.announcement_status_active()
-                    : m.announcement_status_inactive()}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {format(new Date(a.updatedAt), "yyyy-MM-dd HH:mm")}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={list.items}
+      getRowId={(r) => r.id}
+      filters={ANNOUNCEMENT_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
+    />
   )
 }

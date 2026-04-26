@@ -365,7 +365,7 @@ rankRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const filter = c.req.valid("query");
+    const filter = c.req.valid("query") as Record<string, unknown>;
     const page = await rankService.listSeasons(orgId, filter);
     return c.json(
       ok({ items: page.items.map(serializeSeason), nextCursor: page.nextCursor }),

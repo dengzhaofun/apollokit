@@ -15,6 +15,7 @@ import { Button } from "#/components/ui/button"
 import { FormDialog } from "#/components/ui/form-dialog"
 import { useCreateLotteryPool } from "#/hooks/use-lottery"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -28,7 +29,7 @@ const FORM_ID = "lottery-pool-form"
 
 export const Route = createFileRoute("/_dashboard/lottery/")({
   component: LotteryListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function LotteryListPage() {
@@ -65,6 +66,7 @@ function LotteryListPage() {
 
       <PageBody>
         <LotteryPoolTable
+          route={Route}
           activityId={filter.activityId}
           includeActivity={filter.includeActivity}
         />

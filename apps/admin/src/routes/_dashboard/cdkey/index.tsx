@@ -13,8 +13,13 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
 import { WriteGate } from "#/components/WriteGate"
-import { useCdkeyBatches, useCreateCdkeyBatch } from "#/hooks/use-cdkey"
+import {
+  CDKEY_BATCH_FILTER_DEFS,
+  useCdkeyBatches,
+  useCreateCdkeyBatch,
+} from "#/hooks/use-cdkey"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -26,7 +31,7 @@ const FORM_ID = "cdkey-batch-form"
 
 export const Route = createFileRoute("/_dashboard/cdkey/")({
   component: CdkeyListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 const columnHelper = createColumnHelper<CdkeyBatch>()
@@ -108,7 +113,7 @@ function CdkeyListPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const list = useCdkeyBatches()
+  const list = useCdkeyBatches(Route)
   const columns = useColumns()
 
   return (
@@ -128,17 +133,22 @@ function CdkeyListPage() {
         <DataTable
           columns={columns}
           data={list.items}
-          isLoading={list.isLoading}
           getRowId={(row) => row.id}
-          pageIndex={list.pageIndex}
-          canPrev={list.canPrev}
-          canNext={list.canNext}
-          onNextPage={list.nextPage}
-          onPrevPage={list.prevPage}
-          pageSize={list.pageSize}
-          onPageSizeChange={list.setPageSize}
-          searchValue={list.searchInput}
-          onSearchChange={list.setSearchInput}
+          filters={CDKEY_BATCH_FILTER_DEFS}
+          filterValues={list.filters}
+          onFilterChange={list.setFilter}
+          onResetFilters={list.resetFilters}
+          hasActiveFilters={list.hasActiveFilters}
+          activeFilterCount={list.activeFilterCount}
+          mode={list.mode}
+          onModeChange={list.setMode}
+          advancedQuery={
+            list.advanced as
+              | import("#/components/ui/query-builder").RuleGroupType
+              | undefined
+          }
+          onAdvancedQueryChange={list.setAdvanced}
+          {...list.tableProps}
         />
       </main>
 

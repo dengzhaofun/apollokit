@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   EndUser,
-  EndUserOrigin,
   SignOutAllResponse,
   SyncEndUserInput,
   SyncEndUserResponse,
@@ -14,34 +18,70 @@ import type {
 const END_USERS_KEY = ["end-user"] as const
 
 /**
- * Paginated end-users — server-side cursor pagination + search filter.
- * The `q` of useCursorList maps to the legacy `search` query param.
+ * Filter definitions for the end-user list page. Mirrors the server's
+ * `endUserFilters` declaration in `apps/server/src/modules/end-user/validators.ts`
+ * — keep these two in sync. The toolbar uses these for facet rendering;
+ * the QueryBuilder (advanced mode) reads them for field/operator menus.
+ *
+ * The hook flattens the values into URL params using the same key
+ * convention the server expects (`origin`, `disabled`, `createdAtGte`, …),
+ * so the only thing list-page state and server contract share is the
+ * key naming.
  */
-export function useEndUsers(
-  opts: {
-    initialPageSize?: number
-    origin?: EndUserOrigin
-    disabled?: boolean
-  } = {},
-) {
-  const { initialPageSize = 50, origin, disabled } = opts
-  return useCursorList<EndUser>({
-    queryKey: [
-      ...END_USERS_KEY,
-      "list",
-      { origin: origin ?? null, disabled: disabled ?? null },
+export const END_USER_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "origin",
+    label: "Origin",
+    type: "select",
+    options: [
+      { value: "managed", label: "Managed" },
+      { value: "synced", label: "Synced" },
     ],
-    fetchPage: ({ cursor, limit, q }) =>
+  },
+  {
+    id: "disabled",
+    label: "Status",
+    type: "boolean",
+    trueLabel: "Disabled",
+    falseLabel: "Active",
+  },
+  {
+    id: "emailVerified",
+    label: "Email verified",
+    type: "boolean",
+  },
+  {
+    id: "createdAt",
+    label: "Created",
+    type: "dateRange",
+  },
+]
+
+/**
+ * Paginated end-users — URL-driven (search/filters/cursor/pageSize/mode/adv
+ * all live in the route's search params). Drop-in replacement for the
+ * legacy `useEndUsers({ origin, disabled })` API.
+ *
+ * The hook needs the route handle to read/write search params via
+ * TanStack Router's typed search-param API; pass `Route` from the
+ * file route module.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useEndUsers(route: any) {
+  return useListSearch<EndUser>({
+    route,
+    queryKey: [...END_USERS_KEY, "list"],
+    filterDefs: END_USER_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EndUser>>(
         `/api/end-user?${buildQs({
           cursor,
           limit,
-          search: q,
-          origin,
-          disabled: disabled == null ? undefined : String(disabled),
+          q,
+          adv,
+          ...filters,
         })}`,
       ),
-    initialPageSize,
   })
 }
 

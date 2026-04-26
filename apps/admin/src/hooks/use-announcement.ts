@@ -1,35 +1,71 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   Announcement,
-  AnnouncementListFilter,
-  AnnouncementListResponse,
   CreateAnnouncementInput,
   UpdateAnnouncementInput,
 } from "#/lib/types/announcement"
 
 const KEY = ["announcements"] as const
 
-export function useAnnouncements(filter: AnnouncementListFilter = {}) {
-  const params = new URLSearchParams()
-  if (filter.kind) params.set("kind", filter.kind)
-  if (filter.isActive !== undefined)
-    params.set("isActive", filter.isActive ? "true" : "false")
-  if (filter.q) params.set("q", filter.q)
-  const qs = params.toString()
-  return useQuery({
-    queryKey: [
-      ...KEY,
-      filter.kind ?? null,
-      filter.isActive ?? null,
-      filter.q ?? null,
+/**
+ * Filter defs for the announcement list. Mirrors the server's
+ * `announcementFilters` declaration.
+ */
+export const ANNOUNCEMENT_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "kind",
+    label: "Kind",
+    type: "select",
+    options: [
+      { value: "modal", label: "Modal" },
+      { value: "feed", label: "Feed" },
+      { value: "ticker", label: "Ticker" },
     ],
-    queryFn: () =>
-      api.get<AnnouncementListResponse>(
-        `/api/announcement${qs ? `?${qs}` : ""}`,
+  },
+  {
+    id: "isActive",
+    label: "Status",
+    type: "boolean",
+    trueLabel: "Active",
+    falseLabel: "Inactive",
+  },
+  {
+    id: "severity",
+    label: "Severity",
+    type: "select",
+    options: [
+      { value: "info", label: "Info" },
+      { value: "warning", label: "Warning" },
+      { value: "urgent", label: "Urgent" },
+    ],
+  },
+]
+
+/** URL-driven announcements list — wired into <DataTable />. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useAnnouncements(route: any) {
+  return useListSearch<Announcement>({
+    route,
+    queryKey: KEY,
+    filterDefs: ANNOUNCEMENT_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
+      api.get<Page<Announcement>>(
+        `/api/announcement?${buildQs({
+          cursor,
+          limit,
+          q,
+          adv,
+          ...filters,
+        })}`,
       ),
-    select: (data) => data.items,
   })
 }
 

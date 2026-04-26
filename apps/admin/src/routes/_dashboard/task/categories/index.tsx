@@ -39,14 +39,16 @@ import {
   useDeleteTaskCategory,
 } from "#/hooks/use-task"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import type { TaskCategory } from "#/lib/types/task"
 
 export const Route = createFileRoute("/_dashboard/task/categories/")({
   component: CategoriesPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function CategoriesPage() {
-  const list = useTaskCategories()
+  const list = useTaskCategories(Route)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<TaskCategory | null>(null)
 

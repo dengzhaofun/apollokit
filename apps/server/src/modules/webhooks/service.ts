@@ -77,9 +77,10 @@ import type {
   WebhooksEndpoint,
   WebhooksEndpointView,
 } from "./types";
-import type {
-  CreateEndpointInput,
-  UpdateEndpointInput,
+import {
+  webhookDeliveryFilters,
+  type CreateEndpointInput,
+  type UpdateEndpointInput,
 } from "./validators";
 
 type WebhooksDeps = Pick<AppDeps, "db"> & { appSecret: string };
@@ -404,23 +405,20 @@ export function createWebhooksService(
     ): Promise<Page<WebhooksDelivery>> {
       await loadEndpoint(organizationId, endpointId);
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [
+      const where = and(
         eq(webhooksDeliveries.organizationId, organizationId),
         eq(webhooksDeliveries.endpointId, endpointId),
-      ];
-      if (filter.status) {
-        conds.push(eq(webhooksDeliveries.status, filter.status));
-      }
-      const seek = cursorWhere(
-        filter.cursor,
-        webhooksDeliveries.createdAt,
-        webhooksDeliveries.id,
+        webhookDeliveryFilters.where(filter as Record<string, unknown>),
+        cursorWhere(
+          filter.cursor,
+          webhooksDeliveries.createdAt,
+          webhooksDeliveries.id,
+        ),
       );
-      if (seek) conds.push(seek);
       const rows = await db
         .select()
         .from(webhooksDeliveries)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(webhooksDeliveries.createdAt), desc(webhooksDeliveries.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

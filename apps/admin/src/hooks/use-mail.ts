@@ -1,7 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CreateMailInput,
   MailMessage,
@@ -10,15 +15,19 @@ import type {
 
 const MESSAGES_KEY = ["mail-messages"] as const
 
-/** Paginated mail messages — for the admin MessageTable. */
-export function useMailMessages(initialPageSize = 50) {
-  return useCursorList<MailMessage>({
+export const MAIL_MESSAGE_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated mail messages — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useMailMessages(route: any) {
+  return useListSearch<MailMessage>({
+    route,
     queryKey: MESSAGES_KEY,
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: MAIL_MESSAGE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<MailMessage>>(
-        `/api/mail/messages?${buildQs({ cursor, limit, q })}`,
+        `/api/mail/messages?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 

@@ -3,7 +3,10 @@ import { format } from "date-fns"
 import { useMemo } from "react"
 
 import { DataTable } from "#/components/data-table/DataTable"
-import { useCheckInUserStates } from "#/hooks/use-check-in"
+import {
+  CHECK_IN_USER_STATE_FILTER_DEFS,
+  useCheckInUserStates,
+} from "#/hooks/use-check-in"
 import type { CheckInUserState } from "#/lib/types/check-in"
 import * as m from "#/paraglide/messages.js"
 
@@ -56,26 +59,33 @@ function useColumns(): ColumnDef<CheckInUserState, unknown>[] {
 
 interface Props {
   configKey: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function UserStatesTable({ configKey }: Props) {
-  const list = useCheckInUserStates(configKey)
+export function UserStatesTable({ configKey, route }: Props) {
+  const list = useCheckInUserStates(configKey, route)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.endUserId}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={CHECK_IN_USER_STATE_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

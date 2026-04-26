@@ -12,6 +12,7 @@ import { MessageForm } from "#/components/mail/MessageForm"
 import { MessageTable } from "#/components/mail/MessageTable"
 import { useCreateMailMessage } from "#/hooks/use-mail"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -22,7 +23,7 @@ const FORM_ID = "mail-message-form"
 
 export const Route = createFileRoute("/_dashboard/mail/")({
   component: MailListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function MailListPage() {
@@ -51,7 +52,7 @@ function MailListPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <MessageTable />
+        <MessageTable route={Route} />
       </main>
 
       {modal === "create" ? <CreateMailDrawer onClose={closeModal} /> : null}

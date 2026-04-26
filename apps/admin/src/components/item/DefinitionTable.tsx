@@ -13,7 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useItemDefinitions } from "#/hooks/use-item"
+import {
+  buildItemDefinitionFilterDefs,
+  useAllItemCategories,
+  useItemDefinitions,
+} from "#/hooks/use-item"
 import { openEditModal } from "#/lib/modal-search"
 import type { ItemDefinition } from "#/lib/types/item"
 import * as m from "#/paraglide/messages.js"
@@ -126,29 +130,36 @@ function useColumns(): ColumnDef<ItemDefinition, unknown>[] {
 }
 
 interface Props {
-  /** Optional category filter — passed through to the list hook. */
-  categoryId?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function DefinitionTable({ categoryId }: Props = {}) {
-  const list = useItemDefinitions({ categoryId })
+export function DefinitionTable({ route }: Props) {
+  const { data: categories } = useAllItemCategories()
+  const filterDefs = buildItemDefinitionFilterDefs(categories)
+  const list = useItemDefinitions(route, filterDefs)
   const columns = useColumns()
 
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={filterDefs}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

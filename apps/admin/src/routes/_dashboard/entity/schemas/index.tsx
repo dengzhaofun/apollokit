@@ -5,9 +5,11 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { SchemaTable } from "#/components/entity/SchemaTable"
+import { listSearchSchema } from "#/lib/list-search"
 
 export const Route = createFileRoute("/_dashboard/entity/schemas/")({
   component: EntitySchemasPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function EntitySchemasPage() {
@@ -25,7 +27,7 @@ function EntitySchemasPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <SchemaTable />
+        <SchemaTable route={Route} />
       </main>
     </>
   )

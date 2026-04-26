@@ -261,14 +261,10 @@ teamRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const query = c.req.valid("query");
-    const page = await teamService.listTeams(orgId, {
-      configKey: query.configKey,
-      status: query.status,
-      cursor: query.cursor,
-      limit: query.limit,
-      q: query.q,
-    });
+    const query = c.req.valid("query") as Record<string, unknown> & {
+      configKey?: string;
+    };
+    const page = await teamService.listTeams(orgId, query);
     return c.json(
       ok({ items: page.items.map(serializeTeam), nextCursor: page.nextCursor }),
       200,

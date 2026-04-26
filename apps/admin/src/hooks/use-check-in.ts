@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CheckInConfig,
   CheckInResult,
@@ -11,24 +16,34 @@ import type {
 
 const CONFIGS_KEY = ["check-in-configs"] as const
 
-/** Paginated check-in configs — for the admin ConfigTable. */
+export const CHECK_IN_CONFIG_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated check-in configs — URL-driven. */
 export function useCheckInConfigs(
-  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
-  const { activityId, includeActivity, initialPageSize = 50 } = opts
-  return useCursorList<CheckInConfig>({
-    queryKey: [...CONFIGS_KEY, { activityId: activityId ?? null, includeActivity: !!includeActivity }],
-    fetchPage: ({ cursor, limit, q }) =>
+  const { activityId, includeActivity } = extraQuery
+  return useListSearch<CheckInConfig>({
+    route,
+    queryKey: [
+      ...CONFIGS_KEY,
+      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+    ],
+    filterDefs: CHECK_IN_CONFIG_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CheckInConfig>>(
         `/api/check-in/configs?${buildQs({
           cursor,
           limit,
           q,
+          adv,
+          ...filters,
           activityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -60,15 +75,19 @@ export function useCheckInConfig(key: string) {
   })
 }
 
-/** Paginated user states under a check-in config — for UserStatesTable. */
-export function useCheckInUserStates(configKey: string, initialPageSize = 50) {
-  return useCursorList<CheckInUserState>({
+export const CHECK_IN_USER_STATE_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated user states under a check-in config — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCheckInUserStates(configKey: string, route: any) {
+  return useListSearch<CheckInUserState>({
+    route,
     queryKey: ["check-in-user-states", configKey],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: CHECK_IN_USER_STATE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CheckInUserState>>(
-        `/api/check-in/configs/${configKey}/users?${buildQs({ cursor, limit, q })}`,
+        `/api/check-in/configs/${configKey}/users?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!configKey,
   })
 }

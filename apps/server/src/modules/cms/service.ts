@@ -57,11 +57,13 @@ import {
   validateSchemaDef,
 } from "./schema-validator";
 import type { CmsEntry, CmsSchemaDef, CmsType } from "./types";
-import type {
-  CreateCmsEntryInput,
-  CreateCmsTypeInput,
-  UpdateCmsEntryInput,
-  UpdateCmsTypeInput,
+import {
+  cmsEntryFilters,
+  cmsTypeFilters,
+  type CreateCmsEntryInput,
+  type CreateCmsTypeInput,
+  type UpdateCmsEntryInput,
+  type UpdateCmsTypeInput,
 } from "./validators";
 
 type CmsDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
@@ -292,21 +294,15 @@ export function createCmsService(d: CmsDeps) {
       filter: PageParams & { status?: "active" | "archived" } = {},
     ): Promise<Page<CmsType>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(cmsTypes.organizationId, organizationId)];
-      if (filter.status) {
-        conds.push(eq(cmsTypes.status, filter.status));
-      }
-      const seek = cursorWhere(filter.cursor, cmsTypes.createdAt, cmsTypes.id);
-      if (seek) conds.push(seek);
-      if (filter.q) {
-        const pat = `%${filter.q}%`;
-        const search = or(ilike(cmsTypes.name, pat), ilike(cmsTypes.alias, pat));
-        if (search) conds.push(search);
-      }
+      const where = and(
+        eq(cmsTypes.organizationId, organizationId),
+        cmsTypeFilters.where(filter as Record<string, unknown>),
+        cursorWhere(filter.cursor, cmsTypes.createdAt, cmsTypes.id),
+      );
       const rows = await db
         .select()
         .from(cmsTypes)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(cmsTypes.createdAt), desc(cmsTypes.id))
         .limit(limit + 1);
       return buildPage(rows, limit);
@@ -565,32 +561,18 @@ export function createCmsService(d: CmsDeps) {
       await loadTypeByAlias(organizationId, typeAlias);
 
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [
+      const where = and(
         eq(cmsEntries.organizationId, organizationId),
         eq(cmsEntries.typeAlias, typeAlias),
-      ];
-      if (filter.status) {
-        conds.push(eq(cmsEntries.status, filter.status));
-      }
-      if (filter.groupKey) {
-        conds.push(eq(cmsEntries.groupKey, filter.groupKey));
-      }
-      if (filter.tag) {
-        conds.push(sql`${cmsEntries.tags} @> ARRAY[${filter.tag}]::text[]`);
-      }
-      if (filter.q) {
-        conds.push(ilike(cmsEntries.alias, `${filter.q}%`));
-      }
-      const seek = cursorWhere(filter.cursor, cmsEntries.createdAt, cmsEntries.id);
-      if (seek) conds.push(seek);
-
+        cmsEntryFilters.where(filter as Record<string, unknown>),
+        cursorWhere(filter.cursor, cmsEntries.createdAt, cmsEntries.id),
+      );
       const rows = await db
         .select()
         .from(cmsEntries)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(cmsEntries.createdAt), desc(cmsEntries.id))
         .limit(limit + 1);
-
       return buildPage(rows, limit);
     },
 

@@ -295,12 +295,8 @@ webhooksRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { id } = c.req.valid("param");
-    const q = c.req.valid("query");
-    const page = await webhooksService.listDeliveries(orgId, id, {
-      status: q.status,
-      cursor: q.cursor,
-      limit: q.limit,
-    });
+    const q = c.req.valid("query") as Record<string, unknown>;
+    const page = await webhooksService.listDeliveries(orgId, id, q);
     return c.json(
       ok({ items: page.items.map(serializeDelivery), nextCursor: page.nextCursor }),
       200,

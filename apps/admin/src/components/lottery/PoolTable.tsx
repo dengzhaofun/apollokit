@@ -13,7 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useLotteryPools } from "#/hooks/use-lottery"
+import {
+  LOTTERY_POOL_FILTER_DEFS,
+  useLotteryPools,
+} from "#/hooks/use-lottery"
 import type { LotteryPool } from "#/lib/types/lottery"
 
 const columnHelper = createColumnHelper<LotteryPool>()
@@ -120,26 +123,33 @@ function useColumns(): ColumnDef<LotteryPool, unknown>[] {
 interface Props {
   activityId?: string
   includeActivity?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
-export function LotteryPoolTable(props: Props = {}) {
-  const list = useLotteryPools(props)
+export function LotteryPoolTable({ route, ...rest }: Props) {
+  const list = useLotteryPools(route, rest)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={LOTTERY_POOL_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

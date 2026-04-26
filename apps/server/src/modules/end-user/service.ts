@@ -23,7 +23,7 @@
  * take the tenant's values verbatim.
  */
 
-import { and, asc, count, desc, eq, gt, inArray, like, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
@@ -46,6 +46,7 @@ import type {
   SyncResult,
   UpdateEndUserInput,
 } from "./types";
+import { endUserFilters } from "./validators";
 
 type EndUserDeps = Pick<AppDeps, "db">;
 
@@ -206,35 +207,15 @@ export function createEndUserService(deps: EndUserDeps) {
     async list(orgId: string, filter: ListFilter = {}): Promise<ListResult> {
       const limit = clampLimit(filter.limit);
 
-      // Origin filter needs a sub-select since origin is derived from
-      // eu_account presence. Plain `like`/`eq` predicates compose on
-      // the base table, origin is expressed as an EXISTS.
-      const baseWhere: SQL[] = [eq(euUser.organizationId, orgId)];
-      if (filter.search) {
-        const pat = `%${filter.search}%`;
-        baseWhere.push(
-          or(
-            like(euUser.name, pat),
-            like(euUser.email, pat),
-            like(euUser.externalId, pat),
-          )!,
-        );
-      }
-      if (filter.disabled !== undefined) {
-        baseWhere.push(eq(euUser.disabled, filter.disabled));
-      }
-      if (filter.origin === "managed") {
-        baseWhere.push(
-          sql`EXISTS (SELECT 1 FROM ${euAccount} WHERE ${euAccount.userId} = ${euUser.id} AND ${euAccount.providerId} = 'credential')`,
-        );
-      } else if (filter.origin === "synced") {
-        baseWhere.push(
-          sql`NOT EXISTS (SELECT 1 FROM ${euAccount} WHERE ${euAccount.userId} = ${euUser.id} AND ${euAccount.providerId} = 'credential')`,
-        );
-      }
-      const seek = cursorWhere(filter.cursor, euUser.createdAt, euUser.id);
-      if (seek) baseWhere.push(seek);
-      const where = and(...baseWhere);
+      // The DSL handles search (ILIKE name/email/externalId), basic
+      // filters (origin/disabled/emailVerified/externalId/createdAt),
+      // and the advanced AST in one call. Cursor and org-scope are
+      // composed on top — those aren't filter-DSL concerns.
+      const where = and(
+        eq(euUser.organizationId, orgId),
+        endUserFilters.where(filter as Record<string, unknown>),
+        cursorWhere(filter.cursor, euUser.createdAt, euUser.id),
+      );
 
       const rawRows = await db
         .select()

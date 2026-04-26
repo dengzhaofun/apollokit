@@ -4,6 +4,7 @@ import { MessagesSquareIcon, Plus } from "lucide-react"
 import { ScriptTable } from "#/components/dialogue/ScriptTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 import { getLocale } from "#/paraglide/runtime.js"
 
@@ -11,6 +12,7 @@ const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/dialogue/")({
   component: DialogueListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function DialogueListPage() {
@@ -31,7 +33,7 @@ function DialogueListPage() {
       />
 
       <PageBody>
-        <ScriptTable />
+        <ScriptTable route={Route} />
       </PageBody>
     </PageShell>
   )

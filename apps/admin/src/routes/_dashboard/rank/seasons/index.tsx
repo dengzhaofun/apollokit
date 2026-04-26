@@ -23,15 +23,20 @@ import {
   useRankTierConfigs,
 } from "#/hooks/use-rank"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 
 import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/rank/seasons/")({
   component: RankSeasonsListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function RankSeasonsListPage() {
-  const { data: seasons, isPending, error } = useRankSeasons()
+  const seasonsList = useRankSeasons(Route)
+  const seasons = seasonsList.items
+  const isPending = seasonsList.isLoading
+  const error = seasonsList.error
   const { data: tierConfigs } = useRankTierConfigs()
   const activate = useActivateRankSeason()
   const finalize = useFinalizeRankSeason()
@@ -70,7 +75,7 @@ function RankSeasonsListPage() {
         ) : (
           <div className="rounded-xl border bg-card shadow-sm">
             <SeasonTable
-              data={seasons ?? []}
+              data={seasons}
               tierConfigNameById={tierConfigNameById}
               rightCell={(s) => {
                 if (s.status === "upcoming") {

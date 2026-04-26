@@ -85,7 +85,11 @@ import type {
   AssistPoolStatus,
   ContributeResult,
 } from "./types";
-import type { CreateConfigInput, UpdateConfigInput } from "./validators";
+import {
+  assistPoolConfigFilters,
+  type CreateConfigInput,
+  type UpdateConfigInput,
+} from "./validators";
 
 // Extend the event-bus type map for assist-pool domain events.
 declare module "../../lib/event-bus" {
@@ -420,23 +424,27 @@ export function createAssistPoolService(
       filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
     ): Promise<Page<AssistPoolConfig>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(assistPoolConfigs.organizationId, organizationId)];
-      if (filter.activityId) {
-        conds.push(eq(assistPoolConfigs.activityId, filter.activityId));
-      } else if (!filter.includeActivity) {
-        conds.push(sql`${assistPoolConfigs.activityId} IS NULL`);
+      // Default behavior is "permanent-only" (activityId IS NULL).
+      // includeActivity=true switches off that default; activityId=<uuid>
+      // narrows to one activity. Translate to DSL flat sentinels.
+      const filterInput: Record<string, unknown> = { ...filter };
+      if (!filter.activityId && !filter.includeActivity) {
+        filterInput.activityId = "null";
       }
-      const seek = cursorWhere(filter.cursor, assistPoolConfigs.createdAt, assistPoolConfigs.id);
-      if (seek) conds.push(seek);
-      if (filter.q) {
-        const pat = `%${filter.q}%`;
-        const search = or(ilike(assistPoolConfigs.name, pat), ilike(assistPoolConfigs.alias, pat));
-        if (search) conds.push(search);
-      }
+      delete filterInput.includeActivity;
+      const where = and(
+        eq(assistPoolConfigs.organizationId, organizationId),
+        assistPoolConfigFilters.where(filterInput),
+        cursorWhere(
+          filter.cursor,
+          assistPoolConfigs.createdAt,
+          assistPoolConfigs.id,
+        ),
+      );
       const rows = await db
         .select()
         .from(assistPoolConfigs)
-        .where(and(...conds))
+        .where(where)
         .orderBy(desc(assistPoolConfigs.createdAt), desc(assistPoolConfigs.id))
         .limit(limit + 1);
       return buildPage(rows, limit);

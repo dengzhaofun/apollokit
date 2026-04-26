@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
+
+const FRIEND_GIFT_PACKAGE_FILTER_DEFS: FilterDef[] = []
+const FRIEND_GIFT_SEND_FILTER_DEFS: FilterDef[] = []
 import type {
   CreateFriendGiftPackageInput,
   FriendGiftPackage,
@@ -31,15 +39,17 @@ export function useUpsertFriendGiftSettings() {
   })
 }
 
-/** Paginated friend-gift packages — for the admin packages table. */
-export function useFriendGiftPackages(initialPageSize = 50) {
-  return useCursorList<FriendGiftPackage>({
+/** URL-driven friend-gift packages — for the admin packages table. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useFriendGiftPackages(route: any) {
+  return useListSearch<FriendGiftPackage>({
+    route,
     queryKey: PACKAGES_KEY,
+    filterDefs: FRIEND_GIFT_PACKAGE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<FriendGiftPackage>>(
         `/api/friend-gift/packages?${buildQs({ cursor, limit, q })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -97,14 +107,16 @@ export function useDeleteFriendGiftPackage() {
   })
 }
 
-/** Paginated friend-gift sends — admin audit log. */
-export function useFriendGiftSends(initialPageSize = 50) {
-  return useCursorList<FriendGiftSend>({
+/** URL-driven friend-gift sends — admin audit log. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useFriendGiftSends(route: any) {
+  return useListSearch<FriendGiftSend>({
+    route,
     queryKey: SENDS_KEY,
+    filterDefs: FRIEND_GIFT_SEND_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<FriendGiftSend>>(
         `/api/friend-gift/sends?${buildQs({ cursor, limit, q })}`,
       ),
-    initialPageSize,
   })
 }

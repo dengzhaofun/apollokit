@@ -36,6 +36,7 @@ import {
   CmsTypeStatusSchema,
   CreateCmsEntrySchema,
   CreateCmsTypeSchema,
+  ListCmsTypesQuerySchema,
   ListEntriesQuerySchema,
   UpdateCmsEntrySchema,
   UpdateCmsTypeSchema,
@@ -92,15 +93,7 @@ cmsRouter.openapi(
     path: "/types",
     tags: [TAG],
     summary: "List CMS types in the current project",
-    request: {
-      query: PaginationQuerySchema.merge(
-        z.object({
-          status: CmsTypeStatusSchema.optional().openapi({
-            param: { name: "status", in: "query" },
-          }),
-        }),
-      ),
-    },
+    request: { query: ListCmsTypesQuerySchema },
     responses: {
       200: {
         description: "OK",
@@ -113,13 +106,8 @@ cmsRouter.openapi(
   }),
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
-    const q = c.req.valid("query");
-    const page = await cmsService.listTypes(orgId, {
-      status: q.status,
-      cursor: q.cursor,
-      limit: q.limit,
-      q: q.q,
-    });
+    const q = c.req.valid("query") as Record<string, unknown>;
+    const page = await cmsService.listTypes(orgId, q);
     return c.json(
       ok({ items: page.items.map(serializeType), nextCursor: page.nextCursor }),
       200,
@@ -263,15 +251,8 @@ cmsRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { typeAlias } = c.req.valid("param");
-    const q = c.req.valid("query");
-    const page = await cmsService.listEntries(orgId, typeAlias, {
-      status: q.status,
-      groupKey: q.groupKey,
-      tag: q.tag,
-      q: q.q,
-      cursor: q.cursor,
-      limit: q.limit,
-    });
+    const q = c.req.valid("query") as Record<string, unknown>;
+    const page = await cmsService.listEntries(orgId, typeAlias, q);
     return c.json(
       ok({
         items: page.items.map(serializeEntry),

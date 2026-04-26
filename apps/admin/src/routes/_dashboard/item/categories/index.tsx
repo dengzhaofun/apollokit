@@ -16,13 +16,14 @@ import {
   useUpdateItemCategory,
 } from "#/hooks/use-item"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import { closedModal, modalSearchSchema, openCreateModal } from "#/lib/modal-search"
 
 const FORM_ID = "item-category-form"
 
 export const Route = createFileRoute("/_dashboard/item/categories/")({
   component: ItemCategoriesPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function ItemCategoriesPage() {
@@ -54,7 +55,7 @@ function ItemCategoriesPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <CategoryTable />
+        <CategoryTable route={Route} />
       </main>
 
       {modal === "create" ? (

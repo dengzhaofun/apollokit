@@ -5,23 +5,17 @@ import { toast } from "sonner"
 
 import { AnnouncementForm } from "#/components/announcement/AnnouncementForm"
 import { AnnouncementTable } from "#/components/announcement/AnnouncementTable"
-import {
-  EmptyList,
-  ErrorState,
-  PageBody,
-  PageHeader,
-  PageShell,
-} from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
 import { WriteGate } from "#/components/WriteGate"
 import {
   useAnnouncement,
-  useAnnouncements,
   useCreateAnnouncement,
   useUpdateAnnouncement,
 } from "#/hooks/use-announcement"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   closedModal,
   modalSearchSchema,
@@ -35,7 +29,7 @@ const FORM_ID = "announcement-form"
 
 export const Route = createFileRoute("/_dashboard/announcement/")({
   component: AnnouncementListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function AnnouncementListPage() {
@@ -51,21 +45,15 @@ function AnnouncementListPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const { data: items, isPending, error, refetch } = useAnnouncements()
-  const total = items?.length ?? 0
-
   return (
     <PageShell>
       <PageHeader
         icon={<MegaphoneIcon className="size-5" />}
         title={t("公告", "Announcements")}
-        description={
-          isPending
-            ? t("加载中…", "Loading…")
-            : error
-              ? t("加载失败", "Failed to load")
-              : t(`共 ${total} 条公告`, `${total} announcements total`)
-        }
+        description={t(
+          "搜索 / 筛选 / 翻页均走服务端,全部状态写入 URL。",
+          "Search, filter, and pagination are server-driven; all state lives in the URL.",
+        )}
         actions={
           <WriteGate>
             <Button size="sm" onClick={openCreate}>
@@ -77,38 +65,7 @@ function AnnouncementListPage() {
       />
 
       <PageBody>
-        {isPending ? (
-          <div className="flex h-40 items-center justify-center rounded-lg border bg-card text-muted-foreground">
-            {m.announcement_loading()}
-          </div>
-        ) : error ? (
-          <ErrorState
-            title={t("公告加载失败", "Failed to load announcements")}
-            onRetry={() => refetch()}
-            retryLabel={t("重试", "Retry")}
-            error={error instanceof Error ? error : null}
-          />
-        ) : total === 0 ? (
-          <EmptyList
-            title={t("还没有公告", "No announcements yet")}
-            description={t(
-              "发布第一条公告,触达全体玩家。",
-              "Publish your first announcement to reach all players.",
-            )}
-            action={
-              <WriteGate>
-                <Button size="sm" onClick={openCreate}>
-                  <Plus />
-                  {m.announcement_new()}
-                </Button>
-              </WriteGate>
-            }
-          />
-        ) : (
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <AnnouncementTable data={items ?? []} />
-          </div>
-        )}
+        <AnnouncementTable route={Route} />
       </PageBody>
 
       {modal === "create" ? (

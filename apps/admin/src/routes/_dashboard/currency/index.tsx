@@ -25,12 +25,13 @@ import {
   modalSearchSchema,
   openCreateModal,
 } from "#/lib/modal-search"
+import { listSearchSchema } from "#/lib/list-search"
 
 const FORM_ID = "currency-definition-form"
 
 export const Route = createFileRoute("/_dashboard/currency/")({
   component: CurrencyListPage,
-  validateSearch: modalSearchSchema,
+  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
 function CurrencyListPage() {
@@ -87,7 +88,7 @@ function CurrencyListPage() {
           </div>
 
           <TabsContent value="definitions" className="mt-6">
-            <DefinitionTable />
+            <DefinitionTable route={Route} />
           </TabsContent>
 
           <TabsContent value="ledger" className="mt-6 space-y-4">

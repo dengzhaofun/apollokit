@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useCurrencies } from "#/hooks/use-currency"
+import { CURRENCY_FILTER_DEFS, useCurrencies } from "#/hooks/use-currency"
 import { openEditModal } from "#/lib/modal-search"
 import type { CurrencyDefinition } from "#/lib/types/currency"
 import * as m from "#/paraglide/messages.js"
@@ -117,24 +117,34 @@ function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
   ) as ColumnDef<CurrencyDefinition, unknown>[]
 }
 
-export function DefinitionTable() {
-  const list = useCurrencies()
+interface Props {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
+}
+
+export function DefinitionTable({ route }: Props) {
+  const list = useCurrencies(route)
   const columns = useColumns()
   return (
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={CURRENCY_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

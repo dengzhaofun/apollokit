@@ -8,10 +8,12 @@ import { Button } from "#/components/ui/button"
 import { WriteGate } from "#/components/WriteGate"
 import { useActivityTickRun } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/activity/")({
   component: ActivityListPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function ActivityListPage() {
@@ -68,7 +70,7 @@ function ActivityListPage() {
       />
 
       <PageBody>
-        <ActivityTable />
+        <ActivityTable route={Route} />
       </PageBody>
     </PageShell>
   )

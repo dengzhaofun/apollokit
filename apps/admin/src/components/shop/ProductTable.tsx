@@ -14,7 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { useDeleteShopProduct, useShopProducts } from "#/hooks/use-shop"
+import {
+  SHOP_PRODUCT_FILTER_DEFS,
+  useDeleteShopProduct,
+  useShopProducts,
+} from "#/hooks/use-shop"
 import { ApiError } from "#/lib/api-client"
 import type {
   ShopListProductsQuery,
@@ -156,6 +160,8 @@ export interface ProductTableProps {
   tagId?: string
   /** Activity-scope passthrough — see ActivityScopeFilter. */
   activityFilter?: Pick<ShopListProductsQuery, "activityId" | "includeActivity">
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any
 }
 
 export function ProductTable({
@@ -163,8 +169,9 @@ export function ProductTable({
   categoryId,
   tagId,
   activityFilter,
+  route,
 }: ProductTableProps) {
-  const list = useShopProducts({
+  const list = useShopProducts(route, {
     productType,
     categoryId,
     tagId,
@@ -176,17 +183,22 @@ export function ProductTable({
     <DataTable
       columns={columns}
       data={list.items}
-      isLoading={list.isLoading}
       getRowId={(row) => row.id}
-      pageIndex={list.pageIndex}
-      canPrev={list.canPrev}
-      canNext={list.canNext}
-      onNextPage={list.nextPage}
-      onPrevPage={list.prevPage}
-      pageSize={list.pageSize}
-      onPageSizeChange={list.setPageSize}
-      searchValue={list.searchInput}
-      onSearchChange={list.setSearchInput}
+      filters={SHOP_PRODUCT_FILTER_DEFS}
+      filterValues={list.filters}
+      onFilterChange={list.setFilter}
+      onResetFilters={list.resetFilters}
+      hasActiveFilters={list.hasActiveFilters}
+      activeFilterCount={list.activeFilterCount}
+      mode={list.mode}
+      onModeChange={list.setMode}
+      advancedQuery={
+        list.advanced as
+          | import("#/components/ui/query-builder").RuleGroupType
+          | undefined
+      }
+      onAdvancedQueryChange={list.setAdvanced}
+      {...list.tableProps}
     />
   )
 }

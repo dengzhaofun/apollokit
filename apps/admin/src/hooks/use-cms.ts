@@ -1,14 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   CmsEntry,
   CmsType,
   CmsTypeStatus,
   CreateCmsEntryInput,
   CreateCmsTypeInput,
-  ListEntriesFilter,
   UpdateCmsEntryInput,
   UpdateCmsTypeInput,
 } from "#/lib/types/cms"
@@ -18,18 +22,29 @@ const entriesKey = (typeAlias: string) => ["cms-entries", typeAlias] as const
 
 // ─── Types ───────────────────────────────────────────────────────
 
-/** Paginated CMS types — for the admin types table. */
-export function useCmsTypes(
-  opts: { status?: CmsTypeStatus; initialPageSize?: number } = {},
-) {
-  const { status, initialPageSize = 50 } = opts
-  return useCursorList<CmsType>({
-    queryKey: [...TYPES_KEY, { status: status ?? null }],
-    fetchPage: ({ cursor, limit, q }) =>
+export const CMS_TYPE_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+]
+
+/** Paginated CMS types — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCmsTypes(route: any) {
+  return useListSearch<CmsType>({
+    route,
+    queryKey: TYPES_KEY,
+    filterDefs: CMS_TYPE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsType>>(
-        `/api/cms/types?${buildQs({ cursor, limit, q, status })}`,
+        `/api/cms/types?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -89,31 +104,57 @@ export function useDeleteCmsType() {
 
 // ─── Entries ─────────────────────────────────────────────────────
 
-/** Paginated CMS entries under a type — for the admin entries table. */
+export const CMS_ENTRY_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "draft", label: "Draft" },
+      { value: "published", label: "Published" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+  // groupKey + tag are technically filterable on the server but the
+  // current entry list page renders bespoke selectors for them outside
+  // the table — they are passed via the `extraQuery` arg below rather
+  // than the URL contract. Add them here once the page is ported to
+  // the standard filter toolbar.
+]
+
+/**
+ * Paginated CMS entries under a type — URL-driven.
+ *
+ * `extraQuery` overrides URL-set filter values; current entry list page
+ * uses it to pass status/groupKey/tag from its own selectors.
+ */
 export function useCmsEntries(
   typeAlias: string | undefined,
-  filter: Omit<ListEntriesFilter, "limit" | "offset" | "q"> & {
-    initialPageSize?: number
-  } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: { status?: string; groupKey?: string; tag?: string } = {},
 ) {
-  const { status, groupKey, tag, initialPageSize = 50 } = filter
-  return useCursorList<CmsEntry>({
+  const { status, groupKey, tag } = extraQuery
+  return useListSearch<CmsEntry>({
+    route,
     queryKey: [
       ...entriesKey(typeAlias ?? ""),
       { status: status ?? null, groupKey: groupKey ?? null, tag: tag ?? null },
     ],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: CMS_ENTRY_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsEntry>>(
         `/api/cms/types/${typeAlias}/entries?${buildQs({
           cursor,
           limit,
           q,
-          status,
+          adv,
+          ...filters,
+          status: status ?? (filters.status as string | undefined),
           groupKey,
           tag,
         })}`,
       ),
-    initialPageSize,
     enabled: !!typeAlias,
   })
 }

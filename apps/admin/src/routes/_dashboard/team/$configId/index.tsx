@@ -17,6 +17,7 @@ import {
   useTeams,
 } from "#/hooks/use-team"
 import { ApiError } from "#/lib/api-client"
+import { listSearchSchema } from "#/lib/list-search"
 import {
   Table,
   TableBody,
@@ -28,6 +29,7 @@ import {
 
 export const Route = createFileRoute("/_dashboard/team/$configId/")({
   component: TeamDetailPage,
+  validateSearch: listSearchSchema.passthrough(),
 })
 
 function TeamDetailPage() {
@@ -39,7 +41,7 @@ function TeamDetailPage() {
   // Server filters by configKey so the page only sees this config's teams.
   // Capped at the first page (50); add full pagination if a single config
   // ever has hundreds of active teams.
-  const teamsList = useTeams({ configKey: configId })
+  const teamsList = useTeams(Route, { configKey: configId })
   const updateMutation = useUpdateTeamConfig()
   const deleteMutation = useDeleteTeamConfig()
 

@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "#/lib/api-client"
-import { qs as buildQs, useCursorList, type Page } from "#/hooks/use-cursor-list"
+import {
+  qs as buildQs,
+  useListSearch,
+  type FilterDef,
+  type Page,
+} from "#/hooks/use-list-search"
 import type {
   LotteryPool,
   LotteryTier,
@@ -25,24 +30,34 @@ const POOLS_KEY = ["lottery-pools"] as const
 
 // ─── Pools ───────────────────────────────────────────────────────
 
-/** Paginated pools — for the admin pool list page. */
+export const LOTTERY_POOL_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated pools — URL-driven. */
 export function useLotteryPools(
-  opts: { activityId?: string; includeActivity?: boolean; initialPageSize?: number } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: any,
+  extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
-  const { activityId, includeActivity, initialPageSize = 50 } = opts
-  return useCursorList<LotteryPool>({
-    queryKey: [...POOLS_KEY, { activityId: activityId ?? null, includeActivity: !!includeActivity }],
-    fetchPage: ({ cursor, limit, q }) =>
+  const { activityId, includeActivity } = extraQuery
+  return useListSearch<LotteryPool>({
+    route,
+    queryKey: [
+      ...POOLS_KEY,
+      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+    ],
+    filterDefs: LOTTERY_POOL_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPool>>(
         `/api/lottery/pools?${buildQs({
           cursor,
           limit,
           q,
+          adv,
+          ...filters,
           activityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),
-    initialPageSize,
   })
 }
 
@@ -102,15 +117,19 @@ export function useDeleteLotteryPool() {
 
 // ─── Tiers ───────────────────────────────────────────────────────
 
-/** Paginated tiers under one pool — for TierTable. */
-export function useLotteryTiers(poolKey: string, initialPageSize = 50) {
-  return useCursorList<LotteryTier>({
+export const LOTTERY_TIER_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated tiers under one pool — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useLotteryTiers(poolKey: string, route: any) {
+  return useListSearch<LotteryTier>({
+    route,
     queryKey: ["lottery-tiers", poolKey],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: LOTTERY_TIER_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryTier>>(
-        `/api/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q })}`,
+        `/api/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!poolKey,
   })
 }
@@ -167,15 +186,19 @@ export function useDeleteLotteryTier() {
 
 // ─── Prizes ──────────────────────────────────────────────────────
 
-/** Paginated prizes under one pool — for PrizeTable. */
-export function useLotteryPrizes(poolKey: string, initialPageSize = 50) {
-  return useCursorList<LotteryPrize>({
+export const LOTTERY_PRIZE_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated prizes under one pool — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useLotteryPrizes(poolKey: string, route: any) {
+  return useListSearch<LotteryPrize>({
+    route,
     queryKey: ["lottery-prizes", poolKey],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: LOTTERY_PRIZE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPrize>>(
-        `/api/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q })}`,
+        `/api/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!poolKey,
   })
 }
@@ -237,15 +260,19 @@ export function useDeleteLotteryPrize() {
 
 // ─── Pity Rules ──────────────────────────────────────────────────
 
-/** Paginated pity rules under one pool — for PityRuleTable. */
-export function useLotteryPityRules(poolKey: string, initialPageSize = 50) {
-  return useCursorList<LotteryPityRule>({
+export const LOTTERY_PITY_RULE_FILTER_DEFS: FilterDef[] = []
+
+/** Paginated pity rules under one pool — URL-driven. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useLotteryPityRules(poolKey: string, route: any) {
+  return useListSearch<LotteryPityRule>({
+    route,
     queryKey: ["lottery-pity-rules", poolKey],
-    fetchPage: ({ cursor, limit, q }) =>
+    filterDefs: LOTTERY_PITY_RULE_FILTER_DEFS,
+    fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPityRule>>(
-        `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q })}`,
+        `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
-    initialPageSize,
     enabled: !!poolKey,
   })
 }
