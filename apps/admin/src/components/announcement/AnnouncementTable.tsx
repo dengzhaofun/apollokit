@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { openEditModal } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 import type {
   Announcement,
@@ -89,8 +90,8 @@ export function AnnouncementTable({ data }: AnnouncementTableProps) {
             <TableRow key={a.id}>
               <TableCell>
                 <Link
-                  to="/announcement/$alias"
-                  params={{ alias: a.alias }}
+                  to="/announcement"
+                  search={(prev) => ({ ...prev, ...openEditModal(a.alias) })}
                   className="block"
                 >
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">

@@ -1,6 +1,10 @@
-import { useState } from "react"
+import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import {
+  FormStateBridge,
+  type FormBridgeState,
+} from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -26,6 +30,9 @@ interface ConfigFormProps {
   onSubmit: (values: CreateAssistPoolConfigInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  id?: string
+  hideSubmitButton?: boolean
+  onStateChange?: (state: FormBridgeState) => void
 }
 
 export function AssistPoolConfigForm({
@@ -33,310 +40,427 @@ export function AssistPoolConfigForm({
   onSubmit,
   isPending,
   submitLabel,
+  id,
+  hideSubmitButton,
+  onStateChange,
 }: ConfigFormProps) {
   const initialPolicy =
-    defaultValues?.contributionPolicy ?? ({ kind: "fixed", amount: 20 } as AssistContributionPolicy)
-
-  const [name, setName] = useState(defaultValues?.name ?? "")
-  const [alias, setAlias] = useState(defaultValues?.alias ?? "")
-  const [description, setDescription] = useState(
-    defaultValues?.description ?? "",
-  )
-  const [mode, setMode] = useState<AssistPoolMode>(
-    defaultValues?.mode ?? "decrement",
-  )
-  const [targetAmount, setTargetAmount] = useState(
-    defaultValues?.targetAmount ?? 100,
-  )
-  const [policyKind, setPolicyKind] = useState<PolicyKind>(initialPolicy.kind)
-  const [fixedAmount, setFixedAmount] = useState(
-    initialPolicy.kind === "fixed" ? initialPolicy.amount : 20,
-  )
-  const [uniformMin, setUniformMin] = useState(
-    initialPolicy.kind === "uniform" ? initialPolicy.min : 5,
-  )
-  const [uniformMax, setUniformMax] = useState(
-    initialPolicy.kind === "uniform" ? initialPolicy.max : 30,
-  )
-  const [decayBase, setDecayBase] = useState(
-    initialPolicy.kind === "decaying" ? initialPolicy.base : 30,
-  )
-  const [decayTailRatio, setDecayTailRatio] = useState(
-    initialPolicy.kind === "decaying" ? initialPolicy.tailRatio : 0.1,
-  )
-  const [decayTailFloor, setDecayTailFloor] = useState(
-    initialPolicy.kind === "decaying" ? initialPolicy.tailFloor : 1,
-  )
-  const [perAssisterLimit, setPerAssisterLimit] = useState(
-    defaultValues?.perAssisterLimit ?? 1,
-  )
-  const [initiatorCanAssist, setInitiatorCanAssist] = useState(
-    defaultValues?.initiatorCanAssist ?? false,
-  )
-  const [expiresInSeconds, setExpiresInSeconds] = useState(
-    defaultValues?.expiresInSeconds ?? 86400,
-  )
-  const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
+    defaultValues?.contributionPolicy ??
+    ({ kind: "fixed", amount: 20 } as AssistContributionPolicy)
   const activityId = defaultValues?.activityId ?? null
 
-  function buildPolicy(): AssistContributionPolicy {
-    if (policyKind === "fixed") return { kind: "fixed", amount: fixedAmount }
-    if (policyKind === "uniform")
-      return { kind: "uniform", min: uniformMin, max: uniformMax }
-    return {
-      kind: "decaying",
-      base: decayBase,
-      tailRatio: decayTailRatio,
-      tailFloor: decayTailFloor,
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const input: CreateAssistPoolConfigInput = {
-      name,
-      alias: alias || null,
-      description: description || null,
-      mode,
-      targetAmount,
-      contributionPolicy: buildPolicy(),
-      perAssisterLimit,
-      initiatorCanAssist,
-      expiresInSeconds,
-      isActive,
-      activityId,
-    }
-    await onSubmit(input)
-  }
+  const form = useForm({
+    defaultValues: {
+      name: defaultValues?.name ?? "",
+      alias: defaultValues?.alias ?? "",
+      description: defaultValues?.description ?? "",
+      mode: (defaultValues?.mode ?? "decrement") as AssistPoolMode,
+      targetAmount: defaultValues?.targetAmount ?? 100,
+      policyKind: initialPolicy.kind as PolicyKind,
+      fixedAmount: initialPolicy.kind === "fixed" ? initialPolicy.amount : 20,
+      uniformMin: initialPolicy.kind === "uniform" ? initialPolicy.min : 5,
+      uniformMax: initialPolicy.kind === "uniform" ? initialPolicy.max : 30,
+      decayBase: initialPolicy.kind === "decaying" ? initialPolicy.base : 30,
+      decayTailRatio:
+        initialPolicy.kind === "decaying" ? initialPolicy.tailRatio : 0.1,
+      decayTailFloor:
+        initialPolicy.kind === "decaying" ? initialPolicy.tailFloor : 1,
+      perAssisterLimit: defaultValues?.perAssisterLimit ?? 1,
+      initiatorCanAssist: defaultValues?.initiatorCanAssist ?? false,
+      expiresInSeconds: defaultValues?.expiresInSeconds ?? 86400,
+      isActive: defaultValues?.isActive ?? true,
+    },
+    onSubmit: async ({ value }) => {
+      let policy: AssistContributionPolicy
+      if (value.policyKind === "fixed") {
+        policy = { kind: "fixed", amount: value.fixedAmount }
+      } else if (value.policyKind === "uniform") {
+        policy = { kind: "uniform", min: value.uniformMin, max: value.uniformMax }
+      } else {
+        policy = {
+          kind: "decaying",
+          base: value.decayBase,
+          tailRatio: value.decayTailRatio,
+          tailFloor: value.decayTailFloor,
+        }
+      }
+      await onSubmit({
+        name: value.name,
+        alias: value.alias || null,
+        description: value.description || null,
+        mode: value.mode,
+        targetAmount: value.targetAmount,
+        contributionPolicy: policy,
+        perAssisterLimit: value.perAssisterLimit,
+        initiatorCanAssist: value.initiatorCanAssist,
+        expiresInSeconds: value.expiresInSeconds,
+        isActive: value.isActive,
+        activityId,
+      })
+    },
+  })
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">{m.assistpool_name()}</Label>
-        <Input
-          id="name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={m.assistpool_name_placeholder()}
-        />
-      </div>
+    <form
+      id={id}
+      onSubmit={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        form.handleSubmit()
+      }}
+      className="space-y-6"
+    >
+      {onStateChange ? (
+        <form.Subscribe
+          selector={(s) => ({
+            canSubmit: s.canSubmit,
+            isDirty: s.isDirty,
+            isSubmitting: s.isSubmitting,
+          })}
+        >
+          {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
+        </form.Subscribe>
+      ) : null}
 
-      <div className="space-y-2">
-        <Label htmlFor="alias">{m.assistpool_alias_optional()}</Label>
-        <Input
-          id="alias"
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder={m.assistpool_alias_placeholder()}
-        />
-        <p className="text-xs text-muted-foreground">
-          {m.assistpool_alias_help()}
-        </p>
-      </div>
+      <form.Field
+        name="name"
+        validators={{
+          onChange: ({ value }) => (!value.trim() ? "Name required" : undefined),
+        }}
+      >
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="name">{m.assistpool_name()}</Label>
+            <Input
+              id="name"
+              required
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder={m.assistpool_name_placeholder()}
+            />
+          </div>
+        )}
+      </form.Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">{m.assistpool_description()}</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-        />
-      </div>
+      <form.Field name="alias">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="alias">{m.assistpool_alias_optional()}</Label>
+            <Input
+              id="alias"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder={m.assistpool_alias_placeholder()}
+            />
+            <p className="text-xs text-muted-foreground">
+              {m.assistpool_alias_help()}
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="description">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="description">{m.assistpool_description()}</Label>
+            <Textarea
+              id="description"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              rows={2}
+            />
+          </div>
+        )}
+      </form.Field>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>{m.assistpool_mode()}</Label>
-          <Select
-            value={mode}
-            onValueChange={(v) => setMode(v as AssistPoolMode)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="decrement">
-                {m.assistpool_mode_decrement()}
-              </SelectItem>
-              <SelectItem value="accumulate">
-                {m.assistpool_mode_accumulate()}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <form.Field name="mode">
+          {(field) => (
+            <div className="space-y-2">
+              <Label>{m.assistpool_mode()}</Label>
+              <Select
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v as AssistPoolMode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="decrement">
+                    {m.assistpool_mode_decrement()}
+                  </SelectItem>
+                  <SelectItem value="accumulate">
+                    {m.assistpool_mode_accumulate()}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </form.Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="target">{m.assistpool_target_amount()}</Label>
-          <Input
-            id="target"
-            type="number"
-            min={1}
-            required
-            value={targetAmount}
-            onChange={(e) => setTargetAmount(Number(e.target.value))}
-          />
-        </div>
+        <form.Field name="targetAmount">
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor="target">{m.assistpool_target_amount()}</Label>
+              <Input
+                id="target"
+                type="number"
+                min={1}
+                required
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(Number(e.target.value) || 1)
+                }
+              />
+            </div>
+          )}
+        </form.Field>
       </div>
 
       <div className="space-y-3 rounded-lg border p-4">
         <Label>{m.assistpool_policy()}</Label>
-        <Select
-          value={policyKind}
-          onValueChange={(v) => setPolicyKind(v as PolicyKind)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="fixed">{m.assistpool_policy_fixed()}</SelectItem>
-            <SelectItem value="uniform">
-              {m.assistpool_policy_uniform()}
-            </SelectItem>
-            <SelectItem value="decaying">
-              {m.assistpool_policy_decaying()}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <form.Field name="policyKind">
+          {(field) => (
+            <Select
+              value={field.state.value}
+              onValueChange={(v) => field.handleChange(v as PolicyKind)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed">
+                  {m.assistpool_policy_fixed()}
+                </SelectItem>
+                <SelectItem value="uniform">
+                  {m.assistpool_policy_uniform()}
+                </SelectItem>
+                <SelectItem value="decaying">
+                  {m.assistpool_policy_decaying()}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </form.Field>
 
-        {policyKind === "fixed" && (
-          <div className="space-y-2">
-            <Label htmlFor="fixed-amount">
-              {m.assistpool_amount_per_assist()}
-            </Label>
-            <Input
-              id="fixed-amount"
-              type="number"
-              min={1}
-              value={fixedAmount}
-              onChange={(e) => setFixedAmount(Number(e.target.value))}
-            />
-          </div>
-        )}
-
-        {policyKind === "uniform" && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="uniform-min">{m.assistpool_min()}</Label>
-              <Input
-                id="uniform-min"
-                type="number"
-                min={1}
-                value={uniformMin}
-                onChange={(e) => setUniformMin(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="uniform-max">{m.assistpool_max()}</Label>
-              <Input
-                id="uniform-max"
-                type="number"
-                min={1}
-                value={uniformMax}
-                onChange={(e) => setUniformMax(Number(e.target.value))}
-              />
-            </div>
-          </div>
-        )}
-
-        {policyKind === "decaying" && (
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="decay-base">{m.assistpool_base()}</Label>
-              <Input
-                id="decay-base"
-                type="number"
-                min={1}
-                value={decayBase}
-                onChange={(e) => setDecayBase(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="decay-tail-ratio">
-                {m.assistpool_tail_ratio()}
-              </Label>
-              <Input
-                id="decay-tail-ratio"
-                type="number"
-                step="0.01"
-                min={0}
-                max={1}
-                value={decayTailRatio}
-                onChange={(e) => setDecayTailRatio(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="decay-floor">{m.assistpool_tail_floor()}</Label>
-              <Input
-                id="decay-floor"
-                type="number"
-                min={1}
-                value={decayTailFloor}
-                onChange={(e) => setDecayTailFloor(Number(e.target.value))}
-              />
-            </div>
-          </div>
-        )}
+        <form.Subscribe selector={(s) => s.values.policyKind}>
+          {(policyKind) =>
+            policyKind === "fixed" ? (
+              <form.Field name="fixedAmount">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="fixed-amount">
+                      {m.assistpool_amount_per_assist()}
+                    </Label>
+                    <Input
+                      id="fixed-amount"
+                      type="number"
+                      min={1}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) =>
+                        field.handleChange(Number(e.target.value) || 1)
+                      }
+                    />
+                  </div>
+                )}
+              </form.Field>
+            ) : policyKind === "uniform" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <form.Field name="uniformMin">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="uniform-min">{m.assistpool_min()}</Label>
+                      <Input
+                        id="uniform-min"
+                        type="number"
+                        min={1}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(Number(e.target.value) || 1)
+                        }
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="uniformMax">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="uniform-max">{m.assistpool_max()}</Label>
+                      <Input
+                        id="uniform-max"
+                        type="number"
+                        min={1}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(Number(e.target.value) || 1)
+                        }
+                      />
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                <form.Field name="decayBase">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="decay-base">{m.assistpool_base()}</Label>
+                      <Input
+                        id="decay-base"
+                        type="number"
+                        min={1}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(Number(e.target.value) || 1)
+                        }
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="decayTailRatio">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="decay-tail-ratio">
+                        {m.assistpool_tail_ratio()}
+                      </Label>
+                      <Input
+                        id="decay-tail-ratio"
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        max={1}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(Number(e.target.value))
+                        }
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="decayTailFloor">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="decay-floor">
+                        {m.assistpool_tail_floor()}
+                      </Label>
+                      <Input
+                        id="decay-floor"
+                        type="number"
+                        min={1}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) =>
+                          field.handleChange(Number(e.target.value) || 1)
+                        }
+                      />
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+            )
+          }
+        </form.Subscribe>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="per-assister">
-            {m.assistpool_per_assister_limit()}
-          </Label>
-          <Input
-            id="per-assister"
-            type="number"
-            min={1}
-            value={perAssisterLimit}
-            onChange={(e) => setPerAssisterLimit(Number(e.target.value))}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="ttl">{m.assistpool_expires_in_seconds()}</Label>
-          <Input
-            id="ttl"
-            type="number"
-            min={1}
-            value={expiresInSeconds}
-            onChange={(e) => setExpiresInSeconds(Number(e.target.value))}
-          />
-        </div>
+        <form.Field name="perAssisterLimit">
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor="per-assister">
+                {m.assistpool_per_assister_limit()}
+              </Label>
+              <Input
+                id="per-assister"
+                type="number"
+                min={1}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(Number(e.target.value) || 1)
+                }
+              />
+            </div>
+          )}
+        </form.Field>
+        <form.Field name="expiresInSeconds">
+          {(field) => (
+            <div className="space-y-2">
+              <Label htmlFor="ttl">{m.assistpool_expires_in_seconds()}</Label>
+              <Input
+                id="ttl"
+                type="number"
+                min={1}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(Number(e.target.value) || 1)
+                }
+              />
+            </div>
+          )}
+        </form.Field>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div>
-          <Label htmlFor="initiator-can-assist">
-            {m.assistpool_initiator_can_assist()}
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            {m.assistpool_initiator_can_assist_help()}
-          </p>
-        </div>
-        <Switch
-          id="initiator-can-assist"
-          checked={initiatorCanAssist}
-          onCheckedChange={setInitiatorCanAssist}
-        />
-      </div>
+      <form.Field name="initiatorCanAssist">
+        {(field) => (
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label htmlFor="initiator-can-assist">
+                {m.assistpool_initiator_can_assist()}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {m.assistpool_initiator_can_assist_help()}
+              </p>
+            </div>
+            <Switch
+              id="initiator-can-assist"
+              checked={field.state.value}
+              onCheckedChange={(v) => field.handleChange(v === true)}
+            />
+          </div>
+        )}
+      </form.Field>
 
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div>
-          <Label htmlFor="active">{m.assistpool_active()}</Label>
-          <p className="text-xs text-muted-foreground">
-            {m.assistpool_active_help()}
-          </p>
-        </div>
-        <Switch id="active" checked={isActive} onCheckedChange={setIsActive} />
-      </div>
+      <form.Field name="isActive">
+        {(field) => (
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label htmlFor="active">{m.assistpool_active()}</Label>
+              <p className="text-xs text-muted-foreground">
+                {m.assistpool_active_help()}
+              </p>
+            </div>
+            <Switch
+              id="active"
+              checked={field.state.value}
+              onCheckedChange={(v) => field.handleChange(v === true)}
+            />
+          </div>
+        )}
+      </form.Field>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
-          {isPending
-            ? m.assistpool_creating()
-            : (submitLabel ?? m.assistpool_create())}
-        </Button>
-      </div>
+      {hideSubmitButton ? null : (
+        <form.Subscribe selector={(s) => s.canSubmit}>
+          {(canSubmit) => (
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isPending || !canSubmit}>
+                {isPending
+                  ? m.assistpool_creating()
+                  : (submitLabel ?? m.assistpool_create())}
+              </Button>
+            </div>
+          )}
+        </form.Subscribe>
+      )}
     </form>
   )
 }

@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { openEditModal } from "#/lib/modal-search"
 import type { CurrencyDefinition } from "#/lib/types/currency"
 
 const columnHelper = createColumnHelper<CurrencyDefinition>()
@@ -37,8 +38,8 @@ function useColumns() {
         header: m.common_name(),
         cell: (info) => (
           <Link
-            to="/currency/$currencyId"
-            params={{ currencyId: info.row.original.id }}
+            to="/currency"
+            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -108,7 +109,10 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link to="/currency/$currencyId" params={{ currencyId: def.id }}>
+          <Link
+            to="/currency"
+            search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
+          >
             <Pencil className="size-4" />
             {m.common_edit()}
           </Link>

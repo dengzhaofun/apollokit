@@ -1,8 +1,12 @@
-import { useState } from "react"
+import { useForm } from "@tanstack/react-form"
 
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import {
+  FormStateBridge,
+  type FormBridgeState,
+} from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Textarea } from "#/components/ui/textarea"
@@ -21,154 +25,229 @@ interface MessageFormProps {
   onSubmit: (values: CreateMailInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  id?: string
+  hideSubmitButton?: boolean
+  onStateChange?: (state: FormBridgeState) => void
 }
 
 export function MessageForm({
   onSubmit,
   isPending,
   submitLabel,
+  id,
+  hideSubmitButton,
+  onStateChange,
 }: MessageFormProps) {
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
-  const [targetType, setTargetType] = useState<MailTargetType>("broadcast")
-  const [recipientsRaw, setRecipientsRaw] = useState("")
-  const [requireRead, setRequireRead] = useState(false)
-  const [expiresAt, setExpiresAt] = useState("")
-  const [entries, setEntries] = useState<RewardEntry[]>([])
-  const [error, setError] = useState("")
+  const form = useForm({
+    defaultValues: {
+      title: "",
+      content: "",
+      targetType: "broadcast" as MailTargetType,
+      recipientsRaw: "",
+      requireRead: false,
+      expiresAt: "",
+      entries: [] as RewardEntry[],
+      formError: "",
+    },
+    onSubmit: async ({ value, formApi }) => {
+      formApi.setFieldValue("formError", "")
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-
-    if (!title.trim() || !content.trim()) {
-      setError(m.mail_error_title_content_required())
-      return
-    }
-
-    const rewards = entries.filter((e) => e.id && e.count > 0)
-
-    let targetUserIds: string[] | undefined = undefined
-    if (targetType === "multicast") {
-      targetUserIds = recipientsRaw
-        .split(/[\n,]/)
-        .map((s) => s.trim())
-        .filter(Boolean)
-      if (targetUserIds.length === 0) {
-        setError(m.mail_error_recipients_required())
+      if (!value.title.trim() || !value.content.trim()) {
+        formApi.setFieldValue("formError", m.mail_error_title_content_required())
         return
       }
-    }
 
-    const payload: CreateMailInput = {
-      title: title.trim(),
-      content: content.trim(),
-      rewards,
-      targetType,
-      targetUserIds,
-      requireRead,
-      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-    }
-    void onSubmit(payload)
-  }
+      const rewards = value.entries.filter((e) => e.id && e.count > 0)
+
+      let targetUserIds: string[] | undefined
+      if (value.targetType === "multicast") {
+        targetUserIds = value.recipientsRaw
+          .split(/[\n,]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+        if (targetUserIds.length === 0) {
+          formApi.setFieldValue("formError", m.mail_error_recipients_required())
+          return
+        }
+      }
+
+      const payload: CreateMailInput = {
+        title: value.title.trim(),
+        content: value.content.trim(),
+        rewards,
+        targetType: value.targetType,
+        targetUserIds,
+        requireRead: value.requireRead,
+        expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : null,
+      }
+      await onSubmit(payload)
+    },
+  })
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="mail-title">{m.mail_field_title()} *</Label>
-        <Input
-          id="mail-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={200}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="mail-content">{m.mail_field_content()} *</Label>
-        <Textarea
-          id="mail-content"
-          rows={6}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          maxLength={10_000}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>{m.mail_field_target_type()} *</Label>
-        <Select
-          value={targetType}
-          onValueChange={(v) => setTargetType(v as MailTargetType)}
+    <form
+      id={id}
+      onSubmit={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        form.handleSubmit()
+      }}
+      className="space-y-4"
+    >
+      {onStateChange ? (
+        <form.Subscribe
+          selector={(s) => ({
+            canSubmit: s.canSubmit,
+            isDirty: s.isDirty,
+            isSubmitting: s.isSubmitting,
+          })}
         >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="broadcast">
-              {m.mail_target_broadcast()}
-            </SelectItem>
-            <SelectItem value="multicast">
-              {m.mail_target_multicast()}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          {m.mail_field_target_hint()}
-        </p>
-      </div>
+          {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
+        </form.Subscribe>
+      ) : null}
 
-      {targetType === "multicast" && (
-        <div className="space-y-2">
-          <Label htmlFor="mail-recipients">{m.mail_field_recipients()} *</Label>
-          <Textarea
-            id="mail-recipients"
-            rows={4}
-            value={recipientsRaw}
-            onChange={(e) => setRecipientsRaw(e.target.value)}
-            placeholder="user-1, user-2&#10;user-3"
+      <form.Field name="title">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="mail-title">{m.mail_field_title()} *</Label>
+            <Input
+              id="mail-title"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              maxLength={200}
+            />
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="content">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="mail-content">{m.mail_field_content()} *</Label>
+            <Textarea
+              id="mail-content"
+              rows={6}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              maxLength={10_000}
+            />
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="targetType">
+        {(field) => (
+          <div className="space-y-2">
+            <Label>{m.mail_field_target_type()} *</Label>
+            <Select
+              value={field.state.value}
+              onValueChange={(v) => field.handleChange(v as MailTargetType)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="broadcast">
+                  {m.mail_target_broadcast()}
+                </SelectItem>
+                <SelectItem value="multicast">
+                  {m.mail_target_multicast()}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {m.mail_field_target_hint()}
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Subscribe selector={(s) => s.values.targetType}>
+        {(targetType) =>
+          targetType === "multicast" ? (
+            <form.Field name="recipientsRaw">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="mail-recipients">
+                    {m.mail_field_recipients()} *
+                  </Label>
+                  <Textarea
+                    id="mail-recipients"
+                    rows={4}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="user-1, user-2&#10;user-3"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {m.mail_field_recipients_hint()}
+                  </p>
+                </div>
+              )}
+            </form.Field>
+          ) : null
+        }
+      </form.Subscribe>
+
+      <form.Field name="entries">
+        {(field) => (
+          <RewardEntryEditor
+            label={m.mail_field_rewards()}
+            entries={field.state.value}
+            onChange={(v) => field.handleChange(v)}
+            hint={m.mail_field_rewards_hint()}
           />
-          <p className="text-xs text-muted-foreground">
-            {m.mail_field_recipients_hint()}
-          </p>
-        </div>
+        )}
+      </form.Field>
+
+      <form.Field name="requireRead">
+        {(field) => (
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label>{m.mail_field_require_read()}</Label>
+              <p className="text-xs text-muted-foreground">
+                {m.mail_field_require_read_hint()}
+              </p>
+            </div>
+            <Switch
+              checked={field.state.value}
+              onCheckedChange={(v) => field.handleChange(v === true)}
+            />
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="expiresAt">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor="mail-expires">{m.mail_field_expires_at()}</Label>
+            <Input
+              id="mail-expires"
+              type="datetime-local"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              {m.mail_field_expires_at_hint()}
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Subscribe selector={(s) => s.values.formError}>
+        {(formError) =>
+          formError ? <p className="text-sm text-destructive">{formError}</p> : null
+        }
+      </form.Subscribe>
+
+      {hideSubmitButton ? null : (
+        <Button type="submit" disabled={isPending}>
+          {isPending ? m.common_loading() : (submitLabel ?? m.common_create())}
+        </Button>
       )}
-
-      <RewardEntryEditor
-        label={m.mail_field_rewards()}
-        entries={entries}
-        onChange={setEntries}
-        hint={m.mail_field_rewards_hint()}
-      />
-
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div className="space-y-0.5">
-          <Label>{m.mail_field_require_read()}</Label>
-          <p className="text-xs text-muted-foreground">
-            {m.mail_field_require_read_hint()}
-          </p>
-        </div>
-        <Switch checked={requireRead} onCheckedChange={setRequireRead} />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="mail-expires">{m.mail_field_expires_at()}</Label>
-        <Input
-          id="mail-expires"
-          type="datetime-local"
-          value={expiresAt}
-          onChange={(e) => setExpiresAt(e.target.value)}
-        />
-        <p className="text-xs text-muted-foreground">
-          {m.mail_field_expires_at_hint()}
-        </p>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? m.common_loading() : (submitLabel ?? m.common_create())}
-      </Button>
     </form>
   )
 }

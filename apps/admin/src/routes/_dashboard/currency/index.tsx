@@ -1,21 +1,51 @@
 import { useMemo, useState } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
 
 import { Button } from "#/components/ui/button"
+import { FormDialog } from "#/components/ui/form-dialog"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
+import { DefinitionForm } from "#/components/currency/DefinitionForm"
 import { DefinitionTable } from "#/components/currency/DefinitionTable"
 import { LedgerTable } from "#/components/currency/LedgerTable"
-import { useCurrencies, useCurrencyLedger } from "#/hooks/use-currency"
+import {
+  useCreateCurrency,
+  useCurrencies,
+  useCurrency,
+  useCurrencyLedger,
+  useUpdateCurrency,
+} from "#/hooks/use-currency"
+import { ApiError } from "#/lib/api-client"
+import {
+  closedModal,
+  modalSearchSchema,
+  openCreateModal,
+} from "#/lib/modal-search"
+
+const FORM_ID = "currency-definition-form"
 
 export const Route = createFileRoute("/_dashboard/currency/")({
   component: CurrencyListPage,
+  validateSearch: modalSearchSchema,
 })
 
 function CurrencyListPage() {
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const modal = search.modal
+  const editingId = modal === "edit" ? search.id : undefined
+
+  function closeModal() {
+    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+  }
+  function openCreate() {
+    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+  }
+
   const {
     data: currencies,
     isPending: defPending,
@@ -52,11 +82,9 @@ function CurrencyListPage() {
               <TabsTrigger value="ledger">{m.currency_ledger()}</TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
-              <Button asChild size="sm">
-                <Link to="/currency/create">
-                  <Plus className="size-4" />
-                  {m.currency_new_definition()}
-                </Link>
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="size-4" />
+                {m.currency_new_definition()}
               </Button>
             </div>
           </div>
@@ -127,6 +155,150 @@ function CurrencyListPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {modal === "create" ? (
+        <CreateCurrencyDialog onClose={closeModal} />
+      ) : null}
+      {modal === "edit" && editingId ? (
+        <EditCurrencyDialog id={editingId} onClose={closeModal} />
+      ) : null}
     </>
+  )
+}
+
+interface DialogShellProps {
+  onClose: () => void
+}
+
+function CreateCurrencyDialog({ onClose }: DialogShellProps) {
+  const createMutation = useCreateCurrency()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !createMutation.isPending}
+      title={m.currency_new_definition()}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={!formState.canSubmit || createMutation.isPending}
+          >
+            {createMutation.isPending ? m.common_saving() : m.common_create()}
+          </Button>
+        </>
+      }
+    >
+      <DefinitionForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={createMutation.isPending}
+        onSubmit={async (values) => {
+          try {
+            await createMutation.mutateAsync(values)
+            toast.success(m.currency_created())
+            onClose()
+          } catch (err) {
+            toast.error(
+              err instanceof ApiError
+                ? err.body.error
+                : m.currency_failed_create(),
+            )
+          }
+        }}
+      />
+    </FormDialog>
+  )
+}
+
+function EditCurrencyDialog({
+  id,
+  onClose,
+}: DialogShellProps & { id: string }) {
+  const { data: currency, isPending: loading, error } = useCurrency(id)
+  const updateMutation = useUpdateCurrency()
+  const [formState, setFormState] = useState({
+    canSubmit: false,
+    isDirty: false,
+    isSubmitting: false,
+  })
+
+  return (
+    <FormDialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+      isDirty={formState.isDirty && !updateMutation.isPending}
+      title={m.common_edit()}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {m.common_cancel()}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={
+              !currency || !formState.canSubmit || updateMutation.isPending
+            }
+          >
+            {updateMutation.isPending
+              ? m.common_saving()
+              : m.common_save_changes()}
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          {m.common_loading()}
+        </div>
+      ) : error || !currency ? (
+        <div className="py-10 text-center text-sm text-destructive">
+          {error?.message ?? "Currency not found"}
+        </div>
+      ) : (
+        <DefinitionForm
+          id={FORM_ID}
+          hideSubmitButton
+          onStateChange={setFormState}
+          defaultValues={{
+            name: currency.name,
+            alias: currency.alias,
+            description: currency.description,
+            icon: currency.icon,
+            sortOrder: currency.sortOrder,
+            isActive: currency.isActive,
+            activityId: currency.activityId,
+          }}
+          isPending={updateMutation.isPending}
+          onSubmit={async (values) => {
+            try {
+              await updateMutation.mutateAsync({ id: currency.id, ...values })
+              toast.success(m.currency_updated())
+              onClose()
+            } catch (err) {
+              toast.error(
+                err instanceof ApiError ? err.body.error : "Failed to update",
+              )
+            }
+          }}
+        />
+      )}
+    </FormDialog>
   )
 }

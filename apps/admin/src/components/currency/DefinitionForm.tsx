@@ -2,6 +2,10 @@ import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import {
+  FormStateBridge,
+  type FormBridgeState,
+} from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Switch } from "#/components/ui/switch"
@@ -13,6 +17,9 @@ interface DefinitionFormProps {
   onSubmit: (values: CreateCurrencyInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  id?: string
+  hideSubmitButton?: boolean
+  onStateChange?: (state: FormBridgeState) => void
 }
 
 export function DefinitionForm({
@@ -20,6 +27,9 @@ export function DefinitionForm({
   onSubmit,
   isPending,
   submitLabel,
+  id,
+  hideSubmitButton,
+  onStateChange,
 }: DefinitionFormProps) {
   const form = useForm({
     defaultValues: {
@@ -47,6 +57,7 @@ export function DefinitionForm({
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -54,6 +65,17 @@ export function DefinitionForm({
       }}
       className="space-y-6"
     >
+      {onStateChange ? (
+        <form.Subscribe
+          selector={(s) => ({
+            canSubmit: s.canSubmit,
+            isDirty: s.isDirty,
+            isSubmitting: s.isSubmitting,
+          })}
+        >
+          {(state) => <FormStateBridge state={state} onChange={onStateChange} />}
+        </form.Subscribe>
+      ) : null}
       <form.Field
         name="name"
         validators={{
@@ -161,13 +183,15 @@ export function DefinitionForm({
         )}
       </form.Field>
 
-      <form.Subscribe selector={(s) => s.canSubmit}>
-        {(canSubmit) => (
-          <Button type="submit" disabled={!canSubmit || isPending}>
-            {isPending ? "Saving..." : (submitLabel ?? m.common_create())}
-          </Button>
-        )}
-      </form.Subscribe>
+      {hideSubmitButton ? null : (
+        <form.Subscribe selector={(s) => s.canSubmit}>
+          {(canSubmit) => (
+            <Button type="submit" disabled={!canSubmit || isPending}>
+              {isPending ? "Saving..." : (submitLabel ?? m.common_create())}
+            </Button>
+          )}
+        </form.Subscribe>
+      )}
     </form>
   )
 }

@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { openEditModal } from "#/lib/modal-search"
 import type { ItemDefinition } from "#/lib/types/item"
 
 const columnHelper = createColumnHelper<ItemDefinition>()
@@ -42,8 +43,8 @@ function useColumns() {
       header: m.common_name(),
       cell: (info) => (
         <Link
-          to="/item/definitions/$definitionId"
-          params={{ definitionId: info.row.original.id }}
+          to="/item/definitions"
+          search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
           className="font-medium hover:underline"
         >
           {info.getValue()}
@@ -106,8 +107,8 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
           <Link
-            to="/item/definitions/$definitionId"
-            params={{ definitionId: def.id }}
+            to="/item/definitions"
+            search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
           >
             <Pencil className="size-4" />
             {m.common_edit()}

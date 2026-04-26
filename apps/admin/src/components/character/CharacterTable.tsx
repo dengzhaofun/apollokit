@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "#/components/ui/table"
 import { resolveAssetUrl } from "#/lib/api-client"
+import { openEditModal } from "#/lib/modal-search"
 import type { Character } from "#/lib/types/character"
 import * as m from "#/paraglide/messages.js"
 
@@ -54,8 +55,8 @@ export function CharacterTable({ data }: CharacterTableProps) {
               </TableCell>
               <TableCell>
                 <Link
-                  to="/character/$characterId"
-                  params={{ characterId: c.id }}
+                  to="/character"
+                  search={(prev) => ({ ...prev, ...openEditModal(c.id) })}
                   className="font-medium hover:underline"
                 >
                   {c.name}
