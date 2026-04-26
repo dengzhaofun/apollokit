@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import * as m from "#/paraglide/messages.js"
@@ -139,7 +140,10 @@ export function LeaderboardConfigForm({
       <form.Field name="metricKey">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>{m.leaderboard_field_metric_key_label()}</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              {m.leaderboard_field_metric_key_label()}
+              <FieldHint>{m.leaderboard_field_metric_key_hint()}</FieldHint>
+            </Label>
             <Input
               id={field.name}
               value={field.state.value}
@@ -147,9 +151,6 @@ export function LeaderboardConfigForm({
               placeholder="pvp_score / task.claimed / level.stars"
               required
             />
-            <p className="text-xs text-muted-foreground">
-              {m.leaderboard_field_metric_key_hint()}
-            </p>
           </div>
         )}
       </form.Field>
@@ -297,8 +298,9 @@ export function LeaderboardConfigForm({
       <form.Field name="rewardTiersJson">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name}>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
               {m.leaderboard_field_reward_tiers_label()}
+              <FieldHint>{m.leaderboard_field_reward_tiers_hint()}</FieldHint>
             </Label>
             <Textarea
               id={field.name}
@@ -308,9 +310,6 @@ export function LeaderboardConfigForm({
               className="font-mono text-xs"
               placeholder='[{"from":1,"to":1,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
             />
-            <p className="text-xs text-muted-foreground">
-              {m.leaderboard_field_reward_tiers_hint()}
-            </p>
           </div>
         )}
       </form.Field>

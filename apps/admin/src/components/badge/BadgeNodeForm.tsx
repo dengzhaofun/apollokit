@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { Button } from "#/components/ui/button"
+import { FieldDescription, FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { RedDot, type RedDotDisplayType } from "#/components/ui/red-dot"
@@ -146,9 +147,7 @@ export function BadgeNodeForm({
             disabled={!!initial}
             className="font-mono"
           />
-          <p className="text-xs text-muted-foreground">
-            {m.badge_field_key_hint()}
-          </p>
+          <FieldDescription>{m.badge_field_key_hint()}</FieldDescription>
         </div>
 
         <div className="space-y-1">
@@ -260,8 +259,9 @@ export function BadgeNodeForm({
 
         {signalMatchMode === "prefix" ? (
           <div className="space-y-1">
-            <Label htmlFor="signalKeyPrefix">
+            <Label htmlFor="signalKeyPrefix" className="inline-flex items-center gap-1.5">
               {m.badge_field_signal_key_prefix()} *
+              <FieldHint>{m.badge_field_signal_key_prefix_hint()}</FieldHint>
             </Label>
             <Input
               id="signalKeyPrefix"
@@ -271,9 +271,6 @@ export function BadgeNodeForm({
               placeholder="mail.inbox."
               className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              {m.badge_field_signal_key_prefix_hint()}
-            </p>
           </div>
         ) : null}
 
@@ -307,7 +304,10 @@ export function BadgeNodeForm({
         </header>
 
         <div className="space-y-1">
-          <Label>{m.badge_field_dismiss_mode()} *</Label>
+          <Label className="inline-flex items-center gap-1.5">
+            {m.badge_field_dismiss_mode()} *
+            <FieldHint>{m.badge_field_dismiss_mode_hint()}</FieldHint>
+          </Label>
           <Select
             value={dismissMode}
             onValueChange={(v) => setDismissMode(v as BadgeDismissMode)}
@@ -323,9 +323,6 @@ export function BadgeNodeForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            {m.badge_field_dismiss_mode_hint()}
-          </p>
         </div>
 
         {(dismissMode === "cooldown" || dismissMode === "daily") && (
@@ -356,8 +353,9 @@ export function BadgeNodeForm({
         </header>
 
         <div className="space-y-1">
-          <Label htmlFor="visibilityRule">
+          <Label htmlFor="visibilityRule" className="inline-flex items-center gap-1.5">
             {m.badge_field_visibility_rule()}
+            <FieldHint>{m.badge_field_visibility_rule_hint()}</FieldHint>
           </Label>
           <Textarea
             id="visibilityRule"
@@ -367,9 +365,6 @@ export function BadgeNodeForm({
             placeholder='{ "roles": ["vip"], "minLevel": 10 }'
             className="font-mono text-xs"
           />
-          <p className="text-xs text-muted-foreground">
-            {m.badge_field_visibility_rule_hint()}
-          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -71,16 +72,16 @@ export function AlbumForm({
           />
         </div>
         <div>
-          <Label htmlFor="alias">{m.collection_field_alias()}</Label>
+          <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+            {m.collection_field_alias()}
+            <FieldHint>{m.collection_field_alias_hint()}</FieldHint>
+          </Label>
           <Input
             id="alias"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
             placeholder="dragons"
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {m.collection_field_alias_hint()}
-          </p>
         </div>
       </div>
       <div>

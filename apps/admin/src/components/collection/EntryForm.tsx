@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -149,8 +150,9 @@ export function EntryForm({
           </Select>
         </div>
         <div>
-          <Label htmlFor="e-trigger">
+          <Label htmlFor="e-trigger" className="inline-flex items-center gap-1.5">
             {m.collection_entry_field_trigger()}
+            <FieldHint>{m.collection_entry_trigger_hint()}</FieldHint>
           </Label>
           <Select
             value={triggerItemDefinitionId}
@@ -172,9 +174,6 @@ export function EntryForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {m.collection_entry_trigger_hint()}
-          </p>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-3">

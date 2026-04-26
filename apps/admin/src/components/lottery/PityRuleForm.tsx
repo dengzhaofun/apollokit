@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
@@ -104,7 +105,12 @@ export function PityRuleForm({
         >
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>Hard Pity Threshold *</Label>
+              <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                Hard Pity Threshold *
+                <FieldHint>
+                  Guaranteed after this many pulls without the tier.
+                </FieldHint>
+              </Label>
               <Input
                 id={field.name}
                 type="number"
@@ -114,9 +120,6 @@ export function PityRuleForm({
                 onChange={(e) => field.handleChange(Number(e.target.value))}
                 placeholder="e.g. 90"
               />
-              <p className="text-xs text-muted-foreground">
-                Guaranteed after this many pulls without the tier.
-              </p>
               {field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
               )}
@@ -127,7 +130,12 @@ export function PityRuleForm({
         <form.Field name="softPityStartAt">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>Soft Pity Start</Label>
+              <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                Soft Pity Start
+                <FieldHint>
+                  Start boosting weight after this many pulls.
+                </FieldHint>
+              </Label>
               <Input
                 id={field.name}
                 type="number"
@@ -139,9 +147,6 @@ export function PityRuleForm({
                 }
                 placeholder="e.g. 74"
               />
-              <p className="text-xs text-muted-foreground">
-                Start boosting weight after this many pulls.
-              </p>
             </div>
           )}
         </form.Field>
@@ -149,7 +154,12 @@ export function PityRuleForm({
         <form.Field name="softPityWeightIncrement">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor={field.name}>Weight Increment</Label>
+              <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+                Weight Increment
+                <FieldHint>
+                  Extra weight added per pull after soft pity starts.
+                </FieldHint>
+              </Label>
               <Input
                 id={field.name}
                 type="number"
@@ -161,9 +171,6 @@ export function PityRuleForm({
                 }
                 placeholder="e.g. 60"
               />
-              <p className="text-xs text-muted-foreground">
-                Extra weight added per pull after soft pity starts.
-              </p>
             </div>
           )}
         </form.Field>

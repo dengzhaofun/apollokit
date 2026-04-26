@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
+import { FieldDescription } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -124,9 +125,9 @@ export function MilestoneForm({
             </SelectContent>
           </Select>
           {initial ? (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <FieldDescription className="mt-1">
               {m.collection_milestone_scope_locked()}
-            </p>
+            </FieldDescription>
           ) : null}
         </div>
         {scope === "entry" ? (

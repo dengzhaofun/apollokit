@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -107,11 +108,8 @@ export function LotteryPoolForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. lucky-wheel"
+              placeholder="e.g. lucky-wheel (lowercase, digits, hyphens, underscores)"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional URL-friendly key. Lowercase letters, digits, hyphens, underscores.
-            </p>
           </div>
         )}
       </form.Field>
@@ -135,7 +133,12 @@ export function LotteryPoolForm({
       <form.Field name="globalPullLimit">
         {(field) => (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>Global Pull Limit</Label>
+            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
+              Global Pull Limit
+              <FieldHint>
+                Maximum total pulls across all users. Empty = unlimited.
+              </FieldHint>
+            </Label>
             <Input
               id={field.name}
               type="number"
@@ -147,9 +150,6 @@ export function LotteryPoolForm({
               }
               placeholder="Leave empty for unlimited"
             />
-            <p className="text-xs text-muted-foreground">
-              Maximum total pulls across all users. Empty = unlimited.
-            </p>
           </div>
         )}
       </form.Field>

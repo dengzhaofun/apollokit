@@ -1,5 +1,6 @@
 import type { AnyFieldApi } from "@tanstack/react-form"
 
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Textarea } from "#/components/ui/textarea"
@@ -43,16 +44,15 @@ function FieldShell({
   return (
     <div className="flex flex-col gap-1.5">
       {label ? (
-        <Label htmlFor={htmlFor}>
+        <Label htmlFor={htmlFor} className="inline-flex items-center gap-1.5">
           {label}
           {required ? " *" : ""}
+          {hint ? <FieldHint>{hint}</FieldHint> : null}
         </Label>
       ) : null}
       {children}
       {errMsg ? (
         <p className="text-sm text-destructive">{errMsg}</p>
-      ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   )

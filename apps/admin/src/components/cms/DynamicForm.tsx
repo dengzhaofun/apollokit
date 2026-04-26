@@ -27,6 +27,7 @@ import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Checkbox } from "#/components/ui/checkbox"
+import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -72,19 +73,17 @@ function FieldRenderer({ def, value, onChange }: FieldRendererProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline gap-2">
-        <Label className="text-sm font-medium">
+        <Label className="inline-flex items-center gap-1.5 text-sm font-medium">
           {def.label}
           {def.required ? (
             <span className="ml-0.5 text-destructive">*</span>
           ) : null}
+          {def.description ? <FieldHint>{def.description}</FieldHint> : null}
         </Label>
         <Badge variant="outline" className="text-[10px] uppercase">
           {def.type}
         </Badge>
       </div>
-      {def.description ? (
-        <p className="text-xs text-muted-foreground">{def.description}</p>
-      ) : null}
 
       <FieldInput def={def} value={value} onChange={onChange} />
     </div>

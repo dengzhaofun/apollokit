@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 
 import { Button } from "#/components/ui/button"
+import { FieldHint } from "#/components/ui/field-hint"
 import {
   FormStateBridge,
   type FormBridgeState,
@@ -96,7 +97,10 @@ export function GroupForm({
       <form.Field name="alias">
         {(field) => (
           <div className="space-y-1">
-            <Label htmlFor="alias">{m.banner_field_alias()}</Label>
+            <Label htmlFor="alias" className="inline-flex items-center gap-1.5">
+              {m.banner_field_alias()}
+              <FieldHint>{m.banner_field_alias_hint()}</FieldHint>
+            </Label>
             <Input
               id="alias"
               value={field.state.value}
@@ -104,9 +108,6 @@ export function GroupForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="home-main"
             />
-            <p className="text-xs text-muted-foreground">
-              {m.banner_field_alias_hint()}
-            </p>
           </div>
         )}
       </form.Field>
