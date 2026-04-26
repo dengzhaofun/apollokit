@@ -348,8 +348,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <span className="text-sm font-bold">A</span>
+                <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
+                  <img src="/logo192.png" alt={m.nav_brand()} className="size-full object-contain" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">{m.nav_brand()}</span>

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./apps/admin/public/logo-wordmark.png" alt="ApolloKit" width="420" />
+
 # ApolloKit
 
 **开源的游戏通用后端 · 一个 SDK，接完所有通用逻辑**

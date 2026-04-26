@@ -45,8 +45,8 @@ function TopNav() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 font-black tracking-tight">
-          <span className="grid size-7 place-items-center rounded-lg bg-foreground text-background">
-            <span className="text-[11px] font-black">AK</span>
+          <span className="grid size-7 overflow-hidden place-items-center rounded-lg bg-white">
+            <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
           </span>
           <span>ApolloKit</span>
         </Link>
@@ -81,8 +81,8 @@ function Footer() {
     <footer className="border-t border-border/60 py-12">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
         <div className="flex items-center gap-2 font-black tracking-tight">
-          <span className="grid size-7 place-items-center rounded-lg bg-foreground text-background">
-            <span className="text-[11px] font-black">AK</span>
+          <span className="grid size-7 overflow-hidden place-items-center rounded-lg bg-white">
+            <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
           </span>
           <span>ApolloKit</span>
           <span className="ml-3 text-sm font-normal text-muted-foreground">
