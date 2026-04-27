@@ -14,5 +14,11 @@ declare namespace Cloudflare {
     TINYBIRD_URL: string;
     TINYBIRD_WORKSPACE_ID: string;
     OPENROUTER_API_KEY: string;
+    /** Sentry DSN（dzfun/apollokit-server）— 未配时 SDK 自动 no-op */
+    SENTRY_DSN?: string;
+    /** Sentry 环境标签；wrangler.jsonc vars 固定为 production，本地无值时 worker.ts 兜底 development */
+    SENTRY_ENVIRONMENT?: string;
+    /** Cloudflare 版本元数据；@sentry/cloudflare ≥ 10.35 自动从 .id 取 release */
+    CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string };
   }
 }

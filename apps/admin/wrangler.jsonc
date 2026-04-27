@@ -6,6 +6,22 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
   "placement": { "mode": "smart" },
+  // Cloudflare 版本元数据 binding。@sentry/cloudflare ≥ 10.35 自动从
+  // CF_VERSION_METADATA.id 读取 release，免手动维护 SENTRY_RELEASE。
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  // Sentry 相关配置：
+  //   Secrets（`wrangler secret put`，runtime 注入到 worker）：
+  //     SENTRY_DSN          — admin worker SSR 端 Sentry DSN
+  //                            （dzfun/apollokit-admin 项目，与浏览器 DSN 同 project）
+  //   Plain vars：
+  //     SENTRY_ENVIRONMENT  — Sentry 环境标签，固定 production
+  //   Build-time env（Cloudflare Workers Builds dashboard 的 Build tab）：
+  //     SENTRY_AUTH_TOKEN   — vite plugin 上传 sourcemap 用，可选；不配
+  //                            时 vite-plugin disable，部署不会失败
+  // 浏览器端 DSN 在 src/router.tsx 里硬编码（前端 DSN 是公开值，社区惯例）。
+  "vars": {
+    "SENTRY_ENVIRONMENT": "production"
+  },
   // Service binding to the API worker. Admin forwards `/api/*` requests
   // through this binding (worker-to-worker RPC, no public network),
   // making the browser see all traffic as same-origin and removing the

@@ -14,6 +14,7 @@ import { requestContext } from "./lib/request-context";
 import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
+import { sentryContext } from "./middleware/sentry-context";
 import { session } from "./middleware/session";
 import { analyticsRouter } from "./modules/analytics";
 import {
@@ -196,6 +197,11 @@ app.on(["POST", "GET"], "/api/client/auth/*", (c) => {
 
 // Inject c.var.user / c.var.session for downstream business routes
 app.use("*", session);
+// Tag the current Sentry scope with user/org/authMethod/requestId. Must run
+// AFTER `session` so user/org are populated, and before any business route
+// so thrown exceptions inherit the tags. No-op when Sentry isn't initialized
+// (local dev / unit tests).
+app.use("*", sentryContext);
 // Put the per-request AsyncLocalStorage store in place so domain-event
 // subscribers can stamp Tinybird rows with the same `traceId` that
 // `http_requests` records. Must wrap everything AFTER `requestId()` has
@@ -318,5 +324,12 @@ app.get(
 // default export. We attach `scheduled` directly to the Hono app instance
 // so tests that still do `import app from "./index"` keep working with
 // `app.request(...)` / `app.fetch(...)`.
+//
+// The wrangler entry is `src/worker.ts`, which wraps this app with
+// `Sentry.withSentry(...)` — we keep the bare app export here so vitest
+// (which never resolves the Sentry/cloudflare:workers import path) can
+// continue to do `import app from "./index"; app.request(...)`.
 Object.assign(app, { scheduled });
-export default app as typeof app & { scheduled: typeof scheduled };
+const exportedApp = app as typeof app & { scheduled: typeof scheduled };
+export { exportedApp as app };
+export default exportedApp;

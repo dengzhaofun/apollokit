@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "apollokit-server",
-  "main": "src/index.ts",
+  "main": "src/worker.ts",
   "compatibility_date": "2026-04-11",
   "compatibility_flags": [
     "nodejs_compat"
@@ -11,6 +11,9 @@
     "head_sampling_rate": 0.1
   },
   "placement": { "mode": "smart" },
+  // Cloudflare 版本元数据 binding。@sentry/cloudflare ≥ 10.35 会自动从
+  // CF_VERSION_METADATA.id 读取 release，免去手动维护 SENTRY_RELEASE。
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   // Cron triggers — scheduled handler in src/scheduled.ts.
   // Every-minute tick keeps activity state transitions (scheduled →
   // teasing → active → settling → ended → archived) and schedule
@@ -39,6 +42,8 @@
   //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)
   //   UPSTASH_REDIS_REST_TOKEN  — Upstash Redis REST API token
   //   OPENROUTER_API_KEY        — OpenRouter API key for the AI SDK provider
+  //   SENTRY_DSN                — Sentry project DSN（dzfun/apollokit-server）。
+  //                               未配置时 @sentry/cloudflare 自动 no-op。
   //
   // Plain vars (public config; override per-environment as needed):
   //   ADMIN_URL                 — origin of the admin SPA, used to build
@@ -47,6 +52,8 @@
   //                               invitation email. Must be an authorized
   //                               sender under your Cloudflare Email Service
   //                               onboarded domain in production.
+  //   SENTRY_ENVIRONMENT        — Sentry 环境标签，默认 production；本地
+  //                               dev 无此变量时 worker.ts 兜底 development。
   //
   // Bindings:
   //   MEDIA_R2 — object store for the media library (admin asset drive).
@@ -59,7 +66,8 @@
   //   falls back to a console log (see src/lib/mailer.ts).
   "vars": {
     "ADMIN_URL": "https://apollokit-admin.limitless-ai.workers.dev",
-    "INVITE_FROM_ADDRESS": "invites@example.com"
+    "INVITE_FROM_ADDRESS": "invites@example.com",
+    "SENTRY_ENVIRONMENT": "production"
   },
   "r2_buckets": [
     { "binding": "MEDIA_R2", "bucket_name": "apollokit-media" }

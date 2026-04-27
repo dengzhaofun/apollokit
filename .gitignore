@@ -43,3 +43,6 @@ yarn-error.log*
 
 # Fumadocs MDX (auto-generated)
 .source
+
+# Sentry
+.env.sentry-build-plugin

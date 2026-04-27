@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/cloudflare'
 import { paraglideMiddleware } from './paraglide/server.js'
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 
@@ -13,9 +14,12 @@ import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 // is intercepted by vite's `server.proxy` before reaching this handler.
 interface AdminEnv {
   API: { fetch: (req: Request) => Promise<Response> }
+  SENTRY_DSN?: string
+  SENTRY_ENVIRONMENT?: string
+  CF_VERSION_METADATA?: { id: string }
 }
 
-export default createServerEntry({
+const tanstackHandler = createServerEntry({
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url)
     if (url.pathname.startsWith('/api/')) {
@@ -27,3 +31,17 @@ export default createServerEntry({
     return paraglideMiddleware(req, () => handler.fetch(req))
   },
 })
+
+// Sentry 包装层：把 worker 的 fetch handler 套一层，未捕获异常自动上报。
+// SENTRY_DSN 未配时 SDK no-op，本地 dev 不上报。release 由
+// CF_VERSION_METADATA 自动检测（@sentry/cloudflare ≥ 10.35）。
+// tracesSampleRate 0.1 与 wrangler.jsonc observability head_sampling_rate 对齐。
+export default Sentry.withSentry(
+  (env: AdminEnv) => ({
+    dsn: env.SENTRY_DSN,
+    environment: env.SENTRY_ENVIRONMENT ?? 'development',
+    sendDefaultPii: true,
+    tracesSampleRate: 0.1,
+  }),
+  tanstackHandler,
+)
