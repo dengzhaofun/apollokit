@@ -36,10 +36,13 @@ const tanstackHandler = createServerEntry({
 // SENTRY_DSN 未配时 SDK no-op，本地 dev 不上报。release 由
 // CF_VERSION_METADATA 自动检测（@sentry/cloudflare ≥ 10.35）。
 // tracesSampleRate 0.1 与 wrangler.jsonc observability head_sampling_rate 对齐。
+// Dev (vite Node SSR): cloudflare plugin 仅在 build 启用,Node 路径下
+// `env` 是 undefined,直接 `env.X` 会抛 TypeError 把整个 SSR 打挂。
+// 用 optional chaining 兜底成 no-op(SDK 对 undefined dsn 自身是 no-op)。
 export default Sentry.withSentry(
-  (env: AdminEnv) => ({
-    dsn: env.SENTRY_DSN,
-    environment: env.SENTRY_ENVIRONMENT ?? 'development',
+  (env: AdminEnv | undefined) => ({
+    dsn: env?.SENTRY_DSN,
+    environment: env?.SENTRY_ENVIRONMENT ?? 'development',
     sendDefaultPii: true,
     tracesSampleRate: 0.1,
   }),

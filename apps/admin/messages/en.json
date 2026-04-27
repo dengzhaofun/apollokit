@@ -1970,6 +1970,11 @@
   "badge_inspector_dismissal_active": "active — badge suppressed",
 
   "nav_settings": "Settings",
+  "user_menu_theme": "Theme",
+  "user_menu_theme_light": "Light",
+  "user_menu_theme_dark": "Dark",
+  "user_menu_theme_system": "System",
+  "user_menu_language": "Language",
   "settings_section_personal": "Personal",
   "settings_section_project": "Project",
   "settings_account": "Account",
