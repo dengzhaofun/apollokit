@@ -15,11 +15,13 @@ import { ModuleError } from "./lib/errors";
 import { logger } from "./lib/logger";
 import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { getClientOrgId } from "./lib/route-context";
+import { auditLog } from "./middleware/audit-log";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { sentryContext } from "./middleware/sentry-context";
 import { session } from "./middleware/session";
 import { analyticsRouter } from "./modules/analytics";
+import { auditLogRouter } from "./modules/audit-log";
 import {
   announcementRouter,
   announcementClientRouter,
@@ -225,6 +227,11 @@ app.use("*", (c, next) =>
 // Auto-ingest every request into Tinybird's http_requests dataset.
 // Must run AFTER session so we know which tenant to tag.
 app.use("*", requestLog);
+// Auto-record admin mutations to the `audit_logs` table. Must run AFTER
+// `session` (needs `c.var.user` / `c.var.session`) and AFTER `requestId()`
+// (uses traceId). Self-skips reads, /api/auth/*, /api/client/*, and
+// /api/audit-logs/* (own router, defensive).
+app.use("*", auditLog);
 
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
@@ -233,6 +240,7 @@ app.route("/health", health);
 // Admin routes — session or admin API key
 app.route("/api/analytics", analyticsRouter);
 app.route("/api/announcement", announcementRouter);
+app.route("/api/audit-logs", auditLogRouter);
 app.route("/api/badge", badgeRouter);
 app.route("/api/banner", bannerRouter);
 app.route("/api/battle-pass", battlePassRouter);

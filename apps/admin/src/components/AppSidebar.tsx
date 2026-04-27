@@ -100,6 +100,7 @@ type NavRoute =
   | "/analytics/modules"
   | "/analytics/activity"
   | "/analytics/logs"
+  | "/audit-logs"
   | "/check-in"
   | "/item"
   | "/item/definitions"
@@ -204,6 +205,7 @@ function getNavGroups(): NavGroup[] {
           icon: Activity,
         },
         { title: m.nav_logs, to: "/analytics/logs", icon: ScrollText },
+        { title: m.nav_audit_logs, to: "/audit-logs", icon: Shield },
       ],
     },
     {
