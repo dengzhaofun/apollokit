@@ -34,6 +34,8 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -89,25 +91,8 @@ import {
 // cdkey redemptions).
 type CdkeyDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "analytics">>;
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 const MAX_GENERATE_PER_REQUEST = 10_000;
 const GENERATE_CHUNK_SIZE = 500;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 
 function parseIsoDate(v: string | null | undefined): Date | null {
   if (v === null || v === undefined) return null;

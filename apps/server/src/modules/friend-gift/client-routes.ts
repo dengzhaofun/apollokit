@@ -8,12 +8,13 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
- * (the caller / sender) from c.var.endUserId!. Receiver fields (receiverUserId) stay
+ * (the caller / sender) from getEndUserId(c). Receiver fields (receiverUserId) stay
  * in the request body/query.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -152,7 +153,7 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { packageId, receiverUserId, message } = c.req.valid("json");
     const send = await friendGiftService.sendGift(orgId, endUserId, {
       packageId,
@@ -183,7 +184,7 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const rows = await friendGiftService.listInbox(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
   },
@@ -209,7 +210,7 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const rows = await friendGiftService.listSent(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
   },
@@ -239,7 +240,7 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const claimed = await friendGiftService.claimGift(orgId, id, endUserId);
     return c.json(ok(serializeSend(claimed)), 200);
@@ -268,7 +269,7 @@ friendGiftClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const status = await friendGiftService.getDailyStatus(orgId, endUserId);
     return c.json(ok(status), 200);
   },

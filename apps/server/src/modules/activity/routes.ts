@@ -11,6 +11,7 @@
 import { z } from "@hono/zod-openapi";
 import { PaginationQuerySchema, pageOf } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -148,7 +149,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await activityService.createActivity(orgId, c.req.valid("json"));
     return c.json(ok(serializeActivity(row)), 201);
   },
@@ -174,7 +175,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await activityService.listActivities(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeActivity), nextCursor: page.nextCursor }),
@@ -201,7 +202,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await activityService.getActivity(orgId, key);
     return c.json(ok(serializeActivity(row)), 200);
@@ -229,7 +230,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await activityService.updateActivity(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeActivity(row)), 200);
@@ -246,7 +247,7 @@ activityRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await activityService.deleteActivity(orgId, id);
     return c.json(ok(null), 200);
@@ -276,7 +277,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const { action } = c.req.valid("json");
     let row;
@@ -320,7 +321,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await activityService.createNode(orgId, key, c.req.valid("json"));
     return c.json(ok(row), 201);
@@ -359,7 +360,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const result = await activityService.listNodes(orgId, key);
     return c.json(ok(result), 200);
@@ -387,7 +388,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await activityService.updateNode(orgId, id, c.req.valid("json"));
     return c.json(ok(row), 200);
@@ -404,7 +405,7 @@ activityRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await activityService.deleteNode(orgId, id);
     return c.json(ok(null), 200);
@@ -436,7 +437,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await activityService.createSchedule(
       orgId,
@@ -467,7 +468,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await activityService.listSchedules(orgId, key);
     return c.json(ok({ items: rows }), 200);
@@ -484,7 +485,7 @@ activityRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await activityService.deleteSchedule(orgId, id);
     return c.json(ok(null), 200);
@@ -516,7 +517,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await activityService.join({
@@ -554,7 +555,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await activityService.leaveActivity({
@@ -589,7 +590,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const { status, cursor, limit } = c.req.valid("query");
     const result = await activityService.listMembers({
@@ -634,7 +635,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const result = await activityService.redeemQueueNumber({
       organizationId: orgId,
@@ -678,7 +679,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await activityService.addPoints({
@@ -714,7 +715,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await activityService.claimMilestone({
@@ -752,7 +753,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const view = await activityService.getActivityForUser({
       organizationId: orgId,
@@ -838,7 +839,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const result = await activityService.getActivityAnalytics({
       organizationId: orgId,
@@ -872,7 +873,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const row = await activityService.createTemplate(orgId, body);
     return c.json(ok(row), 201);
@@ -900,7 +901,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await activityService.listTemplates(orgId);
     return c.json(ok({ items: rows }), 200);
   },
@@ -916,7 +917,7 @@ activityRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await activityService.deleteTemplate(orgId, id);
     return c.json(ok(null), 200);
@@ -949,7 +950,7 @@ activityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const result = await activityService.instantiateTemplate({
       organizationId: orgId,

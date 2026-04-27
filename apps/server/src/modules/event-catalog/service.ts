@@ -33,6 +33,7 @@ import {
   platformToView,
 } from "./types";
 import type { EventFieldRow } from "../../schema/event-catalog";
+import { logger } from "../../lib/logger";
 
 type EventCatalogDeps = Pick<AppDeps, "db">;
 
@@ -117,7 +118,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
         .where(eq(eventCatalogEntries.id, existing.id));
     } catch (err) {
       // 记录但不抛 —— catalog 记录失败不应阻塞 task 进度更新。
-      console.error("event-catalog: recordExternalEvent failed", {
+      logger.error("event-catalog: recordExternalEvent failed", {
         organizationId,
         eventName,
         err,

@@ -5,6 +5,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -117,7 +118,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await cdkeyService.createBatch(orgId, c.req.valid("json"));
     return c.json(ok(serializeBatch(row)), 201);
   },
@@ -139,7 +140,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await cdkeyService.listBatches(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeBatch), nextCursor: page.nextCursor }),
@@ -164,7 +165,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await cdkeyService.getBatch(orgId, key);
     return c.json(ok(serializeBatch(row)), 200);
@@ -190,7 +191,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await cdkeyService.updateBatch(orgId, key, c.req.valid("json"));
     return c.json(ok(serializeBatch(row)), 200);
@@ -213,7 +214,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     await cdkeyService.deleteBatch(orgId, key);
     return c.json(ok(null), 200);
@@ -245,7 +246,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { batchId } = c.req.valid("param");
     const result = await cdkeyService.generateCodes(
       orgId,
@@ -275,7 +276,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { batchId } = c.req.valid("param");
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await cdkeyService.listCodes(orgId, batchId, q);
@@ -302,7 +303,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { codeId } = c.req.valid("param");
     const row = await cdkeyService.revokeCode(orgId, codeId);
     return c.json(ok(serializeCode(row)), 200);
@@ -311,7 +312,7 @@ cdkeyRouter.openapi(
 
 // CSV export — streaming per-batch codes.
 cdkeyRouter.get("/batches/:batchId/codes.csv", async (c) => {
-  const orgId = c.var.session!.activeOrganizationId!;
+  const orgId = getOrgId(c);
   const batchId = c.req.param("batchId")!;
   // Cap export at 200 (server-side limit). CSV export should be reworked
   // to stream multiple pages if larger exports are needed.
@@ -360,7 +361,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { batchId } = c.req.valid("param");
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await cdkeyService.listRedemptionLogs(orgId, batchId, q);
@@ -391,7 +392,7 @@ cdkeyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { code, endUserId, idempotencyKey } = c.req.valid("json");
     const result = await cdkeyService.redeem({
       organizationId: orgId,

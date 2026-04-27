@@ -19,6 +19,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response"
+import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key"
 import { NavigationApiKeyNotSupported } from "./errors"
 import { navigationService } from "./index"
@@ -71,7 +72,7 @@ navigationRouter.openapi(
   }),
   async (c) => {
     const userId = requireSessionUserId(c.var.user?.id)
-    const orgId = c.var.session!.activeOrganizationId!
+    const orgId = getOrgId(c)
     const rows = await navigationService.list(orgId, userId)
     return c.json(ok({ items: rows.map(serialize) }), 200)
   },
@@ -100,7 +101,7 @@ navigationRouter.openapi(
   }),
   async (c) => {
     const userId = requireSessionUserId(c.var.user?.id)
-    const orgId = c.var.session!.activeOrganizationId!
+    const orgId = getOrgId(c)
     const { routePath } = c.req.valid("json")
     const row = await navigationService.add(orgId, userId, routePath)
     return c.json(ok(serialize(row)), 201)
@@ -124,7 +125,7 @@ navigationRouter.openapi(
   }),
   async (c) => {
     const userId = requireSessionUserId(c.var.user?.id)
-    const orgId = c.var.session!.activeOrganizationId!
+    const orgId = getOrgId(c)
     const { routePath } = c.req.valid("query")
     await navigationService.remove(orgId, userId, routePath)
     return c.json(ok(null), 200)

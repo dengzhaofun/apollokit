@@ -11,6 +11,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -135,7 +136,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await storageBoxService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
@@ -157,7 +158,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await storageBoxService.listConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
@@ -182,7 +183,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await storageBoxService.getConfig(orgId, id);
     return c.json(ok(serializeConfig(row)), 200);
@@ -208,7 +209,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await storageBoxService.updateConfig(
       orgId,
@@ -235,7 +236,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await storageBoxService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -262,7 +263,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const now = new Date();
     const result = await storageBoxService.deposit({
@@ -298,7 +299,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const now = new Date();
     const result = await storageBoxService.withdraw({
@@ -337,7 +338,7 @@ storageBoxRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const rows = await storageBoxService.listDepositsForUser({
       organizationId: orgId,

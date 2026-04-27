@@ -14,6 +14,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -97,7 +98,7 @@ assistPoolClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("json");
 
     const row = await assistPoolService.initiateInstance({
@@ -129,7 +130,7 @@ assistPoolClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("query");
 
     const rows = await assistPoolService.listInstances({
@@ -189,7 +190,7 @@ assistPoolClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const res = await assistPoolService.contribute({
       organizationId: orgId,

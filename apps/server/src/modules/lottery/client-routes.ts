@@ -11,6 +11,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -53,7 +54,7 @@ lotteryClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { poolId, idempotencyKey } = c.req.valid("json");
 
     const result = await lotteryService.pull({
@@ -88,7 +89,7 @@ lotteryClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { poolId, count, idempotencyKey } = c.req.valid("json");
 
     const result = await lotteryService.multiPull({
@@ -122,7 +123,7 @@ lotteryClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { poolKey } = c.req.valid("param");
     const state = await lotteryService.getUserState({
       organizationId: orgId,
@@ -151,7 +152,7 @@ lotteryClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { poolKey } = c.req.valid("param");
     const rows = await lotteryService.getPullHistory({
       organizationId: orgId,

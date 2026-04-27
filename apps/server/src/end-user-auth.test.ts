@@ -237,8 +237,8 @@ describe("end-user-auth — cross-tenant session guard on business routes", () =
       headers: { "x-api-key": b.cpk, cookie: cookieA },
     });
     expect(res.status).toBe(403);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("session_tenant_mismatch");
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe("session_tenant_mismatch");
   });
 });
 

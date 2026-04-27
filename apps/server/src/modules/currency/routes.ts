@@ -7,6 +7,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -123,7 +124,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await currencyService.createDefinition(
       orgId,
       c.req.valid("json"),
@@ -150,7 +151,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await currencyService.listDefinitions(orgId, q);
     return c.json(
@@ -178,7 +179,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await currencyService.getDefinition(orgId, key);
     return c.json(ok(serializeDefinition(row)), 200);
@@ -208,7 +209,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await currencyService.updateDefinition(
       orgId,
@@ -235,7 +236,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await currencyService.deleteDefinition(orgId, id);
     return c.json(ok(null), 200);
@@ -262,7 +263,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("query");
     const wallets = await currencyService.getWallets(orgId, endUserId);
     return c.json(ok({ items: wallets }), 200);
@@ -287,7 +288,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId, currencyId } = c.req.valid("param");
     const balance = await currencyService.getBalance(
       orgId,
@@ -318,7 +319,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await currencyService.grant({
       organizationId: orgId,
@@ -351,7 +352,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await currencyService.deduct({
       organizationId: orgId,
@@ -384,7 +385,7 @@ currencyRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await currencyService.listLedger(orgId, q);
     return c.json(ok({

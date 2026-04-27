@@ -3,7 +3,7 @@
  *
  * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_). All handlers resolve the
- * organization from `c.var.session!.activeOrganizationId!`.
+ * organization from `getOrgId(c)`.
  *
  * Client-facing routes live in `client-routes.ts`.
  */
@@ -11,6 +11,7 @@
 import { z } from "@hono/zod-openapi";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -167,7 +168,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await entityService.listSchemas(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeSchema), nextCursor: page.nextCursor }),
@@ -196,7 +197,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await entityService.createSchema(orgId, input);
     return c.json(ok(serializeSchema(row)), 201);
@@ -219,7 +220,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await entityService.getSchema(orgId, key);
     return c.json(ok(serializeSchema(row)), 200);
@@ -247,7 +248,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateSchema(orgId, id, input);
@@ -271,7 +272,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await entityService.deleteSchema(orgId, id);
     return c.json(ok(null), 200);
@@ -308,7 +309,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await entityService.listBlueprints(orgId, {
       schemaId: q.schemaId,
@@ -345,7 +346,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await entityService.createBlueprint(orgId, input);
     return c.json(ok(serializeBlueprint(row)), 201);
@@ -370,7 +371,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await entityService.getBlueprint(orgId, key);
     return c.json(ok(serializeBlueprint(row)), 200);
@@ -400,7 +401,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateBlueprint(orgId, id, input);
@@ -424,7 +425,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await entityService.deleteBlueprint(orgId, id);
     return c.json(ok(null), 200);
@@ -453,7 +454,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const rows = await entityService.listSkins(orgId, id);
     return c.json(ok(rows.map(serializeSkin)), 200);
@@ -481,7 +482,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.createSkin(orgId, id, input);
@@ -510,7 +511,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { skinId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateSkin(orgId, skinId, input);
@@ -534,7 +535,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { skinId } = c.req.valid("param");
     await entityService.deleteSkin(orgId, skinId);
     return c.json(ok(null), 200);
@@ -565,7 +566,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await entityService.listFormationConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeFormationConfig), nextCursor: page.nextCursor }),
@@ -598,7 +599,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await entityService.createFormationConfig(orgId, input);
     return c.json(ok(serializeFormationConfig(row)), 201);
@@ -623,7 +624,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await entityService.getFormationConfig(orgId, key);
     return c.json(ok(serializeFormationConfig(row)), 200);
@@ -655,7 +656,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateFormationConfig(orgId, id, input);
@@ -679,7 +680,7 @@ entityRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await entityService.deleteFormationConfig(orgId, id);
     return c.json(ok(null), 200);

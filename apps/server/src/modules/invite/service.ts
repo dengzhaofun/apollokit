@@ -15,6 +15,7 @@
 import { and, count, desc, eq, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
 import type { EventBus } from "../../lib/event-bus";
 import { getTraceId } from "../../lib/request-context";
 import {
@@ -77,14 +78,6 @@ const DEFAULT_SETTINGS: ResolvedInviteSettings = {
 
 const CODE_RETRIES = 3;
 
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505") return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 
 export function createInviteService(d: InviteDeps) {
   const { db, events, analytics } = d;

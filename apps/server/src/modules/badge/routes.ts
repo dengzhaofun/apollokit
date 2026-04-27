@@ -27,6 +27,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -80,7 +81,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await badgeService.listNodes(orgId);
     return c.json(
       ok({ items: rows.map(badgeService._serializeNode) }),
@@ -111,7 +112,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await badgeService.createNode(orgId, input);
     return c.json(ok(badgeService._serializeNode(row)), 201);
@@ -141,7 +142,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await badgeService.updateNode(orgId, id, input);
@@ -165,7 +166,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await badgeService.deleteNode(orgId, id);
     return c.json(ok(null), 200);
@@ -193,7 +194,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const result = await badgeService.validateTree(orgId);
     return c.json(ok(result), 200);
   },
@@ -249,7 +250,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await badgeService.createFromTemplate(orgId, input);
     return c.json(ok(badgeService._serializeNode(row)), 201);
@@ -282,7 +283,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await badgeService.signal(orgId, {
       endUserId: input.endUserId,
@@ -324,7 +325,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { inputs } = c.req.valid("json");
     const rows = await badgeService.signalBatch(
       orgId,
@@ -371,7 +372,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const result = await badgeService.preview(
       orgId,
@@ -404,7 +405,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await badgeService.listSignalRegistry(orgId);
     return c.json(
       ok({ items: rows.map(badgeService._serializeRegistry) }),
@@ -439,7 +440,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await badgeService.upsertSignalRegistry(orgId, input);
     return c.json(ok(badgeService._serializeRegistry(row)), 200);
@@ -462,7 +463,7 @@ badgeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { keyPattern } = c.req.valid("param");
     await badgeService.deleteSignalRegistry(orgId, keyPattern);
     return c.json(ok(null), 200);

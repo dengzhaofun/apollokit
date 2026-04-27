@@ -66,7 +66,10 @@ import { shopProducts } from "../../schema/shop";
 import { taskDefinitions } from "../../schema/task";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import type { RewardEntry } from "../../lib/rewards";
+import { logger } from "../../lib/logger";
 import {
   activityConfigs,
   activityMembers,
@@ -192,12 +195,6 @@ type MailLike = {
 };
 
 type MailGetter = () => MailLike | null;
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
 
 export function createActivityService(
   d: ActivityDeps,
@@ -1090,7 +1087,7 @@ export function createActivityService(
             },
           );
         } catch (err) {
-          console.error(
+          logger.error(
             `[activity] milestone mail failed activity=${activity.id} user=${params.endUserId}:`,
             err,
           );
@@ -1634,7 +1631,7 @@ export function createActivityService(
             continue;
           }
           errors++;
-          console.error(
+          logger.error(
             `[activity] template ${tpl.alias} spawn failed:`,
             err,
           );
@@ -1712,7 +1709,7 @@ export function createActivityService(
           }
         } catch (err) {
           errors++;
-          console.error(`[activity] advance failed id=${act.id}:`, err);
+          logger.error(`[activity] advance failed id=${act.id}:`, err);
         }
       }
 
@@ -1787,7 +1784,7 @@ export function createActivityService(
           scheduleFired++;
         } catch (err) {
           errors++;
-          console.error(`[activity] schedule fire failed id=${s.id}:`, err);
+          logger.error(`[activity] schedule fire failed id=${s.id}:`, err);
         }
       }
 
@@ -1889,7 +1886,7 @@ async function runArchiveCleanup(
       WHERE activity_id = ${activity.id}
     `);
     const n = (counted.rows[0] as { cnt: number } | undefined)?.cnt ?? 0;
-    console.log(
+    logger.info(
       `[activity] archive convert: activity=${activity.id} entity_instances=${n} (conversion logic TODO, falling through to purge)`,
     );
   }
@@ -1958,7 +1955,7 @@ async function fireSchedule(params: {
           });
         } catch (err) {
           if (!isUniqueViolation(err)) {
-            console.error(
+            logger.error(
               `[activity] grant_reward failed user=${p.endUserId}:`,
               err,
             );
@@ -1987,7 +1984,7 @@ async function fireSchedule(params: {
 
     case "set_flag":
     default:
-      console.warn(
+      logger.warn(
         `[activity] action_type=${schedule.actionType} not implemented in MVP`,
       );
   }
@@ -2293,14 +2290,4 @@ function generateQueueCandidate(
   return out;
 }
 
-/** Detect Postgres unique_violation (SQLSTATE 23505) across driver quirks. */
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 

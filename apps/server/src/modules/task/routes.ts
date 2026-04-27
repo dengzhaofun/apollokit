@@ -10,6 +10,7 @@ import { z } from "@hono/zod-openapi";
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -168,7 +169,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await taskService.createCategory(orgId, c.req.valid("json"));
     return c.json(ok(serializeCategory(row)), 201);
   },
@@ -192,7 +193,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await taskService.listCategories(orgId, q);
     return c.json(
@@ -218,7 +219,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await taskService.getCategory(orgId, id);
     return c.json(ok(serializeCategory(row)), 200);
@@ -246,7 +247,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await taskService.updateCategory(
       orgId,
@@ -267,7 +268,7 @@ taskRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await taskService.deleteCategory(orgId, id);
     return c.json(ok(null), 200);
@@ -298,7 +299,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await taskService.createDefinition(
       orgId,
       c.req.valid("json"),
@@ -325,7 +326,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query") as Record<string, unknown>;
     // Pass through wholesale — service.listDefinitions normalises the
     // legacy `parentId: null` / `includeActivity` semantics into the
@@ -356,7 +357,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await taskService.getDefinition(orgId, key);
     return c.json(ok(serializeDefinition(row)), 200);
@@ -386,7 +387,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await taskService.updateDefinition(
       orgId,
@@ -407,7 +408,7 @@ taskRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     await taskService.deleteDefinition(orgId, key);
     return c.json(ok(null), 200);
@@ -455,7 +456,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
 
@@ -491,7 +492,7 @@ taskRouter.openapi(
     responses: { 200: { description: "Revoked", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     await taskService.revokeAssignment(orgId, endUserId, key);
     return c.json(ok(null), 200);
@@ -519,7 +520,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const { endUserId, activeOnly, limit } = c.req.valid("query");
     const def = await taskService.getDefinition(orgId, key);
@@ -554,7 +555,7 @@ taskRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId, activeOnly, limit } = c.req.valid("query");
     const rows = await taskService.listAssignments(
       orgId,

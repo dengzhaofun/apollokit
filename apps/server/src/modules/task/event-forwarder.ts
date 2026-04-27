@@ -14,6 +14,7 @@
 import type { EventBus } from "../../lib/event-bus";
 import { listInternalEvents } from "../../lib/event-registry";
 import type { TaskService } from "./service";
+import { logger } from "../../lib/logger";
 
 export function installTaskEventForwarder(
   events: EventBus,
@@ -34,7 +35,7 @@ export function installTaskEventForwarder(
         const endUserId =
           typeof p.endUserId === "string" ? p.endUserId : null;
         if (!orgId || !endUserId) {
-          console.warn(
+          logger.warn(
             `task-forwarder: skipping ${desc.name} (missing organizationId / endUserId)`,
           );
           return;
@@ -42,7 +43,7 @@ export function installTaskEventForwarder(
         try {
           await task.processEvent(orgId, endUserId, desc.name, p);
         } catch (err) {
-          console.error(
+          logger.error(
             `task-forwarder: processEvent(${desc.name}) failed`,
             err,
           );

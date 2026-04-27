@@ -29,6 +29,8 @@ import {
 } from "../../lib/pagination";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import type { RewardEntry } from "../../lib/rewards";
 import {
   exchangeConfigs,
@@ -77,13 +79,6 @@ declare module "../../lib/event-bus" {
       rewardItems: RewardEntry[];
     };
   }
-}
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
 }
 
 export function createExchangeService(
@@ -635,13 +630,3 @@ export function createExchangeService(
 }
 
 export type ExchangeService = ReturnType<typeof createExchangeService>;
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

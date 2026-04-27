@@ -16,6 +16,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -57,7 +58,7 @@ bannerClientRouter.openapi(
   }),
   async (c) => {
     const { alias } = c.req.valid("param");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const group = await bannerService.getClientGroupByAlias(
       orgId,

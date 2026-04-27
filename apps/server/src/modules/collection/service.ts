@@ -69,6 +69,8 @@
 import { and, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -108,6 +110,7 @@ import type {
   DeliveryMode,
 } from "./types";
 import { MILESTONE_SCOPES } from "./types";
+import { logger } from "../../lib/logger";
 import type {
   CreateAlbumInput,
   CreateEntryInput,
@@ -153,23 +156,6 @@ export type ItemSvc = {
     sourceId?: string;
   }) => Promise<unknown>;
 };
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 
 /**
  * Origin prefix for any `source` that originates from this module. The
@@ -1149,7 +1135,7 @@ export function createCollectionService(
     } catch (err) {
       // Never let the collection hook break the main grantItems.
        
-      console.error("[collection] onItemGranted failed", {
+      logger.error("[collection] onItemGranted failed", {
         err,
         source: params.source,
         sourceId: params.sourceId,

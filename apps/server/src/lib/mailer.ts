@@ -27,6 +27,7 @@
  */
 
 import { env } from "cloudflare:workers";
+import { logger } from "./logger";
 
 export type InviteEmailPayload = {
   to: string;
@@ -92,7 +93,7 @@ export async function sendInviteEmail(p: InviteEmailPayload): Promise<void> {
   // scripts can import this module without the binding wired up.
   const binding = (env as { EMAIL?: typeof env.EMAIL | undefined }).EMAIL;
   if (!binding) {
-    console.log(
+    logger.info(
       `[mailer:dev] Invitation for ${p.to} → ${p.acceptUrl} (role=${p.role}, org=${p.organizationName})`,
     );
     return;

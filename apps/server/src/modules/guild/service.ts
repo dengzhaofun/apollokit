@@ -28,6 +28,7 @@
 import { and, count, desc, eq, ilike, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
 import {
   buildPage,
   clampLimit,
@@ -1221,13 +1222,3 @@ export function createGuildService(d: GuildDeps) {
 
 export type GuildService = ReturnType<typeof createGuildService>;
 
-/** Detect Postgres unique_violation (SQLSTATE 23505) across driver quirks. */
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

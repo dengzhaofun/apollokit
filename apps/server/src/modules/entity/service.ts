@@ -20,6 +20,8 @@
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -102,23 +104,6 @@ export type ItemSvc = {
     sourceId?: string;
   }) => Promise<unknown>;
 };
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 
 export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   const { db } = d;

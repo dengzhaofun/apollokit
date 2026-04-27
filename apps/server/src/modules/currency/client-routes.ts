@@ -8,13 +8,14 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body, query, or path.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body, query, or path.
  *
  * Exposes read-only wallet / balance queries for end users.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -59,7 +60,7 @@ currencyClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const wallets = await currencyService.getWallets(orgId, endUserId);
     return c.json(ok({ items: wallets }), 200);
   },
@@ -83,7 +84,7 @@ currencyClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const def = await currencyService.getDefinition(orgId, key);
     const balance = await currencyService.getBalance(orgId, endUserId, def.id);

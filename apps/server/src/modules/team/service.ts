@@ -31,6 +31,8 @@
 import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -71,14 +73,6 @@ import {
 } from "./validators";
 
 type TeamDeps = Pick<AppDeps, "db">;
-
-/** Treat strings that look like UUIDs as ids; everything else is an alias. */
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
 
 const ACTIVE_STATUSES: TeamStatus[] = ["open", "closed", "in_game"];
 
@@ -1049,13 +1043,3 @@ export function createTeamService(d: TeamDeps) {
 
 export type TeamService = ReturnType<typeof createTeamService>;
 
-/** Detect Postgres unique_violation (SQLSTATE 23505) across driver quirks. */
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

@@ -11,6 +11,7 @@
 
 import type { TinybirdClient } from "../tinybird";
 import type { HttpRequestRecord, BusinessEventRecord } from "./types";
+import { logger } from "../logger";
 
 export interface AnalyticsWriter {
   logHttp(r: HttpRequestRecord): Promise<void>;
@@ -51,7 +52,7 @@ export function createAnalyticsWriter(
           user_agent: clampUserAgent(r.userAgent),
         });
       } catch (err) {
-        console.error("[analytics.logHttp] failed:", err);
+        logger.error("[analytics.logHttp] failed:", err);
       }
     },
 
@@ -69,7 +70,7 @@ export function createAnalyticsWriter(
           event_data: JSON.stringify(r.eventData ?? {}),
         });
       } catch (err) {
-        console.error("[analytics.logEvent] failed:", err);
+        logger.error("[analytics.logEvent] failed:", err);
       }
     },
   };

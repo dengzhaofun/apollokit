@@ -8,7 +8,7 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Surface:
  *   GET  /active              → currently-visible list
@@ -18,6 +18,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -60,7 +61,7 @@ announcementClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const items = await announcementService.getActiveForClient(
       orgId,
       endUserId,
@@ -89,7 +90,7 @@ announcementClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     await announcementService.recordImpression(orgId, alias, endUserId);
     return c.json(ok(null), 200);
@@ -116,7 +117,7 @@ announcementClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     await announcementService.recordClick(orgId, alias, endUserId);
     return c.json(ok(null), 200);

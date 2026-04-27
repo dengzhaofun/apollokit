@@ -5,6 +5,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -117,7 +118,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await exchangeService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
@@ -139,7 +140,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await exchangeService.listConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
@@ -164,7 +165,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await exchangeService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
@@ -190,7 +191,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await exchangeService.updateConfig(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 200);
@@ -213,7 +214,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await exchangeService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -241,7 +242,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { configKey } = c.req.valid("param");
     const row = await exchangeService.createOption(
       orgId,
@@ -268,7 +269,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { configKey } = c.req.valid("param");
     const page = await exchangeService.listOptions(orgId, configKey, c.req.valid("query"));
     return c.json(
@@ -297,7 +298,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { optionId } = c.req.valid("param");
     const row = await exchangeService.updateOption(
       orgId,
@@ -324,7 +325,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { optionId } = c.req.valid("param");
     await exchangeService.deleteOption(orgId, optionId);
     return c.json(ok(null), 200);
@@ -352,7 +353,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { optionId } = c.req.valid("param");
     const { endUserId, idempotencyKey } = c.req.valid("json");
     const result = await exchangeService.execute({
@@ -381,7 +382,7 @@ exchangeRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const optionId = c.req.param("optionId")!;
     const endUserId = c.req.param("endUserId")!;
     const state = await exchangeService.getUserOptionState({

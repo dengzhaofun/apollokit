@@ -18,6 +18,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -80,7 +81,7 @@ mailClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { since, limit } = c.req.valid("query");
     const { items } = await mailService.listInbox(orgId, endUserId, {
       since: since ? new Date(since) : undefined,
@@ -110,7 +111,7 @@ mailClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const row = await mailService.getInboxMessage(orgId, endUserId, id);
     return c.json(ok(serializeInbox(row)), 200);
@@ -139,7 +140,7 @@ mailClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const state = await mailService.markRead(orgId, endUserId, id);
     return c.json(ok(serializeUserState(state)), 200);
@@ -166,7 +167,7 @@ mailClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const result = await mailService.claim(orgId, endUserId, id);
     return c.json(ok({

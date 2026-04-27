@@ -17,6 +17,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -70,7 +71,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const result = await endUserService.syncUser(orgId, input);
     return c.json(ok(result), result.created ? 201 : 200);
@@ -96,7 +97,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const result = await endUserService.list(orgId, q);
     return c.json(ok(result), 200);
@@ -120,7 +121,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     return c.json(ok(await endUserService.get(orgId, id)), 200);
   },
@@ -146,7 +147,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     return c.json(ok(await endUserService.update(orgId, id, input)), 200);
@@ -170,7 +171,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     return c.json(ok(await endUserService.setDisabled(orgId, id, true)), 200);
   },
@@ -193,7 +194,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     return c.json(ok(await endUserService.setDisabled(orgId, id, false)), 200);
   },
@@ -216,7 +217,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     return c.json(ok(await endUserService.signOutAll(orgId, id)), 200);
   },
@@ -239,7 +240,7 @@ endUserRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await endUserService.remove(orgId, id);
     return c.json(ok(null), 200);

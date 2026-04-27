@@ -28,6 +28,7 @@
 import { and, count, eq, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
 import {
   friendBlocks,
   friendRelationships,
@@ -665,12 +666,3 @@ export function createFriendService(d: FriendDeps) {
 
 export type FriendService = ReturnType<typeof createFriendService>;
 
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -67,7 +68,7 @@ itemClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { definitionId } = c.req.valid("query");
     const items = await itemService.getInventory({
       organizationId: orgId,
@@ -98,7 +99,7 @@ itemClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const def = await itemService.getDefinition(orgId, key);
     const balance = await itemService.getBalance({
@@ -132,7 +133,7 @@ itemClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { definitionId, idempotencyKey } = c.req.valid("json");
 
     // 1. Look up the item definition

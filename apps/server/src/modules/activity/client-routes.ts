@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -138,7 +139,7 @@ activityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     const view = await activityService.getActivityForUser({
       organizationId: orgId,
@@ -173,7 +174,7 @@ activityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     const row = await activityService.join({
       organizationId: orgId,
@@ -213,7 +214,7 @@ activityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { milestoneAlias } = c.req.valid("json");
     const { alias } = c.req.valid("param");
     const result = await activityService.claimMilestone({

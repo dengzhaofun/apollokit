@@ -3,7 +3,7 @@
  *
  * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_). All handlers resolve the
- * organization from `c.var.session!.activeOrganizationId!`.
+ * organization from `getOrgId(c)`.
  *
  * Client-facing routes (player progress, clear, claim) live in
  * `client-routes.ts`.
@@ -13,6 +13,7 @@ import { z } from "@hono/zod-openapi";
 
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
@@ -172,7 +173,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await levelService.listConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
@@ -199,7 +200,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await levelService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
@@ -221,7 +222,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await levelService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
@@ -247,7 +248,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.updateConfig(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 200);
@@ -264,7 +265,7 @@ levelRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await levelService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -289,7 +290,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const rows = await levelService.listStages(orgId, id);
     return c.json(ok({ items: rows.map(serializeStage) }), 200);
@@ -315,7 +316,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.createStage(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeStage(row)), 201);
@@ -341,7 +342,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.updateStage(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeStage(row)), 200);
@@ -358,7 +359,7 @@ levelRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await levelService.deleteStage(orgId, id);
     return c.json(ok(null), 200);
@@ -397,7 +398,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { stageId } = c.req.valid("query");
     const rows = await levelService.listLevels(orgId, id, stageId);
@@ -424,7 +425,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.createLevel(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeLevel(row)), 201);
@@ -447,7 +448,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.loadLevelById(orgId, id);
     return c.json(ok(serializeLevel(row)), 200);
@@ -473,7 +474,7 @@ levelRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.updateLevel(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeLevel(row)), 200);
@@ -490,7 +491,7 @@ levelRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await levelService.deleteLevel(orgId, id);
     return c.json(ok(null), 200);

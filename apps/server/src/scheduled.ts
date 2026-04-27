@@ -25,6 +25,7 @@ import { activityService } from "./modules/activity";
 import { assistPoolService } from "./modules/assist-pool";
 import { leaderboardService } from "./modules/leaderboard";
 import { webhooksService } from "./modules/webhooks";
+import { logger } from "./lib/logger";
 
 export type ScheduledEvent = {
   cron: string;
@@ -41,7 +42,7 @@ export async function scheduled(
   // tick tags Tinybird rows with the same id, so the cron run shows up as
   // a single `tenant_trace` waterfall just like a fetch request does.
   const traceId = `cron-${crypto.randomUUID()}`;
-  console.log(
+  logger.info(
     `[scheduled] tick cron=${event.cron} at=${now.toISOString()} trace=${traceId}`,
   );
 
@@ -80,8 +81,8 @@ async function runTask(
   const started = Date.now();
   try {
     await fn();
-    console.log(`[scheduled] ${name} ok (${Date.now() - started}ms)`);
+    logger.info(`[scheduled] ${name} ok (${Date.now() - started}ms)`);
   } catch (err) {
-    console.error(`[scheduled] ${name} failed:`, err);
+    logger.error(`[scheduled] ${name} failed:`, err);
   }
 }

@@ -12,6 +12,7 @@ import type { EventBus } from "../../../lib/event-bus";
 import type { ActivityConfig } from "../../../schema/activity";
 import type { ActivityState } from "../types";
 import { kindRegistry } from "./registry";
+import { logger } from "../../../lib/logger";
 
 type Runtime = { db: AppDeps["db"]; events: EventBus };
 
@@ -26,7 +27,7 @@ export async function broadcastStateChange(params: {
   try {
     await handler.onStateChange(params);
   } catch (err) {
-    console.error(
+    logger.error(
       `[activity-kind] onStateChange failed kind=${params.activity.kind} activity=${params.activity.id}:`,
       err,
     );
@@ -42,7 +43,7 @@ export async function broadcastArchive(params: {
   try {
     await handler.onArchive(params);
   } catch (err) {
-    console.error(
+    logger.error(
       `[activity-kind] onArchive failed kind=${params.activity.kind} activity=${params.activity.id}:`,
       err,
     );

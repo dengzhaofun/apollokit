@@ -44,16 +44,18 @@ describe("sendInviteEmail", () => {
         // or a CI runner where no Cloudflare account is attached.
       },
     }));
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, "info").mockImplementation(() => {});
 
     const { sendInviteEmail } = await import("./mailer");
     await sendInviteEmail(BASE_PAYLOAD);
 
     expect(logSpy).toHaveBeenCalledTimes(1);
-    const msg = String(logSpy.mock.calls[0]![0]);
-    expect(msg).toContain("[mailer:dev]");
-    expect(msg).toContain(BASE_PAYLOAD.acceptUrl);
-    expect(msg).toContain(BASE_PAYLOAD.to);
+    // logger.info passes a structured payload `{ level, event, traceId, ... }`
+    // to console.info — the prose lives in `event`.
+    const payload = logSpy.mock.calls[0]![0] as { event: string };
+    expect(payload.event).toContain("[mailer:dev]");
+    expect(payload.event).toContain(BASE_PAYLOAD.acceptUrl);
+    expect(payload.event).toContain(BASE_PAYLOAD.to);
   });
 
   test("calls EMAIL.send with the rendered payload when binding present", async () => {

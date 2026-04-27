@@ -18,6 +18,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { clientAuthHeaders } from "../../middleware/client-auth-headers";
@@ -93,7 +94,7 @@ rankClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { seasonId, tierConfigAlias } = c.req.valid("query");
     const view = await rankService.getPlayerState({
       organizationId: orgId,
@@ -134,7 +135,7 @@ rankClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { seasonId, tierConfigAlias, limit, cursor } = c.req.valid("query");
     // If only tierConfigAlias is provided, resolve the active season first.
     const effectiveSeasonId =
@@ -213,7 +214,7 @@ rankClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const {
       seasonId,
       tierConfigAlias,

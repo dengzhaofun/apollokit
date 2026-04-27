@@ -46,6 +46,8 @@
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -107,6 +109,7 @@ import type {
   TopResult,
 } from "./types";
 import type { CreateConfigInput, UpdateConfigInput } from "./validators";
+import { logger } from "../../lib/logger";
 
 type LeaderboardDeps = Pick<AppDeps, "db" | "redis" | "events">;
 
@@ -133,13 +136,6 @@ type MailLike = {
 };
 
 type MailGetter = () => MailLike | null;
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
 
 function resolveScopeKeys(
   orgId: string,
@@ -279,7 +275,7 @@ export function createLeaderboardService(
       return newScore;
     } catch (err) {
       // Redis is best-effort; if it fails, PG still holds the truth.
-      console.warn("[leaderboard] redis update failed:", err);
+      logger.warn("[leaderboard] redis update failed:", err);
       return null;
     }
   }
@@ -837,7 +833,7 @@ export function createLeaderboardService(
             settled++;
           } catch (err) {
             errors++;
-            console.error(
+            logger.error(
               `[leaderboard] settle failed config=${config.id} cycle=${prevKey} scope=${scopeKey}:`,
               err,
             );
@@ -874,7 +870,7 @@ export function createLeaderboardService(
       try {
         entries = await topWithScores(redis, key, config.maxEntries);
       } catch (err) {
-        console.warn("[leaderboard] settle read redis failed:", err);
+        logger.warn("[leaderboard] settle read redis failed:", err);
       }
 
       if (entries.length === 0) {
@@ -982,7 +978,7 @@ export function createLeaderboardService(
       try {
         await purge(redis, key);
       } catch (err) {
-        console.warn("[leaderboard] redis purge failed:", err);
+        logger.warn("[leaderboard] redis purge failed:", err);
       }
     },
   };
@@ -1052,7 +1048,7 @@ async function readTop(
       }));
     }
   } catch (err) {
-    console.warn("[leaderboard] top read redis failed, falling back:", err);
+    logger.warn("[leaderboard] top read redis failed, falling back:", err);
   }
 
   const rows = await db
@@ -1103,7 +1099,7 @@ async function readSelf(
       return { rank: r === null ? null : r + 1, score: s };
     }
   } catch (err) {
-    console.warn("[leaderboard] self read redis failed:", err);
+    logger.warn("[leaderboard] self read redis failed:", err);
   }
   // Fallback: expensive but correct — count higher-scoring entries.
   const rows = await db
@@ -1182,7 +1178,7 @@ async function dispatchTierRewards(params: {
     } catch (err) {
       // Mail failure does not roll back the claim row — operators can
       // re-dispatch from the claim table if needed. Log loudly.
-      console.error(
+      logger.error(
         `[leaderboard] mail dispatch failed config=${config.id} user=${row.endUserId}:`,
         err,
       );
@@ -1204,13 +1200,3 @@ async function redisSetNx(
   }
 }
 
-/** Detect Postgres unique_violation (SQLSTATE 23505) across driver quirks. */
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

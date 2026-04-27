@@ -22,6 +22,8 @@
  * publishing caller — emit() is always safe.
  */
 
+import { logger } from "./logger";
+
 /** Type map for events. Augment via module augmentation. */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EventMap {}
@@ -62,7 +64,7 @@ export function createEventBus(): EventBus {
       try {
         await (handler as Handler<K>)(payload);
       } catch (err) {
-        console.error(`[event-bus] handler for "${type}" threw:`, err);
+        logger.error(`[event-bus] handler for "${type}" threw:`, err);
       }
     }
   }

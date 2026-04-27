@@ -29,26 +29,29 @@
  * `c.var.clientCredential`. Auth routes themselves (`/api/client/auth/*`)
  * do NOT mount this middleware — they're the thing that *produces*
  * the end-user identity.
+ *
+ * Throws `ModuleError` subclasses so the standard envelope covers all
+ * 401/403/400 paths uniformly.
  */
 
 import { createMiddleware } from "hono/factory";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 import { endUserAuth } from "../end-user-auth";
 import type { HonoEnv } from "../env";
-import { ModuleError } from "../lib/errors";
 import { clientCredentialService } from "../modules/client-credentials";
+import {
+  EndUserDisabledError,
+  InvalidEndUserHeaderError,
+  TenantMismatchError,
+  UnauthorizedError,
+} from "./auth-errors";
 
 export const requireClientUser = createMiddleware<HonoEnv>(async (c, next) => {
   const cred = c.get("clientCredential");
   if (!cred) {
-    return c.json(
-      {
-        error:
-          "internal: requireClientUser mounted without requireClientCredential",
-        requestId: c.get("requestId"),
-      },
-      500,
+    // Mount-order misconfiguration — surface as 500 via the global onError.
+    throw new Error(
+      "internal: requireClientUser mounted without requireClientCredential",
     );
   }
 
@@ -60,34 +63,17 @@ export const requireClientUser = createMiddleware<HonoEnv>(async (c, next) => {
     const sessionOrgId = (session.session as { organizationId?: string })
       .organizationId;
     if (!sessionOrgId) {
-      return c.json(
-        {
-          error: "session missing project binding",
-          requestId: c.get("requestId"),
-        },
-        401,
-      );
+      throw new UnauthorizedError("session missing project binding");
     }
     if (sessionOrgId !== cred.organizationId) {
-      return c.json(
-        {
-          error: "session_tenant_mismatch",
-          requestId: c.get("requestId"),
-        },
-        403,
-      );
+      throw new TenantMismatchError();
     }
     // Soft-ban enforcement on every request. `setDisabled` deletes
     // existing sessions so the admin's action is immediate, but a
     // session row issued microseconds before the disable call could
     // still hit this middleware — we double-check and refuse.
     const disabled = (session.user as { disabled?: boolean }).disabled;
-    if (disabled) {
-      return c.json(
-        { error: "end_user_disabled", requestId: c.get("requestId") },
-        403,
-      );
-    }
+    if (disabled) throw new EndUserDisabledError();
     c.set("endUserId", session.user.id);
     c.set("endUserAuthMethod", "session");
     return next();
@@ -96,36 +82,20 @@ export const requireClientUser = createMiddleware<HonoEnv>(async (c, next) => {
   // Channel B: HMAC
   const endUserId = c.req.header("x-end-user-id");
   if (!endUserId || endUserId.length === 0 || endUserId.length > 256) {
-    return c.json(
-      {
-        error: "missing or invalid x-end-user-id header",
-        requestId: c.get("requestId"),
-      },
-      400,
+    throw new InvalidEndUserHeaderError(
+      "missing or invalid x-end-user-id header",
     );
   }
 
   const userHash = c.req.header("x-user-hash");
 
-  try {
-    await clientCredentialService.verifyRequest(
-      cred.publishableKey,
-      endUserId,
-      userHash,
-    );
-  } catch (err) {
-    if (err instanceof ModuleError) {
-      return c.json(
-        {
-          error: err.message,
-          code: err.code,
-          requestId: c.get("requestId"),
-        },
-        err.httpStatus as ContentfulStatusCode,
-      );
-    }
-    throw err;
-  }
+  // verifyRequest throws ModuleError on bad HMAC — let it propagate; the
+  // router/global onError will map it to the standard envelope.
+  await clientCredentialService.verifyRequest(
+    cred.publishableKey,
+    endUserId,
+    userHash,
+  );
 
   c.set("endUserId", endUserId);
   c.set("endUserAuthMethod", "hmac");

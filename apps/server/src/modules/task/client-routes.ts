@@ -15,6 +15,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -60,7 +61,7 @@ taskClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const body = c.req.valid("json");
 
     const now = body.timestamp ? new Date(body.timestamp) : undefined;
@@ -102,7 +103,7 @@ taskClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const body = c.req.valid("json");
 
     const items = await taskService.getTasksForUser(
@@ -140,7 +141,7 @@ taskClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { taskId } = c.req.valid("param");
 
     const result = await taskService.claimReward(orgId, endUserId, taskId);
@@ -172,7 +173,7 @@ taskClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const body = c.req.valid("json");
 
     const result = await taskService.claimTier(

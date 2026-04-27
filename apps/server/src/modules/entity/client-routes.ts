@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no endUserId path segment for the caller.
+ * getEndUserId(c). No inline verifyRequest calls; no endUserId path segment for the caller.
  */
 
 import { z } from "@hono/zod-openapi";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -57,7 +58,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { schemaId, blueprintId } = c.req.valid("query");
     const rows = await entityService.listInstances(orgId, endUserId, {
       schemaId,
@@ -81,7 +82,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const result = await entityService.getInstance(orgId, endUserId, instanceId);
     return c.json(ok(result), 200);
@@ -117,7 +118,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { blueprintId, source, sourceId } = c.req.valid("json");
     const inst = await entityService.acquireEntity(
       orgId,
@@ -147,7 +148,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     await entityService.discardEntity(orgId, endUserId, instanceId);
     return c.json(ok(null), 200);
@@ -180,7 +181,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { locked } = c.req.valid("json");
     const inst = await entityService.toggleLock(
@@ -219,7 +220,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { amount } = c.req.valid("json");
     const inst = await entityService.addExp(orgId, endUserId, instanceId, amount);
@@ -253,7 +254,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { targetLevel } = c.req.valid("json");
     const inst = await entityService.levelUp(
@@ -280,7 +281,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const inst = await entityService.rankUp(orgId, endUserId, instanceId);
     return c.json(ok(inst), 200);
@@ -313,7 +314,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { feedInstanceIds } = c.req.valid("json");
     const inst = await entityService.synthesize(
@@ -356,7 +357,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex, equippedInstanceId } = c.req.valid("json");
     const slot = await entityService.equip(
@@ -401,7 +402,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex } = c.req.valid("json");
     await entityService.unequip(orgId, endUserId, instanceId, slotKey, slotIndex);
@@ -435,7 +436,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { skinId } = c.req.valid("json");
     const inst = await entityService.changeSkin(
@@ -471,7 +472,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configId } = c.req.valid("param");
     const rows = await entityService.listFormations(orgId, endUserId, configId);
     return c.json(ok(rows), 200);
@@ -517,7 +518,7 @@ entityClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configId, formationIndex } = c.req.valid("param");
     const { name, slots } = c.req.valid("json");
     const formation = await entityService.updateFormation(

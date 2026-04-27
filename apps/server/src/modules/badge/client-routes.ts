@@ -16,6 +16,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRoute, createClientRouter } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -55,7 +56,7 @@ badgeClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { rootKey } = c.req.valid("query");
     // Session-mode dismissals key off the player's current session.
     // We use the end-user session id when present; HMAC callers get a
@@ -104,7 +105,7 @@ badgeClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const input = c.req.valid("json");
     const result = await badgeService.dismiss(
       orgId,
@@ -139,7 +140,7 @@ badgeClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     await badgeService.resetSession(orgId, endUserId);
     return c.json(ok(null), 200);
   },

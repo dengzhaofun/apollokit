@@ -14,6 +14,7 @@
 import type { AppDeps } from "../../../deps";
 import type { EventMap } from "../../../lib/event-bus";
 import { kindRegistry } from "./registry";
+import { logger } from "../../../lib/logger";
 
 export function wireKindEventSubscriptions(
   deps: Pick<AppDeps, "db" | "events">,
@@ -39,7 +40,7 @@ export function wireKindEventSubscriptions(
               runtime,
             });
           } catch (err) {
-            console.error(
+            logger.error(
               `[activity-kind] onEvent failed kind=${handler.kind} event=${eventName}:`,
               err,
             );

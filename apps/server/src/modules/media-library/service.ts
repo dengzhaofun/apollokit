@@ -14,8 +14,10 @@
 import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
 import type { ObjectStorage } from "../../lib/storage";
 import { mediaAssets, mediaFolders } from "../../schema/media-library";
+import { logger } from "../../lib/logger";
 import {
   AssetNotFound,
   CannotDeleteDefaultFolder,
@@ -65,16 +67,6 @@ function generateObjectKey(organizationId: string, filename: string): string {
   const id = crypto.randomUUID();
   const ext = pickExtension(filename);
   return `${organizationId}/${y}/${m}/${d}/${id}${ext ? `.${ext}` : ""}`;
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
 }
 
 export function createMediaLibraryService(d: MediaLibraryDeps) {
@@ -571,7 +563,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       try {
         await storage.delete(asset.objectKey);
       } catch (err) {
-        console.error(
+        logger.error(
           `media-library: failed to delete object ${asset.objectKey}`,
           err,
         );

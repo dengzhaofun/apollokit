@@ -7,6 +7,7 @@ import { z } from "@hono/zod-openapi";
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -250,7 +251,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await lotteryService.createPool(orgId, c.req.valid("json"));
     return c.json(ok(serializePool(row)), 201);
   },
@@ -283,7 +284,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await lotteryService.listPools(orgId, {
       activityId: q.activityId,
@@ -315,7 +316,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await lotteryService.getPool(orgId, key);
     return c.json(ok(serializePool(row)), 200);
@@ -341,7 +342,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await lotteryService.updatePool(orgId, id, c.req.valid("json"));
     return c.json(ok(serializePool(row)), 200);
@@ -364,7 +365,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await lotteryService.deletePool(orgId, id);
     return c.json(ok(null), 200);
@@ -392,7 +393,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const row = await lotteryService.createTier(
       orgId,
@@ -419,7 +420,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const page = await lotteryService.listTiers(orgId, poolKey, c.req.valid("query"));
     return c.json(
@@ -448,7 +449,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { tierId } = c.req.valid("param");
     const row = await lotteryService.updateTier(
       orgId,
@@ -475,7 +476,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { tierId } = c.req.valid("param");
     await lotteryService.deleteTier(orgId, tierId);
     return c.json(ok(null), 200);
@@ -503,7 +504,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey, tierId } = c.req.valid("param");
     const row = await lotteryService.createPrize(
       orgId,
@@ -534,7 +535,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const row = await lotteryService.createPrize(
       orgId,
@@ -562,7 +563,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const page = await lotteryService.listPrizes(orgId, poolKey, c.req.valid("query"));
     return c.json(
@@ -591,7 +592,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { prizeId } = c.req.valid("param");
     const row = await lotteryService.updatePrize(
       orgId,
@@ -618,7 +619,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { prizeId } = c.req.valid("param");
     await lotteryService.deletePrize(orgId, prizeId);
     return c.json(ok(null), 200);
@@ -650,7 +651,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const row = await lotteryService.createPityRule(
       orgId,
@@ -679,7 +680,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const page = await lotteryService.listPityRules(orgId, poolKey, c.req.valid("query"));
     return c.json(
@@ -712,7 +713,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { ruleId } = c.req.valid("param");
     const row = await lotteryService.updatePityRule(
       orgId,
@@ -739,7 +740,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { ruleId } = c.req.valid("param");
     await lotteryService.deletePityRule(orgId, ruleId);
     return c.json(ok(null), 200);
@@ -767,7 +768,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const { endUserId, idempotencyKey } = c.req.valid("json");
     const result = await lotteryService.pull({
@@ -799,7 +800,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const { endUserId, count, idempotencyKey } = c.req.valid("json");
     const result = await lotteryService.multiPull({
@@ -835,7 +836,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const { endUserId } = c.req.valid("param");
     const state = await lotteryService.getUserState({
@@ -865,7 +866,7 @@ lotteryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { poolKey } = c.req.valid("param");
     const { endUserId } = c.req.valid("param");
     const rows = await lotteryService.getPullHistory({
