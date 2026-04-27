@@ -809,7 +809,21 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+        </SidebarMenu>
 
+        <div
+          className={
+            isIcon
+              ? "flex justify-center py-1"
+              : "px-2 py-1 [&_button]:w-full"
+          }
+        >
+          <OrganizationSwitcher size={isIcon ? "icon" : undefined} />
+        </div>
+
+        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+
+        <SidebarMenu>
           {/*
             Search 入口 —— 展开模式渲染 Linear/Vercel 风格的搜索条
             (Search... ⌘K),icon 模式只剩一颗放大镜 + tooltip。点击触发
@@ -829,18 +843,6 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-
-        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
-
-        <div
-          className={
-            isIcon
-              ? "flex justify-center py-1"
-              : "px-2 py-1 [&_button]:w-full"
-          }
-        >
-          <OrganizationSwitcher size={isIcon ? "icon" : undefined} />
-        </div>
       </SidebarHeader>
 
       <SidebarContent>
