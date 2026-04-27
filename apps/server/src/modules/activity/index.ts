@@ -61,3 +61,14 @@ export const activityService = createActivityService(deps, () => mailService);
 
 export { activityRouter } from "./routes";
 export { activityClientRouter } from "./client-routes";
+
+// Cross-module phase gate — let other modules (check-in, task, lottery,
+// shop, …) guard activity-bound entry points without taking a hard
+// dependency on the service factory.
+export {
+  assertActivityClaimable,
+  assertActivityWritable,
+  getActivityPhases,
+  isClaimablePhase,
+  isWritablePhase,
+} from "./gate";

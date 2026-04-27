@@ -34,6 +34,26 @@ export class ActivityWrongState extends ModuleError {
   }
 }
 
+export class ActivityNotInWritablePhase extends ModuleError {
+  constructor(activityId: string, phase: string) {
+    super(
+      "activity.not_in_writable_phase",
+      409,
+      `activity ${activityId} is in phase=${phase}; participation requires phase=active`,
+    );
+  }
+}
+
+export class ActivityNotInClaimablePhase extends ModuleError {
+  constructor(activityId: string, phase: string) {
+    super(
+      "activity.not_in_claimable_phase",
+      409,
+      `activity ${activityId} is in phase=${phase}; claims allowed only in {active, settling}`,
+    );
+  }
+}
+
 export class ActivityNodeNotFound extends ModuleError {
   constructor(alias: string) {
     super("activity.node_not_found", 404, `activity node not found: ${alias}`);
