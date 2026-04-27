@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { HeadContent, Link, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { RootProvider } from 'fumadocs-ui/provider/tanstack'
-import { CompassIcon } from 'lucide-react'
+import { AlertTriangleIcon, CompassIcon } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 import { Providers } from '../providers'
 import { Button } from '../components/ui/button'
 import { ConsentLayer } from '../components/consent/ConsentLayer'
@@ -90,6 +92,12 @@ export const Route = createRootRoute({
    * 不在 root 强加,避免覆盖业务页面已有的细粒度状态处理。
    */
   notFoundComponent: NotFoundPage,
+  /*
+   * 全局 React 渲染期错误兜底。把异常上报 Sentry,然后渲染一个友好降级页。
+   * 业务页面如果实现了自己的 errorComponent / ErrorBoundary,会优先消费,
+   * 走不到这里。Sentry SDK 未初始化时 captureException 是 no-op。
+   */
+  errorComponent: RootErrorBoundary,
 })
 
 function NotFoundPage() {
@@ -116,6 +124,47 @@ function NotFoundPage() {
               {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
             </Link>
           </Button>
+        </EmptyContent>
+      </Empty>
+    </main>
+  )
+}
+
+function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
+  // 上报放 effect 里跑,避免 SSR 阶段重复上报(captureException 在 SSR 上下文
+  // 里没有 Sentry browser SDK,纯 no-op,但 effect 让语义更明确)。
+  useEffect(() => {
+    Sentry.captureException(error)
+  }, [error])
+
+  const isZh = getLocale() === 'zh'
+  return (
+    <main className="flex min-h-[80vh] items-center justify-center p-6">
+      <Empty className="max-w-md">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <AlertTriangleIcon className="size-4" />
+          </EmptyMedia>
+          <EmptyTitle>
+            {isZh ? '页面崩了' : 'Something went wrong'}
+          </EmptyTitle>
+          <EmptyDescription>
+            {isZh
+              ? '我们已收到错误报告。可以试着重试,或者回到主页面。'
+              : "We've received the error report. Try again or head back to the dashboard."}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={reset}>
+              {isZh ? '重试' : 'Retry'}
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/dashboard">
+                {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+              </Link>
+            </Button>
+          </div>
         </EmptyContent>
       </Empty>
     </main>
