@@ -1,5 +1,6 @@
 import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
 import { Link, useLocation } from "@tanstack/react-router"
+import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import {
   Activity,
@@ -15,12 +16,15 @@ import {
   HeartHandshake,
   GalleryHorizontal,
   Gift,
+  Globe,
   Layers,
   LayoutDashboard,
   LineChart,
   ListTodo,
   Medal,
   Megaphone,
+  Monitor,
+  Moon,
   Radio,
   Bell,
   Mail,
@@ -28,15 +32,16 @@ import {
   MessagesSquare,
   Search,
   Package,
+  Palette,
   PartyPopper,
   PieChart,
   PiggyBank,
   ScrollText,
-  Settings,
   Shield,
   ShoppingCart,
   Sparkles,
   Star,
+  Sun,
   Swords,
   Tags,
   Ticket,
@@ -52,6 +57,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "#/components/ui/collapsible"
+import {
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "#/components/ui/dropdown-menu"
 import {
   Popover,
   PopoverContent,
@@ -79,9 +91,8 @@ import { useFavorites } from "#/hooks/use-navigation-favorites"
 import { cn } from "#/lib/utils"
 import { useCommandPalette } from "./command-palette-context"
 import { FavoriteStarButton } from "./FavoriteStarButton"
-import { LanguageSwitcher } from "./LanguageSwitcher"
-import ThemeToggle from "./ThemeToggle"
 import * as m from "../paraglide/messages.js"
+import { getLocale, setLocale, type Locale } from "../paraglide/runtime.js"
 
 type NavRoute =
   | "/dashboard"
@@ -695,6 +706,77 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
   )
 }
 
+/**
+ * UserButton 包装 —— Theme + Language 用 shadcn 的二级菜单
+ * (DropdownMenuSub)收口,传给 better-auth-ui 的 `additionalLinks`。
+ *
+ * 关于 asChild 包裹:Library 会把每个非 `{href,...}` 的 ReactNode 用
+ * `<DropdownMenuItem asChild>` 包起来。DropdownMenuSub 是一个仅提供
+ * context 的组件、自身不渲染 DOM,所以 Slot 合并上来的 menuitem 相关
+ * props 都被无视;真正进入 DOM 的是 SubTrigger / SubContent,各自带
+ * 独立的 role 和事件,行为符合标准 sub-menu 预期。
+ *
+ * 顺序:
+ *   • [Identity 头] + ─────
+ *   • Theme  ▶  (Light / Dark / System)
+ *   • Language  ▶  (English / 中文)
+ *   • Settings(默认 link → /settings/account)
+ *   • Sign Out(默认 link)
+ */
+function UserMenuButton({ isIcon }: { isIcon: boolean }) {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  // mounted 之前避免读 next-themes 的值,免 hydration mismatch
+  const themeValue = mounted ? theme ?? "system" : "system"
+  const currentLocale: Locale = mounted ? getLocale() : "en"
+
+  return (
+    <UserButton
+      size={isIcon ? "icon" : "lg"}
+      additionalLinks={[
+        <DropdownMenuSub key="theme-sub">
+          <DropdownMenuSubTrigger>
+            <Palette className="size-4" />
+            <span>{m.user_menu_theme()}</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="min-w-[10rem]">
+            <DropdownMenuRadioGroup value={themeValue} onValueChange={setTheme}>
+              <DropdownMenuRadioItem value="light">
+                <Sun className="size-4" />
+                <span>{m.user_menu_theme_light()}</span>
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="dark">
+                <Moon className="size-4" />
+                <span>{m.user_menu_theme_dark()}</span>
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="system">
+                <Monitor className="size-4" />
+                <span>{m.user_menu_theme_system()}</span>
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>,
+        <DropdownMenuSub key="lang-sub">
+          <DropdownMenuSubTrigger>
+            <Globe className="size-4" />
+            <span>{m.user_menu_language()}</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="min-w-[8rem]">
+            <DropdownMenuRadioGroup
+              value={currentLocale}
+              onValueChange={(v) => setLocale(v as Locale)}
+            >
+              <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="zh">中文</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>,
+      ]}
+    />
+  )
+}
+
 export function AppSidebar() {
   const groups = getNavGroups()
   const { pathname } = useLocation()
@@ -806,28 +888,12 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === "/settings" || pathname.startsWith("/settings/")}
-              tooltip={m.nav_settings()}
-            >
-              <Link to="/settings">
-                <Settings className="size-4" />
-                <span>{m.nav_settings()}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           {/*
-            Lang + Theme 行 —— collapsed 模式自动隐藏(group-data 选择器),展开时
-            才显示。两个控件共享一行,视觉重心比之前各占一行轻很多。
+            Settings / Theme / Language 全部收口到 UserButton 的下拉菜单里
+            (additionalLinks)。Settings 走 better-auth-ui 默认 link
+            (account.basePath=/settings, viewPaths.SETTINGS=account →
+            /settings/account),进入后 SettingsNav 提供二级跳转。
           */}
-          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-            <div className="flex items-center gap-1 px-1 py-0.5">
-              <LanguageSwitcher />
-              <ThemeToggle />
-            </div>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <div
               className={
@@ -836,7 +902,7 @@ export function AppSidebar() {
                   : "px-1 py-1 [&_button]:w-full"
               }
             >
-              <UserButton size={isIcon ? "icon" : "lg"} />
+              <UserMenuButton isIcon={isIcon} />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
