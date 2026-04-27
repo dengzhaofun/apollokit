@@ -114,6 +114,7 @@ import type {
   ActivityMilestoneTier,
   ActivityNode,
   ActivityState,
+  ActivityTimeline,
   ActivityViewForUser,
   ActivityVisibility,
 } from "./types";
@@ -564,13 +565,33 @@ export function createActivityService(
     async listNodes(
       organizationId: string,
       activityIdOrAlias: string,
-    ): Promise<ActivityNode[]> {
+      now: Date = new Date(),
+    ): Promise<{
+      items: ActivityNode[];
+      activity: {
+        id: string;
+        alias: string;
+        derivedPhase: ActivityState;
+        timeline: ActivityTimeline;
+      };
+    }> {
       const activity = await loadByKey(organizationId, activityIdOrAlias);
-      return db
+      const items = await db
         .select()
         .from(activityNodes)
         .where(eq(activityNodes.activityId, activity.id))
         .orderBy(activityNodes.orderIndex);
+      // Live phase via deriveState — admin UI badges should reflect the
+      // current minute, not the cron-persisted `status` column.
+      return {
+        items,
+        activity: {
+          id: activity.id,
+          alias: activity.alias,
+          derivedPhase: deriveState(activity, now),
+          timeline: deriveTimeline(activity, now),
+        },
+      };
     },
 
     // ─── Schedules ──────────────────────────────────────────────

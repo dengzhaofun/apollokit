@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
+import { ActivityPhaseBadge } from "#/components/activity/ActivityPhaseBadge"
 import {
   STATE_LABELS,
   STATE_VARIANT,
@@ -376,7 +377,9 @@ function NodesPanel({
   activityKey: string
   activityId: string
 }) {
-  const { data: nodes, isPending } = useActivityNodes(activityKey)
+  const { data: nodesData, isPending } = useActivityNodes(activityKey)
+  const nodes = nodesData?.items
+  const activityPhase = nodesData?.activity.derivedPhase
   const createMutation = useCreateActivityNode(activityKey)
   const deleteMutation = useDeleteActivityNode(activityKey)
   const updateMutation = useUpdateActivityNode(activityKey)
@@ -413,7 +416,15 @@ function NodesPanel({
         onOpenChange={setCreatorOpen}
       />
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        {activityPhase ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{m.activity_nodes_phase_banner()}</span>
+            <ActivityPhaseBadge phase={activityPhase} />
+          </div>
+        ) : (
+          <div />
+        )}
         <Button size="sm" onClick={() => setCreatorOpen(true)}>
           {m.activity_nodes_create_button()}
         </Button>

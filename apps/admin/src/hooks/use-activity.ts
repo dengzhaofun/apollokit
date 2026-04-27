@@ -101,12 +101,40 @@ export function useActivityLifecycle() {
 
 // ─── Nodes ─────────────────────────────────────────────────────────
 
+export type ActivityPhase =
+  | "draft"
+  | "scheduled"
+  | "teasing"
+  | "active"
+  | "settling"
+  | "ended"
+  | "archived"
+
+export type ActivityTimeline = {
+  state: ActivityPhase
+  now: string | Date
+  msToVisible: number
+  msToStart: number
+  msToEnd: number
+  msToRewardEnd: number
+  msToHidden: number
+}
+
+export type ActivityNodeListResponse = {
+  items: ActivityNode[]
+  activity: {
+    id: string
+    alias: string
+    derivedPhase: ActivityPhase
+    timeline: ActivityTimeline
+  }
+}
+
 export function useActivityNodes(key: string) {
   return useQuery({
     queryKey: ["activity-nodes", key],
     queryFn: () =>
-      api.get<{ items: ActivityNode[] }>(`/api/activity/${key}/nodes`),
-    select: (data) => data.items,
+      api.get<ActivityNodeListResponse>(`/api/activity/${key}/nodes`),
     enabled: !!key,
   })
 }
