@@ -4,7 +4,8 @@
   "main": "./src/server.ts",
   "compatibility_date": "2026-04-11",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "placement": { "mode": "smart" },
   // Service binding to the API worker. Admin forwards `/api/*` requests
   // through this binding (worker-to-worker RPC, no public network),
   // making the browser see all traffic as same-origin and removing the
