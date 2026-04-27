@@ -7,8 +7,10 @@
     "nodejs_compat"
   ],
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "head_sampling_rate": 0.1
   },
+  "placement": { "mode": "smart" },
   // Cron triggers — scheduled handler in src/scheduled.ts.
   // Every-minute tick keeps activity state transitions (scheduled →
   // teasing → active → settling → ended → archived) and schedule
