@@ -86,7 +86,7 @@ export function CommandPalette() {
               const Icon = item.icon
               const rows = [
                 <CommandItem
-                  key={item.to}
+                  key={`p:${item.to}`}
                   value={buildSearchValue(item)}
                   onSelect={() => go(item.to)}
                 >
@@ -102,7 +102,7 @@ export function CommandPalette() {
                   const ChildIcon = child.icon
                   rows.push(
                     <CommandItem
-                      key={child.to}
+                      key={`c:${child.to}`}
                       value={buildSearchValue(child, item)}
                       onSelect={() => go(child.to)}
                     >
