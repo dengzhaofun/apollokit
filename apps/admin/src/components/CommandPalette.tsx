@@ -9,6 +9,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
+  CommandShortcut,
 } from "#/components/ui/command"
 import { getNavGroups, type NavItem } from "./AppSidebar"
 import { useCommandPalette } from "./command-palette-context"
@@ -90,11 +91,10 @@ export function CommandPalette() {
                   onSelect={() => go(item.to)}
                 >
                   <Icon className="size-4" />
-                  <span>{item.title()}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {item.to}
-                  </span>
-                  <FavoriteStarButton routePath={item.to} />
+                  <span className="truncate">{item.title()}</span>
+                  <CommandShortcut>
+                    <FavoriteStarButton routePath={item.to} />
+                  </CommandShortcut>
                 </CommandItem>,
               ]
               if (item.children) {
@@ -107,16 +107,15 @@ export function CommandPalette() {
                       onSelect={() => go(child.to)}
                     >
                       <ChildIcon className="size-4" />
-                      <span>
+                      <span className="truncate">
                         <span className="text-muted-foreground">
                           {item.title()} ›{" "}
                         </span>
                         {child.title()}
                       </span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {child.to}
-                      </span>
-                      <FavoriteStarButton routePath={child.to} />
+                      <CommandShortcut>
+                        <FavoriteStarButton routePath={child.to} />
+                      </CommandShortcut>
                     </CommandItem>,
                   )
                 }
