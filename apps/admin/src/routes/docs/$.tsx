@@ -2,7 +2,10 @@ import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { DocsPage, DocsBody } from 'fumadocs-ui/page'
-import { MarkdownCopyButton } from 'fumadocs-ui/layouts/docs/page'
+import {
+  MarkdownCopyButton,
+  ViewOptionsPopover,
+} from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
 import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import type { TOCItemType } from 'fumadocs-core/toc'
@@ -10,6 +13,11 @@ import { i18n } from '#/lib/source'
 import { source } from '#/lib/source-server'
 import { getBaseOptions } from '#/lib/layout.shared'
 import { APIPage } from '#/lib/openapi'
+import {
+  AISearch,
+  AISearchPanel,
+  AISearchTrigger,
+} from '#/components/ai/search'
 import browserCollections from 'collections/browser'
 
 // Generated API-reference MDX (under content/docs/{locale}/api/) embeds
@@ -135,30 +143,48 @@ function Page() {
   // 避免英文站点击 OpenAPI 跳到中文目录。
   const layoutOptions = getBaseOptions(data.locale as 'zh' | 'en')
   return (
-    <DocsLayout {...layoutOptions} tree={data.tree}>
-      <DocsPage
-        // toc 驱动右侧 "On this page";footer(prev/next)默认 enabled=true,
-        // 它读 DocsLayout 的 pageTree 再匹配当前 pathname 自动算邻居,不需要
-        // 显式传 items。
-        toc={data.toc as TOCItemType[]}
-        editOnGithub={{
-          owner: REPO_OWNER,
-          repo: REPO_NAME,
-          sha: REPO_BRANCH,
-          path: data.githubPath,
-        }}
-        lastUpdate={data.lastModified ?? undefined}
-      >
-        <DocsBody>
-          <div className="not-prose mb-6 flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold leading-tight tracking-tight">
-              {data.title}
-            </h1>
-            <MarkdownCopyButton markdownUrl={data.markdownUrl} />
-          </div>
-          {clientLoader.useContent(data.path)}
-        </DocsBody>
-      </DocsPage>
-    </DocsLayout>
+    // AISearch 是 docs 页签级别的对话上下文,挂在 DocsLayout 外面
+    // 这样浮按钮和侧拉面板可以盖在主内容上而不被 layout 的 grid
+    // 布局撕碎。locale 透传给后端 chat handler 用来分片搜索索引。
+    <AISearch locale={data.locale}>
+      <DocsLayout {...layoutOptions} tree={data.tree}>
+        <DocsPage
+          // toc 驱动右侧 "On this page";footer(prev/next)默认 enabled=true,
+          // 它读 DocsLayout 的 pageTree 再匹配当前 pathname 自动算邻居,不需要
+          // 显式传 items。
+          toc={data.toc as TOCItemType[]}
+          editOnGithub={{
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            sha: REPO_BRANCH,
+            path: data.githubPath,
+          }}
+          lastUpdate={data.lastModified ?? undefined}
+        >
+          <DocsBody>
+            <div className="not-prose mb-6 flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-bold leading-tight tracking-tight">
+                {data.title}
+              </h1>
+              <div className="flex items-center gap-2">
+                {/*
+                  MarkdownCopyButton 复制本页 .md 喂给 LLM;
+                  ViewOptionsPopover 提供「在 ChatGPT/Claude 打开本页」的菜单,
+                  目标 URL 都用同一个 /docs-md/<lang>/<slug> 端点。
+                */}
+                <MarkdownCopyButton markdownUrl={data.markdownUrl} />
+                <ViewOptionsPopover
+                  markdownUrl={data.markdownUrl}
+                  githubUrl={`https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${REPO_BRANCH}/${data.githubPath}`}
+                />
+              </div>
+            </div>
+            {clientLoader.useContent(data.path)}
+          </DocsBody>
+        </DocsPage>
+      </DocsLayout>
+      <AISearchTrigger position="float" />
+      <AISearchPanel />
+    </AISearch>
   )
 }
