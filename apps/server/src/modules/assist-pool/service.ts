@@ -54,6 +54,7 @@ import {
   assistPoolInstances,
   assistPoolRewardsLedger,
 } from "../../schema/assist-pool";
+import { assertActivityWritable } from "../activity/gate";
 import type { CurrencyService } from "../currency/service";
 import type { ItemService } from "../item/service";
 import {
@@ -472,6 +473,17 @@ export function createAssistPoolService(
         throw new AssistPoolConfigInactive(params.configKey);
       }
 
+      // Activity-phase gate: if config is bound to an activity, the
+      // activity must be in its writable phase ('active'). Independent
+      // from config.isActive, expiresInSeconds, and per-instance limits.
+      if (config.activityId) {
+        await assertActivityWritable(
+          db,
+          config.activityId,
+          params.now ?? new Date(),
+        );
+      }
+
       if (config.maxInstancesPerInitiator !== null) {
         const existing = await countActiveInstancesForInitiator(
           config.id,
@@ -567,6 +579,11 @@ export function createAssistPoolService(
         const cfg = config[0];
         if (!cfg) throw new AssistPoolConfigNotFound(instance.configId);
         if (!cfg.isActive) throw new AssistPoolConfigInactive(cfg.id);
+
+        // Activity-phase gate (see initiateInstance).
+        if (cfg.activityId) {
+          await assertActivityWritable(db, cfg.activityId, now);
+        }
 
         // Self-assist guard
         if (

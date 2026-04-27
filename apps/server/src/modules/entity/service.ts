@@ -43,6 +43,7 @@ import {
   type SlotDefinition,
   type SynthesisConfig,
 } from "../../schema/entity";
+import { assertActivityWritable } from "../activity/gate";
 import {
   EntityAliasConflict,
   EntityAlreadyEquipped,
@@ -863,6 +864,15 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   ): Promise<EntityInstance> {
     const bp = await loadBlueprintByKey(organizationId, blueprintId);
     const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+
+    // Activity-phase gate: if the blueprint is bound to an activity,
+    // minting new instances of it is restricted to the activity's
+    // writable phase ('active'). Operations on already-acquired
+    // instances (levelUp, equip, …) are intentionally NOT gated —
+    // entities persist past the activity.
+    if (bp.activityId) {
+      await assertActivityWritable(db, bp.activityId);
+    }
 
     // Determine initial rank
     const initialRank =

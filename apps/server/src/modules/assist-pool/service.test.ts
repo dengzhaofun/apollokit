@@ -364,4 +364,80 @@ describe("assist-pool service", () => {
     // The first instance was force-expired separately; no assertion here
     void inst;
   });
+
+  describe("activity-bound writable gate", () => {
+    const HOUR = 3_600_000;
+    async function seedActivity(opts: {
+      alias: string;
+      phaseAt: "active" | "teasing" | "ended";
+    }): Promise<string> {
+      const { activityConfigs } = await import("../../schema/activity");
+      const offsetMap = { active: 0, teasing: -1.5 * HOUR, ended: +2.5 * HOUR };
+      const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
+      const [row] = await db
+        .insert(activityConfigs)
+        .values({
+          organizationId: orgId,
+          alias: opts.alias,
+          name: `gate-${opts.alias}`,
+          kind: "generic",
+          status: "active",
+          visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+          startAt: new Date(anchor.getTime() - HOUR),
+          endAt: new Date(anchor.getTime() + HOUR),
+          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+          hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+        })
+        .returning({ id: activityConfigs.id });
+      return row!.id;
+    }
+
+    test("teasing activity → initiateInstance throws activity.not_in_writable_phase", async () => {
+      const activityId = await seedActivity({
+        alias: "ap-gate-teasing",
+        phaseAt: "teasing",
+      });
+      await svc.createConfig(orgId, {
+        name: "Bound teasing",
+        alias: "ap-bound-teasing",
+        targetAmount: 10,
+        contributionPolicy: { kind: "fixed", amount: 5 },
+        activityId,
+      });
+      await expect(
+        svc.initiateInstance({
+          organizationId: orgId,
+          configKey: "ap-bound-teasing",
+          initiatorEndUserId: "u-ap-gate-teasing",
+        }),
+      ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
+    });
+
+    test("active activity → initiateInstance + contribute both succeed", async () => {
+      const activityId = await seedActivity({
+        alias: "ap-gate-active",
+        phaseAt: "active",
+      });
+      await svc.createConfig(orgId, {
+        name: "Bound active",
+        alias: "ap-bound-active",
+        targetAmount: 100,
+        contributionPolicy: { kind: "fixed", amount: 25 },
+        perAssisterLimit: 5,
+        activityId,
+      });
+      const inst = await svc.initiateInstance({
+        organizationId: orgId,
+        configKey: "ap-bound-active",
+        initiatorEndUserId: "u-ap-gate-active",
+      });
+      expect(inst.status).toBe("in_progress");
+      const r = await svc.contribute({
+        organizationId: orgId,
+        instanceId: inst.id,
+        assisterEndUserId: "u-ap-gate-helper",
+      });
+      expect(r.contribution.amount).toBe(25);
+    });
+  });
 });
