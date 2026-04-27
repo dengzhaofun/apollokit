@@ -339,7 +339,19 @@ activityRouter.openapi(
         description: "OK",
         content: {
           "application/json": {
-            schema: envelopeOf(z.object({ items: z.array(z.record(z.string(), z.unknown())) }),)
+            // `activity` carries the live phase + timeline so the admin UI
+            // can render a phase badge per node without a second roundtrip.
+            schema: envelopeOf(
+              z.object({
+                items: z.array(z.record(z.string(), z.unknown())),
+                activity: z.object({
+                  id: z.string(),
+                  alias: z.string(),
+                  derivedPhase: z.string(),
+                  timeline: z.record(z.string(), z.unknown()),
+                }),
+              }),
+            ),
           },
         },
       },
@@ -349,8 +361,8 @@ activityRouter.openapi(
   async (c) => {
     const orgId = c.var.session!.activeOrganizationId!;
     const { key } = c.req.valid("param");
-    const rows = await activityService.listNodes(orgId, key);
-    return c.json(ok({ items: rows }), 200);
+    const result = await activityService.listNodes(orgId, key);
+    return c.json(ok(result), 200);
   },
 );
 

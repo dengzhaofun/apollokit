@@ -2059,5 +2059,25 @@
   "cms_filter_alias_placeholder": "搜索 alias",
 
   "cms_submit_create_type": "创建类型",
-  "cms_submit_create_entry": "创建条目"
+  "cms_submit_create_entry": "创建条目",
+
+  "activity_phase_draft": "草稿",
+  "activity_phase_scheduled": "未公开",
+  "activity_phase_teasing": "预热中",
+  "activity_phase_active": "进行中",
+  "activity_phase_settling": "结算中",
+  "activity_phase_ended": "已结束",
+  "activity_phase_archived": "已归档",
+  "activity_phase_draft_tooltip": "草稿，玩家完全不可见。需要显式 publish 才会进入下一阶段。",
+  "activity_phase_scheduled_tooltip": "已发布但未到公开时间（now < visibleAt），玩家暂不可见。",
+  "activity_phase_teasing_tooltip": "预热期：玩家可以看到入口/海报，但所有参与/写入操作（签到、抽奖、购买、提交分数等）会被拒绝。",
+  "activity_phase_active_tooltip": "进行中：玩家可以参与并领奖。",
+  "activity_phase_settling_tooltip": "结算期：不再接收新参与，但还可以领奖（直到 rewardEndAt）。",
+  "activity_phase_ended_tooltip": "已结束：玩家可以看到结果（如最终排行），但不能参与也不能领奖。",
+  "activity_phase_archived_tooltip": "已归档：玩家完全不可见，数据可被 cleanup_rule 清理。",
+  "activity_nodes_phase_banner": "本活动当前阶段：",
+  "activity_lifecycle_simple_description": "只填开始 / 结束时间，预热（visibleAt）默认无、领奖期默认 7 天、归档延迟默认 30 天。需要自定义就切到进阶模式。",
+  "activity_lifecycle_simple_hint": "进阶模式可解锁全部 5 个时间点：可见 / 开始 / 结束 / 领奖截止 / 隐藏。",
+  "activity_lifecycle_switch_simple": "← 切回简单模式",
+  "activity_lifecycle_switch_advanced": "需要自定义？切到进阶模式 →"
 }

@@ -38,6 +38,11 @@ import type { AppDeps } from "../../deps";
 import { grantRewards, type RewardServices } from "../../lib/rewards";
 import { activityConfigs } from "../../schema/activity";
 import {
+  ActivityNotFound,
+  ActivityNotInClaimablePhase,
+} from "../activity/errors";
+import { assertActivityClaimable } from "../activity/gate";
+import {
   battlePassClaims,
   battlePassConfigs,
   battlePassSeasonTasks,
@@ -170,34 +175,30 @@ export function createBattlePassService(
   }
 
   /**
-   * 根据 activity_configs 判断某季目前能否继续领奖。规则：
-   *   - 必须存在
-   *   - 状态 ∈ {active, settling, ended}（active 阶段可做任务，ended 阶段仍在奖励窗口内）
-   *   - now ≤ rewardEndAt（若 rewardEndAt 为 null，默认使用 endAt）
+   * 根据 activity 状态机判断某季目前能否领奖。委托给统一的活动期 gate
+   * (`assertActivityClaimable`)：仅 phase ∈ {active, settling} 通过。
+   *
+   * 历史实现（在 PR #80 之前）写在这里，重复了状态机判断逻辑且把
+   * `status` 列当 archived 哨兵；现在改成 deriveState 实时算，跨模块
+   * 一致。错误码保持 `battle_pass.reward_window_closed`，避免破坏 SDK
+   * 客户端的 catch-by-code 习惯。
    */
   async function assertRewardWindowOpen(
-    organizationId: string,
+    _organizationId: string,
     activityId: string,
     seasonId: string,
     now: Date,
   ) {
-    const [act] = await db
-      .select()
-      .from(activityConfigs)
-      .where(
-        and(
-          eq(activityConfigs.organizationId, organizationId),
-          eq(activityConfigs.id, activityId),
-        ),
-      )
-      .limit(1);
-    if (!act) throw new BattlePassRewardWindowClosed(seasonId);
-    const rewardEndAt = act.rewardEndAt ?? act.endAt;
-    if (rewardEndAt && now.getTime() > rewardEndAt.getTime()) {
-      throw new BattlePassRewardWindowClosed(seasonId);
-    }
-    if (act.status === "archived") {
-      throw new BattlePassRewardWindowClosed(seasonId);
+    try {
+      await assertActivityClaimable(db, activityId, now);
+    } catch (err) {
+      if (
+        err instanceof ActivityNotFound ||
+        err instanceof ActivityNotInClaimablePhase
+      ) {
+        throw new BattlePassRewardWindowClosed(seasonId);
+      }
+      throw err;
     }
   }
 

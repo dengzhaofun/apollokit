@@ -294,3 +294,114 @@ describe("check-in service", () => {
     }
   });
 });
+
+describe("check-in service — activity-bound writable gate", () => {
+  const svc = createCheckInService({ db });
+  let orgId: string;
+  const HOUR = 3_600_000;
+
+  beforeAll(async () => {
+    orgId = await createTestOrg("check-in-svc-gate");
+  });
+
+  afterAll(async () => {
+    await deleteTestOrg(orgId);
+  });
+
+  /** Seed an activity at a chosen phase relative to `now`. */
+  async function seedActivity(opts: {
+    alias: string;
+    phaseAt: "active" | "teasing" | "settling" | "ended";
+  }): Promise<string> {
+    const { activityConfigs } = await import("../../schema/activity");
+    const now = Date.now();
+    const offsetMap = {
+      active: 0,
+      teasing: -1.5 * HOUR, // anchor in past so now is between visibleAt and startAt
+      settling: +1.5 * HOUR, // anchor in past so now is between endAt and rewardEndAt
+      ended: +2.5 * HOUR, // anchor far enough in past that now > rewardEndAt
+    };
+    const anchor = new Date(now - offsetMap[opts.phaseAt]);
+    const [row] = await db
+      .insert(activityConfigs)
+      .values({
+        organizationId: orgId,
+        alias: opts.alias,
+        name: `gate-${opts.alias}`,
+        kind: "generic",
+        status: "active",
+        visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+        startAt: new Date(anchor.getTime() - HOUR),
+        endAt: new Date(anchor.getTime() + HOUR),
+        rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+        hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+      })
+      .returning({ id: activityConfigs.id });
+    return row!.id;
+  }
+
+  test("active activity → check-in succeeds", async () => {
+    const activityId = await seedActivity({ alias: "g-active", phaseAt: "active" });
+    const cfg = await svc.createConfig(orgId, {
+      name: "Active",
+      alias: "ci-active",
+      resetMode: "none",
+      timezone: "UTC",
+      activityId,
+    });
+    expect(cfg.activityId).toBe(activityId);
+    const r = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "ci-active",
+      endUserId: "u-gate-active",
+    });
+    expect(r.alreadyCheckedIn).toBe(false);
+    expect(r.state.totalDays).toBe(1);
+  });
+
+  test.each(["teasing", "settling", "ended"] as const)(
+    "%s activity → check-in throws activity.not_in_writable_phase, no row written",
+    async (phase) => {
+      const activityId = await seedActivity({
+        alias: `g-${phase}`,
+        phaseAt: phase,
+      });
+      await svc.createConfig(orgId, {
+        name: phase,
+        alias: `ci-${phase}`,
+        resetMode: "none",
+        timezone: "UTC",
+        activityId,
+      });
+      await expect(
+        svc.checkIn({
+          organizationId: orgId,
+          configKey: `ci-${phase}`,
+          endUserId: `u-${phase}`,
+        }),
+      ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
+
+      const view = await svc.getUserState({
+        organizationId: orgId,
+        configKey: `ci-${phase}`,
+        endUserId: `u-${phase}`,
+      });
+      expect(view.state.totalDays).toBe(0);
+    },
+  );
+
+  test("activityId=null config is unaffected by gate (regression)", async () => {
+    await svc.createConfig(orgId, {
+      name: "Standalone",
+      alias: "ci-standalone",
+      resetMode: "none",
+      timezone: "UTC",
+    });
+    const r = await svc.checkIn({
+      organizationId: orgId,
+      configKey: "ci-standalone",
+      endUserId: "u-standalone",
+    });
+    expect(r.state.totalDays).toBe(1);
+  });
+});

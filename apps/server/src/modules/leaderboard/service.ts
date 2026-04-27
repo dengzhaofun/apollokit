@@ -88,6 +88,7 @@ import {
   type LeaderboardRewardTier,
   type LeaderboardSnapshotRow,
 } from "../../schema/leaderboard";
+import { getActivityPhases, isWritablePhase } from "../activity/gate";
 import {
   LeaderboardAliasConflict,
   LeaderboardConfigNotFound,
@@ -464,6 +465,20 @@ export function createLeaderboardService(
         .from(leaderboardConfigs)
         .where(and(...conds));
 
+      // Batch-resolve activity phases for the configs that bind one.
+      // Silent skip below for non-writable phases — contribute is
+      // event-driven, throwing would surface as 4xx to upstream.
+      const boundActivityIds = [
+        ...new Set(
+          configs.map((c) => c.activityId).filter((x): x is string => !!x),
+        ),
+      ];
+      const activityPhaseMap = await getActivityPhases(
+        db,
+        boundActivityIds,
+        now,
+      );
+
       const details: FanoutResult["details"] = [];
       let applied = 0;
 
@@ -472,6 +487,10 @@ export function createLeaderboardService(
         // only when the contribute call carries a matching activity.
         if (config.activityId) {
           if (config.activityId !== input.activityContext?.activityId) {
+            continue;
+          }
+          // ...and the activity must be in its writable phase. Silent skip.
+          if (!isWritablePhase(activityPhaseMap.get(config.activityId))) {
             continue;
           }
         }

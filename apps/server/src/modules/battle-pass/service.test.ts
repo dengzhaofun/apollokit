@@ -550,10 +550,21 @@ describe("battle-pass service", () => {
       taskDefinitionId: taskId,
     });
 
-    // 手动把 activity 状态改为 archived
+    // 把 activity 时间窗口推到全部过去 + status='archived'。
+    // gate 用 deriveState(row, now) 实时算 phase，所以光改 status 列
+    // 不够 —— 必须把 hiddenAt 推到过去才能让 phase=archived。这也更
+    // 接近生产事实：cron 在过完 hiddenAt 之后才会把 status 写成 archived。
+    const past = new Date(Date.now() - 24 * 3_600_000);
     await db
       .update(activityConfigs)
-      .set({ status: "archived" })
+      .set({
+        status: "archived",
+        visibleAt: new Date(past.getTime() - 5 * 3_600_000),
+        startAt: new Date(past.getTime() - 4 * 3_600_000),
+        endAt: new Date(past.getTime() - 3 * 3_600_000),
+        rewardEndAt: new Date(past.getTime() - 2 * 3_600_000),
+        hiddenAt: new Date(past.getTime() - 3_600_000),
+      })
       .where(eq(activityConfigs.id, actId));
 
     await expect(

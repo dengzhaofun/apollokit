@@ -30,6 +30,7 @@ import {
 } from "../../schema/task";
 import type { RewardEntry } from "../../lib/rewards";
 import { grantRewards, type RewardServices } from "../../lib/rewards";
+import { assertActivityClaimable, getActivityPhases, isWritablePhase } from "../activity/gate";
 import type { MailService } from "../mail/service";
 import { compileTaskFilter, type TaskFilterFn } from "./filter";
 import {
@@ -683,6 +684,25 @@ export function createTaskService(
 
     if (defs.length === 0) return 0;
 
+    // 1b. Activity-phase gate — for defs bound to an activity, batch-resolve
+    //     the live phase once and silently drop events whose activity is not
+    //     in the writable phase ('active'). Silent because processEvent is
+    //     a backend stream: throwing would surface as 4xx to upstream game
+    //     services. Idempotent — re-firing the same event after the activity
+    //     becomes active will naturally start counting (we never wrote a
+    //     "dropped" marker). reset_mode/period independence is preserved
+    //     because the gate is the OUTER filter.
+    const boundActivityIds = [
+      ...new Set(
+        defs.map((d) => d.activityId).filter((x): x is string => !!x),
+      ),
+    ];
+    const activityPhaseMap = await getActivityPhases(
+      db,
+      boundActivityIds,
+      ts,
+    );
+
     let processed = 0;
 
     for (const def of defs) {
@@ -693,6 +713,14 @@ export function createTaskService(
         def.weekStartsOn,
         ts,
       );
+
+      // 2b. Activity gate (silent skip — see batch resolution above).
+      if (
+        def.activityId &&
+        !isWritablePhase(activityPhaseMap.get(def.activityId))
+      ) {
+        continue;
+      }
 
       // 3. Visibility gate — 'assigned' tasks must NOT accumulate
       //    progress for unassigned users, otherwise the list-side
@@ -1502,6 +1530,13 @@ export function createTaskService(
 
     if (def.autoClaim) throw new TaskAutoClaimOnly();
 
+    // Activity-phase gate: claims allowed in {active, settling}, blocked
+    // in {teasing, ended, archived}. Player-initiated, so we throw a
+    // typed error (router maps to 409) instead of silently dropping.
+    if (def.activityId) {
+      await assertActivityClaimable(db, def.activityId, ts);
+    }
+
     // Load progress
     const rows = await db
       .select()
@@ -1599,6 +1634,11 @@ export function createTaskService(
     const def = await loadDefinitionByKey(organizationId, taskId);
 
     if (def.autoClaim) throw new TaskAutoClaimOnly();
+
+    // Activity-phase gate (see claimReward).
+    if (def.activityId) {
+      await assertActivityClaimable(db, def.activityId, ts);
+    }
 
     const tier: TaskRewardTier | undefined = (def.rewardTiers ?? []).find(
       (t) => t.alias === tierAlias,

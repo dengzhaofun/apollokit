@@ -174,8 +174,43 @@ describe("leaderboard service", () => {
   });
 
   test("activity-bound config only fires on matching activityContext", async () => {
-    const activityIdA = crypto.randomUUID();
-    const activityIdB = crypto.randomUUID();
+    // Seed two real activity rows so the activity-phase gate has DB
+    // backing — the gate silently skips bound configs whose activity
+    // either doesn't exist or isn't in its writable phase.
+    const { activityConfigs } = await import("../../schema/activity");
+    const HOUR = 3_600_000;
+    const now = Date.now();
+    const activeTimes = {
+      visibleAt: new Date(now - 2 * HOUR),
+      startAt: new Date(now - HOUR),
+      endAt: new Date(now + HOUR),
+      rewardEndAt: new Date(now + 2 * HOUR),
+      hiddenAt: new Date(now + 24 * HOUR),
+    };
+    const [actA] = await db
+      .insert(activityConfigs)
+      .values({
+        organizationId: orgId,
+        alias: `lb-act-A-${crypto.randomUUID()}`,
+        name: "lb act A",
+        kind: "generic",
+        status: "active",
+        ...activeTimes,
+      })
+      .returning({ id: activityConfigs.id });
+    const [actB] = await db
+      .insert(activityConfigs)
+      .values({
+        organizationId: orgId,
+        alias: `lb-act-B-${crypto.randomUUID()}`,
+        name: "lb act B",
+        kind: "generic",
+        status: "active",
+        ...activeTimes,
+      })
+      .returning({ id: activityConfigs.id });
+    const activityIdA = actA!.id;
+    const activityIdB = actB!.id;
 
     await svc.createConfig(orgId, {
       alias: "lb-act-a",
@@ -276,5 +311,56 @@ describe("leaderboard service", () => {
       configKey: cfg.alias,
     });
     expect(after.length).toBe(before);
+  });
+
+  test("activity-bound config: silent skip when bound activity is teasing/ended", async () => {
+    const { activityConfigs } = await import("../../schema/activity");
+    const HOUR = 3_600_000;
+    const now = Date.now();
+
+    // Activity in teasing: anchor in future so now is between visibleAt and startAt.
+    const teaseAnchor = new Date(now + 1.5 * HOUR);
+    const [teasing] = await db
+      .insert(activityConfigs)
+      .values({
+        organizationId: orgId,
+        alias: `lb-gate-teasing-${crypto.randomUUID()}`,
+        name: "teasing",
+        kind: "generic",
+        status: "active",
+        visibleAt: new Date(teaseAnchor.getTime() - 2 * HOUR),
+        startAt: new Date(teaseAnchor.getTime() - HOUR),
+        endAt: new Date(teaseAnchor.getTime() + HOUR),
+        rewardEndAt: new Date(teaseAnchor.getTime() + 2 * HOUR),
+        hiddenAt: new Date(teaseAnchor.getTime() + 24 * HOUR),
+      })
+      .returning({ id: activityConfigs.id });
+    const teasingActivityId = teasing!.id;
+
+    await svc.createConfig(orgId, {
+      alias: "lb-gate-bound-teasing",
+      name: "Bound teasing",
+      metricKey: "lb_gate_metric",
+      cycle: "all_time",
+      activityId: teasingActivityId,
+    });
+    await svc.createConfig(orgId, {
+      alias: "lb-gate-unbound",
+      name: "Unbound",
+      metricKey: "lb_gate_metric",
+      cycle: "all_time",
+    });
+
+    // contribute with matching activityContext for the teasing activity.
+    // Bound config silently skipped (activity not yet writable); unbound
+    // applies → applied = 1, not 2.
+    const r = await svc.contribute({
+      organizationId: orgId,
+      endUserId: "u-gate-skip",
+      metricKey: "lb_gate_metric",
+      value: 7,
+      activityContext: { activityId: teasingActivityId },
+    });
+    expect(r.applied).toBe(1);
   });
 });

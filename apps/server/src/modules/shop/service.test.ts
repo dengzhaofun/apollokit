@@ -582,4 +582,83 @@ describe("shop service", () => {
     const futureView = views.find((v) => v.id === future.id);
     expect(futureView?.eligibility.status).toBe("not_started");
   });
+
+  // ─── Activity-bound writable gate ──────────────────────────────
+  describe("activity-bound writable gate", () => {
+    const HOUR = 3_600_000;
+
+    async function seedActivity(opts: {
+      alias: string;
+      phaseAt: "active" | "ended";
+    }): Promise<string> {
+      const { activityConfigs } = await import("../../schema/activity");
+      const offsetMap = { active: 0, ended: +2.5 * HOUR };
+      const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
+      const [row] = await db
+        .insert(activityConfigs)
+        .values({
+          organizationId: orgId,
+          alias: opts.alias,
+          name: `gate-${opts.alias}`,
+          kind: "generic",
+          status: "active",
+          visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+          startAt: new Date(anchor.getTime() - HOUR),
+          endAt: new Date(anchor.getTime() + HOUR),
+          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+          hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+        })
+        .returning({ id: activityConfigs.id });
+      return row!.id;
+    }
+
+    test("ended activity → purchase throws activity.not_in_writable_phase", async () => {
+      const goldDef = await itemSvc.createDefinition(orgId, {
+        name: "Gold gate",
+        alias: "gold-gate-shop",
+        stackable: true,
+      });
+      const gemDef = await itemSvc.createDefinition(orgId, {
+        name: "Gem gate",
+        alias: "gem-gate-shop",
+        stackable: true,
+      });
+      await itemSvc.grantItems({
+        organizationId: orgId,
+        endUserId: "u-gate-shop-ended",
+        grants: [{ definitionId: goldDef.id, quantity: 1000 }],
+        source: "test",
+      });
+
+      const activityId = await seedActivity({
+        alias: "gate-shop-ended",
+        phaseAt: "ended",
+      });
+      const prod = await svc.createProduct(orgId, {
+        name: "Ended product",
+        alias: "prod-gate-ended",
+        productType: "regular",
+        costItems: [{ type: "item" as const, id: goldDef.id, count: 100 }],
+        rewardItems: [{ type: "item" as const, id: gemDef.id, count: 10 }],
+        timeWindowType: "none",
+        activityId,
+      });
+
+      await expect(
+        svc.purchase({
+          organizationId: orgId,
+          endUserId: "u-gate-shop-ended",
+          productKey: prod.id,
+        }),
+      ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
+
+      // No deduction occurred.
+      const goldBal = await itemSvc.getBalance({
+        organizationId: orgId,
+        endUserId: "u-gate-shop-ended",
+        definitionId: goldDef.id,
+      });
+      expect(goldBal).toBe(1000);
+    });
+  });
 });

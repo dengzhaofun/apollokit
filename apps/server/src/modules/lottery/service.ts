@@ -36,6 +36,7 @@ import {
   lotteryUserStates,
   lotteryPullLogs,
 } from "../../schema/lottery";
+import { assertActivityWritable } from "../activity/gate";
 import type { ItemService } from "../item";
 import type { RewardEntry } from "../../lib/rewards";
 import {
@@ -764,6 +765,12 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         params.poolKey,
       );
       validatePoolActive(pool);
+      // 2b. If the pool is bound to an activity, the activity must be in
+      //     its writable phase ('active'). Independent from the pool's own
+      //     startAt/endAt window already checked above.
+      if (pool.activityId) {
+        await assertActivityWritable(db, pool.activityId);
+      }
 
       // 3. Check global pull limit
       if (pool.globalPullLimit != null) {
@@ -993,6 +1000,10 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         params.poolKey,
       );
       validatePoolActive(pool);
+      // 2b. Activity-phase gate (see pull).
+      if (pool.activityId) {
+        await assertActivityWritable(db, pool.activityId);
+      }
 
       // 3. Check global pull limit (claim N slots)
       if (pool.globalPullLimit != null) {

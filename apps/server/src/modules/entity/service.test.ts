@@ -773,4 +773,75 @@ describe("entity service — Phase 2-5", () => {
       svc.updateFormation(orgId, "player-1", formConfigId, 5, "Bad", []),
     ).rejects.toThrow("exceeds max");
   });
+
+  describe("activity-bound writable gate (acquireEntity only)", () => {
+    const HOUR = 3_600_000;
+
+    async function seedActivity(opts: {
+      alias: string;
+      phaseAt: "active" | "ended";
+    }): Promise<string> {
+      const { activityConfigs } = await import("../../schema/activity");
+      const offsetMap = { active: 0, ended: +2.5 * HOUR };
+      const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
+      const [row] = await db
+        .insert(activityConfigs)
+        .values({
+          organizationId: orgId,
+          alias: opts.alias,
+          name: `gate-${opts.alias}`,
+          kind: "generic",
+          status: "active",
+          visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+          startAt: new Date(anchor.getTime() - HOUR),
+          endAt: new Date(anchor.getTime() + HOUR),
+          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+          hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+        })
+        .returning({ id: activityConfigs.id });
+      return row!.id;
+    }
+
+    test("ended activity → acquireEntity throws activity.not_in_writable_phase", async () => {
+      const activityId = await seedActivity({
+        alias: "ent-gate-ended",
+        phaseAt: "ended",
+      });
+      const bp = await svc.createBlueprint(orgId, {
+        schemaId: heroSchemaId,
+        name: "Limited hero",
+        alias: "limited-ended",
+        rarity: "SSR",
+        tags: { class: "warrior" },
+        baseStats: { hp: 1000, atk: 50 },
+        activityId,
+      });
+      await expect(
+        svc.acquireEntity(orgId, "u-ent-ended", bp.id, "test"),
+      ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
+    });
+
+    test("active activity → acquireEntity succeeds", async () => {
+      const activityId = await seedActivity({
+        alias: "ent-gate-active",
+        phaseAt: "active",
+      });
+      const bp = await svc.createBlueprint(orgId, {
+        schemaId: heroSchemaId,
+        name: "Limited active",
+        alias: "limited-active",
+        rarity: "SSR",
+        tags: { class: "warrior" },
+        baseStats: { hp: 1000, atk: 50 },
+        activityId,
+      });
+      const inst = await svc.acquireEntity(
+        orgId,
+        "u-ent-active",
+        bp.id,
+        "test",
+      );
+      expect(inst.blueprintId).toBe(bp.id);
+    });
+  });
 });
