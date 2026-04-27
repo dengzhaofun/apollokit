@@ -26,10 +26,13 @@ export function detectUserLocale(messages: UIMessage[]): "zh" | "en" {
     const m = messages[i];
     if (m?.role !== "user") continue;
     const text = (m.parts ?? [])
-      .map((p) =>
-        // @ts-expect-error text part shape is `{ type: 'text', text: string }`
-        p.type === "text" && typeof p.text === "string" ? p.text : "",
-      )
+      .map((p) => {
+        if (p.type !== "text") return "";
+        // The discriminated `text` part has `text: string`; the runtime
+        // typeof check appeases narrowing in case the union widens.
+        const t = (p as { text?: unknown }).text;
+        return typeof t === "string" ? t : "";
+      })
       .join("");
     if (!text) continue;
     return /[一-鿿]/.test(text) ? "zh" : "en";
