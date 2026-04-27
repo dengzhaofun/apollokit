@@ -658,4 +658,81 @@ describe("lottery service", () => {
     expect(result.pulls[0]!.prizeName).toBe("Better luck next time");
     expect(result.pulls[0]!.rewardItems).toEqual([]);
   });
+
+  // ─── Activity-bound writable gate ──────────────────────────────
+  describe("activity-bound writable gate", () => {
+    const HOUR = 3_600_000;
+
+    async function seedActivity(opts: {
+      alias: string;
+      phaseAt: "active" | "teasing" | "ended";
+    }): Promise<string> {
+      const { activityConfigs } = await import("../../schema/activity");
+      const offsetMap = { active: 0, teasing: -1.5 * HOUR, ended: +2.5 * HOUR };
+      const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
+      const [row] = await db
+        .insert(activityConfigs)
+        .values({
+          organizationId: orgId,
+          alias: opts.alias,
+          name: `gate-${opts.alias}`,
+          kind: "generic",
+          status: "active",
+          visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+          startAt: new Date(anchor.getTime() - HOUR),
+          endAt: new Date(anchor.getTime() + HOUR),
+          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+          hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+        })
+        .returning({ id: activityConfigs.id });
+      return row!.id;
+    }
+
+    test("teasing activity → pull throws activity.not_in_writable_phase", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-lottery-teasing",
+        phaseAt: "teasing",
+      });
+      const pool = await svc.createPool(orgId, {
+        name: "Teasing pool",
+        alias: "gate-pool-teasing",
+        activityId,
+      });
+      await svc.createPrize(orgId, pool.id, null, {
+        name: "Anything",
+        rewardItems: [],
+        weight: 1,
+      });
+      await expect(
+        svc.pull({
+          organizationId: orgId,
+          endUserId: "u-gate-lottery-teasing",
+          poolKey: pool.id,
+        }),
+      ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
+    });
+
+    test("active activity → pull succeeds (regression for the gate happy path)", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-lottery-active",
+        phaseAt: "active",
+      });
+      const pool = await svc.createPool(orgId, {
+        name: "Active pool",
+        alias: "gate-pool-active",
+        activityId,
+      });
+      await svc.createPrize(orgId, pool.id, null, {
+        name: "Anything",
+        rewardItems: [],
+        weight: 1,
+      });
+      const r = await svc.pull({
+        organizationId: orgId,
+        endUserId: "u-gate-lottery-active",
+        poolKey: pool.id,
+      });
+      expect(r.pulls).toHaveLength(1);
+    });
+  });
 });

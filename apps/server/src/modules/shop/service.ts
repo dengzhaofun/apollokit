@@ -58,6 +58,7 @@ import {
   shopUserPurchaseStates,
 } from "../../schema/shop";
 import { itemGrantLogs } from "../../schema/item";
+import { assertActivityWritable } from "../activity/gate";
 import type { ItemService } from "../item";
 import type { RewardEntry } from "../../lib/rewards";
 import {
@@ -1134,6 +1135,12 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       params.productKey,
     );
     if (!product.isActive) throw new ShopProductInactive(product.id);
+    // 2b. If the product is bound to an activity, the activity must be in
+    //     its writable phase ('active'). Independent from the product's
+    //     own time-window / cyclic-reset settings.
+    if (product.activityId) {
+      await assertActivityWritable(db, product.activityId, now);
+    }
 
     const stateRows = await db
       .select()

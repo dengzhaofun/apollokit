@@ -1714,4 +1714,220 @@ describe("task service", () => {
       ]);
     });
   });
+
+  // ─── Activity-bound writable / claimable gate ────────────────────
+  describe("activity-bound gate", () => {
+    const HOUR = 3_600_000;
+
+    async function seedActivity(opts: {
+      alias: string;
+      phaseAt: "active" | "teasing" | "settling" | "ended";
+    }): Promise<string> {
+      const { activityConfigs } = await import("../../schema/activity");
+      const offsetMap = {
+        active: 0,
+        teasing: -1.5 * HOUR,
+        settling: +1.5 * HOUR,
+        ended: +2.5 * HOUR,
+      };
+      const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
+      const [row] = await db
+        .insert(activityConfigs)
+        .values({
+          organizationId: orgId,
+          alias: opts.alias,
+          name: `gate-${opts.alias}`,
+          kind: "generic",
+          status: "active",
+          visibleAt: new Date(anchor.getTime() - 2 * HOUR),
+          startAt: new Date(anchor.getTime() - HOUR),
+          endAt: new Date(anchor.getTime() + HOUR),
+          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
+          hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
+        })
+        .returning({ id: activityConfigs.id });
+      return row!.id;
+    }
+
+    test("processEvent: active activity → progress upserted", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-task-active",
+        phaseAt: "active",
+      });
+      const def = await svc.createDefinition(orgId, {
+        name: "Active gate",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "gate_evt_active",
+        targetValue: 5,
+        rewards: [],
+        activityId,
+      });
+      const processed = await svc.processEvent(
+        orgId,
+        "u-gate-task-active",
+        "gate_evt_active",
+        {},
+      );
+      expect(processed).toBe(1);
+      const tasks = await svc.getTasksForUser(
+        orgId,
+        "u-gate-task-active",
+        {},
+      );
+      expect(tasks.find((t) => t.id === def.id)?.currentValue).toBe(1);
+    });
+
+    test("processEvent: teasing activity → silent skip (no row, no error)", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-task-teasing",
+        phaseAt: "teasing",
+      });
+      const def = await svc.createDefinition(orgId, {
+        name: "Teasing gate",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "gate_evt_teasing",
+        targetValue: 5,
+        rewards: [],
+        activityId,
+      });
+      const processed = await svc.processEvent(
+        orgId,
+        "u-gate-task-teasing",
+        "gate_evt_teasing",
+        {},
+      );
+      expect(processed).toBe(0);
+      const tasks = await svc.getTasksForUser(
+        orgId,
+        "u-gate-task-teasing",
+        {},
+      );
+      const t = tasks.find((tk) => tk.id === def.id);
+      expect(t?.currentValue ?? 0).toBe(0);
+    });
+
+    test("processEvent: mixed batch — active progresses, ended is silently skipped", async () => {
+      const activeId = await seedActivity({
+        alias: "gate-mix-active",
+        phaseAt: "active",
+      });
+      const endedId = await seedActivity({
+        alias: "gate-mix-ended",
+        phaseAt: "ended",
+      });
+      const evtName = "gate_evt_mix";
+      const defA = await svc.createDefinition(orgId, {
+        name: "mix-A",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: evtName,
+        targetValue: 5,
+        rewards: [],
+        activityId: activeId,
+      });
+      const defB = await svc.createDefinition(orgId, {
+        name: "mix-B",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: evtName,
+        targetValue: 5,
+        rewards: [],
+        activityId: endedId,
+      });
+      const endUser = "u-gate-mix";
+      const processed = await svc.processEvent(orgId, endUser, evtName, {});
+      expect(processed).toBe(1); // only the active one counted
+      const tasks = await svc.getTasksForUser(orgId, endUser, {});
+      expect(tasks.find((t) => t.id === defA.id)?.currentValue).toBe(1);
+      expect(tasks.find((t) => t.id === defB.id)?.currentValue ?? 0).toBe(0);
+    });
+
+    test("claimReward: ended activity → throws activity.not_in_claimable_phase", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-claim-ended",
+        phaseAt: "ended",
+      });
+      const def = await svc.createDefinition(orgId, {
+        name: "Claim ended",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "noop-claim-ended",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+        autoClaim: false,
+        activityId,
+      });
+      // Manually backfill a completed progress row so claimReward's
+      // claim-eligibility checks reach the activity gate before failing
+      // on its own grounds.
+      const { taskUserProgress } = await import("../../schema/task");
+      await db.insert(taskUserProgress).values({
+        taskId: def.id,
+        endUserId: "u-claim-ended",
+        organizationId: orgId,
+        currentValue: def.targetValue,
+        isCompleted: true,
+        completedAt: new Date(),
+        periodKey: "none",
+      });
+      await expect(
+        svc.claimReward(orgId, "u-claim-ended", def.id),
+      ).rejects.toMatchObject({ code: "activity.not_in_claimable_phase" });
+    });
+
+    test("claimReward: settling activity → claim succeeds", async () => {
+      const activityId = await seedActivity({
+        alias: "gate-claim-settling",
+        phaseAt: "settling",
+      });
+      const def = await svc.createDefinition(orgId, {
+        name: "Claim settling",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "noop-claim-settling",
+        targetValue: 1,
+        rewards: [{ type: "item", id: "x", count: 1 }],
+        autoClaim: false,
+        activityId,
+      });
+      const { taskUserProgress } = await import("../../schema/task");
+      await db.insert(taskUserProgress).values({
+        taskId: def.id,
+        endUserId: "u-claim-settling",
+        organizationId: orgId,
+        currentValue: def.targetValue,
+        isCompleted: true,
+        completedAt: new Date(),
+        periodKey: "none",
+      });
+      const r = await svc.claimReward(orgId, "u-claim-settling", def.id);
+      expect(r.taskId).toBe(def.id);
+    });
+
+    test("activityId=null def is unaffected by gate (regression)", async () => {
+      const def = await svc.createDefinition(orgId, {
+        name: "Standalone gate",
+        period: "none",
+        countingMethod: "event_count",
+        eventName: "gate_evt_standalone",
+        targetValue: 5,
+        rewards: [],
+      });
+      const processed = await svc.processEvent(
+        orgId,
+        "u-gate-standalone",
+        "gate_evt_standalone",
+        {},
+      );
+      expect(processed).toBe(1);
+      const tasks = await svc.getTasksForUser(
+        orgId,
+        "u-gate-standalone",
+        {},
+      );
+      expect(tasks.find((t) => t.id === def.id)?.currentValue).toBe(1);
+    });
+  });
 });

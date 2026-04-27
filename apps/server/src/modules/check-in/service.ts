@@ -66,6 +66,7 @@ import {
   checkInRewards,
   checkInUserStates,
 } from "../../schema/check-in";
+import { assertActivityWritable } from "../activity/gate";
 import type { ItemService } from "../item/service";
 import {
   CheckInAliasConflict,
@@ -405,6 +406,16 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       assertResetMode(resetMode);
 
       const now = params.now ?? new Date();
+
+      // If the config is bound to an activity, the activity must be in
+      // its writable phase (active). reset_mode and the activity window
+      // are independent dimensions: reset_mode still drives streak
+      // resets within the window. The inline daily-reward grant below
+      // is also gated by this single check — no separate claimable
+      // gate needed until a deferred-claim endpoint is added.
+      if (config.activityId) {
+        await assertActivityWritable(db, config.activityId, now);
+      }
       const today = toNaturalDate(now, config.timezone);
       const newCycleKey = cycleKeyFor(today, resetMode, config.weekStartsOn);
 
