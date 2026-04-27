@@ -13,6 +13,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -131,7 +132,7 @@ shopClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { productKey, idempotencyKey } = c.req.valid("json");
 
     const result = await shopService.purchase({
@@ -166,7 +167,7 @@ shopClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { stageId, idempotencyKey } = c.req.valid("json");
 
     const result = await shopService.claimGrowthStage({
@@ -199,7 +200,7 @@ shopClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { categoryId, tagId, productType } = c.req.valid("query");
 
     const views = await shopService.listUserProducts({

@@ -12,6 +12,7 @@ import { z } from "@hono/zod-openapi";
 
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -92,7 +93,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await leaderboardService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
@@ -115,7 +116,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await leaderboardService.listConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
@@ -143,7 +144,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await leaderboardService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
@@ -174,7 +175,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await leaderboardService.updateConfig(
       orgId,
@@ -203,7 +204,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await leaderboardService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -234,7 +235,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await leaderboardService.contribute({
       organizationId: orgId,
@@ -271,7 +272,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const result = await leaderboardService.getTop({
@@ -307,7 +308,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const result = await leaderboardService.getNeighbors({
@@ -341,7 +342,7 @@ leaderboardRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await leaderboardService.listSnapshots({
       organizationId: orgId,

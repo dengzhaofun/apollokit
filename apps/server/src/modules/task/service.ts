@@ -12,6 +12,8 @@
 import { and, desc, eq, gt, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -68,6 +70,7 @@ import type {
   UpdateDefinitionInput,
 } from "./validators";
 import { computePeriodKey, isPeriodStale } from "./time";
+import { logger } from "../../lib/logger";
 
 // `events` / `eventCatalog` are optional so existing tests that pass only
 // { db } keep compiling. In production wiring (barrel index.ts) we always
@@ -112,23 +115,6 @@ declare module "../../lib/event-bus" {
       claimedAt: Date;
     };
   }
-}
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
 }
 
 /** Extract a numeric value from eventData using a dot-path. */
@@ -183,7 +169,7 @@ export function createTaskService(
       // Malformed filter reached runtime (e.g. definition written via raw SQL
       // bypassing the validator). Log and fail-closed — the task is skipped
       // but other tasks in the dispatch loop keep processing.
-      console.error("task: filter compile failed", {
+      logger.error("task: filter compile failed", {
         taskId,
         expression,
         err,
@@ -203,7 +189,7 @@ export function createTaskService(
     try {
       result = fn(eventData);
     } catch (err) {
-      console.error("task: filter evaluation failed", {
+      logger.error("task: filter evaluation failed", {
         taskId: def.id,
         err,
       });
@@ -665,7 +651,7 @@ export function createTaskService(
           ts,
         );
       } catch (err) {
-        console.error("task: recordExternalEvent failed", err);
+        logger.error("task: recordExternalEvent failed", err);
       }
     }
 
@@ -821,7 +807,7 @@ export function createTaskService(
       try {
         await evaluateAndDispatchTiers(organizationId, endUserId, def, row, ts);
       } catch (err) {
-        console.error("task: evaluateAndDispatchTiers failed", err);
+        logger.error("task: evaluateAndDispatchTiers failed", err);
       }
 
       // 6b. If task is completed and unclaimed, fire side-effects.
@@ -834,7 +820,7 @@ export function createTaskService(
           try {
             await propagateToParent(organizationId, endUserId, def, ts);
           } catch (err) {
-            console.error("task: propagateToParent failed", err);
+            logger.error("task: propagateToParent failed", err);
           }
         }
 
@@ -843,7 +829,7 @@ export function createTaskService(
           try {
             await handleAutoClaim(organizationId, endUserId, def, row, ts);
           } catch (err) {
-            console.error("task: handleAutoClaim failed", err);
+            logger.error("task: handleAutoClaim failed", err);
           }
         }
       }
@@ -1053,7 +1039,7 @@ export function createTaskService(
         now,
       );
     } catch (err) {
-      console.error("task: parent evaluateAndDispatchTiers failed", err);
+      logger.error("task: parent evaluateAndDispatchTiers failed", err);
     }
 
     if (
@@ -1065,7 +1051,7 @@ export function createTaskService(
       try {
         await handleAutoClaim(organizationId, endUserId, parentDef, row, now);
       } catch (err) {
-        console.error("task: parent handleAutoClaim failed", err);
+        logger.error("task: parent handleAutoClaim failed", err);
       }
     }
 
@@ -1175,7 +1161,7 @@ export function createTaskService(
         if (!inserted) continue;
       } catch (err) {
         if (isUniqueViolation(err)) continue;
-        console.error("task: tier ledger insert failed", err);
+        logger.error("task: tier ledger insert failed", err);
         continue;
       }
 
@@ -1191,7 +1177,7 @@ export function createTaskService(
           originSourceId: `${def.id}:${endUserId}:${progress.periodKey}:${tier.alias}`,
         });
       } catch (err) {
-        console.error("task: tier auto-claim mail failed", err);
+        logger.error("task: tier auto-claim mail failed", err);
       }
     }
 

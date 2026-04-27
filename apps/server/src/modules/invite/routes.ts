@@ -7,6 +7,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAuth } from "../../middleware/require-auth";
@@ -117,7 +118,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await inviteService.getSettings(orgId);
     return c.json(ok(row ? serializeSettings(row) : null), 200);
   },
@@ -146,7 +147,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const row = await inviteService.upsertSettings(orgId, body);
     return c.json(ok(serializeSettings(row)), 200);
@@ -172,7 +173,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const query = c.req.valid("query");
     const { items, total } = await inviteService.adminListRelationships(orgId, {
       limit: query.limit,
@@ -201,7 +202,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await inviteService.adminRevokeRelationship(orgId, id);
     return c.json(ok(null), 200);
@@ -225,7 +226,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const summary = await inviteService.adminGetUserStats(orgId, endUserId);
     return c.json(ok(serializeSummary(summary)), 200);
@@ -249,7 +250,7 @@ inviteRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const result = await inviteService.adminResetUserCode(orgId, endUserId);
     return c.json(ok({

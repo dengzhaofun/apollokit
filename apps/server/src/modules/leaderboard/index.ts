@@ -14,6 +14,7 @@ import { deps } from "../../deps";
 import { registerEvent } from "../../lib/event-registry";
 import { mailService } from "../mail";
 import { createLeaderboardService } from "./service";
+import { logger } from "../../lib/logger";
 
 registerEvent({
   name: "leaderboard.contributed",
@@ -58,7 +59,7 @@ deps.events.on("task.claimed", async (evt) => {
       idempotencyKey: `task:${evt.taskId}:${evt.periodKey}`,
     });
   } catch (err) {
-    console.error("[leaderboard] task.claimed subscriber failed:", err);
+    logger.error("[leaderboard] task.claimed subscriber failed:", err);
   }
 });
 
@@ -88,7 +89,7 @@ deps.events.on("level.cleared", async (evt) => {
       });
     }
   } catch (err) {
-    console.error("[leaderboard] level.cleared subscriber failed:", err);
+    logger.error("[leaderboard] level.cleared subscriber failed:", err);
   }
 });
 
@@ -107,7 +108,7 @@ deps.events.on("activity.milestone.claimed", async (evt) => {
       idempotencyKey: `activity:${evt.activityId}:${evt.endUserId}:${evt.milestoneAlias}`,
     });
   } catch (err) {
-    console.error(
+    logger.error(
       "[leaderboard] activity.milestone.claimed subscriber failed:",
       err,
     );

@@ -10,6 +10,7 @@ import { z } from "@hono/zod-openapi";
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -112,7 +113,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await bannerService.listGroups(orgId, {
       activityId: q.activityId,
@@ -148,7 +149,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await bannerService.createGroup(orgId, input);
     return c.json(ok(serializeGroup(row)), 201);
@@ -171,7 +172,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await bannerService.getGroup(orgId, id);
     return c.json(ok(serializeGroup(row)), 200);
@@ -199,7 +200,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateGroup(orgId, id, input);
@@ -223,7 +224,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await bannerService.deleteGroup(orgId, id);
     return c.json(ok(null), 200);
@@ -248,7 +249,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { groupId } = c.req.valid("param");
     const page = await bannerService.listBanners(orgId, groupId, c.req.valid("query"));
     return c.json(
@@ -279,7 +280,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { groupId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.createBanner(orgId, groupId, input);
@@ -308,7 +309,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { groupId } = c.req.valid("param");
     const { bannerIds } = c.req.valid("json");
     const rows = await bannerService.reorderBanners(orgId, groupId, bannerIds);
@@ -333,7 +334,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await bannerService.getBanner(orgId, id);
     return c.json(ok(serializeBanner(row)), 200);
@@ -361,7 +362,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await bannerService.updateBanner(orgId, id, input);
@@ -385,7 +386,7 @@ bannerRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await bannerService.deleteBanner(orgId, id);
     return c.json(ok(null), 200);

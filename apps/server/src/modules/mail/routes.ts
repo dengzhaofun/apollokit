@@ -10,6 +10,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -81,7 +82,7 @@ mailRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const adminId = c.var.user?.id ?? null;
     const input = c.req.valid("json");
     const row = await mailService.createMessage(orgId, {
@@ -109,7 +110,7 @@ mailRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const query = c.req.valid("query");
     const { items, nextCursor } = await mailService.listMessages(orgId, {
       limit: query.limit,
@@ -140,7 +141,7 @@ mailRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await mailService.getMessage(orgId, id);
     return c.json(ok(serializeMessageWithStats(row)), 200);
@@ -164,7 +165,7 @@ mailRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await mailService.revokeMessage(orgId, id);
     return c.json(ok(null), 200);
@@ -188,7 +189,7 @@ mailRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await mailService.deleteMessage(orgId, id);
     return c.json(ok(null), 200);

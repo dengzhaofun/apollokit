@@ -9,6 +9,7 @@
 
 import { z } from "zod";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -118,7 +119,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { parentId } = c.req.valid("query");
     const { items, breadcrumb } = await mediaLibraryService.listFolders(
       orgId,
@@ -148,7 +149,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const createdBy = c.var.user?.id ?? null;
     const row = await mediaLibraryService.createFolder(orgId, input, createdBy);
@@ -177,7 +178,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await mediaLibraryService.updateFolder(orgId, id, input);
@@ -195,7 +196,7 @@ mediaLibraryRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteFolder(orgId, id);
     return c.json(ok(null), 200);
@@ -220,7 +221,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { folderId, limit, cursor } = c.req.valid("query");
     const { items, nextCursor } = await mediaLibraryService.listAssets(
       orgId,
@@ -234,7 +235,7 @@ mediaLibraryRouter.openapi(
 // Multipart upload route — handwired (OpenAPIHono's multipart support is
 // rough). We parse FormData ourselves and call the service.
 mediaLibraryRouter.post("/assets/upload", async (c) => {
-  const orgId = c.var.session!.activeOrganizationId!;
+  const orgId = getOrgId(c);
   const uploadedBy = c.var.user?.id ?? null;
 
   const form = await c.req.formData();
@@ -297,7 +298,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const uploadedBy = c.var.user?.id ?? null;
     const request = c.req.valid("json");
     const { asset, objectKey, uploadUrl, publicUrl, expiresIn } =
@@ -336,7 +337,7 @@ mediaLibraryRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await mediaLibraryService.confirmUpload(orgId, input);
     return c.json(ok(serializeAsset(row)), 200);
@@ -353,7 +354,7 @@ mediaLibraryRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await mediaLibraryService.deleteAsset(orgId, id);
     return c.json(ok(null), 200);

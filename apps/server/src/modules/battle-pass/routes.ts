@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the battle-pass (纪行) module.
  *
  * 所有路由走 `requireAdminOrApiKey`，下游可安全读
- * `c.var.session!.activeOrganizationId!`。
+ * `getOrgId(c)`。
  *
  * C-end 玩家路由在 `client-routes.ts`。
  */
@@ -14,6 +14,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
 import { battlePassService } from "./index";
@@ -86,7 +87,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await battlePassService.createConfig(organizationId, input);
     return c.json(ok(serializeConfig(row)), 201);
@@ -113,7 +114,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const rows = await battlePassService.listConfigs(organizationId);
     return c.json(
       ok({ items: rows.map(serializeConfig) }),
@@ -145,7 +146,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await battlePassService.getConfig(organizationId, id);
     return c.json(ok(serializeConfig(row)), 200);
@@ -178,7 +179,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await battlePassService.updateConfig(
@@ -209,7 +210,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { id } = c.req.valid("param");
     await battlePassService.deleteConfig(organizationId, id);
     return c.json(ok(null), 200);
@@ -238,7 +239,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     await battlePassService.bindTasks(organizationId, id, input);
@@ -269,7 +270,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { id } = c.req.valid("param");
     const rows = await battlePassService.listSeasonTasks(organizationId, id);
     return c.json(
@@ -319,7 +320,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { seasonId } = c.req.valid("param");
     const input = c.req.valid("json");
     const outcome = await battlePassService.grantTier({
@@ -359,7 +360,7 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = c.var.session!.activeOrganizationId!;
+    const organizationId = getOrgId(c);
     const { seasonId } = c.req.valid("param");
     const { endUserId } = c.req.valid("query");
     const view = await battlePassService.getAggregateView(

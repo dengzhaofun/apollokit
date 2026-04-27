@@ -10,6 +10,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -124,7 +125,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await assistPoolService.createConfig(
       orgId,
       c.req.valid("json"),
@@ -153,7 +154,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     // The DSL doesn't model `includeActivity`'s "switch off the
     // implicit IS NULL filter" semantic — service layer translates it.
     const raw = c.req.valid("query") as Record<string, unknown> & {
@@ -189,7 +190,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await assistPoolService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
@@ -220,7 +221,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await assistPoolService.updateConfig(
       orgId,
@@ -248,7 +249,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await assistPoolService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -278,7 +279,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const row = await assistPoolService.initiateInstance({
       organizationId: orgId,
@@ -308,7 +309,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const rows = await assistPoolService.listInstances({
       organizationId: orgId,
@@ -340,7 +341,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
     return c.json(ok(serializeInstance(row)), 200);
@@ -366,7 +367,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { instanceId } = c.req.valid("param");
     const rows = await assistPoolService.listContributions(orgId, instanceId);
     return c.json(ok({ items: rows.map(serializeContribution) }), 200);
@@ -397,7 +398,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { instanceId } = c.req.valid("param");
     const { assisterEndUserId } = c.req.valid("json");
     const res = await assistPoolService.contribute({
@@ -433,7 +434,7 @@ assistPoolRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.forceExpireInstance(orgId, instanceId);
     return c.json(ok(serializeInstance(row)), 200);

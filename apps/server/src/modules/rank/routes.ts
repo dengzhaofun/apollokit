@@ -15,6 +15,7 @@ import { z } from "@hono/zod-openapi";
 
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
@@ -174,7 +175,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const reportedBy = c.var.user?.id ?? null;
     const result = await rankService.settleMatch({
@@ -210,7 +211,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const result = await rankService.createTierConfig(orgId, input);
     return c.json(ok(serializeTierConfig(result)), 201);
@@ -235,7 +236,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await rankService.listTierConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeTierConfig), nextCursor: page.nextCursor }),
@@ -262,7 +263,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const result = await rankService.getTierConfig(orgId, key);
     return c.json(ok(serializeTierConfig(result)), 200);
@@ -292,7 +293,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const input = c.req.valid("json");
     const result = await rankService.updateTierConfig(orgId, key, input);
@@ -310,7 +311,7 @@ rankRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await rankService.deleteTierConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -339,7 +340,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await rankService.createSeason(orgId, input);
     return c.json(ok(serializeSeason(row)), 201);
@@ -364,7 +365,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const filter = c.req.valid("query") as Record<string, unknown>;
     const page = await rankService.listSeasons(orgId, filter);
     return c.json(
@@ -390,7 +391,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await rankService.getSeason(orgId, id);
     return c.json(ok(serializeSeason(row)), 200);
@@ -418,7 +419,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await rankService.updateSeason(orgId, id, input);
@@ -442,7 +443,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await rankService.activateSeason(orgId, id);
     return c.json(ok(serializeSeason(row)), 200);
@@ -467,7 +468,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const result = await rankService.finalizeSeason(orgId, id);
     return c.json(ok(result), 200);
@@ -497,7 +498,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { tierId, endUserId, limit } = c.req.valid("query");
     const items = await rankService.listPlayerStates({
@@ -534,7 +535,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const input = c.req.valid("json");
     const view = await rankService.adjustPlayer(orgId, endUserId, input);
@@ -578,7 +579,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { limit, cursor } = c.req.valid("query");
     const { items, nextCursor } = await rankService.listSeasonMatches({
@@ -612,7 +613,7 @@ rankRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { match, participants } = await rankService.getMatch(orgId, id);
     return c.json(ok({

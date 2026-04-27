@@ -13,6 +13,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -112,7 +113,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const { endpoint, secret } = await webhooksService.createEndpoint(
       orgId,
@@ -146,7 +147,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await webhooksService.listEndpoints(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeEndpoint), nextCursor: page.nextCursor }),
@@ -174,7 +175,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await webhooksService.getEndpoint(orgId, id);
     return c.json(ok(serializeEndpoint(row)), 200);
@@ -205,7 +206,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const patch = c.req.valid("json");
     const row = await webhooksService.updateEndpoint(orgId, id, patch);
@@ -235,7 +236,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { endpoint, secret } = await webhooksService.rotateSecret(orgId, id);
     return c.json(
@@ -262,7 +263,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await webhooksService.deleteEndpoint(orgId, id);
     return c.json(ok(null), 200);
@@ -293,7 +294,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await webhooksService.listDeliveries(orgId, id, q);
@@ -324,7 +325,7 @@ webhooksRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await webhooksService.replayDelivery(orgId, id);
     return c.json(ok(serializeDelivery(row)), 200);

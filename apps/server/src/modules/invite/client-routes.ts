@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -103,7 +104,7 @@ inviteClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const result = await inviteService.getOrCreateMyCode(orgId, endUserId);
     return c.json(ok({
         code: result.code,
@@ -132,7 +133,7 @@ inviteClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const result = await inviteService.resetCode(orgId, endUserId);
     return c.json(ok({
         code: result.code,
@@ -161,7 +162,7 @@ inviteClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const summary = await inviteService.getSummary(orgId, endUserId);
     return c.json(ok(serializeSummary(summary)), 200);
   },
@@ -188,7 +189,7 @@ inviteClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { limit, offset } = c.req.valid("query");
     const { items, total } = await inviteService.listMyInvitees(orgId, endUserId, {
       limit,
@@ -233,7 +234,7 @@ inviteClientRouter.openapi(
     const body = c.req.valid("json");
     const { relationship, alreadyBound } = await inviteService.bind(orgId, {
       code: body.code,
-      inviteeEndUserId: c.var.endUserId!,
+      inviteeEndUserId: getEndUserId(c),
     });
     return c.json(ok({ relationship: serializeRelationship(relationship), alreadyBound }), 200,);
   },
@@ -273,7 +274,7 @@ inviteClientRouter.openapi(
     const orgId = c.get("clientCredential")!.organizationId;
     const body = c.req.valid("json");
     const { relationship, alreadyQualified } = await inviteService.qualify(orgId, {
-      inviteeEndUserId: c.var.endUserId!,
+      inviteeEndUserId: getEndUserId(c),
       qualifiedReason: body.qualifiedReason ?? null,
     });
     return c.json(ok({ relationship: serializeRelationship(relationship), alreadyQualified }), 200,);

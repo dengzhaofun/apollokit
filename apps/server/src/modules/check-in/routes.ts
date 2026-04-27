@@ -7,7 +7,7 @@
  *
  * Every route is guarded by `requireAdminOrApiKey` — accepts either a
  * valid Better Auth session or an admin API key (ak_). Downstream handlers
- * can safely read `c.var.session!.activeOrganizationId!` without null checks.
+ * can safely read `getOrgId(c)` without null checks.
  *
  * C-end (client) routes live in `client-routes.ts` under a separate base
  * path with client credential + HMAC auth.
@@ -16,6 +16,7 @@
 import { z } from "@hono/zod-openapi";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
@@ -141,7 +142,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await checkInService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
@@ -182,7 +183,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await checkInService.listConfigs(orgId, {
       activityId: q.activityId,
@@ -217,7 +218,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await checkInService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
@@ -248,7 +249,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await checkInService.updateConfig(
       orgId,
@@ -276,7 +277,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await checkInService.deleteConfig(orgId, id);
     return c.json(ok(null), 200);
@@ -302,7 +303,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const page = await checkInService.listUserStates({
@@ -341,7 +342,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const { endUserId } = c.req.valid("json");
     const result = await checkInService.checkIn({
@@ -380,7 +381,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const view = await checkInService.getUserState({
       organizationId: orgId,
@@ -446,7 +447,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await checkInService.createReward(orgId, key, body);
@@ -473,7 +474,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await checkInService.listRewards(orgId, key);
     return c.json(ok({ items: rows.map(serializeReward) }), 200);
@@ -504,7 +505,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { rewardId } = c.req.valid("param");
     const row = await checkInService.updateReward(
       orgId,
@@ -532,7 +533,7 @@ checkInRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { rewardId } = c.req.valid("param");
     await checkInService.deleteReward(orgId, rewardId);
     return c.json(ok(null), 200);

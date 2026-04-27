@@ -9,6 +9,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -48,7 +49,7 @@ eventCatalogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { capability } = c.req.valid("query");
     const items = await eventCatalogService.listAll(orgId, { capability });
     return c.json(ok({ items }), 200);
@@ -71,7 +72,7 @@ eventCatalogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { name } = c.req.valid("param");
     const view = await eventCatalogService.getOne(orgId, name);
     return c.json(ok(view), 200);
@@ -100,7 +101,7 @@ eventCatalogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { name } = c.req.valid("param");
     const body = c.req.valid("json");
     const view = await eventCatalogService.updateExternal(orgId, name, body);

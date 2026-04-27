@@ -16,6 +16,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
 import { battlePassService } from "./index";
@@ -116,7 +117,7 @@ battlePassClientRouter.openapi(
   }),
   async (c) => {
     const organizationId = resolveOrgId(c);
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const view = await battlePassService.getAggregateView(
       organizationId,
@@ -154,7 +155,7 @@ battlePassClientRouter.openapi(
   }),
   async (c) => {
     const organizationId = resolveOrgId(c);
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const input = c.req.valid("json");
     const outcome = await battlePassService.claimLevel({
@@ -200,7 +201,7 @@ battlePassClientRouter.openapi(
   }),
   async (c) => {
     const organizationId = resolveOrgId(c);
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const results = await battlePassService.claimAll({
       organizationId,

@@ -7,12 +7,13 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and the caller's
- * endUserId from c.var.endUserId!. No inline verifyRequest calls; no auth fields in
+ * endUserId from getEndUserId(c). No inline verifyRequest calls; no auth fields in
  * body or query.
  */
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -140,7 +141,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configKey, metadata } = c.req.valid("json");
 
     const team = await teamService.createTeam(orgId, configKey, endUserId, metadata);
@@ -172,7 +173,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configAlias } = c.req.valid("query");
     const team = await teamService.getMyTeam(orgId, configAlias, endUserId);
     return c.json(ok(team ? serializeTeam(team) : null), 200);
@@ -223,7 +224,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const team = await teamService.joinTeam(orgId, id, endUserId);
     return c.json(ok(serializeTeam(team)), 200);
@@ -250,7 +251,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const team = await teamService.leaveTeam(orgId, id, endUserId);
     return c.json(ok(serializeTeam(team)), 200);
@@ -277,7 +278,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const team = await teamService.dissolveTeam(orgId, id, endUserId);
     return c.json(ok(serializeTeam(team)), 200);
@@ -304,7 +305,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     const team = await teamService.kickMember(orgId, id, endUserId, userId);
     return c.json(ok(serializeTeam(team)), 200);
@@ -334,7 +335,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { newLeaderUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.transferLeader(orgId, id, endUserId, newLeaderUserId);
@@ -365,7 +366,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { status } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const team = await teamService.updateTeamStatus(orgId, id, endUserId, status);
@@ -398,7 +399,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { toUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const inv = await teamService.inviteUser(orgId, id, endUserId, toUserId);
@@ -426,7 +427,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const team = await teamService.acceptInvitation(orgId, id, endUserId);
     return c.json(ok(serializeTeam(team)), 200);
@@ -455,7 +456,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const inv = await teamService.rejectInvitation(orgId, id, endUserId);
     return c.json(ok(serializeInvitation(inv)), 200);
@@ -482,7 +483,7 @@ teamClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { configAlias } = c.req.valid("query");
     const team = await teamService.quickMatch(orgId, configAlias, endUserId);
     return c.json(ok(serializeTeam(team)), 200);

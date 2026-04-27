@@ -87,6 +87,7 @@ export function validateTimeOrder(t: {
 }
 
 import { Cron } from "croner";
+import { logger } from "../../lib/logger";
 
 /**
  * Compute the next `fireAt` for an activity schedule.
@@ -140,7 +141,7 @@ export function computeNextFireAt(
         });
         return cron.nextRun(from) ?? null;
       } catch (err) {
-        console.error(
+        logger.error(
           `[activity] invalid cron expression "${schedule.cronExpr}":`,
           err,
         );

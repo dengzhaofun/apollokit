@@ -8,6 +8,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -234,7 +235,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.createCategory(orgId, c.req.valid("json"));
     return c.json(ok(serializeCategory(row)), 201);
   },
@@ -255,7 +256,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await shopService.listCategories(orgId);
     return c.json(ok({ items: rows.map(serializeCategory) }), 200);
   },
@@ -276,7 +277,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const tree = await shopService.listCategoryTree(orgId);
     return c.json(ok({ items: tree.map(serializeTree) }), 200);
   },
@@ -298,7 +299,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.getCategory(orgId, c.req.valid("param").key);
     return c.json(ok(serializeCategory(row)), 200);
   },
@@ -325,7 +326,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.updateCategory(
       orgId,
       c.req.valid("param").id,
@@ -345,7 +346,7 @@ shopRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     await shopService.deleteCategory(orgId, c.req.valid("param").id);
     return c.json(ok(null), 200);
   },
@@ -371,7 +372,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.createTag(orgId, c.req.valid("json"));
     return c.json(ok(serializeTag(row)), 201);
   },
@@ -393,7 +394,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await shopService.listTags(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeTag), nextCursor: page.nextCursor }),
@@ -418,7 +419,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.getTag(orgId, c.req.valid("param").key);
     return c.json(ok(serializeTag(row)), 200);
   },
@@ -443,7 +444,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.updateTag(
       orgId,
       c.req.valid("param").id,
@@ -463,7 +464,7 @@ shopRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     await shopService.deleteTag(orgId, c.req.valid("param").id);
     return c.json(ok(null), 200);
   },
@@ -491,7 +492,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.createProduct(orgId, c.req.valid("json"));
     return c.json(ok(serializeProduct(row)), 201);
   },
@@ -513,7 +514,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await shopService.listProducts(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeProduct), nextCursor: page.nextCursor }),
@@ -538,7 +539,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.getProduct(orgId, c.req.valid("param").key);
     return c.json(ok(serializeProduct(row)), 200);
   },
@@ -565,7 +566,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.updateProduct(
       orgId,
       c.req.valid("param").id,
@@ -585,7 +586,7 @@ shopRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     await shopService.deleteProduct(orgId, c.req.valid("param").id);
     return c.json(ok(null), 200);
   },
@@ -611,7 +612,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await shopService.listStages(
       orgId,
       c.req.valid("param").productId,
@@ -643,7 +644,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.createStage(
       orgId,
       c.req.valid("param").productId,
@@ -676,7 +677,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await shopService.upsertStages(
       orgId,
       c.req.valid("param").productId,
@@ -709,7 +710,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await shopService.updateStage(
       orgId,
       c.req.valid("param").stageId,
@@ -729,7 +730,7 @@ shopRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     await shopService.deleteStage(orgId, c.req.valid("param").stageId);
     return c.json(ok(null), 200);
   },
@@ -756,7 +757,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await shopService.purchase({
@@ -788,7 +789,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId, stageId } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await shopService.claimGrowthStage({
@@ -822,7 +823,7 @@ shopRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const query = c.req.valid("query");
     const views = await shopService.listUserProducts({

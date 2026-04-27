@@ -7,6 +7,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -73,7 +74,7 @@ announcementRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const filter = c.req.valid("query");
     const page = await announcementService.list(orgId, filter);
     return c.json(
@@ -105,7 +106,7 @@ announcementRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await announcementService.create(
       orgId,
@@ -134,7 +135,7 @@ announcementRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { alias } = c.req.valid("param");
     const row = await announcementService.getByAlias(orgId, alias);
     return c.json(ok(serialize(row)), 200);
@@ -164,7 +165,7 @@ announcementRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { alias } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await announcementService.update(orgId, alias, input);
@@ -188,7 +189,7 @@ announcementRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { alias } = c.req.valid("param");
     await announcementService.remove(orgId, alias);
     return c.json(ok(null), 200);

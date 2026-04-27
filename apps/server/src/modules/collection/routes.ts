@@ -3,7 +3,7 @@
  *
  * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_). All handlers resolve the
- * organization from `c.var.session!.activeOrganizationId!`.
+ * organization from `getOrgId(c)`.
  *
  * Client-facing routes (player progress, claim, sync) live in
  * `client-routes.ts`.
@@ -12,6 +12,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -212,7 +213,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await collectionService.createAlbum(orgId, c.req.valid("json"));
     return c.json(ok(serializeAlbum(row)), 201);
   },
@@ -234,7 +235,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await collectionService.listAlbums(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeAlbum), nextCursor: page.nextCursor }),
@@ -259,7 +260,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await collectionService.getAlbum(orgId, key);
     return c.json(ok(serializeAlbum(row)), 200);
@@ -285,7 +286,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await collectionService.updateAlbum(
       orgId,
@@ -306,7 +307,7 @@ collectionRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await collectionService.deleteAlbum(orgId, id);
     return c.json(ok(null), 200);
@@ -334,7 +335,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await collectionService.createGroup(
       orgId,
@@ -361,7 +362,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await collectionService.listGroups(orgId, key);
     return c.json(ok({ items: rows.map(serializeGroup) }), 200);
@@ -387,7 +388,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await collectionService.updateGroup(
       orgId,
@@ -408,7 +409,7 @@ collectionRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await collectionService.deleteGroup(orgId, id);
     return c.json(ok(null), 200);
@@ -436,7 +437,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await collectionService.createEntry(
       orgId,
@@ -468,7 +469,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const rows = await collectionService.bulkCreateEntries(
@@ -496,7 +497,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await collectionService.listEntries(orgId, key);
     return c.json(ok({ items: rows.map(serializeEntry) }), 200);
@@ -522,7 +523,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await collectionService.updateEntry(
       orgId,
@@ -543,7 +544,7 @@ collectionRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await collectionService.deleteEntry(orgId, id);
     return c.json(ok(null), 200);
@@ -573,7 +574,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await collectionService.createMilestone(
       orgId,
@@ -602,7 +603,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await collectionService.listMilestones(orgId, key);
     return c.json(ok({ items: rows.map(serializeMilestone) }), 200);
@@ -630,7 +631,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await collectionService.updateMilestone(
       orgId,
@@ -651,7 +652,7 @@ collectionRouter.openapi(
     responses: { 200: { description: "Deleted", content: { "application/json": { schema: NullDataEnvelopeSchema } } }, ...commonErrorResponses },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await collectionService.deleteMilestone(orgId, id);
     return c.json(ok(null), 200);
@@ -676,7 +677,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const stats = await collectionService.getStats(orgId, key);
     return c.json(ok(stats), 200);
@@ -704,7 +705,7 @@ collectionRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const { endUserId } = c.req.valid("json");
     const entries = await collectionService.syncFromInventory({

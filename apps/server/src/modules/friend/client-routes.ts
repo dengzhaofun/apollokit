@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -124,7 +125,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { toUserId, message } = c.req.valid("json");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.sendRequest(orgId, endUserId, toUserId, message);
     return c.json(ok(serializeRequest(row)), 201);
@@ -148,7 +149,7 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listIncomingRequests(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeRequest) }), 200);
@@ -172,7 +173,7 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listOutgoingRequests(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeRequest) }), 200);
@@ -201,7 +202,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.acceptRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
@@ -230,7 +231,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.rejectRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
@@ -259,7 +260,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const row = await friendService.cancelRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
@@ -292,7 +293,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { limit, offset } = c.req.valid("query");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listFriends(orgId, endUserId, { limit, offset });
     return c.json(ok({ items: rows.map(serializeRelationship), total: rows.length }), 200);
@@ -347,7 +348,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { withUserId } = c.req.valid("query");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.getMutualFriends(orgId, endUserId, withUserId);
     // Raw SQL returns snake_case — map to camelCase
@@ -387,7 +388,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { blockedUserId } = c.req.valid("json");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     await friendService.blockUser(orgId, endUserId, blockedUserId);
     return c.json(ok(null), 200);
@@ -414,7 +415,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { blockedUserId } = c.req.valid("param");
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     await friendService.unblockUser(orgId, endUserId, blockedUserId);
     return c.json(ok(null), 200);
@@ -438,7 +439,7 @@ friendClientRouter.openapi(
     },
   }),
   async (c) => {
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const orgId = c.get("clientCredential")!.organizationId;
     const rows = await friendService.listBlocks(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeBlock) }), 200);

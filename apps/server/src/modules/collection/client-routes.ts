@@ -8,7 +8,7 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
  *   GET  /albums                          → album list + per-user progress
@@ -22,6 +22,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -126,7 +127,7 @@ collectionClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const rows = await collectionService.listAlbumsForUser({
       organizationId: orgId,
       endUserId,
@@ -165,7 +166,7 @@ collectionClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const detail = await collectionService.getAlbumDetailForUser({
       organizationId: orgId,
@@ -206,7 +207,7 @@ collectionClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const entries = await collectionService.syncFromInventory({
       organizationId: orgId,
@@ -240,7 +241,7 @@ collectionClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const result = await collectionService.claimMilestone({
       organizationId: orgId,

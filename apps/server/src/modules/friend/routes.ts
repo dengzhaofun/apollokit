@@ -7,6 +7,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -85,7 +86,7 @@ friendRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await friendService.getSettings(orgId);
     if (!row) throw new FriendSettingsNotFound();
     return c.json(ok(serializeSettings(row)), 200);
@@ -115,7 +116,7 @@ friendRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await friendService.upsertSettings(orgId, c.req.valid("json"));
     return c.json(ok(serializeSettings(row)), 200);
   },
@@ -140,7 +141,7 @@ friendRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { limit, offset } = c.req.valid("query");
     const result = await friendService.listRelationships(orgId, { limit, offset });
     return c.json(ok({
@@ -167,7 +168,7 @@ friendRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await friendService.deleteRelationship(orgId, id);
     return c.json(ok(null), 200);

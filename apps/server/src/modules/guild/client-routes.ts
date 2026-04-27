@@ -8,11 +8,12 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
- * c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -220,7 +221,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const body = c.req.valid("json");
     const { guild, member } = await guildService.createGuild(orgId, endUserId, {
       name: body.name,
@@ -315,7 +316,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const result = await guildService.getMyGuild(orgId, endUserId);
     if (!result) {
       return c.json(ok(null), 200);
@@ -348,7 +349,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { message } = c.req.valid("json");
     const req = await guildService.applyToJoin(orgId, id, endUserId, message);
@@ -377,7 +378,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     await guildService.leaveGuild(orgId, id, endUserId);
     return c.json(ok({ success: true }), 200);
@@ -405,7 +406,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     // Verify the user is the leader before allowing disband
     const myGuild = await guildService.getMyGuild(orgId, endUserId);
@@ -467,7 +468,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptJoinRequest(orgId, id, endUserId);
     return c.json(ok(serializeJoinRequest(request)), 200);
@@ -495,7 +496,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const req = await guildService.rejectJoinRequest(orgId, id, endUserId);
     return c.json(ok(serializeJoinRequest(req)), 200);
@@ -526,7 +527,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { targetUserId } = c.req.valid("json");
     const req = await guildService.inviteUser(orgId, id, endUserId, targetUserId);
@@ -555,7 +556,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptInvitation(orgId, id, endUserId);
     return c.json(ok(serializeJoinRequest(request)), 200);
@@ -583,7 +584,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const req = await guildService.rejectInvitation(orgId, id, endUserId);
     return c.json(ok(serializeJoinRequest(req)), 200);
@@ -611,7 +612,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     const member = await guildService.promoteMember(orgId, id, endUserId, userId);
     return c.json(ok(serializeMember(member)), 200);
@@ -639,7 +640,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     const member = await guildService.demoteMember(orgId, id, endUserId, userId);
     return c.json(ok(serializeMember(member)), 200);
@@ -667,7 +668,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     await guildService.kickMember(orgId, id, endUserId, userId);
     return c.json(ok({ success: true }), 200);
@@ -698,7 +699,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { newLeaderUserId } = c.req.valid("json");
     await guildService.transferLeader(orgId, id, endUserId, newLeaderUserId);
@@ -730,7 +731,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     // Verify the user is officer+ in this guild
@@ -778,7 +779,7 @@ guildClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { delta, source, sourceId } = c.req.valid("json");
     const log = await guildService.contribute(orgId, id, endUserId, delta, source, sourceId);

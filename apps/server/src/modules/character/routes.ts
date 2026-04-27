@@ -15,6 +15,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
 import { characterService } from "./index";
@@ -69,7 +70,7 @@ characterRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await characterService.listCharacters(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeCharacter), nextCursor: page.nextCursor }),
@@ -100,7 +101,7 @@ characterRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const input = c.req.valid("json");
     const row = await characterService.createCharacter(orgId, input);
     return c.json(ok(serializeCharacter(row)), 201);
@@ -125,7 +126,7 @@ characterRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await characterService.getCharacter(orgId, id);
     return c.json(ok(serializeCharacter(row)), 200);
@@ -155,7 +156,7 @@ characterRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await characterService.updateCharacter(orgId, id, input);
@@ -179,7 +180,7 @@ characterRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await characterService.deleteCharacter(orgId, id);
     return c.json(ok(null), 200);

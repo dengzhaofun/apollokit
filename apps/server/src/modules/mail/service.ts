@@ -53,6 +53,7 @@
 import { and, desc, eq, gt, gte, ilike, isNull, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
 import { mailMessages, mailUserStates } from "../../schema/mail";
 import { itemGrantLogs } from "../../schema/item";
 import type { ItemService } from "../item";
@@ -731,12 +732,3 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
 
 export type MailService = ReturnType<typeof createMailService>;
 
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

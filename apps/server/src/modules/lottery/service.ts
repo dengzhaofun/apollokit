@@ -21,6 +21,8 @@
 import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   clampLimit,
@@ -52,6 +54,7 @@ import {
   LotteryConcurrencyConflict,
 } from "./errors";
 import { selectPrize, updatePityCounters } from "./rng";
+import { logger } from "../../lib/logger";
 import type {
   LotteryPool,
   LotteryTier,
@@ -93,13 +96,6 @@ declare module "../../lib/event-bus" {
       pityTriggeredCount: number;
     };
   }
-}
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
 }
 
 export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
@@ -1133,7 +1129,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         // The in-memory check already filtered, so this is very unlikely
         if (updated.length === 0) {
           // Best-effort: log but don't fail the whole batch
-          console.warn(
+          logger.warn(
             `lottery: stock claim failed for prize ${prizeId}, count ${count}`,
           );
         }
@@ -1293,13 +1289,3 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
 }
 
 export type LotteryService = ReturnType<typeof createLotteryService>;
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}

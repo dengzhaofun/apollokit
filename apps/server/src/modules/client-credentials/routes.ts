@@ -11,6 +11,7 @@
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -81,7 +82,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const result = await clientCredentialService.create(
       orgId,
       c.req.valid("json"),
@@ -117,7 +118,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const rows = await clientCredentialService.list(orgId);
     return c.json(ok({ items: rows.map(serialize) }), 200);
   },
@@ -140,7 +141,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.get(orgId, id);
     return c.json(ok(serialize(row)), 200);
@@ -164,7 +165,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await clientCredentialService.revoke(orgId, id);
     return c.json(ok(serialize(row)), 200);
@@ -188,7 +189,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const result = await clientCredentialService.rotate(orgId, id);
     return c.json(ok(result), 200);
@@ -217,7 +218,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { devMode } = c.req.valid("json");
     const row = await clientCredentialService.updateDevMode(orgId, id, devMode);
@@ -242,7 +243,7 @@ clientCredentialRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await clientCredentialService.delete(orgId, id);
     return c.json(ok(null), 200);

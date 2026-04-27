@@ -72,6 +72,8 @@
 import { and, desc, eq, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { isUniqueViolation } from "../../lib/db-errors";
+import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
   buildPageBy,
@@ -103,6 +105,7 @@ import {
 } from "./errors";
 import { applyDelta } from "./progression";
 import { createRatingStrategy, type RatingInput } from "./rating";
+import { logger } from "../../lib/logger";
 import type {
   EloRatingParams,
   ParticipantDelta,
@@ -172,23 +175,6 @@ declare module "../../lib/event-bus" {
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function looksLikeId(key: string): boolean {
-  return UUID_RE.test(key);
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { code?: unknown; cause?: { code?: unknown } };
-  if (e.code === "23505") return true;
-  if (e.cause && typeof e.cause === "object" && e.cause.code === "23505")
-    return true;
-  const msg = (err as { message?: unknown }).message;
-  return typeof msg === "string" && msg.includes("23505");
-}
 
 function defaultInitialMmr(tierConfig: RankTierConfig): number {
   const params = tierConfig.ratingParams as Partial<EloRatingParams>;
@@ -579,7 +565,7 @@ export function createRankService(
           },
         });
       } catch (err) {
-        console.warn("[rank] leaderboard.createConfig failed:", err);
+        logger.warn("[rank] leaderboard.createConfig failed:", err);
       }
     }
 
@@ -747,7 +733,7 @@ export function createRankService(
           { status: "archived" },
         );
       } catch (err) {
-        console.warn("[rank] leaderboard.updateConfig(archived) failed:", err);
+        logger.warn("[rank] leaderboard.updateConfig(archived) failed:", err);
       }
     }
 
@@ -1274,7 +1260,7 @@ export function createRankService(
                 },
           });
         } catch (err) {
-          console.warn("[rank] leaderboard.contribute failed:", err);
+          logger.warn("[rank] leaderboard.contribute failed:", err);
         }
       }
     }

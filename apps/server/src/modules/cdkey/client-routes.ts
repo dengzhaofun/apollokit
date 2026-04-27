@@ -4,11 +4,12 @@
  * Protected by `requireClientCredential` + `requireClientUser`. The end user
  * identity (x-end-user-id + x-user-hash HMAC) is verified by middleware, so
  * handlers read orgId from c.get("clientCredential")!.organizationId and
- * endUserId from c.var.endUserId!. No inline verifyRequest calls.
+ * endUserId from getEndUserId(c). No inline verifyRequest calls.
  */
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -49,7 +50,7 @@ cdkeyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { code, idempotencyKey } = c.req.valid("json");
 
     const orgId = c.get("clientCredential")!.organizationId;

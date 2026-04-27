@@ -7,6 +7,7 @@
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -126,7 +127,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await itemService.createCategory(orgId, c.req.valid("json"));
     return c.json(ok(serializeCategory(row)), 201);
   },
@@ -148,7 +149,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await itemService.listCategories(orgId, q);
     return c.json(
@@ -174,7 +175,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await itemService.getCategory(orgId, key);
     return c.json(ok(serializeCategory(row)), 200);
@@ -200,7 +201,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await itemService.updateCategory(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeCategory(row)), 200);
@@ -223,7 +224,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await itemService.deleteCategory(orgId, id);
     return c.json(ok(null), 200);
@@ -254,7 +255,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await itemService.createDefinition(orgId, c.req.valid("json"));
     return c.json(ok(serializeDefinition(row)), 201);
   },
@@ -278,7 +279,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await itemService.listDefinitions(orgId, q);
     return c.json(
@@ -306,7 +307,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const row = await itemService.getDefinition(orgId, key);
     return c.json(ok(serializeDefinition(row)), 200);
@@ -336,7 +337,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await itemService.updateDefinition(
       orgId,
@@ -363,7 +364,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await itemService.deleteDefinition(orgId, id);
     return c.json(ok(null), 200);
@@ -390,7 +391,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await itemService.grantItems({
       organizationId: orgId,
@@ -421,7 +422,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await itemService.deductItems({
       organizationId: orgId,
@@ -453,7 +454,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const { definitionId } = c.req.valid("query");
     const items = await itemService.getInventory({
@@ -483,7 +484,7 @@ itemRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { endUserId, key } = c.req.valid("param");
     const def = await itemService.getDefinition(orgId, key);
     const balance = await itemService.getBalance({

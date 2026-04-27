@@ -26,6 +26,7 @@
 import type { Redis } from "@upstash/redis/cloudflare";
 
 import type { BadgeTreeNode } from "./types";
+import { logger } from "../../lib/logger";
 
 const VERSION_TTL_SEC = 24 * 60 * 60; // 1 day — rarely read but cheap
 const TREE_TTL_SEC = 300;
@@ -127,7 +128,7 @@ export function createBadgeCache(redis: Redis | null): BadgeCache {
         return cached ?? null;
       } catch (err) {
         // Cache misses and Redis failures are equivalent to the caller.
-        console.warn("[badge-cache] readTree failed", err);
+        logger.warn("[badge-cache] readTree failed", err);
         return null;
       }
     },
@@ -142,7 +143,7 @@ export function createBadgeCache(redis: Redis | null): BadgeCache {
           ex: TREE_TTL_SEC,
         });
       } catch (err) {
-        console.warn("[badge-cache] writeTree failed", err);
+        logger.warn("[badge-cache] writeTree failed", err);
       }
     },
 
@@ -152,7 +153,7 @@ export function createBadgeCache(redis: Redis | null): BadgeCache {
           ex: VERSION_TTL_SEC,
         });
       } catch (err) {
-        console.warn("[badge-cache] bumpVersion failed", err);
+        logger.warn("[badge-cache] bumpVersion failed", err);
       }
     },
   };

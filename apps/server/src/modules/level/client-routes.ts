@@ -7,7 +7,7 @@
  *                             populates c.var.endUserId
  *
  * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
- * from c.var.endUserId!. No inline verifyRequest calls; no auth fields in body or query.
+ * from getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
  *   POST /configs                          → config list + per-user summary
@@ -22,6 +22,7 @@
 
 import { z } from "@hono/zod-openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
@@ -206,7 +207,7 @@ levelClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     // Client view: fetch up to the server cap; client doesn't paginate.
     const { items: configs } = await levelService.listConfigs(orgId, { limit: 200 });
 
@@ -256,7 +257,7 @@ levelClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const overview = await levelService.getConfigOverview(
       orgId,
@@ -333,7 +334,7 @@ levelClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const detail = await levelService.getLevelDetail(orgId, endUserId, id);
 
@@ -401,7 +402,7 @@ levelClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { stars, score } = c.req.valid("json");
     const { id } = c.req.valid("param");
     const result = await levelService.reportClear(orgId, endUserId, id, {
@@ -447,7 +448,7 @@ levelClientRouter.openapi(
   }),
   async (c) => {
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const { type, starTier } = c.req.valid("json");
     const { id } = c.req.valid("param");
 

@@ -17,6 +17,7 @@
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
@@ -68,7 +69,7 @@ dialogueClientRouter.openapi(
   async (c) => {
     const { alias } = c.req.valid("param");
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const view = await dialogueService.start(orgId, endUserId, alias);
     return c.json(ok(serializeSession(view)), 200);
   },
@@ -100,7 +101,7 @@ dialogueClientRouter.openapi(
     const { alias } = c.req.valid("param");
     const { optionId } = c.req.valid("json");
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const view = await dialogueService.advance(
       orgId,
       endUserId,
@@ -133,7 +134,7 @@ dialogueClientRouter.openapi(
   async (c) => {
     const { alias } = c.req.valid("param");
     const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = c.var.endUserId!;
+    const endUserId = getEndUserId(c);
     const view = await dialogueService.reset(orgId, endUserId, alias);
     return c.json(ok(serializeSession(view)), 200);
   },

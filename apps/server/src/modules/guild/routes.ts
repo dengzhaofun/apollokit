@@ -2,11 +2,12 @@
  * Admin-facing HTTP routes for the guild module.
  *
  * Every route is guarded by `requireAdminOrApiKey`. Downstream handlers
- * read `c.var.session!.activeOrganizationId!` without null checks.
+ * read `getOrgId(c)` without null checks.
  */
 
 import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -199,7 +200,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await guildService.getSettings(orgId);
     return c.json(ok(serializeSettings(row)), 200);
   },
@@ -226,7 +227,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await guildService.upsertSettings(orgId, c.req.valid("json"));
     return c.json(ok(serializeSettings(row)), 200);
   },
@@ -251,7 +252,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const page = await guildService.listGuilds(orgId, {
       search: q.search,
@@ -283,7 +284,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await guildService.getGuild(orgId, id);
     return c.json(ok(serializeGuild(row)), 200);
@@ -312,7 +313,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await guildService.updateGuild(orgId, id, c.req.valid("json"));
     return c.json(ok(serializeGuild(row)), 200);
@@ -336,7 +337,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await guildService.disbandGuild(orgId, id);
     return c.json(ok(serializeGuild(row)), 200);
@@ -367,7 +368,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { amount, source, sourceId } = c.req.valid("json");
     const log = await guildService.grantExp(orgId, id, amount, source, sourceId);
@@ -394,7 +395,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const rows = await guildService.listMembers(orgId, id);
     return c.json(ok({ items: rows.map(serializeMember) }), 200);
@@ -421,7 +422,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { status, limit, offset } = c.req.valid("query");
     const rows = await guildService.listJoinRequests(orgId, id, { status, limit, offset });
@@ -449,7 +450,7 @@ guildRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await guildService.listContributions(orgId, id, { limit, offset });

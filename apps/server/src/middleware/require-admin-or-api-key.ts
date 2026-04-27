@@ -16,6 +16,7 @@ import { createMiddleware } from "hono/factory";
 
 import { auth } from "../auth";
 import type { HonoEnv } from "../env";
+import { UnauthorizedError } from "./auth-errors";
 
 export const requireAdminOrApiKey = createMiddleware<HonoEnv>(
   async (c, next) => {
@@ -42,9 +43,6 @@ export const requireAdminOrApiKey = createMiddleware<HonoEnv>(
       }
     }
 
-    return c.json(
-      { error: "unauthorized", requestId: c.get("requestId") },
-      401,
-    );
+    throw new UnauthorizedError();
   },
 );

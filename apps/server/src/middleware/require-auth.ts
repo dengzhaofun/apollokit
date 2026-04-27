@@ -1,6 +1,7 @@
 import { createMiddleware } from "hono/factory";
 
 import type { HonoEnv } from "../env";
+import { NoActiveProjectError, UnauthorizedError } from "./auth-errors";
 
 /**
  * Guard for admin-side business routes.
@@ -10,23 +11,11 @@ import type { HonoEnv } from "../env";
  *   project-scoped, so we refuse to proceed without knowing which project).
  *
  * Mount per-router, not globally, so future public (API-key) routes can
- * stay unprotected by this middleware.
+ * stay unprotected by this middleware. Throws `ModuleError` subclasses so
+ * the router/global `onError` emits the standard envelope.
  */
 export const requireAuth = createMiddleware<HonoEnv>(async (c, next) => {
-  if (!c.var.user) {
-    return c.json(
-      { error: "unauthorized", requestId: c.get("requestId") },
-      401,
-    );
-  }
-  if (!c.var.session?.activeOrganizationId) {
-    return c.json(
-      {
-        error: "no active project",
-        requestId: c.get("requestId"),
-      },
-      400,
-    );
-  }
+  if (!c.var.user) throw new UnauthorizedError();
+  if (!c.var.session?.activeOrganizationId) throw new NoActiveProjectError();
   await next();
 });

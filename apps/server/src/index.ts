@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
@@ -11,7 +11,10 @@ import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
 import { registerSecuritySchemes, validationDefaultHook } from "./lib/openapi";
 import { requestContext } from "./lib/request-context";
+import { ModuleError } from "./lib/errors";
+import { logger } from "./lib/logger";
 import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
+import { getClientOrgId } from "./lib/route-context";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { session } from "./middleware/session";
@@ -117,7 +120,7 @@ const app = new OpenAPIHono<HonoEnv>({
 
 // Base middleware
 app.use("*", requestId());
-app.use("*", logger());
+app.use("*", honoLogger());
 app.use("*", prettyJSON());
 // `crossOriginResourcePolicy: "cross-origin"` — the media-library
 // `<img>` proxy (`/api/media-library/object/...`) is loaded via same-
@@ -142,7 +145,17 @@ app.use(
 // `createAdminRouter` / `createClientRouter` in `lib/openapi.ts`);
 // anything that reaches here is unexpected.
 app.onError((err, c) => {
-  console.error(err);
+  // Globally-mounted middleware (e.g. requireClientCredential on
+  // /api/client/auth/*) throws ModuleError and never enters a router,
+  // so the per-router `attachErrorHandler` doesn't see it. Map here
+  // so the standard envelope covers those paths too.
+  if (err instanceof ModuleError) {
+    return c.json(
+      fail(err.code, err.message),
+      err.httpStatus as Parameters<typeof c.json>[1],
+    );
+  }
+  logger.error("unhandled_error", err);
   return c.json(fail(INTERNAL_ERROR_CODE, err.message), 500);
 });
 
@@ -173,7 +186,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 // also strip the header.
 app.use("/api/client/auth/*", requireClientCredential);
 app.on(["POST", "GET"], "/api/client/auth/*", (c) => {
-  const orgId = c.var.clientCredential!.organizationId;
+  const orgId = getClientOrgId(c);
   const scopedHeaders = new Headers(c.req.raw.headers);
   scopedHeaders.delete(EU_ORG_ID_HEADER);
   scopedHeaders.set(EU_ORG_ID_HEADER, orgId);

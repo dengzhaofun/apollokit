@@ -2,12 +2,13 @@
  * Admin-facing HTTP routes for the friend gift module.
  *
  * Every route is guarded by `requireAdminOrApiKey`. Downstream handlers
- * read `c.var.session!.activeOrganizationId!` uniformly.
+ * read `getOrgId(c)` uniformly.
  */
 
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -135,7 +136,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await friendGiftService.getSettings(orgId);
     if (!row) {
       throw new FriendGiftSettingsNotFound();
@@ -165,7 +166,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await friendGiftService.upsertSettings(
       orgId,
       c.req.valid("json"),
@@ -197,7 +198,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const row = await friendGiftService.createPackage(
       orgId,
       c.req.valid("json"),
@@ -223,7 +224,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await friendGiftService.listPackages(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializePackage), nextCursor: page.nextCursor }),
@@ -249,7 +250,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getPackage(orgId, id);
     return c.json(ok(serializePackage(row)), 200);
@@ -278,7 +279,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await friendGiftService.updatePackage(
       orgId,
@@ -306,7 +307,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     await friendGiftService.deletePackage(orgId, id);
     return c.json(ok(null), 200);
@@ -332,7 +333,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const page = await friendGiftService.listSends(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeSend), nextCursor: page.nextCursor }),
@@ -358,7 +359,7 @@ friendGiftRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await friendGiftService.getSend(orgId, id);
     return c.json(ok(serializeSend(row)), 200);

@@ -13,7 +13,10 @@
  * For POST routes with body-based HMAC, the route handler calls
  * service.verifyRequest() with the full (publishableKey, endUserId, userHash).
  *
- * Mount per-router, not globally.
+ * Mount per-router, not globally (one exception: it's mounted on
+ * `/api/client/auth/*` in `src/index.ts` so end-user-auth routes can
+ * resolve the org). Throws `ModuleError` subclasses so the global
+ * `app.onError` emits the standard envelope.
  */
 
 import { createMiddleware } from "hono/factory";
@@ -22,14 +25,14 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import type { HonoEnv } from "../env";
 import { clientCredentials } from "../schema/client-credential";
+import { InvalidClientCredentialError } from "./auth-errors";
 
 export const requireClientCredential = createMiddleware<HonoEnv>(
   async (c, next) => {
     const publishableKey = c.req.header("x-api-key");
     if (!publishableKey || !publishableKey.startsWith("cpk_")) {
-      return c.json(
-        { error: "missing or invalid x-api-key header", requestId: c.get("requestId") },
-        401,
+      throw new InvalidClientCredentialError(
+        "missing or invalid x-api-key header",
       );
     }
 
@@ -46,22 +49,13 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
       .where(eq(clientCredentials.publishableKey, publishableKey));
 
     if (!cred) {
-      return c.json(
-        { error: "invalid client credential", requestId: c.get("requestId") },
-        401,
-      );
+      throw new InvalidClientCredentialError("invalid client credential");
     }
     if (!cred.enabled) {
-      return c.json(
-        { error: "client credential is disabled", requestId: c.get("requestId") },
-        401,
-      );
+      throw new InvalidClientCredentialError("client credential is disabled");
     }
     if (cred.expiresAt && cred.expiresAt < new Date()) {
-      return c.json(
-        { error: "client credential has expired", requestId: c.get("requestId") },
-        401,
-      );
+      throw new InvalidClientCredentialError("client credential has expired");
     }
 
     // Place org context for downstream handlers

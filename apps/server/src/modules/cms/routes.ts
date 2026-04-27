@@ -20,6 +20,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requireOrgManage } from "../../middleware/require-org-manage";
@@ -105,7 +106,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await cmsService.listTypes(orgId, q);
     return c.json(
@@ -135,7 +136,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const row = await cmsService.createType(orgId, c.req.valid("json"), {
       userId,
@@ -162,7 +163,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { typeKey } = c.req.valid("param");
     const row = await cmsService.getType(orgId, typeKey);
     return c.json(ok(serializeType(row)), 200);
@@ -190,7 +191,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const { typeKey } = c.req.valid("param");
     const row = await cmsService.updateType(
@@ -219,7 +220,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { typeKey } = c.req.valid("param");
     await cmsService.deleteType(orgId, typeKey);
     return c.json(ok(null), 200);
@@ -249,7 +250,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { typeAlias } = c.req.valid("param");
     const q = c.req.valid("query") as Record<string, unknown>;
     const page = await cmsService.listEntries(orgId, typeAlias, q);
@@ -284,7 +285,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const { typeAlias } = c.req.valid("param");
     const row = await cmsService.createEntry(
@@ -315,7 +316,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { typeAlias, entryKey } = c.req.valid("param");
     const row = await cmsService.getEntry(orgId, typeAlias, entryKey);
     return c.json(ok(serializeEntry(row)), 200);
@@ -343,7 +344,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const { typeAlias, entryKey } = c.req.valid("param");
     const row = await cmsService.updateEntry(
@@ -373,7 +374,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const { typeAlias, entryKey } = c.req.valid("param");
     await cmsService.deleteEntry(orgId, typeAlias, entryKey);
     return c.json(ok(null), 200);
@@ -398,7 +399,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const { typeAlias, entryKey } = c.req.valid("param");
     const row = await cmsService.publishEntry(orgId, typeAlias, entryKey, {
@@ -426,7 +427,7 @@ cmsRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = getOrgId(c);
     const userId = c.var.user?.id;
     const { typeAlias, entryKey } = c.req.valid("param");
     const row = await cmsService.unpublishEntry(orgId, typeAlias, entryKey, {
