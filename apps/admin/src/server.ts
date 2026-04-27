@@ -19,10 +19,27 @@ interface AdminEnv {
   CF_VERSION_METADATA?: { id: string }
 }
 
+// `/api/*` 默认转发去 server worker(business endpoints + better-auth);
+// 但有几条 admin 自己持有的端点不能转发出去:
+//   - /api/search   docs Orama 搜索(routes/api/search.ts)
+//   - /api/chat     docs Ask-AI 流式接口(routes/api/chat.ts)
+//   - /api/_*       预留给 admin 内部端点
+// 这些走 TanStack Start handler;不在白名单的 /api/* 全部 service-binding
+// 出去。
+function isAdminLocalApi(pathname: string): boolean {
+  return (
+    pathname === '/api/search' ||
+    pathname.startsWith('/api/search?') ||
+    pathname === '/api/chat' ||
+    pathname.startsWith('/api/chat?') ||
+    pathname.startsWith('/api/_')
+  )
+}
+
 const tanstackHandler = createServerEntry({
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url)
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname.startsWith('/api/') && !isAdminLocalApi(url.pathname)) {
       const { env } = (await import('cloudflare:workers')) as unknown as {
         env: AdminEnv
       }
