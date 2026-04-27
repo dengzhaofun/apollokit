@@ -161,9 +161,13 @@ const HERO_ICONS_OUTER: LucideIcon[] = [
 function PlanetLogo({ size = "size-20" }: { size?: string }) {
   return (
     <div
-      className={`${size} relative grid place-items-center rounded-[28%] bg-gradient-to-br from-foreground to-foreground/70 text-background shadow-[0_10px_40px_-10px_rgba(0,0,0,.45)] ring-1 ring-foreground/20`}
+      className={`${size} relative grid place-items-center overflow-hidden rounded-[28%] bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,.45)] ring-1 ring-foreground/20`}
     >
-      <span className="text-lg font-black tracking-tight">AK</span>
+      <img
+        src="/logo192.png"
+        alt="ApolloKit"
+        className="size-3/4 object-contain"
+      />
       <span className="absolute -right-1 -top-1 size-3 rounded-full bg-[var(--ak-accent-2)] shadow-[0_0_24px_var(--ak-glow-2)]" />
     </div>
   )
