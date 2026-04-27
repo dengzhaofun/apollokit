@@ -4,6 +4,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { BadgeNodeForm } from "#/components/badge/BadgeNodeForm"
+import { useBadgeNodeForm } from "#/components/badge/use-node-form"
 import { PageHeaderActions } from "#/components/PageHeader"
 import {
   AlertDialog,
@@ -79,16 +80,13 @@ function BadgeDetailPage() {
               {m.common_loading()}
             </div>
           ) : (
-            <BadgeNodeForm
-              initial={node}
+            <EditBadgePanel
+              node={node}
               existingKeys={existingKeys}
               isPending={updateMutation.isPending}
-              submitLabel={m.common_save_changes()}
-              onSubmit={async (values) => {
+              onSave={async (values) => {
                 try {
-                  // `key` is immutable in the form (disabled input). Strip it
-                  // from the patch body so the server doesn't see a stale
-                  // value.
+                  // `key` is immutable in edit (disabled). Strip it.
                   const { key: _k, ...patch } = values
                   await updateMutation.mutateAsync({ id: nodeId, input: patch })
                   toast.success(m.badge_updated())
@@ -122,5 +120,28 @@ function BadgeDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+function EditBadgePanel({
+  node,
+  existingKeys,
+  isPending,
+  onSave,
+}: {
+  node: NonNullable<ReturnType<typeof useBadgeNodes>["data"]>[number]
+  existingKeys: string[]
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useBadgeNodeForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useBadgeNodeForm({ initial: node, onSubmit: onSave })
+  return (
+    <BadgeNodeForm
+      form={form}
+      keyLocked
+      existingKeys={existingKeys}
+      isPending={isPending}
+      submitLabel={m.common_save_changes()}
+    />
   )
 }

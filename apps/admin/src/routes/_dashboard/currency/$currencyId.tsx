@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog"
 import { DefinitionForm } from "#/components/currency/DefinitionForm"
+import { useDefinitionForm } from "#/components/currency/use-definition-form"
 import {
   useCurrency,
   useDeleteCurrency,
@@ -94,11 +95,10 @@ function CurrencyDetailPage() {
 
           {editing ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <DefinitionForm
-                defaultValues={currency}
-                submitLabel={m.common_save()}
+              <EditCurrencyPanel
+                currency={currency}
                 isPending={updateMutation.isPending}
-                onSubmit={async (values) => {
+                onSave={async (values) => {
                   try {
                     await updateMutation.mutateAsync({
                       id: currency.id,
@@ -107,11 +107,8 @@ function CurrencyDetailPage() {
                     toast.success(m.currency_updated())
                     setEditing(false)
                   } catch (err) {
-                    if (err instanceof ApiError) {
-                      toast.error(err.body.error)
-                    } else {
-                      toast.error(m.currency_failed_update())
-                    }
+                    if (err instanceof ApiError) toast.error(err.body.error)
+                    else toast.error(m.currency_failed_update())
                   }
                 }}
               />
@@ -215,5 +212,24 @@ function DetailItem({
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="text-sm">{value}</div>
     </div>
+  )
+}
+
+function EditCurrencyPanel({
+  currency,
+  isPending,
+  onSave,
+}: {
+  currency: NonNullable<ReturnType<typeof useCurrency>["data"]>
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useDefinitionForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useDefinitionForm({ defaultValues: currency, onSubmit: onSave })
+  return (
+    <DefinitionForm
+      form={form}
+      submitLabel={m.common_save()}
+      isPending={isPending}
+    />
   )
 }

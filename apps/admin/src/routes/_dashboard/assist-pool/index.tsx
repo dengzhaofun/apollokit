@@ -5,10 +5,11 @@ import { HeartHandshakeIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { AssistPoolConfigForm } from "#/components/assist-pool/ConfigForm"
+import { useAssistPoolForm } from "#/components/assist-pool/use-config-form"
 import { DataTable } from "#/components/data-table/DataTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import {
   ASSIST_POOL_CONFIG_FILTER_DEFS,
   useAssistPoolConfig,
@@ -167,16 +168,29 @@ function CreateAssistPoolDrawer({ onClose }: DrawerShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useAssistPoolForm({
+    onSubmit: async (values) => {
+      try {
+        await createMutation.mutateAsync(values)
+        toast.success(m.assistpool_created())
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : m.assistpool_failed_create(),
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !createMutation.isPending}
       title={m.assistpool_new_config()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -197,21 +211,9 @@ function CreateAssistPoolDrawer({ onClose }: DrawerShellProps) {
         hideSubmitButton
         onStateChange={setFormState}
         isPending={createMutation.isPending}
-        onSubmit={async (values) => {
-          try {
-            await createMutation.mutateAsync(values)
-            toast.success(m.assistpool_created())
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError
-                ? err.body.error
-                : m.assistpool_failed_create(),
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -220,22 +222,70 @@ function EditAssistPoolDrawer({
   onClose,
 }: DrawerShellProps & { id: string }) {
   const { data: cfg, isPending: loading, error } = useAssistPoolConfig(id)
+
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !cfg) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Pool not found"}
+      </div>
+    )
+  }
+  return <EditAssistPoolDrawerLoaded cfg={cfg} onClose={onClose} />
+}
+
+function EditAssistPoolDrawerLoaded({
+  cfg,
+  onClose,
+}: DrawerShellProps & { cfg: NonNullable<ReturnType<typeof useAssistPoolConfig>["data"]> }) {
   const updateMutation = useUpdateAssistPoolConfig()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useAssistPoolForm({
+    defaultValues: {
+      name: cfg.name,
+      alias: cfg.alias,
+      description: cfg.description,
+      mode: cfg.mode,
+      targetAmount: cfg.targetAmount,
+      contributionPolicy: cfg.contributionPolicy,
+      perAssisterLimit: cfg.perAssisterLimit,
+      initiatorCanAssist: cfg.initiatorCanAssist,
+      expiresInSeconds: cfg.expiresInSeconds,
+      isActive: cfg.isActive,
+      activityId: cfg.activityId,
+    },
+    onSubmit: async (values) => {
+      try {
+        await updateMutation.mutateAsync({ id: cfg.id, ...values })
+        toast.success("Pool updated")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !updateMutation.isPending}
       title={m.common_edit()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -244,7 +294,7 @@ function EditAssistPoolDrawer({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={!cfg || !formState.canSubmit || updateMutation.isPending}
+            disabled={!formState.canSubmit || updateMutation.isPending}
           >
             {updateMutation.isPending
               ? m.common_saving()
@@ -253,46 +303,13 @@ function EditAssistPoolDrawer({
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !cfg ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Pool not found"}
-        </div>
-      ) : (
-        <AssistPoolConfigForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          defaultValues={{
-            name: cfg.name,
-            alias: cfg.alias,
-            description: cfg.description,
-            mode: cfg.mode,
-            targetAmount: cfg.targetAmount,
-            contributionPolicy: cfg.contributionPolicy,
-            perAssisterLimit: cfg.perAssisterLimit,
-            initiatorCanAssist: cfg.initiatorCanAssist,
-            expiresInSeconds: cfg.expiresInSeconds,
-            isActive: cfg.isActive,
-            activityId: cfg.activityId,
-          }}
-          isPending={updateMutation.isPending}
-          onSubmit={async (values) => {
-            try {
-              await updateMutation.mutateAsync({ id: cfg.id, ...values })
-              toast.success("Pool updated")
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDrawer>
+      <AssistPoolConfigForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={updateMutation.isPending}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

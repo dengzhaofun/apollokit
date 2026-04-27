@@ -1,0 +1,8 @@
+export { AIAssistPanel } from "./AIAssistPanel"
+export { ApplyConfigCard } from "./ApplyConfigCard"
+export { ClarifyPrompt } from "./ClarifyPrompt"
+export { applyCheckInToForm } from "./apply-helpers"
+export { AssistProvider, useAssistContext } from "./AssistContext"
+export { FormProvider, useFormContext, type AnyFormApi } from "./FormProvider"
+export { GlobalAssistFab } from "./GlobalAssistFab"
+export { MODULE_REGISTRY, getModuleEntry, type ModuleEntry } from "./registry"

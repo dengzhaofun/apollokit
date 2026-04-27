@@ -10,9 +10,10 @@ import {
 } from "#/components/activity/ActivityScopeFilter"
 import { ConfigForm } from "#/components/check-in/ConfigForm"
 import { ConfigTable } from "#/components/check-in/ConfigTable"
+import { useConfigForm } from "#/components/check-in/use-config-form"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { WriteGate } from "#/components/WriteGate"
 import { useCreateCheckInConfig } from "#/hooks/use-check-in"
 import { ApiError } from "#/lib/api-client"
@@ -97,15 +98,35 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
     isSubmitting: false,
   })
 
+  // Lift the form instance out of `ConfigForm` so the AI panel can
+  // call `form.setFieldValue(...)` to write back proposed configs.
+  const form = useConfigForm({
+    onSubmit: async (values) => {
+      try {
+        const row = await mutation.mutateAsync(values)
+        toast.success("Check-in created")
+        onClose()
+        void navigate({
+          to: "/check-in/$configId",
+          params: { configId: row.id },
+        })
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to create",
+        )
+      }
+    },
+  })
+
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.checkin_new_config()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -126,22 +147,8 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
         hideSubmitButton
         onStateChange={setFormState}
         isPending={mutation.isPending}
-        onSubmit={async (values) => {
-          try {
-            const row = await mutation.mutateAsync(values)
-            toast.success("Check-in created")
-            onClose()
-            void navigate({
-              to: "/check-in/$configId",
-              params: { configId: row.id },
-            })
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : "Failed to create",
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }

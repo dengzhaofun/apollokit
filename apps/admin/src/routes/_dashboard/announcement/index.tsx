@@ -5,9 +5,10 @@ import { toast } from "sonner"
 
 import { AnnouncementForm } from "#/components/announcement/AnnouncementForm"
 import { AnnouncementTable } from "#/components/announcement/AnnouncementTable"
+import { useAnnouncementForm } from "#/components/announcement/use-announcement-form"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { WriteGate } from "#/components/WriteGate"
 import {
   useAnnouncement,
@@ -89,16 +90,29 @@ function CreateAnnouncementDrawer({ onClose }: DrawerShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useAnnouncementForm({
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync(values)
+        toast.success("Announcement created")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to create",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.announcement_new()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -120,19 +134,9 @@ function CreateAnnouncementDrawer({ onClose }: DrawerShellProps) {
         onStateChange={setFormState}
         isPending={mutation.isPending}
         submitLabel={m.common_create()}
-        onSubmit={async (values) => {
-          try {
-            await mutation.mutateAsync(values)
-            toast.success("Announcement created")
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : "Failed to create",
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -141,22 +145,58 @@ function EditAnnouncementDrawer({
   onClose,
 }: DrawerShellProps & { alias: string }) {
   const { data: ann, isPending: loading, error } = useAnnouncement(alias)
+
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !ann) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Announcement not found"}
+      </div>
+    )
+  }
+  return <EditAnnouncementDrawerLoaded ann={ann} onClose={onClose} />
+}
+
+function EditAnnouncementDrawerLoaded({
+  ann,
+  onClose,
+}: DrawerShellProps & { ann: NonNullable<ReturnType<typeof useAnnouncement>["data"]> }) {
   const mutation = useUpdateAnnouncement()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useAnnouncementForm({
+    initial: ann,
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync({ alias: ann.alias, input: values })
+        toast.success("Announcement updated")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.common_edit()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -165,43 +205,22 @@ function EditAnnouncementDrawer({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={!ann || !formState.canSubmit || mutation.isPending}
+            disabled={!form.state.canSubmit || mutation.isPending}
           >
             {mutation.isPending ? m.common_saving() : m.common_save_changes()}
           </Button>
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !ann ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Announcement not found"}
-        </div>
-      ) : (
-        <AnnouncementForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          aliasLocked
-          initial={ann}
-          isPending={mutation.isPending}
-          submitLabel={m.common_save_changes()}
-          onSubmit={async (values) => {
-            try {
-              await mutation.mutateAsync({ alias: ann.alias, input: values })
-              toast.success("Announcement updated")
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDrawer>
+      <AnnouncementForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        aliasLocked
+        isPending={mutation.isPending}
+        submitLabel={m.common_save_changes()}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

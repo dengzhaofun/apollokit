@@ -9,10 +9,11 @@ import {
   type ActivityScope,
 } from "#/components/activity/ActivityScopeFilter"
 import { GroupForm } from "#/components/banner/GroupForm"
+import { useGroupForm } from "#/components/banner/use-group-form"
 import { GroupTable } from "#/components/banner/GroupTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDialog } from "#/components/ui/form-dialog"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import {
   useBannerGroup,
   useCreateBannerGroup,
@@ -99,15 +100,35 @@ function CreateBannerGroupDialog({ onClose }: DialogShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useGroupForm({
+    onSubmit: async (values) => {
+      try {
+        const row = await mutation.mutateAsync(values)
+        toast.success(m.banner_group_created())
+        onClose()
+        void navigate({
+          to: "/banner/$groupId",
+          params: { groupId: row.id },
+        })
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError
+            ? err.body.error
+            : m.banner_failed_create_group(),
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.banner_new_group()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -129,25 +150,9 @@ function CreateBannerGroupDialog({ onClose }: DialogShellProps) {
         onStateChange={setFormState}
         isPending={mutation.isPending}
         submitLabel={m.common_create()}
-        onSubmit={async (values) => {
-          try {
-            const row = await mutation.mutateAsync(values)
-            toast.success(m.banner_group_created())
-            onClose()
-            void navigate({
-              to: "/banner/$groupId",
-              params: { groupId: row.id },
-            })
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError
-                ? err.body.error
-                : m.banner_failed_create_group(),
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDialog>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -156,21 +161,59 @@ function EditBannerGroupDialog({
   onClose,
 }: DialogShellProps & { id: string }) {
   const { data: group, isPending: loading, error } = useBannerGroup(id)
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !group) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Banner group not found"}
+      </div>
+    )
+  }
+  return <EditBannerGroupDialogLoaded group={group} onClose={onClose} />
+}
+
+function EditBannerGroupDialogLoaded({
+  group,
+  onClose,
+}: DialogShellProps & {
+  group: NonNullable<ReturnType<typeof useBannerGroup>["data"]>
+}) {
   const mutation = useUpdateBannerGroup()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useGroupForm({
+    initial: group,
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync({ id: group.id, input: values })
+        toast.success("Banner group updated")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.common_edit()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -179,42 +222,21 @@ function EditBannerGroupDialog({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={!group || !formState.canSubmit || mutation.isPending}
+            disabled={!formState.canSubmit || mutation.isPending}
           >
             {mutation.isPending ? m.common_saving() : m.common_save_changes()}
           </Button>
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !group ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Banner group not found"}
-        </div>
-      ) : (
-        <GroupForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          initial={group}
-          isPending={mutation.isPending}
-          submitLabel={m.common_save_changes()}
-          onSubmit={async (values) => {
-            try {
-              await mutation.mutateAsync({ id: group.id, input: values })
-              toast.success("Banner group updated")
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDialog>
+      <GroupForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={mutation.isPending}
+        submitLabel={m.common_save_changes()}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

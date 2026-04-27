@@ -6,9 +6,10 @@ import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { WriteGate } from "#/components/WriteGate"
 import { MessageForm } from "#/components/mail/MessageForm"
+import { useMessageForm } from "#/components/mail/use-message-form"
 import { MessageTable } from "#/components/mail/MessageTable"
 import { useCreateMailMessage } from "#/hooks/use-mail"
 import { ApiError } from "#/lib/api-client"
@@ -67,16 +68,29 @@ function CreateMailDrawer({ onClose }: { onClose: () => void }) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useMessageForm({
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync(values)
+        toast.success("Mail sent")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to send mail",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.mail_new_message()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -98,18 +112,8 @@ function CreateMailDrawer({ onClose }: { onClose: () => void }) {
         onStateChange={setFormState}
         isPending={mutation.isPending}
         submitLabel={m.common_create()}
-        onSubmit={async (values) => {
-          try {
-            await mutation.mutateAsync(values)
-            toast.success("Mail sent")
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : "Failed to send mail",
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }

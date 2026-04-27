@@ -2,15 +2,22 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { ConfigForm as CheckInConfigForm } from "#/components/check-in/ConfigForm"
+import { useConfigForm as useCheckInForm } from "#/components/check-in/use-config-form"
 import { GroupForm as BannerGroupForm } from "#/components/banner/GroupForm"
+import { useGroupForm as useBannerGroupForm } from "#/components/banner/use-group-form"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
+import { useLotteryPoolForm } from "#/components/lottery/use-pool-form"
 import { DefinitionForm as TaskDefinitionForm } from "#/components/task/DefinitionForm"
 import { ProductForm as ShopProductForm } from "#/components/shop/ProductForm"
+import { useProductForm as useShopProductForm } from "#/components/shop/use-product-form"
 import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
+import { useLeaderboardForm } from "#/components/leaderboard/use-config-form"
 import { BlueprintForm as EntityBlueprintForm } from "#/components/entity/BlueprintForm"
 import { DefinitionForm as ItemDefinitionForm } from "#/components/item/DefinitionForm"
 import { DefinitionForm as CurrencyDefinitionForm } from "#/components/currency/DefinitionForm"
+import { useDefinitionForm as useCurrencyDefinitionForm } from "#/components/currency/use-definition-form"
 import { AssistPoolConfigForm } from "#/components/assist-pool/ConfigForm"
+import { useAssistPoolForm } from "#/components/assist-pool/use-config-form"
 import { Button } from "#/components/ui/button"
 import {
   Dialog,
@@ -287,69 +294,78 @@ function reportError(err: unknown) {
 
 function CheckInSection(props: SectionImplProps) {
   const create = useCreateCheckInConfig()
+  const form = useCheckInForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const config = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(config.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <CheckInConfigForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_check_in()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const config = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(config.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
 
 function LotterySection(props: SectionImplProps) {
   const create = useCreateLotteryPool()
+  const form = useLotteryPoolForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const pool = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(pool.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <LotteryPoolForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_lottery()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const pool = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(pool.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
 
 function BannerSection(props: SectionImplProps) {
   const create = useCreateBannerGroup()
+  const form = useBannerGroupForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const group = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(group.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <BannerGroupForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_banner()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const group = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(group.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
@@ -381,46 +397,52 @@ function TaskSection(props: SectionImplProps) {
 
 function ShopSection(props: SectionImplProps) {
   const create = useCreateShopProduct()
+  const form = useShopProductForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const product = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(product.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <ShopProductForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_exchange()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const product = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(product.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
 
 function LeaderboardSection(props: SectionImplProps) {
   const create = useCreateLeaderboardConfig()
+  const form = useLeaderboardForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const cfg = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(cfg.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <LeaderboardConfigForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_leaderboard()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const cfg = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(cfg.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
@@ -510,46 +532,52 @@ function ItemSection(props: SectionImplProps) {
 
 function CurrencySection(props: SectionImplProps) {
   const create = useCreateCurrency()
+  const form = useCurrencyDefinitionForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const def = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(def.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <CurrencyDefinitionForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_currency_definition()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const def = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(def.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }
 
 function AssistPoolSection(props: SectionImplProps) {
   const create = useCreateAssistPoolConfig()
+  const form = useAssistPoolForm({
+    defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
+    onSubmit: async (values) => {
+      if (props.aliasRequired()) return
+      try {
+        const cfg = await create.mutateAsync({
+          ...values,
+          activityId: props.activityId,
+        })
+        await props.mountNode(cfg.id)
+      } catch (err) {
+        reportError(err)
+      }
+    },
+  })
   return (
     <AssistPoolConfigForm
-      defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
+      form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_assist_pool()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
-          const cfg = await create.mutateAsync({
-            ...values,
-            activityId: props.activityId,
-          })
-          await props.mountNode(cfg.id)
-        } catch (err) {
-          reportError(err)
-        }
-      }}
     />
   )
 }

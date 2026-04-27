@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import {
@@ -10,11 +8,11 @@ import { Input } from "#/components/ui/input"
 import { Textarea } from "#/components/ui/textarea"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
-import type { CreatePoolInput } from "#/lib/types/lottery"
+
+import type { LotteryPoolFormApi } from "./use-pool-form"
 
 interface PoolFormProps {
-  defaultValues?: Partial<CreatePoolInput>
-  onSubmit: (values: CreatePoolInput) => void | Promise<void>
+  form: LotteryPoolFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -23,36 +21,13 @@ interface PoolFormProps {
 }
 
 export function LotteryPoolForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel = "Create",
   id,
   hideSubmitButton,
   onStateChange,
 }: PoolFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: defaultValues?.name ?? "",
-      alias: defaultValues?.alias ?? "",
-      description: defaultValues?.description ?? "",
-      isActive: defaultValues?.isActive ?? true,
-      globalPullLimit: defaultValues?.globalPullLimit ?? (null as number | null),
-      activityId: defaultValues?.activityId ?? (null as string | null),
-    },
-    onSubmit: async ({ value }) => {
-      const input: CreatePoolInput = {
-        name: value.name,
-        alias: value.alias || null,
-        description: value.description || null,
-        isActive: value.isActive,
-        globalPullLimit: value.globalPullLimit,
-        activityId: value.activityId,
-      }
-      await onSubmit(input)
-    },
-  })
-
   return (
     <form
       id={id}

@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
@@ -16,75 +14,25 @@ import { Textarea } from "#/components/ui/textarea"
 import type {
   AggregationMode,
   ConfigStatus,
-  CreateLeaderboardInput,
   CycleMode,
-  RewardTier,
   ScopeMode,
   TieBreaker,
 } from "#/lib/types/leaderboard"
 
+import type { LeaderboardFormApi } from "./use-config-form"
+
 interface Props {
-  defaultValues?: Partial<CreateLeaderboardInput>
-  onSubmit: (values: CreateLeaderboardInput) => void | Promise<void>
+  /** Form instance owned by the caller — see `use-config-form.ts`. */
+  form: LeaderboardFormApi
   isPending?: boolean
   submitLabel?: string
 }
 
 export function LeaderboardConfigForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel,
 }: Props) {
-  const form = useForm({
-    defaultValues: {
-      alias: defaultValues?.alias ?? "",
-      name: defaultValues?.name ?? "",
-      description: defaultValues?.description ?? "",
-      metricKey: defaultValues?.metricKey ?? "",
-      cycle: defaultValues?.cycle ?? ("daily" as CycleMode),
-      weekStartsOn: defaultValues?.weekStartsOn ?? 1,
-      timezone:
-        defaultValues?.timezone ??
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-      scope: defaultValues?.scope ?? ("global" as ScopeMode),
-      aggregation: defaultValues?.aggregation ?? ("sum" as AggregationMode),
-      maxEntries: defaultValues?.maxEntries ?? 1000,
-      tieBreaker: defaultValues?.tieBreaker ?? ("earliest" as TieBreaker),
-      status: defaultValues?.status ?? ("active" as ConfigStatus),
-      activityId: defaultValues?.activityId ?? (null as string | null),
-      rewardTiersJson: JSON.stringify(
-        defaultValues?.rewardTiers ?? [],
-        null,
-        2,
-      ),
-    },
-    onSubmit: async ({ value }) => {
-      let tiers: RewardTier[] = []
-      try {
-        tiers = JSON.parse(value.rewardTiersJson) as RewardTier[]
-      } catch {
-        tiers = []
-      }
-      await onSubmit({
-        alias: value.alias,
-        name: value.name,
-        description: value.description || null,
-        metricKey: value.metricKey,
-        cycle: value.cycle,
-        weekStartsOn: value.weekStartsOn,
-        timezone: value.timezone,
-        scope: value.scope,
-        aggregation: value.aggregation,
-        maxEntries: value.maxEntries,
-        tieBreaker: value.tieBreaker,
-        status: value.status,
-        activityId: value.activityId,
-        rewardTiers: tiers,
-      })
-    },
-  })
-
   return (
     <form
       onSubmit={(e) => {

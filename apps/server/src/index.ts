@@ -20,6 +20,7 @@ import { requireClientCredential } from "./middleware/require-client-credential"
 import { requestLog } from "./middleware/request-log";
 import { sentryContext } from "./middleware/sentry-context";
 import { session } from "./middleware/session";
+import { adminAgentRouter } from "./modules/admin-agent";
 import { analyticsRouter } from "./modules/analytics";
 import { auditLogRouter } from "./modules/audit-log";
 import {
@@ -238,6 +239,11 @@ app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
 
 // Admin routes — session or admin API key
+//
+// `/api/ai/admin/*` is the AI agent endpoint — single chat shared across
+// every admin module. Streaming SSE response, NOT enveloped, NOT in OpenAPI.
+// See `modules/admin-agent/routes.ts` for the rationale.
+app.route("/api/ai/admin", adminAgentRouter);
 app.route("/api/analytics", analyticsRouter);
 app.route("/api/announcement", announcementRouter);
 app.route("/api/audit-logs", auditLogRouter);

@@ -21,7 +21,6 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 
-import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
   Card,

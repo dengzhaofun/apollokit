@@ -2,8 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { SeasonForm } from "#/components/rank/SeasonForm"
+import { useSeasonForm } from "#/components/rank/use-season-form"
 import { useCreateRankSeason, useRankTierConfigs } from "#/hooks/use-rank"
 import { ApiError } from "#/lib/api-client"
+import type { RankTierConfig } from "#/lib/types/rank"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/rank/seasons/create")({
@@ -11,8 +13,6 @@ export const Route = createFileRoute("/_dashboard/rank/seasons/create")({
 })
 
 function RankSeasonCreatePage() {
-  const navigate = useNavigate()
-  const mutation = useCreateRankSeason()
   const { data: tierConfigs, isPending, error } = useRankTierConfigs()
 
   return (
@@ -26,27 +26,43 @@ function RankSeasonCreatePage() {
               {m.rank_failed_load()} {error.message}
             </div>
           ) : (
-            <SeasonForm
-              tierConfigs={tierConfigs ?? []}
-              isPending={mutation.isPending}
-              submitLabel={m.rank_save()}
-              onSubmit={async (values) => {
-                try {
-                  const row = await mutation.mutateAsync(values)
-                  toast.success(m.rank_season_created())
-                  navigate({
-                    to: "/rank/seasons/$seasonId",
-                    params: { seasonId: row.id },
-                  })
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error((err as Error).message)
-                }
-              }}
-            />
+            <CreateSeasonPanel tierConfigs={tierConfigs ?? []} />
           )}
         </div>
       </main>
     </>
+  )
+}
+
+/**
+ * Sub-component so `useSeasonForm` only mounts when tierConfigs are
+ * loaded — its defaultValues key off `tierConfigs[0].id`.
+ */
+function CreateSeasonPanel({ tierConfigs }: { tierConfigs: RankTierConfig[] }) {
+  const navigate = useNavigate()
+  const mutation = useCreateRankSeason()
+  const form = useSeasonForm({
+    tierConfigs,
+    onSubmit: async (values) => {
+      try {
+        const row = await mutation.mutateAsync(values)
+        toast.success(m.rank_season_created())
+        navigate({
+          to: "/rank/seasons/$seasonId",
+          params: { seasonId: row.id },
+        })
+      } catch (err) {
+        if (err instanceof ApiError) toast.error(err.body.error)
+        else toast.error((err as Error).message)
+      }
+    },
+  })
+  return (
+    <SeasonForm
+      form={form}
+      tierConfigs={tierConfigs}
+      isPending={mutation.isPending}
+      submitLabel={m.rank_save()}
+    />
   )
 }

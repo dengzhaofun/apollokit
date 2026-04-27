@@ -12,6 +12,7 @@ import { ConfigForm } from "#/components/check-in/ConfigForm"
 import { DeleteConfigDialog } from "#/components/check-in/DeleteConfigDialog"
 import { UserStatesTable } from "#/components/check-in/UserStatesTable"
 import { RewardsSection } from "#/components/check-in/RewardsSection"
+import { useConfigForm } from "#/components/check-in/use-config-form"
 import {
   useCheckInConfig,
   useUpdateCheckInConfig,
@@ -19,6 +20,7 @@ import {
 } from "#/hooks/use-check-in"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
+import type { CheckInConfig, UpdateConfigInput } from "#/lib/types/check-in"
 
 
 function getResetModeLabels(): Record<string, string> {
@@ -121,20 +123,10 @@ function CheckInDetailPage() {
 
           {editing ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <ConfigForm
-                defaultValues={{
-                  name: config.name,
-                  alias: config.alias,
-                  description: config.description,
-                  resetMode: config.resetMode,
-                  weekStartsOn: config.weekStartsOn,
-                  target: config.target,
-                  timezone: config.timezone,
-                  isActive: config.isActive,
-                }}
-                submitLabel={m.common_save_changes()}
+              <EditCheckInForm
+                config={config}
                 isPending={updateMutation.isPending}
-                onSubmit={async (values) => {
+                onSave={async (values) => {
                   try {
                     await updateMutation.mutateAsync({ id: config.id, ...values })
                     toast.success(m.checkin_config_updated())
@@ -248,5 +240,48 @@ function DetailItem({
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="text-sm">{value}</div>
     </div>
+  )
+}
+
+/**
+ * Edit form is split into its own component so that `useConfigForm`
+ * (which calls `useForm`) is only invoked while the user is actively
+ * editing — keeps the form state localized to the edit lifecycle and
+ * avoids rebuilding the controller on every detail-page render.
+ *
+ * Note: the AI assist panel is intentionally NOT wired up here in the
+ * MVP. Editing tends to be small targeted changes; assist is most
+ * useful from a blank slate. Adding it later is a one-liner — see
+ * `<AIAssistPanel surface="check-in:edit" ... />` in the create
+ * drawer for the pattern.
+ */
+function EditCheckInForm({
+  config,
+  isPending,
+  onSave,
+}: {
+  config: CheckInConfig
+  isPending: boolean
+  onSave: (values: UpdateConfigInput) => void | Promise<void>
+}) {
+  const form = useConfigForm({
+    defaultValues: {
+      name: config.name,
+      alias: config.alias,
+      description: config.description,
+      resetMode: config.resetMode,
+      weekStartsOn: config.weekStartsOn,
+      target: config.target,
+      timezone: config.timezone,
+      isActive: config.isActive,
+    },
+    onSubmit: onSave,
+  })
+  return (
+    <ConfigForm
+      form={form}
+      submitLabel={m.common_save_changes()}
+      isPending={isPending}
+    />
   )
 }

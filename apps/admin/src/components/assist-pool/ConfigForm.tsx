@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import {
@@ -20,15 +18,15 @@ import { Textarea } from "#/components/ui/textarea"
 import type {
   AssistContributionPolicy,
   AssistPoolMode,
-  CreateAssistPoolConfigInput,
 } from "#/lib/types/assist-pool"
 import * as m from "#/paraglide/messages.js"
+
+import type { AssistPoolFormApi } from "./use-config-form"
 
 type PolicyKind = AssistContributionPolicy["kind"]
 
 interface ConfigFormProps {
-  defaultValues?: Partial<CreateAssistPoolConfigInput>
-  onSubmit: (values: CreateAssistPoolConfigInput) => void | Promise<void>
+  form: AssistPoolFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -37,70 +35,13 @@ interface ConfigFormProps {
 }
 
 export function AssistPoolConfigForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
 }: ConfigFormProps) {
-  const initialPolicy =
-    defaultValues?.contributionPolicy ??
-    ({ kind: "fixed", amount: 20 } as AssistContributionPolicy)
-  const activityId = defaultValues?.activityId ?? null
-
-  const form = useForm({
-    defaultValues: {
-      name: defaultValues?.name ?? "",
-      alias: defaultValues?.alias ?? "",
-      description: defaultValues?.description ?? "",
-      mode: (defaultValues?.mode ?? "decrement") as AssistPoolMode,
-      targetAmount: defaultValues?.targetAmount ?? 100,
-      policyKind: initialPolicy.kind as PolicyKind,
-      fixedAmount: initialPolicy.kind === "fixed" ? initialPolicy.amount : 20,
-      uniformMin: initialPolicy.kind === "uniform" ? initialPolicy.min : 5,
-      uniformMax: initialPolicy.kind === "uniform" ? initialPolicy.max : 30,
-      decayBase: initialPolicy.kind === "decaying" ? initialPolicy.base : 30,
-      decayTailRatio:
-        initialPolicy.kind === "decaying" ? initialPolicy.tailRatio : 0.1,
-      decayTailFloor:
-        initialPolicy.kind === "decaying" ? initialPolicy.tailFloor : 1,
-      perAssisterLimit: defaultValues?.perAssisterLimit ?? 1,
-      initiatorCanAssist: defaultValues?.initiatorCanAssist ?? false,
-      expiresInSeconds: defaultValues?.expiresInSeconds ?? 86400,
-      isActive: defaultValues?.isActive ?? true,
-    },
-    onSubmit: async ({ value }) => {
-      let policy: AssistContributionPolicy
-      if (value.policyKind === "fixed") {
-        policy = { kind: "fixed", amount: value.fixedAmount }
-      } else if (value.policyKind === "uniform") {
-        policy = { kind: "uniform", min: value.uniformMin, max: value.uniformMax }
-      } else {
-        policy = {
-          kind: "decaying",
-          base: value.decayBase,
-          tailRatio: value.decayTailRatio,
-          tailFloor: value.decayTailFloor,
-        }
-      }
-      await onSubmit({
-        name: value.name,
-        alias: value.alias || null,
-        description: value.description || null,
-        mode: value.mode,
-        targetAmount: value.targetAmount,
-        contributionPolicy: policy,
-        perAssisterLimit: value.perAssisterLimit,
-        initiatorCanAssist: value.initiatorCanAssist,
-        expiresInSeconds: value.expiresInSeconds,
-        isActive: value.isActive,
-        activityId,
-      })
-    },
-  })
-
   return (
     <form
       id={id}

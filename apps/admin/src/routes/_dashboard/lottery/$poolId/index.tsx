@@ -22,6 +22,7 @@ import { Badge } from "#/components/ui/badge"
 import { Skeleton } from "#/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
+import { useLotteryPoolForm } from "#/components/lottery/use-pool-form"
 import { LotteryDeleteDialog } from "#/components/lottery/DeleteDialog"
 import { TierTable } from "#/components/lottery/TierTable"
 import { TierForm } from "#/components/lottery/TierForm"
@@ -210,26 +211,17 @@ function LotteryPoolDetailPage() {
           <TabsContent value="config" className="mt-4">
           {editing ? (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <LotteryPoolForm
-                defaultValues={{
-                  name: pool.name,
-                  alias: pool.alias,
-                  description: pool.description,
-                  isActive: pool.isActive,
-                  globalPullLimit: pool.globalPullLimit,
-                }}
-                submitLabel="Save Changes"
+              <EditLotteryPoolForm
+                pool={pool}
                 isPending={updatePool.isPending}
-                onSubmit={async (values) => {
+                onSave={async (values) => {
                   try {
                     await updatePool.mutateAsync({ id: pool.id, ...values })
                     toast.success("Pool updated")
                     setEditing(false)
                   } catch (err) {
                     toast.error(
-                      err instanceof ApiError
-                        ? err.body.error
-                        : "Failed to update pool",
+                      err instanceof ApiError ? err.body.error : "Failed to update pool",
                     )
                   }
                 }}
@@ -597,5 +589,33 @@ function DetailItem({
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="text-sm">{value}</div>
     </div>
+  )
+}
+
+function EditLotteryPoolForm({
+  pool,
+  isPending,
+  onSave,
+}: {
+  pool: NonNullable<ReturnType<typeof useLotteryPool>["data"]>
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useLotteryPoolForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useLotteryPoolForm({
+    defaultValues: {
+      name: pool.name,
+      alias: pool.alias,
+      description: pool.description,
+      isActive: pool.isActive,
+      globalPullLimit: pool.globalPullLimit,
+    },
+    onSubmit: onSave,
+  })
+  return (
+    <LotteryPoolForm
+      form={form}
+      submitLabel="Save Changes"
+      isPending={isPending}
+    />
   )
 }

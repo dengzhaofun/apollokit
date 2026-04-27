@@ -9,10 +9,11 @@ import {
   type ActivityScope,
 } from "#/components/activity/ActivityScopeFilter"
 import { LotteryPoolForm } from "#/components/lottery/PoolForm"
+import { useLotteryPoolForm } from "#/components/lottery/use-pool-form"
 import { LotteryPoolTable } from "#/components/lottery/PoolTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDialog } from "#/components/ui/form-dialog"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { useCreateLotteryPool } from "#/hooks/use-lottery"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
@@ -87,15 +88,33 @@ function CreateLotteryPoolDialog({ onClose }: { onClose: () => void }) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useLotteryPoolForm({
+    onSubmit: async (values) => {
+      try {
+        const row = await mutation.mutateAsync(values)
+        toast.success("Pool created")
+        onClose()
+        void navigate({
+          to: "/lottery/$poolId",
+          params: { poolId: row.id },
+        })
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to create",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={t("新建抽奖池", "New pool")}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -116,22 +135,8 @@ function CreateLotteryPoolDialog({ onClose }: { onClose: () => void }) {
         hideSubmitButton
         onStateChange={setFormState}
         isPending={mutation.isPending}
-        onSubmit={async (values) => {
-          try {
-            const row = await mutation.mutateAsync(values)
-            toast.success("Pool created")
-            onClose()
-            void navigate({
-              to: "/lottery/$poolId",
-              params: { poolId: row.id },
-            })
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : "Failed to create",
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDialog>
+    </FormDrawerWithAssist>
   )
 }
