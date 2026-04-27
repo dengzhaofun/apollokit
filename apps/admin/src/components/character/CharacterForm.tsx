@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
@@ -18,16 +16,13 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import type {
-  Character,
-  CharacterSide,
-  CreateCharacterInput,
-} from "#/lib/types/character"
+import type { CharacterSide } from "#/lib/types/character"
 import * as m from "#/paraglide/messages.js"
 
+import type { CharacterFormApi } from "./use-character-form"
+
 interface CharacterFormProps {
-  initial?: Character
-  onSubmit: (values: CreateCharacterInput) => void | Promise<void>
+  form: CharacterFormApi
   submitLabel: string
   isPending?: boolean
   id?: string
@@ -38,37 +33,13 @@ interface CharacterFormProps {
 const SIDE_NONE = "__none__"
 
 export function CharacterForm({
-  initial,
-  onSubmit,
+  form,
   submitLabel,
   isPending,
   id,
   hideSubmitButton,
   onStateChange,
 }: CharacterFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: initial?.name ?? "",
-      alias: initial?.alias ?? "",
-      description: initial?.description ?? "",
-      avatarUrl: initial?.avatarUrl ?? "",
-      portraitUrl: initial?.portraitUrl ?? "",
-      defaultSide: (initial?.defaultSide ?? null) as CharacterSide | null,
-      isActive: initial?.isActive ?? true,
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({
-        name: value.name.trim(),
-        alias: value.alias.trim() ? value.alias.trim() : null,
-        description: value.description.trim() ? value.description : null,
-        avatarUrl: value.avatarUrl.trim() ? value.avatarUrl : null,
-        portraitUrl: value.portraitUrl.trim() ? value.portraitUrl : null,
-        defaultSide: value.defaultSide,
-        isActive: value.isActive,
-      })
-    },
-  })
-
   return (
     <form
       id={id}

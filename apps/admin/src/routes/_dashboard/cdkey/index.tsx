@@ -7,11 +7,12 @@ import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
 import { CdkeyBatchForm } from "#/components/cdkey/BatchForm"
+import { useBatchForm } from "#/components/cdkey/use-batch-form"
 import { DataTable } from "#/components/data-table/DataTable"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { WriteGate } from "#/components/WriteGate"
 import {
   CDKEY_BATCH_FILTER_DEFS,
@@ -165,16 +166,33 @@ function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useBatchForm({
+    onSubmit: async (input) => {
+      try {
+        const created = await mutation.mutateAsync(input)
+        toast.success(m.cdkey_batch_created())
+        onClose()
+        void navigate({
+          to: "/cdkey/$batchId",
+          params: { batchId: created.id },
+        })
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : m.cdkey_failed_create(),
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.cdkey_new_batch()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -196,22 +214,8 @@ function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
         onStateChange={setFormState}
         isPending={mutation.isPending}
         submitLabel={m.common_create()}
-        onSubmit={async (input) => {
-          try {
-            const created = await mutation.mutateAsync(input)
-            toast.success(m.cdkey_batch_created())
-            onClose()
-            void navigate({
-              to: "/cdkey/$batchId",
-              params: { batchId: created.id },
-            })
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : m.cdkey_failed_create(),
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }

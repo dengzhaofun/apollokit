@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { ShopDeleteDialog } from "#/components/shop/DeleteDialog"
 import { ProductForm } from "#/components/shop/ProductForm"
+import { useProductForm } from "#/components/shop/use-product-form"
 import { Button } from "#/components/ui/button"
 import {
   useDeleteShopProduct,
@@ -82,33 +83,10 @@ function ShopProductEditPage() {
             </div>
           ) : (
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <ProductForm
-                defaultValues={{
-                  categoryId: product.categoryId,
-                  alias: product.alias,
-                  name: product.name,
-                  description: product.description,
-                  coverImage: product.coverImage,
-                  galleryImages: product.galleryImages,
-                  productType: product.productType,
-                  costItems: product.costItems,
-                  rewardItems: product.rewardItems,
-                  timeWindowType: product.timeWindowType,
-                  availableFrom: product.availableFrom,
-                  availableTo: product.availableTo,
-                  eligibilityAnchor: product.eligibilityAnchor,
-                  eligibilityWindowSeconds: product.eligibilityWindowSeconds,
-                  refreshCycle: product.refreshCycle,
-                  refreshLimit: product.refreshLimit,
-                  userLimit: product.userLimit,
-                  globalLimit: product.globalLimit,
-                  sortOrder: product.sortOrder,
-                  isActive: product.isActive,
-                  tagIds: product.tags.map((t) => t.id),
-                }}
+              <EditShopProductPanel
+                product={product}
                 isPending={updateMutation.isPending}
-                submitLabel={m.common_save_changes()}
-                onSubmit={async (input) => {
+                onSave={async (input) => {
                   try {
                     await updateMutation.mutateAsync({
                       id: product.id,
@@ -129,5 +107,49 @@ function ShopProductEditPage() {
         </div>
       </main>
     </>
+  )
+}
+
+function EditShopProductPanel({
+  product,
+  isPending,
+  onSave,
+}: {
+  product: NonNullable<ReturnType<typeof useShopProduct>["data"]>
+  isPending: boolean
+  onSave: (input: Parameters<NonNullable<Parameters<typeof useProductForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useProductForm({
+    defaultValues: {
+      categoryId: product.categoryId,
+      alias: product.alias,
+      name: product.name,
+      description: product.description,
+      coverImage: product.coverImage,
+      galleryImages: product.galleryImages,
+      productType: product.productType,
+      costItems: product.costItems,
+      rewardItems: product.rewardItems,
+      timeWindowType: product.timeWindowType,
+      availableFrom: product.availableFrom,
+      availableTo: product.availableTo,
+      eligibilityAnchor: product.eligibilityAnchor,
+      eligibilityWindowSeconds: product.eligibilityWindowSeconds,
+      refreshCycle: product.refreshCycle,
+      refreshLimit: product.refreshLimit,
+      userLimit: product.userLimit,
+      globalLimit: product.globalLimit,
+      sortOrder: product.sortOrder,
+      isActive: product.isActive,
+      tagIds: product.tags.map((t) => t.id),
+    },
+    onSubmit: onSave,
+  })
+  return (
+    <ProductForm
+      form={form}
+      isPending={isPending}
+      submitLabel={m.common_save_changes()}
+    />
   )
 }

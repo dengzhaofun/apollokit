@@ -8,9 +8,10 @@ import * as m from "#/paraglide/messages.js"
 import { DataTable } from "#/components/data-table/DataTable"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { TeamConfigForm } from "#/components/team/TeamConfigForm"
+import { useTeamConfigForm } from "#/components/team/use-config-form"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
-import { FormDialog } from "#/components/ui/form-dialog"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import {
   useCreateTeamConfig,
   useTeamConfig,
@@ -147,15 +148,29 @@ function CreateTeamConfigDialog({ onClose }: DialogShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useTeamConfigForm({
+    onSubmit: async (values) => {
+      try {
+        await createMutation.mutateAsync(values)
+        toast.success(m.team_config_created())
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to create team config",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !createMutation.isPending}
       title={m.team_new_config()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -176,19 +191,9 @@ function CreateTeamConfigDialog({ onClose }: DialogShellProps) {
         hideSubmitButton
         onStateChange={setFormState}
         isPending={createMutation.isPending}
-        onSubmit={async (values) => {
-          try {
-            await createMutation.mutateAsync(values)
-            toast.success(m.team_config_created())
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : "Failed to create team config",
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDialog>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -197,21 +202,65 @@ function EditTeamConfigDialog({
   onClose,
 }: DialogShellProps & { id: string }) {
   const { data: cfg, isPending: loading, error } = useTeamConfig(id)
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !cfg) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Team config not found"}
+      </div>
+    )
+  }
+  return <EditTeamConfigDialogLoaded cfg={cfg} onClose={onClose} />
+}
+
+function EditTeamConfigDialogLoaded({
+  cfg,
+  onClose,
+}: DialogShellProps & {
+  cfg: NonNullable<ReturnType<typeof useTeamConfig>["data"]>
+}) {
   const updateMutation = useUpdateTeamConfig()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useTeamConfigForm({
+    defaultValues: {
+      name: cfg.name,
+      alias: cfg.alias,
+      maxMembers: cfg.maxMembers,
+      autoDissolveOnLeaderLeave: cfg.autoDissolveOnLeaderLeave,
+      allowQuickMatch: cfg.allowQuickMatch,
+    },
+    onSubmit: async (values) => {
+      try {
+        await updateMutation.mutateAsync({ id: cfg.id, input: values })
+        toast.success("Team config updated")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !updateMutation.isPending}
       title={m.common_edit()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -220,9 +269,7 @@ function EditTeamConfigDialog({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={
-              !cfg || !formState.canSubmit || updateMutation.isPending
-            }
+            disabled={!formState.canSubmit || updateMutation.isPending}
           >
             {updateMutation.isPending
               ? m.common_saving()
@@ -231,40 +278,13 @@ function EditTeamConfigDialog({
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !cfg ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Team config not found"}
-        </div>
-      ) : (
-        <TeamConfigForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          defaultValues={{
-            name: cfg.name,
-            alias: cfg.alias,
-            maxMembers: cfg.maxMembers,
-            autoDissolveOnLeaderLeave: cfg.autoDissolveOnLeaderLeave,
-            allowQuickMatch: cfg.allowQuickMatch,
-          }}
-          isPending={updateMutation.isPending}
-          onSubmit={async (values) => {
-            try {
-              await updateMutation.mutateAsync({ id: cfg.id, input: values })
-              toast.success("Team config updated")
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDialog>
+      <TeamConfigForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={updateMutation.isPending}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

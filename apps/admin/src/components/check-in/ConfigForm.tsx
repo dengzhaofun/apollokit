@@ -1,4 +1,3 @@
-import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
@@ -17,10 +16,9 @@ import {
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
 import { Label } from "#/components/ui/label"
-import type {
-  CreateConfigInput,
-  ResetMode,
-} from "#/lib/types/check-in"
+import type { ResetMode } from "#/lib/types/check-in"
+
+import type { CheckInFormApi } from "./use-config-form"
 
 const TIMEZONES = Intl.supportedValuesOf("timeZone")
 
@@ -45,8 +43,11 @@ function getWeekDayLabels(): string[] {
 }
 
 interface ConfigFormProps {
-  defaultValues?: Partial<CreateConfigInput>
-  onSubmit: (values: CreateConfigInput) => void | Promise<void>
+  /**
+   * The TanStack Form instance, owned by the caller — see
+   * `use-config-form.ts` for why it's lifted out of this component.
+   */
+  form: CheckInFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -55,8 +56,7 @@ interface ConfigFormProps {
 }
 
 export function ConfigForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel = m.common_create(),
   id,
@@ -65,33 +65,6 @@ export function ConfigForm({
 }: ConfigFormProps) {
   const RESET_MODE_LABELS = getResetModeLabels()
   const WEEK_DAY_LABELS = getWeekDayLabels()
-  const form = useForm({
-    defaultValues: {
-      name: defaultValues?.name ?? "",
-      alias: defaultValues?.alias ?? "",
-      description: defaultValues?.description ?? "",
-      resetMode: defaultValues?.resetMode ?? ("none" as ResetMode),
-      weekStartsOn: defaultValues?.weekStartsOn ?? 1,
-      target: defaultValues?.target ?? (null as number | null),
-      timezone: defaultValues?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-      isActive: defaultValues?.isActive ?? true,
-      activityId: defaultValues?.activityId ?? (null as string | null),
-    },
-    onSubmit: async ({ value }) => {
-      const input: CreateConfigInput = {
-        name: value.name,
-        resetMode: value.resetMode,
-        weekStartsOn: value.weekStartsOn,
-        timezone: value.timezone,
-        isActive: value.isActive,
-        alias: value.alias || null,
-        description: value.description || null,
-        target: value.target,
-        activityId: value.activityId,
-      }
-      await onSubmit(input)
-    },
-  })
 
   return (
     <form

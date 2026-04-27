@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import {
@@ -18,16 +16,12 @@ import {
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
 import * as m from "#/paraglide/messages.js"
-import type {
-  BannerGroup,
-  BannerLayout,
-  CreateBannerGroupInput,
-} from "#/lib/types/banner"
+import type { BannerLayout } from "#/lib/types/banner"
+
+import type { GroupFormApi } from "./use-group-form"
 
 interface GroupFormProps {
-  initial?: BannerGroup
-  defaultValues?: Partial<CreateBannerGroupInput>
-  onSubmit: (values: CreateBannerGroupInput) => void | Promise<void>
+  form: GroupFormApi
   submitLabel: string
   isPending?: boolean
   id?: string
@@ -36,42 +30,13 @@ interface GroupFormProps {
 }
 
 export function GroupForm({
-  initial,
-  defaultValues,
-  onSubmit,
+  form,
   submitLabel,
   isPending,
   id,
   hideSubmitButton,
   onStateChange,
 }: GroupFormProps) {
-  const activityId = defaultValues?.activityId ?? initial?.activityId ?? null
-
-  const form = useForm({
-    defaultValues: {
-      alias: defaultValues?.alias ?? initial?.alias ?? "",
-      name: defaultValues?.name ?? initial?.name ?? "",
-      description: defaultValues?.description ?? initial?.description ?? "",
-      layout:
-        (defaultValues?.layout as BannerLayout | undefined) ??
-        (initial?.layout as BannerLayout | undefined) ??
-        ("carousel" as BannerLayout),
-      intervalMs: defaultValues?.intervalMs ?? initial?.intervalMs ?? 4000,
-      isActive: defaultValues?.isActive ?? initial?.isActive ?? true,
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({
-        alias: value.alias.trim() ? value.alias.trim() : null,
-        name: value.name.trim(),
-        description: value.description.trim() ? value.description : null,
-        layout: value.layout,
-        intervalMs: value.intervalMs,
-        isActive: value.isActive,
-        activityId,
-      })
-    },
-  })
-
   return (
     <form
       id={id}

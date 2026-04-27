@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -19,11 +17,13 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Switch } from "#/components/ui/switch"
-import type { CreateMailInput, MailTargetType } from "#/lib/types/mail"
-import type { RewardEntry } from "#/lib/types/rewards"
+import type { MailTargetType } from "#/lib/types/mail"
+
+import type { MessageFormApi } from "./use-message-form"
 
 interface MessageFormProps {
-  onSubmit: (values: CreateMailInput) => void | Promise<void>
+  /** Form instance owned by the caller — see `use-message-form.ts`. */
+  form: MessageFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -32,59 +32,13 @@ interface MessageFormProps {
 }
 
 export function MessageForm({
-  onSubmit,
+  form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
 }: MessageFormProps) {
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      content: "",
-      targetType: "broadcast" as MailTargetType,
-      recipientsRaw: "",
-      requireRead: false,
-      expiresAt: "",
-      entries: [] as RewardEntry[],
-      formError: "",
-    },
-    onSubmit: async ({ value, formApi }) => {
-      formApi.setFieldValue("formError", "")
-
-      if (!value.title.trim() || !value.content.trim()) {
-        formApi.setFieldValue("formError", m.mail_error_title_content_required())
-        return
-      }
-
-      const rewards = value.entries.filter((e) => e.id && e.count > 0)
-
-      let targetUserIds: string[] | undefined
-      if (value.targetType === "multicast") {
-        targetUserIds = value.recipientsRaw
-          .split(/[\n,]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-        if (targetUserIds.length === 0) {
-          formApi.setFieldValue("formError", m.mail_error_recipients_required())
-          return
-        }
-      }
-
-      const payload: CreateMailInput = {
-        title: value.title.trim(),
-        content: value.content.trim(),
-        rewards,
-        targetType: value.targetType,
-        targetUserIds,
-        requireRead: value.requireRead,
-        expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : null,
-      }
-      await onSubmit(payload)
-    },
-  })
-
   return (
     <form
       id={id}

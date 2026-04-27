@@ -4,10 +4,11 @@ import { ContactIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { CharacterForm } from "#/components/character/CharacterForm"
+import { useCharacterForm } from "#/components/character/use-character-form"
 import { CharacterTable } from "#/components/character/CharacterTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { FormDrawer } from "#/components/ui/form-drawer"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import {
   useCharacter,
   useCreateCharacter,
@@ -83,16 +84,29 @@ function CreateCharacterDrawer({ onClose }: DrawerShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useCharacterForm({
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync(values)
+        toast.success(m.character_created())
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : m.character_failed_create(),
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.character_new()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -114,19 +128,9 @@ function CreateCharacterDrawer({ onClose }: DrawerShellProps) {
         onStateChange={setFormState}
         isPending={mutation.isPending}
         submitLabel={m.common_create()}
-        onSubmit={async (values) => {
-          try {
-            await mutation.mutateAsync(values)
-            toast.success(m.character_created())
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError ? err.body.error : m.character_failed_create(),
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDrawer>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -135,22 +139,58 @@ function EditCharacterDrawer({
   onClose,
 }: DrawerShellProps & { id: string }) {
   const { data: character, isPending: loading, error } = useCharacter(id)
+
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !character) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Character not found"}
+      </div>
+    )
+  }
+  return <EditCharacterDrawerLoaded character={character} onClose={onClose} />
+}
+
+function EditCharacterDrawerLoaded({
+  character,
+  onClose,
+}: DrawerShellProps & { character: NonNullable<ReturnType<typeof useCharacter>["data"]> }) {
   const mutation = useUpdateCharacter()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useCharacterForm({
+    initial: character,
+    onSubmit: async (values) => {
+      try {
+        await mutation.mutateAsync({ id: character.id, input: values })
+        toast.success("Character updated")
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDrawer
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !mutation.isPending}
       title={m.common_edit()}
-      size="lg"
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -159,42 +199,21 @@ function EditCharacterDrawer({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={!character || !formState.canSubmit || mutation.isPending}
+            disabled={!formState.canSubmit || mutation.isPending}
           >
             {mutation.isPending ? m.common_saving() : m.common_save_changes()}
           </Button>
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !character ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Character not found"}
-        </div>
-      ) : (
-        <CharacterForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          initial={character}
-          isPending={mutation.isPending}
-          submitLabel={m.common_save_changes()}
-          onSubmit={async (values) => {
-            try {
-              await mutation.mutateAsync({ id: character.id, input: values })
-              toast.success("Character updated")
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDrawer>
+      <CharacterForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={mutation.isPending}
+        submitLabel={m.common_save_changes()}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

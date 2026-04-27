@@ -4,6 +4,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { CharacterForm } from "#/components/character/CharacterForm"
+import { useCharacterForm } from "#/components/character/use-character-form"
 import { PageHeaderActions } from "#/components/PageHeader"
 import {
   AlertDialog,
@@ -76,11 +77,10 @@ function CharacterDetailPage() {
               {m.common_loading()}
             </div>
           ) : (
-            <CharacterForm
-              initial={character}
+            <EditCharacterPanel
+              character={character}
               isPending={updateMutation.isPending}
-              submitLabel={m.common_save_changes()}
-              onSubmit={async (values) => {
+              onSave={async (values) => {
                 try {
                   await updateMutation.mutateAsync({
                     id: characterId,
@@ -117,5 +117,28 @@ function CharacterDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/**
+ * Edit form lifted into a sub-component so `useCharacterForm` runs only
+ * when we have data and is keyed by character.
+ */
+function EditCharacterPanel({
+  character,
+  isPending,
+  onSave,
+}: {
+  character: NonNullable<ReturnType<typeof useCharacter>["data"]>
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useCharacterForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useCharacterForm({ initial: character, onSubmit: onSave })
+  return (
+    <CharacterForm
+      form={form}
+      isPending={isPending}
+      submitLabel={m.common_save_changes()}
+    />
   )
 }

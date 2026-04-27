@@ -5,11 +5,12 @@ import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
 
 import { Button } from "#/components/ui/button"
-import { FormDialog } from "#/components/ui/form-dialog"
+import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { DefinitionForm } from "#/components/currency/DefinitionForm"
+import { useDefinitionForm } from "#/components/currency/use-definition-form"
 import { DefinitionTable } from "#/components/currency/DefinitionTable"
 import { LedgerTable } from "#/components/currency/LedgerTable"
 import {
@@ -163,15 +164,29 @@ function CreateCurrencyDialog({ onClose }: DialogShellProps) {
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useDefinitionForm({
+    onSubmit: async (values) => {
+      try {
+        await createMutation.mutateAsync(values)
+        toast.success(m.currency_created())
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : m.currency_failed_create(),
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !createMutation.isPending}
       title={m.currency_new_definition()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -192,21 +207,9 @@ function CreateCurrencyDialog({ onClose }: DialogShellProps) {
         hideSubmitButton
         onStateChange={setFormState}
         isPending={createMutation.isPending}
-        onSubmit={async (values) => {
-          try {
-            await createMutation.mutateAsync(values)
-            toast.success(m.currency_created())
-            onClose()
-          } catch (err) {
-            toast.error(
-              err instanceof ApiError
-                ? err.body.error
-                : m.currency_failed_create(),
-            )
-          }
-        }}
+        form={form}
       />
-    </FormDialog>
+    </FormDrawerWithAssist>
   )
 }
 
@@ -215,21 +218,67 @@ function EditCurrencyDialog({
   onClose,
 }: DialogShellProps & { id: string }) {
   const { data: currency, isPending: loading, error } = useCurrency(id)
+  if (loading) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        {m.common_loading()}
+      </div>
+    )
+  }
+  if (error || !currency) {
+    return (
+      <div className="py-10 text-center text-sm text-destructive">
+        {error?.message ?? "Currency not found"}
+      </div>
+    )
+  }
+  return <EditCurrencyDialogLoaded currency={currency} onClose={onClose} />
+}
+
+function EditCurrencyDialogLoaded({
+  currency,
+  onClose,
+}: DialogShellProps & {
+  currency: NonNullable<ReturnType<typeof useCurrency>["data"]>
+}) {
   const updateMutation = useUpdateCurrency()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
+  const form = useDefinitionForm({
+    defaultValues: {
+      name: currency.name,
+      alias: currency.alias,
+      description: currency.description,
+      icon: currency.icon,
+      sortOrder: currency.sortOrder,
+      isActive: currency.isActive,
+      activityId: currency.activityId,
+    },
+    onSubmit: async (values) => {
+      try {
+        await updateMutation.mutateAsync({ id: currency.id, ...values })
+        toast.success(m.currency_updated())
+        onClose()
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.body.error : "Failed to update",
+        )
+      }
+    },
+  })
 
   return (
-    <FormDialog
+    <FormDrawerWithAssist
       open
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
       isDirty={formState.isDirty && !updateMutation.isPending}
       title={m.common_edit()}
+      form={form}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -238,9 +287,7 @@ function EditCurrencyDialog({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={
-              !currency || !formState.canSubmit || updateMutation.isPending
-            }
+            disabled={!formState.canSubmit || updateMutation.isPending}
           >
             {updateMutation.isPending
               ? m.common_saving()
@@ -249,42 +296,13 @@ function EditCurrencyDialog({
         </>
       }
     >
-      {loading ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          {m.common_loading()}
-        </div>
-      ) : error || !currency ? (
-        <div className="py-10 text-center text-sm text-destructive">
-          {error?.message ?? "Currency not found"}
-        </div>
-      ) : (
-        <DefinitionForm
-          id={FORM_ID}
-          hideSubmitButton
-          onStateChange={setFormState}
-          defaultValues={{
-            name: currency.name,
-            alias: currency.alias,
-            description: currency.description,
-            icon: currency.icon,
-            sortOrder: currency.sortOrder,
-            isActive: currency.isActive,
-            activityId: currency.activityId,
-          }}
-          isPending={updateMutation.isPending}
-          onSubmit={async (values) => {
-            try {
-              await updateMutation.mutateAsync({ id: currency.id, ...values })
-              toast.success(m.currency_updated())
-              onClose()
-            } catch (err) {
-              toast.error(
-                err instanceof ApiError ? err.body.error : "Failed to update",
-              )
-            }
-          }}
-        />
-      )}
-    </FormDialog>
+      <DefinitionForm
+        id={FORM_ID}
+        hideSubmitButton
+        onStateChange={setFormState}
+        isPending={updateMutation.isPending}
+        form={form}
+      />
+    </FormDrawerWithAssist>
   )
 }

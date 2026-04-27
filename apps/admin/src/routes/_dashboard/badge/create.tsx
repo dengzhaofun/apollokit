@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { BadgeNodeForm } from "#/components/badge/BadgeNodeForm"
 import { BadgeTemplatePicker } from "#/components/badge/BadgeTemplatePicker"
+import { useBadgeNodeForm } from "#/components/badge/use-node-form"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
@@ -74,11 +75,10 @@ function BadgeCreatePage() {
             </TabsContent>
 
             <TabsContent value="custom" className="mt-4">
-              <BadgeNodeForm
+              <CustomBadgePanel
                 existingKeys={existingKeys}
                 isPending={createMutation.isPending}
-                submitLabel={m.common_create()}
-                onSubmit={async (values) => {
+                onSave={async (values) => {
                   try {
                     const row = await createMutation.mutateAsync(values)
                     toast.success(m.badge_created())
@@ -97,5 +97,25 @@ function BadgeCreatePage() {
         </div>
       </main>
     </>
+  )
+}
+
+function CustomBadgePanel({
+  existingKeys,
+  isPending,
+  onSave,
+}: {
+  existingKeys: string[]
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useBadgeNodeForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useBadgeNodeForm({ onSubmit: onSave })
+  return (
+    <BadgeNodeForm
+      form={form}
+      existingKeys={existingKeys}
+      isPending={isPending}
+      submitLabel={m.common_create()}
+    />
   )
 }

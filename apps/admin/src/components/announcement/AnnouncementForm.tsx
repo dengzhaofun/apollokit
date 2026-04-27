@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
@@ -20,15 +18,15 @@ import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
 import * as m from "#/paraglide/messages.js"
 import type {
-  Announcement,
   AnnouncementKind,
   AnnouncementSeverity,
-  CreateAnnouncementInput,
 } from "#/lib/types/announcement"
 
+import type { AnnouncementFormApi } from "./use-announcement-form"
+
 interface AnnouncementFormProps {
-  initial?: Announcement
-  onSubmit: (values: CreateAnnouncementInput) => void | Promise<void>
+  /** Form instance owned by the caller — see `use-announcement-form.ts`. */
+  form: AnnouncementFormApi
   submitLabel: string
   isPending?: boolean
   /** true = show alias read-only (edit mode). */
@@ -38,26 +36,8 @@ interface AnnouncementFormProps {
   onStateChange?: (state: FormBridgeState) => void
 }
 
-function toLocalInput(iso: string | null | undefined): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  )
-}
-
-function toIsoOrNull(local: string): string | null {
-  if (!local) return null
-  const d = new Date(local)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toISOString()
-}
-
 export function AnnouncementForm({
-  initial,
-  onSubmit,
+  form,
   submitLabel,
   isPending,
   aliasLocked,
@@ -65,39 +45,6 @@ export function AnnouncementForm({
   hideSubmitButton,
   onStateChange,
 }: AnnouncementFormProps) {
-  const form = useForm({
-    defaultValues: {
-      alias: initial?.alias ?? "",
-      kind: (initial?.kind ?? "modal") as AnnouncementKind,
-      title: initial?.title ?? "",
-      body: initial?.body ?? "",
-      coverImageUrl: initial?.coverImageUrl ?? "",
-      ctaUrl: initial?.ctaUrl ?? "",
-      ctaLabel: initial?.ctaLabel ?? "",
-      priority: initial?.priority ?? 0,
-      severity: (initial?.severity ?? "info") as AnnouncementSeverity,
-      isActive: initial?.isActive ?? true,
-      visibleFrom: toLocalInput(initial?.visibleFrom),
-      visibleUntil: toLocalInput(initial?.visibleUntil),
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({
-        alias: value.alias.trim(),
-        kind: value.kind,
-        title: value.title.trim(),
-        body: value.body,
-        coverImageUrl: value.coverImageUrl.trim() ? value.coverImageUrl.trim() : null,
-        ctaUrl: value.ctaUrl.trim() ? value.ctaUrl.trim() : null,
-        ctaLabel: value.ctaLabel.trim() ? value.ctaLabel.trim() : null,
-        priority: value.priority,
-        severity: value.severity,
-        isActive: value.isActive,
-        visibleFrom: toIsoOrNull(value.visibleFrom),
-        visibleUntil: toIsoOrNull(value.visibleUntil),
-      })
-    },
-  })
-
   return (
     <form
       id={id}

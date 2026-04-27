@@ -1,4 +1,3 @@
-import { useForm } from "@tanstack/react-form"
 import * as m from "#/paraglide/messages.js"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { Button } from "#/components/ui/button"
@@ -11,11 +10,11 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import type { CreateCurrencyInput } from "#/lib/types/currency"
+
+import type { DefinitionFormApi } from "./use-definition-form"
 
 interface DefinitionFormProps {
-  defaultValues?: Partial<CreateCurrencyInput>
-  onSubmit: (values: CreateCurrencyInput) => void | Promise<void>
+  form: DefinitionFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -24,38 +23,13 @@ interface DefinitionFormProps {
 }
 
 export function DefinitionForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
 }: DefinitionFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: defaultValues?.name ?? "",
-      alias: defaultValues?.alias ?? "",
-      description: defaultValues?.description ?? "",
-      icon: defaultValues?.icon ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
-      isActive: defaultValues?.isActive ?? true,
-      activityId: defaultValues?.activityId ?? (null as string | null),
-    },
-    onSubmit: async ({ value }) => {
-      const input: CreateCurrencyInput = {
-        name: value.name,
-        alias: value.alias || null,
-        description: value.description || null,
-        icon: value.icon || null,
-        sortOrder: value.sortOrder,
-        isActive: value.isActive,
-        activityId: value.activityId,
-      }
-      await onSubmit(input)
-    },
-  })
-
   return (
     <form
       id={id}

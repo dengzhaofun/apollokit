@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -19,11 +17,12 @@ import {
 import { Separator } from "#/components/ui/separator"
 import { Switch } from "#/components/ui/switch"
 import { Textarea } from "#/components/ui/textarea"
-import type { CdkeyCodeType, CreateBatchInput } from "#/lib/types/cdkey"
-import type { RewardEntry } from "#/lib/types/rewards"
+import type { CdkeyCodeType } from "#/lib/types/cdkey"
+
+import type { BatchFormApi } from "./use-batch-form"
 
 interface BatchFormProps {
-  onSubmit: (input: CreateBatchInput) => void | Promise<void>
+  form: BatchFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -32,51 +31,13 @@ interface BatchFormProps {
 }
 
 export function CdkeyBatchForm({
-  onSubmit,
+  form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
 }: BatchFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      alias: "",
-      description: "",
-      codeType: "universal" as CdkeyCodeType,
-      universalCode: "",
-      initialCount: 100,
-      totalLimit: "",
-      perUserLimit: 1,
-      startsAt: "",
-      endsAt: "",
-      isActive: true,
-      reward: [] as RewardEntry[],
-    },
-    onSubmit: async ({ value }) => {
-      if (value.reward.length === 0) return
-      const input: CreateBatchInput = {
-        name: value.name,
-        alias: value.alias.trim() || null,
-        description: value.description.trim() || null,
-        codeType: value.codeType,
-        reward: value.reward,
-        perUserLimit: value.perUserLimit,
-        isActive: value.isActive,
-        startsAt: value.startsAt ? new Date(value.startsAt).toISOString() : null,
-        endsAt: value.endsAt ? new Date(value.endsAt).toISOString() : null,
-      }
-      if (value.codeType === "universal") {
-        input.totalLimit = value.totalLimit ? Number(value.totalLimit) : null
-        if (value.universalCode.trim()) input.universalCode = value.universalCode.trim()
-      } else {
-        input.initialCount = value.initialCount
-      }
-      await onSubmit(input)
-    },
-  })
-
   return (
     <form
       id={id}

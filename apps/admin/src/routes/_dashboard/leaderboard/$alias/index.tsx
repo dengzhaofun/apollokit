@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
+import { useLeaderboardForm } from "#/components/leaderboard/use-config-form"
 import { LeaderboardLivePreview } from "#/components/leaderboard/LivePreview"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -113,11 +114,10 @@ function LeaderboardDetailPage() {
 
           <TabsContent value="edit" className="mt-4">
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <LeaderboardConfigForm
-                defaultValues={config}
+              <EditLeaderboardForm
+                config={config}
                 isPending={updateMutation.isPending}
-                submitLabel="保存修改"
-                onSubmit={async (values) => {
+                onSave={async (values) => {
                   try {
                     const { alias: _alias, ...patch } = values
                     void _alias
@@ -177,5 +177,27 @@ function LeaderboardDetailPage() {
         </Tabs>
       </main>
     </>
+  )
+}
+
+/** Sub-component so `useLeaderboardForm` only mounts when we have data. */
+function EditLeaderboardForm({
+  config,
+  isPending,
+  onSave,
+}: {
+  config: Parameters<typeof useLeaderboardForm>[0]["defaultValues"] extends infer D
+    ? D extends Record<string, unknown> ? D : never
+    : never
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useLeaderboardForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  const form = useLeaderboardForm({ defaultValues: config, onSubmit: onSave })
+  return (
+    <LeaderboardConfigForm
+      form={form}
+      isPending={isPending}
+      submitLabel="保存修改"
+    />
   )
 }

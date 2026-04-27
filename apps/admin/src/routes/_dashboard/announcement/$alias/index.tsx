@@ -4,6 +4,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { AnnouncementForm } from "#/components/announcement/AnnouncementForm"
+import { useAnnouncementForm } from "#/components/announcement/use-announcement-form"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,12 +99,11 @@ function AnnouncementDetailPage() {
           </div>
         ) : data ? (
           <div className="mx-auto max-w-3xl rounded-xl border bg-card p-6 shadow-sm">
-            <AnnouncementForm
+            <EditAnnouncementForm
               initial={data}
-              aliasLocked
+              alias={alias}
               isPending={updateMutation.isPending}
-              submitLabel={m.announcement_submit_save()}
-              onSubmit={async (values) => {
+              onSave={async (values) => {
                 try {
                   // alias is immutable in edit mode; strip before PATCH.
                   const { alias: _alias, ...patch } = values
@@ -120,5 +120,33 @@ function AnnouncementDetailPage() {
         ) : null}
       </main>
     </>
+  )
+}
+
+/**
+ * Edit form lifted into a sub-component so `useAnnouncementForm` only
+ * runs while we have data — same reason check-in's edit page splits its
+ * form into `EditCheckInForm`.
+ */
+function EditAnnouncementForm({
+  initial,
+  alias,
+  isPending,
+  onSave,
+}: {
+  initial: NonNullable<ReturnType<typeof useAnnouncement>["data"]>
+  alias: string
+  isPending: boolean
+  onSave: (values: Parameters<NonNullable<Parameters<typeof useAnnouncementForm>[0]["onSubmit"]>>[0]) => void | Promise<void>
+}) {
+  void alias
+  const form = useAnnouncementForm({ initial, onSubmit: onSave })
+  return (
+    <AnnouncementForm
+      form={form}
+      aliasLocked
+      isPending={isPending}
+      submitLabel={m.announcement_submit_save()}
+    />
   )
 }

@@ -1,5 +1,3 @@
-import { useForm } from "@tanstack/react-form"
-
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Checkbox } from "#/components/ui/checkbox"
@@ -9,11 +7,11 @@ import {
 } from "#/components/ui/form-state-bridge"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
-import type { CreateTeamConfigInput } from "#/lib/types/team"
+
+import type { TeamConfigFormApi } from "./use-config-form"
 
 interface TeamConfigFormProps {
-  defaultValues?: Partial<CreateTeamConfigInput>
-  onSubmit: (values: CreateTeamConfigInput) => void | Promise<void>
+  form: TeamConfigFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -22,33 +20,13 @@ interface TeamConfigFormProps {
 }
 
 export function TeamConfigForm({
-  defaultValues,
-  onSubmit,
+  form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
 }: TeamConfigFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: defaultValues?.name ?? "",
-      alias: defaultValues?.alias ?? "",
-      maxMembers: defaultValues?.maxMembers ?? 4,
-      autoDissolveOnLeaderLeave: defaultValues?.autoDissolveOnLeaderLeave ?? false,
-      allowQuickMatch: defaultValues?.allowQuickMatch ?? false,
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({
-        name: value.name,
-        alias: value.alias || null,
-        maxMembers: value.maxMembers,
-        autoDissolveOnLeaderLeave: value.autoDissolveOnLeaderLeave,
-        allowQuickMatch: value.allowQuickMatch,
-      })
-    },
-  })
-
   return (
     <form
       id={id}
