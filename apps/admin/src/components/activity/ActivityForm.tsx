@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import { useState } from "react"
 
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
@@ -36,6 +37,63 @@ function fromLocalInput(val: string): string {
   return new Date(val).toISOString()
 }
 
+/** Add `days` days to a `<input type="datetime-local">` string. */
+function addDaysLocal(localVal: string, days: number): string {
+  if (!localVal) return ""
+  const d = new Date(localVal)
+  if (Number.isNaN(d.getTime())) return ""
+  d.setDate(d.getDate() + days)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/**
+ * 简单模式下，从 startAt/endAt 推出剩余 3 个时间点：
+ *   - visibleAt   = startAt          (无预热期)
+ *   - rewardEndAt = endAt + 7 天     (默认 7 天领奖窗口)
+ *   - hiddenAt    = rewardEndAt + 30 天  (默认 30 天后归档)
+ * 想自定义就切到进阶模式。
+ */
+function deriveSimpleTimes(startLocal: string, endLocal: string) {
+  const rewardEnd = addDaysLocal(endLocal, 7)
+  return {
+    visibleAtLocal: startLocal,
+    rewardEndAtLocal: rewardEnd,
+    hiddenAtLocal: addDaysLocal(rewardEnd, 30),
+  }
+}
+
+/**
+ * 决定打开表单时默认是简单还是进阶模式：
+ * 编辑现有活动时，如果 visibleAt/rewardEndAt/hiddenAt 与简单模式
+ * 推导值偏离很多（比如有真预热期、奖励窗口非 7 天），就走进阶模式
+ * 让用户看到所有字段；新建（默认值都为空）就走简单模式。
+ */
+function shouldStartInAdvancedMode(
+  defaults?: Partial<{
+    visibleAt: string
+    startAt: string
+    endAt: string
+    rewardEndAt: string
+    hiddenAt: string
+  }>,
+): boolean {
+  if (!defaults?.startAt || !defaults?.endAt) return false
+  const startLocal = toLocalInput(defaults.startAt)
+  const endLocal = toLocalInput(defaults.endAt)
+  const derived = deriveSimpleTimes(startLocal, endLocal)
+  const cur = {
+    visibleAtLocal: toLocalInput(defaults.visibleAt),
+    rewardEndAtLocal: toLocalInput(defaults.rewardEndAt),
+    hiddenAtLocal: toLocalInput(defaults.hiddenAt),
+  }
+  return (
+    cur.visibleAtLocal !== derived.visibleAtLocal ||
+    cur.rewardEndAtLocal !== derived.rewardEndAtLocal ||
+    cur.hiddenAtLocal !== derived.hiddenAtLocal
+  )
+}
+
 interface Props {
   defaultValues?: Partial<CreateActivityInput>
   onSubmit: (values: CreateActivityInput) => void | Promise<void>
@@ -51,6 +109,9 @@ export function ActivityForm({
   submitLabel,
   disableAliasEdit = false,
 }: Props) {
+  const [advancedMode, setAdvancedMode] = useState(() =>
+    shouldStartInAdvancedMode(defaultValues),
+  )
   const form = useForm({
     defaultValues: {
       alias: defaultValues?.alias ?? "",
@@ -246,23 +307,39 @@ export function ActivityForm({
       {/* Section 2:时间安排 */}
       <FormSection
         title={m.activity_lifecycle_legend()}
-        description={m.activity_lifecycle_invariant()}
+        description={
+          advancedMode
+            ? m.activity_lifecycle_invariant()
+            : m.activity_lifecycle_simple_description()
+        }
       >
+        <div className="mb-3 flex items-center justify-end">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (advancedMode) {
+                // 切回简单模式：用 start/end 重新推导其余 3 个
+                const start = form.getFieldValue("startAtLocal")
+                const end = form.getFieldValue("endAtLocal")
+                if (start && end) {
+                  const d = deriveSimpleTimes(start, end)
+                  form.setFieldValue("visibleAtLocal", d.visibleAtLocal)
+                  form.setFieldValue("rewardEndAtLocal", d.rewardEndAtLocal)
+                  form.setFieldValue("hiddenAtLocal", d.hiddenAtLocal)
+                }
+              }
+              setAdvancedMode((v) => !v)
+            }}
+          >
+            {advancedMode
+              ? m.activity_lifecycle_switch_simple()
+              : m.activity_lifecycle_switch_advanced()}
+          </Button>
+        </div>
+
         <FormGrid cols={2}>
-          <form.Field name="visibleAtLocal">
-            {(field) => (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>{m.activity_field_visible_at()}</Label>
-                <Input
-                  id={field.name}
-                  type="datetime-local"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-          </form.Field>
           <form.Field name="startAtLocal">
             {(field) => (
               <div className="flex flex-col gap-1.5">
@@ -271,7 +348,14 @@ export function ActivityForm({
                   id={field.name}
                   type="datetime-local"
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    field.handleChange(v)
+                    // 简单模式下，开始时间改了就立即同步 visibleAt
+                    if (!advancedMode && v) {
+                      form.setFieldValue("visibleAtLocal", v)
+                    }
+                  }}
                   required
                 />
               </div>
@@ -285,41 +369,84 @@ export function ActivityForm({
                   id={field.name}
                   type="datetime-local"
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    field.handleChange(v)
+                    // 简单模式下，结束时间改了就重新推导 rewardEnd / hidden
+                    if (!advancedMode && v) {
+                      const rewardEnd = addDaysLocal(v, 7)
+                      form.setFieldValue("rewardEndAtLocal", rewardEnd)
+                      form.setFieldValue(
+                        "hiddenAtLocal",
+                        addDaysLocal(rewardEnd, 30),
+                      )
+                    }
+                  }}
                   required
                 />
               </div>
             )}
           </form.Field>
-          <form.Field name="rewardEndAtLocal">
-            {(field) => (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>{m.activity_field_reward_end_at()}</Label>
-                <Input
-                  id={field.name}
-                  type="datetime-local"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-          </form.Field>
-          <form.Field name="hiddenAtLocal">
-            {(field) => (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={field.name}>{m.activity_field_hidden_at()}</Label>
-                <Input
-                  id={field.name}
-                  type="datetime-local"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-          </form.Field>
+
+          {advancedMode ? (
+            <>
+              <form.Field name="visibleAtLocal">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>
+                      {m.activity_field_visible_at()}
+                    </Label>
+                    <Input
+                      id={field.name}
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+              </form.Field>
+              <form.Field name="rewardEndAtLocal">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>
+                      {m.activity_field_reward_end_at()}
+                    </Label>
+                    <Input
+                      id={field.name}
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+              </form.Field>
+              <form.Field name="hiddenAtLocal">
+                {(field) => (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={field.name}>
+                      {m.activity_field_hidden_at()}
+                    </Label>
+                    <Input
+                      id={field.name}
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+              </form.Field>
+            </>
+          ) : null}
         </FormGrid>
+
+        {!advancedMode ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {m.activity_lifecycle_simple_hint()}
+          </p>
+        ) : null}
       </FormSection>
 
       {/* Section 3:经济 / 奖励 / 成员配置 —— 全 JSON */}

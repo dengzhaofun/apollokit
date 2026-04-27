@@ -2059,5 +2059,25 @@
   "cms_filter_alias_placeholder": "Search alias",
 
   "cms_submit_create_type": "Create type",
-  "cms_submit_create_entry": "Create entry"
+  "cms_submit_create_entry": "Create entry",
+
+  "activity_phase_draft": "draft",
+  "activity_phase_scheduled": "scheduled",
+  "activity_phase_teasing": "teasing",
+  "activity_phase_active": "active",
+  "activity_phase_settling": "settling",
+  "activity_phase_ended": "ended",
+  "activity_phase_archived": "archived",
+  "activity_phase_draft_tooltip": "Draft — invisible to players. Must be explicitly published before progressing.",
+  "activity_phase_scheduled_tooltip": "Published but before the public-visible time (now < visibleAt). Still invisible to players.",
+  "activity_phase_teasing_tooltip": "Teaser period — players can see the entry/banner but all participation/write actions (check-in, lottery pull, purchase, score submit, etc.) are rejected.",
+  "activity_phase_active_tooltip": "Active — players can participate and claim rewards.",
+  "activity_phase_settling_tooltip": "Settling — no new participation accepted, but rewards can still be claimed until rewardEndAt.",
+  "activity_phase_ended_tooltip": "Ended — players can see the final results (e.g. final leaderboard) but can neither participate nor claim.",
+  "activity_phase_archived_tooltip": "Archived — invisible to players. Data may be swept by cleanup_rule.",
+  "activity_nodes_phase_banner": "Current activity phase:",
+  "activity_lifecycle_simple_description": "Just pick a start and end time. visibleAt defaults to no teasing period, rewardEnd defaults to start+7d, hiddenAt defaults to rewardEnd+30d. Switch to advanced mode to customize.",
+  "activity_lifecycle_simple_hint": "Advanced mode unlocks all 5 time points: visible / start / end / reward end / hidden.",
+  "activity_lifecycle_switch_simple": "← Back to simple mode",
+  "activity_lifecycle_switch_advanced": "Need to customize? Advanced mode →"
 }
