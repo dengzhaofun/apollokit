@@ -179,32 +179,14 @@ export function FormDrawerWithAssist({
             assistOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
             className,
           )}
-          // 拖拽 ResizablePanelGroup 中间的 handle 时,react-resizable-panels
-          // 在 document capture phase 抢先 preventDefault,导致 Radix 自己的
-          // onPointerDownCapture 没机会标记"点击发生在 React 树内"。结果
-          // Radix 把这次 pointerdown 误判成 outside-click → onDismiss → Sheet
-          // 关掉(连带 onOpenChange(false)、URL 抹掉 modal=create)。
-          // 同样的 race 也会发生在 react-resizable-panels 主动 focus()
-          // separator 触发的 focus 事件上。这里直接拦截:目标在 resize handle
-          // 内时阻止 Radix dismiss。
-          onPointerDownOutside={(event) => {
-            const target = event.detail.originalEvent.target as Element | null
-            if (target?.closest("[data-slot=resizable-handle]")) {
-              event.preventDefault()
-            }
-          }}
-          onFocusOutside={(event) => {
-            const target = event.detail.originalEvent.target as Element | null
-            if (target?.closest("[data-slot=resizable-handle]")) {
-              event.preventDefault()
-            }
-          }}
-          onInteractOutside={(event) => {
-            const target = event.detail.originalEvent.target as Element | null
-            if (target?.closest("[data-slot=resizable-handle]")) {
-              event.preventDefault()
-            }
-          }}
+          // TODO(base-ui): 原 Radix Sheet 的 onPointerDownOutside /
+          // onFocusOutside / onInteractOutside 阻止 ResizablePanelGroup
+          // 中间 handle 拖动 / focus 被 Radix 误判为 outside-click → 关闭
+          // Sheet。base-ui Dialog 没有等价 prop —— 当前先删，base-ui 默认
+          // dismiss 行为可能本身已 OK；若 dev 复现关闭误触发，参照下面
+          // 的 onOpenChange((open, event, reason) => ...) hook 处理：
+          //   if (!open && reason === 'outside-press' && (event?.target as
+          //     Element)?.closest('[data-slot=resizable-handle]')) return
         >
           <SheetHeader className="shrink-0 gap-1 border-b">
             <div className="flex items-center justify-between gap-2">

@@ -515,7 +515,9 @@ function NavGroupPopover({
           align="start"
           sideOffset={8}
           className="w-60 p-1"
-          onCloseAutoFocus={(e) => e.preventDefault()}
+          // TODO(base-ui): base-ui Popover 无 onCloseAutoFocus；若 collapsed
+          // sidebar 弹层关闭后出现滚动/焦点跳回 trigger，改用
+          // <Popover.Root finalFocus={null}> 阻止 final focus。
         >
           <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {group.label()}
@@ -690,7 +692,7 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
           align="start"
           sideOffset={8}
           className="w-60 p-1"
-          onCloseAutoFocus={(e) => e.preventDefault()}
+          // TODO(base-ui): 同上 — base-ui Popover 无 onCloseAutoFocus。
         >
           <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {m.nav_group_favorites()}
