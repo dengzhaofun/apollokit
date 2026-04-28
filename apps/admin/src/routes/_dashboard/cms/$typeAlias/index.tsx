@@ -96,7 +96,7 @@ function CmsEntryListPage() {
             {groupOptions && groupOptions.length > 0 ? (
               <Select
                 value={groupKey || "__all"}
-                onValueChange={(v) => setGroupKey(v === "__all" ? "" : v)}
+                onValueChange={(v) => setGroupKey(!v || v === "__all" ? "" : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={m.cms_filter_group_placeholder()} />

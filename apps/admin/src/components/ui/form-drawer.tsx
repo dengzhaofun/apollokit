@@ -102,13 +102,7 @@ export function FormDrawer({
         <Drawer open={open} onOpenChange={requestClose}>
           <DrawerContent className={cn("flex max-h-[92vh] flex-col", className)}>
             <DrawerHeader className="border-b">
-              <DrawerTitle
-                render={
-                  <span className="font-heading text-base font-medium text-foreground">
-                    {title}
-                  </span>
-                }
-              />
+              <DrawerTitle>{title}</DrawerTitle>
               {description ? (
                 <DrawerDescription>{description}</DrawerDescription>
               ) : null}

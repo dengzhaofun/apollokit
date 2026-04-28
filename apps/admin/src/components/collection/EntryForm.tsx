@@ -133,7 +133,7 @@ export function EntryForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label htmlFor="e-group">{m.collection_entry_field_group()}</Label>
-          <Select value={groupId} onValueChange={setGroupId}>
+          <Select value={groupId} onValueChange={(v) => setGroupId(v ?? "")}>
             <SelectTrigger id="e-group">
               <SelectValue placeholder={m.collection_entry_group_placeholder()} />
             </SelectTrigger>
@@ -156,7 +156,7 @@ export function EntryForm({
           </Label>
           <Select
             value={triggerItemDefinitionId}
-            onValueChange={setTriggerDef}
+            onValueChange={(v) => setTriggerDef(v ?? "")}
           >
             <SelectTrigger id="e-trigger">
               <SelectValue

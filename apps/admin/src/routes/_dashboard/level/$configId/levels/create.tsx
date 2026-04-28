@@ -150,7 +150,7 @@ function LevelCreatePage() {
           {config?.hasStages && stages.length > 0 && (
             <div className="space-y-2">
               <Label>{m.level_field_stage()}</Label>
-              <Select value={stageId} onValueChange={setStageId}>
+              <Select value={stageId} onValueChange={(v) => setStageId(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder={m.level_field_stage_none()} />
                 </SelectTrigger>

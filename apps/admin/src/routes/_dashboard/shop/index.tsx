@@ -323,7 +323,7 @@ function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
       <label className="text-xs font-medium text-muted-foreground">
         {label}
       </label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
         <SelectTrigger className="w-44">
           <SelectValue />
         </SelectTrigger>

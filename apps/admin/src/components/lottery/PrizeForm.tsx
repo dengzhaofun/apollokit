@@ -129,7 +129,7 @@ export function PrizeForm({
                 <Label>Tier</Label>
                 <Select
                   value={field.state.value}
-                  onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}
+                  onValueChange={(v) => field.handleChange(!v || v === "__none__" ? "" : v)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="No tier (flat mode)" />

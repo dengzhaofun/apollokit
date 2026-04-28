@@ -263,7 +263,7 @@ function CategoryFormInline({
       <div className="grid gap-4 grid-cols-2">
         <div className="space-y-2">
           <Label>Scope</Label>
-          <Select value={scope} onValueChange={setScope}>
+          <Select value={scope} onValueChange={(v) => setScope(v ?? "")}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="task">Task</SelectItem>

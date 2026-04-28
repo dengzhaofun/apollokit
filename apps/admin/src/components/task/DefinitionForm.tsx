@@ -190,7 +190,7 @@ export function DefinitionForm({
               <Label>Category</Label>
               <Select
                 value={field.state.value}
-                onValueChange={(v) => field.handleChange(v)}
+                onValueChange={(v) => field.handleChange(v ?? "")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="No category" />

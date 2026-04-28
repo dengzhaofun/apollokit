@@ -514,7 +514,7 @@ function LevelsTab({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         {stages.length > 0 && (
-          <Select value={filterStage} onValueChange={setFilterStage}>
+          <Select value={filterStage} onValueChange={(v) => setFilterStage(v ?? "")}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>

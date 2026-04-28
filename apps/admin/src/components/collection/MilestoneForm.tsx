@@ -135,7 +135,7 @@ export function MilestoneForm({
             <Label htmlFor="m-entry">
               {m.collection_milestone_field_entry()}
             </Label>
-            <Select value={entryId} onValueChange={setEntryId}>
+            <Select value={entryId} onValueChange={(v) => setEntryId(v ?? "")}>
               <SelectTrigger id="m-entry">
                 <SelectValue
                   placeholder={m.collection_milestone_entry_placeholder()}
@@ -157,7 +157,7 @@ export function MilestoneForm({
               <Label htmlFor="m-group">
                 {m.collection_milestone_field_group()}
               </Label>
-              <Select value={groupId} onValueChange={setGroupId}>
+              <Select value={groupId} onValueChange={(v) => setGroupId(v ?? "")}>
                 <SelectTrigger id="m-group">
                   <SelectValue
                     placeholder={m.collection_milestone_group_placeholder()}

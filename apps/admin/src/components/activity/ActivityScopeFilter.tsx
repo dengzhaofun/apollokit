@@ -51,7 +51,7 @@ export function ActivityScopeFilter({
         onValueChange={(v) => {
           if (v === STANDALONE) onChange({ kind: "standalone" })
           else if (v === ALL) onChange({ kind: "all" })
-          else onChange({ kind: "activity", activityId: v })
+          else onChange({ kind: "activity", activityId: v ?? "" })
         }}
       >
         <SelectTrigger className="h-8 w-auto min-w-48">

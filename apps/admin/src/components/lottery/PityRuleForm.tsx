@@ -75,7 +75,7 @@ export function PityRuleForm({
               <Label>Guarantee Tier *</Label>
               <Select
                 value={field.state.value}
-                onValueChange={field.handleChange}
+                onValueChange={(v) => field.handleChange(v ?? "")}
                 disabled={disableGuaranteeTier}
               >
                 <SelectTrigger className="w-full">

@@ -90,7 +90,7 @@ export function CategoryForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="cat-parent">{m.shop_parent_category()}</Label>
-          <Select value={parentId} onValueChange={setParentId}>
+          <Select value={parentId} onValueChange={(v) => setParentId(v ?? "")}>
             <SelectTrigger id="cat-parent" className="w-full">
               <SelectValue />
             </SelectTrigger>
