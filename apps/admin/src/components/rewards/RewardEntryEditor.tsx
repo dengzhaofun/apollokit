@@ -1,18 +1,15 @@
+import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 
+import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select"
+import { ResourcePickerDialog } from "#/components/rewards/ResourcePickerDialog"
 import * as m from "#/paraglide/messages.js"
 import { useRewardCatalog } from "#/hooks/use-reward-catalog"
+import type { RewardCatalogOption } from "#/hooks/use-reward-catalog"
 import type { RewardEntry, RewardType } from "#/lib/types/rewards"
 
 interface RewardEntryEditorProps {
@@ -22,7 +19,7 @@ interface RewardEntryEditorProps {
   /** Restrict which types the user can pick. Defaults to all three. */
   allowedTypes?: RewardType[]
   hint?: string
-  /** When true, the "add row" button and row actions are disabled. */
+  /** When true, the picker button and row actions are disabled. */
   disabled?: boolean
 }
 
@@ -46,8 +43,11 @@ function typeLabel(t: RewardType): string {
  * reward, collection milestone reward, level clear reward, leaderboard
  * tier reward, activity global/participant rewards).
  *
- * Layout: `[type ▾] [id/name ▾] [count #] [🗑]`. The type dropdown gates
- * the id dropdown — changing type clears the id because options change.
+ * Selection happens inside `<ResourcePickerDialog />` (multi-select with
+ * server-side search + cursor pagination). Each row only edits `count`
+ * and exposes a delete button — to swap a resource the user removes the
+ * row and re-opens the picker (or toggles the resource in the picker
+ * itself, which is the inverse-add gesture).
  */
 export function RewardEntryEditor({
   label,
@@ -57,7 +57,8 @@ export function RewardEntryEditor({
   hint,
   disabled,
 }: RewardEntryEditorProps) {
-  const { byType, isPending } = useRewardCatalog()
+  const { byType, resolveLabel, isPending } = useRewardCatalog()
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   function update(i: number, patch: Partial<RewardEntry>) {
     const next = [...entries]
@@ -69,9 +70,11 @@ export function RewardEntryEditor({
     onChange(entries.filter((_, j) => j !== i))
   }
 
-  function addRow() {
-    const defaultType = allowedTypes[0] ?? "item"
-    onChange([...entries, { type: defaultType, id: "", count: 1 }])
+  function lookupOption(
+    type: RewardType,
+    id: string,
+  ): RewardCatalogOption | undefined {
+    return byType[type].find((o) => o.id === id)
   }
 
   return (
@@ -80,101 +83,104 @@ export function RewardEntryEditor({
         {label}
         {hint ? <FieldHint>{hint}</FieldHint> : null}
       </Label>
+
       {entries.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {m.reward_entry_empty_hint()}
         </p>
       ) : (
-        entries.map((entry, i) => {
-          const options = byType[entry.type] ?? []
-          return (
-            <div key={i} className="flex items-end gap-2">
-              <div className="w-28">
-                <Select
-                  value={entry.type}
-                  disabled={disabled}
-                  onValueChange={(v) => {
-                    const next = v as RewardType
-                    // Changing type clears id because option list changes.
-                    update(i, { type: next, id: "" })
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allowedTypes.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {typeLabel(t)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <Select
-                  value={entry.id}
-                  disabled={disabled || isPending}
-                  onValueChange={(v) => update(i, { id: v })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        isPending
-                          ? m.common_loading()
-                          : m.reward_entry_pick_target()
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {options.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>
-                        {opt.name}
-                        {opt.alias ? (
-                          <code className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs">
-                            {opt.alias}
-                          </code>
-                        ) : null}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-24">
-                <Input
-                  type="number"
-                  min={1}
-                  value={entry.count}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    update(i, { count: Number(e.target.value) || 1 })
-                  }
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-9"
-                disabled={disabled}
-                onClick={() => remove(i)}
+        <ul className="space-y-2">
+          {entries.map((entry, i) => {
+            const opt = lookupOption(entry.type, entry.id)
+            const displayName = opt?.name ?? resolveLabel(entry.type, entry.id)
+            return (
+              <li
+                key={`${entry.type}:${entry.id}:${i}`}
+                className="flex items-center gap-2 rounded-md border bg-card p-2"
               >
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
-          )
-        })
+                {opt?.icon ? (
+                  <img
+                    src={opt.icon}
+                    alt=""
+                    className="size-7 shrink-0 rounded-md object-cover ring-1 ring-border"
+                  />
+                ) : (
+                  <div className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-xs font-medium text-muted-foreground ring-1 ring-border">
+                    {displayName.slice(0, 1).toUpperCase() || "?"}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-medium">
+                      {isPending && !opt ? m.common_loading() : displayName}
+                    </span>
+                    <Badge variant="outline" className="shrink-0">
+                      {typeLabel(entry.type)}
+                    </Badge>
+                  </div>
+                  {opt?.alias ? (
+                    <code className="text-xs text-muted-foreground">
+                      {opt.alias}
+                    </code>
+                  ) : null}
+                </div>
+                <div className="w-24 shrink-0">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={entry.count}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      update(i, { count: Number(e.target.value) || 1 })
+                    }
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 shrink-0"
+                  disabled={disabled}
+                  onClick={() => remove(i)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </li>
+            )
+          })}
+        </ul>
       )}
+
       <Button
         type="button"
         variant="outline"
         size="sm"
         disabled={disabled}
-        onClick={addRow}
+        onClick={() => setPickerOpen(true)}
       >
         <Plus className="size-4" />
         {m.reward_entry_add()}
       </Button>
+
+      <ResourcePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        currentSelection={entries}
+        onConfirm={(next) => {
+          // Preserve existing counts for rows the user kept; new rows
+          // default to count=1 (the picker doesn't edit counts).
+          const byKey = new Map(
+            entries.map((e) => [`${e.type}:${e.id}`, e.count]),
+          )
+          onChange(
+            next.map((e) => ({
+              ...e,
+              count: byKey.get(`${e.type}:${e.id}`) ?? e.count,
+            })),
+          )
+        }}
+        allowedTypes={allowedTypes}
+      />
     </div>
   )
 }
