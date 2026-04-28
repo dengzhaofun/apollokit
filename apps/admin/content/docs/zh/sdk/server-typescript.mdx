@@ -1,0 +1,245 @@
+---
+title: '@apollokit/server (TypeScript)'
+description: 服务端到服务端的 TypeScript SDK — Node / Bun / Workers / 任何运行 fetch 的 TS 进程
+icon: ServerCog
+---
+
+`@apollokit/server` 是 admin 路由（`/api/<module>/*`）的 TypeScript SDK，跑在你的**受信服务进程**里 —— 后端 API、运营脚本、cron、数据导出、内部管理工具。鉴权用 `ak_` 前缀的 admin API key，**组织级权限**。
+
+<Callout type="warn" title="安全 — 永远不要进客户端">
+
+`ak_` 是组织级密钥,泄露到游戏客户端 / H5 包 / 公网仓库就等于授权攻击者伪造任何运营操作。
+
+如果代码会被打进玩家可控的进程(Unity / 浏览器 / 小程序 / Electron),用 [`@apollokit/client`](/docs/zh/sdk/client-typescript)。
+
+</Callout>
+
+## 快速开始
+
+<Steps>
+
+<Step>
+
+### 安装
+
+```bash title="terminal"
+pnpm add @apollokit/server
+# 或: npm i / yarn add / bun add
+```
+
+</Step>
+
+<Step>
+
+### 签发 admin API key
+
+在管理后台打开 `/api-keys`，点 "新建" → 取名 → 复制返回的 `ak_…`。**只展示一次**，复制后存到密钥管理器。
+
+不能用 UI？走 Better Auth 接口：
+
+```bash title="curl"
+curl -X POST 'https://api.example.com/api/auth/api-key' \
+  -H 'Cookie: <session-cookie>' \
+  -H 'Content-Type: application/json' \
+  -d '{ "configId": "admin", "name": "ops-cron" }'
+```
+
+</Step>
+
+<Step>
+
+### 初始化 client
+
+```ts twoslash title="src/apollokit.ts"
+import { createServerClient } from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.APOLLOKIT_ADMIN_KEY!, // "ak_..."
+})
+```
+
+`createServerClient` 配置全局共享的 fetch client — 进程启动时调用一次,所有 SDK 函数都自动带上 `x-api-key: ak_…` header。
+
+</Step>
+
+<Step>
+
+### 调一个 endpoint
+
+```ts twoslash title="src/list-announcements.ts"
+import {
+  createServerClient,
+  announcementAdminGetRoot,
+} from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.APOLLOKIT_ADMIN_KEY!,
+})
+
+const { data } = await announcementAdminGetRoot({ throwOnError: true })
+//      ^?
+const items = data[200].data.items
+console.log(`公告: ${items.length} 条`)
+```
+
+`throwOnError: true` 让 4xx/5xx 抛异常,2xx 时 `data[200]` 是 envelope。`data[200].data` 是真实业务负载,类型由响应 schema 推导。
+
+</Step>
+
+</Steps>
+
+## 配置
+
+`createServerClient` 只接两个字段:
+
+<AutoTypeTable
+  type={`export interface ApolloKitServerConfig {
+  /** Server base URL (e.g. "https://api.example.com"). */
+  baseUrl: string;
+  /**
+   * Admin API key (\`ak_…\` prefix) issued from the dashboard's
+   * \`/api-keys\` page or via \`POST /api/auth/api-key\` (configId=\`admin\`).
+   * Carries full organization-level authority.
+   */
+  apiKey: string;
+}`}
+/>
+
+需要按租户隔离客户端(多租户代理)请见下方 [多客户端](#多客户端多租户代理)。
+
+## 响应 envelope
+
+每个业务 endpoint 返回标准 envelope:
+
+```jsonc
+{ "code": "ok", "data": <payload>, "message": "", "requestId": "..." }
+```
+
+hey-api 把 status code 索引化,所以 envelope 通过 `data[200]` 取:
+
+```ts twoslash
+import {
+  createServerClient,
+  checkInGetConfigs,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+const { data } = await checkInGetConfigs({ throwOnError: true })
+const envelope = data[200]
+//    ^?
+const configs = envelope.data
+console.log({
+  count: configs.items.length,
+  requestId: envelope.requestId, // 粘贴到追踪面板查全链路
+})
+```
+
+## 错误处理
+
+非 ok 状态在 `throwOnError: true` 下抛 `ApolloKitApiError`:
+
+```ts twoslash
+import {
+  ApolloKitApiError,
+  checkInGetConfigs,
+  createServerClient,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+try {
+  await checkInGetConfigs({ throwOnError: true })
+} catch (err) {
+  if (err instanceof ApolloKitApiError) {
+    // err.code      → "check_in.config_not_found", "validation_error", ...
+    // err.status    → HTTP 状态码
+    // err.requestId → 追踪面板查整链路
+    console.error(`[${err.status}] ${err.code}: ${err.message}`)
+  }
+  throw err
+}
+```
+
+<Callout type="info" title="requestId 全链路追踪">
+
+`ApolloKitApiError.requestId` 跟 server 端 Tinybird 的 `http_requests.trace_id` 同一个值。报障时附上 requestId,直接定位 server 这条请求的完整日志、上下游链路、耗时分布。
+
+</Callout>
+
+错误码命名空间镜像 server 模块错误,完整列表见 `apps/server/src/modules/<module>/errors.ts`。
+
+也可以不用 `throwOnError` 手动判:
+
+```ts twoslash
+import {
+  ApolloKitApiError,
+  isErrorEnvelope,
+  checkInGetConfigs,
+  createServerClient,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+const { data, error, response } = await checkInGetConfigs({})
+
+if (error && isErrorEnvelope(error)) {
+  throw new ApolloKitApiError(error, response.status)
+}
+if (data && data[200]?.code === 'ok') {
+  console.log(`configs: ${data[200].data.items.length}`)
+}
+```
+
+## 多客户端 (多租户代理)
+
+默认导出的 `client` 是进程级单例,适合单租户。如果一个 Node 进程要按 inbound 请求切换 apollokit org,自己建独立 client:
+
+```ts twoslash
+import { createClient } from '@hey-api/client-fetch'
+import { announcementAdminGetRoot } from '@apollokit/server'
+
+function clientForTenant(apiKey: string) {
+  const c = createClient({ baseUrl: 'https://api.example.com' })
+  c.interceptors.request.use((req) => {
+    req.headers.set('x-api-key', apiKey)
+    return req
+  })
+  return c
+}
+
+// 每个 inbound 请求拿对应租户的 ak_, 调用时传 client 选项
+const result = await announcementAdminGetRoot({
+  client: clientForTenant('ak_…'),
+  throwOnError: true,
+})
+```
+
+## 升级 / 重新生成
+
+`@apollokit/server` 的 `src/generated/` 是 SDK 类型 + 函数,跟 server `/openapi.json` 一起 commit。server 改路由后,完整刷新链路:
+
+```bash title="terminal"
+# 1) 启 wrangler dev (一个 terminal)
+pnpm --filter=server dev
+
+# 2) 另一个 terminal: 一键串联 dump → split → SDK gen → inject samples → admin docs
+pnpm sdks:generate
+```
+
+链路细节见 [`sdks:generate` pipeline](/docs/zh/sdk)。
+
+## 与 client SDK 对比
+
+| | `@apollokit/server` | `@apollokit/client` |
+|---|---|---|
+| **包名** | `@apollokit/server` | `@apollokit/client` |
+| **鉴权 header** | `x-api-key: ak_…` | `x-api-key: cpk_…` + `x-end-user-id` + `x-user-hash` |
+| **路由前缀** | `/api/*` | `/api/client/*` |
+| **端用户感知** | 无 — 操作整个组织 | 必带 — endUserId 维度隔离 |
+| **典型用法** | Node/Bun 后端、cron、CLI、数据导出 | 游戏客户端、小程序、浏览器 H5 |
+| **打包体积考量** | 不重要 | 关键 — 不带运行时 retry/HMAC 框架 |
+
+不确定哪个适合自己 → 回 [SDK 概览](/docs/zh/sdk) 看决策路径。

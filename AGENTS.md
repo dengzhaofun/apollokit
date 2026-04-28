@@ -116,14 +116,14 @@ Every `apps/server` business route — everything under `/api/*` except the Bett
 # Start wrangler dev (needs .dev.vars) in one terminal:
 pnpm --filter=server dev
 
-# Then in another terminal:
-pnpm --filter=@repo/sdk-core extract -- --url http://localhost:8787
-pnpm --filter=@repo/sdk-core split
-pnpm --filter=@apollokit/admin generate
-pnpm --filter=@apollokit/client generate
+# Then in another terminal: one-shot pipeline
+# (dump → cp → split → server SDK gen → client SDK gen → inject samples → admin docs)
+pnpm sdks:generate
 ```
 
-The `--url` mode is required because the in-process extractor trips on `import "cloudflare:workers"` in plain Node. Also overwrite `apps/server/openapi.json` from the running server's `/openapi.json` endpoint — admin docs pages read it directly.
+The single `sdks:generate` script ships the whole chain. If you need to run individual steps for debugging, the underlying commands are `pnpm --filter=server openapi:dump` → `pnpm --filter=@repo/sdk-core run split` → `pnpm --filter=@apollokit/{server,client} run generate` → `pnpm --filter=@repo/sdk-core run inject-samples` → `pnpm --filter=admin run gen:api-docs`.
+
+`pnpm --filter=@repo/sdk-core extract` is the legacy in-process extractor — it trips on `import "cloudflare:workers"` in plain Node and is superseded by `openapi:dump` + cp inside `sdks:generate`. Don't use `extract` in new flows.
 
 ## Known gotchas
 

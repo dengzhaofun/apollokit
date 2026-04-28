@@ -41,23 +41,32 @@ jobs:
           pnpm exec tsx scripts/extract-openapi.ts --url "$API_URL"
           pnpm exec tsx scripts/split-spec.ts
 
+      - name: Generate Server SDK
+        working-directory: packages/sdk-server-ts
+        run: pnpm exec openapi-ts
+
       - name: Generate Client SDK
         working-directory: packages/sdk-client-ts
         run: pnpm exec openapi-ts
 
-      - name: Generate Admin SDK
-        working-directory: packages/sdk-admin-ts
-        run: pnpm exec openapi-ts
+      - name: Inject x-codeSamples
+        working-directory: packages/sdk-core
+        run: pnpm exec tsx scripts/inject-samples.ts
 
       - name: Type check SDKs
         run: |
-          cd packages/sdk-client-ts && pnpm exec tsc --noEmit
-          cd ../sdk-admin-ts && pnpm exec tsc --noEmit
+          cd packages/sdk-server-ts && pnpm exec tsc --noEmit
+          cd ../sdk-client-ts && pnpm exec tsc --noEmit
 
       - name: Check for changes
         id: diff
         run: |
-          git diff --quiet packages/sdk-core/specs/ packages/sdk-client-ts/src/generated/ packages/sdk-admin-ts/src/generated/ || echo "changed=true" >> "$GITHUB_OUTPUT"
+          git diff --quiet \
+            apps/server/openapi.json \
+            packages/sdk-core/specs/ \
+            packages/sdk-server-ts/src/generated/ \
+            packages/sdk-client-ts/src/generated/ \
+            || echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create PR
         if: steps.diff.outputs.changed == 'true'
@@ -70,9 +79,10 @@ jobs:
             Automated SDK regeneration triggered by server code changes.
 
             This PR updates the generated SDK code in:
+            - `apps/server/openapi.json` (with `x-codeSamples` injected)
             - `packages/sdk-core/specs/` (OpenAPI specs)
+            - `packages/sdk-server-ts/src/generated/` (Server SDK)
             - `packages/sdk-client-ts/src/generated/` (Client SDK)
-            - `packages/sdk-admin-ts/src/generated/` (Admin SDK)
 
             Review the type changes and merge when ready.
           branch: chore/regenerate-sdks
