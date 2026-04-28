@@ -100,16 +100,28 @@ export function createPublicRouter() {
 
 // ─── Security schemes ────────────────────────────────────────────
 
+// We declare exactly two security schemes for the public OpenAPI doc:
+// `AdminApiKey` for `/api/<module>/*` and `ClientCredential` for
+// `/api/client/<module>/*`. The admin auth middleware
+// (`require-admin-or-api-key.ts`) ALSO accepts a Better Auth session
+// cookie — that path is what the in-product admin dashboard frontend
+// uses, and it works without OpenAPI declaring it. We deliberately do
+// NOT advertise the Session scheme here:
+//
+// - The OpenAPI doc is consumed by SDK users and external integrators.
+//   Listing `Session` confuses them ("which auth do I pick?") and
+//   leaks an internal-only path into the public API surface.
+// - fumadocs-openapi renders every declared scheme as a Try-it-out
+//   credential picker; advertising Session caused users to type a
+//   non-existent cookie value and fail.
+// - The cookie path keeps working at runtime — the middleware doesn't
+//   read OpenAPI metadata, only the actual request headers/cookies.
 export const SECURITY_SCHEMES = {
-  Session: "Session",
   AdminApiKey: "AdminApiKey",
   ClientCredential: "ClientCredential",
 } as const;
 
-const ADMIN_SECURITY = [
-  { [SECURITY_SCHEMES.Session]: [] },
-  { [SECURITY_SCHEMES.AdminApiKey]: [] },
-];
+const ADMIN_SECURITY = [{ [SECURITY_SCHEMES.AdminApiKey]: [] }];
 
 const CLIENT_SECURITY = [{ [SECURITY_SCHEMES.ClientCredential]: [] }];
 
@@ -119,13 +131,6 @@ const CLIENT_SECURITY = [{ [SECURITY_SCHEMES.ClientCredential]: [] }];
  * `app.doc31(...)` runs (or before any request hits `/openapi.json`).
  */
 export function registerSecuritySchemes(app: OpenAPIHono<HonoEnv>) {
-  app.openAPIRegistry.registerComponent("securitySchemes", "Session", {
-    type: "apiKey",
-    in: "cookie",
-    name: "better-auth.session_token",
-    description:
-      "Better Auth admin session cookie (set by /api/auth/sign-in/email).",
-  });
   app.openAPIRegistry.registerComponent("securitySchemes", "AdminApiKey", {
     type: "apiKey",
     in: "header",

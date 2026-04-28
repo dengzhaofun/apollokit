@@ -50,7 +50,7 @@ curl -X POST 'https://api.example.com/api/auth/api-key' \
 
 ### 初始化 client
 
-```ts twoslash title="src/apollokit.ts"
+```ts title="src/apollokit.ts"
 import { createServerClient } from '@apollokit/server'
 
 createServerClient({
@@ -67,7 +67,7 @@ createServerClient({
 
 ### 调一个 endpoint
 
-```ts twoslash title="src/list-announcements.ts"
+```ts title="src/list-announcements.ts"
 import {
   createServerClient,
   announcementAdminGetRoot,
@@ -94,18 +94,10 @@ console.log(`公告: ${items.length} 条`)
 
 `createServerClient` 只接两个字段:
 
-<AutoTypeTable
-  type={`export interface ApolloKitServerConfig {
-  /** Server base URL (e.g. "https://api.example.com"). */
-  baseUrl: string;
-  /**
-   * Admin API key (\`ak_…\` prefix) issued from the dashboard's
-   * \`/api-keys\` page or via \`POST /api/auth/api-key\` (configId=\`admin\`).
-   * Carries full organization-level authority.
-   */
-  apiKey: string;
-}`}
-/>
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `baseUrl` | `string` | Server base URL（例如 `https://api.example.com`） |
+| `apiKey` | `string` | Admin API key (`ak_…` 前缀)。从管理后台 `/api-keys` 页面或 `POST /api/auth/api-key` (`configId=admin`) 签发,带组织级全权限 |
 
 需要按租户隔离客户端(多租户代理)请见下方 [多客户端](#多客户端多租户代理)。
 
@@ -119,7 +111,7 @@ console.log(`公告: ${items.length} 条`)
 
 hey-api 把 status code 索引化,所以 envelope 通过 `data[200]` 取:
 
-```ts twoslash
+```ts
 import {
   createServerClient,
   checkInGetConfigs,
@@ -141,7 +133,7 @@ console.log({
 
 非 ok 状态在 `throwOnError: true` 下抛 `ApolloKitApiError`:
 
-```ts twoslash
+```ts
 import {
   ApolloKitApiError,
   checkInGetConfigs,
@@ -173,7 +165,7 @@ try {
 
 也可以不用 `throwOnError` 手动判:
 
-```ts twoslash
+```ts
 import {
   ApolloKitApiError,
   isErrorEnvelope,
@@ -197,7 +189,7 @@ if (data && data[200]?.code === 'ok') {
 
 默认导出的 `client` 是进程级单例,适合单租户。如果一个 Node 进程要按 inbound 请求切换 apollokit org,自己建独立 client:
 
-```ts twoslash
+```ts
 import { createClient } from '@hey-api/client-fetch'
 import { announcementAdminGetRoot } from '@apollokit/server'
 

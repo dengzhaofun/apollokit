@@ -1,4 +1,5 @@
 import {
+  applyMdxPreset,
   defineConfig,
   defineDocs,
   frontmatterSchema,
@@ -29,25 +30,29 @@ export const docs = defineDocs({
     postprocess: {
       includeProcessedMarkdown: {},
     },
-    // Build-time MDX option overrides — wires Twoslash, AutoTypeTable
-    // and Mermaid remark plugins into the shared shiki/rehype-code chain.
+    // Build-time MDX option overrides.
     //
-    // - `transformerTwoslash` annotates every TS/JS code block with the
-    //   real TypeScript type info; `fumadocs-twoslash/twoslash.css` is
-    //   imported from `routes/docs/$.tsx` so hover popovers render.
-    //   Cache lives under `node_modules/.cache/fumadocs-twoslash` —
-    //   first build is slow (full ts-morph compile), reruns reuse it.
-    // - `remarkAutoTypeTable` lets MDX use `<AutoTypeTable file="…"
-    //   name="…" />` to extract a TS interface and emit a Type Table at
-    //   build time; the runtime `AutoTypeTable` component is also
-    //   registered in `routes/docs/$.tsx` for places that prefer the
-    //   inline `type="…"` API.
-    // - `remarkMdxMermaid` rewrites ` ```mermaid ` fenced code blocks
-    //   into `<Mermaid chart="…" />` JSX. The runtime `<Mermaid>`
-    //   component (registered in `routes/docs/$.tsx`) is client-only
-    //   and reads dark/light from `next-themes`, so SSR yields the
-    //   placeholder and the diagram appears after hydration.
-    async mdxOptions() {
+    // CRITICAL: must return `applyMdxPreset({...})(environment)`,
+    // not raw ProcessorOptions. Returning raw options bypasses fumadocs'
+    // default plugin chain — remarkGfm (markdown tables), remarkHeading
+    // (heading ids + toc), rehypeCode (shiki syntax highlighting),
+    // remarkStructure (search index) all silently disappear, leaving
+    // tables unparsed and code blocks colorless. `applyMdxPreset` merges
+    // user plugins INTO the default chain instead of replacing it.
+    //
+    // - `transformerTwoslash` annotates TS/JS code blocks with type info;
+    //   `fumadocs-twoslash/twoslash.css` is imported from
+    //   `routes/docs/$.tsx` so hover popovers render. Cache lives under
+    //   `node_modules/.cache/fumadocs-twoslash`.
+    //
+    // (Two integrations were tried and rolled back to keep the dev
+    // preview stable in TanStack Start (RSC-less Vite SSR):
+    //  - `remarkAutoTypeTable` / `<AutoTypeTable>` — its runtime UI is a
+    //    Next.js Server Component which can't hydrate without RSC.
+    //  - `remarkMdxMermaid` / `<Mermaid>` — mermaid 11 syntax errors on
+    //    diagrams with `<…>` placeholders crashed the page; revisit when
+    //    we have a more forgiving renderer or move to Next.)
+    async mdxOptions(environment) {
       const { rehypeCodeDefaultOptions } = await import(
         'fumadocs-core/mdx-plugins/rehype-code'
       );
@@ -55,20 +60,8 @@ export const docs = defineDocs({
       const { createFileSystemTypesCache } = await import(
         'fumadocs-twoslash/cache-fs'
       );
-      const {
-        remarkAutoTypeTable,
-        createGenerator,
-        createFileSystemGeneratorCache,
-      } = await import('fumadocs-typescript');
-      const { remarkMdxMermaid } = await import('fumadocs-mermaid');
 
-      const generator = createGenerator({
-        cache: createFileSystemGeneratorCache(
-          'node_modules/.cache/fumadocs-typescript',
-        ),
-      });
-
-      return {
+      return applyMdxPreset({
         rehypeCodeOptions: {
           ...rehypeCodeDefaultOptions,
           transformers: [
@@ -80,11 +73,7 @@ export const docs = defineDocs({
             }),
           ],
         },
-        remarkPlugins: [
-          [remarkAutoTypeTable, { generator }],
-          remarkMdxMermaid,
-        ],
-      };
+      })(environment);
     },
   },
   meta: {
