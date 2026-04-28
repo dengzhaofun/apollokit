@@ -3,7 +3,7 @@
     "info": {
         "title": "apollokit API",
         "version": "0.1.0",
-        "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`Authorization: Bearer ak_\u2026`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client public key (`X-Client-Public-Key: cpk_\u2026`) plus HMAC headers (`X-Client-Signature`, `X-Client-Timestamp`, `X-Client-Nonce`).\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
+        "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`x-api-key: ak_\u2026`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_\u2026`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers \u2014 `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
     },
     "servers": [
         {
@@ -20,16 +20,16 @@
                 "description": "Better Auth admin session cookie (set by /api/auth/sign-in/email)."
             },
             "AdminApiKey": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "ak_\u2026",
-                "description": "Admin API key. Send as `Authorization: Bearer ak_\u2026`. Issued via Better Auth `/api/auth/api-key`."
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-api-key",
+                "description": "Admin API key (`ak_\u2026` prefix). Send in the `x-api-key` request header. Issued via Better Auth `/api/auth/api-key` (configId=`admin`)."
             },
             "ClientCredential": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "X-Client-Public-Key",
-                "description": "End-user client credential (cpk_\u2026). Paired with HMAC headers `X-Client-Signature`, `X-Client-Timestamp`, and `X-Client-Nonce`."
+                "name": "x-api-key",
+                "description": "Client publishable key (`cpk_\u2026` prefix) sent in the `x-api-key` request header. End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers \u2014 `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed at runtime by the client SDK and not declared as a separate security scheme."
             }
         },
         "schemas": {

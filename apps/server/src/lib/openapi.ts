@@ -127,18 +127,18 @@ export function registerSecuritySchemes(app: OpenAPIHono<HonoEnv>) {
       "Better Auth admin session cookie (set by /api/auth/sign-in/email).",
   });
   app.openAPIRegistry.registerComponent("securitySchemes", "AdminApiKey", {
-    type: "http",
-    scheme: "bearer",
-    bearerFormat: "ak_…",
+    type: "apiKey",
+    in: "header",
+    name: "x-api-key",
     description:
-      "Admin API key. Send as `Authorization: Bearer ak_…`. Issued via Better Auth `/api/auth/api-key`.",
+      "Admin API key (`ak_…` prefix). Send in the `x-api-key` request header. Issued via Better Auth `/api/auth/api-key` (configId=`admin`).",
   });
   app.openAPIRegistry.registerComponent("securitySchemes", "ClientCredential", {
     type: "apiKey",
     in: "header",
-    name: "X-Client-Public-Key",
+    name: "x-api-key",
     description:
-      "End-user client credential (cpk_…). Paired with HMAC headers `X-Client-Signature`, `X-Client-Timestamp`, and `X-Client-Nonce`.",
+      "Client publishable key (`cpk_…` prefix) sent in the `x-api-key` request header. End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed at runtime by the client SDK and not declared as a separate security scheme.",
   });
 }
 

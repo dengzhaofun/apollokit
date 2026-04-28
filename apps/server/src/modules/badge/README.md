@@ -38,7 +38,7 @@
 ```bash
 # 建根节点 "home"(纯聚合父)
 curl -X POST https://api.example.com/api/badge/nodes \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -H "Content-Type: application/json" \
   -d '{
     "key": "home",
@@ -49,7 +49,7 @@ curl -X POST https://api.example.com/api/badge/nodes \
 
 # 建叶子节点 "home.mail" 绑定 mail.inbox.* 前缀
 curl -X POST https://api.example.com/api/badge/nodes \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -H "Content-Type: application/json" \
   -d '{
     "key": "home.mail",
@@ -65,10 +65,10 @@ curl -X POST https://api.example.com/api/badge/nodes \
 
 ```bash
 curl -X GET https://api.example.com/api/badge/templates \
-  -H "Authorization: Bearer ak_..."
+  -H "x-api-key: ak_..."
 
 curl -X POST https://api.example.com/api/badge/nodes/from-template \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -d '{
     "templateId": "dynamic_list_number",
     "key": "home.mail",
@@ -82,7 +82,7 @@ curl -X POST https://api.example.com/api/badge/nodes/from-template \
 ```bash
 # 新邮件到达 → 推 signal,count=1
 curl -X POST https://api.example.com/api/badge/signal \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -d '{
     "endUserId": "player_42",
     "signalKey": "mail.inbox.msg_abc123",
@@ -93,7 +93,7 @@ curl -X POST https://api.example.com/api/badge/signal \
 
 # 玩家读邮件 → clear
 curl -X POST https://api.example.com/api/badge/signal \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -d '{
     "endUserId": "player_42",
     "signalKey": "mail.inbox.msg_abc123",
@@ -105,9 +105,9 @@ curl -X POST https://api.example.com/api/badge/signal \
 
 ```bash
 curl https://api.example.com/api/client/badge/tree?rootKey=home \
-  -H "X-Client-Public-Key: cpk_..." \
-  -H "X-End-User-Id: player_42" \
-  -H "X-User-Hash: ..."
+  -H "x-api-key: cpk_..." \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: ..."
 ```
 
 返回:
@@ -178,7 +178,7 @@ curl https://api.example.com/api/client/badge/tree?rootKey=home \
 
 ```bash
 curl -X POST https://api.example.com/api/badge/preview \
-  -H "Authorization: Bearer ak_..." \
+  -H "x-api-key: ak_..." \
   -d '{ "endUserId": "player_42", "rootKey": "home", "explain": true }'
 ```
 

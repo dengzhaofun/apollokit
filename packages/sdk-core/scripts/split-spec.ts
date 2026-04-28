@@ -4,8 +4,13 @@
  * Admin spec: all paths NOT starting with /api/client/
  * Client spec: only paths starting with /api/client/
  *
- * Each output spec includes only the schemas transitively referenced
- * by its paths. Security schemes are adjusted per audience.
+ * Each output spec includes only the schemas transitively referenced by
+ * its paths. `components.securitySchemes` is copied from the source and
+ * trimmed to schemes that are actually relevant to that audience —
+ * `Session` is dropped from both (cookie-only, never used by SDKs);
+ * `AdminApiKey` and `ClientCredential` stay only with their respective
+ * audience. Each operation's `security` array is filtered the same way
+ * so SDK generators don't see dangling references.
  *
  * Usage: tsx scripts/split-spec.ts
  */
@@ -33,6 +38,19 @@ interface OpenAPISpec {
   };
   [key: string]: unknown;
 }
+
+type SecurityRequirement = Record<string, string[]>;
+
+const HTTP_METHODS = new Set([
+  "get",
+  "post",
+  "put",
+  "patch",
+  "delete",
+  "options",
+  "head",
+  "trace",
+]);
 
 // ---------------------------------------------------------------------------
 // Schema reference collector
@@ -85,6 +103,38 @@ function expandRefs(
 }
 
 // ---------------------------------------------------------------------------
+// Path security filter
+// ---------------------------------------------------------------------------
+
+/**
+ * Walk the filtered paths and strip dropped security scheme refs from
+ * every operation's `security` array. Returns a new paths object;
+ * input is not mutated.
+ */
+function stripDroppedSecurity(
+  paths: Record<string, Record<string, unknown>>,
+  keptSchemes: Set<string>,
+): Record<string, Record<string, unknown>> {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [path, methods] of Object.entries(paths)) {
+    const newMethods: Record<string, unknown> = { ...methods };
+    for (const [method, op] of Object.entries(methods)) {
+      if (!HTTP_METHODS.has(method.toLowerCase())) continue;
+      if (op === null || typeof op !== "object") continue;
+      const opRecord = op as Record<string, unknown>;
+      const security = opRecord["security"];
+      if (!Array.isArray(security)) continue;
+      const filtered = (security as SecurityRequirement[]).filter((req) =>
+        Object.keys(req).every((name) => keptSchemes.has(name)),
+      );
+      newMethods[method] = { ...opRecord, security: filtered };
+    }
+    out[path] = newMethods;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Split logic
 // ---------------------------------------------------------------------------
 
@@ -92,17 +142,21 @@ function splitSpec(
   full: OpenAPISpec,
   pathFilter: (path: string) => boolean,
   title: string,
-  securitySchemes: Record<string, unknown>,
+  keptSchemes: Set<string>,
 ): OpenAPISpec {
   // Filter paths
-  const paths: Record<string, Record<string, unknown>> = {};
+  const filteredPaths: Record<string, Record<string, unknown>> = {};
   for (const [path, ops] of Object.entries(full.paths)) {
     if (pathFilter(path)) {
-      paths[path] = ops;
+      filteredPaths[path] = ops;
     }
   }
 
-  // Collect directly referenced schemas
+  // Strip operation-level security refs to dropped schemes
+  const paths = stripDroppedSecurity(filteredPaths, keptSchemes);
+
+  // Collect directly referenced schemas (after security stripping — body
+  // / response refs aren't affected, but this keeps the input single-pass)
   const directRefs = new Set<string>();
   collectRefs(paths, directRefs);
 
@@ -118,6 +172,15 @@ function splitSpec(
   for (const name of neededSchemas) {
     if (allSchemas[name]) {
       schemas[name] = allSchemas[name];
+    }
+  }
+
+  // Trim source securitySchemes to the kept set
+  const sourceSchemes = full.components?.securitySchemes ?? {};
+  const securitySchemes: Record<string, unknown> = {};
+  for (const name of keptSchemes) {
+    if (sourceSchemes[name]) {
+      securitySchemes[name] = sourceSchemes[name];
     }
   }
 
@@ -147,36 +210,22 @@ function main(): void {
   const fullPath = resolve(specsDir, "openapi.json");
   const full: OpenAPISpec = JSON.parse(readFileSync(fullPath, "utf-8"));
 
-  // Admin spec: everything except /api/client/* paths
+  // Admin spec for SDK consumers — drop cookie-only `Session`, keep only
+  // `AdminApiKey`. `ClientCredential` shouldn't appear on admin paths;
+  // if it does it's filtered out the same way.
   const adminSpec = splitSpec(
     full,
     (path) => !path.startsWith("/api/client/"),
     "apollokit Admin API",
-    {
-      AdminApiKey: {
-        type: "apiKey",
-        in: "header",
-        name: "x-api-key",
-        description:
-          "Admin API key with ak_ prefix. Create via the dashboard or POST /api/client-credentials.",
-      },
-    },
+    new Set(["AdminApiKey"]),
   );
 
-  // Client spec: only /api/client/* paths
+  // Client spec — keep only `ClientCredential`.
   const clientSpec = splitSpec(
     full,
     (path) => path.startsWith("/api/client/"),
     "apollokit Client API",
-    {
-      ClientKey: {
-        type: "apiKey",
-        in: "header",
-        name: "x-api-key",
-        description:
-          "Client publishable key with cpk_ prefix. Obtain from your admin dashboard.",
-      },
-    },
+    new Set(["ClientCredential"]),
   );
 
   const adminPath = resolve(specsDir, "openapi-admin.json");
