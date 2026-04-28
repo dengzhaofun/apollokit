@@ -6,6 +6,51 @@ icon: ShoppingBag
 
 商店模块是玩家花钱(用 [currency](./currency) 计价)换东西(发 [item](./item) 或其他货币)的统一管道。支持多级分类、标签、阶段化成长包、限购。
 
+## 快速开始
+
+最常用的 endpoint:玩家购买商品 — `POST /api/client/shop/purchase`。前提是管理端已经创建好商品(详见下方 [商品配置](#数据模型));假设商品 id 是 `<product-id>`。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, shopClientPostPurchase } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…',
+})
+
+const { data } = await shopClientPostPurchase({
+  headers: { 'x-end-user-id': 'player_42' },
+  body: { productId: '<product-id>', quantity: 1 },
+  throwOnError: true,
+})
+
+console.log(data[200].data.granted) // 实际发放的奖励列表
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+curl -X POST https://api.example.com/api/client/shop/purchase \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"productId":"<product-id>","quantity":1}'
+```
+
+</Tab>
+
+</Tabs>
+
+完整 endpoint 列表见 [API Reference](./api/shop);SDK 接入细节见 [`@apollokit/client`](./sdk/client-typescript)。
+
 ## 数据模型
 
 - **分类(category)**:支持树形结构(`/categories/tree`)。一个商品可挂在一个分类下。

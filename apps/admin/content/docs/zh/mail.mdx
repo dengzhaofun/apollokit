@@ -6,6 +6,50 @@ icon: Mail
 
 邮件模块承担「向玩家发消息 + 附带奖励」。支持定向给单人、多人、广播全服,支持附件(物品 / 货币),支持撤回、过期、硬删除。
 
+## 快速开始
+
+最常用的 endpoint:玩家拉取邮件列表 — `GET /api/client/mail/messages`。返回该玩家的可见邮件(包括广播邮件的惰性匹配),按发送时间倒序。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, mailClientGetMessages } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…',
+})
+
+const { data } = await mailClientGetMessages({
+  headers: { 'x-end-user-id': 'player_42' },
+  throwOnError: true,
+})
+
+for (const m of data[200].data.items) {
+  console.log(m.title, m.read ? '已读' : '未读')
+}
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+curl https://api.example.com/api/client/mail/messages \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH"
+```
+
+</Tab>
+
+</Tabs>
+
+发邮件、领附件、广播 / 定向 / 撤回的完整能力见下方各节;SDK 接入细节见 [`@apollokit/client`](./sdk/client-typescript)。
+
 ## 数据模型
 
 - **message(邮件)**:标题、正文、附件、发送目标、发送时间、过期时间。

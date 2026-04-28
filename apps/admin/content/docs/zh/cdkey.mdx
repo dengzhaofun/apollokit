@@ -6,6 +6,51 @@ icon: Ticket
 
 CDKEY 模块支持「一批一批签发,一次性或多次兑换」的码分发流程。适合做渠道礼包、主播码、用户补偿、投放活动。
 
+## 快速开始
+
+最常用的 endpoint:玩家兑换码 — `POST /api/client/cdkey/redeem`。前提是管理端已经创建好批次 + 生成码(详见下方 [批次](#数据模型));玩家把拿到的码贴进客户端就调这个。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, cdkeyClientPostRedeem } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…',
+})
+
+const { data } = await cdkeyClientPostRedeem({
+  headers: { 'x-end-user-id': 'player_42' },
+  body: { code: 'WELCOME2026' },
+  throwOnError: true,
+})
+
+console.log(data[200].data.rewards) // 兑换发放的奖励列表
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+curl -X POST https://api.example.com/api/client/cdkey/redeem \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"WELCOME2026"}'
+```
+
+</Tab>
+
+</Tabs>
+
+完整 endpoint 列表见 [API Reference](./api/cdkey);SDK 接入细节见 [`@apollokit/client`](./sdk/client-typescript)。
+
 ## 数据模型
 
 - **batch(批次)**:一批码的元数据——有效期、每码奖励(或按码差异化)、单人单次限制、全局兑换上限、允许重复等。

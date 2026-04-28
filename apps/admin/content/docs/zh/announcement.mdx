@@ -6,6 +6,50 @@ icon: Megaphone
 
 公告模块用于在游戏里给玩家展示**橱窗式**长文信息——停服预告、大版本介绍、活动预热、CTA 跳转。与[邮件](./mail)(inbox 式、带附件)互补。
 
+## 快速开始
+
+最常用的 endpoint:玩家拉取当前可见公告 — `GET /api/client/announcement/active`。返回按定向规则、时间窗筛选过的公告列表。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, announcementClientGetActive } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…',
+})
+
+const { data } = await announcementClientGetActive({
+  headers: { 'x-end-user-id': 'player_42' },
+  throwOnError: true,
+})
+
+for (const a of data[200].data.items) {
+  console.log(a.title, a.body)
+}
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+curl https://api.example.com/api/client/announcement/active \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH"
+```
+
+</Tab>
+
+</Tabs>
+
+公告创建、定向规则、CTA、埋点的完整能力见下方各节;SDK 接入细节见 [`@apollokit/client`](./sdk/client-typescript)。
+
 ## 数据模型
 
 - **announcement**:标题、正文(支持 Markdown / 富文本)、CTA(按钮文案 + 跳转)、展示形式(弹窗 / 列表)、定向条件、时间窗。

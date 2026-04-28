@@ -6,6 +6,53 @@ icon: CalendarCheck
 
 签到模块管理用户每日签到行为，支持连续签到追踪、按周/月周期重置、以及按天配置奖励物品。
 
+## 快速开始
+
+最常用的 endpoint:玩家发起签到 — `POST /api/client/check-in/check-ins`。前提是管理端已经创建好一个签到配置(详见下方 [核心概念](#核心概念));假设别名是 `daily`,玩家 id 是 `player_42`。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, checkInClientPostCheckIns } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…', // 受信进程才传;浏览器 / 小程序场景见 SDK 文档
+})
+
+// SDK 自动用 csk_ 签发 x-user-hash,只传 endUserId
+const { data } = await checkInClientPostCheckIns({
+  headers: { 'x-end-user-id': 'player_42' },
+  body: { configKey: 'daily' },
+  throwOnError: true,
+})
+
+console.log(data[200].data.state.currentStreak) // 连续签到天数
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+# USER_HASH 是 HMAC-SHA256(endUserId, csk_) hex,服务端代签
+curl -X POST https://api.example.com/api/client/check-in/check-ins \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"configKey":"daily"}'
+```
+
+</Tab>
+
+</Tabs>
+
+完整 endpoint 列表见 [API Reference](./api/check-in);SDK 接入细节见 [`@apollokit/client`](./sdk/client-typescript)。
+
 ## 核心概念
 
 ### 签到配置 (CheckInConfig)
