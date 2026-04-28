@@ -1,0 +1,9 @@
+{
+  "title": "CMS (Client)",
+  "pages": [
+    "cms_client_get_by_alias_by_typealias_by_entryalias",
+    "cms_client_get_group_by_typealias_by_groupkey",
+    "cms_client_get_tag_by_tag",
+    "cms_client_get_list_by_typealias"
+  ]
+}

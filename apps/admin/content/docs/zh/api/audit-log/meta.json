@@ -1,0 +1,8 @@
+{
+  "title": "Audit Log",
+  "pages": [
+    "audit_log_get_root",
+    "audit_log_get_resource_types",
+    "audit_log_get_by_id"
+  ]
+}

@@ -12,7 +12,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "screenshots": "node scripts/take-screenshots.mjs"
+    "screenshots": "node scripts/take-screenshots.mjs",
+    "sdks:generate": "pnpm --filter=server run openapi:dump && cp apps/server/openapi.json packages/sdk-core/specs/openapi.json && pnpm --filter=@repo/sdk-core run split && pnpm --filter=@apollokit/server run generate && pnpm --filter=@apollokit/client run generate && pnpm --filter=@repo/sdk-core run inject-samples && pnpm --filter=admin run gen:api-docs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

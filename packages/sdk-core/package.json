@@ -6,7 +6,8 @@
   "scripts": {
     "extract": "tsx scripts/extract-openapi.ts",
     "split": "tsx scripts/split-spec.ts",
-    "openapi": "tsx scripts/extract-openapi.ts && tsx scripts/split-spec.ts"
+    "openapi": "tsx scripts/extract-openapi.ts && tsx scripts/split-spec.ts",
+    "inject-samples": "tsx scripts/inject-samples.ts"
   },
   "devDependencies": {
     "tsx": "^4.21.0",
