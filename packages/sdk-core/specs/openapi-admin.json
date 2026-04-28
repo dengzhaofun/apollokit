@@ -48460,9 +48460,7 @@
           "code": {
             "type": "string"
           },
-          "data": {
-            "type": "null"
-          },
+          "data": {},
           "message": {
             "type": "string"
           },
@@ -48765,9 +48763,7 @@
               "ok"
             ]
           },
-          "data": {
-            "type": "null"
-          },
+          "data": {},
           "message": {
             "type": "string"
           },
@@ -54589,9 +54585,7 @@
                   "minLevel"
                 ]
               },
-              {
-                "type": "null"
-              }
+              {}
             ]
           },
           "repeatable": {
@@ -54716,9 +54710,7 @@
                   "minLevel"
                 ]
               },
-              {
-                "type": "null"
-              }
+              {}
             ]
           },
           "repeatable": {
@@ -54988,9 +54980,7 @@
                   "minLevel"
                 ]
               },
-              {
-                "type": "null"
-              }
+              {}
             ]
           },
           "repeatable": {
