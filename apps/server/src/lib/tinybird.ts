@@ -247,6 +247,14 @@ export function createTinybirdClient(opts: { token: string; baseUrl: string }) {
     ...tinybirdResources,
     token: opts.token,
     baseUrl: opts.baseUrl,
+    // SDK auto-derives `devMode` from `NODE_ENV === "development"` (see
+    // `@tinybirdco/sdk/src/schema/project.ts`). In dev mode it tries to
+    // load `tinybird.config.mjs` from disk to resolve a per-branch token —
+    // which only works for the CLI. The Workers runtime has no filesystem
+    // access for that dynamic import, so wrangler dev would 500 on every
+    // ingest. Branch routing belongs to `pnpm tb:deploy`; the live token
+    // already points at the right workspace via env vars.
+    devMode: false,
   });
 }
 

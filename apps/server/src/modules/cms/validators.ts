@@ -82,18 +82,25 @@ type CmsFieldDefShape = {
 };
 
 export const CmsFieldDefSchema: z.ZodType<CmsFieldDefShape> = z.lazy(() =>
-  z.object({
-    name: FieldNameSchema,
-    label: z.string().min(1).max(256),
-    description: z.string().max(2000).optional(),
-    type: z.enum(CMS_FIELD_TYPES),
-    required: z.boolean().optional(),
-    default: z.unknown().optional(),
-    validation: CmsFieldValidationSchema,
-    itemDef: CmsFieldDefSchema.optional(),
-    fields: z.array(CmsFieldDefSchema).optional(),
-    options: CmsFieldOptionsSchema,
-  }),
+  z
+    .object({
+      name: FieldNameSchema,
+      label: z.string().min(1).max(256),
+      description: z.string().max(2000).optional(),
+      type: z.enum(CMS_FIELD_TYPES),
+      required: z.boolean().optional(),
+      default: z.unknown().optional(),
+      validation: CmsFieldValidationSchema,
+      itemDef: CmsFieldDefSchema.optional(),
+      fields: z.array(CmsFieldDefSchema).optional(),
+      options: CmsFieldOptionsSchema,
+    })
+    // Register as a named OpenAPI component INSIDE z.lazy so the
+    // generator emits `$ref: '#/components/schemas/CmsFieldDef'` at
+    // each self-reference instead of recursing into safeParse() — the
+    // recursive parse otherwise blows the stack inside zod-to-openapi's
+    // isNullable/isOptional heuristics.
+    .openapi("CmsFieldDef"),
 );
 
 export const CmsSchemaDefSchema = z
