@@ -33,7 +33,6 @@
     "@openrouter/ai-sdk-provider": "^2.8.0",
     "@orama/tokenizers": "^3.1.18",
     "@radix-ui/react-presence": "^1.1.5",
-    "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@rive-app/react-webgl2": "^4.28.2",
     "@sentry/cloudflare": "^10.35",
     "@sentry/react": "^10.35",
