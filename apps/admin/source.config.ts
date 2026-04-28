@@ -29,8 +29,8 @@ export const docs = defineDocs({
     postprocess: {
       includeProcessedMarkdown: {},
     },
-    // Build-time MDX option overrides — wires Twoslash + AutoTypeTable
-    // remark plugin into the shared shiki/rehype-code chain.
+    // Build-time MDX option overrides — wires Twoslash, AutoTypeTable
+    // and Mermaid remark plugins into the shared shiki/rehype-code chain.
     //
     // - `transformerTwoslash` annotates every TS/JS code block with the
     //   real TypeScript type info; `fumadocs-twoslash/twoslash.css` is
@@ -42,6 +42,11 @@ export const docs = defineDocs({
     //   build time; the runtime `AutoTypeTable` component is also
     //   registered in `routes/docs/$.tsx` for places that prefer the
     //   inline `type="…"` API.
+    // - `remarkMdxMermaid` rewrites ` ```mermaid ` fenced code blocks
+    //   into `<Mermaid chart="…" />` JSX. The runtime `<Mermaid>`
+    //   component (registered in `routes/docs/$.tsx`) is client-only
+    //   and reads dark/light from `next-themes`, so SSR yields the
+    //   placeholder and the diagram appears after hydration.
     async mdxOptions() {
       const { rehypeCodeDefaultOptions } = await import(
         'fumadocs-core/mdx-plugins/rehype-code'
@@ -55,6 +60,7 @@ export const docs = defineDocs({
         createGenerator,
         createFileSystemGeneratorCache,
       } = await import('fumadocs-typescript');
+      const { remarkMdxMermaid } = await import('fumadocs-mermaid');
 
       const generator = createGenerator({
         cache: createFileSystemGeneratorCache(
@@ -74,7 +80,10 @@ export const docs = defineDocs({
             }),
           ],
         },
-        remarkPlugins: [[remarkAutoTypeTable, { generator }]],
+        remarkPlugins: [
+          [remarkAutoTypeTable, { generator }],
+          remarkMdxMermaid,
+        ],
       };
     },
   },

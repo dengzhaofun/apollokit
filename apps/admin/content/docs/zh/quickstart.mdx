@@ -33,9 +33,11 @@ icon: Rocket
 
 ## 4. 调通第一次请求
 
-假设你的玩家 id 是 `player_42`,HMAC 签名是从服务端用 `secret` 算出来的十六进制串。两种选择:
+假设你的玩家 id 是 `player_42`,HMAC 签名是从服务端用 `secret` 算出来的十六进制串。挑你顺手的语言:
 
-### 方式 A:后端代签,直接 cURL
+<Tabs groupId="language" items={['curl', 'TypeScript']} persist>
+
+<Tab value="curl">
 
 ```bash
 # 先用任意 HMAC-SHA256 工具把 endUserId 按 secret 签一下,结果记为 $USER_HASH
@@ -50,6 +52,38 @@ curl -X POST https://your-server.example.com/api/client/check-in/check-ins \
   -H "Content-Type: application/json" \
   -d '{"configKey":"daily"}'
 ```
+
+</Tab>
+
+<Tab value="TypeScript">
+
+```ts
+import {
+  createClient,
+  signEndUser,
+  checkInClientPostCheckIns,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://your-server.example.com',
+  publishableKey: 'cpk_XXX',
+  secret: process.env.APOLLOKIT_CSK!, // ⚠️ 仅服务端,绝不进浏览器 bundle
+})
+
+const userHash = await signEndUser('player_42', process.env.APOLLOKIT_CSK!)
+
+const { data } = await checkInClientPostCheckIns({
+  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': userHash },
+  body: { configKey: 'daily' },
+  throwOnError: true,
+})
+
+console.log(data[200].data)
+```
+
+</Tab>
+
+</Tabs>
 
 成功响应形如:
 
@@ -70,28 +104,7 @@ curl -X POST https://your-server.example.com/api/client/check-in/check-ins \
 }
 ```
 
-### 方式 B:走 TypeScript 客户端 SDK
-
-```ts
-import { createClient, signEndUser, postCheckIns } from '@apollokit/client';
-
-const client = createClient({
-  baseUrl: 'https://your-server.example.com',
-  publishableKey: 'cpk_XXX',
-  secret: 'csk_XXX', // ⚠️ 仅服务端,绝不进浏览器 bundle
-});
-
-const userHash = await signEndUser('player_42', 'csk_XXX');
-
-const { data } = await postCheckIns({
-  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': userHash },
-  body: { configKey: 'daily' },
-});
-
-console.log(data);
-```
-
-更多 SDK 细节见 [client-sdk](./client-sdk)。
+更多 SDK 细节见 [`@apollokit/client` 接入](./sdk/client-typescript) 或 [`@apollokit/server` 接入](./sdk/server-typescript)(管理端用法)。
 
 ## 5. 下一步
 

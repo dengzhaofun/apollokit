@@ -15,6 +15,13 @@ import type { TOCItemType } from 'fumadocs-core/toc'
 // info; this stylesheet renders the hover bubble. Pulled from npm so
 // fumadocs upgrades carry it.
 import 'fumadocs-twoslash/twoslash.css'
+// `<Mermaid>` is the runtime renderer for ` ```mermaid ` blocks. The
+// build-time `remarkMdxMermaid` plugin in `source.config.ts` rewrites
+// fenced mermaid code blocks into `<Mermaid chart="…" />` JSX, this
+// component renders the SVG client-side (mermaid lib + next-themes
+// dark/light detection). SSR yields the placeholder; diagram appears
+// after hydration.
+import { Mermaid } from 'fumadocs-mermaid/ui'
 import { i18n } from '#/lib/source'
 import { source } from '#/lib/source-server'
 import { getBaseOptions } from '#/lib/layout.shared'
@@ -41,6 +48,7 @@ const mdxComponents = {
   ...defaultMdxComponents,
   ...TabsComponents,
   APIPage,
+  Mermaid,
 }
 
 const REPO_OWNER = 'dengzhaofun'
