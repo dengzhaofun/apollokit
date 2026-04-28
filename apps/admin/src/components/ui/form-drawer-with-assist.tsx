@@ -21,6 +21,7 @@
 
 import { ChevronRightIcon, SparklesIcon } from "lucide-react"
 import * as React from "react"
+import { useDefaultLayout } from "react-resizable-panels"
 
 import {
   AlertDialog,
@@ -40,6 +41,11 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "#/components/ui/drawer"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "#/components/ui/resizable"
 import {
   Sheet,
   SheetContent,
@@ -72,7 +78,9 @@ interface FormDrawerWithAssistProps {
 }
 
 const COLLAPSED_WIDTH = "sm:!max-w-[840px]"
-const EXPANDED_WIDTH = "sm:!max-w-[1180px]"
+// 给左右两栏 + 拖拽留出舒服空间;默认 58/42 split 时
+// AI 栏 ≈ 1480 * 0.42 ≈ 621px(对比原 420px 固定宽)。
+const EXPANDED_WIDTH = "sm:!max-w-[min(1480px,92vw)]"
 
 export function FormDrawerWithAssist({
   open,
@@ -88,6 +96,16 @@ export function FormDrawerWithAssist({
   const isMobile = useIsMobile()
   const [confirmingClose, setConfirmingClose] = React.useState(false)
   const [assistOpen, setAssistOpen] = React.useState(false)
+
+  // 持久化用户拖拽出来的左右比例 — useDefaultLayout 把 layout 存到
+  // localStorage,key 由传入的 id 决定。SSR 阶段 window 不可用,这里
+  // 保护一下;hook 内部对 storage===undefined 也是 no-op。
+  const layoutStorage =
+    typeof window !== "undefined" ? window.localStorage : undefined
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "form-drawer-assist-split-v1",
+    storage: layoutStorage,
+  })
 
   // Tell the global AssistContext we're on screen. The FAB watches this
   // counter and hides itself when > 0 to avoid two AI entry points.
@@ -165,6 +183,32 @@ export function FormDrawerWithAssist({
             assistOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
             className,
           )}
+          // 拖拽 ResizablePanelGroup 中间的 handle 时,react-resizable-panels
+          // 在 document capture phase 抢先 preventDefault,导致 Radix 自己的
+          // onPointerDownCapture 没机会标记"点击发生在 React 树内"。结果
+          // Radix 把这次 pointerdown 误判成 outside-click → onDismiss → Sheet
+          // 关掉(连带 onOpenChange(false)、URL 抹掉 modal=create)。
+          // 同样的 race 也会发生在 react-resizable-panels 主动 focus()
+          // separator 触发的 focus 事件上。这里直接拦截:目标在 resize handle
+          // 内时阻止 Radix dismiss。
+          onPointerDownOutside={(event) => {
+            const target = event.detail.originalEvent.target as Element | null
+            if (target?.closest("[data-slot=resizable-handle]")) {
+              event.preventDefault()
+            }
+          }}
+          onFocusOutside={(event) => {
+            const target = event.detail.originalEvent.target as Element | null
+            if (target?.closest("[data-slot=resizable-handle]")) {
+              event.preventDefault()
+            }
+          }}
+          onInteractOutside={(event) => {
+            const target = event.detail.originalEvent.target as Element | null
+            if (target?.closest("[data-slot=resizable-handle]")) {
+              event.preventDefault()
+            }
+          }}
         >
           <SheetHeader className="shrink-0 gap-1 border-b">
             <div className="flex items-center justify-between gap-2">
@@ -195,12 +239,24 @@ export function FormDrawerWithAssist({
             ) : null}
           </SheetHeader>
           <div className="flex flex-1 overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4">{children}</div>
             {assistOpen ? (
-              <div className="hidden w-[420px] shrink-0 border-l md:block">
-                <AIAssistPanel />
-              </div>
-            ) : null}
+              <ResizablePanelGroup
+                orientation="horizontal"
+                defaultLayout={defaultLayout}
+                onLayoutChanged={onLayoutChanged}
+                className="flex-1"
+              >
+                <ResizablePanel defaultSize={58} minSize={35} maxSize={75}>
+                  <div className="h-full overflow-y-auto p-4">{children}</div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={42} minSize={28} maxSize={65}>
+                  <AIAssistPanel />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-4">{children}</div>
+            )}
           </div>
           {footer ? (
             <div className="flex shrink-0 flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">

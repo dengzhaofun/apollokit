@@ -198,6 +198,19 @@ function AIAssistPanelInner({
       target.intent === "create"
         ? `/${target.module}/create`
         : `/${target.module}`
+    // Build target surface directly from module + intent rather than
+    // re-parsing the URL — `computeSurface` would mis-classify a real
+    // NewPage `/foo/create` as `:edit` because there's no `?modal=create`
+    // on the path yet.
+    const targetSurface =
+      `${target.module}:${target.intent}` as AdminSurface
+    // Carry the conversation over to the next surface so the user can
+    // continue without retyping. The next mount keys by surface and
+    // `loadMessages` picks this up. We save BEFORE `addToolResult` —
+    // the navigateTo result is UI-only metadata, and trimMessagesForSend
+    // strips orphan input-available tool parts before the next request
+    // so the provider doesn't complain about missing tool results.
+    saveMessages(targetSurface, messages)
     setNavigatedCalls((prev) => new Set(prev).add(callId))
     addToolResult({
       tool: "navigateTo",

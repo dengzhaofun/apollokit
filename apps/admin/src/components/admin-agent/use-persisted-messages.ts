@@ -116,10 +116,31 @@ export function clearMessages(surface: string): void {
  * message-level trimming never splits a call from its result.
  */
 export function trimMessagesForSend(messages: UIMessage[]): UIMessage[] {
-  if (messages.length <= SEND_LIMIT) return messages
-  let start = messages.length - SEND_LIMIT
-  while (start < messages.length && messages[start]!.role !== "user") {
-    start++
+  let slice: UIMessage[]
+  if (messages.length <= SEND_LIMIT) {
+    slice = messages
+  } else {
+    let start = messages.length - SEND_LIMIT
+    while (start < messages.length && messages[start]!.role !== "user") {
+      start++
+    }
+    slice = messages.slice(start)
   }
-  return messages.slice(start)
+  // Strip orphan `tool-navigateTo` parts whose state never reached
+  // output-available — happens when we carry a conversation across
+  // surfaces (saveMessages runs before addToolResult lands). The model
+  // doesn't need the navigate result (no `execute`, UI-only), and
+  // providers reject "tool call without matching result" pairs.
+  return slice.map((msg) => {
+    if (msg.role !== "assistant" || !Array.isArray(msg.parts)) return msg
+    const cleaned = msg.parts.filter((part) => {
+      const type = (part as { type?: string }).type
+      if (type !== "tool-navigateTo") return true
+      const state = (part as { state?: string }).state
+      return state === "output-available" || state === "output-error"
+    })
+    return cleaned.length === msg.parts.length
+      ? msg
+      : ({ ...msg, parts: cleaned } as UIMessage)
+  })
 }
