@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
@@ -38,11 +40,12 @@ function CommandDialog({
   className,
   showCloseButton = false,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string
   description?: string
   className?: string
   showCloseButton?: boolean
+  children: React.ReactNode
 }) {
   return (
     <Dialog {...props}>
@@ -57,16 +60,7 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {/*
-          The cmdk context (`Command` aka `CommandPrimitive`) MUST wrap
-          all `CommandInput` / `CommandList` / `CommandGroup` /
-          `CommandItem` children — otherwise their internal
-          `useSyncExternalStore(state.subscribe, …)` call hits an
-          undefined context and throws "Cannot read properties of
-          undefined (reading 'subscribe')". The shadcn upstream pattern
-          includes this wrapper here.
-        */}
-        <Command className="rounded-none">{children}</Command>
+        {children}
       </DialogContent>
     </Dialog>
   )
