@@ -118,20 +118,29 @@ const { data } = await badgeClientGetTree({
 
 ## HMAC 流程
 
-```
- endUserId (你的玩家 id)
-       │
-       │  HMAC-SHA256
-       │  key = decrypted csk_
-       │  data = endUserId
-       ▼
- userHash (hex)  ──┐
- endUserId    ────┤
- cpk_         ────┤  ──→  apollokit server
-                  │       1. 用 cpk_ 找到组织 / csk_
-                  │       2. 解密 csk_,重算 HMAC(endUserId)
-                  │       3. 跟 caller 传来的 hash 比对
-                  └       4. 一致 → 放行;否则 401
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Game as Game Frontend
+  participant Backend as Your Backend
+  participant Server as apollokit Server
+
+  Note over Backend: holds csk_ secret<br/>(env / secret manager)
+
+  Game->>Backend: 我登录了 (你的 session)
+  Backend->>Backend: HMAC-SHA256(endUserId, csk_)
+  Backend-->>Game: { endUserId, userHash }
+
+  rect rgb(48, 56, 72)
+    Game->>Server: GET /api/client/badge/tree<br/>x-api-key: cpk_…<br/>x-end-user-id: <endUserId><br/>x-user-hash: <userHash>
+    Server->>Server: 用 cpk_ 找到 org / 加密的 csk_
+    Server->>Server: 解密 csk_,重算 HMAC(endUserId)
+    alt hash 匹配
+      Server-->>Game: 200 { code: ok, data: ... }
+    else hash 不匹配
+      Server-->>Game: 401 { code: client.invalid_credential }
+    end
+  end
 ```
 
 实现细节:
