@@ -319,10 +319,12 @@ wireKindEventSubscriptions(deps);
 
 // OpenAPI document + Scalar UI
 //
-// `registerSecuritySchemes` adds Session / AdminApiKey / ClientCredential
-// to `components.securitySchemes`. The `security` array on each route is
+// `registerSecuritySchemes` adds AdminApiKey / ClientCredential to
+// `components.securitySchemes`. The `security` array on each route is
 // stamped per-router by `createAdminRoute` / `createClientRoute` /
-// `createPublicRoute` from `./lib/openapi`.
+// `createPublicRoute` from `./lib/openapi`. The Better Auth cookie
+// session that the admin dashboard uses is intentionally NOT advertised
+// here — see `lib/openapi.ts:SECURITY_SCHEMES` for the rationale.
 registerSecuritySchemes(app);
 
 app.doc31("/openapi.json", {
@@ -332,7 +334,7 @@ app.doc31("/openapi.json", {
     version: "0.1.0",
     description:
       "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n" +
-      "- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`x-api-key: ak_…`).\n" +
+      "- **Admin** (`/api/<module>/...`): server-to-server calls (operations dashboards, cron, data pipelines). Authenticate with an admin API key (`x-api-key: ak_…`).\n" +
       "- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\n" +
       "Every business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format.",
   },

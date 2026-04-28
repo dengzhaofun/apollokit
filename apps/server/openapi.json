@@ -3,7 +3,7 @@
   "info": {
     "title": "apollokit API",
     "version": "0.1.0",
-    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`x-api-key: ak_…`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
+    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): server-to-server calls (operations dashboards, cron, data pipelines). Authenticate with an admin API key (`x-api-key: ak_…`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
   },
   "servers": [
     {
@@ -13,12 +13,6 @@
   ],
   "components": {
     "securitySchemes": {
-      "Session": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "better-auth.session_token",
-        "description": "Better Auth admin session cookie (set by /api/auth/sign-in/email)."
-      },
       "AdminApiKey": {
         "type": "apiKey",
         "in": "header",
@@ -26959,9 +26953,6 @@
         "operationId": "analytics_post_token",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -27031,9 +27022,6 @@
         "summary": "List announcements for the active org",
         "operationId": "announcement_admin_get_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -27254,9 +27242,6 @@
         "operationId": "announcement_admin_post_root",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -27386,9 +27371,6 @@
         "summary": "Get an announcement by alias",
         "operationId": "announcement_admin_get_by_alias",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -27521,9 +27503,6 @@
         "summary": "Update an announcement",
         "operationId": "announcement_admin_patch_by_alias",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -27666,9 +27645,6 @@
         "operationId": "announcement_admin_delete_by_alias",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -27779,9 +27755,6 @@
         "summary": "List audit log entries for the current org (cursor-paginated)",
         "operationId": "audit_log_get_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -28085,9 +28058,6 @@
         "operationId": "audit_log_get_resource_types",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -28208,9 +28178,6 @@
         "summary": "Get a single audit log entry by id",
         "operationId": "audit_log_get_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -28345,9 +28312,6 @@
         "operationId": "badge_admin_get_nodes",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -28466,9 +28430,6 @@
         "summary": "Create a badge node",
         "operationId": "badge_admin_post_nodes",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -28599,9 +28560,6 @@
         "summary": "Update a badge node",
         "operationId": "badge_admin_patch_nodes_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -28742,9 +28700,6 @@
         "operationId": "badge_admin_delete_nodes_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -28853,9 +28808,6 @@
         "summary": "Validate the node tree (cycles, dangling parents, bindings)",
         "operationId": "badge_admin_post_nodes_validate_tree",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -28978,9 +28930,6 @@
         "operationId": "badge_admin_get_templates",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -29101,9 +29050,6 @@
         "summary": "Create a node from a built-in template",
         "operationId": "badge_admin_post_nodes_from_template",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -29236,9 +29182,6 @@
         "operationId": "badge_admin_post_signal",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -29368,9 +29311,6 @@
         "summary": "Push a batch of badge signals (max 500 per call)",
         "operationId": "badge_admin_post_signal_batch",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -29502,9 +29442,6 @@
         "operationId": "badge_admin_post_preview",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -29635,9 +29572,6 @@
         "operationId": "badge_admin_get_signal_registry",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -29756,9 +29690,6 @@
         "summary": "Upsert a signalKey pattern into the registry",
         "operationId": "badge_admin_put_signal_registry",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -29890,9 +29821,6 @@
         "operationId": "badge_admin_delete_signal_registry_by_keypattern",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -30002,9 +29930,6 @@
         "summary": "List all banner groups for the active org",
         "operationId": "banner_admin_get_groups",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -30180,9 +30105,6 @@
         "operationId": "banner_admin_post_groups",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -30313,9 +30235,6 @@
         "operationId": "banner_admin_get_groups_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -30445,9 +30364,6 @@
         "summary": "Update a banner group",
         "operationId": "banner_admin_patch_groups_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -30588,9 +30504,6 @@
         "operationId": "banner_admin_delete_groups_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -30699,9 +30612,6 @@
         "summary": "List banners inside a group",
         "operationId": "banner_admin_get_groups_by_groupid_banners",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -30865,9 +30775,6 @@
         "operationId": "banner_admin_post_groups_by_groupid_banners",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -31008,9 +30915,6 @@
         "summary": "Reorder banners inside a group (full ordered set required)",
         "operationId": "banner_admin_post_groups_by_groupid_banners_reorder",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -31153,9 +31057,6 @@
         "operationId": "banner_admin_get_banners_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -31285,9 +31186,6 @@
         "summary": "Update a banner",
         "operationId": "banner_admin_patch_banners_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -31428,9 +31326,6 @@
         "operationId": "banner_admin_delete_banners_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -31539,9 +31434,6 @@
         "summary": "Create a battle-pass (season pass) config",
         "operationId": "battle_pass_post_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -31671,9 +31563,6 @@
         "operationId": "battle_pass_get_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -31794,9 +31683,6 @@
         "summary": "Get a battle-pass config",
         "operationId": "battle_pass_get_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -31929,9 +31815,6 @@
         "summary": "Update a battle-pass config",
         "operationId": "battle_pass_put_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -32074,9 +31957,6 @@
         "operationId": "battle_pass_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -32187,9 +32067,6 @@
         "summary": "Replace the task bindings for a battle-pass season",
         "operationId": "battle_pass_post_configs_by_id_bind_tasks",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -32310,9 +32187,6 @@
         "summary": "List tasks bound to a battle-pass season",
         "operationId": "battle_pass_get_configs_by_id_tasks",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -32447,9 +32321,6 @@
         "summary": "Activate a paid tier for an end user (payment callback / admin)",
         "operationId": "battle_pass_post_by_seasonid_grant_tier",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -32593,9 +32464,6 @@
         "summary": "Admin view of an end user's battle-pass aggregate state for debugging",
         "operationId": "battle_pass_get_by_seasonid_aggregate",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -32743,9 +32611,6 @@
         "operationId": "cdkey_batches_post_batches",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -32873,9 +32738,6 @@
         "summary": "List cdkey batches",
         "operationId": "cdkey_batches_get_batches",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -33032,9 +32894,6 @@
         "operationId": "cdkey_batches_get_batches_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -33166,9 +33025,6 @@
         "summary": "Update a cdkey batch",
         "operationId": "cdkey_batches_patch_batches_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -33311,9 +33167,6 @@
         "operationId": "cdkey_batches_delete_batches_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -33424,9 +33277,6 @@
         "summary": "Append-generate unique codes for a batch",
         "operationId": "cdkey_codes_post_batches_by_batchid_codes_generate",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -33570,9 +33420,6 @@
         "summary": "List codes for a batch",
         "operationId": "cdkey_codes_get_batches_by_batchid_codes",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -33766,9 +33613,6 @@
         "operationId": "cdkey_codes_patch_codes_by_codeid_revoke",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -33902,9 +33746,6 @@
         "summary": "List redemption logs for a batch",
         "operationId": "cdkey_logs_get_batches_by_batchid_logs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -34096,9 +33937,6 @@
         "operationId": "cdkey_redemption_post_redeem",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -34228,9 +34066,6 @@
         "summary": "List characters",
         "operationId": "character_get_characters",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -34385,9 +34220,6 @@
         "operationId": "character_post_characters",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -34518,9 +34350,6 @@
         "operationId": "character_get_characters_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -34650,9 +34479,6 @@
         "summary": "Update a character",
         "operationId": "character_patch_characters_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -34793,9 +34619,6 @@
         "operationId": "character_delete_characters_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -34904,9 +34727,6 @@
         "summary": "Create a check-in config for the current project",
         "operationId": "check_in_post_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -35035,9 +34855,6 @@
         "summary": "List check-in configs. Default filters out activity-scoped configs so the permanent list isn't polluted.",
         "operationId": "check_in_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -35209,9 +35026,6 @@
         "operationId": "check_in_get_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -35345,9 +35159,6 @@
         "summary": "Update a check-in config",
         "operationId": "check_in_patch_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -35490,9 +35301,6 @@
         "operationId": "check_in_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -35603,9 +35411,6 @@
         "summary": "List all user states for a check-in config",
         "operationId": "check_in_get_configs_by_key_users",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -35773,9 +35578,6 @@
         "operationId": "check_in_post_configs_by_key_check_ins",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -35918,9 +35720,6 @@
         "summary": "Fetch an end user's aggregate state for a config",
         "operationId": "check_in_get_configs_by_key_users_by_enduserid_state",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -36068,9 +35867,6 @@
         "operationId": "check_in_rewards_post_configs_by_key_rewards",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -36212,9 +36008,6 @@
         "operationId": "check_in_rewards_get_configs_by_key_rewards",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -36348,9 +36141,6 @@
         "summary": "Update a check-in reward",
         "operationId": "check_in_rewards_patch_rewards_by_rewardid",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -36493,9 +36283,6 @@
         "operationId": "check_in_rewards_delete_rewards_by_rewardid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -36606,9 +36393,6 @@
         "summary": "Create a client credential for the current project",
         "operationId": "client_credentials_post_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -36738,9 +36522,6 @@
         "operationId": "client_credentials_get_root",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -36861,9 +36642,6 @@
         "summary": "Get a client credential by ID",
         "operationId": "client_credentials_get_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -36996,9 +36774,6 @@
         "operationId": "client_credentials_delete_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -37108,9 +36883,6 @@
         "summary": "Disable a client credential (soft revoke)",
         "operationId": "client_credentials_post_by_id_revoke",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -37245,9 +37017,6 @@
         "operationId": "client_credentials_post_by_id_rotate",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -37380,9 +37149,6 @@
         "summary": "Toggle dev mode (skips HMAC verification when enabled)",
         "operationId": "client_credentials_patch_by_id_dev_mode",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -37525,9 +37291,6 @@
         "summary": "List CMS types in the current project",
         "operationId": "cms_get_types",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -37706,9 +37469,6 @@
         "operationId": "cms_post_types",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -37838,9 +37598,6 @@
         "summary": "Get a CMS type by id or alias",
         "operationId": "cms_get_types_by_typekey",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -37973,9 +37730,6 @@
         "summary": "Update a CMS type",
         "operationId": "cms_patch_types_by_typekey",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -38118,9 +37872,6 @@
         "operationId": "cms_delete_types_by_typekey",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -38231,9 +37982,6 @@
         "summary": "List entries for a CMS type",
         "operationId": "cms_get_types_by_typealias_entries",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -38434,9 +38182,6 @@
         "operationId": "cms_post_types_by_typealias_entries",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -38582,9 +38327,6 @@
         "operationId": "cms_get_types_by_typealias_entries_by_entrykey",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -38727,9 +38469,6 @@
         "summary": "Update an entry (optimistic concurrency via version)",
         "operationId": "cms_patch_types_by_typealias_entries_by_entrykey",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -38883,9 +38622,6 @@
         "operationId": "cms_delete_types_by_typealias_entries_by_entrykey",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -39007,9 +38743,6 @@
         "summary": "Publish an entry",
         "operationId": "cms_post_types_by_typealias_entries_by_entrykey_publish",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -39156,9 +38889,6 @@
         "operationId": "cms_post_types_by_typealias_entries_by_entrykey_unpublish",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -39303,9 +39033,6 @@
         "summary": "Upsert an end-user from a tenant-owned identity; safe to call repeatedly",
         "operationId": "end_user_post_sync",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -39469,9 +39196,6 @@
         "summary": "List end-users for the current org",
         "operationId": "end_user_get_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -39754,9 +39478,6 @@
         "operationId": "end_user_get_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -39887,9 +39608,6 @@
         "summary": "Patch name / image / emailVerified on an end-user",
         "operationId": "end_user_patch_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -40031,9 +39749,6 @@
         "operationId": "end_user_delete_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -40143,9 +39858,6 @@
         "summary": "Soft-ban the end-user; revokes all active sessions",
         "operationId": "end_user_post_by_id_disable",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -40280,9 +39992,6 @@
         "operationId": "end_user_post_by_id_enable",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -40415,9 +40124,6 @@
         "summary": "Revoke all active sessions without banning the user",
         "operationId": "end_user_post_by_id_sign_out_all",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -40552,9 +40258,6 @@
         "operationId": "collection_post_albums",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -40682,9 +40385,6 @@
         "summary": "List collection albums",
         "operationId": "collection_get_albums",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -40841,9 +40541,6 @@
         "operationId": "collection_get_albums_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -40977,9 +40674,6 @@
         "summary": "Update an album",
         "operationId": "collection_patch_albums_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -41120,9 +40814,6 @@
         "operationId": "collection_delete_albums_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -41231,9 +40922,6 @@
         "summary": "Create a group under an album",
         "operationId": "collection_groups_post_albums_by_key_groups",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -41376,9 +41064,6 @@
         "operationId": "collection_groups_get_albums_by_key_groups",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -41512,9 +41197,6 @@
         "summary": "Update a group",
         "operationId": "collection_groups_patch_groups_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -41655,9 +41337,6 @@
         "operationId": "collection_groups_delete_groups_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -41766,9 +41445,6 @@
         "summary": "Create an entry under an album",
         "operationId": "collection_entries_post_albums_by_key_entries",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -41911,9 +41587,6 @@
         "operationId": "collection_entries_get_albums_by_key_entries",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -42047,9 +41720,6 @@
         "summary": "Bulk-create entries under an album",
         "operationId": "collection_entries_post_albums_by_key_entries_bulk",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -42194,9 +41864,6 @@
         "operationId": "collection_entries_patch_entries_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -42336,9 +42003,6 @@
         "operationId": "collection_entries_delete_entries_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -42447,9 +42111,6 @@
         "summary": "Create a milestone under an album",
         "operationId": "collection_milestones_post_albums_by_key_milestones",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -42592,9 +42253,6 @@
         "operationId": "collection_milestones_get_albums_by_key_milestones",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -42728,9 +42386,6 @@
         "summary": "Update a milestone",
         "operationId": "collection_milestones_patch_milestones_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -42871,9 +42526,6 @@
         "operationId": "collection_milestones_delete_milestones_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -42982,9 +42634,6 @@
         "summary": "Aggregate unlock / claim statistics for an album",
         "operationId": "collection_ops_get_albums_by_key_stats",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -43119,9 +42768,6 @@
         "summary": "Run a fallback unlock sync for a specific end user",
         "operationId": "collection_ops_post_albums_by_key_rescan",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -43266,9 +42912,6 @@
         "operationId": "currency_definitions_post_definitions",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -43396,9 +43039,6 @@
         "summary": "List currencies",
         "operationId": "currency_definitions_get_definitions",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -43603,9 +43243,6 @@
         "operationId": "currency_definitions_get_definitions_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -43739,9 +43376,6 @@
         "summary": "Update a currency",
         "operationId": "currency_definitions_patch_definitions_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -43884,9 +43518,6 @@
         "operationId": "currency_definitions_delete_definitions_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -43997,9 +43628,6 @@
         "summary": "List all wallets for a user",
         "operationId": "currency_wallet_get_wallets",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -44133,9 +43761,6 @@
         "summary": "Get balance for a single currency",
         "operationId": "currency_wallet_get_wallets_by_enduserid_by_currencyid",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -44279,9 +43904,6 @@
         "operationId": "currency_wallet_post_wallets_grant",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -44412,9 +44034,6 @@
         "operationId": "currency_wallet_post_wallets_deduct",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -44544,9 +44163,6 @@
         "summary": "Query currency ledger entries",
         "operationId": "currency_ledger_get_ledger",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -44726,9 +44342,6 @@
         "operationId": "dialogue_admin_get_scripts",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -44882,9 +44495,6 @@
         "operationId": "dialogue_admin_post_scripts",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -45015,9 +44625,6 @@
         "operationId": "dialogue_admin_get_scripts_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -45147,9 +44754,6 @@
         "summary": "Update a dialogue script",
         "operationId": "dialogue_admin_patch_scripts_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -45290,9 +44894,6 @@
         "operationId": "dialogue_admin_delete_scripts_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -45401,9 +45002,6 @@
         "summary": "List all entity schemas",
         "operationId": "entity_schemas_admin_get_schemas",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -45558,9 +45156,6 @@
         "operationId": "entity_schemas_admin_post_schemas",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -45690,9 +45285,6 @@
         "summary": "Get an entity schema by ID or alias",
         "operationId": "entity_schemas_admin_get_schemas_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -45827,9 +45419,6 @@
         "summary": "Update an entity schema",
         "operationId": "entity_schemas_admin_patch_schemas_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -45972,9 +45561,6 @@
         "operationId": "entity_schemas_admin_delete_schemas_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -46085,9 +45671,6 @@
         "summary": "List all blueprints (optionally filtered by schemaId)",
         "operationId": "entity_blueprints_admin_get_blueprints",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -46251,9 +45834,6 @@
         "operationId": "entity_blueprints_admin_post_blueprints",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -46383,9 +45963,6 @@
         "summary": "Get a blueprint by ID or alias",
         "operationId": "entity_blueprints_admin_get_blueprints_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -46520,9 +46097,6 @@
         "summary": "Update a blueprint",
         "operationId": "entity_blueprints_admin_patch_blueprints_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -46665,9 +46239,6 @@
         "operationId": "entity_blueprints_admin_delete_blueprints_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -46778,9 +46349,6 @@
         "summary": "List skins for a blueprint",
         "operationId": "entity_skins_admin_get_blueprints_by_id_skins",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -46916,9 +46484,6 @@
         "summary": "Create a skin for a blueprint",
         "operationId": "entity_skins_admin_post_blueprints_by_id_skins",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -47063,9 +46628,6 @@
         "operationId": "entity_skins_admin_patch_skins_by_skinid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -47207,9 +46769,6 @@
         "operationId": "entity_skins_admin_delete_skins_by_skinid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -47320,9 +46879,6 @@
         "summary": "List all formation configs",
         "operationId": "entity_formations_admin_get_formation_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -47477,9 +47033,6 @@
         "operationId": "entity_formations_admin_post_formation_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -47609,9 +47162,6 @@
         "summary": "Get a formation config by ID or alias",
         "operationId": "entity_formations_admin_get_formation_configs_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -47745,9 +47295,6 @@
         "summary": "Update a formation config",
         "operationId": "entity_formations_admin_patch_formation_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -47890,9 +47437,6 @@
         "operationId": "entity_formations_admin_delete_formation_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -48003,9 +47547,6 @@
         "summary": "Create an item category",
         "operationId": "item_categories_post_categories",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -48134,9 +47675,6 @@
         "summary": "List item categories",
         "operationId": "item_categories_get_categories",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -48293,9 +47831,6 @@
         "operationId": "item_categories_get_categories_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -48429,9 +47964,6 @@
         "summary": "Update an item category",
         "operationId": "item_categories_patch_categories_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -48574,9 +48106,6 @@
         "operationId": "item_categories_delete_categories_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -48687,9 +48216,6 @@
         "summary": "Create an item definition",
         "operationId": "item_definitions_post_definitions",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -48818,9 +48344,6 @@
         "summary": "List item definitions",
         "operationId": "item_definitions_get_definitions",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -49010,9 +48533,6 @@
         "operationId": "item_definitions_get_definitions_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -49146,9 +48666,6 @@
         "summary": "Update an item definition",
         "operationId": "item_definitions_patch_definitions_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -49291,9 +48808,6 @@
         "operationId": "item_definitions_delete_definitions_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -49404,9 +48918,6 @@
         "summary": "Grant items/currencies to a user (reward center)",
         "operationId": "item_inventory_post_grant",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -49538,9 +49049,6 @@
         "operationId": "item_inventory_post_deduct",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -49670,9 +49178,6 @@
         "summary": "Get a user's full inventory",
         "operationId": "item_inventory_get_users_by_enduserid_inventory",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -49820,9 +49325,6 @@
         "operationId": "item_inventory_get_users_by_enduserid_balance_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -49969,9 +49471,6 @@
         "operationId": "exchange_configs_post_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -50099,9 +49598,6 @@
         "summary": "List exchange configs",
         "operationId": "exchange_configs_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -50258,9 +49754,6 @@
         "operationId": "exchange_configs_get_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -50394,9 +49887,6 @@
         "summary": "Update an exchange config",
         "operationId": "exchange_configs_patch_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -50539,9 +50029,6 @@
         "operationId": "exchange_configs_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -50652,9 +50139,6 @@
         "summary": "Create an exchange option under a config",
         "operationId": "exchange_options_post_configs_by_configkey_options",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -50796,9 +50280,6 @@
         "summary": "List exchange options for a config",
         "operationId": "exchange_options_get_configs_by_configkey_options",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -50966,9 +50447,6 @@
         "operationId": "exchange_options_patch_options_by_optionid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -51110,9 +50588,6 @@
         "operationId": "exchange_options_delete_options_by_optionid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -51223,9 +50698,6 @@
         "summary": "Execute an exchange for an end user",
         "operationId": "exchange_execution_post_options_by_optionid_execute",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -51370,9 +50842,6 @@
         "operationId": "exchange_execution_get_options_by_optionid_users_by_enduserid_state",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -51494,9 +50963,6 @@
         "operationId": "friend_get_settings",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -51615,9 +51081,6 @@
         "summary": "Create or update friend settings for the current project",
         "operationId": "friend_put_settings",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -51748,9 +51211,6 @@
         "summary": "List all friend relationships in this project (admin)",
         "operationId": "friend_get_relationships",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -51903,9 +51363,6 @@
         "operationId": "friend_delete_relationships_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -52016,9 +51473,6 @@
         "summary": "Get friend gift settings for the current project",
         "operationId": "friend_gift_get_settings",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -52138,9 +51592,6 @@
         "summary": "Create or update friend gift settings",
         "operationId": "friend_gift_put_settings",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -52272,9 +51723,6 @@
         "operationId": "friend_gift_post_packages",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -52402,9 +51850,6 @@
         "summary": "List gift packages for the current project",
         "operationId": "friend_gift_get_packages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -52561,9 +52006,6 @@
         "operationId": "friend_gift_get_packages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -52695,9 +52137,6 @@
         "summary": "Update a gift package",
         "operationId": "friend_gift_put_packages_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -52840,9 +52279,6 @@
         "operationId": "friend_gift_delete_packages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -52953,9 +52389,6 @@
         "summary": "List all gift sends for the current project",
         "operationId": "friend_gift_get_sends",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -53112,9 +52545,6 @@
         "operationId": "friend_gift_get_sends_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -53248,9 +52678,6 @@
         "operationId": "invite_admin_get_settings",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -53368,9 +52795,6 @@
         ],
         "operationId": "invite_admin_put_settings",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -53500,9 +52924,6 @@
         ],
         "operationId": "invite_admin_get_relationships",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -53675,9 +53096,6 @@
         "operationId": "invite_admin_delete_relationships_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -53785,9 +53203,6 @@
         ],
         "operationId": "invite_admin_get_users_by_enduserid_stats",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -53922,9 +53337,6 @@
         ],
         "operationId": "invite_admin_post_users_by_enduserid_reset_code",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -54061,9 +53473,6 @@
         "operationId": "guild_get_settings",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -54182,9 +53591,6 @@
         "summary": "Upsert guild settings for the current project",
         "operationId": "guild_put_settings",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -54315,9 +53721,6 @@
         "summary": "List guilds for the current project",
         "operationId": "guild_get_guilds",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -54478,9 +53881,6 @@
         "operationId": "guild_get_guilds_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -54612,9 +54012,6 @@
         "summary": "Update a guild",
         "operationId": "guild_put_guilds_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -54757,9 +54154,6 @@
         "operationId": "guild_delete_guilds_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -54893,9 +54287,6 @@
         "summary": "Grant experience points to a guild (admin)",
         "operationId": "guild_post_guilds_by_id_grant_exp",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -55040,9 +54431,6 @@
         "operationId": "guild_get_guilds_by_id_members",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -55176,9 +54564,6 @@
         "summary": "List join requests for a guild",
         "operationId": "guild_get_guilds_by_id_requests",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -55350,9 +54735,6 @@
         "operationId": "guild_get_guilds_by_id_contributions",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -55507,9 +54889,6 @@
         "operationId": "lottery_pools_post_pools",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -55637,9 +55016,6 @@
         "summary": "List lottery pools",
         "operationId": "lottery_pools_get_pools",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -55817,9 +55193,6 @@
         "operationId": "lottery_pools_get_pools_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -55953,9 +55326,6 @@
         "summary": "Update a lottery pool",
         "operationId": "lottery_pools_patch_pools_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -56098,9 +55468,6 @@
         "operationId": "lottery_pools_delete_pools_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -56211,9 +55578,6 @@
         "summary": "Create a tier in a pool",
         "operationId": "lottery_tiers_post_pools_by_poolkey_tiers",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -56355,9 +55719,6 @@
         "summary": "List tiers for a pool",
         "operationId": "lottery_tiers_get_pools_by_poolkey_tiers",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -56525,9 +55886,6 @@
         "operationId": "lottery_tiers_patch_tiers_by_tierid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -56669,9 +56027,6 @@
         "operationId": "lottery_tiers_delete_tiers_by_tierid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -56782,9 +56137,6 @@
         "summary": "Create a prize under a tier",
         "operationId": "lottery_prizes_post_pools_by_poolkey_tiers_by_tierid_prizes",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -56940,9 +56292,6 @@
         "operationId": "lottery_prizes_post_pools_by_poolkey_prizes",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -57083,9 +56432,6 @@
         "summary": "List all prizes in a pool",
         "operationId": "lottery_prizes_get_pools_by_poolkey_prizes",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -57253,9 +56599,6 @@
         "operationId": "lottery_prizes_patch_prizes_by_prizeid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -57397,9 +56740,6 @@
         "operationId": "lottery_prizes_delete_prizes_by_prizeid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -57510,9 +56850,6 @@
         "summary": "Create a pity rule for a pool",
         "operationId": "lottery_pity_rules_post_pools_by_poolkey_pity_rules",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -57654,9 +56991,6 @@
         "summary": "List pity rules for a pool",
         "operationId": "lottery_pity_rules_get_pools_by_poolkey_pity_rules",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -57824,9 +57158,6 @@
         "operationId": "lottery_pity_rules_patch_pity_rules_by_ruleid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -57968,9 +57299,6 @@
         "operationId": "lottery_pity_rules_delete_pity_rules_by_ruleid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -58081,9 +57409,6 @@
         "summary": "Execute a single pull (admin)",
         "operationId": "lottery_pull_post_pools_by_poolkey_pull",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -58228,9 +57553,6 @@
         "operationId": "lottery_pull_post_pools_by_poolkey_multi_pull",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -58373,9 +57695,6 @@
         "summary": "Get user pity state for a pool",
         "operationId": "lottery_pull_get_pools_by_poolkey_users_by_enduserid_state",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -58522,9 +57841,6 @@
         "operationId": "lottery_pull_get_pools_by_poolkey_users_by_enduserid_history",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -58670,9 +57986,6 @@
         "operationId": "mail_admin_post_messages",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -58800,9 +58113,6 @@
         "summary": "List mail messages for the active org",
         "operationId": "mail_admin_get_messages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -58971,9 +58281,6 @@
         "operationId": "mail_admin_get_messages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -59106,9 +58413,6 @@
         "operationId": "mail_admin_delete_messages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -59220,9 +58524,6 @@
         "operationId": "mail_admin_post_messages_by_id_revoke",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -59333,9 +58634,6 @@
         "summary": "List the current user's pinned nav routes for this project",
         "operationId": "navigation_get_favorites",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -59455,9 +58753,6 @@
         "summary": "Pin a nav route as a favorite",
         "operationId": "navigation_post_favorites",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -59587,9 +58882,6 @@
         "operationId": "navigation_delete_favorites",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -59703,9 +58995,6 @@
         "summary": "Create a shop category",
         "operationId": "shop_categories_post_categories",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -59835,9 +59124,6 @@
         "operationId": "shop_categories_get_categories",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -59959,9 +59245,6 @@
         "operationId": "shop_categories_get_categories_tree",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -60082,9 +59365,6 @@
         "summary": "Get a shop category by id or alias",
         "operationId": "shop_categories_get_categories_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -60219,9 +59499,6 @@
         "summary": "Update a shop category",
         "operationId": "shop_categories_patch_categories_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -60362,9 +59639,6 @@
         "operationId": "shop_categories_delete_categories_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -60473,9 +59747,6 @@
         "summary": "Create a shop tag",
         "operationId": "shop_tags_post_tags",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -60604,9 +59875,6 @@
         "summary": "List shop tags",
         "operationId": "shop_tags_get_tags",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -60763,9 +60031,6 @@
         "operationId": "shop_tags_get_tags_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -60899,9 +60164,6 @@
         "summary": "Update a shop tag",
         "operationId": "shop_tags_patch_tags_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -61042,9 +60304,6 @@
         "operationId": "shop_tags_delete_tags_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -61153,9 +60412,6 @@
         "summary": "Create a shop product",
         "operationId": "shop_products_post_products",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -61284,9 +60540,6 @@
         "summary": "List shop products",
         "operationId": "shop_products_get_products",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -61543,9 +60796,6 @@
         "operationId": "shop_products_get_products_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -61679,9 +60929,6 @@
         "summary": "Update a shop product",
         "operationId": "shop_products_patch_products_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -61822,9 +61069,6 @@
         "operationId": "shop_products_delete_products_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -61933,9 +61177,6 @@
         "summary": "List growth stages for a product",
         "operationId": "shop_growth_stages_get_products_by_productid_stages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -62066,9 +61307,6 @@
         "summary": "Create a growth stage for a product",
         "operationId": "shop_growth_stages_post_products_by_productid_stages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -62208,9 +61446,6 @@
         "summary": "Replace all growth stages for a product",
         "operationId": "shop_growth_stages_put_products_by_productid_stages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -62353,9 +61588,6 @@
         "operationId": "shop_growth_stages_patch_stages_by_stageid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -62495,9 +61727,6 @@
         "operationId": "shop_growth_stages_delete_stages_by_stageid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -62606,9 +61835,6 @@
         "summary": "Purchase a product on behalf of an end user",
         "operationId": "shop_execution_post_products_by_id_purchase",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -62750,9 +61976,6 @@
         "summary": "Claim a growth stage reward on behalf of an end user",
         "operationId": "shop_execution_post_users_by_enduserid_stages_by_stageid_claim",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -62903,9 +62126,6 @@
         "summary": "List products with per-user eligibility for an end user",
         "operationId": "shop_execution_get_users_by_enduserid_products",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -63069,9 +62289,6 @@
         "operationId": "storage_box_configs_post_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -63199,9 +62416,6 @@
         "summary": "List storage box configs",
         "operationId": "storage_box_configs_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -63358,9 +62572,6 @@
         "operationId": "storage_box_configs_get_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -63492,9 +62703,6 @@
         "summary": "Update a storage box config",
         "operationId": "storage_box_configs_patch_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -63637,9 +62845,6 @@
         "operationId": "storage_box_configs_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -63750,9 +62955,6 @@
         "summary": "Deposit currency into a storage box on behalf of an end user",
         "operationId": "storage_box_transactions_post_deposits",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -63884,9 +63086,6 @@
         "operationId": "storage_box_transactions_post_withdrawals",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -64016,9 +63215,6 @@
         "summary": "List a user's active storage box deposits (with projected interest)",
         "operationId": "storage_box_transactions_get_deposits_by_enduserid",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -64153,9 +63349,6 @@
         "operationId": "media_library_admin_get_folders",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -64288,9 +63481,6 @@
         "operationId": "media_library_admin_post_folders",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -64420,9 +63610,6 @@
         "summary": "Rename or move a folder",
         "operationId": "media_library_admin_patch_folders_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -64563,9 +63750,6 @@
         "operationId": "media_library_admin_delete_folders_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -64674,9 +63858,6 @@
         "summary": "List assets in a folder",
         "operationId": "media_library_admin_get_assets",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -64833,9 +64014,6 @@
         "operationId": "media_library_admin_post_assets_presign",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -64965,9 +64143,6 @@
         "summary": "Finalize a pre-signed upload with actual size/checksum",
         "operationId": "media_library_admin_post_assets_confirm",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -65099,9 +64274,6 @@
         "operationId": "media_library_admin_delete_assets_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -65210,9 +64382,6 @@
         "summary": "Worker-mediated upload (multipart/form-data; file, folderId?)",
         "operationId": "media_library_admin_post_assets_upload",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -65357,9 +64526,6 @@
         "operationId": "task_categories_post_categories",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -65487,9 +64653,6 @@
         "summary": "List task categories",
         "operationId": "task_categories_get_categories",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -65697,9 +64860,6 @@
         "operationId": "task_categories_get_categories_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -65829,9 +64989,6 @@
         "summary": "Update a task category",
         "operationId": "task_categories_patch_categories_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -65972,9 +65129,6 @@
         "operationId": "task_categories_delete_categories_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -66083,9 +65237,6 @@
         "summary": "Create a task definition",
         "operationId": "task_definitions_post_definitions",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -66214,9 +65365,6 @@
         "summary": "List task definitions",
         "operationId": "task_definitions_get_definitions",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -66515,9 +65663,6 @@
         "operationId": "task_definitions_get_definitions_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -66649,9 +65794,6 @@
         "summary": "Update a task definition",
         "operationId": "task_definitions_patch_definitions_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -66794,9 +65936,6 @@
         "operationId": "task_definitions_delete_definitions_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -66907,9 +66046,6 @@
         "summary": "Assign a task to one or more end users",
         "operationId": "task_assignments_post_definitions_by_key_assignments",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -67051,9 +66187,6 @@
         "summary": "List end users assigned to this task",
         "operationId": "task_assignments_get_definitions_by_key_assignments",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -67221,9 +66354,6 @@
         "operationId": "task_assignments_delete_definitions_by_key_assignments_by_enduserid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -67344,9 +66474,6 @@
         "summary": "List assignments across all tasks (admin/customer-support view)",
         "operationId": "task_assignments_get_assignments",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -67503,9 +66630,6 @@
         "operationId": "team_post_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -67633,9 +66757,6 @@
         "summary": "List team configs for the current project",
         "operationId": "team_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -67792,9 +66913,6 @@
         "operationId": "team_get_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -67926,9 +67044,6 @@
         "summary": "Update a team config",
         "operationId": "team_put_configs_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -68071,9 +67186,6 @@
         "operationId": "team_delete_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -68184,9 +67296,6 @@
         "summary": "List teams for the current project",
         "operationId": "team_get_teams",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -68380,9 +67489,6 @@
         "operationId": "team_get_teams_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -68517,9 +67623,6 @@
         "operationId": "team_post_teams_by_id_dissolve",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -68653,9 +67756,6 @@
         "summary": "List level configs",
         "operationId": "level_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -68810,9 +67910,6 @@
         "operationId": "level_post_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -68942,9 +68039,6 @@
         "summary": "Fetch a level config by id or alias",
         "operationId": "level_get_configs_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -69079,9 +68173,6 @@
         "summary": "Update a level config",
         "operationId": "level_put_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -69222,9 +68313,6 @@
         "operationId": "level_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -69333,9 +68421,6 @@
         "summary": "List stages under a config",
         "operationId": "level_stages_get_configs_by_id_stages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -69466,9 +68551,6 @@
         "summary": "Create a stage under a config",
         "operationId": "level_stages_post_configs_by_id_stages",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -69611,9 +68693,6 @@
         "operationId": "level_stages_put_stages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -69753,9 +68832,6 @@
         "operationId": "level_stages_delete_stages_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -69864,9 +68940,6 @@
         "summary": "List levels under a config",
         "operationId": "level_levels_get_configs_by_id_levels",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -70009,9 +69082,6 @@
         "operationId": "level_levels_post_configs_by_id_levels",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -70153,9 +69223,6 @@
         "operationId": "level_levels_get_levels_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -70285,9 +69352,6 @@
         "summary": "Update a level",
         "operationId": "level_levels_put_levels_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -70428,9 +69492,6 @@
         "operationId": "level_levels_delete_levels_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -70539,9 +69600,6 @@
         "summary": "Create a leaderboard config for the current project",
         "operationId": "leaderboard_post_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -70670,9 +69728,6 @@
         "summary": "List leaderboard configs for the current project",
         "operationId": "leaderboard_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -70829,9 +69884,6 @@
         "operationId": "leaderboard_get_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -70965,9 +70017,6 @@
         "summary": "Update a leaderboard config",
         "operationId": "leaderboard_patch_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -71110,9 +70159,6 @@
         "operationId": "leaderboard_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -71223,9 +70269,6 @@
         "summary": "Report a metric contribution. Fans out to all active configs matching the metricKey.",
         "operationId": "leaderboard_post_contribute",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -71356,9 +70399,6 @@
         "summary": "Top N entries in the current (or specified) cycle bucket",
         "operationId": "leaderboard_get_configs_by_key_top",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -71539,9 +70579,6 @@
         "operationId": "leaderboard_get_configs_by_key_neighbors",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -71715,9 +70752,6 @@
         "operationId": "leaderboard_get_configs_by_key_snapshots",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -71852,9 +70886,6 @@
         "operationId": "leaderboard_post_settle_run",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -71975,9 +71006,6 @@
         "summary": "Create an activity (draft)",
         "operationId": "activity_post_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -72106,9 +71134,6 @@
         "summary": "List activities",
         "operationId": "activity_get_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -72284,9 +71309,6 @@
         "operationId": "activity_get_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -72418,9 +71440,6 @@
         "summary": "Update an activity",
         "operationId": "activity_patch_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -72561,9 +71580,6 @@
         "operationId": "activity_delete_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -72672,9 +71688,6 @@
         "summary": "Publish / unpublish / archive an activity",
         "operationId": "activity_post_by_key_publish",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -72817,9 +71830,6 @@
         "operationId": "activity_post_by_key_nodes",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -72959,9 +71969,6 @@
         "summary": "List nodes of an activity",
         "operationId": "activity_get_by_key_nodes",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -73132,9 +72139,6 @@
         "operationId": "activity_patch_nodes_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -73275,9 +72279,6 @@
         "operationId": "activity_delete_nodes_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -73386,9 +72387,6 @@
         "summary": "Attach a time trigger to an activity",
         "operationId": "activity_post_by_key_schedules",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -73529,9 +72527,6 @@
         "summary": "List schedules attached to an activity",
         "operationId": "activity_get_by_key_schedules",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -73677,9 +72672,6 @@
         "operationId": "activity_delete_schedules_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -73788,9 +72780,6 @@
         "summary": "Enrol an end user in an activity",
         "operationId": "activity_post_by_key_join",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -73933,9 +72922,6 @@
         "operationId": "activity_post_by_key_leave",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -74076,9 +73062,6 @@
         "summary": "Paginated list of activity members (admin).",
         "operationId": "activity_get_by_key_members",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -74247,9 +73230,6 @@
         "operationId": "activity_post_by_key_members_by_enduserid_redeem_queue",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -74389,9 +73369,6 @@
         "summary": "Adjust activity points for a player",
         "operationId": "activity_post_by_key_add_points",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -74549,9 +73526,6 @@
         "operationId": "activity_post_by_key_claim_milestone",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -74694,9 +73668,6 @@
         "operationId": "activity_get_by_key_view_by_enduserid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -74837,9 +73808,6 @@
         "operationId": "activity_post_tick_run",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -74960,9 +73928,6 @@
         "summary": "Participation stats for an activity.",
         "operationId": "activity_get_by_key_analytics",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -75096,9 +74061,6 @@
         "operationId": "activity_post_templates",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -75227,9 +74189,6 @@
         "summary": "List activity templates.",
         "operationId": "activity_get_templates",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -75364,9 +74323,6 @@
         "operationId": "activity_delete_templates_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -75475,9 +74431,6 @@
         "summary": "Manually spawn a new activity instance from a template (creates in draft status).",
         "operationId": "activity_post_templates_by_id_instantiate",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -75611,9 +74564,6 @@
         "operationId": "assist_pool_post_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -75741,9 +74691,6 @@
         "summary": "List assist-pool configs. Activity-scoped configs are filtered out by default.",
         "operationId": "assist_pool_get_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -75922,9 +74869,6 @@
         "operationId": "assist_pool_get_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -76058,9 +75002,6 @@
         "summary": "Update an assist-pool config (mode / policy / target are immutable)",
         "operationId": "assist_pool_patch_configs_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -76203,9 +75144,6 @@
         "operationId": "assist_pool_delete_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -76316,9 +75254,6 @@
         "summary": "Admin: initiate an assist-pool instance for a given end user",
         "operationId": "assist_pool_instances_post_instances",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -76447,9 +75382,6 @@
         "summary": "List assist-pool instances",
         "operationId": "assist_pool_instances_get_instances",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -76614,9 +75546,6 @@
         "operationId": "assist_pool_instances_get_instances_by_instanceid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -76751,9 +75680,6 @@
         "operationId": "assist_pool_instances_get_instances_by_instanceid_contributions",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -76887,9 +75813,6 @@
         "summary": "Admin: contribute to an instance on behalf of an end user",
         "operationId": "assist_pool_instances_post_instances_by_instanceid_contribute",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -77034,9 +75957,6 @@
         "operationId": "assist_pool_instances_post_instances_by_instanceid_force_expire",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -77170,9 +76090,6 @@
         "summary": "List all events (internal + external + platform) for the current org, optionally filtered by capability",
         "operationId": "event_catalog_get_root",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -77313,9 +76230,6 @@
         "operationId": "event_catalog_get_by_name",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -77446,9 +76360,6 @@
         "summary": "Update description or fields for an external event. Upgrades status to 'canonical'. Rejects internal events.",
         "operationId": "event_catalog_patch_by_name",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -77592,9 +76503,6 @@
         "operationId": "rank_admin_post_settle",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -77725,9 +76633,6 @@
         "operationId": "rank_admin_post_tier_configs",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -77855,9 +76760,6 @@
         "summary": "List tier configs",
         "operationId": "rank_admin_get_tier_configs",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -78014,9 +76916,6 @@
         "operationId": "rank_admin_get_tier_configs_by_key",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -78148,9 +77047,6 @@
         "summary": "Update a tier config (full tier replacement on tiers[])",
         "operationId": "rank_admin_patch_tier_configs_by_key",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -78295,9 +77191,6 @@
         "operationId": "rank_admin_delete_tier_configs_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -78406,9 +77299,6 @@
         "summary": "Create a new season",
         "operationId": "rank_admin_post_seasons",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -78537,9 +77427,6 @@
         "summary": "List seasons (optionally filtered)",
         "operationId": "rank_admin_get_seasons",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -78732,9 +77619,6 @@
         "operationId": "rank_admin_get_seasons_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -78864,9 +77748,6 @@
         "summary": "Update a season",
         "operationId": "rank_admin_patch_seasons_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -79009,9 +77890,6 @@
         "operationId": "rank_admin_post_seasons_by_id_activate",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -79144,9 +78022,6 @@
         "operationId": "rank_admin_post_seasons_by_id_finalize",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -79278,9 +78153,6 @@
         "summary": "List players in a season (sorted by rankScore desc)",
         "operationId": "rank_admin_get_seasons_by_id_players",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -79442,9 +78314,6 @@
         "operationId": "rank_admin_patch_seasons_by_seasonid_players_by_enduserid",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -79595,9 +78464,6 @@
         "summary": "List recent matches for a season (summary only)",
         "operationId": "rank_admin_get_seasons_by_id_matches",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -79750,9 +78616,6 @@
         "operationId": "rank_admin_get_matches_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -79885,9 +78748,6 @@
         "operationId": "webhooks_post_endpoints",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -80015,9 +78875,6 @@
         "summary": "List webhook endpoints for the current project",
         "operationId": "webhooks_get_endpoints",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -80174,9 +79031,6 @@
         "operationId": "webhooks_get_endpoints_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -80308,9 +79162,6 @@
         "summary": "Update a webhook endpoint",
         "operationId": "webhooks_patch_endpoints_by_id",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -80453,9 +79304,6 @@
         "operationId": "webhooks_delete_endpoints_by_id",
         "security": [
           {
-            "Session": []
-          },
-          {
             "AdminApiKey": []
           }
         ],
@@ -80566,9 +79414,6 @@
         "summary": "Rotate the signing secret. Previous secret is invalid immediately; new secret is shown only in this response.",
         "operationId": "webhooks_post_endpoints_by_id_rotate_secret",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -80703,9 +79548,6 @@
         "summary": "List recent delivery attempts for an endpoint",
         "operationId": "webhooks_get_endpoints_by_id_deliveries",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }
@@ -80911,9 +79753,6 @@
         "summary": "Replay a delivery — queues a new pending delivery reusing the original event id",
         "operationId": "webhooks_post_deliveries_by_id_replay",
         "security": [
-          {
-            "Session": []
-          },
           {
             "AdminApiKey": []
           }

@@ -55,7 +55,7 @@ app.post('/auth/apollokit-creds', async (req, res) => {
 <Step>
 **前端用拿到的 `userHash` 调 apollokit**:
 
-```ts twoslash
+```ts
 import { createClient, badgeClientGetTree } from '@apollokit/client'
 
 createClient({
@@ -85,7 +85,7 @@ console.log(data[200].data.nodes)
 
 如果你写的是玩家代理 / SSR / Bun script —— 进程在你的服务器、`csk_` 可以读环境变量,SDK 装一层 async 拦截器**自动帮你签名**。每次调用只传 `x-end-user-id`,SDK 自动注入 `x-user-hash`:
 
-```ts twoslash
+```ts
 import { createClient, badgeClientGetTree } from '@apollokit/client'
 
 createClient({
@@ -119,29 +119,35 @@ console.log(data[200].data.nodes)
 
 ## HMAC 流程
 
-```mermaid
-sequenceDiagram
-  autonumber
-  participant Game as Game Frontend
-  participant Backend as Your Backend
-  participant Server as apollokit Server
-
-  Note over Backend: holds csk_ secret<br/>(env / secret manager)
-
-  Game->>Backend: 我登录了 (你的 session)
-  Backend->>Backend: HMAC-SHA256(endUserId, csk_)
-  Backend-->>Game: { endUserId, userHash }
-
-  rect rgb(48, 56, 72)
-    Game->>Server: GET /api/client/badge/tree<br/>x-api-key: cpk_…<br/>x-end-user-id: <endUserId><br/>x-user-hash: <userHash>
-    Server->>Server: 用 cpk_ 找到 org / 加密的 csk_
-    Server->>Server: 解密 csk_,重算 HMAC(endUserId)
-    alt hash 匹配
-      Server-->>Game: 200 { code: ok, data: ... }
-    else hash 不匹配
-      Server-->>Game: 401 { code: client.invalid_credential }
-    end
-  end
+```
+ Game Frontend          Your Backend            apollokit Server
+ (浏览器/小程序)         (持有 csk_)              (持有 cpk_+csk_)
+       │                     │                         │
+       │  1. 我登录了 (走     │                         │
+       │     你的 session)    │                         │
+       │ ──────────────────► │                         │
+       │                     │                         │
+       │                     │ 2. HMAC-SHA256          │
+       │                     │    (endUserId, csk_)    │
+       │                     │                         │
+       │   3. { endUserId,   │                         │
+       │      userHash }     │                         │
+       │ ◄────────────────── │                         │
+       │                     │                         │
+       │  4. GET /api/client/badge/tree                 │
+       │     x-api-key:     cpk_…                       │
+       │     x-end-user-id: <endUserId>                 │
+       │     x-user-hash:   <userHash>                  │
+       │ ─────────────────────────────────────────────► │
+       │                                                │
+       │                                                │ 5. 用 cpk_ 找到 org / 加密 csk_
+       │                                                │ 6. 解密 csk_,重算 HMAC
+       │                                                │ 7. 跟 caller 传来的 hash 比对
+       │                                                │
+       │              ┌─ 一致 ─► 200 { code: ok, data } │
+       │ ◄────────────┤                                 │
+       │              └─ 不一致 ► 401 invalid_credential │
+       │                                                │
 ```
 
 实现细节:
@@ -153,20 +159,11 @@ sequenceDiagram
 
 ## 配置
 
-<AutoTypeTable
-  type={`export interface ApolloKitClientConfig {
-  /** Server base URL (e.g. "https://api.example.com") */
-  baseUrl: string;
-  /** Client publishable key (cpk_ prefix) */
-  publishableKey: string;
-  /**
-   * Client secret (csk_ prefix). Only use in server-side / trusted environments.
-   * When provided, the SDK computes HMAC automatically for each request.
-   * Never include this in browser bundles.
-   */
-  secret?: string;
-}`}
-/>
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `baseUrl` | `string` | Server base URL（例如 `https://api.example.com`） |
+| `publishableKey` | `string` | Client publishable key (`cpk_` 前缀),公开,可打包进 H5 / 小程序 |
+| `secret?` | `string` | Client secret (`csk_` 前缀)。**只在服务端/受信进程传**。配了之后 SDK 自动为每次请求算 HMAC。**绝对不要进浏览器 bundle** |
 
 ## 端用户登录 (Better Auth Email)
 
@@ -210,7 +207,7 @@ await signOut()
 
 跟 server SDK 一样的 `ApolloKitApiError` 模式:
 
-```ts twoslash
+```ts
 import {
   ApolloKitApiError,
   isErrorEnvelope,

@@ -8,6 +8,7 @@ import {
 } from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
 import * as TabsComponents from 'fumadocs-ui/components/tabs'
+import { Step, Steps } from 'fumadocs-ui/components/steps'
 import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import type { TOCItemType } from 'fumadocs-core/toc'
 // Twoslash hover-popover styles. The `transformerTwoslash` injected in
@@ -15,13 +16,6 @@ import type { TOCItemType } from 'fumadocs-core/toc'
 // info; this stylesheet renders the hover bubble. Pulled from npm so
 // fumadocs upgrades carry it.
 import 'fumadocs-twoslash/twoslash.css'
-// `<Mermaid>` is the runtime renderer for ` ```mermaid ` blocks. The
-// build-time `remarkMdxMermaid` plugin in `source.config.ts` rewrites
-// fenced mermaid code blocks into `<Mermaid chart="…" />` JSX, this
-// component renders the SVG client-side (mermaid lib + next-themes
-// dark/light detection). SSR yields the placeholder; diagram appears
-// after hydration.
-import { Mermaid } from 'fumadocs-mermaid/ui'
 import { i18n } from '#/lib/source'
 import { source } from '#/lib/source-server'
 import { getBaseOptions } from '#/lib/layout.shared'
@@ -38,17 +32,23 @@ import browserCollections from 'collections/browser'
 // configured `APIPage` factory through the MDX `components` map so the
 // generated pages render with our shiki theme + our schema registry.
 //
-// `<AutoTypeTable>` is wired purely at build time — `remarkAutoTypeTable`
-// in `source.config.ts` reads the JSX element, generates the type table
-// at compile time, and replaces it with static markdown. There is no
-// runtime component — keeping `fumadocs-typescript` (which pulls
-// `node:fs` / `ts-morph`) out of the browser bundle. Tabs are exposed
-// so SDK quickstart pages can use multi-language `<Tabs groupId="…">`.
+// Tabs are exposed so SDK quickstart pages can use multi-language
+// `<Tabs groupId="…">`.
+//
+// `AutoTypeTable` (fumadocs-typescript) and `Mermaid` (fumadocs-mermaid)
+// were tried but rolled back to keep the dev preview stable in TanStack
+// Start (RSC-less Vite SSR): AutoTypeTable's runtime UI is a Next.js
+// Server Component which can't hydrate without RSC; Mermaid's parser
+// crashes the page on diagrams with `<…>` placeholders. SDK config
+// tables are hand-written markdown, flow / sequence diagrams use ASCII
+// blocks. Revisit when we move to Next or upstream supports RSC-less
+// SSR. See `source.config.ts` for the matching plugin omissions.
 const mdxComponents = {
   ...defaultMdxComponents,
   ...TabsComponents,
+  Step,
+  Steps,
   APIPage,
-  Mermaid,
 }
 
 const REPO_OWNER = 'dengzhaofun'
