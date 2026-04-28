@@ -135,6 +135,50 @@ function stripDroppedSecurity(
 }
 
 // ---------------------------------------------------------------------------
+// OpenAPI 3.1 null-type normalization for SDK generators
+// ---------------------------------------------------------------------------
+
+/**
+ * Walk the spec in place and replace every `{ "type": "null" }` schema
+ * with `{}` (any-value). OpenAPI 3.1 lets you write `type: null` as a
+ * standalone schema (it means "the JSON value `null`"), which is valid
+ * JSON Schema 2020-12 but not understood by the Fern generator
+ * (`Failed to convert schema breadcrumbs=…  value={"type":"null"}`).
+ *
+ * Two places in the spec produce it today:
+ *   - error envelopes' `data` field (`ApiErrorEnvelope`, `ApiNullEnvelope`)
+ *     where Zod's `z.null()` lowers to `type: null` — losing this
+ *     information turns the SDK type into `unknown` for the error body,
+ *     which is fine because the surrounding envelope already says
+ *     `data: null` semantically via the `code !== "ok"` discriminator.
+ *   - `oneOf: […, { type: "null" }]` branches in dialogue trigger
+ *     conditions where the wider union admits `null`. Replacing the
+ *     branch with `{}` widens the union to "any value" for that arm —
+ *     the SDK loses the `null` guard but every other valid value is
+ *     still accepted.
+ *
+ * Both losses are recoverable later: when Fern (or downstream
+ * generators) ship full 3.1 support, drop this function. Until then,
+ * SDK accuracy is the right thing to trade off for buildable output.
+ */
+function normalizeNullTypeForGenerators(node: unknown): void {
+  if (node === null || node === undefined) return;
+  if (Array.isArray(node)) {
+    for (const item of node) normalizeNullTypeForGenerators(item);
+    return;
+  }
+  if (typeof node !== "object") return;
+  const record = node as Record<string, unknown>;
+  if (record["type"] === "null" && Object.keys(record).length === 1) {
+    delete record["type"];
+    return;
+  }
+  for (const value of Object.values(record)) {
+    normalizeNullTypeForGenerators(value);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Split logic
 // ---------------------------------------------------------------------------
 
@@ -189,6 +233,12 @@ function splitSpec(
   if (Object.keys(schemas).length > 0) components.schemas = schemas;
   if (Object.keys(securitySchemes).length > 0)
     components.securitySchemes = securitySchemes;
+
+  // Strip OpenAPI-3.1-only `{"type": "null"}` schemas — Fern's parser
+  // rejects them. Mutates paths + components in place; runs last so
+  // every $ref-expanded subtree is covered.
+  normalizeNullTypeForGenerators(paths);
+  normalizeNullTypeForGenerators(components);
 
   return {
     openapi: full.openapi,

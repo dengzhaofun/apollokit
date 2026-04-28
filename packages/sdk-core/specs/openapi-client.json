@@ -19235,9 +19235,7 @@
           "code": {
             "type": "string"
           },
-          "data": {
-            "type": "null"
-          },
+          "data": {},
           "message": {
             "type": "string"
           },
@@ -19261,9 +19259,7 @@
               "ok"
             ]
           },
-          "data": {
-            "type": "null"
-          },
+          "data": {},
           "message": {
             "type": "string"
           },

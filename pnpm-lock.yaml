@@ -469,6 +469,22 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  packages/sdk-server-ts:
+    dependencies:
+      '@hey-api/client-fetch':
+        specifier: ^0.9.0
+        version: 0.9.0(@hey-api/openapi-ts@0.70.0(typescript@5.9.2))
+    devDependencies:
+      '@hey-api/openapi-ts':
+        specifier: ^0.70.0
+        version: 0.70.0(typescript@5.9.2)
+      '@repo/sdk-core':
+        specifier: workspace:*
+        version: link:../sdk-core
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
   packages/typescript-config: {}
 
   packages/ui:
