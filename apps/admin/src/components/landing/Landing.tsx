@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
 import {
   ArrowRight,
   ArrowLeftRight,
@@ -162,6 +163,13 @@ const HERO_ICONS_OUTER: LucideIcon[] = [
 ]
 
 function PlanetLogo({ size = "size-20" }: { size?: string }) {
+  const [badgeOpen, setBadgeOpen] = useState(false)
+  useEffect(() => {
+    // Land after the hero `ak-rise` finishes (~700ms) so the dot pops in
+    // as the final beat of the entrance, not on top of the rise.
+    const id = window.setTimeout(() => setBadgeOpen(true), 750)
+    return () => window.clearTimeout(id)
+  }, [])
   return (
     <div
       className={`${size} relative grid place-items-center overflow-hidden rounded-[28%] bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,.45)] ring-1 ring-foreground/20`}
@@ -171,7 +179,13 @@ function PlanetLogo({ size = "size-20" }: { size?: string }) {
         alt="ApolloKit"
         className="size-3/4 object-contain"
       />
-      <span className="absolute -right-1 -top-1 size-3 rounded-full bg-[var(--ak-accent-2)] shadow-[0_0_24px_var(--ak-glow-2)]" />
+      <span
+        className="t-badge -right-1 -top-1"
+        data-open={badgeOpen ? "true" : "false"}
+        aria-hidden
+      >
+        <span className="t-badge-dot size-3 rounded-full bg-[var(--ak-accent-2)] shadow-[0_0_24px_var(--ak-glow-2)]" />
+      </span>
     </div>
   )
 }
@@ -392,9 +406,11 @@ function Hero() {
               { k: "4", v: "步集成完毕" },
               { k: "全球", v: "就近响应" },
               { k: "14", v: "AI 模块覆盖" },
-            ].map((s) => (
+            ].map((s, i) => (
               <div key={s.v}>
-                <dt className="text-3xl font-black tracking-tight text-foreground">{s.k}</dt>
+                <dt className="text-3xl font-black tracking-tight text-foreground">
+                  <PopInChars text={s.k} delayMs={650 + i * 110} />
+                </dt>
                 <dd className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
                   {s.v}
                 </dd>
@@ -1224,6 +1240,41 @@ function PricingPreview() {
         </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * Per-character entrance using the transitions-dev "number pop-in" snippet.
+ * Renders hidden until `delayMs` elapses, then arms the keyframe so the
+ * characters slide + blur in. The last two characters carry data-stagger
+ * markers so they trail behind by 1× / 2× --digit-stagger.
+ */
+function PopInChars({ text, delayMs = 0 }: { text: string; delayMs?: number }) {
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setArmed(true), delayMs)
+    return () => window.clearTimeout(id)
+  }, [delayMs])
+  const chars = [...text]
+  return (
+    <span
+      className={armed ? "t-digit-group is-animating" : "t-digit-group"}
+      style={armed ? undefined : { opacity: 0 }}
+    >
+      {chars.map((ch, i) => {
+        const stagger =
+          i === chars.length - 2
+            ? "1"
+            : i === chars.length - 1
+              ? "2"
+              : undefined
+        return (
+          <span key={i} className="t-digit" data-stagger={stagger}>
+            {ch}
+          </span>
+        )
+      })}
+    </span>
   )
 }
 
