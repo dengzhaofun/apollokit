@@ -27,7 +27,6 @@ export function detectUserLocale(messages: UIMessage[]): "zh" | "en" {
     if (m?.role !== "user") continue;
     const text = (m.parts ?? [])
       .map((p) =>
-        // @ts-expect-error text part shape is `{ type: 'text', text: string }`
         p.type === "text" && typeof p.text === "string" ? p.text : "",
       )
       .join("");
