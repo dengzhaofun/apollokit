@@ -57,14 +57,17 @@ function BlueprintDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link
-            to="/entity/schemas/$schemaId"
-            params={{ schemaId }}
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              to="/entity/schemas/$schemaId"
+              params={{ schemaId }}
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
         {bp.rarity && <Badge variant="secondary">{bp.rarity}</Badge>}
         {bp.alias && (
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -73,11 +76,13 @@ function BlueprintDetailPage() {
         )}
         <div className="ml-auto flex gap-2">
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="size-4" />
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="size-4" />
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
@@ -167,15 +172,18 @@ function BlueprintDetailPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">{m.entity_skins()}</h2>
-            <Button asChild size="sm">
-              <Link
-                to="/entity/schemas/$schemaId/blueprints/$blueprintId/skins/create"
-                params={{ schemaId, blueprintId: bp.id }}
-              >
-                <Plus className="size-4" />
-                {m.entity_new_skin()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link
+                  to="/entity/schemas/$schemaId/blueprints/$blueprintId/skins/create"
+                  params={{ schemaId, blueprintId: bp.id }}
+                >
+                  <Plus className="size-4" />
+                  {m.entity_new_skin()}
+                </Link>
+              }
+              size="sm"
+            />
           </div>
           <div className="rounded-xl border bg-card shadow-sm">
             <SkinTable data={skins ?? []} />

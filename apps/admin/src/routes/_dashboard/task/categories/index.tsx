@@ -57,12 +57,14 @@ function CategoriesPage() {
       <PageHeaderActions>
         <div className="ml-auto">
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null) }}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="size-4" />
-                New Category
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={
+                <Button size="sm">
+                  <Plus className="size-4" />
+                  New Category
+                </Button>
+              }
+            />
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle>

@@ -37,12 +37,15 @@ function CollectionListPage() {
               : t(`共 ${total} 个图鉴册`, `${total} albums total`)
         }
         actions={
-          <Button asChild size="sm">
-            <Link to="/collection/create">
-              <Plus />
-              {m.collection_new_album()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/collection/create">
+                <Plus />
+                {m.collection_new_album()}
+              </Link>
+            }
+            size="sm"
+          />
         }
       />
 
@@ -66,12 +69,15 @@ function CollectionListPage() {
               "Create your first album to bundle character/skin/achievement collectibles.",
             )}
             action={
-              <Button asChild size="sm">
-                <Link to="/collection/create">
-                  <Plus />
-                  {m.collection_new_album()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link to="/collection/create">
+                    <Plus />
+                    {m.collection_new_album()}
+                  </Link>
+                }
+                size="sm"
+              />
             }
           />
         ) : (

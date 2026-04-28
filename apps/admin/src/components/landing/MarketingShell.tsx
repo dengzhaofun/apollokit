@@ -63,17 +63,26 @@ function TopNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to="/auth/$authView" params={{ authView: "sign-in" }}>
-              登录
-            </Link>
-          </Button>
-          <Button asChild size="sm" className="font-semibold">
-            <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-              免费开始
-              <ArrowRight className="ml-1 size-3.5" />
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/auth/$authView" params={{ authView: "sign-in" }}>
+                登录
+              </Link>
+            }
+            variant="ghost"
+            size="sm"
+            className="hidden sm:inline-flex"
+          />
+          <Button
+            render={
+              <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
+                免费开始
+                <ArrowRight className="ml-1 size-3.5" />
+              </Link>
+            }
+            size="sm"
+            className="font-semibold"
+          />
         </div>
       </div>
     </header>

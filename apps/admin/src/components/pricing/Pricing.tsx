@@ -169,16 +169,16 @@ function TierCard({
 
       <div className="mt-auto pt-7">
         <Button
-          asChild
+          render={
+            <a href={plan.cta.href}>
+              {plan.cta.label}
+              <ArrowRight className="ml-1 size-4" />
+            </a>
+          }
           variant={plan.highlighted ? "default" : "outline"}
           className="w-full font-semibold"
           size="lg"
-        >
-          <a href={plan.cta.href}>
-            {plan.cta.label}
-            <ArrowRight className="ml-1 size-4" />
-          </a>
-        </Button>
+        />
       </div>
     </div>
   )
@@ -391,20 +391,22 @@ function PricingCTA() {
               零风险、零信用卡、零销售骚扰。等要商业首发了，再升级 Studio 也不迟。
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" className="h-12 px-6 text-base font-semibold">
-                <a href="/auth/sign-up">
-                  免费创建账号
-                  <ArrowRight className="ml-1 size-4" />
-                </a>
-              </Button>
               <Button
-                asChild
+                render={
+                  <a href="/auth/sign-up">
+                    免费创建账号
+                    <ArrowRight className="ml-1 size-4" />
+                  </a>
+                }
+                size="lg"
+                className="h-12 px-6 text-base font-semibold"
+              />
+              <Button
+                render={<a href="mailto:sales@apollokit.dev">联系销售</a>}
                 variant="outline"
                 size="lg"
                 className="h-12 px-6 text-base"
-              >
-                <a href="mailto:sales@apollokit.dev">联系销售</a>
-              </Button>
+              />
             </div>
           </div>
         </div>

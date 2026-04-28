@@ -87,18 +87,24 @@ function ShopProductsPage() {
         description={t("商品分页 / 搜索均走服务端。", "Products are paginated and searched server-side.")}
         actions={
           <>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/shop/categories">
-                <Folder />
-                {m.shop_categories()}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/shop/tags">
-                <Tag />
-                {m.shop_tags()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/shop/categories">
+                  <Folder />
+                  {m.shop_categories()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
+            <Button
+              render={
+                <Link to="/shop/tags">
+                  <Tag />
+                  {m.shop_tags()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             <WriteGate>
               <Button size="sm" onClick={openCreate}>
                 <Plus />

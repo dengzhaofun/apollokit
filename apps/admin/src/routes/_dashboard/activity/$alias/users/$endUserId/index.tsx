@@ -39,12 +39,15 @@ function ActivityUserDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/activity/$alias/users" params={{ alias }}>
-            <ArrowLeft className="size-4" />
-            返回
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/activity/$alias/users" params={{ alias }}>
+              <ArrowLeft className="size-4" />
+              返回
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         <Badge className="ml-2">{activity.derivedState}</Badge>
       </PageHeaderActions>
 

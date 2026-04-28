@@ -23,32 +23,38 @@ const columnHelper = createColumnHelper<ItemCategory>()
 function ActionsCell({ category }: { category: ItemCategory }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">{m.common_actions()}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{m.common_actions()}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link
-            to="/item/categories"
-            search={(prev) => ({ ...prev, ...openEditModal(category.id) })}
-          >
-            <Pencil className="size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/item/categories/$categoryId"
-            params={{ categoryId: category.id }}
-            search={{ delete: true }}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/item/categories"
+              search={(prev) => ({ ...prev, ...openEditModal(category.id) })}
+            >
+              <Pencil className="size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/item/categories/$categoryId"
+              params={{ categoryId: category.id }}
+              search={{ delete: true }}
+            >
+              <Trash2 className="size-4" />
+              {m.common_delete()}
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

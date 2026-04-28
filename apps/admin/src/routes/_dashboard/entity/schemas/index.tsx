@@ -17,12 +17,15 @@ function EntitySchemasPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/entity/schemas/create">
-              <Plus className="size-4" />
-              {m.entity_new_schema()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/entity/schemas/create">
+                <Plus className="size-4" />
+                {m.entity_new_schema()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 

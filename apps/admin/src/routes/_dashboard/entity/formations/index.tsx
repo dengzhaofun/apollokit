@@ -17,12 +17,15 @@ function EntityFormationsPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/entity/formations/create">
-              <Plus className="size-4" />
-              {m.entity_new_formation()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/entity/formations/create">
+                <Plus className="size-4" />
+                {m.entity_new_formation()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 

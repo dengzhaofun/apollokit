@@ -25,29 +25,35 @@ const columnHelper = createColumnHelper<StorageBoxConfig>()
 function ActionsCell({ config }: { config: StorageBoxConfig }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">{m.common_actions()}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{m.common_actions()}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link to="/storage-box/configs/$configId" params={{ configId: config.id }}>
-            <Pencil className="size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/storage-box/configs/$configId"
-            params={{ configId: config.id }}
-            search={{ delete: true }}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link to="/storage-box/configs/$configId" params={{ configId: config.id }}>
+              <Pencil className="size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/storage-box/configs/$configId"
+              params={{ configId: config.id }}
+              search={{ delete: true }}
+            >
+              <Trash2 className="size-4" />
+              {m.common_delete()}
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

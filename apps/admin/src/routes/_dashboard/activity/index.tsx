@@ -26,12 +26,15 @@ function ActivityListPage() {
         title={m.activity_page_title()}
         actions={
           <>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/activity/templates">
-                <FileStack />
-                {m.activity_action_templates()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/activity/templates">
+                  <FileStack />
+                  {m.activity_action_templates()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             <WriteGate>
               <Button
                 variant="outline"
@@ -58,12 +61,15 @@ function ActivityListPage() {
               </Button>
             </WriteGate>
             <WriteGate>
-              <Button asChild size="sm">
-                <Link to="/activity/create">
-                  <Plus />
-                  {m.activity_action_create()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link to="/activity/create">
+                    <Plus />
+                    {m.activity_action_create()}
+                  </Link>
+                }
+                size="sm"
+              />
             </WriteGate>
           </>
         }

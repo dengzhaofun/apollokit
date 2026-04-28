@@ -58,12 +58,15 @@ function ShopCategoryEditPage() {
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl space-y-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/shop/categories">
-              <ArrowLeft className="size-4" />
-              {m.shop_back_to_categories()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/shop/categories">
+                <ArrowLeft className="size-4" />
+                {m.shop_back_to_categories()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
 
           {isPending ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">

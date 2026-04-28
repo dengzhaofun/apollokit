@@ -57,12 +57,15 @@ function ExchangeConfigDetailPage() {
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/exchange">
-                <ArrowLeft className="size-4" />
-                {m.common_back()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/exchange">
+                  <ArrowLeft className="size-4" />
+                  {m.common_back()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             <div className="ml-auto flex items-center gap-2">
               <Button
                 variant="outline"
@@ -167,15 +170,18 @@ function ExchangeConfigDetailPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">{m.exchange_options()}</h3>
-              <Button asChild size="sm">
-                <Link
-                  to="/exchange/$configId/options/create"
-                  params={{ configId }}
-                >
-                  <Plus className="size-4" />
-                  {m.exchange_new_option()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link
+                    to="/exchange/$configId/options/create"
+                    params={{ configId }}
+                  >
+                    <Plus className="size-4" />
+                    {m.exchange_new_option()}
+                  </Link>
+                }
+                size="sm"
+              />
             </div>
             <OptionTable configKey={configId} route={Route} />
           </div>

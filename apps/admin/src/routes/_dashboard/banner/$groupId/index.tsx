@@ -121,25 +121,31 @@ function BannerGroupDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/banner">
-            <ArrowLeft className="size-4" />
-            {m.banner_back_to_groups()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/banner">
+              <ArrowLeft className="size-4" />
+              {m.banner_back_to_groups()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         {group && !group.alias ? (
           <Badge variant="outline">{m.banner_draft_badge()}</Badge>
         ) : null}
         <div className="ml-auto flex gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link
-              to="/banner/$groupId/edit"
-              params={{ groupId }}
-            >
-              <Pencil className="size-4" />
-              {m.banner_edit_group()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link
+                to="/banner/$groupId/edit"
+                params={{ groupId }}
+              >
+                <Pencil className="size-4" />
+                {m.banner_edit_group()}
+              </Link>
+            }
+            size="sm" variant="outline"
+          />
           <Button
             size="sm"
             variant="outline"

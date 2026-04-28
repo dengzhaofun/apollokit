@@ -31,12 +31,14 @@ export function ShopDeleteDialog({
 }: ShopDeleteDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="size-4" />
-          {triggerLabel ?? m.common_delete()}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button variant="destructive" size="sm">
+            <Trash2 className="size-4" />
+            {triggerLabel ?? m.common_delete()}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

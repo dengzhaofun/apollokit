@@ -49,12 +49,15 @@ function LevelListPage() {
               : t(`共 ${total} 个等级体系`, `${total} configs total`)
         }
         actions={
-          <Button asChild size="sm">
-            <Link to="/level/create">
-              <Plus />
-              {m.level_new_config()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/level/create">
+                <Plus />
+                {m.level_new_config()}
+              </Link>
+            }
+            size="sm"
+          />
         }
       />
 
@@ -78,12 +81,15 @@ function LevelListPage() {
               "Create your first level config to define stages and unlock rules.",
             )}
             action={
-              <Button asChild size="sm">
-                <Link to="/level/create">
-                  <Plus />
-                  {m.level_new_config()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link to="/level/create">
+                    <Plus />
+                    {m.level_new_config()}
+                  </Link>
+                }
+                size="sm"
+              />
             }
           />
         ) : (
@@ -132,14 +138,17 @@ function LevelListPage() {
                     </TableCell>
                     <TableCell>{cfg.sortOrder}</TableCell>
                     <TableCell className="flex justify-end gap-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link
-                          to="/level/$configId"
-                          params={{ configId: cfg.id }}
-                        >
-                          {m.common_edit()}
-                        </Link>
-                      </Button>
+                      <Button
+                        render={
+                          <Link
+                            to="/level/$configId"
+                            params={{ configId: cfg.id }}
+                          >
+                            {m.common_edit()}
+                          </Link>
+                        }
+                        variant="outline" size="sm"
+                      />
                       <Button
                         variant="destructive"
                         size="sm"

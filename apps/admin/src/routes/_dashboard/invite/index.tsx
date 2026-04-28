@@ -325,15 +325,17 @@ function InvitePage() {
                         </TableCell>
                         <TableCell>
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={deleteMutation.isPending}
-                              >
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={deleteMutation.isPending}
+                                >
+                                  <Trash2 className="size-4 text-destructive" />
+                                </Button>
+                              }
+                            />
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>

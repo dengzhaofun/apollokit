@@ -59,11 +59,13 @@ export function GlobalAssistFab() {
         >
           <SheetHeader className="shrink-0 gap-1 border-b">
             <div className="flex items-center justify-between gap-2">
-              <SheetTitle asChild>
-                <span className="font-heading text-base font-medium text-foreground">
-                  AI 助手
-                </span>
-              </SheetTitle>
+              <SheetTitle
+                render={
+                  <span className="font-heading text-base font-medium text-foreground">
+                    AI 助手
+                  </span>
+                }
+              />
               <Button
                 size="icon-sm"
                 variant="ghost"

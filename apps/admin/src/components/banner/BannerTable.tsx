@@ -149,20 +149,20 @@ export function BannerTable({
                       <ArrowDown className="size-4" />
                     </Button>
                     <Button
+                      render={
+                        <Link
+                          to="/banner/$groupId"
+                          params={{ groupId }}
+                          search={(prev) => ({ ...prev, ...openEditChildModal("banner", row.id) })}
+                          title={m.common_edit()}
+                        >
+                          <Pencil className="size-4" />
+                        </Link>
+                      }
                       variant="ghost"
                       size="icon"
                       className="size-8"
-                      asChild
-                    >
-                      <Link
-                        to="/banner/$groupId"
-                        params={{ groupId }}
-                        search={(prev) => ({ ...prev, ...openEditChildModal("banner", row.id) })}
-                        title={m.common_edit()}
-                      >
-                        <Pencil className="size-4" />
-                      </Link>
-                    </Button>
+                    />
                     <Button
                       variant="ghost"
                       size="icon"

@@ -23,12 +23,14 @@ interface Props {
 export function DeleteStorageBoxDialog({ name, onConfirm, isPending }: Props) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="size-4" />
-          {m.common_delete()}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button variant="destructive" size="sm">
+            <Trash2 className="size-4" />
+            {m.common_delete()}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{m.storage_box_delete_title({ name })}</AlertDialogTitle>

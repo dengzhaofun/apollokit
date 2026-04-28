@@ -330,23 +330,27 @@ function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" className="h-12 px-6 text-base font-semibold">
-              <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-                免费开始构建
-                <ArrowRight className="ml-1 size-4" />
-              </Link>
-            </Button>
             <Button
-              asChild
+              render={
+                <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
+                  免费开始构建
+                  <ArrowRight className="ml-1 size-4" />
+                </Link>
+              }
+              size="lg"
+              className="h-12 px-6 text-base font-semibold"
+            />
+            <Button
+              render={
+                <a href="#modules">
+                  看看 30+ 模块
+                  <ArrowRight className="ml-1 size-4" />
+                </a>
+              }
               variant="outline"
               size="lg"
               className="h-12 px-6 text-base"
-            >
-              <a href="#modules">
-                看看 30+ 模块
-                <ArrowRight className="ml-1 size-4" />
-              </a>
-            </Button>
+            />
           </div>
 
           {/* Stats strip */}
@@ -844,22 +848,26 @@ function FinalCTA() {
               ApolloKit 免费开始使用。注册后立刻拿到一个控制台 + API Key，接入一个新项目只需一个下午。
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" className="h-12 px-6 text-base font-semibold">
-                <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-                  免费开始构建
-                  <ArrowRight className="ml-1 size-4" />
-                </Link>
-              </Button>
               <Button
-                asChild
+                render={
+                  <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
+                    免费开始构建
+                    <ArrowRight className="ml-1 size-4" />
+                  </Link>
+                }
+                size="lg"
+                className="h-12 px-6 text-base font-semibold"
+              />
+              <Button
+                render={
+                  <a href="/docs">
+                    读文档
+                  </a>
+                }
                 variant="outline"
                 size="lg"
                 className="h-12 px-6 text-base"
-              >
-                <a href="/docs">
-                  读文档
-                </a>
-              </Button>
+              />
             </div>
           </div>
         </div>
@@ -948,16 +956,16 @@ function PricingPreview() {
 
               <div className="mt-auto pt-6">
                 <Button
-                  asChild
+                  render={
+                    <a href={plan.cta.href}>
+                      {plan.cta.label}
+                      <ArrowRight className="ml-1 size-3.5" />
+                    </a>
+                  }
                   variant={plan.highlighted ? "default" : "outline"}
                   size="sm"
                   className="w-full"
-                >
-                  <a href={plan.cta.href}>
-                    {plan.cta.label}
-                    <ArrowRight className="ml-1 size-3.5" />
-                  </a>
-                </Button>
+                />
               </div>
             </div>
           ))}

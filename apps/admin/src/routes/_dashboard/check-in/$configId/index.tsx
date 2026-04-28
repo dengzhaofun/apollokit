@@ -86,12 +86,15 @@ function CheckInDetailPage() {
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/check-in">
-                <ArrowLeft className="size-4" />
-                {m.common_back()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/check-in">
+                  <ArrowLeft className="size-4" />
+                  {m.common_back()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             <div className="ml-auto flex items-center gap-2">
               <Button
                 variant="outline"
@@ -203,15 +206,18 @@ function CheckInDetailPage() {
 
           {/* Preview link */}
           {!editing && (
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                to="/check-in/$configId/preview"
-                params={{ configId }}
-              >
-                <Play className="size-4" />
-                {m.checkin_preview_test()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link
+                  to="/check-in/$configId/preview"
+                  params={{ configId }}
+                >
+                  <Play className="size-4" />
+                  {m.checkin_preview_test()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
           )}
 
           {/* Rewards */}

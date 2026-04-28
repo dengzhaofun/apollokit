@@ -58,21 +58,23 @@ export function DateRangePicker({ label, value, onChange, className }: Props) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("h-8 border-dashed", className)}
-        >
-          <CalendarIcon className="mr-2 size-4" />
-          {label}
-          {summary ? (
-            <span className="ml-2 text-muted-foreground tabular-nums">
-              {summary}
-            </span>
-          ) : null}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("h-8 border-dashed", className)}
+          >
+            <CalendarIcon className="mr-2 size-4" />
+            {label}
+            {summary ? (
+              <span className="ml-2 text-muted-foreground tabular-nums">
+                {summary}
+              </span>
+            ) : null}
+          </Button>
+        }
+      />
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="range"

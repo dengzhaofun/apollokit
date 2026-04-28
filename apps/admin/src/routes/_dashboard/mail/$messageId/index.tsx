@@ -74,25 +74,30 @@ function MailDetailPage() {
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-6">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/mail">
-                <ArrowLeft className="size-4" />
-                {m.common_back()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/mail">
+                  <ArrowLeft className="size-4" />
+                  {m.common_back()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             <div className="ml-auto flex items-center gap-2">
               {!detail.revokedAt && (
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={revokeMutation.isPending}
-                    >
-                      <Ban className="size-4" />
-                      {m.mail_revoke()}
-                    </Button>
-                  </AlertDialogTrigger>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={revokeMutation.isPending}
+                      >
+                        <Ban className="size-4" />
+                        {m.mail_revoke()}
+                      </Button>
+                    }
+                  />
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
@@ -127,16 +132,18 @@ function MailDetailPage() {
                 </AlertDialog>
               )}
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="size-4" />
-                    {m.common_delete()}
-                  </Button>
-                </AlertDialogTrigger>
+                <AlertDialogTrigger
+                  render={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="size-4" />
+                      {m.common_delete()}
+                    </Button>
+                  }
+                />
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>

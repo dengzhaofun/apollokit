@@ -38,18 +38,24 @@ function TaskListPage() {
         actions={
           <>
             <ActivityScopeFilter value={scope} onChange={setScope} />
-            <Button asChild size="sm" variant="outline">
-              <Link to="/task/categories">
-                <Tags />
-                {t("分类", "Categories")}
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/task/create">
-                <Plus />
-                {t("新建任务", "New task")}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/task/categories">
+                  <Tags />
+                  {t("分类", "Categories")}
+                </Link>
+              }
+              size="sm" variant="outline"
+            />
+            <Button
+              render={
+                <Link to="/task/create">
+                  <Plus />
+                  {t("新建任务", "New task")}
+                </Link>
+              }
+              size="sm"
+            />
           </>
         }
       />

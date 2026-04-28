@@ -67,18 +67,20 @@ export function FieldHint({
 }: FieldHintProps) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          className={cn(
-            "inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            className
-          )}
-        >
-          <Info className="size-3.5" aria-hidden />
-        </button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            aria-label={label}
+            className={cn(
+              "inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              className
+            )}
+          >
+            <Info className="size-3.5" aria-hidden />
+          </button>
+        }
+      />
       <TooltipContent side={side} align={align}>
         {children}
       </TooltipContent>

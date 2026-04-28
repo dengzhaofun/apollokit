@@ -54,12 +54,15 @@ function BadgeDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/badge">
-            <ArrowLeft className="size-4" />
-            {m.badge_back_to_list()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/badge">
+              <ArrowLeft className="size-4" />
+              {m.badge_back_to_list()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         <div className="ml-auto">
           <Button
             size="sm"

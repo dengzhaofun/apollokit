@@ -17,12 +17,15 @@ function ExchangeListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/exchange/create">
-              <Plus className="size-4" />
-              {m.exchange_new_config()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/exchange/create">
+                <Plus className="size-4" />
+                {m.exchange_new_config()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 

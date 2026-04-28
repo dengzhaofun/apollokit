@@ -38,19 +38,25 @@ function CmsEntryListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link to="/cms/types/$alias" params={{ alias: typeAlias }}>
-              <Settings className="size-4" />
-              {m.cms_entry_edit_type()}
-            </Link>
-          </Button>
-          <WriteGate>
-            <Button asChild size="sm">
-              <Link to="/cms/$typeAlias/create" params={{ typeAlias }}>
-                <Plus className="size-4" />
-                {m.cms_entry_new()}
+          <Button
+            render={
+              <Link to="/cms/types/$alias" params={{ alias: typeAlias }}>
+                <Settings className="size-4" />
+                {m.cms_entry_edit_type()}
               </Link>
-            </Button>
+            }
+            size="sm" variant="outline"
+          />
+          <WriteGate>
+            <Button
+              render={
+                <Link to="/cms/$typeAlias/create" params={{ typeAlias }}>
+                  <Plus className="size-4" />
+                  {m.cms_entry_new()}
+                </Link>
+              }
+              size="sm"
+            />
           </WriteGate>
         </div>
       </PageHeaderActions>

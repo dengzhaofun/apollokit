@@ -18,18 +18,24 @@ function BadgeListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto flex gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link to="/badge/inspector">
-              <FlaskConical className="size-4" />
-              {m.badge_inspector_title()}
-            </Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link to="/badge/create">
-              <Plus className="size-4" />
-              {m.badge_new()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/badge/inspector">
+                <FlaskConical className="size-4" />
+                {m.badge_inspector_title()}
+              </Link>
+            }
+            size="sm" variant="outline"
+          />
+          <Button
+            render={
+              <Link to="/badge/create">
+                <Plus className="size-4" />
+                {m.badge_new()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 

@@ -80,11 +80,14 @@ function LevelConfigDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/level">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/level">
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.level_delete_config()}
@@ -527,14 +530,17 @@ function LevelsTab({
             </SelectContent>
           </Select>
         )}
-        <Button asChild size="sm">
-          <Link
-            to="/level/$configId/levels/create"
-            params={{ configId }}
-          >
-            <Plus className="size-4" /> {m.level_new_level()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              to="/level/$configId/levels/create"
+              params={{ configId }}
+            >
+              <Plus className="size-4" /> {m.level_new_level()}
+            </Link>
+          }
+          size="sm"
+        />
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
@@ -600,14 +606,17 @@ function LevelsTab({
                   </TableCell>
                   <TableCell>{lvl.sortOrder}</TableCell>
                   <TableCell className="flex justify-end gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link
-                        to="/level/$configId/levels/$levelId"
-                        params={{ configId, levelId: lvl.id }}
-                      >
-                        <Pencil className="size-4" /> {m.common_edit()}
-                      </Link>
-                    </Button>
+                    <Button
+                      render={
+                        <Link
+                          to="/level/$configId/levels/$levelId"
+                          params={{ configId, levelId: lvl.id }}
+                        >
+                          <Pencil className="size-4" /> {m.common_edit()}
+                        </Link>
+                      }
+                      variant="outline" size="sm"
+                    />
                     <CollectionDeleteDialog
                       title={m.level_edit_level()}
                       description={m.level_delete_level_desc()}

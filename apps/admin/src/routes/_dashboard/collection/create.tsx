@@ -20,11 +20,14 @@ function CollectionCreatePage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/collection">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/collection">
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">

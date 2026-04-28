@@ -23,12 +23,15 @@ function DialogueListPage() {
         title={t("对话脚本", "Dialogue scripts")}
         description={t("分页 / 搜索均走服务端。", "Paginated and searched server-side.")}
         actions={
-          <Button asChild size="sm">
-            <Link to="/dialogue/create">
-              <Plus />
-              {m.dialogue_new_script()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/dialogue/create">
+                <Plus />
+                {m.dialogue_new_script()}
+              </Link>
+            }
+            size="sm"
+          />
         }
       />
 

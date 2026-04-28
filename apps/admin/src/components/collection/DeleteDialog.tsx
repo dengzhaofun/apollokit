@@ -33,12 +33,14 @@ export function CollectionDeleteDialog({
 }: CollectionDeleteDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size={size}>
-          <Trash2 className="size-4" />
-          {size === "sm" ? (triggerLabel ?? m.common_delete()) : null}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button variant="destructive" size={size}>
+            <Trash2 className="size-4" />
+            {size === "sm" ? (triggerLabel ?? m.common_delete()) : null}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

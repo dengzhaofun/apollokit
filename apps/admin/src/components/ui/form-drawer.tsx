@@ -102,11 +102,13 @@ export function FormDrawer({
         <Drawer open={open} onOpenChange={requestClose}>
           <DrawerContent className={cn("flex max-h-[92vh] flex-col", className)}>
             <DrawerHeader className="border-b">
-              <DrawerTitle asChild>
-                <span className="font-heading text-base font-medium text-foreground">
-                  {title}
-                </span>
-              </DrawerTitle>
+              <DrawerTitle
+                render={
+                  <span className="font-heading text-base font-medium text-foreground">
+                    {title}
+                  </span>
+                }
+              />
               {description ? (
                 <DrawerDescription>{description}</DrawerDescription>
               ) : null}
@@ -126,11 +128,13 @@ export function FormDrawer({
             )}
           >
             <SheetHeader className="shrink-0 gap-1 border-b">
-              <SheetTitle asChild>
-                <span className="font-heading text-base font-medium text-foreground">
-                  {title}
-                </span>
-              </SheetTitle>
+              <SheetTitle
+                render={
+                  <span className="font-heading text-base font-medium text-foreground">
+                    {title}
+                  </span>
+                }
+              />
               {description ? (
                 <SheetDescription>{description}</SheetDescription>
               ) : null}

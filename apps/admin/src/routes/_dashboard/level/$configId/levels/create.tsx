@@ -82,11 +82,14 @@ function LevelCreatePage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/level/$configId" params={{ configId }}>
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/level/$configId" params={{ configId }}>
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
@@ -218,11 +221,14 @@ function LevelCreatePage() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button asChild variant="outline">
-              <Link to="/level/$configId" params={{ configId }}>
-                {m.common_cancel()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/level/$configId" params={{ configId }}>
+                  {m.common_cancel()}
+                </Link>
+              }
+              variant="outline"
+            />
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending
                 ? m.common_loading()

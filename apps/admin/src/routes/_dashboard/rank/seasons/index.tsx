@@ -51,15 +51,21 @@ function RankSeasonsListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/rank">{m.rank_tab_configs()}</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link to="/rank/seasons/create">
-              <Plus className="size-4" />
-              {m.rank_new_season()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/rank">{m.rank_tab_configs()}</Link>
+            }
+            variant="outline" size="sm"
+          />
+          <Button
+            render={
+              <Link to="/rank/seasons/create">
+                <Plus className="size-4" />
+                {m.rank_new_season()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 
@@ -103,12 +109,14 @@ function RankSeasonsListPage() {
                 if (s.status === "active") {
                   return (
                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Flag className="size-3.5" />
-                          {m.rank_season_finalize()}
-                        </Button>
-                      </AlertDialogTrigger>
+                      <AlertDialogTrigger
+                        render={
+                          <Button variant="outline" size="sm">
+                            <Flag className="size-3.5" />
+                            {m.rank_season_finalize()}
+                          </Button>
+                        }
+                      />
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>

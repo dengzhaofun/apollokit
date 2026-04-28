@@ -89,14 +89,16 @@ export function ActivityPhaseBadge({
   const style = PHASE_VARIANT[phase]
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Badge
-          variant={style.variant}
-          className={[style.className, className].filter(Boolean).join(" ")}
-        >
-          {phaseLabel(phase)}
-        </Badge>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Badge
+            variant={style.variant}
+            className={[style.className, className].filter(Boolean).join(" ")}
+          >
+            {phaseLabel(phase)}
+          </Badge>
+        }
+      />
       <TooltipContent>{phaseTooltip(phase)}</TooltipContent>
     </Tooltip>
   )

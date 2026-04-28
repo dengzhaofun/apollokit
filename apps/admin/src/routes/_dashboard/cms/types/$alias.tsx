@@ -42,12 +42,14 @@ function CmsTypeEditPage() {
         <div className="ml-auto">
           <WriteGate>
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Trash2 className="size-4 text-destructive" />
-                  {m.common_delete()}
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="size-4 text-destructive" />
+                    {m.common_delete()}
+                  </Button>
+                }
+              />
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>

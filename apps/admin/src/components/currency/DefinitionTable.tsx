@@ -23,32 +23,38 @@ const columnHelper = createColumnHelper<CurrencyDefinition>()
 function ActionsCell({ def }: { def: CurrencyDefinition }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">{m.common_actions()}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{m.common_actions()}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link
-            to="/currency"
-            search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
-          >
-            <Pencil className="size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/currency/$currencyId"
-            params={{ currencyId: def.id }}
-            search={{ delete: true }}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/currency"
+              search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
+            >
+              <Pencil className="size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/currency/$currencyId"
+              params={{ currencyId: def.id }}
+              search={{ delete: true }}
+            >
+              <Trash2 className="size-4" />
+              {m.common_delete()}
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

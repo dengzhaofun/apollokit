@@ -24,38 +24,44 @@ const columnHelper = createColumnHelper<ExchangeOption>()
 function ActionsCell({ option }: { option: ExchangeOption }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">{m.common_actions()}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{m.common_actions()}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link
-            to="/exchange/$configId/options/$optionId"
-            params={{
-              configId: option.configId,
-              optionId: option.id,
-            }}
-          >
-            <Pencil className="size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/exchange/$configId/options/$optionId"
-            params={{
-              configId: option.configId,
-              optionId: option.id,
-            }}
-            search={{ delete: true }}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/exchange/$configId/options/$optionId"
+              params={{
+                configId: option.configId,
+                optionId: option.id,
+              }}
+            >
+              <Pencil className="size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/exchange/$configId/options/$optionId"
+              params={{
+                configId: option.configId,
+                optionId: option.id,
+              }}
+              search={{ delete: true }}
+            >
+              <Trash2 className="size-4" />
+              {m.common_delete()}
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

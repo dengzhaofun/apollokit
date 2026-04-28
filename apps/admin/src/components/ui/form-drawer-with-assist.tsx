@@ -133,11 +133,13 @@ export function FormDrawerWithAssist({
         <Drawer open={open} onOpenChange={requestClose}>
           <DrawerContent className={cn("flex max-h-[92vh] flex-col", className)}>
             <DrawerHeader className="border-b">
-              <DrawerTitle asChild>
-                <span className="font-heading text-base font-medium text-foreground">
-                  {title}
-                </span>
-              </DrawerTitle>
+              <DrawerTitle
+                render={
+                  <span className="font-heading text-base font-medium text-foreground">
+                    {title}
+                  </span>
+                }
+              />
               {description ? (
                 <DrawerDescription>{description}</DrawerDescription>
               ) : null}
@@ -212,11 +214,13 @@ export function FormDrawerWithAssist({
         >
           <SheetHeader className="shrink-0 gap-1 border-b">
             <div className="flex items-center justify-between gap-2">
-              <SheetTitle asChild>
-                <span className="font-heading text-base font-medium text-foreground">
-                  {title}
-                </span>
-              </SheetTitle>
+              <SheetTitle
+                render={
+                  <span className="font-heading text-base font-medium text-foreground">
+                    {title}
+                  </span>
+                }
+              />
               {/* mr-9 leaves room for Sheet's own close X (absolute top-3 right-3). */}
               <Button
                 size="sm"

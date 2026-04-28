@@ -119,11 +119,14 @@ function NotFoundPage() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button asChild size="sm">
-            <Link to="/dashboard">
-              {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/dashboard">
+                {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+              </Link>
+            }
+            size="sm"
+          />
         </EmptyContent>
       </Empty>
     </main>
@@ -159,11 +162,14 @@ function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }
             <Button size="sm" variant="outline" onClick={reset}>
               {isZh ? '重试' : 'Retry'}
             </Button>
-            <Button asChild size="sm">
-              <Link to="/dashboard">
-                {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/dashboard">
+                  {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+                </Link>
+              }
+              size="sm"
+            />
           </div>
         </EmptyContent>
       </Empty>
