@@ -7,8 +7,14 @@ import {
   ViewOptionsPopover,
 } from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
+import * as TabsComponents from 'fumadocs-ui/components/tabs'
 import { useFumadocsLoader } from 'fumadocs-core/source/client'
 import type { TOCItemType } from 'fumadocs-core/toc'
+// Twoslash hover-popover styles. The `transformerTwoslash` injected in
+// `apps/admin/source.config.ts` annotates every TS code block with type
+// info; this stylesheet renders the hover bubble. Pulled from npm so
+// fumadocs upgrades carry it.
+import 'fumadocs-twoslash/twoslash.css'
 import { i18n } from '#/lib/source'
 import { source } from '#/lib/source-server'
 import { getBaseOptions } from '#/lib/layout.shared'
@@ -24,7 +30,18 @@ import browserCollections from 'collections/browser'
 // `<APIPage document="apollokit" operations={[...]} />`. We ship our
 // configured `APIPage` factory through the MDX `components` map so the
 // generated pages render with our shiki theme + our schema registry.
-const mdxComponents = { ...defaultMdxComponents, APIPage }
+//
+// `<AutoTypeTable>` is wired purely at build time — `remarkAutoTypeTable`
+// in `source.config.ts` reads the JSX element, generates the type table
+// at compile time, and replaces it with static markdown. There is no
+// runtime component — keeping `fumadocs-typescript` (which pulls
+// `node:fs` / `ts-morph`) out of the browser bundle. Tabs are exposed
+// so SDK quickstart pages can use multi-language `<Tabs groupId="…">`.
+const mdxComponents = {
+  ...defaultMdxComponents,
+  ...TabsComponents,
+  APIPage,
+}
 
 const REPO_OWNER = 'dengzhaofun'
 const REPO_NAME = 'apollokit'
