@@ -63,5 +63,7 @@ export default Sentry.withSentry(
     sendDefaultPii: true,
     tracesSampleRate: 0.1,
   }),
-  tanstackHandler,
+  // ServerEntry from @tanstack/react-start has a `fetch` method but isn't
+  // nominally an ExportedHandler — duck-typed cast to the shape Sentry expects.
+  tanstackHandler as unknown as ExportedHandler<AdminEnv | undefined>,
 )
