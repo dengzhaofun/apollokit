@@ -3,7 +3,7 @@
   "info": {
     "title": "apollokit Client API",
     "version": "0.1.0",
-    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`Authorization: Bearer ak_…`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client public key (`X-Client-Public-Key: cpk_…`) plus HMAC headers (`X-Client-Signature`, `X-Client-Timestamp`, `X-Client-Nonce`).\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
+    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): used by SaaS operators from the admin dashboard. Authenticate with a Better Auth session cookie or an admin API key (`x-api-key: ak_…`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
   },
   "servers": [
     {
@@ -1704,6 +1704,606 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/CheckInUserStateView"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/cms/by-alias/{typeAlias}/{entryAlias}": {
+      "get": {
+        "tags": [
+          "CMS (Client)"
+        ],
+        "summary": "Fetch a single published CMS entry by alias",
+        "operationId": "cms_client_get_by_alias_by_typealias_by_entryalias",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
+            },
+            "required": true,
+            "name": "typeAlias",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
+            },
+            "required": true,
+            "name": "entryAlias",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CmsClientEntry"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/cms/group/{typeAlias}/{groupKey}": {
+      "get": {
+        "tags": [
+          "CMS (Client)"
+        ],
+        "summary": "List published entries within a group",
+        "operationId": "cms_client_get_group_by_typealias_by_groupkey",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
+            },
+            "required": true,
+            "name": "typeAlias",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "groupKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CmsClientEntryList"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/cms/tag/{tag}": {
+      "get": {
+        "tags": [
+          "CMS (Client)"
+        ],
+        "summary": "List published entries with a tag (cross-type)",
+        "operationId": "cms_client_get_tag_by_tag",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "tag",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CmsClientEntryList"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/cms/list/{typeAlias}": {
+      "get": {
+        "tags": [
+          "CMS (Client)"
+        ],
+        "summary": "List all published entries of a type",
+        "operationId": "cms_client_get_list_by_typealias",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
+            },
+            "required": true,
+            "name": "typeAlias",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "groupKey",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "tag",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CmsClientEntryList"
                     },
                     "message": {
                       "type": "string"
@@ -9065,31 +9665,37 @@
           {
             "schema": {
               "type": "string",
-              "description": "Search by guild name."
+              "description": "Search by guild name (legacy alias for q)."
             },
             "required": false,
-            "description": "Search by guild name.",
+            "description": "Search by guild name (legacy alias for q).",
             "name": "search",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string",
-              "description": "Page size (default 20)."
+              "type": "string"
             },
             "required": false,
-            "description": "Page size (default 20).",
-            "name": "limit",
+            "name": "q",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string",
-              "description": "Pagination offset (default 0)."
+              "type": "string"
             },
             "required": false,
-            "description": "Pagination offset (default 0).",
-            "name": "offset",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "required": false,
+            "name": "limit",
             "in": "query"
           },
           {
@@ -19241,6 +19847,62 @@
           "remaining"
         ]
       },
+      "CmsClientEntry": {
+        "type": "object",
+        "properties": {
+          "typeAlias": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "groupKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "schemaVersion": {
+            "type": "integer"
+          },
+          "publishedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "typeAlias",
+          "alias",
+          "groupKey",
+          "tags",
+          "data",
+          "schemaVersion",
+          "publishedAt"
+        ]
+      },
+      "CmsClientEntryList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CmsClientEntry"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
       "CollectionClientAlbumList": {
         "type": "object",
         "properties": {
@@ -19885,10 +20547,18 @@
             "items": {
               "$ref": "#/components/schemas/FriendGiftPackage"
             }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor for the next page, or null if no more rows."
           }
         },
         "required": [
-          "items"
+          "items",
+          "nextCursor"
         ]
       },
       "ClientFriendGiftSend": {
@@ -20025,10 +20695,18 @@
             "items": {
               "$ref": "#/components/schemas/FriendGiftSendRecord"
             }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor for the next page, or null if no more rows."
           }
         },
         "required": [
-          "items"
+          "items",
+          "nextCursor"
         ]
       },
       "ClientFriendGiftClaim": {
@@ -20288,13 +20966,17 @@
               "$ref": "#/components/schemas/Guild"
             }
           },
-          "total": {
-            "type": "integer"
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor for the next page, or null if no more rows."
           }
         },
         "required": [
           "items",
-          "total"
+          "nextCursor"
         ]
       },
       "Guild": {
@@ -25313,11 +25995,11 @@
       }
     },
     "securitySchemes": {
-      "ClientKey": {
+      "ClientCredential": {
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key",
-        "description": "Client publishable key with cpk_ prefix. Obtain from your admin dashboard."
+        "description": "Client publishable key (`cpk_…` prefix) sent in the `x-api-key` request header. End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed at runtime by the client SDK and not declared as a separate security scheme."
       }
     }
   }
