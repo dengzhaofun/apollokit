@@ -13,6 +13,7 @@ import {
   Gift,
   Globe,
   KeyRound,
+  Layers,
   LayoutGrid,
   LineChart,
   ListTodo,
@@ -20,6 +21,7 @@ import {
   Map as MapIcon,
   Medal,
   Megaphone,
+  MessageSquareDashed,
   MessagesSquare,
   Package,
   PartyPopper,
@@ -35,6 +37,7 @@ import {
   UserPlus,
   Users,
   Wand2,
+  WandSparkles,
   Zap,
   type LucideIcon,
 } from "lucide-react"
@@ -296,7 +299,25 @@ function Hero() {
         <div className="ak-rise">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
-            通用游戏后端，一个 SDK 接入就够
+            通用游戏后端 + AI 副驾驶，一个 SDK 接入就够
+          </div>
+
+          <div className="mt-3">
+            <a
+              href="#ai-copilot"
+              className="group inline-flex items-center gap-2 rounded-full border border-[var(--ak-accent-2)]/40 bg-[var(--ak-accent-2)]/8 px-3.5 py-1.5 text-xs font-medium text-foreground/90 shadow-[0_8px_24px_-12px_var(--ak-glow-2)] backdrop-blur transition-colors hover:border-[var(--ak-accent-2)]/70 hover:bg-[var(--ak-accent-2)]/12"
+            >
+              <Sparkles
+                className="size-3.5 text-[var(--ak-accent-2)]"
+                strokeWidth={2}
+              />
+              <span>
+                内置 AI Copilot · 覆盖{" "}
+                <span className="font-bold text-foreground">14</span>{" "}
+                个业务模块
+              </span>
+              <ArrowRight className="size-3 text-[var(--ak-accent-2)] transition-transform group-hover:translate-x-0.5" />
+            </a>
           </div>
 
           <h1 className="mt-6 text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
@@ -351,6 +372,17 @@ function Hero() {
               size="lg"
               className="h-12 px-6 text-base"
             />
+            <Button
+              render={
+                <a href="#ai-copilot">
+                  <Sparkles className="mr-1 size-4 text-[var(--ak-accent-2)]" />
+                  看看 Copilot 演示
+                </a>
+              }
+              variant="ghost"
+              size="lg"
+              className="h-12 px-4 text-base text-foreground/80 hover:text-foreground"
+            />
           </div>
 
           {/* Stats strip */}
@@ -359,7 +391,7 @@ function Hero() {
               { k: "30+", v: "开箱即用模块" },
               { k: "4", v: "步集成完毕" },
               { k: "全球", v: "就近响应" },
-              { k: "0", v: "运维负担" },
+              { k: "14", v: "AI 模块覆盖" },
             ].map((s) => (
               <div key={s.v}>
                 <dt className="text-3xl font-black tracking-tight text-foreground">{s.k}</dt>
@@ -600,6 +632,226 @@ function Workflow() {
   )
 }
 
+function AICopilot() {
+  const bullets: Array<{
+    icon: LucideIcon
+    kicker?: string
+    title: string
+    desc: string
+  }> = [
+    {
+      icon: Layers,
+      kicker: "14",
+      title: "模块全覆盖",
+      desc: "活动、签到、邮件、商城、抽奖……Copilot 都懂，不只是个聊天框。",
+    },
+    {
+      icon: WandSparkles,
+      title: "智能回填表单",
+      desc: "看得懂你正在编辑哪个页面，把「双 11 周末双倍签」自动拆成字段。",
+    },
+    {
+      icon: MessageSquareDashed,
+      title: "跨页带话 · 拖拽侧栏",
+      desc: "从活动跳到邮件，对话不丢；侧栏拖到任何位置，AI 始终在你视线里。",
+    },
+    {
+      icon: BookOpen,
+      title: "文档 Ask-AI · 流式 + 引用",
+      desc: "文档站随时召唤，流式 Markdown 作答，自动附参考链接。",
+    },
+  ]
+
+  return (
+    <section id="ai-copilot" className="relative py-24">
+      <div
+        className="ak-glow"
+        style={{
+          top: "10%",
+          right: "-6%",
+          width: "55%",
+          height: "55%",
+          background: "var(--ak-glow-2)",
+        }}
+      />
+      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+        <div>
+          <SectionEyebrow>运营人员的 AI 副驾驶</SectionEyebrow>
+          <SectionTitle>
+            30+ 模块复杂吗？
+            <br className="hidden md:block" />
+            让 Copilot 替你点。
+          </SectionTitle>
+          <p className="mt-5 max-w-xl text-muted-foreground">
+            ApolloKit Copilot 嵌在控制台每一个页面里——看得懂你正在编辑的活动、抽奖、邮件，
+            能直接回填字段、跨页带话、查文档。运营不用记 14 套规则，写一句话就够。
+          </p>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {bullets.map(({ icon: Icon, kicker, title, desc }) => (
+              <div
+                key={title}
+                className="ak-tile group relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-foreground/30"
+              >
+                <div
+                  className="absolute inset-x-0 top-0 h-px"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, var(--ak-accent-2), transparent)",
+                  }}
+                  aria-hidden
+                />
+                <div className="flex items-start justify-between">
+                  {kicker ? (
+                    <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-5xl font-black leading-none tracking-tight text-transparent">
+                      {kicker}
+                    </span>
+                  ) : (
+                    <div className="grid size-10 place-items-center rounded-xl bg-foreground/5 text-foreground ring-1 ring-border group-hover:bg-[var(--ak-accent-2)]/10 group-hover:text-[var(--ak-accent-2)]">
+                      <Icon className="size-5" strokeWidth={1.75} />
+                    </div>
+                  )}
+                  {kicker && (
+                    <Sparkles
+                      className="size-4 text-[var(--ak-accent-2)]"
+                      strokeWidth={1.75}
+                    />
+                  )}
+                </div>
+                <h3 className="mt-4 text-base font-bold tracking-tight">
+                  {title}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <CopilotMock />
+      </div>
+    </section>
+  )
+}
+
+function CopilotMock() {
+  return (
+    <div className="ak-rise relative">
+      {/* mini 控制台 */}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 shadow-[0_30px_80px_-30px_var(--ak-glow-2)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-3">
+          <span className="size-3 rounded-full bg-red-400/80" />
+          <span className="size-3 rounded-full bg-yellow-400/80" />
+          <span className="size-3 rounded-full bg-green-400/80" />
+          <span className="ml-3 truncate font-mono text-xs text-muted-foreground">
+            apollokit · 活动 · 编辑
+          </span>
+          <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
+            Copilot · 在线
+          </span>
+        </div>
+
+        <div className="space-y-3 p-5">
+          <MockField label="活动名称" value="双 11 周末双倍签" />
+          <MockField
+            label="活动周期"
+            value="2026-11-08 → 2026-11-10"
+            aiFilled
+          />
+          <MockField
+            label="奖励倍数"
+            value="2.0x · 应用于 7 日签到奖励"
+            aiFilled
+          />
+          <MockField label="目标分层" value="VIP1+ · 7 日活跃" />
+        </div>
+      </div>
+
+      {/* 连接虚线（sm+） */}
+      <svg
+        className="pointer-events-none absolute -bottom-2 right-12 hidden h-20 w-28 sm:block"
+        viewBox="0 0 112 80"
+        fill="none"
+        aria-hidden
+      >
+        <path
+          d="M4 8 Q 56 8 60 50 T 108 76"
+          stroke="var(--ak-accent-2)"
+          strokeWidth="1.5"
+          strokeDasharray="4 4"
+          strokeLinecap="round"
+          opacity="0.45"
+          fill="none"
+        />
+      </svg>
+
+      {/* AI 对话气泡：sm+ 浮在右下，移动端堆在底下 */}
+      <div className="relative mt-4 sm:absolute sm:-bottom-8 sm:right-[-12px] sm:mt-0 sm:w-[300px]">
+        <div className="rounded-2xl border border-border bg-background p-4 shadow-[0_30px_80px_-20px_var(--ak-glow-2)] ring-1 ring-[var(--ak-accent-2)]/30">
+          <div className="text-xs leading-relaxed">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              you
+            </span>
+            <p className="mt-1 text-foreground/80">
+              「帮我配双 11 周末双倍签」
+            </p>
+          </div>
+          <div className="mt-3 flex items-start gap-2 border-t border-border/70 pt-3">
+            <Sparkles
+              className="mt-0.5 size-4 shrink-0 text-[var(--ak-accent-2)]"
+              strokeWidth={1.75}
+            />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-foreground">
+                已生成活动草稿
+              </div>
+              <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                ↳ 已填 3 字段 · 引用 docs §4.2 抽奖概率
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MockField({
+  label,
+  value,
+  aiFilled = false,
+}: {
+  label: string
+  value: string
+  aiFilled?: boolean
+}) {
+  return (
+    <div
+      className={
+        "relative rounded-md border bg-background/60 px-3 py-2 transition-colors " +
+        (aiFilled
+          ? "border-[var(--ak-accent-2)]/40 ring-1 ring-[var(--ak-accent-2)]/20"
+          : "border-border")
+      }
+    >
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 truncate text-sm font-medium text-foreground">
+        {value}
+      </div>
+      {aiFilled && (
+        <Sparkles
+          className="absolute right-2 top-2 size-3 text-[var(--ak-accent-2)]"
+          strokeWidth={2}
+        />
+      )}
+    </div>
+  )
+}
+
 function CodeShowcase() {
   return (
     <section id="developer" className="relative py-24">
@@ -770,11 +1022,11 @@ function Stack() {
     },
     {
       k: "安全身份与权限",
-      d: "账号体系、项目协作、按模块分 scope 的 API Key，都内建在平台里。",
+      d: "账号体系、项目协作、按 Dev/Staging/Prod 隔离的 scope API Key，一套接口跑通三套环境。",
     },
     {
-      k: "多环境一致",
-      d: "Dev / Staging / Prod 同一套接口。开发、测试、上线不需要切规则。",
+      k: "AI 原生底座",
+      d: "Vercel AI SDK + OpenRouter 多模型，内置文档 RAG。运营 Copilot、文档 Ask-AI 开箱即用，不用自己接模型。",
     },
     {
       k: "可审计、可回放",
@@ -982,6 +1234,7 @@ export default function Landing() {
       <Capabilities />
       <ModuleMatrix />
       <Workflow />
+      <AICopilot />
       <CodeShowcase />
       <Stack />
       <PricingPreview />
