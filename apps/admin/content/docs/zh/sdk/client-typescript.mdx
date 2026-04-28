@@ -83,14 +83,10 @@ console.log(data[200].data.nodes)
 
 ### 模式 B: 受信 Node 代理 (有 secret)
 
-如果你写的是玩家代理 / SSR / Bun script —— 进程在你的服务器、`csk_` 可以读环境变量,SDK 直接帮你算 HMAC:
+如果你写的是玩家代理 / SSR / Bun script —— 进程在你的服务器、`csk_` 可以读环境变量,SDK 装一层 async 拦截器**自动帮你签名**。每次调用只传 `x-end-user-id`,SDK 自动注入 `x-user-hash`:
 
 ```ts twoslash
-import {
-  createClient,
-  signEndUser,
-  badgeClientGetTree,
-} from '@apollokit/client'
+import { createClient, badgeClientGetTree } from '@apollokit/client'
 
 createClient({
   baseUrl: 'https://api.example.com',
@@ -98,15 +94,20 @@ createClient({
   secret: process.env.APOLLOKIT_CSK!,         // "csk_..." — 受信进程才传
 })
 
-// 每次调用还是要传 endUserId — SDK 帮你算 hash
-const endUserId = 'player_42'
-const userHash = await signEndUser(endUserId, process.env.APOLLOKIT_CSK!)
-
+// 只传 x-end-user-id — SDK 拦截器看到 secret 在 + 没有 x-user-hash,
+// 用 csk_ 算 HMAC-SHA256(endUserId) 自动注入。
 const { data } = await badgeClientGetTree({
-  headers: { 'x-end-user-id': endUserId, 'x-user-hash': userHash },
+  headers: { 'x-end-user-id': 'player_42' },
   throwOnError: true,
 })
+console.log(data[200].data.nodes)
 ```
+
+<Callout type="info" title="想手动覆盖签名 (测试 / 切租户)">
+
+拦截器只在 `x-user-hash` **缺失** 时注入。如果你显式传了 `x-user-hash`(比如代签其他玩家、跑测试桩、或者 secret 没配但手上有别处签好的 hash),SDK 不会覆盖。`signEndUser(endUserId, secret)` 工具函数仍然导出,需要时直接调。
+
+</Callout>
 
 <Callout type="warn" title="csk_ 不要进 git">
 
