@@ -1,0 +1,8 @@
+{
+  "title": "Navigation",
+  "pages": [
+    "navigation_get_favorites",
+    "navigation_post_favorites",
+    "navigation_delete_favorites"
+  ]
+}

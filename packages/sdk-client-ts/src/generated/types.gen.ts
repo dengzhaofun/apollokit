@@ -6,14 +6,14 @@ export type ClientAnnouncementList = {
 
 export type ApiErrorEnvelope = {
     code: string;
-    data: null;
+    data: unknown;
     message: string;
     requestId: string;
 };
 
 export type ApiNullEnvelope = {
     code: 'ok';
-    data: null;
+    data: unknown;
     message: string;
     requestId: string;
 };
@@ -155,6 +155,22 @@ export type CheckInUserStateView = {
     target: number | null;
     isCompleted: boolean;
     remaining: number | null;
+};
+
+export type CmsClientEntry = {
+    typeAlias: string;
+    alias: string;
+    groupKey: string | null;
+    tags: Array<string>;
+    data: {
+        [key: string]: unknown;
+    };
+    schemaVersion: number;
+    publishedAt: string;
+};
+
+export type CmsClientEntryList = {
+    items: Array<CmsClientEntry>;
 };
 
 export type CollectionClientAlbumList = {
@@ -328,6 +344,10 @@ export type FriendBlockList = {
 
 export type FriendGiftPackageList = {
     items: Array<FriendGiftPackage>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
 };
 
 export type ClientFriendGiftSend = {
@@ -371,6 +391,10 @@ export type FriendGiftSendRecord = {
 
 export type FriendGiftSendList = {
     items: Array<FriendGiftSendRecord>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
 };
 
 export type ClientFriendGiftClaim = {
@@ -455,7 +479,10 @@ export type CreateGuildResponse = {
 
 export type GuildList = {
     items: Array<Guild>;
-    total: number;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
 };
 
 export type Guild = {
@@ -2496,6 +2523,227 @@ export type CheckInClientGetStateResponses = {
 };
 
 export type CheckInClientGetStateResponse = CheckInClientGetStateResponses[keyof CheckInClientGetStateResponses];
+
+export type CmsClientGetByAliasByTypealiasByEntryaliasData = {
+    body?: never;
+    path: {
+        typeAlias: string;
+        entryAlias: string;
+    };
+    query?: never;
+    url: '/api/client/cms/by-alias/{typeAlias}/{entryAlias}';
+};
+
+export type CmsClientGetByAliasByTypealiasByEntryaliasErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CmsClientGetByAliasByTypealiasByEntryaliasError = CmsClientGetByAliasByTypealiasByEntryaliasErrors[keyof CmsClientGetByAliasByTypealiasByEntryaliasErrors];
+
+export type CmsClientGetByAliasByTypealiasByEntryaliasResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CmsClientEntry;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CmsClientGetByAliasByTypealiasByEntryaliasResponse = CmsClientGetByAliasByTypealiasByEntryaliasResponses[keyof CmsClientGetByAliasByTypealiasByEntryaliasResponses];
+
+export type CmsClientGetGroupByTypealiasByGroupkeyData = {
+    body?: never;
+    path: {
+        typeAlias: string;
+        groupKey: string;
+    };
+    query?: {
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/client/cms/group/{typeAlias}/{groupKey}';
+};
+
+export type CmsClientGetGroupByTypealiasByGroupkeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CmsClientGetGroupByTypealiasByGroupkeyError = CmsClientGetGroupByTypealiasByGroupkeyErrors[keyof CmsClientGetGroupByTypealiasByGroupkeyErrors];
+
+export type CmsClientGetGroupByTypealiasByGroupkeyResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CmsClientEntryList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CmsClientGetGroupByTypealiasByGroupkeyResponse = CmsClientGetGroupByTypealiasByGroupkeyResponses[keyof CmsClientGetGroupByTypealiasByGroupkeyResponses];
+
+export type CmsClientGetTagByTagData = {
+    body?: never;
+    path: {
+        tag: string;
+    };
+    query?: {
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/client/cms/tag/{tag}';
+};
+
+export type CmsClientGetTagByTagErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CmsClientGetTagByTagError = CmsClientGetTagByTagErrors[keyof CmsClientGetTagByTagErrors];
+
+export type CmsClientGetTagByTagResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CmsClientEntryList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CmsClientGetTagByTagResponse = CmsClientGetTagByTagResponses[keyof CmsClientGetTagByTagResponses];
+
+export type CmsClientGetListByTypealiasData = {
+    body?: never;
+    path: {
+        typeAlias: string;
+    };
+    query?: {
+        groupKey?: string;
+        tag?: string;
+        limit?: number;
+        offset?: number | null;
+    };
+    url: '/api/client/cms/list/{typeAlias}';
+};
+
+export type CmsClientGetListByTypealiasErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CmsClientGetListByTypealiasError = CmsClientGetListByTypealiasErrors[keyof CmsClientGetListByTypealiasErrors];
+
+export type CmsClientGetListByTypealiasResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CmsClientEntryList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CmsClientGetListByTypealiasResponse = CmsClientGetListByTypealiasResponses[keyof CmsClientGetListByTypealiasResponses];
 
 export type CollectionClientGetAlbumsData = {
     body?: never;
@@ -5624,17 +5872,12 @@ export type GuildClientGetGuildsData = {
     path?: never;
     query?: {
         /**
-         * Search by guild name.
+         * Search by guild name (legacy alias for q).
          */
         search?: string;
-        /**
-         * Page size (default 20).
-         */
-        limit?: string;
-        /**
-         * Pagination offset (default 0).
-         */
-        offset?: string;
+        q?: string;
+        cursor?: string;
+        limit?: number;
     };
     url: '/api/client/guild/guilds';
 };

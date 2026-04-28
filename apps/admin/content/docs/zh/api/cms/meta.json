@@ -1,0 +1,17 @@
+{
+  "title": "CMS",
+  "pages": [
+    "cms_get_types",
+    "cms_post_types",
+    "cms_get_types_by_typekey",
+    "cms_patch_types_by_typekey",
+    "cms_delete_types_by_typekey",
+    "cms_get_types_by_typealias_entries",
+    "cms_post_types_by_typealias_entries",
+    "cms_get_types_by_typealias_entries_by_entrykey",
+    "cms_patch_types_by_typealias_entries_by_entrykey",
+    "cms_delete_types_by_typealias_entries_by_entrykey",
+    "cms_post_types_by_typealias_entries_by_entrykey_publish",
+    "cms_post_types_by_typealias_entries_by_entrykey_unpublish"
+  ]
+}
