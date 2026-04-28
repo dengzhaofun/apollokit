@@ -32,7 +32,7 @@ function DialogueCreatePage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-7xl">
           <ScriptEditor
             isPending={mutation.isPending}
             submitLabel={m.common_create()}

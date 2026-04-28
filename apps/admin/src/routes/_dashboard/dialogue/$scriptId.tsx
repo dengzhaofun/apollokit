@@ -77,7 +77,7 @@ function DialogueDetailPage() {
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-7xl">
           {isPending || !script ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">
               {m.common_loading()}
