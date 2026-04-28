@@ -6,7 +6,7 @@ on:
     paths:
       - ".changeset/**"
       - "packages/sdk-client-ts/**"
-      - "packages/sdk-admin-ts/**"
+      - "packages/sdk-server-ts/**"
   workflow_dispatch: {}
 
 permissions:

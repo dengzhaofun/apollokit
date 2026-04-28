@@ -1,0 +1,236 @@
+---
+title: '@apollokit/client (TypeScript)'
+description: 端用户场景的 TypeScript SDK — 浏览器 H5 / 小程序 / Electron / Node 玩家代理
+icon: Smartphone
+---
+
+`@apollokit/client` 是 client 路由（`/api/client/<module>/*`）的 TypeScript SDK，跑在**面向终端用户**的进程里 —— 浏览器 H5、小程序、Electron、Cocos Creator H5、或者代表玩家的 Node 代理。鉴权用 `cpk_` 前缀的 publishable key + 按用户的 HMAC 签名。
+
+<Callout type="info" title="跟 server SDK 的关键差异">
+
+`@apollokit/client` 必须**按 endUserId 隔离**每次调用,SDK 不知道"当前用户是谁",由 caller 在每次请求 headers 里带 `x-end-user-id`。`x-user-hash`(HMAC) 是该 endUserId 的"凭证",要么服务端预签发,要么用 `csk_` 在受信进程里实时算 — 详见下方 [两种部署模式](#两种部署模式)。
+
+</Callout>
+
+## 三种 header 作用
+
+每次 client API 请求带 3 个 header:
+
+| Header | 作用 | 谁负责 |
+|---|---|---|
+| `x-api-key: cpk_…` | 标识 apollokit 项目 / 组织 | `createClient({ publishableKey })` 自动注入 |
+| `x-end-user-id: <id>` | 标识具体玩家 | **每次调用的 caller** 在 `headers` 选项里传 |
+| `x-user-hash: <hex>` | HMAC-SHA256(endUserId, csk_),证明该 endUserId 通过你的鉴权 | 同上 — caller 传(预签发 或 SDK 实时算) |
+
+server 校验 `x-user-hash` 时用 `csk_` 解密自己存的副本算 HMAC,跟 caller 传来的对比。**`csk_` 是 server-only secret**,不要进客户端 bundle。
+
+## 两种部署模式
+
+### 模式 A: 浏览器 / 小程序 (无 secret)
+
+游戏前端无法持有 `csk_`(打包就泄露)。流程:
+
+<Steps>
+
+<Step>
+**玩家登录你的后端**(用你自己的鉴权,跟 apollokit 无关)。后端确认这是有效用户后,拿到 `endUserId`(玩家在你系统里的 id)。
+</Step>
+
+<Step>
+**后端用 `csk_` 算 HMAC** → 把 `userHash` 跟 `endUserId` 一起返回前端:
+
+```ts
+// 你的后端 (Node / Workers / Go / Python ...)
+import { signEndUser } from '@apollokit/client'
+
+app.post('/auth/apollokit-creds', async (req, res) => {
+  const endUserId = req.session.userId // 你自己的 session
+  const userHash = await signEndUser(endUserId, process.env.APOLLOKIT_CSK!)
+  res.json({ endUserId, userHash })
+})
+```
+
+</Step>
+
+<Step>
+**前端用拿到的 `userHash` 调 apollokit**:
+
+```ts twoslash
+import { createClient, badgeClientGetTree } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…', // 公开,可以打包进 H5 bundle
+  // secret 不传 — 浏览器拿不到 csk_
+})
+
+// 假设这俩从你后端 /auth/apollokit-creds 接口拿到
+const { endUserId, userHash } = await fetch('/auth/apollokit-creds').then((r) => r.json())
+
+const { data } = await badgeClientGetTree({
+  headers: {
+    'x-end-user-id': endUserId,
+    'x-user-hash': userHash,
+  },
+  throwOnError: true,
+})
+console.log(data[200].data.nodes)
+```
+
+</Step>
+
+</Steps>
+
+### 模式 B: 受信 Node 代理 (有 secret)
+
+如果你写的是玩家代理 / SSR / Bun script —— 进程在你的服务器、`csk_` 可以读环境变量,SDK 直接帮你算 HMAC:
+
+```ts twoslash
+import {
+  createClient,
+  signEndUser,
+  badgeClientGetTree,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: process.env.APOLLOKIT_CPK!, // "cpk_..."
+  secret: process.env.APOLLOKIT_CSK!,         // "csk_..." — 受信进程才传
+})
+
+// 每次调用还是要传 endUserId — SDK 帮你算 hash
+const endUserId = 'player_42'
+const userHash = await signEndUser(endUserId, process.env.APOLLOKIT_CSK!)
+
+const { data } = await badgeClientGetTree({
+  headers: { 'x-end-user-id': endUserId, 'x-user-hash': userHash },
+  throwOnError: true,
+})
+```
+
+<Callout type="warn" title="csk_ 不要进 git">
+
+`csk_` 是 server-only 私钥,跟 ak_ 一样级别的密钥。永远走 secret manager / `.dev.vars` / Cloudflare secrets,**绝对不要 commit**。
+
+每一个 client credential pair (`cpk_` + `csk_`) 在管理后台 `/client-credentials` 页生成,不能恢复 — 丢了就 rotate。
+
+</Callout>
+
+## HMAC 流程
+
+```
+ endUserId (你的玩家 id)
+       │
+       │  HMAC-SHA256
+       │  key = decrypted csk_
+       │  data = endUserId
+       ▼
+ userHash (hex)  ──┐
+ endUserId    ────┤
+ cpk_         ────┤  ──→  apollokit server
+                  │       1. 用 cpk_ 找到组织 / csk_
+                  │       2. 解密 csk_,重算 HMAC(endUserId)
+                  │       3. 跟 caller 传来的 hash 比对
+                  └       4. 一致 → 放行;否则 401
+```
+
+实现细节:
+
+- 算法: **HMAC-SHA256**,十六进制小写输出
+- key: `csk_…` 解密后的原始字节(server 用 AES-256-GCM 加密存,运行时解)
+- data: `endUserId` UTF-8 编码字节
+- SDK 用 Web Crypto API([apps/server/src/lib/crypto.ts](https://github.com/dengzhaofun/apollokit/blob/main/apps/server/src/lib/crypto.ts) 是参考实现) — 浏览器、Node 18+、Deno、Cloudflare Workers、Cocos Creator WebGL 都跑同一份代码
+
+## 配置
+
+<AutoTypeTable
+  type={`export interface ApolloKitClientConfig {
+  /** Server base URL (e.g. "https://api.example.com") */
+  baseUrl: string;
+  /** Client publishable key (cpk_ prefix) */
+  publishableKey: string;
+  /**
+   * Client secret (csk_ prefix). Only use in server-side / trusted environments.
+   * When provided, the SDK computes HMAC automatically for each request.
+   * Never include this in browser bundles.
+   */
+  secret?: string;
+}`}
+/>
+
+## 端用户登录 (Better Auth Email)
+
+如果你想用 apollokit 内置的"游戏侧 Better Auth"管玩家账号(MVP 仅 email + password),用 SDK 自带的 auth helpers:
+
+```ts
+import {
+  createClient,
+  signUpEmail,
+  signInEmail,
+  signOut,
+  getSession,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+})
+
+// 注册
+const result = await signUpEmail({
+  email: 'player@example.com',
+  password: 'secret123',
+  name: 'Player',
+})
+// result.user / result.token (非浏览器环境时返回)
+
+// 登录(浏览器走 cookie,Node/Unity 走 token)
+await signInEmail({ email: 'player@example.com', password: 'secret123' })
+
+// 拿当前 session
+const session = await getSession()
+
+// 登出
+await signOut()
+```
+
+注意端用户邮箱在 server 端存为 `{orgId}__{rawEmail}` 做租户隔离,SDK 这边自动剥前缀,你拿到的 `user.email` 就是玩家原始邮箱。
+
+## 错误处理
+
+跟 server SDK 一样的 `ApolloKitApiError` 模式:
+
+```ts twoslash
+import {
+  ApolloKitApiError,
+  isErrorEnvelope,
+  badgeClientGetTree,
+  createClient,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_demo',
+})
+
+const { data, error, response } = await badgeClientGetTree({
+  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': '…' },
+})
+
+if (error && isErrorEnvelope(error)) {
+  throw new ApolloKitApiError(error, response.status)
+}
+if (data && data[200]?.code === 'ok') {
+  console.log(data[200].data.nodes)
+}
+```
+
+错误码命名空间镜像 server 模块错误(client 路由 + admin 路由共用 ModuleError 体系)。
+
+## 与 server SDK 对比
+
+回到 [SDK 概览](/docs/zh/sdk) 看完整对比表。简短版:
+
+- **包打体积**: client SDK 是给浏览器 / 小程序的,体积敏感 — 没内置 retry / 错误恢复框架,把控制权交给 caller
+- **endUserId 隔离**: client 每次调用必带,server 完全不感知 endUserId
+- **Unity / C# 计划**: 同协议,但单独立项,见 [SDK 概览](/docs/zh/sdk)
