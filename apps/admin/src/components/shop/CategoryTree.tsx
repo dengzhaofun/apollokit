@@ -61,14 +61,19 @@ function CategoryNode({
           <Badge variant="outline">{m.common_inactive()}</Badge>
         ) : null}
         <div className="ml-auto flex items-center gap-1">
-          <Button asChild variant="ghost" size="icon" className="size-7">
-            <Link
-              to="/shop/categories/$categoryId"
-              params={{ categoryId: node.id }}
-            >
-              <Pencil className="size-3.5" />
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link
+                to="/shop/categories/$categoryId"
+                params={{ categoryId: node.id }}
+              >
+                <Pencil className="size-3.5" />
+              </Link>
+            }
+            variant="ghost"
+            size="icon"
+            className="size-7"
+          />
           <ShopDeleteDialog
             title={m.shop_delete_category_title()}
             description={m.shop_delete_category_desc()}

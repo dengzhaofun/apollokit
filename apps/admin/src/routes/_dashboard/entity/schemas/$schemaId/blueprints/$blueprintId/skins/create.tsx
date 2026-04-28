@@ -61,14 +61,17 @@ function SkinCreatePage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link
-            to="/entity/schemas/$schemaId/blueprints/$blueprintId"
-            params={{ schemaId, blueprintId }}
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link
+              to="/entity/schemas/$schemaId/blueprints/$blueprintId"
+              params={{ schemaId, blueprintId }}
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">

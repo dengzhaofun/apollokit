@@ -60,11 +60,14 @@ function LevelDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/level/$configId" params={{ configId }}>
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/level/$configId" params={{ configId }}>
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.level_edit_level()}
@@ -215,7 +218,7 @@ function LevelEditForm({
       {hasStages && stages.length > 0 && (
         <div className="space-y-2">
           <Label>{m.level_field_stage()}</Label>
-          <Select value={stageId} onValueChange={setStageId}>
+          <Select value={stageId} onValueChange={(v) => setStageId(v ?? "")}>
             <SelectTrigger>
               <SelectValue placeholder={m.level_field_stage_none()} />
             </SelectTrigger>
@@ -286,11 +289,14 @@ function LevelEditForm({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button asChild variant="outline">
-          <Link to="/level/$configId" params={{ configId }}>
-            {m.level_back_to_list()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/level/$configId" params={{ configId }}>
+              {m.level_back_to_list()}
+            </Link>
+          }
+          variant="outline"
+        />
         <Button type="submit" disabled={updateMutation.isPending}>
           {updateMutation.isPending
             ? m.common_saving()

@@ -26,12 +26,15 @@ function CmsTypesPage() {
       <PageHeaderActions>
         <div className="ml-auto">
           <WriteGate>
-            <Button asChild size="sm">
-              <Link to="/cms/types/create">
-                <Plus className="size-4" />
-                {m.cms_type_new()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/cms/types/create">
+                  <Plus className="size-4" />
+                  {m.cms_type_new()}
+                </Link>
+              }
+              size="sm"
+            />
           </WriteGate>
         </div>
       </PageHeaderActions>
@@ -49,12 +52,15 @@ function CmsTypesPage() {
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground">
             <p>{m.cms_type_list_empty()}</p>
             <WriteGate>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/cms/types/create">
-                  <Plus className="size-4" />
-                  {m.cms_type_new()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link to="/cms/types/create">
+                    <Plus className="size-4" />
+                    {m.cms_type_new()}
+                  </Link>
+                }
+                size="sm" variant="outline"
+              />
             </WriteGate>
           </div>
         ) : (

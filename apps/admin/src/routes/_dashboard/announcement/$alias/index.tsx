@@ -41,20 +41,25 @@ function AnnouncementDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/announcement">
-            <ChevronLeft className="size-4" />
-            {m.announcement_back_to_list()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/announcement">
+              <ChevronLeft className="size-4" />
+              {m.announcement_back_to_list()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         <div className="ml-auto">
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="destructive">
-                <Trash2 className="size-4" />
-                {m.announcement_delete_button()}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button size="sm" variant="destructive">
+                  <Trash2 className="size-4" />
+                  {m.announcement_delete_button()}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

@@ -108,11 +108,13 @@ export function DataTableFilterToolbar({
 
       {showAdvancedToggle && filterDefs.length > 0 ? (
         <ToggleGroup
-          type="single"
           size="sm"
-          value={mode}
+          // base-ui ToggleGroup `value` 严格 readonly string[]；single 模式
+          // 用 multiple={false}（默认）+ 数组首项。
+          value={[mode]}
           onValueChange={(v) => {
-            if (v === "basic" || v === "advanced") onModeChange(v)
+            const next = v[0]
+            if (next === "basic" || next === "advanced") onModeChange(next)
           }}
           className="ml-auto h-8"
         >
@@ -145,7 +147,7 @@ function FilterControl({
       return (
         <Select
           value={v}
-          onValueChange={(next) => onChange(next === "__all__" ? undefined : next)}
+          onValueChange={(next) => onChange(!next || next === "__all__" ? undefined : next)}
         >
           <SelectTrigger className="h-8 w-[160px] text-xs">
             <SelectValue placeholder={def.label} />

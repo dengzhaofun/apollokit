@@ -57,12 +57,14 @@ function CategoriesPage() {
       <PageHeaderActions>
         <div className="ml-auto">
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null) }}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="size-4" />
-                New Category
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={
+                <Button size="sm">
+                  <Plus className="size-4" />
+                  New Category
+                </Button>
+              }
+            />
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle>
@@ -261,7 +263,7 @@ function CategoryFormInline({
       <div className="grid gap-4 grid-cols-2">
         <div className="space-y-2">
           <Label>Scope</Label>
-          <Select value={scope} onValueChange={setScope}>
+          <Select value={scope} onValueChange={(v) => setScope(v ?? "")}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="task">Task</SelectItem>

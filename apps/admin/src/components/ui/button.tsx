@@ -1,6 +1,5 @@
-import * as React from "react"
+import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
 
 import { cn } from "#/lib/utils"
 
@@ -45,20 +44,19 @@ function Button({
   className,
   variant = "default",
   size = "default",
-  asChild = false,
+  render,
+  nativeButton,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
-
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  // 业务有 77+ 处 <Button render={<Link/>}>—— Link 渲染 <a>，base-ui Button
+  // 默认 nativeButton=true 会发"expected native <button>"警告。当调用方
+  // 传了 render（覆盖默认 button DOM）时自动关掉。显式传值优先。
   return (
-    <Comp
+    <ButtonPrimitive
       data-slot="button"
-      data-variant={variant}
-      data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      render={render}
+      nativeButton={nativeButton ?? render === undefined}
       {...props}
     />
   )

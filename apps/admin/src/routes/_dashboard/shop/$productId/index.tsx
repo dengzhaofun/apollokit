@@ -31,15 +31,18 @@ function ShopProductEditPage() {
       <PageHeaderActions>
         <div className="ml-auto flex items-center gap-2">
           {product?.productType === "growth_pack" ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                to="/shop/$productId/stages"
-                params={{ productId }}
-              >
-                <Layers className="size-4" />
-                {m.shop_manage_stages()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link
+                  to="/shop/$productId/stages"
+                  params={{ productId }}
+                >
+                  <Layers className="size-4" />
+                  {m.shop_manage_stages()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
           ) : null}
           {product ? (
             <ShopDeleteDialog
@@ -66,12 +69,15 @@ function ShopProductEditPage() {
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/shop">
-              <ArrowLeft className="size-4" />
-              {m.shop_back_to_products()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/shop">
+                <ArrowLeft className="size-4" />
+                {m.shop_back_to_products()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
 
           {isPending ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">

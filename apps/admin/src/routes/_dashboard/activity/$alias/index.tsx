@@ -195,18 +195,24 @@ function ActivityDetailPage() {
         meta={meta}
         actions={
           <>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/activity">
-                <ArrowLeft />
-                {m.common_back()}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/activity/$alias/users" params={{ alias }}>
-                <UserSearch />
-                {m.activity_detail_view_by_user()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/activity">
+                  <ArrowLeft />
+                  {m.common_back()}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+            <Button
+              render={
+                <Link to="/activity/$alias/users" params={{ alias }}>
+                  <UserSearch />
+                  {m.activity_detail_view_by_user()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
             {lifecycleAction}
             <Button
               variant="destructive"
@@ -572,33 +578,35 @@ function NodesPanel({
 
                   <div className="ml-auto flex items-center gap-3">
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5">
-                          <Switch
-                            id={`node-enabled-${n.id}`}
-                            checked={n.enabled}
-                            disabled={updateMutation.isPending}
-                            onCheckedChange={async (checked) => {
-                              try {
-                                await updateMutation.mutateAsync({
-                                  id: n.id,
-                                  enabled: checked,
-                                })
-                              } catch (err) {
-                                if (err instanceof ApiError)
-                                  toast.error(err.body.error)
-                                else toast.error(m.activity_nodes_toggle_failed())
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={`node-enabled-${n.id}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            {m.activity_nodes_switch_label()}
-                          </label>
-                        </div>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              id={`node-enabled-${n.id}`}
+                              checked={n.enabled}
+                              disabled={updateMutation.isPending}
+                              onCheckedChange={async (checked) => {
+                                try {
+                                  await updateMutation.mutateAsync({
+                                    id: n.id,
+                                    enabled: checked,
+                                  })
+                                } catch (err) {
+                                  if (err instanceof ApiError)
+                                    toast.error(err.body.error)
+                                  else toast.error(m.activity_nodes_toggle_failed())
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`node-enabled-${n.id}`}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {m.activity_nodes_switch_label()}
+                            </label>
+                          </div>
+                        }
+                      />
                       <TooltipContent>
                         {m.activity_nodes_switch_tooltip()}
                       </TooltipContent>
@@ -606,15 +614,17 @@ function NodesPanel({
 
                     {n.refId ? (
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge
-                            variant={resourceActive ? "default" : "outline"}
-                          >
-                            {resourceActive
-                              ? m.activity_nodes_resource_active()
-                              : m.activity_nodes_resource_inactive()}
-                          </Badge>
-                        </TooltipTrigger>
+                        <TooltipTrigger
+                          render={
+                            <Badge
+                              variant={resourceActive ? "default" : "outline"}
+                            >
+                              {resourceActive
+                                ? m.activity_nodes_resource_active()
+                                : m.activity_nodes_resource_inactive()}
+                            </Badge>
+                          }
+                        />
                         <TooltipContent>
                           {m.activity_nodes_resource_tooltip()}
                         </TooltipContent>
@@ -622,15 +632,17 @@ function NodesPanel({
                     ) : null}
 
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge
-                          variant={effectiveEnabled ? "default" : "destructive"}
-                        >
-                          {effectiveEnabled
-                            ? m.activity_nodes_player_visible()
-                            : m.activity_nodes_player_hidden()}
-                        </Badge>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Badge
+                            variant={effectiveEnabled ? "default" : "destructive"}
+                          >
+                            {effectiveEnabled
+                              ? m.activity_nodes_player_visible()
+                              : m.activity_nodes_player_hidden()}
+                          </Badge>
+                        }
+                      />
                       <TooltipContent>
                         {m.activity_nodes_visibility_tooltip_intro()}
                         {!effectiveEnabled
@@ -644,31 +656,33 @@ function NodesPanel({
                     </Tooltip>
 
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            const ok = await confirm({
-                              title: t("删除节点?", "Delete node?"),
-                              description: m.activity_nodes_delete_confirm({ alias: n.alias }),
-                              confirmLabel: m.common_delete(),
-                              danger: true,
-                            })
-                            if (!ok) return
-                            try {
-                              await deleteMutation.mutateAsync(n.id)
-                              toast.success(m.activity_nodes_delete_success())
-                            } catch (err) {
-                              if (err instanceof ApiError)
-                                toast.error(err.body.error)
-                              else toast.error(m.activity_nodes_delete_failed())
-                            }
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: t("删除节点?", "Delete node?"),
+                                description: m.activity_nodes_delete_confirm({ alias: n.alias }),
+                                confirmLabel: m.common_delete(),
+                                danger: true,
+                              })
+                              if (!ok) return
+                              try {
+                                await deleteMutation.mutateAsync(n.id)
+                                toast.success(m.activity_nodes_delete_success())
+                              } catch (err) {
+                                if (err instanceof ApiError)
+                                  toast.error(err.body.error)
+                                else toast.error(m.activity_nodes_delete_failed())
+                              }
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
                       <TooltipContent>
                         {m.activity_nodes_delete_tooltip()}
                       </TooltipContent>

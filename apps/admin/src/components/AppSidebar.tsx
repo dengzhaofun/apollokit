@@ -342,50 +342,59 @@ function NavParentItem({
       open={open}
       onOpenChange={setOpen}
       className="group/nav-collapsible"
-      asChild
-    >
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
-          <Link to={item.to} onClick={() => setOpen(true)}>
-            <item.icon className="size-4" />
-            <span>{item.title()}</span>
-          </Link>
-        </SidebarMenuButton>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuAction
-            className="data-[state=open]:rotate-90"
-            aria-label="Toggle submenu"
-          >
-            <ChevronRight className="size-4" />
-          </SidebarMenuAction>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.children?.map((child) => {
-              const isChildActive =
-                pathname === child.to || pathname.startsWith(`${child.to}/`)
-              return (
-                <SidebarMenuSubItem
-                  key={child.to}
-                  className="group/menu-sub-item"
-                >
-                  <SidebarMenuSubButton asChild isActive={isChildActive}>
-                    <Link to={child.to}>
-                      <child.icon className="size-4" />
-                      <span>{child.title()}</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                  <FavoriteStarButton
-                    routePath={child.to}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/menu-sub-item:opacity-100 focus-visible:opacity-100 data-[favorited=true]:opacity-100"
-                  />
-                </SidebarMenuSubItem>
-              )
-            })}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
+      render={
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            render={
+              <Link to={item.to} onClick={() => setOpen(true)}>
+                <item.icon className="size-4" />
+                <span>{item.title()}</span>
+              </Link>
+            }
+            isActive={isItemActive}
+            tooltip={item.title()}
+          />
+          <CollapsibleTrigger
+            render={
+              <SidebarMenuAction
+                className="data-[state=open]:rotate-90"
+                aria-label="Toggle submenu"
+              >
+                <ChevronRight className="size-4" />
+              </SidebarMenuAction>
+            }
+          />
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {item.children?.map((child) => {
+                const isChildActive =
+                  pathname === child.to || pathname.startsWith(`${child.to}/`)
+                return (
+                  <SidebarMenuSubItem
+                    key={child.to}
+                    className="group/menu-sub-item"
+                  >
+                    <SidebarMenuSubButton
+                      render={
+                        <Link to={child.to}>
+                          <child.icon className="size-4" />
+                          <span>{child.title()}</span>
+                        </Link>
+                      }
+                      isActive={isChildActive}
+                    />
+                    <FavoriteStarButton
+                      routePath={child.to}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/menu-sub-item:opacity-100 focus-visible:opacity-100 data-[favorited=true]:opacity-100"
+                    />
+                  </SidebarMenuSubItem>
+                )
+              })}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </SidebarMenuItem>
+      }
+    />
   )
 }
 
@@ -414,12 +423,14 @@ function NavGroupSection({
       className="group/collapsible"
     >
       <SidebarGroup>
-        <SidebarGroupLabel asChild>
-          <CollapsibleTrigger className="flex w-full items-center justify-between text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/55 hover:text-sidebar-foreground/85">
-            {group.label()}
-            <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
+        <SidebarGroupLabel
+          render={
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/55 hover:text-sidebar-foreground/85">
+              {group.label()}
+              <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            </CollapsibleTrigger>
+          }
+        />
         <CollapsibleContent>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -429,18 +440,25 @@ function NavGroupSection({
                 if (!item.children) {
                   return (
                     <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton asChild isActive={isItemActive} tooltip={item.title()}>
-                        <Link to={item.to}>
-                          <item.icon className="size-4" />
-                          <span>{item.title()}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      <SidebarMenuAction asChild showOnHover>
-                        <FavoriteStarButton
-                          routePath={item.to}
-                          className="data-[favorited=true]:opacity-100"
-                        />
-                      </SidebarMenuAction>
+                      <SidebarMenuButton
+                        render={
+                          <Link to={item.to}>
+                            <item.icon className="size-4" />
+                            <span>{item.title()}</span>
+                          </Link>
+                        }
+                        isActive={isItemActive}
+                        tooltip={item.title()}
+                      />
+                      <SidebarMenuAction
+                        render={
+                          <FavoriteStarButton
+                            routePath={item.to}
+                            className="data-[favorited=true]:opacity-100"
+                          />
+                        }
+                        showOnHover
+                      />
                     </SidebarMenuItem>
                   )
                 }
@@ -480,22 +498,26 @@ function NavGroupPopover({
   return (
     <SidebarMenuItem>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <SidebarMenuButton
-            isActive={isActiveGroup}
-            tooltip={open ? undefined : group.label()}
-            aria-label={group.label()}
-          >
-            <GroupIcon className="size-4" />
-            <span>{group.label()}</span>
-          </SidebarMenuButton>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <SidebarMenuButton
+              isActive={isActiveGroup}
+              tooltip={open ? undefined : group.label()}
+              aria-label={group.label()}
+            >
+              <GroupIcon className="size-4" />
+              <span>{group.label()}</span>
+            </SidebarMenuButton>
+          }
+        />
         <PopoverContent
           side="right"
           align="start"
           sideOffset={8}
           className="w-60 p-1"
-          onCloseAutoFocus={(e) => e.preventDefault()}
+          // TODO(base-ui): base-ui Popover 无 onCloseAutoFocus；若 collapsed
+          // sidebar 弹层关闭后出现滚动/焦点跳回 trigger，改用
+          // <Popover.Root finalFocus={null}> 阻止 final focus。
         >
           <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {group.label()}
@@ -610,18 +632,16 @@ function NavFavoritesGroup({ pathname }: { pathname: string }) {
             return (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton
-                  asChild
+                  render={
+                    <Link to={item.to}>
+                      <item.icon className="size-4" />
+                      <span>{item.title()}</span>
+                    </Link>
+                  }
                   isActive={isActive}
                   tooltip={item.title()}
-                >
-                  <Link to={item.to}>
-                    <item.icon className="size-4" />
-                    <span>{item.title()}</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuAction asChild>
-                  <FavoriteStarButton routePath={item.to} />
-                </SidebarMenuAction>
+                />
+                <SidebarMenuAction render={<FavoriteStarButton routePath={item.to} />} />
               </SidebarMenuItem>
             )
           })}
@@ -655,22 +675,24 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
   return (
     <SidebarMenuItem>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <SidebarMenuButton
-            isActive={isActiveGroup}
-            tooltip={open ? undefined : m.nav_group_favorites()}
-            aria-label={m.nav_group_favorites()}
-          >
-            <Star className="size-4" />
-            <span>{m.nav_group_favorites()}</span>
-          </SidebarMenuButton>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <SidebarMenuButton
+              isActive={isActiveGroup}
+              tooltip={open ? undefined : m.nav_group_favorites()}
+              aria-label={m.nav_group_favorites()}
+            >
+              <Star className="size-4" />
+              <span>{m.nav_group_favorites()}</span>
+            </SidebarMenuButton>
+          }
+        />
         <PopoverContent
           side="right"
           align="start"
           sideOffset={8}
           className="w-60 p-1"
-          onCloseAutoFocus={(e) => e.preventDefault()}
+          // TODO(base-ui): 同上 — base-ui Popover 无 onCloseAutoFocus。
         >
           <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {m.nav_group_favorites()}
@@ -797,17 +819,21 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip={m.nav_brand()}>
-              <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
-                  <img src="/logo192.png" alt={m.nav_brand()} className="size-full object-contain" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="font-semibold">{m.nav_brand()}</span>
-                  <span className="text-xs text-muted-foreground">{m.nav_admin()}</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
+            <SidebarMenuButton
+              render={
+                <Link to="/">
+                  <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
+                    <img src="/logo192.png" alt={m.nav_brand()} className="size-full object-contain" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
+                    <span className="font-semibold">{m.nav_brand()}</span>
+                    <span className="text-xs text-muted-foreground">{m.nav_admin()}</span>
+                  </div>
+                </Link>
+              }
+              size="lg"
+              tooltip={m.nav_brand()}
+            />
           </SidebarMenuItem>
         </SidebarMenu>
 

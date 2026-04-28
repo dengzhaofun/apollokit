@@ -86,11 +86,14 @@ function SchemaDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/entity/schemas">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/entity/schemas">
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
         {schema.alias && (
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
             {schema.alias}
@@ -98,11 +101,13 @@ function SchemaDetailPage() {
         )}
         <div className="ml-auto flex gap-2">
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="size-4" />
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="size-4" />
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

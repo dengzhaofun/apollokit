@@ -105,11 +105,14 @@ function CollectionAlbumDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/collection">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/collection">
+              <ArrowLeft className="size-4" />
+            </Link>
+          }
+          variant="ghost" size="icon"
+        />
         <div className="ml-auto">
           <CollectionDeleteDialog
             title={m.collection_delete_album()}

@@ -56,12 +56,14 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Rewards</h3>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
-              <Plus className="size-4" />
-              Add Reward
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger
+            render={
+              <Button size="sm" variant="outline">
+                <Plus className="size-4" />
+                Add Reward
+              </Button>
+            }
+          />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Reward</DialogTitle>
@@ -118,16 +120,18 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
                   if (!open) setEditingReward(null)
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    onClick={() => setEditingReward(reward)}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                </DialogTrigger>
+                <DialogTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => setEditingReward(reward)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                />
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Edit Reward (Day {reward.dayNumber})</DialogTitle>
@@ -160,11 +164,13 @@ export function RewardsSection({ configKey }: RewardsSectionProps) {
               </Dialog>
 
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8">
-                    <Trash2 className="size-4" />
-                  </Button>
-                </AlertDialogTrigger>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <Trash2 className="size-4" />
+                    </Button>
+                  }
+                />
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>

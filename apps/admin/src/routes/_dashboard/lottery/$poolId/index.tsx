@@ -153,12 +153,15 @@ function LotteryPoolDetailPage() {
         ]}
         actions={
           <>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/lottery">
-                <ArrowLeft />
-                {t("返回", "Back")}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/lottery">
+                  <ArrowLeft />
+                  {t("返回", "Back")}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
             <Button
               variant="outline"
               size="sm"

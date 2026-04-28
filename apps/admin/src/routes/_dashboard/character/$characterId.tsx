@@ -51,12 +51,15 @@ function CharacterDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/character">
-            <ArrowLeft className="size-4" />
-            {m.character_back_to_list()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/character">
+              <ArrowLeft className="size-4" />
+              {m.character_back_to_list()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         <div className="ml-auto">
           <Button
             size="sm"

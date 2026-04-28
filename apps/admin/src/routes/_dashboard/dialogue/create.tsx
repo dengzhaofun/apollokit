@@ -20,12 +20,15 @@ function DialogueCreatePage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dialogue">
-            <ArrowLeft className="size-4" />
-            {m.dialogue_back_to_scripts()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/dialogue">
+              <ArrowLeft className="size-4" />
+              {m.dialogue_back_to_scripts()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">

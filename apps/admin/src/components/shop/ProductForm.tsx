@@ -83,7 +83,7 @@ export function ProductForm({ form, isPending, submitLabel }: ProductFormProps) 
                 <Label htmlFor="prod-cat">{m.shop_category()}</Label>
                 <Select
                   value={field.state.value}
-                  onValueChange={(v) => field.handleChange(v)}
+                  onValueChange={(v) => field.handleChange(v ?? "")}
                 >
                   <SelectTrigger id="prod-cat" className="w-full">
                     <SelectValue />

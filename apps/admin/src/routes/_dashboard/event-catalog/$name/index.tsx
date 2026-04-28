@@ -63,12 +63,16 @@ function EventCatalogDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/event-catalog">
-            <ArrowLeft className="size-4" />
-            {m.common_back()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/event-catalog">
+              <ArrowLeft className="size-4" />
+              {m.common_back()}
+            </Link>
+          }
+          variant="ghost"
+          size="sm"
+        />
         <h1 className="text-sm font-semibold font-mono">{name}</h1>
       </PageHeaderActions>
 

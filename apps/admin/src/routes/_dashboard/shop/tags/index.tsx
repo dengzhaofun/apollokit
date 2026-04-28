@@ -20,12 +20,15 @@ function ShopTagsPage() {
     <>
       <main className="flex-1 space-y-6 p-6">
         <div className="mx-auto max-w-4xl space-y-6">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/shop">
-              <ArrowLeft className="size-4" />
-              {m.shop_back_to_products()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/shop">
+                <ArrowLeft className="size-4" />
+                {m.shop_back_to_products()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
 
           <CreateTagInlineForm
             isPending={createMutation.isPending}

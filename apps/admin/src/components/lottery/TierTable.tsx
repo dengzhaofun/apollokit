@@ -79,12 +79,14 @@ export function TierTable({ data, onEdit, onDelete }: TierTableProps) {
         const tier = info.row.original
         return (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(tier)}>
                 <Pencil className="size-4" />

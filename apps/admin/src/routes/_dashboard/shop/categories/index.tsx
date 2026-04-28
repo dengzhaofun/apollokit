@@ -26,12 +26,15 @@ function ShopCategoriesPage() {
     <>
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-4xl space-y-6">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/shop">
-              <ArrowLeft className="size-4" />
-              {m.shop_back_to_products()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/shop">
+                <ArrowLeft className="size-4" />
+                {m.shop_back_to_products()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">{m.shop_categories()}</h2>

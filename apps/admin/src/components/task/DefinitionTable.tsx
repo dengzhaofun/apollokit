@@ -27,18 +27,22 @@ const columnHelper = createColumnHelper<TaskDefinition>()
 function ActionsCell({ def }: { def: TaskDefinition }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link to="/task/$taskId" params={{ taskId: def.id }}>
-            <Pencil className="mr-2 size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link to="/task/$taskId" params={{ taskId: def.id }}>
+              <Pencil className="mr-2 size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

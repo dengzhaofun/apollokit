@@ -93,12 +93,14 @@ function RankSeasonDetailPage() {
           ) : null}
           {season?.status === "active" ? (
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Flag className="size-3.5" />
-                  {m.rank_season_finalize()}
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="outline" size="sm">
+                    <Flag className="size-3.5" />
+                    {m.rank_season_finalize()}
+                  </Button>
+                }
+              />
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>

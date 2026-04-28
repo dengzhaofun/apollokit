@@ -87,12 +87,15 @@ function EndUserDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/end-user">
-            <ArrowLeft className="size-4" />
-            {m.end_user_detail_back()}
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/end-user">
+              <ArrowLeft className="size-4" />
+              {m.end_user_detail_back()}
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">
@@ -108,9 +111,12 @@ function EndUserDetailPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {m.end_user_detail_not_found_description()}
             </p>
-            <Button asChild variant="outline" size="sm" className="mt-4">
-              <Link to="/end-user">{m.end_user_detail_back()}</Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/end-user">{m.end_user_detail_back()}</Link>
+              }
+              variant="outline" size="sm" className="mt-4"
+            />
           </div>
         ) : data ? (
           <div className="mx-auto grid max-w-4xl gap-6">
@@ -261,16 +267,18 @@ function EndUserDetailPage() {
               <div className="grid gap-3">
                 {/* Sign-out all */}
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      disabled={signOutMutation.isPending}
-                    >
-                      <LogOut className="size-4" />
-                      {m.end_user_detail_action_sign_out_all()}
-                    </Button>
-                  </AlertDialogTrigger>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        className="justify-start"
+                        disabled={signOutMutation.isPending}
+                      >
+                        <LogOut className="size-4" />
+                        {m.end_user_detail_action_sign_out_all()}
+                      </Button>
+                    }
+                  />
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
@@ -326,16 +334,18 @@ function EndUserDetailPage() {
                   </Button>
                 ) : (
                   <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="justify-start text-destructive"
-                        disabled={disableMutation.isPending}
-                      >
-                        <ShieldBan className="size-4" />
-                        {m.end_user_detail_action_disable()}
-                      </Button>
-                    </AlertDialogTrigger>
+                    <AlertDialogTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          className="justify-start text-destructive"
+                          disabled={disableMutation.isPending}
+                        >
+                          <ShieldBan className="size-4" />
+                          {m.end_user_detail_action_disable()}
+                        </Button>
+                      }
+                    />
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
@@ -370,16 +380,18 @@ function EndUserDetailPage() {
 
                 {/* Delete */}
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      className="justify-start"
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="size-4" />
-                      {m.end_user_detail_action_delete()}
-                    </Button>
-                  </AlertDialogTrigger>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        variant="destructive"
+                        className="justify-start"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="size-4" />
+                        {m.end_user_detail_action_delete()}
+                      </Button>
+                    }
+                  />
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>

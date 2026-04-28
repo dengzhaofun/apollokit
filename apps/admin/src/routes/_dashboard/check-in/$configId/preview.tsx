@@ -273,11 +273,14 @@ function getResetModeLabels(): Record<string, string> {
 function Header({ configId }: { configId: string }) {
   return (
     <PageHeaderActions>
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link to="/check-in/$configId" params={{ configId }}>
-          <ArrowLeft className="size-4" />
-        </Link>
-      </Button>
+      <Button
+        render={
+          <Link to="/check-in/$configId" params={{ configId }}>
+            <ArrowLeft className="size-4" />
+          </Link>
+        }
+        variant="ghost" size="sm" className="-ml-2"
+      />
     </PageHeaderActions>
   )
 }

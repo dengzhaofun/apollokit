@@ -35,19 +35,23 @@ function ActionsCell({ product }: { product: ShopProduct }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">{m.common_actions()}</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">{m.common_actions()}</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link to="/shop/$productId" params={{ productId: product.id }}>
-            <Pencil className="size-4" />
-            {m.common_edit()}
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link to="/shop/$productId" params={{ productId: product.id }}>
+              <Pencil className="size-4" />
+              {m.common_edit()}
+            </Link>
+          }
+        />
         <DropdownMenuItem
           variant="destructive"
           onSelect={async (e) => {

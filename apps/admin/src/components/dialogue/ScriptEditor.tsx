@@ -182,7 +182,7 @@ export function ScriptEditor({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="space-y-1">
             <Label>{m.dialogue_field_start_node()}</Label>
-            <Select value={startNodeId} onValueChange={setStartNodeId}>
+            <Select value={startNodeId} onValueChange={(v) => setStartNodeId(v ?? "")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -397,7 +397,7 @@ function NodeCard({
                 onChange({
                   speaker: {
                     ...node.speaker,
-                    characterId: v,
+                    characterId: v ?? undefined,
                     // Pin the picker to one source — clear any inline
                     // override the user may have previously entered.
                     name: undefined,
@@ -479,7 +479,7 @@ function NodeCard({
         <Select
           value={node.next ?? NEXT_NONE}
           onValueChange={(v) =>
-            onChange({ next: v === NEXT_NONE ? undefined : v })
+            onChange({ next: !v || v === NEXT_NONE ? undefined : v })
           }
         >
           <SelectTrigger>
@@ -602,7 +602,7 @@ function OptionCard({
         <Select
           value={option.next ?? NEXT_NONE}
           onValueChange={(v) =>
-            onChange({ next: v === NEXT_NONE ? undefined : v })
+            onChange({ next: !v || v === NEXT_NONE ? undefined : v })
           }
         >
           <SelectTrigger>

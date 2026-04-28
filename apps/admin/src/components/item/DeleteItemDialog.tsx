@@ -28,12 +28,14 @@ export function DeleteItemDialog({
 }: DeleteItemDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="size-4" />
-          {m.common_delete()}
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button variant="destructive" size="sm">
+            <Trash2 className="size-4" />
+            {m.common_delete()}
+          </Button>
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete &ldquo;{name}&rdquo;?</AlertDialogTitle>

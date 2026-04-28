@@ -111,12 +111,15 @@ function FriendGiftPage() {
         {/* Packages header */}
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">{m.gift_packages()}</h2>
-          <Button size="sm" asChild>
-            <Link to="/friend-gift/packages/create">
-              <Plus className="size-4" />
-              {m.gift_new_package()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/friend-gift/packages/create">
+                <Plus className="size-4" />
+                {m.gift_new_package()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
 
         <DataTable

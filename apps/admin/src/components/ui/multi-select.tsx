@@ -76,49 +76,51 @@ export function MultiSelect({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("h-8 border-dashed", className)}
-        >
-          <PlusCircleIcon className="mr-2 size-4" />
-          {label}
-          {selected.length > 0 ? (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selected.length}
-              </Badge>
-              <div className="hidden items-center gap-1 lg:flex">
-                {selected.length > maxChips ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-sm px-1 font-normal"
-                  >
-                    {selected.length} selected
-                  </Badge>
-                ) : (
-                  options
-                    .filter((o) => selectedSet.has(o.value))
-                    .map((o) => (
-                      <Badge
-                        key={o.value}
-                        variant="secondary"
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        {o.label}
-                      </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          ) : null}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("h-8 border-dashed", className)}
+          >
+            <PlusCircleIcon className="mr-2 size-4" />
+            {label}
+            {selected.length > 0 ? (
+              <>
+                <Separator orientation="vertical" className="mx-2 h-4" />
+                <Badge
+                  variant="secondary"
+                  className="rounded-sm px-1 font-normal lg:hidden"
+                >
+                  {selected.length}
+                </Badge>
+                <div className="hidden items-center gap-1 lg:flex">
+                  {selected.length > maxChips ? (
+                    <Badge
+                      variant="secondary"
+                      className="rounded-sm px-1 font-normal"
+                    >
+                      {selected.length} selected
+                    </Badge>
+                  ) : (
+                    options
+                      .filter((o) => selectedSet.has(o.value))
+                      .map((o) => (
+                        <Badge
+                          key={o.value}
+                          variant="secondary"
+                          className="rounded-sm px-1 font-normal"
+                        >
+                          {o.label}
+                        </Badge>
+                      ))
+                  )}
+                </div>
+              </>
+            ) : null}
+          </Button>
+        }
+      />
       <PopoverContent className="w-[220px] p-0" align="start">
         <Command>
           {searchPlaceholder ? (

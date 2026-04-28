@@ -27,12 +27,15 @@ function ShopStagesPage() {
     <>
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-4xl space-y-6">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/shop/$productId" params={{ productId }}>
-              <ArrowLeft className="size-4" />
-              {m.common_back()}
-            </Link>
-          </Button>
+          <Button
+            render={
+              <Link to="/shop/$productId" params={{ productId }}>
+                <ArrowLeft className="size-4" />
+                {m.common_back()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
 
           {product && product.productType !== "growth_pack" ? (
             <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground shadow-sm">

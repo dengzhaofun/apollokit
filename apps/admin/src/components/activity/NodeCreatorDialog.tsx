@@ -457,7 +457,7 @@ function EntitySection(props: SectionImplProps) {
     <div className="space-y-4">
       <div className="flex flex-col gap-1.5">
         <Label>{m.activity_node_entity_schema_label()}</Label>
-        <Select value={schemaId} onValueChange={setSchemaId}>
+        <Select value={schemaId} onValueChange={(v) => setSchemaId(v ?? "")}>
           <SelectTrigger>
             <SelectValue
               placeholder={

@@ -139,7 +139,7 @@ export function EntryForm({
             {groupOptions && groupOptions.length > 0 ? (
               <Select
                 value={groupKey || "__none"}
-                onValueChange={(v) => setGroupKey(v === "__none" ? "" : v)}
+                onValueChange={(v) => setGroupKey(!v || v === "__none" ? "" : v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={m.cms_entry_group_none()} />

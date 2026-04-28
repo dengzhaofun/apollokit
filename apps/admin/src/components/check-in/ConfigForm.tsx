@@ -230,7 +230,7 @@ export function ConfigForm({
             <Label htmlFor={field.name}>{m.checkin_timezone()}</Label>
             <Select
               value={field.state.value}
-              onValueChange={(v) => field.handleChange(v)}
+              onValueChange={(v) => field.handleChange(v ?? "")}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />

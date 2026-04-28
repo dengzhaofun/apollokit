@@ -59,12 +59,15 @@ function LeaderboardListPage() {
               <RotateCw />
               {t("手动触发结算", "Settle now")}
             </Button>
-            <Button asChild size="sm">
-              <Link to="/leaderboard/create">
-                <Plus />
-                {t("新建榜单", "New leaderboard")}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/leaderboard/create">
+                  <Plus />
+                  {t("新建榜单", "New leaderboard")}
+                </Link>
+              }
+              size="sm"
+            />
           </>
         }
       />

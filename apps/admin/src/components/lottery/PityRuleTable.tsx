@@ -83,12 +83,14 @@ export function PityRuleTable({
         const rule = info.row.original
         return (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              }
+            />
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(rule)}>
                 <Pencil className="size-4" />

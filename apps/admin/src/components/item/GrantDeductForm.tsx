@@ -42,7 +42,7 @@ function ItemEntryEditor({
               value={entry.definitionId}
               onValueChange={(v) => {
                 const next = [...entries]
-                next[i] = { ...entry, definitionId: v }
+                next[i] = { ...entry, definitionId: v ?? "" }
                 onChange(next)
               }}
             >

@@ -24,29 +24,35 @@ const columnHelper = createColumnHelper<LotteryPool>()
 function ActionsCell({ pool }: { pool: LotteryPool }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-          <span className="sr-only">Actions</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">Actions</span>
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link to="/lottery/$poolId" params={{ poolId: pool.id }}>
-            <Pencil className="size-4" />
-            Edit
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            to="/lottery/$poolId"
-            params={{ poolId: pool.id }}
-            search={{ delete: true }}
-          >
-            <Trash2 className="size-4" />
-            Delete
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={
+            <Link to="/lottery/$poolId" params={{ poolId: pool.id }}>
+              <Pencil className="size-4" />
+              Edit
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/lottery/$poolId"
+              params={{ poolId: pool.id }}
+              search={{ delete: true }}
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </Link>
+          }
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )

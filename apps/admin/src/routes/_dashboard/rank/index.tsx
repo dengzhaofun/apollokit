@@ -38,18 +38,24 @@ function RankConfigsPage() {
         }
         actions={
           <>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/rank/seasons">
-                <CalendarClock />
-                {m.rank_tab_seasons()}
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/rank/create">
-                <Plus />
-                {m.rank_new_config()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/rank/seasons">
+                  <CalendarClock />
+                  {m.rank_tab_seasons()}
+                </Link>
+              }
+              variant="outline" size="sm"
+            />
+            <Button
+              render={
+                <Link to="/rank/create">
+                  <Plus />
+                  {m.rank_new_config()}
+                </Link>
+              }
+              size="sm"
+            />
           </>
         }
       />
@@ -74,12 +80,15 @@ function RankConfigsPage() {
               "Create your first tier ladder with progression rules and season rewards.",
             )}
             action={
-              <Button asChild size="sm">
-                <Link to="/rank/create">
-                  <Plus />
-                  {m.rank_new_config()}
-                </Link>
-              </Button>
+              <Button
+                render={
+                  <Link to="/rank/create">
+                    <Plus />
+                    {m.rank_new_config()}
+                  </Link>
+                }
+                size="sm"
+              />
             }
           />
         ) : (

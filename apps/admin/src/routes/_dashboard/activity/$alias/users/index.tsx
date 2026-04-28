@@ -17,12 +17,15 @@ function ActivityUsersIndexPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/activity/$alias" params={{ alias }}>
-            <ArrowLeft className="size-4" />
-            返回活动详情
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/activity/$alias" params={{ alias }}>
+              <ArrowLeft className="size-4" />
+              返回活动详情
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
       </PageHeaderActions>
 
       <main className="flex-1 p-6">

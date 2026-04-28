@@ -86,7 +86,7 @@ export function SeasonForm({ form, tierConfigs, submitLabel, isPending }: Props)
             <Label>{m.rank_season_tier_config()}</Label>
             <Select
               value={field.state.value}
-              onValueChange={(v) => field.handleChange(v)}
+              onValueChange={(v) => field.handleChange(v ?? "")}
             >
               <SelectTrigger>
                 <SelectValue />

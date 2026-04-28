@@ -54,12 +54,15 @@ function LeaderboardDetailPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/leaderboard">
-            <ArrowLeft className="size-4" />
-            返回
-          </Link>
-        </Button>
+        <Button
+          render={
+            <Link to="/leaderboard">
+              <ArrowLeft className="size-4" />
+              返回
+            </Link>
+          }
+          variant="ghost" size="sm"
+        />
         <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
           {config.alias}
         </code>

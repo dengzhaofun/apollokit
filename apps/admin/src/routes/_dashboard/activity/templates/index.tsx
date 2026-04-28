@@ -36,19 +36,25 @@ function ActivityTemplatesPage() {
   return (
     <>
       <PageHeaderActions>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/activity">
-            <ArrowLeft className="size-4" />
-            {m.activity_template_back_to_list()}
-          </Link>
-        </Button>
-        <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link to="/activity/templates/create">
-              <Plus className="size-4" />
-              {m.activity_template_new()}
+        <Button
+          render={
+            <Link to="/activity">
+              <ArrowLeft className="size-4" />
+              {m.activity_template_back_to_list()}
             </Link>
-          </Button>
+          }
+          variant="ghost" size="sm"
+        />
+        <div className="ml-auto">
+          <Button
+            render={
+              <Link to="/activity/templates/create">
+                <Plus className="size-4" />
+                {m.activity_template_new()}
+              </Link>
+            }
+            size="sm"
+          />
         </div>
       </PageHeaderActions>
 

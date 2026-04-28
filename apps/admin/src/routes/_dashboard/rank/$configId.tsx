@@ -40,12 +40,14 @@ function RankConfigDetailPage() {
       {data ? (
         <PageHeaderActions>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-destructive">
-                <Trash2 className="size-4" />
-                {m.rank_delete_config()}
-              </Button>
-            </AlertDialogTrigger>
+            <AlertDialogTrigger
+              render={
+                <Button variant="ghost" size="sm" className="text-destructive">
+                  <Trash2 className="size-4" />
+                  {m.rank_delete_config()}
+                </Button>
+              }
+            />
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

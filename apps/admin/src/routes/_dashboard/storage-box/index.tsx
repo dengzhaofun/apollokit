@@ -23,12 +23,15 @@ function StorageBoxListPage() {
               <TabsTrigger value="configs">{m.storage_box_tab_configs()}</TabsTrigger>
               <TabsTrigger value="deposits">{m.storage_box_tab_deposits()}</TabsTrigger>
             </TabsList>
-            <Button asChild size="sm">
-              <Link to="/storage-box/configs/create">
-                <Plus className="size-4" />
-                {m.storage_box_action_create()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/storage-box/configs/create">
+                  <Plus className="size-4" />
+                  {m.storage_box_action_create()}
+                </Link>
+              }
+              size="sm"
+            />
           </div>
 
           <TabsContent value="configs" className="mt-4">

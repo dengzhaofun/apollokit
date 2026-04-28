@@ -39,9 +39,7 @@ export function RouteBreadcrumb() {
           {onlyDashboard ? (
             <BreadcrumbPage>{m.nav_home()}</BreadcrumbPage>
           ) : (
-            <BreadcrumbLink asChild>
-              <Link to="/dashboard">{m.nav_home()}</Link>
-            </BreadcrumbLink>
+            <BreadcrumbLink render={<Link to="/dashboard">{m.nav_home()}</Link>} />
           )}
         </BreadcrumbItem>
 
@@ -63,9 +61,7 @@ export function RouteBreadcrumb() {
               {tail.length === 0 ? (
                 <BreadcrumbPage>{item.title()}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink asChild>
-                  <Link to={item.to}>{item.title()}</Link>
-                </BreadcrumbLink>
+                <BreadcrumbLink render={<Link to={item.to}>{item.title()}</Link>} />
               )}
             </BreadcrumbItem>
           </>
@@ -81,9 +77,7 @@ export function RouteBreadcrumb() {
                 {isLast ? (
                   <BreadcrumbPage>{label}</BreadcrumbPage>
                 ) : idx === 0 && child ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={child.to}>{label}</Link>
-                  </BreadcrumbLink>
+                  <BreadcrumbLink render={<Link to={child.to}>{label}</Link>} />
                 ) : (
                   <span className="text-muted-foreground">{label}</span>
                 )}
