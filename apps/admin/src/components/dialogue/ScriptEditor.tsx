@@ -1,7 +1,8 @@
-import { Plus, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { PanelRightClose, PanelRightOpen, Plus, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { LinkActionEditor } from "#/components/common/LinkActionEditor"
+import { ScriptMiniGraph } from "#/components/dialogue/ScriptMiniGraph"
 import { MediaPickerDialog } from "#/components/media-library/MediaPickerDialog"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -27,7 +28,22 @@ import type {
 } from "#/lib/types/dialogue"
 import type { LinkAction } from "#/lib/types/link"
 import { validateLinkAction } from "#/lib/types/link"
+import { cn } from "#/lib/utils"
 import * as m from "#/paraglide/messages.js"
+
+const MINI_GRAPH_COLLAPSED_KEY = "dialogue.miniGraph.collapsed"
+
+function jumpToNodeCard(nodeId: string) {
+  const el = document.querySelector<HTMLElement>(
+    `[data-node-id="${CSS.escape(nodeId)}"]`,
+  )
+  if (!el) return
+  el.scrollIntoView({ behavior: "smooth", block: "center" })
+  el.classList.add("ring-2", "ring-primary", "ring-offset-2")
+  window.setTimeout(() => {
+    el.classList.remove("ring-2", "ring-primary", "ring-offset-2")
+  }, 1500)
+}
 
 interface ScriptEditorProps {
   initial?: DialogueScript
@@ -71,6 +87,30 @@ export function ScriptEditor({
     initial?.nodes ?? [emptyNode("start")],
   )
   const [error, setError] = useState("")
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
+  const [graphCollapsed, setGraphCollapsed] = useState(false)
+
+  // Persist sidebar collapse across reloads. SSR-safe: read in effect.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(MINI_GRAPH_COLLAPSED_KEY)
+      if (stored === "1") setGraphCollapsed(true)
+    } catch {
+      // ignore — private mode or storage disabled, default to expanded
+    }
+  }, [])
+
+  function toggleGraphCollapsed() {
+    setGraphCollapsed((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem(MINI_GRAPH_COLLAPSED_KEY, next ? "1" : "0")
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
 
   const nodeIdOptions = nodes.map((n) => n.id).filter(Boolean)
 
@@ -143,7 +183,33 @@ export function ScriptEditor({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="flex gap-6">
+      <form onSubmit={handleSubmit} className="min-w-0 flex-1 space-y-6">
+        <div className="flex items-center justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={toggleGraphCollapsed}
+            title={
+              graphCollapsed
+                ? m.dialogue_minigraph_expand()
+                : m.dialogue_minigraph_collapse()
+            }
+            className="hidden lg:inline-flex"
+          >
+            {graphCollapsed ? (
+              <PanelRightOpen className="size-4" />
+            ) : (
+              <PanelRightClose className="size-4" />
+            )}
+            <span className="text-xs">
+              {graphCollapsed
+                ? m.dialogue_minigraph_expand()
+                : m.dialogue_minigraph_collapse()}
+            </span>
+          </Button>
+        </div>
       {/* ── Metadata ───────────────────────────────── */}
       <section className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
         <div className="space-y-1">
@@ -239,6 +305,8 @@ export function ScriptEditor({
               node={node}
               nodeIds={nodeIdOptions}
               characters={characters ?? []}
+              isFocused={focusedNodeId === node.id}
+              onFocusNode={() => setFocusedNodeId(node.id)}
               onChange={(patch) => updateNode(index, patch)}
               onRemove={() => removeNode(index)}
             />
@@ -253,7 +321,26 @@ export function ScriptEditor({
           {submitLabel}
         </Button>
       </div>
-    </form>
+      </form>
+
+      <aside
+        className={cn(
+          "sticky top-6 hidden h-[calc(100vh-3rem)] w-[360px] shrink-0 overflow-hidden rounded-xl border bg-card shadow-sm",
+          !graphCollapsed && "lg:flex lg:flex-col",
+        )}
+      >
+        <ScriptMiniGraph
+          nodes={nodes}
+          startNodeId={startNodeId}
+          focusedNodeId={focusedNodeId}
+          characters={characters ?? []}
+          onJumpToNode={(id) => {
+            setFocusedNodeId(id)
+            jumpToNodeCard(id)
+          }}
+        />
+      </aside>
+    </div>
   )
 }
 
@@ -263,6 +350,8 @@ interface NodeCardProps {
   node: DialogueNode
   nodeIds: string[]
   characters: Character[]
+  isFocused: boolean
+  onFocusNode: () => void
   onChange: (patch: Partial<DialogueNode>) => void
   onRemove: () => void
 }
@@ -275,6 +364,8 @@ function NodeCard({
   node,
   nodeIds,
   characters,
+  isFocused,
+  onFocusNode,
   onChange,
   onRemove,
 }: NodeCardProps) {
@@ -291,7 +382,15 @@ function NodeCard({
     : SPEAKER_MODE_INLINE
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
+    <div
+      data-node-id={node.id}
+      onFocusCapture={onFocusNode}
+      onMouseDown={onFocusNode}
+      className={cn(
+        "space-y-4 rounded-xl border bg-card p-4 shadow-sm transition-shadow",
+        isFocused && "ring-2 ring-primary/40",
+      )}
+    >
       <div className="flex items-start gap-3">
         <div className="flex-1 space-y-1">
           <Label className="text-xs">{m.dialogue_node_id()}</Label>
