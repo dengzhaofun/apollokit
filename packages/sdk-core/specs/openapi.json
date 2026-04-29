@@ -687,7 +687,7 @@
           "sortOrder": {
             "type": "integer"
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean"
           },
           "createdAt": {
@@ -712,7 +712,7 @@
           "dismissConfig",
           "visibilityRule",
           "sortOrder",
-          "isEnabled",
+          "isActive",
           "createdAt",
           "updatedAt"
         ]
@@ -821,7 +821,7 @@
             "type": "integer",
             "default": 0
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean",
             "default": true
           }
@@ -926,7 +926,7 @@
           "sortOrder": {
             "type": "integer"
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean"
           }
         }
@@ -94453,295 +94453,5 @@
       }
     }
   },
-  "webhooks": {},
-  "tags": [
-    {
-      "name": "Activity"
-    },
-    {
-      "name": "Activity (Client)"
-    },
-    {
-      "name": "Announcement (Admin)"
-    },
-    {
-      "name": "Announcement (Client)"
-    },
-    {
-      "name": "Assist Pool"
-    },
-    {
-      "name": "Assist Pool (Client)"
-    },
-    {
-      "name": "Assist Pool Instances"
-    },
-    {
-      "name": "Audit Log"
-    },
-    {
-      "name": "Badge (Admin)"
-    },
-    {
-      "name": "Badge (Client)"
-    },
-    {
-      "name": "Banner (Admin)"
-    },
-    {
-      "name": "Banner (Client)"
-    },
-    {
-      "name": "Battle Pass"
-    },
-    {
-      "name": "Battle Pass (Client)"
-    },
-    {
-      "name": "CDKey (Client)"
-    },
-    {
-      "name": "CDKey Batches"
-    },
-    {
-      "name": "CDKey Codes"
-    },
-    {
-      "name": "CDKey Logs"
-    },
-    {
-      "name": "CDKey Redemption"
-    },
-    {
-      "name": "CMS"
-    },
-    {
-      "name": "CMS (Client)"
-    },
-    {
-      "name": "Character"
-    },
-    {
-      "name": "Check-In"
-    },
-    {
-      "name": "Check-In (Client)"
-    },
-    {
-      "name": "Check-In Rewards"
-    },
-    {
-      "name": "Client Credentials"
-    },
-    {
-      "name": "Collection"
-    },
-    {
-      "name": "Collection (Client)"
-    },
-    {
-      "name": "Collection Entries"
-    },
-    {
-      "name": "Collection Groups"
-    },
-    {
-      "name": "Collection Milestones"
-    },
-    {
-      "name": "Collection Ops"
-    },
-    {
-      "name": "Currency (Client)"
-    },
-    {
-      "name": "Currency Definitions"
-    },
-    {
-      "name": "Currency Ledger"
-    },
-    {
-      "name": "Currency Wallet"
-    },
-    {
-      "name": "Dialogue (Admin)"
-    },
-    {
-      "name": "Dialogue (Client)"
-    },
-    {
-      "name": "End User"
-    },
-    {
-      "name": "Entity (Client)"
-    },
-    {
-      "name": "Entity Blueprints (Admin)"
-    },
-    {
-      "name": "Entity Formations (Admin)"
-    },
-    {
-      "name": "Entity Schemas (Admin)"
-    },
-    {
-      "name": "Entity Skins (Admin)"
-    },
-    {
-      "name": "Event Catalog"
-    },
-    {
-      "name": "Exchange (Client)"
-    },
-    {
-      "name": "Exchange Configs"
-    },
-    {
-      "name": "Exchange Execution"
-    },
-    {
-      "name": "Exchange Options"
-    },
-    {
-      "name": "Friend"
-    },
-    {
-      "name": "Friend (Client)"
-    },
-    {
-      "name": "Friend Gift"
-    },
-    {
-      "name": "Friend Gift (Client)"
-    },
-    {
-      "name": "Guild"
-    },
-    {
-      "name": "Guild (Client)"
-    },
-    {
-      "name": "Invite (Admin)"
-    },
-    {
-      "name": "Invite (Client)"
-    },
-    {
-      "name": "Item (Client)"
-    },
-    {
-      "name": "Item Categories"
-    },
-    {
-      "name": "Item Definitions"
-    },
-    {
-      "name": "Item Inventory"
-    },
-    {
-      "name": "Leaderboard"
-    },
-    {
-      "name": "Leaderboard (Client)"
-    },
-    {
-      "name": "Level"
-    },
-    {
-      "name": "Level (Client)"
-    },
-    {
-      "name": "Level Levels"
-    },
-    {
-      "name": "Level Stages"
-    },
-    {
-      "name": "Lottery (Client)"
-    },
-    {
-      "name": "Lottery Pity Rules"
-    },
-    {
-      "name": "Lottery Pools"
-    },
-    {
-      "name": "Lottery Prizes"
-    },
-    {
-      "name": "Lottery Pull"
-    },
-    {
-      "name": "Lottery Tiers"
-    },
-    {
-      "name": "Mail (Admin)"
-    },
-    {
-      "name": "Mail (Client)"
-    },
-    {
-      "name": "Media Library (Admin)"
-    },
-    {
-      "name": "Meta"
-    },
-    {
-      "name": "Navigation"
-    },
-    {
-      "name": "Rank (Admin)"
-    },
-    {
-      "name": "Rank (Client)"
-    },
-    {
-      "name": "Shop (Client)"
-    },
-    {
-      "name": "Shop Categories"
-    },
-    {
-      "name": "Shop Execution"
-    },
-    {
-      "name": "Shop Growth Stages"
-    },
-    {
-      "name": "Shop Products"
-    },
-    {
-      "name": "Shop Tags"
-    },
-    {
-      "name": "Storage Box Configs"
-    },
-    {
-      "name": "Storage Box Transactions"
-    },
-    {
-      "name": "Task (Client)"
-    },
-    {
-      "name": "Task Assignments"
-    },
-    {
-      "name": "Task Categories"
-    },
-    {
-      "name": "Task Definitions"
-    },
-    {
-      "name": "Team"
-    },
-    {
-      "name": "Team (Client)"
-    },
-    {
-      "name": "Webhooks"
-    },
-    {
-      "name": "analytics"
-    }
-  ]
+  "webhooks": {}
 }

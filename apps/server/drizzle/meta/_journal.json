@@ -36,6 +36,13 @@
       "when": 1777801200001,
       "tag": "0004_kind_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777801200002,
+      "tag": "0005_superb_impossible_man",
+      "breakpoints": true
     }
   ]
 }

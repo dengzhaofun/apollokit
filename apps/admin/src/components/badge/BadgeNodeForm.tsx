@@ -374,7 +374,7 @@ export function BadgeNodeForm({
               </div>
             )}
           </form.Field>
-          <form.Field name="isEnabled">
+          <form.Field name="isActive">
             {(field) => (
               <div className="flex items-center justify-between rounded-md border px-3">
                 <Label htmlFor="enabled" className="cursor-pointer">

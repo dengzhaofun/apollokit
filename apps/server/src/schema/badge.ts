@@ -147,7 +147,7 @@ export const badgeNodes = pgTable(
     visibilityRule: jsonb("visibility_rule").$type<Record<string, unknown>>(),
 
     sortOrder: integer("sort_order").default(0).notNull(),
-    isEnabled: boolean("is_enabled").default(true).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

@@ -123,8 +123,8 @@ export function BadgeNodeTable({ data }: Props) {
                 <Badge variant="outline">{row.aggregation}</Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={row.isEnabled ? "default" : "outline"}>
-                  {row.isEnabled ? m.common_active() : m.common_inactive()}
+                <Badge variant={row.isActive ? "default" : "outline"}>
+                  {row.isActive ? m.common_active() : m.common_inactive()}
                 </Badge>
               </TableCell>
             </TableRow>

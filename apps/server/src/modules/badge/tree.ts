@@ -273,7 +273,7 @@ function isVisible(
   node: BadgeNode,
   playerContext: Record<string, unknown> | null | undefined,
 ): boolean {
-  if (!node.isEnabled) return false;
+  if (!node.isActive) return false;
   const rule = node.visibilityRule as Record<string, unknown> | null;
   if (!rule) return true;
   if (!playerContext) return false; // fail-closed when rule set but no context
