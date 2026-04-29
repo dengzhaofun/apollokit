@@ -38,3 +38,5 @@ export * from "./media-library";
 export * from "./event-catalog";
 export * from "./rank";
 export * from "./webhooks";
+export * from "./triggers";
+export * from "./feature-unlocks";

@@ -26,6 +26,27 @@
   "triggers": {
     "crons": ["* * * * *"]
   },
+  // Cloudflare Queues —— 事件 fan-out 的异步通道（webhook + trigger-rule）。
+  // 详见 ~/.claude/plans/trigger-polished-lemur.md。
+  // queue 资源需先用 `wrangler queues create apollokit-events` 和
+  // `wrangler queues create apollokit-events-dlq` 创建（每个 env 一组）。
+  // EVENTS_QUEUE binding 同时是 producer（events.emit → queue.send）和
+  // consumer（src/queue.ts 处理 batch）。max_batch_timeout=5s 折中保证
+  // 低延迟和 batch 效率；max_retries=5 后进 DLQ，由后续 cron 兜底告警。
+  "queues": {
+    "producers": [
+      { "queue": "apollokit-events", "binding": "EVENTS_QUEUE" }
+    ],
+    "consumers": [
+      {
+        "queue": "apollokit-events",
+        "max_batch_size": 50,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "dead_letter_queue": "apollokit-events-dlq"
+      }
+    ]
+  },
   // Workaround: @better-auth/api-key imports @better-auth/core/utils/* sub-paths
   // via the wildcard export pattern ("./utils/*"), which wrangler's esbuild doesn't resolve.
   // Use relative paths so esbuild treats them as file paths, not package specifiers.

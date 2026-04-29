@@ -114,8 +114,12 @@ import {
 } from "./modules/task";
 import { eventCatalogRouter } from "./modules/event-catalog";
 import { rankClientRouter, rankRouter } from "./modules/rank";
+import { triggersRouter } from "./modules/triggers";
 import { webhooksRouter } from "./modules/webhooks";
+import { installEventDispatcher } from "./lib/event-dispatcher";
+import { getTraceId } from "./lib/request-context";
 import { health } from "./routes/health";
+import { queue as queueHandler } from "./queue";
 import { scheduled } from "./scheduled";
 
 const app = new OpenAPIHono<HonoEnv>({
@@ -281,6 +285,7 @@ app.route("/api/assist-pool", assistPoolRouter);
 app.route("/api/event-catalog", eventCatalogRouter);
 app.route("/api/rank", rankRouter);
 app.route("/api/webhooks", webhooksRouter);
+app.route("/api/triggers", triggersRouter);
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);
@@ -317,6 +322,27 @@ app.route("/api/client/assist-pool", assistPoolClientRouter);
 // eventBus。放在路由挂载之后，保证所有 barrel 都已运行。
 wireKindEventSubscriptions(deps);
 
+// 统一事件 dispatcher —— 把 capabilities 含 webhook 或 trigger-rule 的
+// 事件推到 EVENTS_QUEUE,一条事件一条 envelope(envelope.capabilities 含
+// 该事件命中的全部 async capability)。consumer (`src/queue.ts`) 按
+// envelope.capabilities 数组分别派发到 webhook + trigger 两条业务路径。
+//
+// 必须在所有 module 的 registerEvent 完成后调用,所以放在所有 service /
+// router 的 import 之后。
+installEventDispatcher(
+  deps.events,
+  async ({ eventName, orgId, payload, capabilities }) => {
+    await deps.eventsQueue.send({
+      name: eventName,
+      orgId,
+      payload,
+      capabilities,
+      traceId: getTraceId(),
+      emittedAt: Date.now(),
+    });
+  },
+);
+
 // OpenAPI document + Scalar UI
 //
 // `registerSecuritySchemes` adds AdminApiKey / ClientCredential to
@@ -349,16 +375,19 @@ app.get(
   }),
 );
 
-// Module-worker form: Cloudflare reads `.fetch` and `.scheduled` off the
-// default export. We attach `scheduled` directly to the Hono app instance
-// so tests that still do `import app from "./index"` keep working with
-// `app.request(...)` / `app.fetch(...)`.
+// Module-worker form: Cloudflare reads `.fetch`, `.scheduled` and `.queue`
+// off the default export. We attach all three directly to the Hono app
+// instance so tests that still do `import app from "./index"` keep working
+// with `app.request(...)` / `app.fetch(...)`.
 //
 // The wrangler entry is `src/worker.ts`, which wraps this app with
 // `Sentry.withSentry(...)` — we keep the bare app export here so vitest
 // (which never resolves the Sentry/cloudflare:workers import path) can
 // continue to do `import app from "./index"; app.request(...)`.
-Object.assign(app, { scheduled });
-const exportedApp = app as typeof app & { scheduled: typeof scheduled };
+Object.assign(app, { scheduled, queue: queueHandler });
+const exportedApp = app as typeof app & {
+  scheduled: typeof scheduled;
+  queue: typeof queueHandler;
+};
 export { exportedApp as app };
 export default exportedApp;

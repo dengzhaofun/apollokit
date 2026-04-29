@@ -26,11 +26,17 @@ export type EventKind =
   | "platform-event"
 
 /** 事件消费能力维度 —— 前端构造器按此过滤选项。 */
-export type EventCapability = "task-trigger" | "analytics"
+export type EventCapability =
+  | "task-trigger"
+  | "analytics"
+  | "webhook"
+  | "trigger-rule"
 
 export const EVENT_CAPABILITIES: readonly EventCapability[] = [
   "task-trigger",
   "analytics",
+  "webhook",
+  "trigger-rule",
 ] as const
 
 export interface CatalogEventView {

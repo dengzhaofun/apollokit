@@ -43,6 +43,7 @@
     "storage-box",
     "task",
     "team",
+    "triggers",
     "webhooks"
   ]
 }

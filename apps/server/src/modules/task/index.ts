@@ -19,7 +19,9 @@ import { mailService } from "../mail";
 import { installTaskEventForwarder } from "./event-forwarder";
 import { createTaskService } from "./service";
 
-// 自己发的事件不要桥接回自己，避免自反循环 —— 全部 forwardToTask: false。
+// 自己发的事件不要桥接回自己，避免自反循环 —— 不带 task-trigger capability。
+// 但作为高价值业务信号，显式 opt-in webhook + trigger-rule，让租户能订阅外发
+// 或在 admin 里配置 in-platform trigger 规则（"任务完成 → 解锁地图 / 发邮件"）。
 registerEvent({
   name: "task.completed",
   owner: "task",
@@ -33,7 +35,7 @@ registerEvent({
     { path: "progressValue", type: "number", required: true },
     { path: "completedAt", type: "string", required: true },
   ],
-  forwardToTask: false,
+  capabilities: ["analytics", "webhook", "trigger-rule"],
 });
 
 registerEvent({
@@ -52,7 +54,7 @@ registerEvent({
     { path: "periodKey", type: "string", required: true },
     { path: "claimedAt", type: "string", required: true },
   ],
-  forwardToTask: false,
+  capabilities: ["analytics", "webhook", "trigger-rule"],
 });
 
 registerEvent({
@@ -72,7 +74,7 @@ registerEvent({
     { path: "periodKey", type: "string", required: true },
     { path: "claimedAt", type: "string", required: true },
   ],
-  forwardToTask: false,
+  capabilities: ["analytics", "webhook", "trigger-rule"],
 });
 
 export { createTaskService };

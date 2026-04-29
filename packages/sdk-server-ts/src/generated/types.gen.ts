@@ -5338,7 +5338,7 @@ export type AssistPoolContributeResult = {
     rewards: Array<AssistPoolRewardItem> | null;
 };
 
-export type EventCapability = 'task-trigger' | 'analytics';
+export type EventCapability = 'task-trigger' | 'analytics' | 'webhook' | 'trigger-rule';
 
 export type CatalogEventList = {
     items: Array<CatalogEventView>;
@@ -5773,6 +5773,109 @@ export type WebhookDelivery = {
     failedAt: string | null;
     createdAt: string;
 };
+
+export type TriggerRuleListResponse = {
+    items: Array<TriggerRule>;
+};
+
+export type CreateTriggerRuleRequest = {
+    name: string;
+    description?: string;
+    status?: 'active' | 'disabled' | 'archived';
+    triggerEvent: string;
+    condition?: unknown;
+    actions: Array<TriggerAction>;
+    throttle?: TriggerThrottle;
+    graph?: unknown;
+};
+
+export type TriggerRule = {
+    id: string;
+    organizationId: string;
+    name: string;
+    description: string | null;
+    status: 'active' | 'disabled' | 'archived';
+    triggerEvent: string;
+    condition?: unknown;
+    actions: Array<unknown>;
+    throttle: TriggerThrottle;
+    graph?: unknown;
+    version: number;
+    createdBy: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type UpdateTriggerRuleRequest = {
+    name?: string;
+    description?: string | null;
+    status?: 'active' | 'disabled' | 'archived';
+    triggerEvent?: string;
+    condition?: unknown;
+    actions?: Array<TriggerAction>;
+    throttle?: TriggerThrottle;
+    graph?: unknown;
+    version: number;
+};
+
+export type DryRunTriggerRuleRequest = {
+    payload: {
+        [key: string]: unknown;
+    };
+};
+
+export type DryRunResponse = {
+    results: Array<TriggerEvaluateResult>;
+};
+
+export type TriggerExecutionListResponse = {
+    items: Array<TriggerExecution>;
+};
+
+export type TriggerExecution = {
+    id: string;
+    organizationId: string;
+    ruleId: string;
+    ruleVersion: number;
+    eventName: string;
+    endUserId: string | null;
+    traceId: string | null;
+    conditionResult: string | null;
+    actionResults: Array<unknown> | null;
+    startedAt: string;
+    finishedAt: string | null;
+    status: 'success' | 'partial' | 'failed' | 'throttled' | 'condition_failed';
+};
+
+export type TriggerEvaluateResult = {
+    ruleId: string;
+    status: 'success' | 'partial' | 'failed' | 'throttled' | 'condition_failed';
+    conditionResult: boolean | null;
+    actionResults: Array<TriggerActionResult>;
+};
+
+export type TriggerActionResult = {
+    type: string;
+    status: 'success' | 'failed' | 'skipped';
+    durationMs: number;
+    error?: string;
+    data?: {
+        [key: string]: unknown;
+    };
+};
+
+export type TriggerAction = {
+    type: 'emit_event' | 'grant_reward' | 'unlock_feature' | 'send_notification';
+    [key: string]: unknown | ('emit_event' | 'grant_reward' | 'unlock_feature' | 'send_notification');
+};
+
+export type TriggerThrottle = {
+    perUserPerMinute?: number;
+    perUserPerHour?: number;
+    perUserPerDay?: number;
+    perOrgPerMinute?: number;
+    perOrgPerHour?: number;
+} | null;
 
 export type EventCatalogFieldRow = {
     path: string;
@@ -27242,6 +27345,363 @@ export type WebhooksPostDeliveriesByIdReplayResponses = {
 };
 
 export type WebhooksPostDeliveriesByIdReplayResponse = WebhooksPostDeliveriesByIdReplayResponses[keyof WebhooksPostDeliveriesByIdReplayResponses];
+
+export type TriggersGetRulesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/triggers/rules';
+};
+
+export type TriggersGetRulesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersGetRulesError = TriggersGetRulesErrors[keyof TriggersGetRulesErrors];
+
+export type TriggersGetRulesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TriggerRuleListResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersGetRulesResponse = TriggersGetRulesResponses[keyof TriggersGetRulesResponses];
+
+export type TriggersPostRulesData = {
+    body?: CreateTriggerRuleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/triggers/rules';
+};
+
+export type TriggersPostRulesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersPostRulesError = TriggersPostRulesErrors[keyof TriggersPostRulesErrors];
+
+export type TriggersPostRulesResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: TriggerRule;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersPostRulesResponse = TriggersPostRulesResponses[keyof TriggersPostRulesResponses];
+
+export type TriggersDeleteRulesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/triggers/rules/{id}';
+};
+
+export type TriggersDeleteRulesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersDeleteRulesByIdError = TriggersDeleteRulesByIdErrors[keyof TriggersDeleteRulesByIdErrors];
+
+export type TriggersDeleteRulesByIdResponses = {
+    /**
+     * Archived
+     */
+    200: ApiNullEnvelope;
+};
+
+export type TriggersDeleteRulesByIdResponse = TriggersDeleteRulesByIdResponses[keyof TriggersDeleteRulesByIdResponses];
+
+export type TriggersGetRulesByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/triggers/rules/{id}';
+};
+
+export type TriggersGetRulesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersGetRulesByIdError = TriggersGetRulesByIdErrors[keyof TriggersGetRulesByIdErrors];
+
+export type TriggersGetRulesByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TriggerRule;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersGetRulesByIdResponse = TriggersGetRulesByIdResponses[keyof TriggersGetRulesByIdResponses];
+
+export type TriggersPatchRulesByIdData = {
+    body?: UpdateTriggerRuleRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/triggers/rules/{id}';
+};
+
+export type TriggersPatchRulesByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersPatchRulesByIdError = TriggersPatchRulesByIdErrors[keyof TriggersPatchRulesByIdErrors];
+
+export type TriggersPatchRulesByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TriggerRule;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersPatchRulesByIdResponse = TriggersPatchRulesByIdResponses[keyof TriggersPatchRulesByIdResponses];
+
+export type TriggersPostRulesByIdDryRunData = {
+    body?: DryRunTriggerRuleRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/triggers/rules/{id}/dry-run';
+};
+
+export type TriggersPostRulesByIdDryRunErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersPostRulesByIdDryRunError = TriggersPostRulesByIdDryRunErrors[keyof TriggersPostRulesByIdDryRunErrors];
+
+export type TriggersPostRulesByIdDryRunResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: DryRunResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersPostRulesByIdDryRunResponse = TriggersPostRulesByIdDryRunResponses[keyof TriggersPostRulesByIdDryRunResponses];
+
+export type TriggersGetExecutionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        ruleId?: string;
+        status?: 'success' | 'partial' | 'failed' | 'throttled' | 'condition_failed';
+        limit?: number;
+    };
+    url: '/api/triggers/executions';
+};
+
+export type TriggersGetExecutionsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TriggersGetExecutionsError = TriggersGetExecutionsErrors[keyof TriggersGetExecutionsErrors];
+
+export type TriggersGetExecutionsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TriggerExecutionListResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TriggersGetExecutionsResponse = TriggersGetExecutionsResponses[keyof TriggersGetExecutionsResponses];
 
 export type ClientOptions = {
     baseUrl: 'http://localhost:8787' | (string & {});
