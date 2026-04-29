@@ -1143,6 +1143,8 @@
   "triggers_condition_jsonlogic_help": "留空 = 总是触发。示例可参考下方 placeholder。",
   "triggers_action_field_eventName": "事件名",
   "triggers_action_field_data": "事件数据 (JSON)",
+  "triggers_action_field_featureKey": "Feature 标识",
+  "triggers_action_unlock_feature_help": "解锁后写入 feature_unlocks 表;同一玩家重复解锁同一 feature 会幂等跳过。",
   "triggers_event_payload_schema": "Payload 字段",
   "triggers_event_payload_hint": "在条件 / 动作的 JSON 里可以引用上面的字段名",
   "triggers_editor_fullscreen": "全屏编辑",

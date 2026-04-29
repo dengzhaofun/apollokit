@@ -65,6 +65,7 @@ export const TRIGGER_ACTION_TYPES: readonly TriggerActionType[] = [
  */
 export const IMPLEMENTED_ACTION_TYPES: readonly TriggerActionType[] = [
   "emit_event",
+  "unlock_feature",
 ] as const
 
 export type TriggerThrottle = {

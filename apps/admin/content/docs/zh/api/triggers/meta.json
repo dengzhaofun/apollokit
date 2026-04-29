@@ -1,0 +1,12 @@
+{
+  "title": "Triggers",
+  "pages": [
+    "triggers_get_rules",
+    "triggers_post_rules",
+    "triggers_get_rules_by_id",
+    "triggers_patch_rules_by_id",
+    "triggers_delete_rules_by_id",
+    "triggers_post_rules_by_id_dry_run",
+    "triggers_get_executions"
+  ]
+}

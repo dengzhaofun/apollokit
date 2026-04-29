@@ -1,7 +1,7 @@
 /**
  * 完整 fan-out 闭环集成测 ——
  *   events.emit("task.completed")
- *     → webhook-event-bridge 订阅
+ *     → event-dispatcher 订阅
  *     → 经 EventQueueStub 替代 EVENTS_QUEUE
  *     → createQueueHandler 处理 batch
  *     → webhooksService.dispatch 写 webhooks_deliveries pending 行
@@ -23,7 +23,7 @@ import { webhooksDeliveries, webhooksEndpoints } from "../../schema/webhooks"
 import { createTestOrg, deleteTestOrg } from "../../testing/fixtures"
 import { createEventQueueStub } from "../../testing/event-queue-stub"
 import { createWebhooksService } from "../webhooks/service"
-import { installWebhookEventBridge } from "../webhooks/event-bridge"
+import { installEventDispatcher } from "../../lib/event-dispatcher"
 
 const APP_SECRET = "test-app-secret-32-bytes-minimum-xxxxxxxxx"
 
@@ -94,7 +94,7 @@ describe("trigger-loop integration — emit → queue → dispatch → HTTP POST
     // 3. event-bus + bridge + queue stub
     const events = createEventBus()
     const queueStub = createEventQueueStub()
-    installWebhookEventBridge(
+    installEventDispatcher(
       events,
       async ({ eventName, orgId: o, payload, capabilities }) => {
         await queueStub.send({

@@ -367,6 +367,7 @@ async function runOneRule(args: {
         depth,
         traceId,
         events,
+        db,
         dryRun,
       });
       status = computeOverallStatus(actionResults);
@@ -413,9 +414,10 @@ async function runActions(args: {
   depth: number;
   traceId: string;
   events: EventBus;
+  db: TriggerDeps["db"];
   dryRun: boolean;
 }): Promise<TriggerActionResult[]> {
-  const { actions, orgId, eventName, payload, depth, traceId, events, dryRun } = args;
+  const { actions, orgId, eventName, payload, depth, traceId, events, db, dryRun } = args;
   const ctx = {
     orgId,
     triggerEventName: eventName,
@@ -423,7 +425,7 @@ async function runActions(args: {
     depth: depth + 1, // 每深入一层 +1（emit_event 行为）
     traceId,
   };
-  const deps = { events };
+  const deps = { events, db };
 
   const results: TriggerActionResult[] = [];
   for (const action of actions) {

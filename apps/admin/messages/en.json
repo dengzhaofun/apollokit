@@ -1143,6 +1143,8 @@
   "triggers_condition_jsonlogic_help": "Empty = always fires. See placeholder below for syntax.",
   "triggers_action_field_eventName": "Event name",
   "triggers_action_field_data": "Event data (JSON)",
+  "triggers_action_field_featureKey": "Feature key",
+  "triggers_action_unlock_feature_help": "Inserts into feature_unlocks; idempotent on (org, user, key) — repeat unlocks no-op.",
   "triggers_event_payload_schema": "Payload schema",
   "triggers_event_payload_hint": "Reference these field names in condition / action JSON",
   "triggers_editor_fullscreen": "Fullscreen",

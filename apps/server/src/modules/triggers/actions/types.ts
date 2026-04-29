@@ -2,6 +2,7 @@
  * Action handler 通用契约。
  */
 
+import type { AppDeps } from "../../../deps";
 import type { EventBus } from "../../../lib/event-bus";
 
 /**
@@ -24,9 +25,12 @@ export type ActionContext = {
  *
  * 注意:不包含 webhooks。Trigger 引擎是"内循环替代 webhook"的设计,
  * 想出墙到外部 webhook 的事件流走 webhook 模块自动 fan-out,不经 trigger。
+ *
+ * `db` 给需要直接写表的 action 用(unlock_feature 等)。
  */
 export type ActionDeps = {
   events: EventBus;
+  db: AppDeps["db"];
 };
 
 /**

@@ -14,10 +14,14 @@ import { TriggerActionNotImplemented } from "../errors";
 import type { TriggerAction } from "../types";
 
 import { emitEventAction } from "./emit-event";
+import { unlockFeatureAction } from "./unlock-feature";
 import type { ActionHandler } from "./types";
 
 /** 已实现 handler 的类型集合;UI 用它过滤可用 action 列表。 */
-export const IMPLEMENTED_ACTION_TYPES = ["emit_event"] as const;
+export const IMPLEMENTED_ACTION_TYPES = [
+  "emit_event",
+  "unlock_feature",
+] as const;
 
 export type ImplementedActionType = (typeof IMPLEMENTED_ACTION_TYPES)[number];
 
@@ -34,8 +38,8 @@ const notImplemented =
 
 export const actionRegistry: Record<TriggerAction["type"], ActionHandler> = {
   emit_event: emitEventAction as ActionHandler,
+  unlock_feature: unlockFeatureAction as ActionHandler,
   grant_reward: notImplemented("grant_reward"),
-  unlock_feature: notImplemented("unlock_feature"),
   send_notification: notImplemented("send_notification"),
 };
 

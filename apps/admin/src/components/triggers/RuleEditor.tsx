@@ -381,18 +381,17 @@ export function RuleEditor({ rule }: RuleEditorProps) {
                     {m.triggers_node_action_emit_event()}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    disabled
-                    title={m.triggers_action_stub_notice()}
+                    onClick={() => addAction("unlock_feature")}
                   >
-                    <Gift className="mr-2 h-3.5 w-3.5" />
-                    {m.triggers_node_action_grant_reward()}
+                    <Lock className="mr-2 h-3.5 w-3.5" />
+                    {m.triggers_node_action_unlock_feature()}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled
                     title={m.triggers_action_stub_notice()}
                   >
-                    <Lock className="mr-2 h-3.5 w-3.5" />
-                    {m.triggers_node_action_unlock_feature()}
+                    <Gift className="mr-2 h-3.5 w-3.5" />
+                    {m.triggers_node_action_grant_reward()}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled

@@ -114,14 +114,9 @@ import {
 } from "./modules/task";
 import { eventCatalogRouter } from "./modules/event-catalog";
 import { rankClientRouter, rankRouter } from "./modules/rank";
-import {
-  installTriggerEventBridge,
-  triggersRouter,
-} from "./modules/triggers";
-import {
-  installWebhookEventBridge,
-  webhooksRouter,
-} from "./modules/webhooks";
+import { triggersRouter } from "./modules/triggers";
+import { webhooksRouter } from "./modules/webhooks";
+import { installEventDispatcher } from "./lib/event-dispatcher";
 import { getTraceId } from "./lib/request-context";
 import { health } from "./routes/health";
 import { queue as queueHandler } from "./queue";
@@ -327,28 +322,14 @@ app.route("/api/client/assist-pool", assistPoolClientRouter);
 // eventBus。放在路由挂载之后，保证所有 barrel 都已运行。
 wireKindEventSubscriptions(deps);
 
-// Webhook 事件桥 —— 把 registry 里 capabilities ⊇ ["webhook"] 的事件
-// 推到 EVENTS_QUEUE。consumer (`src/queue.ts`) 异步拾取 → dispatch +
-// ctx.waitUntil(deliverPending) 触发实时 HTTP POST，秒级到达订阅者。
-// 必须在所有 module 的 registerEvent 完成后调用。
-installWebhookEventBridge(
-  deps.events,
-  async ({ eventName, orgId, payload, capabilities }) => {
-    await deps.eventsQueue.send({
-      name: eventName,
-      orgId,
-      payload,
-      capabilities,
-      traceId: getTraceId(),
-      emittedAt: Date.now(),
-    });
-  },
-);
-
-// Trigger 事件桥 —— capabilities ⊇ ["trigger-rule"] 的事件入 queue，
-// consumer 派发到 triggerEngine.evaluate。同 capability 的事件可能被
-// webhook 桥也订阅，那就两条 queue 消息（M3+ 可合并）。
-installTriggerEventBridge(
+// 统一事件 dispatcher —— 把 capabilities 含 webhook 或 trigger-rule 的
+// 事件推到 EVENTS_QUEUE,一条事件一条 envelope(envelope.capabilities 含
+// 该事件命中的全部 async capability)。consumer (`src/queue.ts`) 按
+// envelope.capabilities 数组分别派发到 webhook + trigger 两条业务路径。
+//
+// 必须在所有 module 的 registerEvent 完成后调用,所以放在所有 service /
+// router 的 import 之后。
+installEventDispatcher(
   deps.events,
   async ({ eventName, orgId, payload, capabilities }) => {
     await deps.eventsQueue.send({

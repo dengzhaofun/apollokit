@@ -128,7 +128,8 @@ export function ActionNode(
   const { id, data } = props
   const action = data.action
 
-  const isStub = action.type !== "emit_event"
+  const isImplemented =
+    action.type === "emit_event" || action.type === "unlock_feature"
   const Icon = ICON_BY_TYPE[action.type] ?? Zap
   return (
     <div className="rounded-lg border-2 border-emerald-500 bg-card p-4 shadow-sm min-w-[320px]">
@@ -153,7 +154,10 @@ export function ActionNode(
       {action.type === "emit_event" && (
         <EmitEventForm id={id} action={action} update={data.onUpdateData} />
       )}
-      {isStub && (
+      {action.type === "unlock_feature" && (
+        <UnlockFeatureForm id={id} action={action} update={data.onUpdateData} />
+      )}
+      {!isImplemented && (
         <p className="text-xs text-muted-foreground italic">
           {m.triggers_action_stub_notice()}
         </p>
@@ -223,6 +227,36 @@ function EmitEventForm(props: {
             }
           }}
         />
+      </div>
+    </div>
+  )
+}
+
+function UnlockFeatureForm(props: {
+  id: string
+  action: { type: "unlock_feature"; featureKey: string }
+  update?: (id: string, patch: Record<string, unknown>) => void
+}) {
+  const { id, action, update } = props
+  return (
+    <div className="space-y-2">
+      <div>
+        <Label className="text-xs">
+          {m.triggers_action_field_featureKey()}
+        </Label>
+        <Input
+          className="mt-1 text-xs font-mono"
+          value={action.featureKey}
+          placeholder="e.g. map_b, vip_chat"
+          onChange={(e) =>
+            update?.(id, {
+              action: { ...action, featureKey: e.target.value },
+            })
+          }
+        />
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {m.triggers_action_unlock_feature_help()}
+        </p>
       </div>
     </div>
   )
