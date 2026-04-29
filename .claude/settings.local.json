@@ -4,5 +4,9 @@
       "Bash(pnpm exec:*)",
       "Bash(pnpm install:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ],
+  "enableAllProjectMcpServers": true
 }
