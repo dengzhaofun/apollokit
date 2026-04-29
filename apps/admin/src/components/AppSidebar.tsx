@@ -1,5 +1,5 @@
-import { OrganizationSwitcher, UserButton } from "@daveyplate/better-auth-ui"
-import { Link, useLocation } from "@tanstack/react-router"
+import { OrganizationSwitcher } from "@daveyplate/better-auth-ui"
+import { Link, useLocation, useNavigate } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import {
@@ -58,12 +58,20 @@ import {
   CollapsibleTrigger,
 } from "#/components/ui/collapsible"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar"
+import { authClient } from "#/lib/auth-client"
+import { LogOut, Settings as SettingsIcon } from "lucide-react"
 import {
   Popover,
   PopoverContent,
@@ -277,7 +285,7 @@ function getNavGroups(): NavGroup[] {
       // 事件中心(event-catalog)在 developer 组,因为它是只读治理看板
       // (事件 schema / 订阅健康 / 回放),非"配置"语义。
       // 配置类(项目设置 / API 密钥 / Webhooks / 账号)统一进
-      // /settings 二级页,从 footer 的 Settings 单链或 UserButton 进入。
+      // /settings 二级页,从 footer 的 UserMenuButton 下拉里进入。
       key: "content",
       label: m.nav_group_content,
       icon: BookOpen,
@@ -731,21 +739,21 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
 }
 
 /**
- * UserButton 包装 —— Theme + Language 用 shadcn 的二级菜单
- * (DropdownMenuSub)收口,传给 better-auth-ui 的 `additionalLinks`。
+ * 自家版 UserButton —— 整个下拉用 base-ui (`#/components/ui/dropdown-menu`)
+ * 实现,跟项目其他菜单保持同一套 primitive。
  *
- * 关于 asChild 包裹:Library 会把每个非 `{href,...}` 的 ReactNode 用
- * `<DropdownMenuItem asChild>` 包起来。DropdownMenuSub 是一个仅提供
- * context 的组件、自身不渲染 DOM,所以 Slot 合并上来的 menuitem 相关
- * props 都被无视;真正进入 DOM 的是 SubTrigger / SubContent,各自带
- * 独立的 role 和事件,行为符合标准 sub-menu 预期。
+ * 之所以不用 `@daveyplate/better-auth-ui` 的 `UserButton`:
+ *   它内部用 `@radix-ui/react-dropdown-menu`,把项目里 base-ui 的
+ *   `<DropdownMenuSub>` 当 `additionalLinks` 塞进去会出现 context 错配
+ *   (`MenuRootContext is missing` → ErrorBoundary)。
  *
  * 顺序:
- *   • [Identity 头] + ─────
- *   • Theme  ▶  (Light / Dark / System)
- *   • Language  ▶  (English / 中文)
- *   • Settings(默认 link → /settings/account)
- *   • Sign Out(默认 link)
+ *   • [Identity 头] (avatar + name + email) + separator
+ *   • Theme   ▶  (Light / Dark / System)
+ *   • Language ▶ (English / 中文)
+ *   • separator
+ *   • Settings → /settings/account
+ *   • Sign Out → authClient.signOut() → /auth/sign-in
  */
 function UserMenuButton({ isIcon }: { isIcon: boolean }) {
   const { theme, setTheme } = useTheme()
@@ -755,11 +763,77 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
   const themeValue = mounted ? theme ?? "system" : "system"
   const currentLocale: Locale = mounted ? getLocale() : "en"
 
+  const navigate = useNavigate()
+  const { data: session } = authClient.useSession()
+  const user = session?.user
+  const displayName = user?.name?.trim() || user?.email || ""
+  const initials =
+    (user?.name?.trim() || user?.email || "?")
+      .split(/\s+/)
+      .map((s) => s[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?"
+
+  const handleSignOut = async () => {
+    await authClient.signOut()
+    navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
+  }
+
   return (
-    <UserButton
-      size={isIcon ? "icon" : "lg"}
-      additionalLinks={[
-        <DropdownMenuSub key="theme-sub">
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              isIcon ? "size-8 justify-center p-0" : "px-2 py-1.5",
+            )}
+          >
+            <Avatar size={isIcon ? "sm" : "default"}>
+              {user?.image ? <AvatarImage src={user.image} alt={displayName} /> : null}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            {!isIcon && (
+              <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+                <span className="truncate text-sm font-medium">
+                  {user?.name?.trim() || user?.email || ""}
+                </span>
+                {user?.email && user?.name?.trim() ? (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </span>
+                ) : null}
+              </div>
+            )}
+          </button>
+        }
+      />
+      <DropdownMenuContent
+        side={isIcon ? "right" : "top"}
+        align="start"
+        className="min-w-[14rem]"
+      >
+        <div className="flex items-center gap-2 px-1.5 py-1">
+          <Avatar size="sm">
+            {user?.image ? <AvatarImage src={user.image} alt={displayName} /> : null}
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-sm font-medium">
+              {user?.name?.trim() || user?.email || ""}
+            </span>
+            {user?.email ? (
+              <span className="truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Palette className="size-4" />
             <span>{m.user_menu_theme()}</span>
@@ -780,8 +854,8 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
-        </DropdownMenuSub>,
-        <DropdownMenuSub key="lang-sub">
+        </DropdownMenuSub>
+        <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Globe className="size-4" />
             <span>{m.user_menu_language()}</span>
@@ -795,19 +869,32 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
               <DropdownMenuRadioItem value="zh">中文</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
-        </DropdownMenuSub>,
-      ]}
-    />
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          render={
+            <Link to="/settings">
+              <SettingsIcon className="size-4" />
+              <span>{m.user_menu_settings()}</span>
+            </Link>
+          }
+        />
+        <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+          <LogOut className="size-4" />
+          <span>{m.user_menu_sign_out()}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
 export function AppSidebar() {
   const groups = getNavGroups()
   const { pathname } = useLocation()
-  // collapsed=icon 模式下,Better Auth UI 的 OrganizationSwitcher / UserButton
-  // 必须显式切到 size="icon" 才会渲染圆形头像而不是带文字+chevron 的全宽按钮,
-  // 否则会在 3rem 宽的 icon rail 里溢出。Mobile 走 Sheet,宽度还是 18rem,
-  // 用展开态即可。
+  // collapsed=icon 模式下,OrganizationSwitcher 显式切到 size="icon" 才会
+  // 渲染圆形头像而不是带文字+chevron 的全宽按钮,否则会在 3rem 宽的 icon rail
+  // 里溢出。自家 UserMenuButton 也按 isIcon 切到只显示头像那一支。
+  // Mobile 走 Sheet,宽度还是 18rem,用展开态即可。
   const { state, isMobile } = useSidebar()
   const isIcon = state === "collapsed" && !isMobile
   const { setOpen: setCommandOpen } = useCommandPalette()
@@ -919,10 +1006,9 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           {/*
-            Settings / Theme / Language 全部收口到 UserButton 的下拉菜单里
-            (additionalLinks)。Settings 走 better-auth-ui 默认 link
-            (account.basePath=/settings, viewPaths.SETTINGS=account →
-            /settings/account),进入后 SettingsNav 提供二级跳转。
+            Settings / Theme / Language / Sign out 全部收口到自家
+            UserMenuButton 的下拉菜单。Settings 跳到 /settings,进入后
+            SettingsNav 提供二级跳转。
           */}
           <SidebarMenuItem>
             <div
