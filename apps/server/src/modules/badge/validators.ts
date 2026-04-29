@@ -50,7 +50,7 @@ export const CreateNodeSchema = z
     dismissConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable().optional(),
     sortOrder: z.number().int().default(0),
-    isEnabled: z.boolean().default(true),
+    isActive: z.boolean().default(true),
   })
   .openapi("BadgeNodeCreateRequest");
 
@@ -69,7 +69,7 @@ export const UpdateNodeSchema = z
     dismissConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable().optional(),
     sortOrder: z.number().int().optional(),
-    isEnabled: z.boolean().optional(),
+    isActive: z.boolean().optional(),
   })
   .openapi("BadgeNodeUpdateRequest");
 
@@ -101,7 +101,7 @@ export const BadgeNodeResponseSchema = z
     dismissConfig: z.record(z.string(), z.unknown()).nullable(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable(),
     sortOrder: z.number().int(),
-    isEnabled: z.boolean(),
+    isActive: z.boolean(),
     createdAt: z.string(),
     updatedAt: z.string(),
   })

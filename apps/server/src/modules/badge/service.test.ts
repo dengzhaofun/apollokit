@@ -56,7 +56,7 @@ describe("badge service", () => {
       aggregation: "any",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
     expect(node.key).toBe("home");
     expect(node.parentKey).toBeNull();
@@ -73,7 +73,7 @@ describe("badge service", () => {
       aggregation: "any",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
     await expect(
       svc.updateNode(orgId, (await svc.getNode(orgId, "cycle.a")).id, {
@@ -91,7 +91,7 @@ describe("badge service", () => {
         aggregation: "none",
         dismissMode: "auto",
         sortOrder: 0,
-        isEnabled: true,
+        isActive: true,
       }),
     ).rejects.toMatchObject({ code: "badge.invalid_signal_binding" });
   });
@@ -141,7 +141,7 @@ describe("badge service", () => {
       aggregation: "any",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
     await svc.createNode(orgId, {
       key: leafKey,
@@ -152,7 +152,7 @@ describe("badge service", () => {
       aggregation: "sum",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -188,7 +188,7 @@ describe("badge service", () => {
       aggregation: "sum",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -230,7 +230,7 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "manual",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -263,7 +263,7 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "version",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -311,7 +311,7 @@ describe("badge service", () => {
       dismissMode: "cooldown",
       dismissConfig: { cooldownSec: 60 },
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -359,7 +359,7 @@ describe("badge service", () => {
       dismissMode: "daily",
       dismissConfig: { periodType: "daily", timezone: "UTC" },
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -405,7 +405,7 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "session",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
     await svc.createNode(orgId, {
       key: manualKey,
@@ -415,7 +415,7 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "manual",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
 
     await svc.signal(orgId, {
@@ -465,7 +465,7 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "auto",
       sortOrder: 0,
-      isEnabled: true,
+      isActive: true,
     });
     await svc.signal(orgId, {
       endUserId,

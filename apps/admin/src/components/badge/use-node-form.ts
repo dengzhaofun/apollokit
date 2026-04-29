@@ -30,7 +30,7 @@ export type BadgeNodeFormValues = {
   dismissConfigJson: string
   visibilityRuleJson: string
   sortOrder: number
-  isEnabled: boolean
+  isActive: boolean
   jsonError: string
 }
 
@@ -63,7 +63,7 @@ export function useBadgeNodeForm({
         ? JSON.stringify(initial.visibilityRule, null, 2)
         : "",
       sortOrder: initial?.sortOrder ?? 0,
-      isEnabled: initial?.isEnabled ?? true,
+      isActive: initial?.isActive ?? true,
       jsonError: "",
     } as BadgeNodeFormValues,
     onSubmit: async ({ value, formApi }) => {
@@ -104,7 +104,7 @@ export function useBadgeNodeForm({
         dismissConfig,
         visibilityRule,
         sortOrder: value.sortOrder,
-        isEnabled: value.isEnabled,
+        isActive: value.isActive,
       })
     },
   })

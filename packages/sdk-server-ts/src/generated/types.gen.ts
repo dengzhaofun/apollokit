@@ -185,7 +185,7 @@ export type BadgeNodeCreateRequest = {
         [key: string]: unknown;
     } | null;
     sortOrder?: number;
-    isEnabled?: boolean;
+    isActive?: boolean;
 };
 
 export type BadgeNode = {
@@ -207,7 +207,7 @@ export type BadgeNode = {
         [key: string]: unknown;
     } | null;
     sortOrder: number;
-    isEnabled: boolean;
+    isActive: boolean;
     createdAt: string;
     updatedAt: string;
 };
@@ -228,7 +228,7 @@ export type BadgeNodeUpdateRequest = {
         [key: string]: unknown;
     } | null;
     sortOrder?: number;
-    isEnabled?: boolean;
+    isActive?: boolean;
 };
 
 export type BadgeValidateTreeResponse = {

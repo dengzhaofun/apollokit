@@ -186,7 +186,7 @@ function serializeNode(row: BadgeNode) {
     visibilityRule:
       (row.visibilityRule as Record<string, unknown> | null) ?? null,
     sortOrder: row.sortOrder,
-    isEnabled: row.isEnabled,
+    isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -327,7 +327,7 @@ export function createBadgeService(d: BadgeDeps) {
           dismissConfig: input.dismissConfig ?? null,
           visibilityRule: input.visibilityRule ?? null,
           sortOrder: input.sortOrder,
-          isEnabled: input.isEnabled,
+          isActive: input.isActive,
         })
         .returning();
       if (!row) throw new Error("badge node insert returned no row");
@@ -393,8 +393,8 @@ export function createBadgeService(d: BadgeDeps) {
             ? existing.visibilityRule
             : input.visibilityRule,
         sortOrder: input.sortOrder ?? existing.sortOrder,
-        isEnabled:
-          input.isEnabled === undefined ? existing.isEnabled : input.isEnabled,
+        isActive:
+          input.isActive === undefined ? existing.isActive : input.isActive,
       })
       .where(
         and(
@@ -906,7 +906,7 @@ export function createBadgeService(d: BadgeDeps) {
           .dismissConfig ?? null,
       visibilityRule: null,
       sortOrder: input.sortOrder ?? tpl.defaults.sortOrder,
-      isEnabled: tpl.defaults.isEnabled,
+      isActive: tpl.defaults.isActive,
     });
   }
 

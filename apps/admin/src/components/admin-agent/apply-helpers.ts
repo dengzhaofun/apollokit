@@ -449,8 +449,8 @@ export function applyBadgeNodeToForm(
   if (input.sortOrder !== undefined) {
     form.setFieldValue("sortOrder", input.sortOrder)
   }
-  if (input.isEnabled !== undefined) {
-    form.setFieldValue("isEnabled", input.isEnabled)
+  if (input.isActive !== undefined) {
+    form.setFieldValue("isActive", input.isActive)
   }
 }
 
