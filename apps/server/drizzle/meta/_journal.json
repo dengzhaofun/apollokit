@@ -40,15 +40,8 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1777430031429,
-      "tag": "0005_white_titania",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1777446766120,
-      "tag": "0006_superb_tarantula",
+      "when": 1777801200002,
+      "tag": "0005_superb_impossible_man",
       "breakpoints": true
     }
   ]
