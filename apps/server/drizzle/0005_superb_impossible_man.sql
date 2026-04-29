@@ -1,0 +1,1 @@
+ALTER TABLE "badge_nodes" RENAME COLUMN "is_enabled" TO "is_active";

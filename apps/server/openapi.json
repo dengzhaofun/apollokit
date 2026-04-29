@@ -687,7 +687,7 @@
           "sortOrder": {
             "type": "integer"
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean"
           },
           "createdAt": {
@@ -712,7 +712,7 @@
           "dismissConfig",
           "visibilityRule",
           "sortOrder",
-          "isEnabled",
+          "isActive",
           "createdAt",
           "updatedAt"
         ]
@@ -821,7 +821,7 @@
             "type": "integer",
             "default": 0
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean",
             "default": true
           }
@@ -926,7 +926,7 @@
           "sortOrder": {
             "type": "integer"
           },
-          "isEnabled": {
+          "isActive": {
             "type": "boolean"
           }
         }

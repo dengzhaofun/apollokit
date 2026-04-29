@@ -47,7 +47,7 @@ export type BadgeNode = {
   dismissConfig: Record<string, unknown> | null
   visibilityRule: Record<string, unknown> | null
   sortOrder: number
-  isEnabled: boolean
+  isActive: boolean
   createdAt: string
   updatedAt: string
 }
@@ -67,7 +67,7 @@ export type CreateBadgeNodeInput = {
   dismissConfig?: Record<string, unknown> | null
   visibilityRule?: Record<string, unknown> | null
   sortOrder?: number
-  isEnabled?: boolean
+  isActive?: boolean
 }
 
 export type UpdateBadgeNodeInput = Partial<CreateBadgeNodeInput>
