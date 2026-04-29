@@ -34,11 +34,21 @@ import {
   PromptInput,
   Response,
 } from "../ai-elements"
+import type { MentionRef } from "./mention-types"
 import { Button } from "../ui/button"
 import { ApplyConfigCard } from "./ApplyConfigCard"
 import { ClarifyPrompt } from "./ClarifyPrompt"
 import { useFormContext } from "./FormProvider"
 import { NavigateCard } from "./NavigateCard"
+import {
+  PatchConfigCard,
+  type PatchCardState,
+} from "./PatchConfigCard"
+import {
+  buildPatchUrl,
+  isPatchToolPart,
+  toolNameFromPartType,
+} from "./patch-registry"
 import { getModuleEntry } from "./registry"
 import {
   clearMessages,
@@ -103,6 +113,22 @@ function AIAssistPanelInner({
   const [navigatedCalls, setNavigatedCalls] = React.useState<Set<string>>(
     () => new Set(),
   )
+  /**
+   * Per-callId state for patch* tool cards. Independent from
+   * `appliedCalls` (which is the Set covering the surface-bound apply
+   * tool) because patch firing is async and has loading / failed states
+   * that the apply path doesn't.
+   */
+  const [patchCardStates, setPatchCardStates] = React.useState<
+    Record<string, PatchCardState>
+  >({})
+
+  // Carries the mentions selected for the next outgoing message. Stored
+  // in a ref (not state) so the transport closure reads the current value
+  // at send time without needing to be recreated on every popover edit.
+  // Consumed (cleared) inside `prepareSendMessagesRequest` after the
+  // body is built.
+  const pendingMentionsRef = React.useRef<MentionRef[]>([])
 
   const transport = React.useMemo(
     () =>
@@ -115,6 +141,8 @@ function AIAssistPanelInner({
           // so token cost stays flat as the UI history grows. Older
           // turns remain visible on screen but aren't re-fed to the LLM.
           const sendable = trimMessagesForSend(messages)
+          const mentions = pendingMentionsRef.current
+          pendingMentionsRef.current = []
           return {
             body: {
               ...(body ?? {}),
@@ -122,6 +150,7 @@ function AIAssistPanelInner({
               context: {
                 surface,
                 ...(draft && Object.keys(draft).length > 0 ? { draft } : {}),
+                ...(mentions.length > 0 ? { mentions } : {}),
               },
             },
           }
@@ -223,6 +252,87 @@ function AIAssistPanelInner({
     void navigate({ to: path as never })
   }
 
+  /**
+   * Apply a patch* tool proposal: fire PATCH against the resource's
+   * endpoint, transition the card through applying → applied | failed,
+   * and addToolResult so the agent knows the outcome.
+   *
+   * The endpoint URL is templated by `patch-registry.ts` from the tool
+   * name. We use credentials:include to carry the session cookie since
+   * everything else under /api/* uses the same admin session.
+   */
+  async function handlePatchApply(
+    toolName: string,
+    callId: string,
+    input: { key: string; patch: Record<string, unknown> },
+  ) {
+    if (patchCardStates[callId]?.kind === "applying") return
+    const url = buildPatchUrl(toolName, input.key)
+    if (!url) {
+      toast.error(`未知的 patch 工具：${toolName}`)
+      return
+    }
+    setPatchCardStates((prev) => ({ ...prev, [callId]: { kind: "applying" } }))
+    try {
+      const res = await fetch(url, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input.patch),
+      })
+      if (!res.ok) {
+        // Try to surface the envelope's `message` for a useful error.
+        let detail = `${res.status}`
+        try {
+          const body = (await res.json()) as { message?: string; code?: string }
+          if (body.message) detail = body.message
+          else if (body.code) detail = body.code
+        } catch {
+          /* ignore — fallback to status */
+        }
+        setPatchCardStates((prev) => ({
+          ...prev,
+          [callId]: { kind: "failed", message: detail },
+        }))
+        addToolResult({
+          tool: toolName,
+          toolCallId: callId,
+          output: { applied: false, error: detail },
+        })
+        toast.error(`应用失败：${detail}`)
+        return
+      }
+      setPatchCardStates((prev) => ({ ...prev, [callId]: { kind: "applied" } }))
+      addToolResult({
+        tool: toolName,
+        toolCallId: callId,
+        output: { applied: true },
+      })
+      toast.success("已应用变更")
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setPatchCardStates((prev) => ({
+        ...prev,
+        [callId]: { kind: "failed", message: msg },
+      }))
+      addToolResult({
+        tool: toolName,
+        toolCallId: callId,
+        output: { applied: false, error: msg },
+      })
+      toast.error(`应用失败：${msg}`)
+    }
+  }
+
+  function handlePatchReject(toolName: string, callId: string) {
+    setPatchCardStates((prev) => ({ ...prev, [callId]: { kind: "rejected" } }))
+    addToolResult({
+      tool: toolName,
+      toolCallId: callId,
+      output: { applied: false, reason: "user-rejected" },
+    })
+  }
+
   function handleReject(callId?: string) {
     if (callId && moduleEntry?.applyToolName) {
       addToolResult({
@@ -274,10 +384,13 @@ function AIAssistPanelInner({
               appliedCalls={appliedCalls}
               answeredCalls={answeredCalls}
               navigatedCalls={navigatedCalls}
+              patchCardStates={patchCardStates}
               onApply={handleApply}
               onReject={(callId) => handleReject(callId)}
               onAnswer={handleAnswer}
               onNavigate={handleNavigate}
+              onPatchApply={handlePatchApply}
+              onPatchReject={handlePatchReject}
             />
           ))}
         </Conversation>
@@ -288,7 +401,13 @@ function AIAssistPanelInner({
         </div>
       ) : null}
       <PromptInput
-        onSubmit={(text) => void sendMessage({ text })}
+        onSubmit={(text, mentions) => {
+          pendingMentionsRef.current = mentions.map<MentionRef>(({ type, id }) => ({
+            type,
+            id,
+          }))
+          void sendMessage({ text })
+        }}
         onStop={stop}
         isStreaming={isStreaming}
       />
@@ -346,16 +465,20 @@ function RenderedMessage({
   appliedCalls,
   answeredCalls,
   navigatedCalls,
+  patchCardStates,
   onApply,
   onReject,
   onAnswer,
   onNavigate,
+  onPatchApply,
+  onPatchReject,
 }: {
   msg: UIMessage
   applyToolName: string | undefined
   appliedCalls: Set<string>
   answeredCalls: Set<string>
   navigatedCalls: Set<string>
+  patchCardStates: Record<string, PatchCardState>
   onApply: (callId: string, input: unknown) => void
   onReject: (callId: string) => void
   onAnswer: (callId: string, text: string) => void
@@ -363,6 +486,12 @@ function RenderedMessage({
     callId: string,
     target: { module: string; intent: "list" | "create" },
   ) => void
+  onPatchApply: (
+    toolName: string,
+    callId: string,
+    input: { key: string; patch: Record<string, unknown> },
+  ) => void
+  onPatchReject: (toolName: string, callId: string) => void
 }) {
   if (msg.role === "system") return null
   const role = msg.role === "user" ? "user" : "assistant"
@@ -420,6 +549,39 @@ function RenderedMessage({
                   intent: input.intent!,
                 })
               }
+            />
+          </MessageContent>
+        )
+      }
+      // Patch* cards — partial updates to @-mentioned resources. The
+      // server-side `patch-registry` enumerates tool names; we render
+      // them all uniformly via PatchConfigCard. Distinct from the
+      // surface-bound apply tool above because patches don't depend
+      // on a form being in scope (they fire PATCH directly against
+      // the resource endpoint).
+      if (isPatchToolPart(part.type)) {
+        const tp = part as unknown as ToolPart & {
+          input?: { key?: string; patch?: Record<string, unknown> }
+        }
+        const input = tp.input ?? {}
+        if (!input.key || !input.patch) return null
+        const toolName = toolNameFromPartType(part.type)
+        const cardState = patchCardStates[tp.toolCallId] ?? { kind: "idle" }
+        return (
+          <MessageContent key={i} variant="flat" className="w-full max-w-md">
+            <PatchConfigCard
+              toolName={toolName}
+              state={tp.state}
+              resourceKey={input.key}
+              patch={input.patch}
+              cardState={cardState}
+              onApply={() =>
+                onPatchApply(toolName, tp.toolCallId, {
+                  key: input.key!,
+                  patch: input.patch!,
+                })
+              }
+              onReject={() => onPatchReject(toolName, tp.toolCallId)}
             />
           </MessageContent>
         )

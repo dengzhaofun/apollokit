@@ -10,6 +10,6 @@
  */
 export { Conversation, ConversationEmptyState } from "./conversation"
 export { Message, MessageAvatar, MessageContent } from "./message"
-export { PromptInput } from "./prompt-input"
+export { PromptInput, type PromptInputMention } from "./prompt-input"
 export { Response } from "./response"
 export { Tool, type ToolCallState } from "./tool"

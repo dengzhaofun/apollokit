@@ -15,10 +15,13 @@
  * extraction here is the canonical authoritative dispatch.
  */
 
+import type { ToolSet } from "ai";
+
 import type { AdminSurface } from "../types";
 import { moduleOf } from "../types";
 import { APPLY_TOOL_BY_MODULE, type ApplyableModule } from "./apply-registry";
 import { DOC_TOOL_NAMES, readDoc, searchDocs } from "./docs";
+import { PATCH_TOOL_BY_MODULE, type PatchableModule } from "./patch-registry";
 import { createQueryTools, QUERY_TOOL_NAMES } from "./queries";
 import type { ChatExecutionContext } from "../types";
 import { askClarification, navigateTo } from "./shared";
@@ -26,6 +29,17 @@ import { askClarification, navigateTo } from "./shared";
 export function buildToolsForSurface(
   surface: AdminSurface,
   execCtx: ChatExecutionContext,
+  /**
+   * Extra apply-tool module ids to enable on top of the surface default.
+   * Source: the set of `descriptor.toolModuleId` from any @-mentioned
+   * resources in the current request. Allows the model to act on a
+   * mentioned resource even when the user is on a different surface
+   * (e.g. user is on the dashboard but @-mentions a check-in config).
+   *
+   * Modules without a registered apply tool are silently ignored — the
+   * mention is then read-only.
+   */
+  extraToolModules: readonly string[] = [],
 ) {
   const queries = createQueryTools(execCtx);
 
@@ -34,7 +48,7 @@ export function buildToolsForSurface(
   // page (useful for "is there already a config like X?" before
   // proposing). Docs tools let the agent answer field-meaning /
   // how-to / best-practice questions on any surface.
-  const baseTools = {
+  const tools: ToolSet = {
     askClarification,
     navigateTo,
     searchDocs,
@@ -52,13 +66,28 @@ export function buildToolsForSurface(
     moduleName in APPLY_TOOL_BY_MODULE
   ) {
     const entry = APPLY_TOOL_BY_MODULE[moduleName as ApplyableModule];
-    return {
-      ...baseTools,
-      [entry.name]: entry.tool,
-    };
+    tools[entry.name] = entry.tool;
   }
 
-  return baseTools;
+  // Mention-driven extras. We add BOTH the apply and patch tools for
+  // every mentioned module: apply for "the user wants to recreate this
+  // shape elsewhere", patch for "the user wants to tweak the existing
+  // resource". The system prompt guides the model to pick the right one
+  // (patch for modifications, apply for new). Same `name → tool` overlay;
+  // duplicate module ids are idempotent because the same tool object is
+  // reassigned.
+  for (const m of extraToolModules) {
+    if (m in APPLY_TOOL_BY_MODULE) {
+      const entry = APPLY_TOOL_BY_MODULE[m as ApplyableModule];
+      tools[entry.name] = entry.tool;
+    }
+    if (m in PATCH_TOOL_BY_MODULE) {
+      const entry = PATCH_TOOL_BY_MODULE[m as PatchableModule];
+      tools[entry.name] = entry.tool;
+    }
+  }
+
+  return tools;
 }
 
 export const ADMIN_AGENT_TOOL_NAMES = [
@@ -67,4 +96,5 @@ export const ADMIN_AGENT_TOOL_NAMES = [
   ...DOC_TOOL_NAMES,
   ...QUERY_TOOL_NAMES,
   ...Object.values(APPLY_TOOL_BY_MODULE).map((e) => e.name),
+  ...Object.values(PATCH_TOOL_BY_MODULE).map((e) => e.name),
 ] as const;
