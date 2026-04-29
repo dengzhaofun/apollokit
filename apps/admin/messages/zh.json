@@ -1989,6 +1989,8 @@
   "user_menu_theme_dark": "深色",
   "user_menu_theme_system": "跟随系统",
   "user_menu_language": "语言",
+  "user_menu_settings": "设置",
+  "user_menu_sign_out": "退出登录",
   "settings_section_personal": "个人",
   "settings_section_project": "项目",
   "settings_account": "账号",
