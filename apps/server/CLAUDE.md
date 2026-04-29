@@ -311,14 +311,51 @@ and resolve `organizationId` from the API key instead of the session.
 
 ## Migration flow
 
+We use a **hybrid workflow**: `db:push` for fast iteration locally,
+`db:generate` + `db:migrate` for anything that ships.
+
+### Local iteration (no migration files)
+
 1. Edit / add table in `src/schema/<module>.ts` and re-export from
    `src/schema/index.ts`.
-2. `pnpm --filter=server db:generate` — produces SQL in `drizzle/`.
+2. `pnpm --filter=server db:push` — introspects your dev Neon branch
+   and `ALTER`s in place. No SQL file, no journal entry. Iterate
+   freely until the schema feels right.
+
+`db:push` is **dev-only**. Never point `DATABASE_URL` at prod and run
+push — `--override` on the script makes `.dev.vars` win, but this is
+still a footgun.
+
+### Before opening a PR (write a real migration)
+
+1. `pnpm --filter=server db:generate` — diffs your schema against the
+   last snapshot in `drizzle/meta/` and writes a new SQL file +
+   `_journal.json` entry. **One PR = one generate** (combine multiple
+   schema edits into a single migration).
+2. `pnpm --filter=server db:check` — validates `_journal.json` order,
+   `meta/*.json` snapshot chain, and cross-snapshot consistency.
+   Must be 0 errors before commit.
 3. Read the generated SQL. Verify indexes, constraints, partial
    unique indexes, cascade rules.
-4. `pnpm --filter=server db:migrate` applies it to the Neon branch
-   configured in `.dev.vars`.
-5. Commit both the schema and the generated migration file together.
+4. Commit the schema, the SQL file, and the snapshot together.
+
+If you `git rebase` after generate, re-run `db:check` — your migration
+may now collide with someone else's `idx` / `when`.
+
+### Production deploy
+
+`pnpm --filter=server db:migrate` against the prod connection string
+(uses `.env.production`, not `.dev.vars`). **Requires explicit user
+authorization** — plan approval ≠ migration approval. Always show the
+generated SQL to the user first.
+
+### Why all db scripts pass `dotenv --override`
+
+Without `--override`, dotenv-cli leaves any pre-existing
+`DATABASE_URL` env in place and `.dev.vars` is silently ignored. With
+`--override`, `.dev.vars` always wins for local commands. (Test setup
+in `src/testing/setup.ts` deliberately uses `override: false` for the
+opposite reason — it wants CI secrets to win there.)
 
 ## Testing
 
