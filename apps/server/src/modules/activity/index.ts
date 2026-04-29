@@ -52,6 +52,7 @@ registerEvent({
     { path: "endUserId", type: "string", required: true },
     { path: "milestoneAlias", type: "string", required: true },
   ],
+  capabilities: ["task-trigger", "analytics", "webhook", "trigger-rule"],
 });
 
 export { createActivityService };

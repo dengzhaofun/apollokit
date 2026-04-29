@@ -33,6 +33,9 @@ registerEvent({
     { path: "bestScore", type: "number", required: false },
     { path: "firstClear", type: "boolean", required: true },
   ],
+  // 玩家通关是 in-platform trigger 最常见的入口（"通关第 10 关解锁地图 B"），
+  // 也是租户最可能想外发到 webhook 的事件。显式 opt-in 全部能力。
+  capabilities: ["task-trigger", "analytics", "webhook", "trigger-rule"],
 });
 
 export { createLevelService };

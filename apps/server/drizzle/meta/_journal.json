@@ -36,6 +36,13 @@
       "when": 1777801200001,
       "tag": "0004_kind_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777430031429,
+      "tag": "0005_white_titania",
+      "breakpoints": true
     }
   ]
 }

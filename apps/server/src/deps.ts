@@ -7,6 +7,11 @@ import {
   type AnalyticsService,
 } from "./lib/analytics";
 import { createEventBus, type EventBus } from "./lib/event-bus";
+import type {
+  EventEnvelope,
+  EventQueueProducer,
+} from "./lib/event-queue";
+import { logger } from "./lib/logger";
 import { createObjectStorage, type ObjectStorage } from "./lib/storage";
 import {
   createEventCatalogService,
@@ -33,6 +38,17 @@ export type AppDeps = {
   analytics: AnalyticsService;
   eventCatalog: EventCatalogService;
   ai: AIProvider;
+  /**
+   * Cloudflare Queues producer for the events fan-out path. webhook
+   * bridge / trigger bridge enqueue here; consumer in `src/queue.ts`
+   * drains. Lazy-resolved over `env.EVENTS_QUEUE` so vitest (no real
+   * binding) can swap in `createEventQueueStub()` via factory tests.
+   *
+   * 在 `cloudflare:workers` shim 下（vitest）`send` 是 best-effort no-op
+   * + warn —— 单测如要断言 enqueue，应直接传 stub 给 bridge factory，
+   * 不要依赖 deps 单例。
+   */
+  eventsQueue: EventQueueProducer;
   // logger: typeof logger;
   // behaviorLog: typeof behaviorLog;
 };
@@ -60,6 +76,8 @@ export const deps: AppDeps = {
   // so importing this module under Node (e.g. drizzle-kit) doesn't need
   // OPENROUTER_API_KEY to be present.
   ai: createAIProvider(),
+  // Lazy queue producer — see `createLazyEventsQueue` below for why.
+  eventsQueue: createLazyEventsQueue(),
 };
 
 /**
@@ -108,4 +126,33 @@ function createLazyAnalytics(): AnalyticsService {
       return value;
     },
   });
+}
+
+/**
+ * Resolve EVENTS_QUEUE binding lazily — the binding is only present in
+ * the workerd runtime; under vitest (`cloudflare:workers` shim) it's
+ * undefined, and under `drizzle-kit` running in plain Node `env` itself
+ * may not even be valid. Both paths must not crash on `import` —— we
+ * fall back to a best-effort no-op + warn so any accidental enqueue at
+ * test time is loud but doesn't fail the test.
+ *
+ * Production path: `env.EVENTS_QUEUE.send(envelope)` is the canonical
+ * fan-out trigger. The consumer in `src/queue.ts` does the actual
+ * webhooksService.dispatch + (M3) triggerEngine.evaluate.
+ */
+function createLazyEventsQueue(): EventQueueProducer {
+  return {
+    async send(msg: EventEnvelope): Promise<void> {
+      const queue = (env as { EVENTS_QUEUE?: Queue<EventEnvelope> })
+        .EVENTS_QUEUE;
+      if (!queue) {
+        logger.warn(
+          `[event-queue] no EVENTS_QUEUE binding available; dropping ${msg.name}. ` +
+            `Tests that need to assert enqueue should pass an EventQueueStub directly.`,
+        );
+        return;
+      }
+      await queue.send(msg);
+    },
+  };
 }

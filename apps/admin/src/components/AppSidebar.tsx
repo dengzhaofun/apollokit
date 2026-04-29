@@ -26,6 +26,7 @@ import {
   Monitor,
   Moon,
   Radio,
+  Zap,
   Bell,
   Mail,
   Map as MapIcon,
@@ -139,6 +140,7 @@ type NavRoute =
   | "/collection"
   | "/level"
   | "/event-catalog"
+  | "/triggers"
   | "/friend"
   | "/invite"
   | "/guild"
@@ -321,6 +323,7 @@ function getNavGroups(): NavGroup[] {
       icon: Wrench,
       items: [
         { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
+        { title: m.nav_triggers, to: "/triggers", icon: Zap },
       ],
     },
   ]
