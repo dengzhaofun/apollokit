@@ -168,4 +168,60 @@ describe("admin-agent routes", () => {
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe("invalid_messages");
   });
+
+  test("GET /api/ai/admin/mentions/types without cookie → 401", async () => {
+    const res = await app.request("/api/ai/admin/mentions/types", {
+      method: "GET",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  test("GET /api/ai/admin/mentions/types with cookie → registered types", async () => {
+    const res = await app.request("/api/ai/admin/mentions/types", {
+      method: "GET",
+      headers: { cookie: fx.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      types: { type: string; label: string; writable: boolean }[];
+    };
+    // The 7 Tier-1 descriptors registered via the side-effect barrel
+    // import should all be present.
+    const typeIds = body.types.map((t) => t.type);
+    expect(typeIds).toContain("check-in");
+    expect(typeIds).toContain("task");
+    expect(typeIds).toContain("activity");
+    expect(typeIds).toContain("item");
+    expect(typeIds).toContain("character");
+    expect(typeIds).toContain("dialogue");
+    expect(typeIds).toContain("announcement");
+    // check-in has an apply tool registered → writable.
+    const checkIn = body.types.find((t) => t.type === "check-in");
+    expect(checkIn?.writable).toBe(true);
+    // task has no apply tool yet → read-only mention.
+    const task = body.types.find((t) => t.type === "task");
+    expect(task?.writable).toBe(false);
+  });
+
+  test("GET /api/ai/admin/mentions/search without cookie → 401", async () => {
+    const res = await app.request("/api/ai/admin/mentions/search?q=x", {
+      method: "GET",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  test("GET /api/ai/admin/mentions/search with cookie → empty results for fresh org", async () => {
+    // Fresh org has no resources yet. We're verifying the route
+    // dispatches without throwing — `results: []` is the success shape.
+    const res = await app.request(
+      "/api/ai/admin/mentions/search?types=check-in,task&q=zzz_no_match",
+      {
+        method: "GET",
+        headers: { cookie: fx.cookie },
+      },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { results: unknown[] };
+    expect(Array.isArray(body.results)).toBe(true);
+  });
 });

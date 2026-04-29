@@ -9,6 +9,10 @@
  */
 
 import { deps } from "../../deps";
+// Side-effect import — registers all mention descriptors into the global
+// registry before either the chat service or the mentions router is
+// invoked. Both depend on the registry being populated.
+import "./mentions";
 import { createAdminAgentService } from "./service";
 
 export { createAdminAgentService };

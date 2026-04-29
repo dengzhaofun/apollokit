@@ -3,7 +3,12 @@ import { MockLanguageModelV3, simulateReadableStream } from "ai/test";
 import { describe, expect, test } from "vitest";
 
 import type { AIProvider } from "../../lib/ai";
-import { createAdminAgentService } from "./service";
+import { registerMention } from "./mentions/registry";
+import type { MentionDescriptor, MentionSnapshot } from "./mentions/types";
+import {
+  buildMentionSystemSection,
+  createAdminAgentService,
+} from "./service";
 import type { ChatExecutionContext } from "./types";
 
 /**
@@ -149,6 +154,150 @@ describe("createAdminAgentService", () => {
         : JSON.stringify(sysMsg!.content);
     expect(sysText).toContain("已经填了的字段");
     expect(sysText).toContain("Daily");
+  });
+
+  test("mentioned check-in resource: system prompt gets snapshot + apply tool joins toolset", async () => {
+    // Register a fake check-in mention descriptor that maps to the
+    // "check-in" apply-tool module. We deliberately don't go through
+    // the real db-backed descriptor — fetching with a fake
+    // organizationId would return null. This isolates the chat
+    // wiring (system prompt + tool extension) from the DB layer.
+    const fakeDescriptor: MentionDescriptor = {
+      type: "check-in",
+      label: "签到配置",
+      toolModuleId: "check-in",
+      async search() {
+        return [];
+      },
+      async fetch(orgId, id) {
+        return { id, organizationId: orgId, name: "七日签到" };
+      },
+      toResult(item) {
+        const it = item as { id: string; name: string };
+        return { type: "check-in", id: it.id, name: it.name };
+      },
+      toContextLine(item) {
+        const it = item as { id: string; name: string };
+        return `[check-in] 签到配置 "${it.name}" (id=${it.id}, status=active)`;
+      },
+    };
+    registerMention(fakeDescriptor);
+
+    const model = new MockLanguageModelV3({
+      doStream: async () => textOnlyStreamResult("ok"),
+    });
+    const svc = createAdminAgentService({ ai: mockAi(model) });
+
+    const result = await svc.streamChat(
+      {
+        messages: [sampleUserMessage],
+        // dashboard surface so apply tool comes ONLY from the mention path,
+        // not from the surface-bound `:create` rule.
+        context: {
+          surface: "dashboard",
+          mentions: [{ type: "check-in", id: "cfg_abc" }],
+        },
+      },
+      EXEC_CTX,
+    );
+    await result.consumeStream();
+
+    const call = model.doStreamCalls[0]!;
+    const sysMsg = call.prompt.find((m) => m.role === "system");
+    const sysText =
+      typeof sysMsg!.content === "string"
+        ? sysMsg!.content
+        : JSON.stringify(sysMsg!.content);
+
+    // System prompt now contains the mention snapshot.
+    expect(sysText).toContain("当前对话引用的资源");
+    expect(sysText).toContain("七日签到");
+    expect(sysText).toContain("cfg_abc");
+
+    // Both apply and patch tools were injected by the mention path even
+    // though we're on dashboard. The patch tool is the "modify the
+    // existing resource" path; apply is the "create a similar one"
+    // path. Both must be available so the LLM can pick the right one
+    // based on user intent.
+    const toolNames = (call.tools ?? []).map((t) => t.name);
+    expect(toolNames).toContain("applyCheckInConfig");
+    expect(toolNames).toContain("patchCheckInConfig");
+  });
+
+  test("mentioned resource that fetch() returns null: system shows '已失效'", async () => {
+    const ghostDescriptor: MentionDescriptor = {
+      type: "check-in",
+      label: "签到配置",
+      toolModuleId: "check-in",
+      async search() {
+        return [];
+      },
+      async fetch() {
+        return null; // Resource was deleted between popover-select and submit.
+      },
+      toResult() {
+        return { type: "check-in", id: "x", name: "x" };
+      },
+      toContextLine() {
+        return "(should not be called)";
+      },
+    };
+    registerMention(ghostDescriptor);
+
+    const model = new MockLanguageModelV3({
+      doStream: async () => textOnlyStreamResult("ok"),
+    });
+    const svc = createAdminAgentService({ ai: mockAi(model) });
+
+    const result = await svc.streamChat(
+      {
+        messages: [sampleUserMessage],
+        context: {
+          surface: "dashboard",
+          mentions: [{ type: "check-in", id: "deleted_id" }],
+        },
+      },
+      EXEC_CTX,
+    );
+    await result.consumeStream();
+
+    const call = model.doStreamCalls[0]!;
+    const sysMsg = call.prompt.find((m) => m.role === "system");
+    const sysText =
+      typeof sysMsg!.content === "string"
+        ? sysMsg!.content
+        : JSON.stringify(sysMsg!.content);
+    expect(sysText).toContain("已失效");
+    // Even with a missing snapshot, the toolModuleId on the descriptor
+    // still triggers tool registration — the agent can attempt to read
+    // by id, the read endpoint will surface its own "not found".
+    const toolNames = (call.tools ?? []).map((t) => t.name);
+    expect(toolNames).toContain("applyCheckInConfig");
+  });
+
+  test("buildMentionSystemSection: returns null on empty input", () => {
+    expect(buildMentionSystemSection([])).toBeNull();
+  });
+
+  test("buildMentionSystemSection: composes header + bullet lines", () => {
+    const snapshots: MentionSnapshot[] = [
+      {
+        ref: { type: "check-in", id: "a" },
+        resource: {},
+        contextLine: "[check-in] line A",
+        toolModuleId: "check-in",
+      },
+      {
+        ref: { type: "task", id: "b" },
+        resource: {},
+        contextLine: "[task] line B",
+        toolModuleId: null,
+      },
+    ];
+    const text = buildMentionSystemSection(snapshots)!;
+    expect(text).toContain("当前对话引用的资源");
+    expect(text).toContain("- [check-in] line A");
+    expect(text).toContain("- [task] line B");
   });
 
   test("returns a stream that can be wrapped as a UI message stream response", async () => {

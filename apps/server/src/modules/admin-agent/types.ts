@@ -1,5 +1,7 @@
 import type { UIMessage } from "ai";
 
+import type { MentionRef } from "./mentions/types";
+
 /**
  * The "surface" string the admin frontend sends with each chat request.
  * Format:
@@ -97,6 +99,14 @@ export type ChatRequestBody = {
      * propose values for the missing ones.
      */
     draft?: Record<string, unknown>;
+    /**
+     * Resources the user @-mentioned in the current message. The frontend
+     * sends only `{ type, id }` references — the server re-fetches the
+     * authoritative snapshot via `descriptor.fetch` (org-scoped) and
+     * injects the result into the system prompt + extends the toolset
+     * with the corresponding apply tool. Optional & backwards-compat.
+     */
+    mentions?: MentionRef[];
   };
 };
 
