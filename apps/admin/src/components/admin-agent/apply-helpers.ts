@@ -197,12 +197,9 @@ export function applyLeaderboardToForm(
   if (input.activityId !== undefined) {
     form.setFieldValue("activityId", input.activityId)
   }
-  if (input.rewardTiers !== undefined) {
-    form.setFieldValue(
-      "rewardTiersJson",
-      JSON.stringify(input.rewardTiers ?? [], null, 2),
-    )
-  }
+  // rewardTiers are no longer edited in this form — they live in a
+  // dedicated "Rewards" tab on the detail page (LeaderboardRewardsBlock).
+  // The admin-agent assist tool intentionally cannot patch them here.
 }
 
 /**

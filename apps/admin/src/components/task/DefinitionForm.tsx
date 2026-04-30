@@ -1,4 +1,6 @@
 import { useForm } from "@tanstack/react-form"
+import { useMemo } from "react"
+
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
@@ -13,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
+import {
+  RewardScheduleSection,
+  type RewardScheduleKeyFieldsProps,
+  type RewardTrack,
+} from "#/components/rewards/RewardScheduleSection"
 import type {
   CountingMethod,
   CreateDefinitionInput,
@@ -20,6 +28,7 @@ import type {
   TaskPeriod,
   TaskRewardTier,
 } from "#/lib/types/task"
+import type { RewardEntry } from "#/lib/types/rewards"
 
 interface DefinitionFormProps {
   defaultValues?: Partial<CreateDefinitionInput>
@@ -59,11 +68,8 @@ export function DefinitionForm({
         defaultValues?.defaultAssignmentTtlSeconds ?? ("" as number | ""),
       sortOrder: defaultValues?.sortOrder ?? 0,
       activityId: defaultValues?.activityId ?? (null as string | null),
-      rewardTiersJson: JSON.stringify(
-        defaultValues?.rewardTiers ?? [],
-        null,
-        2,
-      ),
+      rewards: (defaultValues?.rewards ?? []) as RewardEntry[],
+      rewardTiers: (defaultValues?.rewardTiers ?? []) as TaskRewardTier[],
     },
     onSubmit: async ({ value }) => {
       const isEventBased =
@@ -71,27 +77,13 @@ export function DefinitionForm({
         value.countingMethod === "event_value"
       const trimmedFilter = value.filter.trim()
 
-      let rewardTiers: TaskRewardTier[] = []
-      const rewardTiersRaw = value.rewardTiersJson.trim()
-      if (rewardTiersRaw.length > 0) {
-        try {
-          const parsed = JSON.parse(rewardTiersRaw) as unknown
-          if (!Array.isArray(parsed)) {
-            throw new Error("rewardTiers must be an array")
-          }
-          rewardTiers = parsed as TaskRewardTier[]
-        } catch (err) {
-          throw new Error(
-            m.task_reward_tiers_parse_failed({
-              error: err instanceof Error ? err.message : String(err),
-            }),
-          )
-        }
-      }
-
       const ttlRaw = value.defaultAssignmentTtlSeconds
       const ttlSeconds =
         ttlRaw === "" || ttlRaw == null ? null : Number(ttlRaw)
+
+      const sortedTiers = [...value.rewardTiers].sort(
+        (a, b) => a.threshold - b.threshold,
+      )
 
       const input: CreateDefinitionInput = {
         name: value.name,
@@ -113,12 +105,24 @@ export function DefinitionForm({
           value.visibility === "assigned" ? ttlSeconds : null,
         sortOrder: value.sortOrder,
         activityId: value.activityId,
-        rewards: defaultValues?.rewards ?? [{ type: "item", id: "", count: 1 }],
-        rewardTiers,
+        rewards: value.rewards,
+        rewardTiers: sortedTiers,
       }
       await onSubmit(input)
     },
   })
+
+  const tierTracks = useMemo<RewardTrack<TierDraft>[]>(
+    () => [
+      {
+        id: "main",
+        label: m.reward_section_title(),
+        getRewards: (d) => d.rewards,
+        setRewards: (d, rewards) => ({ ...d, rewards }),
+      },
+    ],
+    [],
+  )
 
   return (
     <form
@@ -479,29 +483,126 @@ export function DefinitionForm({
         </form.Subscribe>
       </div>
 
-      <form.Field name="rewardTiersJson">
+      <form.Field name="rewards">
         {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
-              {m.task_field_reward_tiers_label()}
-              <FieldHint>{m.task_field_reward_tiers_hint()}</FieldHint>
-            </Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={5}
-              className="font-mono text-xs"
-              placeholder='[{"alias":"tier-1","threshold":3,"rewards":[{"type":"item","id":"gold-uuid","count":100}]}]'
-            />
-          </div>
+          <RewardEntryEditor
+            label={m.task_field_terminal_rewards_label()}
+            hint={m.task_field_terminal_rewards_hint()}
+            entries={field.state.value}
+            onChange={(next) => field.handleChange(next)}
+          />
         )}
+      </form.Field>
+
+      <form.Field name="rewardTiers">
+        {(field) => {
+          const drafts = tiersToDrafts(field.state.value)
+          const setDrafts = (next: TierDraft[]) =>
+            field.handleChange(draftsToTiers(next))
+          return (
+            <RewardScheduleSection<TierDraft>
+              title={m.task_field_reward_tiers_label()}
+              description={m.task_field_reward_tiers_hint()}
+              list={drafts}
+              getId={(d) => d.id}
+              keyLabel={(d) =>
+                d.alias
+                  ? `${d.alias} · ${m.task_tier_threshold()} ${d.threshold}`
+                  : `${m.task_tier_threshold()} ${d.threshold}`
+              }
+              newDraft={() => {
+                const maxThreshold = drafts.reduce(
+                  (max, d) => Math.max(max, d.threshold),
+                  0,
+                )
+                return {
+                  id: `tier-new-${Date.now()}`,
+                  alias: `tier-${drafts.length + 1}`,
+                  threshold: maxThreshold + 1,
+                  rewards: [],
+                }
+              }}
+              KeyFields={TierKeyFields}
+              validate={(d) => {
+                if (!d.alias.trim()) return m.reward_key_required()
+                if (!Number.isFinite(d.threshold) || d.threshold < 1) {
+                  return m.reward_key_required()
+                }
+                return null
+              }}
+              tracks={tierTracks}
+              onCreate={async (draft) => {
+                setDrafts([...drafts, draft])
+              }}
+              onUpdate={async (draft) => {
+                setDrafts(drafts.map((d) => (d.id === draft.id ? draft : d)))
+              }}
+              onDelete={async (draft) => {
+                setDrafts(drafts.filter((d) => d.id !== draft.id))
+              }}
+            />
+          )
+        }}
       </form.Field>
 
       <Button type="submit" disabled={isPending}>
         {isPending ? m.common_saving() : submitLabel}
       </Button>
     </form>
+  )
+}
+
+type TierDraft = {
+  id: string
+  alias: string
+  threshold: number
+  rewards: RewardEntry[]
+}
+
+function tiersToDrafts(tiers: TaskRewardTier[]): TierDraft[] {
+  return tiers.map((t, i) => ({
+    id: `tier-${t.alias || i}`,
+    alias: t.alias,
+    threshold: t.threshold,
+    rewards: t.rewards,
+  }))
+}
+
+function draftsToTiers(drafts: TierDraft[]): TaskRewardTier[] {
+  return drafts.map(({ alias, threshold, rewards }) => ({
+    alias,
+    threshold,
+    rewards,
+  }))
+}
+
+function TierKeyFields({
+  draft,
+  onChange,
+}: RewardScheduleKeyFieldsProps<TierDraft>) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2">
+        <Label htmlFor="tier-alias">{m.task_tier_alias()}</Label>
+        <Input
+          id="tier-alias"
+          value={draft.alias}
+          onChange={(e) => onChange({ ...draft, alias: e.target.value })}
+          placeholder="tier-1"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="tier-threshold">{m.task_tier_threshold()}</Label>
+        <Input
+          id="tier-threshold"
+          type="number"
+          min={1}
+          value={draft.threshold}
+          onChange={(e) =>
+            onChange({ ...draft, threshold: Number(e.target.value) || 1 })
+          }
+        />
+      </div>
+    </div>
   )
 }

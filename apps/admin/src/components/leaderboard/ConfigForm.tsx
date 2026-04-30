@@ -243,25 +243,6 @@ export function LeaderboardConfigForm({
         </form.Field>
       </div>
 
-      <form.Field name="rewardTiersJson">
-        {(field) => (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
-              {m.leaderboard_field_reward_tiers_label()}
-              <FieldHint>{m.leaderboard_field_reward_tiers_hint()}</FieldHint>
-            </Label>
-            <Textarea
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              rows={6}
-              className="font-mono text-xs"
-              placeholder='[{"from":1,"to":1,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
-            />
-          </div>
-        )}
-      </form.Field>
-
       <div className="flex justify-end">
         <Button type="submit" disabled={isPending}>
           {isPending ? m.leaderboard_submitting() : (submitLabel ?? m.common_create())}

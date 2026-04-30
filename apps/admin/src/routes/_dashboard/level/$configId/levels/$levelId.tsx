@@ -1,9 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { CollectionDeleteDialog } from "#/components/collection/DeleteDialog"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
+import {
+  RewardScheduleSection,
+  type RewardScheduleKeyFieldsProps,
+  type RewardTrack,
+} from "#/components/rewards/RewardScheduleSection"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
@@ -25,6 +31,7 @@ import {
 } from "#/hooks/use-level"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import type { RewardEntry, StarRewardTier } from "#/lib/types/level"
 
 import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
@@ -101,6 +108,40 @@ function LevelDetailPage() {
   )
 }
 
+type StarTierDraft = {
+  id: string
+  stars: number
+  rewards: RewardEntry[]
+}
+
+function StarKeyFields({
+  draft,
+  onChange,
+}: RewardScheduleKeyFieldsProps<StarTierDraft>) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="star-tier-stars">{m.level_field_star_count()}</Label>
+      <Input
+        id="star-tier-stars"
+        type="number"
+        min={1}
+        value={draft.stars}
+        onChange={(e) =>
+          onChange({ ...draft, stars: Number(e.target.value) || 1 })
+        }
+      />
+    </div>
+  )
+}
+
+function tiersToDrafts(tiers: StarRewardTier[] | null): StarTierDraft[] {
+  return (tiers ?? []).map((t, i) => ({
+    id: `tier-${i}`,
+    stars: t.stars,
+    rewards: t.rewards,
+  }))
+}
+
 function LevelEditForm({
   configId,
   levelId,
@@ -126,11 +167,11 @@ function LevelEditForm({
   const [unlockRule, setUnlockRule] = useState(
     initial.unlockRule ? JSON.stringify(initial.unlockRule, null, 2) : "",
   )
-  const [clearRewards, setClearRewards] = useState(
-    initial.clearRewards ? JSON.stringify(initial.clearRewards, null, 2) : "",
+  const [clearRewards, setClearRewards] = useState<RewardEntry[]>(
+    initial.clearRewards ?? [],
   )
-  const [starRewards, setStarRewards] = useState(
-    initial.starRewards ? JSON.stringify(initial.starRewards, null, 2) : "",
+  const [starTiers, setStarTiers] = useState<StarTierDraft[]>(
+    tiersToDrafts(initial.starRewards),
   )
   const [metadata, setMetadata] = useState(
     initial.metadata ? JSON.stringify(initial.metadata, null, 2) : "",
@@ -138,9 +179,22 @@ function LevelEditForm({
   const [sortOrder, setSortOrder] = useState(initial.sortOrder)
   const [isActive, setIsActive] = useState(initial.isActive)
 
+  const starTracks = useMemo<RewardTrack<StarTierDraft>[]>(
+    () => [
+      {
+        id: "main",
+        label: m.reward_section_title(),
+        getRewards: (d) => d.rewards,
+        setRewards: (d, rewards) => ({ ...d, rewards }),
+      },
+    ],
+    [],
+  )
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
+      const sortedTiers = [...starTiers].sort((a, b) => a.stars - b.stars)
       await updateMutation.mutateAsync({
         id: levelId,
         configId,
@@ -153,8 +207,11 @@ function LevelEditForm({
           maxStars,
           stageId: stageId || null,
           unlockRule: unlockRule ? JSON.parse(unlockRule) : null,
-          clearRewards: clearRewards ? JSON.parse(clearRewards) : null,
-          starRewards: starRewards ? JSON.parse(starRewards) : null,
+          clearRewards: clearRewards.length > 0 ? clearRewards : null,
+          starRewards:
+            sortedTiers.length > 0
+              ? sortedTiers.map(({ stars, rewards }) => ({ stars, rewards }))
+              : null,
           metadata: metadata ? JSON.parse(metadata) : null,
           sortOrder,
           isActive,
@@ -244,25 +301,48 @@ function LevelEditForm({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>{m.level_field_clear_rewards()}</Label>
-        <Textarea
-          value={clearRewards}
-          onChange={(e) => setClearRewards(e.target.value)}
-          rows={4}
-          placeholder='[{"type":"item","id":"...","count":1}]'
-        />
-      </div>
+      <RewardEntryEditor
+        label={m.level_field_clear_rewards()}
+        entries={clearRewards}
+        onChange={setClearRewards}
+      />
 
-      <div className="space-y-2">
-        <Label>{m.level_field_star_rewards()}</Label>
-        <Textarea
-          value={starRewards}
-          onChange={(e) => setStarRewards(e.target.value)}
-          rows={4}
-          placeholder='[{"stars":3,"rewards":[{"type":"item","id":"...","count":1}]}]'
-        />
-      </div>
+      <RewardScheduleSection<StarTierDraft>
+        title={m.level_field_star_rewards()}
+        list={starTiers}
+        getId={(d) => d.id}
+        keyLabel={(d) => `${d.stars} ★`}
+        newDraft={() => {
+          const maxStarsUsed = starTiers.reduce(
+            (max, d) => Math.max(max, d.stars),
+            0,
+          )
+          return {
+            id: `tier-new-${Date.now()}`,
+            stars: maxStarsUsed + 1,
+            rewards: [],
+          }
+        }}
+        KeyFields={StarKeyFields}
+        validate={(d) => {
+          if (!Number.isFinite(d.stars) || d.stars < 1) {
+            return m.reward_key_required()
+          }
+          return null
+        }}
+        tracks={starTracks}
+        onCreate={async (draft) => {
+          setStarTiers((prev) => [...prev, draft])
+        }}
+        onUpdate={async (draft) => {
+          setStarTiers((prev) =>
+            prev.map((d) => (d.id === draft.id ? draft : d)),
+          )
+        }}
+        onDelete={async (draft) => {
+          setStarTiers((prev) => prev.filter((d) => d.id !== draft.id))
+        }}
+      />
 
       <div className="space-y-2">
         <Label>{m.level_field_metadata()}</Label>

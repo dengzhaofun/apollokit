@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { Gift, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useMemo } from "react"
 
 import { DataTable } from "#/components/data-table/DataTable"
@@ -47,6 +47,18 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
             <Link to="/check-in/$configId" params={{ configId: config.id }}>
               <Pencil className="size-4" />
               {m.common_edit()}
+            </Link>
+          }
+        />
+        <DropdownMenuItem
+          render={
+            <Link
+              to="/check-in/$configId"
+              params={{ configId: config.id }}
+              hash="rewards"
+            >
+              <Gift className="size-4" />
+              {m.reward_table_link_configure()}
             </Link>
           }
         />

@@ -5,7 +5,6 @@ import type {
   ConfigStatus,
   CreateLeaderboardInput,
   CycleMode,
-  RewardTier,
   ScopeMode,
   TieBreaker,
 } from "#/lib/types/leaderboard"
@@ -24,7 +23,6 @@ export type LeaderboardFormValues = {
   tieBreaker: TieBreaker
   status: ConfigStatus
   activityId: string | null
-  rewardTiersJson: string
 }
 
 export function useLeaderboardForm({
@@ -51,19 +49,10 @@ export function useLeaderboardForm({
       tieBreaker: defaultValues?.tieBreaker ?? ("earliest" as TieBreaker),
       status: defaultValues?.status ?? ("active" as ConfigStatus),
       activityId: defaultValues?.activityId ?? (null as string | null),
-      rewardTiersJson: JSON.stringify(
-        defaultValues?.rewardTiers ?? [],
-        null,
-        2,
-      ),
     } satisfies LeaderboardFormValues,
     onSubmit: async ({ value }) => {
-      let tiers: RewardTier[] = []
-      try {
-        tiers = JSON.parse(value.rewardTiersJson) as RewardTier[]
-      } catch {
-        tiers = []
-      }
+      // rewardTiers are now edited in a dedicated tab on the detail page;
+      // the basic-info form never overwrites them.
       await onSubmit({
         alias: value.alias,
         name: value.name,
@@ -78,7 +67,6 @@ export function useLeaderboardForm({
         tieBreaker: value.tieBreaker,
         status: value.status,
         activityId: value.activityId,
-        rewardTiers: tiers,
       })
     },
   })
