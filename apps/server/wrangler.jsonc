@@ -71,6 +71,13 @@
   //   OPENROUTER_API_KEY        — OpenRouter API key for the AI SDK provider
   //   SENTRY_DSN                — Sentry project DSN（dzfun/apollokit-server）。
   //                               未配置时 @sentry/cloudflare 自动 no-op。
+  //   GOOGLE_CLIENT_ID          — Google OAuth 2.0 Web Client ID（用于 Better Auth
+  //                               socialProviders.google）。在
+  //                               https://console.cloud.google.com/apis/credentials
+  //                               创建,Authorized redirect URIs 必须含
+  //                               https://apollokit-admin.limitless-ai.workers.dev/api/auth/callback/google
+  //                               和 http://localhost:3000/api/auth/callback/google。
+  //   GOOGLE_CLIENT_SECRET      — 同上,对应的 Client Secret。
   //
   // Plain vars (public config; override per-environment as needed):
   //   ADMIN_URL                 — origin of the admin SPA, used to build

@@ -67,6 +67,12 @@ export function Providers({ children }: { children: ReactNode }) {
         // dashboard; `_dashboard.tsx` takes it from there (redirects
         // to `/onboarding/create-project` if the user has no active project).
         redirectTo="/dashboard"
+        // Social providers must be enumerated explicitly — the UI lib
+        // does NOT auto-discover providers from the server. Server-side
+        // socialProviders.google is configured in apps/server/src/auth.ts.
+        social={{
+          providers: ["google"],
+        }}
         // Mount account-scoped views under /settings/* so the UserButton
         // dropdown links to our own settings layout instead of the
         // library default `/account/*` (which doesn't exist here).
