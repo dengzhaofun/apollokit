@@ -6,6 +6,12 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  // CF Workers Builds runs `npx wrangler deploy` (没有 --minify),unminified
+  // bundle ~7 MiB / gzip 1.2 MiB,V8 parse + module init 在 startup 期会
+  // 撞 "Script startup exceeded CPU time limit" (code 10021)。顶层启用
+  // minify 让 CF Builds 走和本地 `pnpm deploy` 相同的体积。本地 deploy
+  // 仍带 `--minify` flag,无副作用。
+  "minify": true,
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0.1
