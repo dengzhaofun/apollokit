@@ -35,8 +35,8 @@ type SortedResult = {
   content: string;
 };
 
-const DOC_LOCALES = ["zh", "en"] as const;
-type DocLocale = (typeof DOC_LOCALES)[number];
+export const DOC_LOCALES = ["zh", "en"] as const;
+export type DocLocale = (typeof DOC_LOCALES)[number];
 
 function adminBaseUrl(): string {
   const url = (env as unknown as { ADMIN_URL?: string }).ADMIN_URL;
@@ -111,6 +111,88 @@ export function __resetDocsTocCacheForTests() {
   _docsTocCache.clear();
 }
 
+/**
+ * Pure docs-search function. Lives outside the ai SDK `tool()` wrapper
+ * so other transports (MCP server, internal RPC, tests) can reuse the
+ * same fetch + truncation logic without depending on `ai`.
+ */
+export type SearchDocsResult =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      results: Array<{
+        url: string;
+        type: SortedResult["type"];
+        content: string;
+      }>;
+    };
+
+export async function runSearchDocs(args: {
+  query: string;
+  locale?: DocLocale;
+  limit?: number;
+}): Promise<SearchDocsResult> {
+  const { query } = args;
+  const locale = args.locale ?? "zh";
+  const limit = args.limit ?? 5;
+  const url = new URL(`${adminBaseUrl()}/api/search`);
+  url.searchParams.set("query", query);
+  url.searchParams.set("locale", locale);
+  const res = await fetch(url);
+  if (!res.ok) {
+    return { ok: false, error: `search failed: HTTP ${res.status}` };
+  }
+  const hits = (await res.json()) as SortedResult[];
+  return {
+    ok: true,
+    results: hits.slice(0, limit).map((h) => ({
+      url: h.url,
+      type: h.type,
+      // Trim long highlights — the model only needs enough to decide
+      // which page to readDoc next.
+      content:
+        h.content.length > 280 ? h.content.slice(0, 280) + "…" : h.content,
+    })),
+  };
+}
+
+/**
+ * Pure single-doc-fetch function. Mirrors `runSearchDocs` — usable from
+ * any transport, no `ai` dependency.
+ */
+export type ReadDocResult =
+  | { ok: false; error: string }
+  | { ok: true; path: string; markdown: string };
+
+export async function runReadDoc(args: {
+  path: string;
+}): Promise<ReadDocResult> {
+  // Normalize: tolerate both 'zh/check-in' and '/docs/zh/check-in'.
+  const cleaned = args.path.replace(/^\/?(docs\/)?/, "").replace(/^\/+/, "");
+  const res = await fetch(`${adminBaseUrl()}/docs-md/${cleaned}`);
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: `doc not found: ${cleaned} (HTTP ${res.status})`,
+    };
+  }
+  const markdown = await res.text();
+  // Hard cap to keep one page from blowing context — pages over this
+  // size should be summarized in pieces (the model can re-call with
+  // more specific search terms). Picked to fit comfortably with
+  // multi-page reads under Kimi's 256K window.
+  const MAX_DOC_CHARS = 40_000;
+  return {
+    ok: true,
+    path: cleaned,
+    markdown:
+      markdown.length > MAX_DOC_CHARS
+        ? markdown.slice(0, MAX_DOC_CHARS) +
+          "\n\n…[truncated; call readDoc with a more specific path or use searchDocs to narrow down]"
+        : markdown,
+  };
+}
+
 export const searchDocs = tool({
   description:
     "Search ApolloKit admin/SDK documentation (Fumadocs MDX, en + zh). " +
@@ -139,30 +221,7 @@ export const searchDocs = tool({
       .default(5)
       .describe("Max results to return."),
   }),
-  execute: async ({ query, locale, limit }) => {
-    const url = new URL(`${adminBaseUrl()}/api/search`);
-    url.searchParams.set("query", query);
-    url.searchParams.set("locale", locale);
-    const res = await fetch(url);
-    if (!res.ok) {
-      return {
-        ok: false as const,
-        error: `search failed: HTTP ${res.status}`,
-      };
-    }
-    const hits = (await res.json()) as SortedResult[];
-    return {
-      ok: true as const,
-      results: hits.slice(0, limit).map((h) => ({
-        url: h.url,
-        type: h.type,
-        // Trim long highlights — the model only needs enough to decide
-        // which page to readDoc next.
-        content:
-          h.content.length > 280 ? h.content.slice(0, 280) + "…" : h.content,
-      })),
-    };
-  },
+  execute: runSearchDocs,
 });
 
 export const readDoc = tool({
@@ -181,32 +240,7 @@ export const readDoc = tool({
           "strip the leading '/docs/' to get the path.",
       ),
   }),
-  execute: async ({ path }) => {
-    // Normalize: tolerate both 'zh/check-in' and '/docs/zh/check-in'.
-    const cleaned = path.replace(/^\/?(docs\/)?/, "").replace(/^\/+/, "");
-    const res = await fetch(`${adminBaseUrl()}/docs-md/${cleaned}`);
-    if (!res.ok) {
-      return {
-        ok: false as const,
-        error: `doc not found: ${cleaned} (HTTP ${res.status})`,
-      };
-    }
-    const markdown = await res.text();
-    // Hard cap to keep one page from blowing context — pages over this
-    // size should be summarized in pieces (the model can re-call with
-    // more specific search terms). Picked to fit comfortably with
-    // multi-page reads under Kimi's 256K window.
-    const MAX_DOC_CHARS = 40_000;
-    return {
-      ok: true as const,
-      path: cleaned,
-      markdown:
-        markdown.length > MAX_DOC_CHARS
-          ? markdown.slice(0, MAX_DOC_CHARS) +
-            "\n\n…[truncated; call readDoc with a more specific path or use searchDocs to narrow down]"
-          : markdown,
-    };
-  },
+  execute: runReadDoc,
 });
 
 export const DOC_TOOL_NAMES = ["searchDocs", "readDoc"] as const;

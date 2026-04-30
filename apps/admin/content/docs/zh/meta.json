@@ -43,6 +43,7 @@
     "analytics",
     "---集成---",
     "webhooks",
+    "mcp",
     "sdk",
     "---API 参考---",
     "api"
