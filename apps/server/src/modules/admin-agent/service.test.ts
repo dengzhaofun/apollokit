@@ -4,11 +4,8 @@ import { describe, expect, test } from "vitest";
 
 import type { AIProvider } from "../../lib/ai";
 import { registerMention } from "./mentions/registry";
-import type { MentionDescriptor, MentionSnapshot } from "./mentions/types";
-import {
-  buildMentionSystemSection,
-  createAdminAgentService,
-} from "./service";
+import type { MentionDescriptor } from "./mentions/types";
+import { createAdminAgentService } from "./service";
 import type { ChatExecutionContext } from "./types";
 
 /**
@@ -40,7 +37,7 @@ function mockAi(model: MockLanguageModelV3): AIProvider {
 
 /**
  * Minimal stream of v3 LanguageModel events that produces a non-empty
- * text-only response. Enough to drive `streamText` end-to-end without
+ * text-only response. Enough to drive the agent end-to-end without
  * exercising any tool path — we just want to confirm the wiring works
  * and that the right system prompt + tools were passed to the model.
  */
@@ -67,76 +64,85 @@ const sampleUserMessage: UIMessage = {
   parts: [{ type: "text", text: "我要 7 日签到" }],
 };
 
+/**
+ * Drain a streaming Response so the underlying mock model is actually
+ * invoked. `Response.text()` reads the body to completion — the SSE
+ * payload itself we don't care about, only the side-effect on the mock.
+ */
+async function drain(response: Response): Promise<void> {
+  await response.text();
+}
+
 describe("createAdminAgentService", () => {
-  test("forwards system prompt + tools for check-in:create surface", async () => {
+  test("form-fill on check-in:create forwards system prompt + applyCheckInConfig", async () => {
     const model = new MockLanguageModelV3({
       doStream: async () => textOnlyStreamResult("ok"),
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         context: { surface: "check-in:create" },
       },
       EXEC_CTX,
     );
-
-    // Drain so the model is invoked.
-    await result.consumeStream();
+    await drain(response);
 
     expect(model.doStreamCalls.length).toBe(1);
     const call = model.doStreamCalls[0]!;
 
-    // System message is passed as the first prompt entry.
     const sysMsg = call.prompt.find((m) => m.role === "system");
     expect(sysMsg).toBeDefined();
     const sysText =
       typeof sysMsg!.content === "string"
         ? sysMsg!.content
         : JSON.stringify(sysMsg!.content);
+    // form-fill identity + check-in module sub-prompt + apply tool name
+    expect(sysText).toContain("form-fill");
     expect(sysText).toContain("签到模块");
     expect(sysText).toContain("applyCheckInConfig");
 
-    // Tools registered for this surface.
     const toolNames = (call.tools ?? []).map((t) => t.name).sort();
     expect(toolNames).toContain("applyCheckInConfig");
     expect(toolNames).toContain("askClarification");
     expect(toolNames).toContain("queryModule");
   });
 
-  test("dashboard surface does NOT register apply* tools", async () => {
+  test("form-fill on dashboard does NOT register apply* tools", async () => {
     const model = new MockLanguageModelV3({
       doStream: async () => textOnlyStreamResult("ok"),
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         context: { surface: "dashboard" },
       },
       EXEC_CTX,
     );
-    await result.consumeStream();
+    await drain(response);
 
     const call = model.doStreamCalls[0]!;
     const toolNames = (call.tools ?? []).map((t) => t.name);
     expect(toolNames.some((n) => n.startsWith("apply"))).toBe(false);
-    // Query tools and askClarification still present.
     expect(toolNames).toContain("askClarification");
     expect(toolNames).toContain("queryModule");
   });
 
-  test("draft is forwarded into the system prompt", async () => {
+  test("form-fill: draft is forwarded into the system prompt", async () => {
     const model = new MockLanguageModelV3({
       doStream: async () => textOnlyStreamResult("ok"),
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         context: {
           surface: "check-in:create",
           draft: { name: "Daily", resetMode: "week" },
@@ -144,7 +150,7 @@ describe("createAdminAgentService", () => {
       },
       EXEC_CTX,
     );
-    await result.consumeStream();
+    await drain(response);
 
     const call = model.doStreamCalls[0]!;
     const sysMsg = call.prompt.find((m) => m.role === "system");
@@ -156,12 +162,11 @@ describe("createAdminAgentService", () => {
     expect(sysText).toContain("Daily");
   });
 
-  test("mentioned check-in resource: system prompt gets snapshot + apply tool joins toolset", async () => {
+  test("form-fill mention path: snapshot in prompt + propose-only patch tool", async () => {
     // Register a fake check-in mention descriptor that maps to the
-    // "check-in" apply-tool module. We deliberately don't go through
-    // the real db-backed descriptor — fetching with a fake
-    // organizationId would return null. This isolates the chat
-    // wiring (system prompt + tool extension) from the DB layer.
+    // "check-in" patch-tool module. Avoid the real db-backed descriptor —
+    // a fake organizationId would return null. This isolates the chat
+    // wiring from the DB layer.
     const fakeDescriptor: MentionDescriptor = {
       type: "check-in",
       label: "签到配置",
@@ -188,11 +193,13 @@ describe("createAdminAgentService", () => {
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         // dashboard surface so apply tool comes ONLY from the mention path,
-        // not from the surface-bound `:create` rule.
+        // not the surface-bound `:create` rule. Form-fill also exposes
+        // apply on mention; global-assistant doesn't (see below).
         context: {
           surface: "dashboard",
           mentions: [{ type: "check-in", id: "cfg_abc" }],
@@ -200,7 +207,7 @@ describe("createAdminAgentService", () => {
       },
       EXEC_CTX,
     );
-    await result.consumeStream();
+    await drain(response);
 
     const call = model.doStreamCalls[0]!;
     const sysMsg = call.prompt.find((m) => m.role === "system");
@@ -209,22 +216,15 @@ describe("createAdminAgentService", () => {
         ? sysMsg!.content
         : JSON.stringify(sysMsg!.content);
 
-    // System prompt now contains the mention snapshot.
     expect(sysText).toContain("当前对话引用的资源");
     expect(sysText).toContain("七日签到");
     expect(sysText).toContain("cfg_abc");
 
-    // Both apply and patch tools were injected by the mention path even
-    // though we're on dashboard. The patch tool is the "modify the
-    // existing resource" path; apply is the "create a similar one"
-    // path. Both must be available so the LLM can pick the right one
-    // based on user intent.
     const toolNames = (call.tools ?? []).map((t) => t.name);
-    expect(toolNames).toContain("applyCheckInConfig");
     expect(toolNames).toContain("patchCheckInConfig");
   });
 
-  test("mentioned resource that fetch() returns null: system shows '已失效'", async () => {
+  test("form-fill mention with deleted resource: system shows '已失效'", async () => {
     const ghostDescriptor: MentionDescriptor = {
       type: "check-in",
       label: "签到配置",
@@ -233,7 +233,7 @@ describe("createAdminAgentService", () => {
         return [];
       },
       async fetch() {
-        return null; // Resource was deleted between popover-select and submit.
+        return null; // deleted between popover-select and submit
       },
       toResult() {
         return { type: "check-in", id: "x", name: "x" };
@@ -249,9 +249,10 @@ describe("createAdminAgentService", () => {
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         context: {
           surface: "dashboard",
           mentions: [{ type: "check-in", id: "deleted_id" }],
@@ -259,7 +260,7 @@ describe("createAdminAgentService", () => {
       },
       EXEC_CTX,
     );
-    await result.consumeStream();
+    await drain(response);
 
     const call = model.doStreamCalls[0]!;
     const sysMsg = call.prompt.find((m) => m.role === "system");
@@ -268,54 +269,61 @@ describe("createAdminAgentService", () => {
         ? sysMsg!.content
         : JSON.stringify(sysMsg!.content);
     expect(sysText).toContain("已失效");
-    // Even with a missing snapshot, the toolModuleId on the descriptor
-    // still triggers tool registration — the agent can attempt to read
-    // by id, the read endpoint will surface its own "not found".
+    // Even with a missing snapshot, descriptor.toolModuleId still
+    // triggers tool registration so the agent can attempt to read.
     const toolNames = (call.tools ?? []).map((t) => t.name);
-    expect(toolNames).toContain("applyCheckInConfig");
+    expect(toolNames).toContain("patchCheckInConfig");
   });
 
-  test("buildMentionSystemSection: returns null on empty input", () => {
-    expect(buildMentionSystemSection([])).toBeNull();
-  });
+  test("global-assistant on dashboard: identity + propose-then-confirm behavior", async () => {
+    const model = new MockLanguageModelV3({
+      doStream: async () => textOnlyStreamResult("ok"),
+    });
+    const svc = createAdminAgentService({ ai: mockAi(model) });
 
-  test("buildMentionSystemSection: composes header + bullet lines", () => {
-    const snapshots: MentionSnapshot[] = [
+    const response = await svc.streamChat(
       {
-        ref: { type: "check-in", id: "a" },
-        resource: {},
-        contextLine: "[check-in] line A",
-        toolModuleId: "check-in",
+        messages: [sampleUserMessage],
+        agentName: "global-assistant",
+        context: { surface: "dashboard" },
       },
-      {
-        ref: { type: "task", id: "b" },
-        resource: {},
-        contextLine: "[task] line B",
-        toolModuleId: null,
-      },
-    ];
-    const text = buildMentionSystemSection(snapshots)!;
-    expect(text).toContain("当前对话引用的资源");
-    expect(text).toContain("- [check-in] line A");
-    expect(text).toContain("- [task] line B");
+      EXEC_CTX,
+    );
+    await drain(response);
+
+    const call = model.doStreamCalls[0]!;
+    const sysMsg = call.prompt.find((m) => m.role === "system");
+    const sysText =
+      typeof sysMsg!.content === "string"
+        ? sysMsg!.content
+        : JSON.stringify(sysMsg!.content);
+    expect(sysText).toContain("global-assistant");
+    // Patch tool propose-only safety net: prompt advertises that as the
+    // load-bearing rule (not "directly writes to db" anymore — that was
+    // unsafe with current model trust levels).
+    expect(sysText).toContain("不会直接写库");
+
+    // Apply tools intentionally NOT exposed under global-assistant.
+    const toolNames = (call.tools ?? []).map((t) => t.name);
+    expect(toolNames.some((n) => n.startsWith("apply"))).toBe(false);
   });
 
-  test("returns a stream that can be wrapped as a UI message stream response", async () => {
+  test("returns a Response with an SSE content-type", async () => {
     const model = new MockLanguageModelV3({
       doStream: async () => textOnlyStreamResult("hello"),
     });
     const svc = createAdminAgentService({ ai: mockAi(model) });
 
-    const result = await svc.streamChat(
+    const response = await svc.streamChat(
       {
         messages: [sampleUserMessage],
+        agentName: "form-fill",
         context: { surface: "check-in:create" },
       },
       EXEC_CTX,
     );
-
-    const response = result.toUIMessageStreamResponse();
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get("content-type")).toMatch(/event-stream/);
+    await drain(response);
   });
 });

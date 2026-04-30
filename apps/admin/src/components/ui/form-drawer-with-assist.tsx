@@ -150,7 +150,7 @@ export function FormDrawerWithAssist({
                 {children}
               </TabsContent>
               <TabsContent value="ai" className="flex-1 overflow-hidden m-0">
-                <AIAssistPanel />
+                <AIAssistPanel agentName="form-fill" />
               </TabsContent>
             </Tabs>
             {footer ? (
@@ -231,7 +231,7 @@ export function FormDrawerWithAssist({
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={42} minSize={28} maxSize={65}>
-                  <AIAssistPanel />
+                  <AIAssistPanel agentName="form-fill" />
                 </ResizablePanel>
               </ResizablePanelGroup>
             ) : (

@@ -1,13 +1,19 @@
 /**
- * Compose the tool set exposed to the model for a given surface.
+ * Compose the tool set exposed to the model. Two layers:
  *
- * Always exposed:
- *   - `askClarification` (shared)
- *   - 3 query tools (queryModule / describeConfig / analyzeActivity)
+ *   - `buildBaseTools()` — always-on: askClarification, navigateTo,
+ *     searchDocs, readDoc, plus query tools (queryModule / describeConfig
+ *     / analyzeActivity). These are agent-agnostic; both form-fill and
+ *     global-assistant want to answer "find / list / describe" questions.
  *
- * Conditionally exposed:
- *   - The module's `apply*` tool, if surface ends with `:create` or
- *     `:edit` AND that module is registered in `APPLY_TOOL_BY_MODULE`.
+ *   - `buildPatchTools(modules, variant)` — module-scoped patch tools,
+ *     `propose` (form-fill, no `execute`) or `execute` (global-assistant,
+ *     writes via service). Module set comes from @-mention resolution.
+ *
+ *   - `buildApplyTool(surface)` — surface-scoped apply tool for the
+ *     module's create/edit form. Apply is currently propose-only (the
+ *     "create new resource" path is too easy to misuse via the assistant
+ *     chat — first-class create flow stays in the form drawer).
  *
  * **Why the apply tool is gated by surface, not by module name alone:**
  * preventing a frontend on `/banner` from sending `surface=check-in:create`
@@ -17,77 +23,72 @@
 
 import type { ToolSet } from "ai";
 
+import type { ChatExecutionContext } from "../types";
+import {
+  APPLY_TOOL_BY_MODULE,
+  type ApplyableModule,
+} from "./apply-registry";
+import { DOC_TOOL_NAMES, readDoc, searchDocs } from "./docs";
+import {
+  PATCH_TOOL_BY_MODULE,
+  type PatchableModule,
+  type PatchToolVariant,
+} from "./patch-registry";
+import { createQueryTools, QUERY_TOOL_NAMES } from "./queries";
 import type { AdminSurface } from "../types";
 import { moduleOf } from "../types";
-import { APPLY_TOOL_BY_MODULE, type ApplyableModule } from "./apply-registry";
-import { DOC_TOOL_NAMES, readDoc, searchDocs } from "./docs";
-import { PATCH_TOOL_BY_MODULE, type PatchableModule } from "./patch-registry";
-import { createQueryTools, QUERY_TOOL_NAMES } from "./queries";
-import type { ChatExecutionContext } from "../types";
 import { askClarification, navigateTo } from "./shared";
 
-export function buildToolsForSurface(
-  surface: AdminSurface,
-  execCtx: ChatExecutionContext,
-  /**
-   * Extra apply-tool module ids to enable on top of the surface default.
-   * Source: the set of `descriptor.toolModuleId` from any @-mentioned
-   * resources in the current request. Allows the model to act on a
-   * mentioned resource even when the user is on a different surface
-   * (e.g. user is on the dashboard but @-mentions a check-in config).
-   *
-   * Modules without a registered apply tool are silently ignored — the
-   * mention is then read-only.
-   */
-  extraToolModules: readonly string[] = [],
-) {
-  const queries = createQueryTools(execCtx);
-
-  // Base set: always present for every surface. Query tools let the
-  // agent answer "find / list / describe" questions even on a form
-  // page (useful for "is there already a config like X?" before
-  // proposing). Docs tools let the agent answer field-meaning /
-  // how-to / best-practice questions on any surface.
-  const tools: ToolSet = {
+/**
+ * Always-present tools. `execCtx` is only needed by query tools (they
+ * read org-scoped DB rows directly via `execute` closures — these are
+ * read-only and predate the agent split, so they keep the closure form;
+ * patch tools moved to `experimental_context` for stateless module-level
+ * singletons).
+ */
+export function buildBaseTools(execCtx: ChatExecutionContext): ToolSet {
+  return {
     askClarification,
     navigateTo,
     searchDocs,
     readDoc,
-    ...queries,
+    ...createQueryTools(execCtx),
   };
+}
 
-  // Apply tool only on `:create` / `:edit` surfaces of registered modules.
+/**
+ * Map a list of mention-supplied module ids to their patch tools. Modules
+ * not in `PATCH_TOOL_BY_MODULE` are silently ignored — the mention is
+ * read-only in that case. Variant decides propose-vs-execute.
+ */
+export function buildPatchTools(
+  modules: readonly string[],
+  variant: PatchToolVariant,
+): ToolSet {
+  const tools: ToolSet = {};
+  for (const m of modules) {
+    if (m in PATCH_TOOL_BY_MODULE) {
+      const entry = PATCH_TOOL_BY_MODULE[m as PatchableModule];
+      tools[entry.name] = entry[variant];
+    }
+  }
+  return tools;
+}
+
+/**
+ * Apply tool only on `:create` / `:edit` surfaces of registered modules.
+ * Returns null on dashboard/list surfaces or modules without an apply
+ * tool registered.
+ */
+export function buildApplyTool(surface: AdminSurface): ToolSet {
   const moduleName = moduleOf(surface);
   const isFormSurface =
     surface.endsWith(":create") || surface.endsWith(":edit");
-  if (
-    isFormSurface &&
-    moduleName &&
-    moduleName in APPLY_TOOL_BY_MODULE
-  ) {
-    const entry = APPLY_TOOL_BY_MODULE[moduleName as ApplyableModule];
-    tools[entry.name] = entry.tool;
+  if (!isFormSurface || !moduleName || !(moduleName in APPLY_TOOL_BY_MODULE)) {
+    return {};
   }
-
-  // Mention-driven extras. We add BOTH the apply and patch tools for
-  // every mentioned module: apply for "the user wants to recreate this
-  // shape elsewhere", patch for "the user wants to tweak the existing
-  // resource". The system prompt guides the model to pick the right one
-  // (patch for modifications, apply for new). Same `name → tool` overlay;
-  // duplicate module ids are idempotent because the same tool object is
-  // reassigned.
-  for (const m of extraToolModules) {
-    if (m in APPLY_TOOL_BY_MODULE) {
-      const entry = APPLY_TOOL_BY_MODULE[m as ApplyableModule];
-      tools[entry.name] = entry.tool;
-    }
-    if (m in PATCH_TOOL_BY_MODULE) {
-      const entry = PATCH_TOOL_BY_MODULE[m as PatchableModule];
-      tools[entry.name] = entry.tool;
-    }
-  }
-
-  return tools;
+  const entry = APPLY_TOOL_BY_MODULE[moduleName as ApplyableModule];
+  return { [entry.name]: entry.tool };
 }
 
 export const ADMIN_AGENT_TOOL_NAMES = [

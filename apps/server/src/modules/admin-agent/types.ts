@@ -1,5 +1,6 @@
 import type { UIMessage } from "ai";
 
+import type { AdminAgentName } from "./agents/types";
 import type { MentionRef } from "./mentions/types";
 
 /**
@@ -91,6 +92,14 @@ export function moduleOf(surface: AdminSurface): AdminModule | null {
 
 export type ChatRequestBody = {
   messages: UIMessage[];
+  /**
+   * Which admin agent should handle this turn. The two current agents
+   * differ in **behavior policy**, not capability: form-fill returns
+   * propose-only patch/apply tool calls (frontend confirms before any
+   * write), global-assistant's patch tool calls write to module services
+   * directly. See `agents/types.ts` for the registry.
+   */
+  agentName: AdminAgentName;
   context: {
     surface: AdminSurface;
     /**

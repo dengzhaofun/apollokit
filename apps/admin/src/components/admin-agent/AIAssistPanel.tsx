@@ -11,8 +11,14 @@
  *     global FAB on `dashboard` surface there's no form, so the agent
  *     just doesn't get a `draft` field.
  *
- * This means the panel is fully self-configuring — no module-specific
- * wiring at the call site, just `<AIAssistPanel />`.
+ * **Per-agent behavior** is selected via the `agentName` prop:
+ *   - `form-fill` (default) — propose-only patch tool calls render as
+ *     `PatchConfigCard` (user confirms before any write); apply tool
+ *     calls render as `ApplyConfigCard`.
+ *   - `global-assistant` — patch tool calls run server-side (`execute`)
+ *     and render as `PatchExecutedCard` (read-only summary). Apply
+ *     tool calls don't fire here (server doesn't expose them under
+ *     this agent), so we don't render an apply card branch.
  */
 
 import { useChat } from "@ai-sdk/react"
@@ -34,6 +40,7 @@ import {
   PromptInput,
   Response,
 } from "../ai-elements"
+import { AGENT_BEHAVIOR, type AdminAgentName } from "./agents"
 import type { MentionRef } from "./mention-types"
 import { Button } from "../ui/button"
 import { ApplyConfigCard } from "./ApplyConfigCard"
@@ -44,6 +51,7 @@ import {
   PatchConfigCard,
   type PatchCardState,
 } from "./PatchConfigCard"
+import { PatchExecutedCard } from "./PatchExecutedCard"
 import {
   buildPatchUrl,
   isPatchToolPart,
@@ -60,43 +68,71 @@ import {
 const ENDPOINT = "/api/ai/admin/chat"
 
 /**
- * Public entry. Thin wrapper that keys the inner panel by surface so
- * navigating from `check-in:list` to `check-in:create` cleanly remounts
- * the chat — `useChat` reads its initial `messages` from
- * `loadMessages(surface)` on construct, and remount is the simplest way
- * to swap the seed without fighting the SDK's lifecycle.
+ * Public entry. Thin wrapper that keys the inner panel by (agent,
+ * surface) so navigating from `check-in:list` to `check-in:create`
+ * cleanly remounts the chat — `useChat` reads its initial `messages`
+ * from `loadMessages(...)` on construct, and remount is the simplest
+ * way to swap the seed without fighting the SDK's lifecycle. The agent
+ * name is part of the key because the two agents have separate persisted
+ * threads (form-fill vs global-assistant should never bleed into each
+ * other).
  */
 export function AIAssistPanel({
+  agentName = "form-fill",
   emptyState,
 }: {
+  /** Which admin agent to address. Defaults to form-fill (the in-form
+   *  drawer use case). The bottom-right global FAB passes "global-assistant". */
+  agentName?: AdminAgentName
   emptyState?: React.ReactNode
 } = {}) {
   const surface = useCurrentSurface()
   return (
     <AIAssistPanelInner
-      key={surface}
+      key={`${agentName}:${surface}`}
+      agentName={agentName}
       surface={surface}
       emptyState={emptyState}
     />
   )
 }
 
+/**
+ * Persistence key combines agent + surface so the form-fill thread on
+ * `check-in:create` doesn't share state with the global-assistant
+ * thread on the same surface.
+ */
+function persistKey(agentName: AdminAgentName, surface: AdminSurface): string {
+  return `${agentName}:${surface}`
+}
+
 function AIAssistPanelInner({
+  agentName,
   surface,
   emptyState,
 }: {
+  agentName: AdminAgentName
   surface: AdminSurface
   emptyState?: React.ReactNode
 }) {
   const navigate = useNavigate()
   const form = useFormContext()
   const moduleEntry = getModuleEntry(surface)
-  const applyToolName = moduleEntry?.applyToolName
+  const behavior = AGENT_BEHAVIOR[agentName]
+  // Apply tool only matters for form-fill — global-assistant doesn't
+  // surface one. We still resolve the moduleEntry above so the empty
+  // state's hint text (and clarify-prompt module hints) work.
+  const applyToolName = behavior.rendersApplyCard
+    ? moduleEntry?.applyToolName
+    : undefined
 
-  // Read once on mount. The wrapper's `key={surface}` ensures we get a
-  // fresh component (and thus a fresh seed) on surface change — no need
-  // to re-read reactively.
-  const initialMessages = React.useMemo(() => loadMessages(surface), [surface])
+  // Read once on mount. The wrapper's `key` ensures we get a fresh
+  // component (and thus a fresh seed) on (agent, surface) change — no
+  // need to re-read reactively.
+  const initialMessages = React.useMemo(
+    () => loadMessages(persistKey(agentName, surface)),
+    [agentName, surface],
+  )
 
   // Stable ref to form so the transport closure always reads latest values.
   const formRef = React.useRef(form)
@@ -118,6 +154,9 @@ function AIAssistPanelInner({
    * `appliedCalls` (which is the Set covering the surface-bound apply
    * tool) because patch firing is async and has loading / failed states
    * that the apply path doesn't.
+   *
+   * Only used by the form-fill flow; global-assistant's patch result is
+   * carried in the message part itself (server already executed).
    */
   const [patchCardStates, setPatchCardStates] = React.useState<
     Record<string, PatchCardState>
@@ -147,6 +186,7 @@ function AIAssistPanelInner({
             body: {
               ...(body ?? {}),
               messages: sendable,
+              agentName,
               context: {
                 surface,
                 ...(draft && Object.keys(draft).length > 0 ? { draft } : {}),
@@ -156,7 +196,7 @@ function AIAssistPanelInner({
           }
         },
       }),
-    [surface],
+    [agentName, surface],
   )
 
   const { messages, sendMessage, setMessages, addToolResult, stop, status, error } = useChat({
@@ -174,11 +214,11 @@ function AIAssistPanelInner({
   // lifecycle — including mid-stream updates. saveMessages caps at
   // ON_DISK_LIMIT internally and is cheap when the chat is short.
   React.useEffect(() => {
-    saveMessages(surface, messages)
-  }, [surface, messages])
+    saveMessages(persistKey(agentName, surface), messages)
+  }, [agentName, surface, messages])
 
   function handleClear() {
-    clearMessages(surface)
+    clearMessages(persistKey(agentName, surface))
     setMessages([])
     toast.success("已清空当前会话")
   }
@@ -234,12 +274,12 @@ function AIAssistPanelInner({
     const targetSurface =
       `${target.module}:${target.intent}` as AdminSurface
     // Carry the conversation over to the next surface so the user can
-    // continue without retyping. The next mount keys by surface and
-    // `loadMessages` picks this up. We save BEFORE `addToolResult` —
+    // continue without retyping. The next mount keys by (agent, surface)
+    // and `loadMessages` picks this up. We save BEFORE `addToolResult` —
     // the navigateTo result is UI-only metadata, and trimMessagesForSend
     // strips orphan input-available tool parts before the next request
     // so the provider doesn't complain about missing tool results.
-    saveMessages(targetSurface, messages)
+    saveMessages(persistKey(agentName, targetSurface), messages)
     setNavigatedCalls((prev) => new Set(prev).add(callId))
     addToolResult({
       tool: "navigateTo",
@@ -260,6 +300,9 @@ function AIAssistPanelInner({
    * The endpoint URL is templated by `patch-registry.ts` from the tool
    * name. We use credentials:include to carry the session cookie since
    * everything else under /api/* uses the same admin session.
+   *
+   * Only invoked under the form-fill agent — global-assistant's patch
+   * runs server-side via `execute` and never reaches this handler.
    */
   async function handlePatchApply(
     toolName: string,
@@ -353,9 +396,7 @@ function AIAssistPanelInner({
         <div className="min-w-0">
           <p className="text-xs font-medium text-foreground">AI 助手</p>
           <p className="text-[11px] text-muted-foreground">
-            {moduleEntry
-              ? "描述你的需求，AI 会帮你回填表单。审核后再保存。"
-              : "可以问配置查询、模块说明等问题。"}
+            {hintForAgent(agentName, !!moduleEntry)}
           </p>
         </div>
         {messages.length > 0 ? (
@@ -373,13 +414,14 @@ function AIAssistPanelInner({
         ) : null}
       </div>
       {showEmpty ? (
-        emptyState ?? <DefaultEmptyState surface={surface} />
+        emptyState ?? <DefaultEmptyState agentName={agentName} surface={surface} />
       ) : (
         <Conversation>
           {messages.map((msg) => (
             <RenderedMessage
               key={msg.id}
               msg={msg}
+              agentName={agentName}
               applyToolName={applyToolName}
               appliedCalls={appliedCalls}
               answeredCalls={answeredCalls}
@@ -415,10 +457,28 @@ function AIAssistPanelInner({
   )
 }
 
-function DefaultEmptyState({ surface }: { surface: string }) {
+function hintForAgent(
+  agentName: AdminAgentName,
+  hasModuleApply: boolean,
+): string {
+  if (agentName === "global-assistant") {
+    return "可以问问题、查配置，或 @-提及资源让 AI 提议修改（你审核确认后写入）。"
+  }
+  return hasModuleApply
+    ? "描述你的需求，AI 会帮你回填表单。审核后再保存。"
+    : "可以问配置查询、模块说明等问题。"
+}
+
+function DefaultEmptyState({
+  agentName,
+  surface,
+}: {
+  agentName: AdminAgentName
+  surface: string
+}) {
   // Surface-specific suggestions help the user get started without
   // having to read the field schema.
-  const suggestions = getSurfaceSuggestions(surface)
+  const suggestions = getSurfaceSuggestions(agentName, surface)
   return (
     <ConversationEmptyState
       title="试试这样问"
@@ -433,7 +493,17 @@ function DefaultEmptyState({ surface }: { surface: string }) {
   )
 }
 
-function getSurfaceSuggestions(surface: string): string[] {
+function getSurfaceSuggestions(
+  agentName: AdminAgentName,
+  surface: string,
+): string[] {
+  if (agentName === "global-assistant") {
+    return [
+      "@7日签到 把它关闭",
+      "列出最近的活动配置",
+      "解释一下 resetMode 的取值",
+    ]
+  }
   // List/dashboard surfaces → query-mode prompts (no form to fill).
   if (surface === "dashboard" || surface.endsWith(":list")) {
     return [
@@ -457,10 +527,13 @@ type ToolPart = {
     | "output-available"
     | "output-error"
   input?: unknown
+  output?: unknown
+  errorText?: string
 }
 
 function RenderedMessage({
   msg,
+  agentName,
   applyToolName,
   appliedCalls,
   answeredCalls,
@@ -474,6 +547,7 @@ function RenderedMessage({
   onPatchReject,
 }: {
   msg: UIMessage
+  agentName: AdminAgentName
   applyToolName: string | undefined
   appliedCalls: Set<string>
   answeredCalls: Set<string>
@@ -496,6 +570,7 @@ function RenderedMessage({
   if (msg.role === "system") return null
   const role = msg.role === "user" ? "user" : "assistant"
   const applyToolType = applyToolName ? `tool-${applyToolName}` : null
+  const behavior = AGENT_BEHAVIOR[agentName]
 
   // Render each part with its own MessageContent (bubble for text,
   // flat for tool cards so their own border isn't nested in a bubble).
@@ -553,12 +628,12 @@ function RenderedMessage({
           </MessageContent>
         )
       }
-      // Patch* cards — partial updates to @-mentioned resources. The
-      // server-side `patch-registry` enumerates tool names; we render
-      // them all uniformly via PatchConfigCard. Distinct from the
-      // surface-bound apply tool above because patches don't depend
-      // on a form being in scope (they fire PATCH directly against
-      // the resource endpoint).
+      // Patch* cards — partial updates to @-mentioned resources. Render
+      // depends on agent behavior:
+      //   - form-fill (confirm-card) — propose only; user clicks 应用,
+      //     FE fires PATCH and tracks card state via patchCardStates.
+      //   - global-assistant (executed-card) — server already executed
+      //     via tool.execute; we just show what changed.
       if (isPatchToolPart(part.type)) {
         const tp = part as unknown as ToolPart & {
           input?: { key?: string; patch?: Record<string, unknown> }
@@ -566,22 +641,36 @@ function RenderedMessage({
         const input = tp.input ?? {}
         if (!input.key || !input.patch) return null
         const toolName = toolNameFromPartType(part.type)
-        const cardState = patchCardStates[tp.toolCallId] ?? { kind: "idle" }
+        if (behavior.patchToolStyle === "confirm-card") {
+          const cardState = patchCardStates[tp.toolCallId] ?? { kind: "idle" }
+          return (
+            <MessageContent key={i} variant="flat" className="w-full max-w-md">
+              <PatchConfigCard
+                toolName={toolName}
+                state={tp.state}
+                resourceKey={input.key}
+                patch={input.patch}
+                cardState={cardState}
+                onApply={() =>
+                  onPatchApply(toolName, tp.toolCallId, {
+                    key: input.key!,
+                    patch: input.patch!,
+                  })
+                }
+                onReject={() => onPatchReject(toolName, tp.toolCallId)}
+              />
+            </MessageContent>
+          )
+        }
+        // executed-card
         return (
           <MessageContent key={i} variant="flat" className="w-full max-w-md">
-            <PatchConfigCard
+            <PatchExecutedCard
               toolName={toolName}
               state={tp.state}
               resourceKey={input.key}
               patch={input.patch}
-              cardState={cardState}
-              onApply={() =>
-                onPatchApply(toolName, tp.toolCallId, {
-                  key: input.key!,
-                  patch: input.patch!,
-                })
-              }
-              onReject={() => onPatchReject(toolName, tp.toolCallId)}
+              errorMessage={tp.errorText}
             />
           </MessageContent>
         )

@@ -1,5 +1,7 @@
 /**
- * Admin AI agent — single chat endpoint shared across all admin modules.
+ * Admin AI agent — single chat endpoint shared across all admin modules
+ * AND across multiple agents. Agent dispatch is by request body, not
+ * URL path.
  *
  * **Why this router does NOT use the standard envelope or `OpenAPIHono`:**
  *
@@ -24,13 +26,15 @@
  *
  * **Surface gating:** the body's `context.surface` is enforced against
  * `ADMIN_SURFACES` here so a buggy or malicious frontend can't request
- * tools it shouldn't have.
+ * tools it shouldn't have. Agent dispatch is similarly gated against
+ * the `AdminAgentName` whitelist.
  */
 
 import { Hono } from "hono";
 
 import type { HonoEnv } from "../../env";
 import { requireAuth } from "../../middleware/require-auth";
+import { isAdminAgentName } from "./agents/types";
 import { adminAgentService } from "./index";
 import { mentionsRouter } from "./mentions/routes";
 import { isAdminSurface, type ChatRequestBody } from "./types";
@@ -58,6 +62,9 @@ adminAgentRouter.post("/chat", async (c) => {
   if (!body.context || !isAdminSurface(body.context.surface)) {
     return c.json({ error: "invalid_surface" }, 400);
   }
+  if (!isAdminAgentName(body.agentName)) {
+    return c.json({ error: "invalid_agent" }, 400);
+  }
 
   // requireAuth has already guaranteed both `user` and an active org.
   const organizationId = c.var.session?.activeOrganizationId;
@@ -66,6 +73,7 @@ adminAgentRouter.post("/chat", async (c) => {
     return c.json({ error: "no_active_organization" }, 400);
   }
 
-  const result = await adminAgentService.streamChat(body, { organizationId });
-  return result.toUIMessageStreamResponse();
+  // streamChat returns a `Response` already (createAgentUIStreamResponse
+  // is HTTP-aware). No need to wrap or call .toUIMessageStreamResponse().
+  return adminAgentService.streamChat(body, { organizationId });
 });
