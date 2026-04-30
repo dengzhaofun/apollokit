@@ -33,6 +33,17 @@ function buildAdminAuth() {
     emailAndPassword: {
       enabled: true,
     },
+    // Google OAuth —— redirectURI 默认 `${baseURL}/api/auth/callback/google`,
+    // baseURL 来自 BETTER_AUTH_URL,必须是 admin domain(浏览器从 Google 域
+    // 直跳回 callback,cookie 种在该 host 下;走 service binding/vite proxy
+    // 的 same-origin 模型要求 cookie 落在 admin 域)。Google 后台的
+    // Authorized redirect URIs 也按 admin domain 配。
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+      },
+    },
     plugins: [
       organization({
         creatorRole: "owner",

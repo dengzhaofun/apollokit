@@ -47,6 +47,12 @@ export const env = {
   get OPENROUTER_API_KEY() {
     return process.env.OPENROUTER_API_KEY!;
   },
+  get GOOGLE_CLIENT_ID() {
+    return process.env.GOOGLE_CLIENT_ID ?? "";
+  },
+  get GOOGLE_CLIENT_SECRET() {
+    return process.env.GOOGLE_CLIENT_SECRET ?? "";
+  },
   // EMAIL binding is intentionally omitted — tests run against a
   // real Neon branch but never through a real Email Service. The
   // mailer falls back to `console.log` when this is undefined, which

@@ -3,7 +3,12 @@
 
 DATABASE_URL="postgresql://user:password@ep-example.us-east-2.aws.neon.tech/neondb?sslmode=require"
 BETTER_AUTH_SECRET="replace-me-with-a-32-byte-random-string"
-BETTER_AUTH_URL="http://localhost:8787"
+# BETTER_AUTH_URL 必须是浏览器看到的 origin（admin domain），不是 server 的
+# 8787 端口。Dev 时 admin 在 :3000,vite proxy 透明转发 /api/* 给 server 8787,
+# 但浏览器仍把所有流量当作 same-origin 3000;Google OAuth 回调由浏览器从
+# Google 域直跳 redirect_uri,cookie 种在 redirect_uri 的 host —— 所以这里
+# 必须填 admin origin,否则 cookie 跨端口失败,前端 :3000 看不到 session。
+BETTER_AUTH_URL="http://localhost:3000"
 UPSTASH_REDIS_REST_URL="https://your-db-xxxxxx.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="replace-me-with-upstash-rest-token"
 
@@ -18,3 +23,11 @@ ADMIN_URL="http://localhost:3000"
 # sending and only log the accept link to the console, so any value
 # works.
 INVITE_FROM_ADDRESS="invites@localhost"
+
+# ─── Google OAuth ────────────────────────────────────────────────
+# 在 https://console.cloud.google.com/apis/credentials 创建 OAuth 2.0
+# Web 客户端获取。Authorized redirect URIs 必须含:
+#   http://localhost:3000/api/auth/callback/google
+#   https://apollokit-admin.limitless-ai.workers.dev/api/auth/callback/google
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-your-google-client-secret"

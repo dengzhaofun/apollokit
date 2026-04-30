@@ -14,6 +14,10 @@ declare namespace Cloudflare {
     TINYBIRD_URL: string;
     TINYBIRD_WORKSPACE_ID: string;
     OPENROUTER_API_KEY: string;
+    /** Google OAuth 2.0 Web Client ID — Better Auth socialProviders.google */
+    GOOGLE_CLIENT_ID: string;
+    /** Google OAuth 2.0 Web Client Secret — Better Auth socialProviders.google */
+    GOOGLE_CLIENT_SECRET: string;
     /** Sentry DSN（dzfun/apollokit-server）— 未配时 SDK 自动 no-op */
     SENTRY_DSN?: string;
     /** Sentry 环境标签；wrangler.jsonc vars 固定为 production，本地无值时 worker.ts 兜底 development */
