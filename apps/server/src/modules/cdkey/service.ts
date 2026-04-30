@@ -6,7 +6,7 @@
  * Cross-module dependency: the item service is injected at the factory so
  * rewards can be granted through the unified item grant pipeline.
  *
- * Redeem concurrency model (no transactions — neon-http limitation):
+ * Redeem concurrency model (single atomic statements + idempotency log):
  *
  *   1. Write a pending row in cdkey_redemption_logs keyed by
  *      UNIQUE (organizationId, source, sourceId). If the insert conflicts,

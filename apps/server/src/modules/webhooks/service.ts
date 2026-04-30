@@ -10,11 +10,11 @@
  *
  * ─── Concurrency on delivery pickup ────────────────────────────────
  *
- * Neon HTTP has no multi-statement transactions (see app
- * CLAUDE.md). We still need to prevent two overlapping cron ticks
- * from double-posting the same delivery. The trick is to claim rows
- * with a single atomic UPDATE whose WHERE clause demands the row is
- * still in a claimable state:
+ * Two overlapping cron ticks must not double-post the same delivery.
+ * Rather than wrapping the claim in `db.transaction()` (which would pin
+ * a Hyperdrive pooled connection for the full delivery loop), we claim
+ * rows with a single atomic UPDATE whose WHERE clause demands the row
+ * is still in a claimable state:
  *
  *   UPDATE webhooks_deliveries
  *   SET status='in_flight', attempt_count=attempt_count+1,

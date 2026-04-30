@@ -5,6 +5,20 @@
  */
 declare namespace Cloudflare {
   interface Env {
+    /**
+     * Cloudflare Hyperdrive binding — TCP connection pool + edge-cache for
+     * Postgres. Worker code reads `env.HYPERDRIVE.connectionString` and
+     * passes it to `pg.Client`. Configured under `hyperdrive[]` in
+     * `wrangler.jsonc`; in `wrangler dev` resolves to the
+     * `localConnectionString` (local Postgres).
+     */
+    HYPERDRIVE: Hyperdrive;
+    /**
+     * Postgres URL — direct (non-pooler) Neon endpoint in prod, local pg
+     * in dev. Used by `drizzle-kit` (Node CLI) and as a Node fallback
+     * when `db` is accessed outside `withDbContext` (vitest path).
+     * Worker runtime reads from `HYPERDRIVE` instead.
+     */
     DATABASE_URL: string;
     BETTER_AUTH_SECRET: string;
     BETTER_AUTH_URL: string;

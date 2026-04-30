@@ -62,8 +62,30 @@
     "@better-auth/core/utils/ip": "./node_modules/@better-auth/core/dist/utils/ip.mjs",
     "@better-auth/core/utils/error-codes": "./node_modules/@better-auth/core/dist/utils/error-codes.mjs"
   },
+  // Hyperdrive — TCP connection pool + edge cache in front of Neon Postgres.
+  // Replaces the Neon HTTP serverless driver: `pg.Client` per request reads
+  // `env.HYPERDRIVE.connectionString`, which transparently resolves to the
+  // pooled origin in prod and to `localConnectionString` under `wrangler dev`.
+  //
+  // Setup (one-time):
+  //   1. In Neon, take the **direct** (non-pooler) connection string for the
+  //      target branch — Hyperdrive already does transaction-mode pooling, so
+  //      stacking Neon's PgBouncer would lose session state.
+  //   2. `npx wrangler hyperdrive create apollokit-prod \
+  //         --connection-string="postgres://USER:PASSWORD@ep-xxx.../apollokit"`
+  //   3. Paste the returned UUID into `id` below.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "7097d0a17c784fdfa2abf21c83782744",
+      "localConnectionString": "postgres://dengzhao@localhost:5432/apollokit_dev?sslmode=disable"
+    }
+  ],
   // Secrets used by the worker (configured via .dev.vars in dev, `wrangler secret put` in prod):
-  //   DATABASE_URL              — Neon Postgres connection string
+  //   DATABASE_URL              — Postgres URL for drizzle-kit (Node CLI) and
+  //                               the vitest fallback. Worker runtime reads
+  //                               HYPERDRIVE instead. Use the Neon **direct**
+  //                               (non-pooler) endpoint in prod.
   //   BETTER_AUTH_SECRET        — random 32+ byte string for cookie signing
   //   BETTER_AUTH_URL           — base URL the auth handler is served at
   //   UPSTASH_REDIS_REST_URL    — Upstash Redis REST endpoint (https://...upstash.io)

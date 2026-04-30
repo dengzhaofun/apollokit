@@ -116,9 +116,8 @@ export const assistPoolConfigs = pgTable(
  *   - decrement → starts at `targetAmount`, drops to 0 on completion
  *   - accumulate→ starts at 0, grows to `targetAmount` on completion
  *
- * `version` backs optimistic-concurrency writes (`WHERE version = ?`)
- * because `neon-http` has no transactions. See `service.ts → contribute`
- * for the full race analysis.
+ * `version` backs optimistic-concurrency writes (`WHERE version = ?`).
+ * See `service.ts → contribute` for the full race analysis.
  */
 export const assistPoolInstances = pgTable(
   "assist_pool_instances",

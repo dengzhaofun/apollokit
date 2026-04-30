@@ -1136,9 +1136,10 @@ export function createTaskService(
    * constraint). For manual tasks the tier is left unclaimed — it
    * surfaces in `getTasksForUser` and the player calls `claimTier`.
    *
-   * Not using a `previousValue` comparison: without cheap transaction
-   * support on neon-http we would have to race-prone piece it together
-   * from RETURNING diffs. Instead the ledger itself is the source of
+   * Not using a `previousValue` comparison: piecing it together from
+   * RETURNING diffs would be race-prone, and wrapping the whole flow in
+   * `db.transaction()` would pin a Hyperdrive pooled connection across
+   * the mail/grant fan-out. Instead the ledger itself is the source of
    * truth — any tier whose threshold fits the current progress and
    * has no ledger row is eligible. `currentValue` is monotonically
    * non-decreasing within a period, so no tier can become eligible
@@ -1909,11 +1910,11 @@ export function createTaskService(
   }
 
   /**
-   * Batch-assign a task to multiple users. Enforces the batch cap so
-   * a single HTTP call can't fan out unbounded inserts over neon-http.
+   * Batch-assign a task to multiple users. Enforces the batch cap so a
+   * single HTTP call can't fan out unbounded inserts.
    *
-   * Not wrapped in a transaction (neon-http has none) — individual
-   * `assignTask` calls run sequentially. Each call is atomic on its
+   * Not wrapped in a transaction — individual `assignTask` calls run
+   * sequentially. Each call is atomic on its
    * own row; a partial failure leaves earlier rows assigned. Caller
    * logs / retries by diffing the returned `items` against the
    * requested `endUserIds`.

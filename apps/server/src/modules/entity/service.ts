@@ -8,13 +8,13 @@
  * Phase 2+: instance acquisition, progression, slot management, formations.
  *
  * ---------------------------------------------------------------------
- * neon-http: no transactions
+ * Single-statement writes + optimistic concurrency
  * ---------------------------------------------------------------------
  *
- * Every write path is a single atomic SQL statement. All mutable
- * per-player state uses the `version` column for optimistic concurrency
- * control — the write includes `WHERE version = ?` and the caller
- * retries or reports conflict on zero affected rows.
+ * Every write path is a single atomic SQL statement. Mutable per-player
+ * state uses the `version` column for optimistic concurrency — the write
+ * includes `WHERE version = ?` and the caller retries or reports conflict
+ * on zero affected rows.
  */
 
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";

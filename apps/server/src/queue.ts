@@ -24,6 +24,7 @@
  *     wrangler.jsonc handle absolute give-up.
  */
 
+import { withDbContext } from "./db";
 import type { EventEnvelope } from "./lib/event-queue";
 import { logger } from "./lib/logger";
 import { requestContext } from "./lib/request-context";
@@ -48,7 +49,7 @@ export type QueueHandlerDeps = {
 export function createQueueHandler(d: QueueHandlerDeps) {
   return async function queue(
     batch: MessageBatch<unknown>,
-    _env: CloudflareBindings,
+    env: CloudflareBindings,
     ctx: ExecutionContext,
   ): Promise<void> {
     logger.info(
@@ -60,21 +61,26 @@ export function createQueueHandler(d: QueueHandlerDeps) {
       // side effects back to the request that produced it (analytics rows,
       // audit logs all share the same trace correlation).
       const traceId = envelope.traceId || `queue-${crypto.randomUUID()}`;
-      await requestContext.run({ traceId }, async () => {
-        try {
-          await handleEnvelope(envelope, d, ctx);
-          msg.ack();
-        } catch (err) {
-          logger.error(
-            `[queue] handler for ${envelope.name} failed (orgId=${envelope.orgId}, attempt=${msg.attempts})`,
-            err,
-          );
-          // 退避：1m / 5m / 30m / 2h / 6h —— 与 webhook deliveries 8-step
-          // 退避同形状但更短（queue 重试是触发器层的，不是终端投递层）。
-          const delaySeconds = backoffSeconds(msg.attempts);
-          msg.retry({ delaySeconds });
-        }
-      });
+      // Fresh Hyperdrive client per message: each envelope is a logical
+      // "request" with its own ack/retry lifecycle, and a transient error
+      // on one shouldn't poison the next one's connection state.
+      await withDbContext(env, () =>
+        requestContext.run({ traceId }, async () => {
+          try {
+            await handleEnvelope(envelope, d, ctx);
+            msg.ack();
+          } catch (err) {
+            logger.error(
+              `[queue] handler for ${envelope.name} failed (orgId=${envelope.orgId}, attempt=${msg.attempts})`,
+              err,
+            );
+            // 退避：1m / 5m / 30m / 2h / 6h —— 与 webhook deliveries 8-step
+            // 退避同形状但更短（queue 重试是触发器层的，不是终端投递层）。
+            const delaySeconds = backoffSeconds(msg.attempts);
+            msg.retry({ delaySeconds });
+          }
+        }),
+      );
     }
   };
 }

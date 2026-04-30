@@ -18,11 +18,12 @@
  *    currency) via a partial unique index + ON CONFLICT DO UPDATE.
  *    Fixed-term deposits are one row per deposit.
  *
- * 4. neon-http has no transactions. A deposit requires two writes:
- *    (a) itemService.deductItems (atomic), (b) upsert the deposit row.
- *    If (b) fails after (a) succeeds, currency is stranded. Mitigation:
- *    the caller supplies an `idempotencyKey` which is passed to
- *    itemService as `sourceId` so reconciliation can detect this case
+ * 4. A deposit requires two writes: (a) itemService.deductItems (atomic),
+ *    (b) upsert the deposit row. If (b) fails after (a) succeeds, currency
+ *    is stranded. We do not wrap them in `db.transaction()` because that
+ *    would pin a Hyperdrive pooled connection across the deduct fan-out.
+ *    Mitigation: the caller supplies an `idempotencyKey` which is passed
+ *    to itemService as `sourceId` so reconciliation can detect this case
  *    by looking for deducts without matching storage_box_logs. This is
  *    the same trade-off exchange.ts documents.
  *

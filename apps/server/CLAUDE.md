@@ -1,7 +1,7 @@
 # apps/server — conventions
 
 Hono API on Cloudflare Workers. `@hono/zod-openapi` for routes, Drizzle ORM
-on Neon Postgres (HTTP driver), Better Auth (with organization plugin) for
+on Neon Postgres via Cloudflare Hyperdrive (TCP `pg`), Better Auth (with organization plugin) for
 admin auth and multi-tenancy. All business modules follow the pattern
 established by `src/modules/check-in/` — read that module before adding a
 new one.
@@ -121,11 +121,13 @@ Instead:
 Rule of thumb: if you're about to `import { db } from "../../db"`
 inside a service file, stop — you're breaking the pattern.
 
-## `neon-http` has no transactions — write single atomic SQL
+## Hot paths — single atomic SQL, transactions sparingly
 
-`drizzle-orm/neon-http` runs over Neon's HTTP driver, which rejects
-`db.transaction()`. All write paths must be expressed as a single
-atomic statement. The canonical pattern (see
+The runtime supports `db.transaction()` (it's `drizzle-orm/node-postgres`
+over Cloudflare Hyperdrive), but Hyperdrive runs in transaction-pool mode
+and an open transaction holds a pooled connection for its full duration.
+On hot paths we still prefer expressing writes as a **single atomic
+statement**. The canonical pattern (see
 `modules/check-in/service.ts → checkIn`) is:
 
 ```sql
@@ -139,6 +141,10 @@ The conditional `WHERE` on `DO UPDATE` is what serializes concurrent
 callers — losers get zero rows and take a re-read branch. Write that
 reasoning in a file-header comment so the next person doesn't have to
 rederive it.
+
+When you do reach for `db.transaction(async tx => …)`, keep it short:
+no third-party HTTP calls inside, no long awaits, no fan-out. A
+mis-scoped transaction will starve the per-Worker Hyperdrive pool.
 
 ## Route mounting — everything business-facing lives under `/api/*`
 
@@ -360,10 +366,15 @@ opposite reason — it wants CI secrets to win there.)
 ## Testing
 
 Vitest runs in plain Node, **not** under `@cloudflare/vitest-pool-workers`.
-Our code only touches Web Standards APIs (`fetch`, `crypto`, `Intl`,
-`neon-http`) and Better Auth, all of which behave identically in Node and
-workerd. Pool-workers adds real startup cost for marginal fidelity gain —
-we'll revisit when we actually bind KV / DO / R2 / AI.
+Our code only touches Web Standards APIs (`fetch`, `crypto`, `Intl`) and
+Better Auth, all of which behave identically in Node and workerd.
+Pool-workers adds real startup cost for marginal fidelity gain — we'll
+revisit when we actually bind KV / DO / R2 / AI.
+
+In tests, `db` resolves through the Node fallback in `src/db.ts` (a plain
+`pg.Pool` against the `DATABASE_URL` from `.dev.vars`) because the
+`HYPERDRIVE` binding doesn't exist outside workerd, so `withDbContext`
+never enters the ALS store.
 
 **The `cloudflare:workers` shim.** `src/db.ts` and `src/auth.ts` import
 `env` from the wrangler-only virtual module `cloudflare:workers`.
@@ -373,11 +384,11 @@ getters over `process.env`. `src/testing/setup.ts` loads `.dev.vars` into
 `process.env` (via `dotenv`, `override: false` so CI secrets always win)
 before any test module is imported.
 
-Tests hit the **real Neon dev branch** in `.dev.vars`. We do not mock
-the database — the `neon-http` upsert pattern documented in the
-`neon-http` section above depends on real Postgres `ON CONFLICT … DO
-UPDATE … WHERE` semantics, and mocks would hide exactly the concurrency
-bugs the pattern exists to catch.
+Tests hit a **real Postgres** instance configured in `.dev.vars` (local
+pg by default — see the worktree-setup memory). We do not mock the
+database — the upsert pattern documented above depends on real Postgres
+`ON CONFLICT … DO UPDATE … WHERE` semantics, and mocks would hide
+exactly the concurrency bugs the pattern exists to catch.
 
 **Two layers of tests, different entry points:**
 

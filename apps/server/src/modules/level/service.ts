@@ -51,7 +51,7 @@
  * Both use the unified `grantRewards()` dispatcher from `../../lib/rewards`.
  *
  * ---------------------------------------------------------------------
- * neon-http: no transactions
+ * Single-statement writes
  * ---------------------------------------------------------------------
  *
  * Every write path is a single atomic SQL statement. The `reportClear`

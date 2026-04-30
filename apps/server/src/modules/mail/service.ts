@@ -30,8 +30,7 @@
  * Claim concurrency — single conditional upsert
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` has no transactions. The claim path reduces to a
- * single atomic statement against `mail_user_states`:
+ * The claim path is a single atomic statement against `mail_user_states`:
  *
  *   INSERT INTO mail_user_states (...)
  *   VALUES (... claimed_at = now())

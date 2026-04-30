@@ -8,13 +8,12 @@
  * Why NO db.transaction()
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` runs over Neon's HTTP driver, which rejects
- * `db.transaction()`. All write paths are expressed as single atomic SQL
- * statements. For operations that logically span multiple tables (e.g.
- * accept request + insert relationship), we accept the small window of
- * inconsistency — the version guard on friend_requests prevents double
- * processing, and the unique index on friend_relationships prevents
- * duplicate friendships.
+ * Hot-path writes are single atomic SQL statements. For operations that
+ * logically span multiple tables (e.g. accept request + insert
+ * relationship) we accept the small window of inconsistency rather than
+ * pinning a Hyperdrive pooled connection inside `db.transaction()`. The
+ * version guard on friend_requests prevents double processing, and the
+ * unique index on friend_relationships prevents duplicate friendships.
  *
  * ---------------------------------------------------------------------
  * Friend pair ordering invariant

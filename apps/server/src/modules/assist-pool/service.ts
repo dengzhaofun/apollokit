@@ -11,7 +11,7 @@
  * Only the `AppDeps` type is allowed. See `apps/server/CLAUDE.md`.
  *
  * ---------------------------------------------------------------------
- * Concurrency — neon-http has no transactions
+ * Concurrency — single atomic statements + optimistic locking
  * ---------------------------------------------------------------------
  *
  * Two race-critical write paths:

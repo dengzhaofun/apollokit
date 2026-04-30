@@ -6,11 +6,11 @@
  * 注入（见 apps/server/CLAUDE.md）。
  *
  * -----------------------------------------------------------------
- * neon-http 无事务 → 单条原子 SQL 策略
+ * 单条原子 SQL / 幂等分步策略
  * -----------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` 不支持 `db.transaction()`，所有写路径必
- * 须表达为单条 SQL 或幂等分步（见 check-in service 的注释）。本
+ * 写路径表达为单条 SQL 或幂等分步（见 check-in service 的注释）—— 避免
+ * 在 `db.transaction()` 内 await，导致 Hyperdrive pool 长时间被占。本
  * 模块的高风险路径：
  *
  *   grantXpForTask：单 season 两步

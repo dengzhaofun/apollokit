@@ -4,7 +4,8 @@
  * Follows apps/server/CLAUDE.md:
  *   - no hono / no @hono/zod-openapi imports
  *   - no direct `../../db` / `../../deps` imports
- *   - all writes expressed as single atomic SQL (neon-http has no tx)
+ *   - all writes expressed as single atomic SQL (avoid pinning a
+ *     Hyperdrive pooled connection inside `db.transaction()`)
  *
  * ---------------------------------------------------------------------
  * Idempotent settlement via the (org, external_match_id) unique index
@@ -314,10 +315,10 @@ export function createRankService(
       throw err;
     }
 
-    // Batch insert tiers. neon-http has no tx so a failure here leaves the
-    // config row orphaned; the caller can retry by first deleting or
-    // picking a new alias. We normalize defaults client-side so tests
-    // / admin get consistent shapes.
+    // Batch insert tiers without a wrapping transaction — a failure here
+    // leaves the config row orphaned; the caller can retry by first
+    // deleting or picking a new alias. We normalize defaults client-side
+    // so tests / admin get consistent shapes.
     const tierRows = await db
       .insert(rankTiers)
       .values(
@@ -633,8 +634,8 @@ export function createRankService(
   /**
    * Activate a season with serialization guarantee: the conditional UPDATE
    * uses `WHERE status='upcoming' AND NOT EXISTS (... another active ...)`
-   * to reject the flip when a sibling is already active. neon-http has no
-   * transaction; this expresses the invariant in a single SQL statement.
+   * to reject the flip when a sibling is already active — the invariant
+   * lives in a single SQL statement, no transaction needed.
    */
   async function activateSeason(
     organizationId: string,
@@ -1205,9 +1206,8 @@ export function createRankService(
 
     // 7. Upsert each player_state. We do per-row upserts because every
     //    row has a different SET clause for counters (wins/losses
-    //    accumulate, the rest is full replacement). neon-http parallels
-    //    these as individual HTTP calls — acceptable for typical
-    //    participant counts (<=100).
+    //    accumulate, the rest is full replacement). Each upsert is its
+    //    own round-trip — acceptable for typical participant counts (<=100).
     for (const row of stateUpserts) {
       const { _winDelta, _lossDelta, ...insertRow } = row;
       await db

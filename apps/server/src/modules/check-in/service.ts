@@ -10,12 +10,10 @@
  * Why this module uses conditional upsert instead of a transaction
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` runs every statement over Neon's HTTP driver, which
- * explicitly does NOT support multi-statement transactions (`db.transaction()`
- * will throw). So the classic "SELECT state FOR UPDATE → compute next →
- * UPDATE" pattern isn't available to us.
- *
- * Instead, every write is expressed as a single atomic SQL statement using:
+ * Hot-path check-in writes complete in a single round-trip; the classic
+ * "SELECT state FOR UPDATE → compute next → UPDATE" pattern would pin a
+ * Hyperdrive-pooled connection across multiple awaits. We express the
+ * mutation as a single atomic SQL statement using:
  *
  *   INSERT INTO check_in_user_states (...)
  *   VALUES (...)   -- values computed in-memory from the last read

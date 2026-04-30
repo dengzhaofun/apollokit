@@ -3,7 +3,8 @@
  *
  * - No Hono / @hono/zod-openapi imports.
  * - No direct `../../db` import — receives deps via factory.
- * - Single-statement atomic writes (neon-http 无 transaction).
+ * - Single-statement atomic writes (avoid pinning Hyperdrive pool inside
+ *   `db.transaction()` on hot paths).
  *
  * Events published (when `events` dep is supplied):
  *   - invite.bound      — relationship created

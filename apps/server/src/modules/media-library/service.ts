@@ -202,8 +202,8 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       SELECT id FROM descendants
     `);
     const ids = new Set<string>();
-    // drizzle's execute on neon-http returns { rows: [...] } or the
-    // rows array directly depending on version. Handle both.
+    // drizzle's execute returns `{ rows: [...] }` on node-postgres but
+    // older invocations sometimes surface the array directly. Handle both.
     const rowArr = Array.isArray(rows)
       ? rows
       : ((rows as { rows?: { id: string }[] }).rows ?? []);

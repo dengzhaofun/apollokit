@@ -66,7 +66,7 @@ export const currencies = pgTable(
  *
  * Exactly one row per `(organizationId, endUserId, currencyId)`. The unique
  * index below is what enables `INSERT ... ON CONFLICT DO UPDATE` for atomic
- * grants without a transaction (neon-http has none).
+ * grants in a single statement.
  *
  * `version` is an optimistic-concurrency counter mirroring the pattern used
  * by `item_inventories`. It is bumped on every mutation; callers needing

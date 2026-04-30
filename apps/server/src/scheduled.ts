@@ -20,6 +20,7 @@
  * will surface via Cloudflare Workers observability.
  */
 
+import { withDbContext } from "./db";
 import { requestContext } from "./lib/request-context";
 import { activityService } from "./modules/activity";
 import { assistPoolService } from "./modules/assist-pool";
@@ -34,7 +35,7 @@ export type ScheduledEvent = {
 
 export async function scheduled(
   event: ScheduledEvent,
-  _env: unknown,
+  env: CloudflareBindings,
   ctx: { waitUntil: (p: Promise<unknown>) => void },
 ): Promise<void> {
   const now = new Date(event.scheduledTime);
@@ -46,32 +47,38 @@ export async function scheduled(
     `[scheduled] tick cron=${event.cron} at=${now.toISOString()} trace=${traceId}`,
   );
 
-  await requestContext.run({ traceId }, async () => {
-    // Each task is independent — one failure shouldn't block the others.
-    ctx.waitUntil(
-      runTask("leaderboard.settleDue", () =>
-        leaderboardService.settleDue({ now }),
-      ),
-    );
-    ctx.waitUntil(
-      runTask("activity.tickDue", () => activityService.tickDue({ now })),
-    );
-    ctx.waitUntil(
-      runTask("assist_pool.expireOverdue", () =>
-        assistPoolService.expireOverdue({ now }),
-      ),
-    );
-    ctx.waitUntil(
-      runTask("webhooks.deliverPending", () =>
-        webhooksService.deliverPending(),
-      ),
-    );
-    ctx.waitUntil(
-      runTask("webhooks.cleanupOldDeliveries", () =>
-        webhooksService.cleanupOldDeliveries(),
-      ),
-    );
-  });
+  // One Hyperdrive client per cron tick — all five tasks share it, which is
+  // safe because none open a `db.transaction()` today. If a future task does,
+  // give it its own `withDbContext` so a long transaction doesn't pin this
+  // tick's pooled connection while the others run.
+  await withDbContext(env, () =>
+    requestContext.run({ traceId }, async () => {
+      // Each task is independent — one failure shouldn't block the others.
+      ctx.waitUntil(
+        runTask("leaderboard.settleDue", () =>
+          leaderboardService.settleDue({ now }),
+        ),
+      );
+      ctx.waitUntil(
+        runTask("activity.tickDue", () => activityService.tickDue({ now })),
+      );
+      ctx.waitUntil(
+        runTask("assist_pool.expireOverdue", () =>
+          assistPoolService.expireOverdue({ now }),
+        ),
+      );
+      ctx.waitUntil(
+        runTask("webhooks.deliverPending", () =>
+          webhooksService.deliverPending(),
+        ),
+      );
+      ctx.waitUntil(
+        runTask("webhooks.cleanupOldDeliveries", () =>
+          webhooksService.cleanupOldDeliveries(),
+        ),
+      );
+    }),
+  );
 }
 
 async function runTask(
