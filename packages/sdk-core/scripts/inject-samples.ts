@@ -65,6 +65,34 @@ interface Operation {
   "x-codeSamples"?: CodeSample[];
 }
 
+/**
+ * Mirror @hey-api/openapi-ts' default `serviceNameBuilder` ("{{name}}Service")
+ * + its internal PascalCase pass on raw OpenAPI tags. Used so the doc
+ * snippets reference the *actual* generated class names (`BadgeAdminService`,
+ * `CdKeyBatchesService`, …) rather than hand-typed guesses.
+ *
+ * Rules (matched against observed @hey-api 0.70 output):
+ *   "Announcement (Admin)" → AnnouncementAdminService
+ *   "CDKey Batches"        → CdKeyBatchesService   (acronym boundary)
+ *   "Check-In Rewards"     → CheckInRewardsService
+ *   "Battle Pass"          → BattlePassService
+ *   "CMS"                  → CmsService
+ */
+function tagToServiceClass(rawTag: string): string {
+  const split = rawTag
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .trim();
+  if (split === "") return "DefaultService";
+  return (
+    split
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join("") + "Service"
+  );
+}
+
 interface OpenAPISpec {
   paths: Record<string, Record<string, Operation | unknown>>;
 }
@@ -149,11 +177,11 @@ function buildCurl(method: string, path: string, audience: Audience): string {
   return lines.join(" \\\n");
 }
 
-function buildTsAdmin(fnName: string): string {
+function buildTsAdmin(serviceClass: string, methodName: string): string {
   return [
     `import {`,
     `  createServerClient,`,
-    `  ${fnName},`,
+    `  ${serviceClass},`,
     `} from "@apollokit/server";`,
     ``,
     `createServerClient({`,
@@ -161,14 +189,14 @@ function buildTsAdmin(fnName: string): string {
     `  apiKey: process.env.APOLLOKIT_ADMIN_KEY!, // "ak_…"`,
     `});`,
     ``,
-    `const { data } = await ${fnName}({ throwOnError: true });`,
+    `const { data } = await ${serviceClass}.${methodName}({ throwOnError: true });`,
     `console.log(data[200].data);`,
   ].join("\n");
 }
 
-function buildTsClient(fnName: string): string {
+function buildTsClient(serviceClass: string, methodName: string): string {
   return [
-    `import { createClient, ${fnName} } from "@apollokit/client";`,
+    `import { createClient, ${serviceClass} } from "@apollokit/client";`,
     ``,
     `// Server-side mode (Node) — pass csk_ so the SDK signs requests.`,
     `// Browser code receives a pre-signed userHash from your backend.`,
@@ -178,7 +206,7 @@ function buildTsClient(fnName: string): string {
     `  secret: process.env.APOLLOKIT_CSK!,`,
     `});`,
     ``,
-    `const { data } = await ${fnName}({`,
+    `const { data } = await ${serviceClass}.${methodName}({`,
     `  headers: { "x-end-user-id": "<end-user-id>" },`,
     `  throwOnError: true,`,
     `});`,
@@ -190,6 +218,7 @@ function buildSamples(
   method: string,
   path: string,
   operationId: string | undefined,
+  tags: string[] | undefined,
   audience: Audience,
 ): CodeSample[] {
   const samples: CodeSample[] = [
@@ -199,18 +228,23 @@ function buildSamples(
       source: buildCurl(method, path, audience),
     },
   ];
-  // TS samples need a stable function name — derive from operationId.
-  // Public endpoints (no operationId in some cases, or no SDK function
-  // generated) get a curl-only Tab.
-  if (operationId && audience !== "public") {
-    const fnName = snakeToCamel(operationId);
+  // TS samples need a stable {ServiceClass, methodName} pair. The
+  // service class follows the OpenAPI tag (matching @hey-api/openapi-ts'
+  // class-per-tag generation); the method name is the camelCased
+  // operationId, which @hey-api preserves verbatim as the static method.
+  if (operationId && tags && tags.length > 0 && audience !== "public") {
+    const methodName = snakeToCamel(operationId);
+    const serviceClass = tagToServiceClass(tags[0]!);
     samples.push({
       lang: "ts",
       label:
         audience === "client"
           ? "TypeScript (@apollokit/client)"
           : "TypeScript (@apollokit/server)",
-      source: audience === "client" ? buildTsClient(fnName) : buildTsAdmin(fnName),
+      source:
+        audience === "client"
+          ? buildTsClient(serviceClass, methodName)
+          : buildTsAdmin(serviceClass, methodName),
     });
   }
   return samples;
@@ -237,6 +271,7 @@ function main(): void {
         method,
         path,
         operation.operationId,
+        operation.tags,
         audience,
       );
       if (samples.length === 0) {

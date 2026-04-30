@@ -4,14 +4,14 @@
  * Run target: not for `node` execution (we don't want real cpk_/csk_
  * credentials in CI). Instead this file is included in `tsc`'s input
  * so `pnpm check-types` verifies the wrapper types align with the
- * generated SDK functions end-to-end. If a server route changes its
- * client schema and the SDK isn't regenerated, this fails to typecheck.
+ * generated SDK service classes end-to-end. If a server route changes
+ * its client schema and the SDK isn't regenerated, this fails to typecheck.
  */
 
 import {
   ApolloKitApiError,
-  badgeClientGetTree,
-  checkInClientPostCheckIns,
+  BadgeClientService,
+  CheckInClientService,
   createClient,
   isErrorEnvelope,
   signEndUser,
@@ -29,7 +29,7 @@ async function browserDemo() {
   const endUserId = 'player_42'
   const userHash = '<from your /auth/apollokit-creds endpoint>'
 
-  const { data } = await badgeClientGetTree({
+  const { data } = await BadgeClientService.badgeClientGetTree({
     headers: { 'x-end-user-id': endUserId, 'x-user-hash': userHash },
     throwOnError: true,
   })
@@ -47,7 +47,7 @@ async function nodeDemo() {
   })
 
   // No x-user-hash — the interceptor adds it from secret + endUserId.
-  const { data } = await checkInClientPostCheckIns({
+  const { data } = await CheckInClientService.checkInClientPostCheckIns({
     headers: { 'x-end-user-id': 'player_42' },
     body: { configKey: 'daily' },
     throwOnError: true,
@@ -65,7 +65,7 @@ async function manualOverride() {
   const adminEndUser = 'support_agent_7'
   const adminHash = await signEndUser(adminEndUser, 'csk_smoke_example' as string)
 
-  const { data, error, response } = await badgeClientGetTree({
+  const { data, error, response } = await BadgeClientService.badgeClientGetTree({
     headers: { 'x-end-user-id': adminEndUser, 'x-user-hash': adminHash },
   })
   if (error && isErrorEnvelope(error)) {

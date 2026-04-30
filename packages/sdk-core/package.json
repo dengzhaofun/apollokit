@@ -3,11 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": ["src", "scripts"],
   "scripts": {
     "extract": "tsx scripts/extract-openapi.ts",
     "split": "tsx scripts/split-spec.ts",
     "openapi": "tsx scripts/extract-openapi.ts && tsx scripts/split-spec.ts",
-    "inject-samples": "tsx scripts/inject-samples.ts"
+    "inject-samples": "tsx scripts/inject-samples.ts",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "tsx": "^4.21.0",

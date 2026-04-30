@@ -19,7 +19,7 @@ pnpm add @apollokit/server
 ```ts
 import {
   createServerClient,
-  announcementAdminGetRoot,
+  AnnouncementAdminService,
 } from "@apollokit/server";
 
 createServerClient({
@@ -28,10 +28,22 @@ createServerClient({
 });
 
 // `throwOnError: true` makes 4xx/5xx throw and types-narrows success.
-const { data } = await announcementAdminGetRoot({ throwOnError: true });
+const { data } = await AnnouncementAdminService.announcementAdminGetRoot({
+  throwOnError: true,
+});
 const announcements = data[200].data; // typed AnnouncementList
 console.log(announcements.items);
 ```
+
+The SDK is **class-based, grouped by OpenAPI tag** — one `XxxService`
+class per module. IDE autocomplete on `import { ` lists every available
+service (`BadgeAdminService`, `CharacterService`,
+`CheckInRewardsService`, `BattlePassService`, …) so you don't have to
+remember endpoint names.
+
+When the server adds a new module, re-running codegen (see
+[Regenerating](#regenerating)) produces a new `XxxService` class
+automatically — no SDK source changes needed.
 
 ## Auth
 
@@ -63,10 +75,10 @@ Manual handling without `throwOnError`:
 import {
   ApolloKitApiError,
   isErrorEnvelope,
-  checkInGetConfigs,
+  CheckInService,
 } from "@apollokit/server";
 
-const { data, error, response } = await checkInGetConfigs({});
+const { data, error, response } = await CheckInService.checkInGetConfigs({});
 if (error && isErrorEnvelope(error)) {
   throw new ApolloKitApiError(error, response.status);
 }
@@ -93,7 +105,7 @@ inbound-request proxies build isolated clients:
 
 ```ts
 import { createClient } from "@hey-api/client-fetch";
-import { announcementAdminGetRoot } from "@apollokit/server";
+import { AnnouncementAdminService } from "@apollokit/server";
 
 function clientForTenant(apiKey: string) {
   const c = createClient({ baseUrl: "https://api.example.com" });
@@ -104,9 +116,25 @@ function clientForTenant(apiKey: string) {
   return c;
 }
 
-const result = await announcementAdminGetRoot({
+const result = await AnnouncementAdminService.announcementAdminGetRoot({
   client: clientForTenant("ak_…"),
   throwOnError: true,
+});
+```
+
+## Retries
+
+By default `createServerClient` installs a response interceptor that
+retries `429` and `5xx` (502/503/504) responses on idempotent methods
+(GET/HEAD/OPTIONS) with exponential backoff (3 attempts). Customize or
+disable:
+
+```ts
+createServerClient({
+  baseUrl,
+  apiKey,
+  retry: { maxAttempts: 5, baseDelayMs: 500, retryAllMethods: true },
+  // or: retry: false
 });
 ```
 
