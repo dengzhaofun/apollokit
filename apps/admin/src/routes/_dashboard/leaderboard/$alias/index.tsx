@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
 import { useLeaderboardForm } from "#/components/leaderboard/use-config-form"
 import { LeaderboardLivePreview } from "#/components/leaderboard/LivePreview"
+import { LeaderboardRewardsBlock } from "#/components/leaderboard/LeaderboardRewardsBlock"
+import * as m from "#/paraglide/messages.js"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -106,6 +108,7 @@ function LeaderboardDetailPage() {
           <TabsList>
             <TabsTrigger value="preview">实时预览</TabsTrigger>
             <TabsTrigger value="edit">编辑配置</TabsTrigger>
+            <TabsTrigger value="rewards">{m.leaderboard_rewards_tab()}</TabsTrigger>
             <TabsTrigger value="snapshots">历史快照</TabsTrigger>
           </TabsList>
 
@@ -135,6 +138,12 @@ function LeaderboardDetailPage() {
                   }
                 }}
               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="rewards" className="mt-4">
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <LeaderboardRewardsBlock config={config} />
             </div>
           </TabsContent>
 

@@ -11,7 +11,7 @@ import { Badge } from "#/components/ui/badge"
 import { ConfigForm } from "#/components/check-in/ConfigForm"
 import { DeleteConfigDialog } from "#/components/check-in/DeleteConfigDialog"
 import { UserStatesTable } from "#/components/check-in/UserStatesTable"
-import { RewardsSection } from "#/components/check-in/RewardsSection"
+import { CheckInRewardsBlock } from "#/components/check-in/CheckInRewardsBlock"
 import { useConfigForm } from "#/components/check-in/use-config-form"
 import {
   useCheckInConfig,
@@ -204,6 +204,9 @@ function CheckInDetailPage() {
             </div>
           )}
 
+          {/* Rewards — always visible (independent from basic-info edit mode) */}
+          <CheckInRewardsBlock configKey={configId} />
+
           {/* Preview link */}
           {!editing && (
             <Button
@@ -219,9 +222,6 @@ function CheckInDetailPage() {
               variant="outline" size="sm"
             />
           )}
-
-          {/* Rewards */}
-          {!editing && <RewardsSection configKey={configId} />}
 
           {/* User States (read-only) */}
           <div className="space-y-3">

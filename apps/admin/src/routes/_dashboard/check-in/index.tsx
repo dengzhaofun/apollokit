@@ -109,6 +109,7 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
         void navigate({
           to: "/check-in/$configId",
           params: { configId: row.id },
+          hash: "rewards",
         })
       } catch (err) {
         toast.error(
@@ -149,6 +150,9 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
         isPending={mutation.isPending}
         form={form}
       />
+      <p className="mt-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 text-xs text-muted-foreground">
+        {m.reward_create_hint()}
+      </p>
     </FormDrawerWithAssist>
   )
 }
