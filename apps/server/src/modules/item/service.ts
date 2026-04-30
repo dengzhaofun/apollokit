@@ -10,9 +10,9 @@
  *    `item_inventories`). A "currency" is just a stackable item with
  *    stackLimit=null and holdLimit=null.
  *
- * 2. Inventory writes use single atomic SQL statements (no transactions)
- *    because neon-http doesn't support them. Concurrency is handled via
- *    optimistic locking (version column) or conditional upserts.
+ * 2. Inventory writes use single atomic SQL statements rather than
+ *    transactions, so concurrency is handled via optimistic locking
+ *    (version column) or conditional upserts.
  *
  * 3. For unlimited-stack items (currencies), a partial unique index on
  *    (org, endUser, defId) WHERE instance_data IS NULL ensures one row

@@ -6,6 +6,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { auth } from "./auth";
+import { withDbContext } from "./db";
 import { deps } from "./deps";
 import { endUserAuth, EU_ORG_ID_HEADER } from "./end-user-auth";
 import type { HonoEnv } from "./env";
@@ -128,6 +129,21 @@ const app = new OpenAPIHono<HonoEnv>({
 });
 
 // Base middleware
+//
+// Hyperdrive db context — must be the very first middleware so every
+// downstream handler (Better Auth route handlers, session middleware,
+// business routes, even error handlers via `app.onError`) sees a
+// per-request `pg.Client` via the ALS-backed `db` proxy. Workers binds
+// every TCP socket to its opening request's I/O context, so we cannot
+// reuse a client across requests.
+//
+// Vitest doesn't bind `HYPERDRIVE` (the `cloudflare:workers` shim has
+// no such field) — `withDbContext` short-circuits in that case and the
+// `db` Proxy falls back to the Node `pg.Pool` (`getNodeFallback` in
+// `./db.ts`).
+app.use("*", async (c, next) => {
+  await withDbContext(c.env, () => next());
+});
 app.use("*", requestId());
 app.use("*", honoLogger());
 app.use("*", prettyJSON());

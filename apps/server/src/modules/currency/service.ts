@@ -11,8 +11,7 @@
  * 1. `currency_wallets` has a unique index on
  *    `(organizationId, endUserId, currencyId)`. Grants use
  *    `INSERT ... ON CONFLICT DO UPDATE` so a single atomic SQL
- *    statement handles both "new wallet" and "existing wallet" cases
- *    — required because neon-http does not support transactions.
+ *    statement handles both "new wallet" and "existing wallet" cases.
  *
  * 2. Deducts use a conditional `UPDATE ... WHERE balance >= amount`.
  *    The SQL returns zero rows when the user cannot afford it; the

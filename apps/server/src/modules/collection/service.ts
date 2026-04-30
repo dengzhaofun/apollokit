@@ -56,7 +56,7 @@
  *      back. The `sync` / `rescan` paths provide compensation.
  *
  * ---------------------------------------------------------------------
- * neon-http: no transactions
+ * Single-statement writes
  * ---------------------------------------------------------------------
  *
  * Every write path is a single atomic SQL statement. Unlock writes and

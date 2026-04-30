@@ -1,11 +1,9 @@
 /**
  * Detect Postgres `unique_violation` (SQLSTATE 23505) across driver quirks.
  *
- * `neon-http` and `postgres-js` both surface the SQLSTATE on the thrown
- * error, but at different paths: sometimes `err.code`, sometimes
- * `err.cause.code`, and the error message can also stringify the code.
- * We probe all three so callers don't need to know which driver wrapped
- * the error this time.
+ * `node-postgres` surfaces the SQLSTATE at different paths depending on
+ * how the error bubbles: sometimes `err.code`, sometimes `err.cause.code`,
+ * and the error message can also stringify the code. We probe all three.
  */
 export function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;

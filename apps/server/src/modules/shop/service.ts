@@ -5,12 +5,12 @@
  *
  * Architecture notes (for the next person touching this file):
  *
- * 1. **No transactions** — `drizzle-orm/neon-http` runs over Neon's HTTP
- *    driver which rejects `db.transaction()`. All write paths use either
- *    a single atomic SQL statement (`INSERT ... ON CONFLICT ... DO UPDATE
- *    ... setWhere <guard>`) or a sequence of atomic statements with
- *    compensating rollbacks on failure. The `purchase` flow below is the
- *    most involved example.
+ * 1. **Atomic statements + compensating rollbacks** — write paths use
+ *    either a single atomic SQL statement (`INSERT ... ON CONFLICT ... DO
+ *    UPDATE ... setWhere <guard>`) or a sequence of atomic statements with
+ *    compensating rollbacks on failure. We avoid `db.transaction()` on hot
+ *    paths so we don't pin a Hyperdrive-pooled connection. The `purchase`
+ *    flow below is the most involved example.
  *
  * 2. **Cross-module dependency** — shop produces/consumes items via the
  *    `itemService`, which is injected as a positional arg (mirroring the
@@ -913,8 +913,8 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       throw new ShopInvalidInput(
         "growth stages only apply to productType='growth_pack'",
       );
-    // Wipe + re-insert — safe under neon-http because no one else writes
-    // stages for this productId concurrently (admin-only mutation).
+    // Wipe + re-insert — safe without a transaction because no one else
+    // writes stages for this productId concurrently (admin-only mutation).
     await db
       .delete(shopGrowthStages)
       .where(eq(shopGrowthStages.productId, product.id));

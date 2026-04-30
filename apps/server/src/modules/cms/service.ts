@@ -5,10 +5,8 @@
  * to the outside world is the typed `AppDeps` object.
  *
  * ---------------------------------------------------------------------
- * Concurrency model (neon-http has no transactions)
+ * Concurrency model — single atomic statements, optimistic versioning
  * ---------------------------------------------------------------------
- *
- * `drizzle-orm/neon-http` rejects multi-statement transactions, so:
  *
  *   - Type CRUD: single INSERT / UPDATE / DELETE per call. The
  *     additive-only schema check in `updateType` reads the prev schema,
@@ -21,8 +19,6 @@
  *   - Entry CRUD: writes use `UPDATE … WHERE version = ?` for optimistic
  *     concurrency. The caller passes the version they read; a mismatch
  *     yields zero rows and the service throws CmsEntryVersionConflict.
- *     This is the only safe pattern under neon-http for stateful entry
- *     mutations (publish flips, data edits).
  */
 
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";

@@ -1,13 +1,21 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { env } from "cloudflare:workers";
-import { neon } from "@neondatabase/serverless";
 import { upstashCache } from "drizzle-orm/cache/upstash";
-import { drizzle as drizzleNeon, type NeonHttpDatabase } from "drizzle-orm/neon-http";
-import type { Pool as PgPool } from "pg";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import pg from "pg";
 
 import * as schema from "./schema";
 
-const url = env.DATABASE_URL;
-const isNeon = /neon\.tech/i.test(url);
+type DB = NodePgDatabase<typeof schema>;
+
+// Per-request db lives here. Workers binds every TCP socket to the I/O
+// context of the request that opened it — Hyperdrive enforces this by
+// design — so we cannot share a `pg.Client` across requests. Each fetch /
+// scheduled / queue handler enters `withDbContext`, which connects a
+// fresh client and stashes it in this ALS store. `db` (below) is a Proxy
+// that reads from here on every method access.
+const dbStore = new AsyncLocalStorage<DB>();
 
 const cache =
   env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
@@ -18,79 +26,79 @@ const cache =
       })
     : undefined;
 
-// `db` is typed as `NeonHttpDatabase` — the production driver, and the
-// shape the entire codebase was written against (`.execute(...).rows`,
-// `.returning(...)`, no multi-statement transactions). Typing this as the
-// true `NeonHttp | NodePg` union would degrade every `.returning()` and
-// `.execute().rows` callsite via builder-chain signature intersection, so
-// we cast the local-Postgres branch to the neon-http type.
+// Node fallback for vitest, drizzle-kit migrations driven from Node, and
+// the Better Auth CLI. None of those run inside workerd, so the I/O
+// isolation rule doesn't apply and a plain `pg.Pool` is the simplest
+// thing that works. Lazily constructed so that worker-runtime code paths
+// never instantiate it.
+let nodeFallback: DB | null = null;
+function getNodeFallback(): DB {
+  if (nodeFallback) return nodeFallback;
+  const url = env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "db accessed outside withDbContext and DATABASE_URL is not set. " +
+        "In a worker entry point, wrap your handler with withDbContext(env, ...).",
+    );
+  }
+  // Pin every new physical connection to UTC so `timestamp`-without-tz
+  // columns behave identically to production (Neon defaults to UTC
+  // server-side). Without this, a local Postgres on +08 stores NOW() as
+  // local time and `col >= ${jsDate}` filters drift by the TZ offset.
+  const pool = new pg.Pool({
+    connectionString: url,
+    options: "-c TimeZone=UTC",
+  });
+  nodeFallback = drizzle({ client: pool, schema, cache });
+  return nodeFallback;
+}
+
+function getDb(): DB {
+  return dbStore.getStore() ?? getNodeFallback();
+}
+
+// `db` resolves the current request's Drizzle instance on every property
+// access. Call sites (`db.select(...)`, `db.transaction(...)`,
+// `db.execute(...)`, ...) are unchanged from the previous neon-http
+// version — only the underlying type widens from `NeonHttpDatabase` to
+// `NodePgDatabase`, which unlocks `db.transaction(cb)`.
 //
-// The local branch uses `drizzle-orm/node-postgres` (not `postgres.js`)
-// because `pg`'s wire result is already `{ rows, fields, rowCount }` —
-// the same shape as `NeonHttpQueryResult`. `postgres.js` would need a
-// `.rows` shim over `RowList`, prepared-statement Bind tweaks, and
-// per-OID timestamp serializers to match.
-//
-// Narrowing to `NeonHttpDatabase` also enforces the codebase's
-// no-transaction rule at compile time — neon-http rejects
-// `db.transaction(cb)` at runtime, and all writes go through single
-// atomic `INSERT ... ON CONFLICT DO UPDATE WHERE ... RETURNING`
-// statements (see apps/server/CLAUDE.md → "`neon-http` has no
-// transactions", and modules/check-in/service.ts for the canonical
-// pattern).
-export const db: NeonHttpDatabase<typeof schema> = isNeon
-  ? drizzleNeon({ client: neon(url), schema, cache })
-  : await (async () => {
-      const { drizzle } = await import("drizzle-orm/node-postgres");
-      const { default: pg } = await import("pg");
-      // Pin every new physical connection to UTC so `timestamp`-without-tz
-      // columns behave the same as on Neon (which defaults to UTC server-side).
-      // Without this, a local Postgres on +08 stores NOW() as local time and
-      // `col >= ${jsDate}` filters drift by the TZ offset.
-      //
-      // `options: "-c TimeZone=UTC"` passes the setting as a libpq startup
-      // parameter — set before any query runs.
-      //
-      // Why not `pg.Pool`? Workers runtime binds every TCP socket to the
-      // I/O context of the request that opened it. `pg.Pool` hands out
-      // idle sockets to later requests; those sockets belong to an ended
-      // I/O context and hang forever ("can't access I/O object from a
-      // different request"). We tried `max: 1, maxUses: 1` to force
-      // destroy-on-release, but concurrent callers race in the release
-      // window: request B queues on `max: 1`, request A releases, and
-      // B picks up the half-torn-down socket before pg finishes
-      // destroying it → hang → workerd cancels after a few ms.
-      //
-      // Instead we open a fresh `pg.Client`, run one query, and call
-      // `end()`. Every query gets its own socket that lives entirely
-      // inside the opening request's I/O context. Local-Postgres connect
-      // cost is ~1–2 ms, an acceptable trade for reliability. This is
-      // dev-only; prod uses Neon HTTP and never creates a socket pool.
-      const poolShim = {
-        async query(
-          text: string | { text: string; values?: unknown[] },
-          values?: unknown[],
-        ) {
-          const client = new pg.Client({
-            connectionString: url,
-            options: "-c TimeZone=UTC",
-          });
-          await client.connect();
-          try {
-            return await client.query(
-              text as string,
-              values as unknown[],
-            );
-          } finally {
-            await client.end();
-          }
-        },
-        async end() {},
-      };
-      const drz = drizzle({
-        client: poolShim as unknown as PgPool,
-        schema,
-        cache,
-      });
-      return drz as unknown as NeonHttpDatabase<typeof schema>;
-    })();
+// Use transactions sparingly: Hyperdrive runs in transaction-pool mode,
+// so an open transaction holds a pooled connection for its full duration.
+// Don't await long-running 3rd-party HTTP inside `db.transaction(...)`.
+export const db = new Proxy({} as DB, {
+  get(_target, prop) {
+    return Reflect.get(getDb() as object, prop, getDb());
+  },
+  has(_target, prop) {
+    return prop in (getDb() as object);
+  },
+});
+
+/**
+ * Wrap a worker entry-point handler so every `db.*` access inside `fn`
+ * (and any awaited continuation) resolves to a freshly-connected
+ * `pg.Client` pinned to the current request. Required by Hyperdrive:
+ * sockets opened in one request's I/O context cannot be reused in
+ * another's.
+ *
+ * Hyperdrive recycles the underlying connection back to its pool when
+ * the request closes, so we deliberately do **not** call `client.end()`.
+ *
+ * When `bindings.HYPERDRIVE` is missing — vitest, Better Auth CLI, any
+ * other Node entry point — we just run `fn()` and let the `db` Proxy
+ * fall through to `getNodeFallback` (a plain `pg.Pool` against
+ * `DATABASE_URL`). Callers stay unaware of the dual mode.
+ */
+export async function withDbContext<T>(
+  bindings: { HYPERDRIVE?: Hyperdrive | undefined },
+  fn: () => T | Promise<T>,
+): Promise<T> {
+  if (!bindings?.HYPERDRIVE) return fn();
+  const client = new pg.Client({
+    connectionString: bindings.HYPERDRIVE.connectionString,
+  });
+  await client.connect();
+  const requestDb = drizzle({ client, schema, cache });
+  return dbStore.run(requestDb, fn);
+}

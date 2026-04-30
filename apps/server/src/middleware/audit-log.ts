@@ -20,9 +20,9 @@
  *   - 响应状态：成功（2xx）或业务冲突（409）才写。4xx/5xx（验证失败、auth
  *     失败、role 拒绝、内部错误）已由 `http_requests` 留痕，不污染审计表。
  *
- * **不阻塞响应**：所有 INSERT 走 `c.executionCtx.waitUntil(...)`。Neon HTTP
- * 单条 INSERT 即原子，无事务需求。失败仅 `console.error` —— 审计写库挂掉
- * 不能让用户的 PATCH 跟着挂。
+ * **不阻塞响应**：所有 INSERT 走 `c.executionCtx.waitUntil(...)`。单条
+ * INSERT 即原子，无事务需求。失败仅 `console.error` —— 审计写库挂掉不能
+ * 让用户的 PATCH 跟着挂。
  *
  * **vitest 兼容**：与 `requestLog` 同款 try/catch `c.executionCtx`。Node 跑
  * 单测时拿不到 ExecutionContext，直接 return 跳过审计写入。

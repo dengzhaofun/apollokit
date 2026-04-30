@@ -8,9 +8,9 @@
  * Concurrency model — single atomic statements, no transactions
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` rejects `db.transaction()`. All writes are
- * expressed as single atomic SQL statements. Member count updates use a
- * version-guarded pattern:
+ * All writes are expressed as single atomic SQL statements; this avoids
+ * pinning a Hyperdrive-pooled connection inside `db.transaction()` on hot
+ * paths. Member count updates use a version-guarded pattern:
  *
  *   UPDATE guild_guilds
  *   SET member_count = member_count + 1, version = version + 1

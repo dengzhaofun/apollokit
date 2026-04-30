@@ -33,11 +33,13 @@
  * drift (stale frontend sending 9 ids when 10 exist) and duplicate
  * sortOrders arising from partial reorders.
  *
- * Without transactions on neon-http, we emit one UPDATE per banner inside
- * a `Promise.all`. A concurrent admin create could insert a new banner
- * with sortOrder colliding with what we just assigned — that's fine, the
- * next reorder / manual edit fixes it and no data is lost. sortOrder is
- * not a unique constraint.
+ * We emit one UPDATE per banner inside a `Promise.all` rather than a
+ * `db.transaction()` — a concurrent admin create could insert a new
+ * banner with sortOrder colliding with what we just assigned, which is
+ * fine because the next reorder / manual edit fixes it and no data is
+ * lost. sortOrder is not a unique constraint. (Drag-reorder with strict
+ * atomic semantics is a separate follow-up; see plan
+ * `serverless-noen-vectorized-eagle.md`.)
  */
 
 import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";

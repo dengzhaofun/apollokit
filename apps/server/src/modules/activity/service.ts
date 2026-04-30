@@ -1852,8 +1852,8 @@ function isNodeUnlocked(
  *                    parked as a TODO but schema supports it.
  *      - "keep"    → no-op. Entities stay bound to archived activity.
  *
- * All DB writes are single statements (neon-http constraint). Failures
- * are logged so one broken row doesn't block the rest of the tick.
+ * All DB writes are single statements. Failures are logged so one
+ * broken row doesn't block the rest of the tick.
  */
 async function runArchiveCleanup(
   db: AppDeps["db"],

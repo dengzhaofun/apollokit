@@ -33,8 +33,7 @@
  * State transitions — conditional UPDATE without transactions
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` has no transactions. Advance is therefore a
- * single conditional UPDATE:
+ * Advance is a single conditional UPDATE:
  *
  *   UPDATE dialogue_progress
  *      SET currentNodeId = $next,

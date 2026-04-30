@@ -643,10 +643,10 @@ export const ClaimTierResponseSchema = z
 // ─── Assignment bodies ────────────────────────────────────────────
 
 /**
- * Soft cap on batch assignment size. Neon HTTP has no transactions and
- * each request is a single round-trip — the cap keeps latency bounded
- * and gives backpressure to accidental "assign to everyone" scripts.
- * Callers with larger cohorts must chunk.
+ * Soft cap on batch assignment size. Each assignment is its own atomic
+ * statement; the cap keeps latency bounded and gives backpressure to
+ * accidental "assign to everyone" scripts. Callers with larger cohorts
+ * must chunk.
  */
 export const ASSIGNMENT_BATCH_MAX = 1000;
 

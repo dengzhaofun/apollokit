@@ -244,8 +244,7 @@ export const activityNodes = pgTable(
  *   - "left"      — user actively called leave
  *
  * `version` enables optimistic-concurrency writes on `nodeState` —
- * neon-http has no transactions, so writers use `UPDATE ... WHERE
- * version = ?` and retry on miss.
+ * writers use `UPDATE ... WHERE version = ?` and retry on miss.
  */
 export const activityMembers = pgTable(
   "activity_members",

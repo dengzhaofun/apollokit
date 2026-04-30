@@ -12,10 +12,9 @@
  *    to prevent abuse — UX guidance is to keep it ≤ 10.
  *  - `remove` — delete by routePath. 404s when missing.
  *
- * neon-http has no transactions; the upsert is a single
- * `INSERT ... SELECT (max+1) ... ON CONFLICT DO UPDATE` so two
- * concurrent adds of the same routePath serialize on the unique
- * index and produce a single row.
+ * The upsert is a single `INSERT ... SELECT (max+1) ... ON CONFLICT DO
+ * UPDATE` so two concurrent adds of the same routePath serialize on the
+ * unique index and produce a single row.
  */
 
 import { and, asc, desc, eq, sql } from "drizzle-orm"

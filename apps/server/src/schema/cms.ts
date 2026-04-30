@@ -120,8 +120,8 @@ export const cmsEntries = pgTable(
      */
     schemaVersion: integer("schema_version").notNull(),
     /**
-     * Optimistic-concurrency token. neon-http forbids `db.transaction()`
-     * so writes use `UPDATE … WHERE version = ?` to detect lost updates.
+     * Optimistic-concurrency token. Writes use `UPDATE … WHERE version = ?`
+     * to detect lost updates without holding a transaction open.
      */
     version: integer("version").notNull().default(1),
     createdBy: text("created_by"),

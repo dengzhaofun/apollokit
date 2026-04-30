@@ -562,9 +562,8 @@ export function createBadgeService(d: BadgeDeps) {
     if (inputs.length === 0) return [];
     const now = new Date();
     const results: BadgeSignal[] = [];
-    // No transactions on neon-http — serialize the writes. Each is its
-    // own atomic UPSERT, so partial success is acceptable (callers
-    // that need atomic batches can retry the failed ones).
+    // Serialized atomic UPSERTs — partial success is acceptable; callers
+    // that need atomic batches can retry the failed ones.
     for (const input of inputs) {
       results.push(await writeSignal(organizationId, input, now));
     }

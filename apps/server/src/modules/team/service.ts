@@ -8,9 +8,9 @@
  * Concurrency strategy — version-guarded single-statement writes
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` runs over Neon's HTTP driver, which does NOT
- * support multi-statement transactions. All writes use single atomic SQL
- * statements with version guards:
+ * Hot-path writes use single atomic SQL statements with version guards
+ * — wrapping multi-statement updates in `db.transaction()` would pin a
+ * Hyperdrive pooled connection for the duration. Pattern:
  *
  *   UPDATE team_teams
  *   SET member_count = member_count + 1, version = version + 1

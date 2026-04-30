@@ -7,9 +7,10 @@
  * Why atomic SQL instead of transactions
  * ---------------------------------------------------------------------
  *
- * `drizzle-orm/neon-http` runs over Neon's HTTP driver, which does NOT
- * support multi-statement transactions (`db.transaction()` will throw).
- * All write paths are expressed as single atomic statements.
+ * Hot paths express writes as single atomic SQL statements. We avoid
+ * `db.transaction()` here because each request would pin a Hyperdrive
+ * pooled connection across the round-trip, which trades latency for
+ * very little benefit when a single UPSERT already serializes correctly.
  *
  * For daily state counters, we use INSERT … ON CONFLICT DO UPDATE with
  * a WHERE guard on the counter limit:

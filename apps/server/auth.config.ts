@@ -11,7 +11,6 @@
 //   hook bodies, databaseHooks) lives in auth.ts and is intentionally NOT
 //   mirrored here, since the CLI never executes those code paths.
 import { apiKey } from "@better-auth/api-key";
-import { neon } from "@neondatabase/serverless";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
@@ -20,12 +19,16 @@ import {
   organization,
 } from "better-auth/plugins";
 import { emailHarmony } from "better-auth-harmony";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 
 import * as schema from "./src/schema";
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle({ client: sql, schema });
+// Same `pg` driver as the worker runtime (via `withDbContext` in src/db.ts);
+// Better Auth CLI runs in Node so a plain `Pool` is fine — no Hyperdrive
+// indirection needed.
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL! });
+const db = drizzle({ client: pool, schema });
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
