@@ -54,7 +54,7 @@ async function signUpAndOrg(): Promise<SignedInFixture> {
     },
     body: JSON.stringify({
       email,
-      password: "password12345",
+      password: "apollokit-test-pw-z3xK9fQp",
       name: "Routes Test",
     }),
   });

@@ -30,7 +30,7 @@ async function signUpAndOrg(label: string): Promise<SignedInFixture> {
     headers: { "content-type": "application/json", origin: ORIGIN },
     body: JSON.stringify({
       email,
-      password: "password12345",
+      password: "apollokit-test-pw-z3xK9fQp",
       name: `Audit ${label} Test`,
     }),
   });

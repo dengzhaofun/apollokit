@@ -58,4 +58,53 @@ export const env = {
   // mailer falls back to `console.log` when this is undefined, which
   // is what we want for CI / `pnpm test`. Tests that need to assert
   // on the send call use `vi.doMock("cloudflare:workers", ...)` per-case.
+
+  // KV binding is faked with a per-process in-memory Map — Better Auth's
+  // `secondaryStorage` (session cookieCache fallback + rateLimit counters)
+  // calls .get / .put / .delete on it, and we don't want every test
+  // setting up a real KV. Stale data between test files is fine because
+  // `fileParallelism: false` serializes test files and each file uses a
+  // fresh org id from `createTestOrg`. Within a file the cache may carry
+  // a few rate-limit counters across cases — bump rateLimit.max if a
+  // single-file test ever hits the limit.
+  KV: makeFakeKV(),
 };
+
+interface FakeKVEntry {
+  value: string;
+  expiresAt: number | null;
+}
+
+function makeFakeKV() {
+  const store = new Map<string, FakeKVEntry>();
+
+  function isExpired(entry: FakeKVEntry): boolean {
+    return entry.expiresAt !== null && entry.expiresAt <= Date.now();
+  }
+
+  return {
+    async get(key: string): Promise<string | null> {
+      const entry = store.get(key);
+      if (!entry) return null;
+      if (isExpired(entry)) {
+        store.delete(key);
+        return null;
+      }
+      return entry.value;
+    },
+    async put(
+      key: string,
+      value: string,
+      options?: { expirationTtl?: number },
+    ): Promise<void> {
+      const ttl = options?.expirationTtl;
+      store.set(key, {
+        value,
+        expiresAt: typeof ttl === "number" ? Date.now() + ttl * 1000 : null,
+      });
+    },
+    async delete(key: string): Promise<void> {
+      store.delete(key);
+    },
+  };
+}

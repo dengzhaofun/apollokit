@@ -39,7 +39,7 @@ async function setupFixture(): Promise<Fixture> {
   const signUp = await app.request("/api/auth/sign-up/email", {
     method: "POST",
     headers: { "content-type": "application/json", origin: ORIGIN },
-    body: JSON.stringify({ email, password: "password12345", name: "Client Routes Test" }),
+    body: JSON.stringify({ email, password: "apollokit-test-pw-z3xK9fQp", name: "Client Routes Test" }),
   });
   if (signUp.status !== 200) throw new Error(`sign-up failed: ${await signUp.text()}`);
 

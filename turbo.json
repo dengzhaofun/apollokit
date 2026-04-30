@@ -20,7 +20,8 @@
     "SENTRY_DSN",
     "SENTRY_ENVIRONMENT",
     "SENTRY_AUTH_TOKEN",
-    "MODE"
+    "MODE",
+    "VITEST"
   ],
   "tasks": {
     "build": {
