@@ -80,150 +80,181 @@ const EMAIL_LOOKUP_PATHS = new Set([
   "/change-email",
 ]);
 
-export const endUserAuth = betterAuth({
-  basePath: "/api/client/auth",
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      ...schema,
-      user: schema.euUser,
-      session: schema.euSession,
-      account: schema.euAccount,
-      verification: schema.euVerification,
-    },
-  }),
-  secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: [
-    "http://localhost:3000",
-    "https://apollokit-admin.limitless-ai.workers.dev",
-  ],
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: true,
-  },
-  user: {
-    // `required: false` here — the NOT NULL guarantee comes from the DB
-    // column + the `user.create.before` hook, not from Better Auth's
-    // input validator. If we mark it required, Better Auth's pre-hook
-    // body validation rejects sign-up before our hook ever runs,
-    // because `input: false` means the client can't supply it and
-    // there's no default.
-    additionalFields: {
-      organizationId: { type: "string", required: false, input: false },
-      externalId: { type: "string", required: false, input: false },
-      // Exposed here so Better Auth's drizzle-adapter picks up the
-      // column (without this declaration it would be invisible to the
-      // adapter and the default=false insert would still work, but
-      // reads through `getSession` would strip it). `requireClientUser`
-      // reads this to enforce the soft-ban on every request.
-      disabled: { type: "boolean", required: false, input: false },
-    },
-  },
-  session: {
-    // Teach the drizzle adapter that `organization_id` is a real,
-    // writable column. Without this, the adapter drops the value
-    // injected by `session.create.before` and the DB rejects the
-    // NOT NULL insert.
-    additionalFields: {
-      organizationId: { type: "string", required: false, input: false },
-    },
-  },
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      if (!EMAIL_LOOKUP_PATHS.has(ctx.path)) return;
-      // Support both transports:
-      //   - HTTP handler  → ctx.request.headers
-      //   - auth.api.*()  → ctx.headers (Better Auth normalizes the
-      //     `headers` arg into ctx.headers but leaves ctx.request
-      //     undefined on this path; we hit this in service tests).
-      const orgId =
-        ctx.headers?.get(EU_ORG_ID_HEADER) ??
-        ctx.request?.headers.get(EU_ORG_ID_HEADER);
-      if (!orgId) {
-        throw new APIError("BAD_REQUEST", {
-          message: "missing tenant context",
-        });
-      }
-      const body = ctx.body as { email?: string; newEmail?: string } | undefined;
-      if (!body) return;
-      const next: Record<string, unknown> = { ...body };
-      if (typeof body.email === "string") {
-        next.email = scopeEmail(orgId, body.email);
-      }
-      if (typeof body.newEmail === "string") {
-        next.newEmail = scopeEmail(orgId, body.newEmail);
-      }
-      return {
-        context: {
-          ...ctx,
-          body: next,
-        },
-      };
+// Lazy via Proxy —— 见 `./auth.ts` 同样原因(Better Auth plugin chain
+// + drizzle adapter init 是 startup CPU 大头)。endUserAuth 配置比 auth
+// 更重(emailAndPassword + autoSignIn + 两组 hooks + additionalFields),
+// 同样延迟到首次访问。
+function buildEndUserAuth() {
+  return betterAuth({
+    basePath: "/api/client/auth",
+    database: drizzleAdapter(db, {
+      provider: "pg",
+      schema: {
+        ...schema,
+        user: schema.euUser,
+        session: schema.euSession,
+        account: schema.euAccount,
+        verification: schema.euVerification,
+      },
     }),
-  },
-  databaseHooks: {
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL: env.BETTER_AUTH_URL,
+    trustedOrigins: [
+      "http://localhost:3000",
+      "https://apollokit-admin.limitless-ai.workers.dev",
+    ],
+    emailAndPassword: {
+      enabled: true,
+      autoSignIn: true,
+    },
     user: {
-      create: {
-        before: async (user, ctx) => {
-          // `ctx` here is the AuthContext, passed directly — NOT the
-          // `HookEndpointContext` used by top-level `hooks.before`. The
-          // Request object lives on `ctx.request`. See
-          // node_modules/better-auth/dist/db/with-hooks.mjs → createWithHooks.
-          //
-          // On the `auth.api.*()` transport (service tests), ctx.request
-          // is undefined and the headers live on ctx.headers instead.
-          const orgId =
-            ctx?.request?.headers.get(EU_ORG_ID_HEADER) ??
-            ctx?.headers?.get(EU_ORG_ID_HEADER);
-          if (!orgId) {
-            throw new APIError("BAD_REQUEST", {
-              message: "cannot create end-user without tenant context",
-            });
-          }
-          return {
-            data: {
-              ...user,
-              organizationId: orgId,
-            },
-          };
-        },
+      // `required: false` here — the NOT NULL guarantee comes from the DB
+      // column + the `user.create.before` hook, not from Better Auth's
+      // input validator. If we mark it required, Better Auth's pre-hook
+      // body validation rejects sign-up before our hook ever runs,
+      // because `input: false` means the client can't supply it and
+      // there's no default.
+      additionalFields: {
+        organizationId: { type: "string", required: false, input: false },
+        externalId: { type: "string", required: false, input: false },
+        // Exposed here so Better Auth's drizzle-adapter picks up the
+        // column (without this declaration it would be invisible to the
+        // adapter and the default=false insert would still work, but
+        // reads through `getSession` would strip it). `requireClientUser`
+        // reads this to enforce the soft-ban on every request.
+        disabled: { type: "boolean", required: false, input: false },
       },
     },
     session: {
-      create: {
-        before: async (session) => {
-          // Denormalize organizationId onto the session so request-time
-          // guards don't need an extra round-trip to eu_user. Also
-          // refuse to mint a session for a disabled player — this is
-          // the sign-in-time half of the soft-ban (the other half is
-          // `setDisabled` deleting existing sessions).
-          const [row] = await db
-            .select({
-              organizationId: schema.euUser.organizationId,
-              disabled: schema.euUser.disabled,
-            })
-            .from(schema.euUser)
-            .where(eq(schema.euUser.id, session.userId))
-            .limit(1);
-          if (!row) {
-            throw new APIError("INTERNAL_SERVER_ERROR", {
-              message: "cannot create session: end-user not found",
-            });
-          }
-          if (row.disabled) {
-            throw new APIError("FORBIDDEN", {
-              message: "end-user is disabled",
-            });
-          }
-          return {
-            data: {
-              ...session,
-              organizationId: row.organizationId,
-            },
-          };
+      // Teach the drizzle adapter that `organization_id` is a real,
+      // writable column. Without this, the adapter drops the value
+      // injected by `session.create.before` and the DB rejects the
+      // NOT NULL insert.
+      additionalFields: {
+        organizationId: { type: "string", required: false, input: false },
+      },
+    },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (!EMAIL_LOOKUP_PATHS.has(ctx.path)) return;
+        // Support both transports:
+        //   - HTTP handler  → ctx.request.headers
+        //   - auth.api.*()  → ctx.headers (Better Auth normalizes the
+        //     `headers` arg into ctx.headers but leaves ctx.request
+        //     undefined on this path; we hit this in service tests).
+        const orgId =
+          ctx.headers?.get(EU_ORG_ID_HEADER) ??
+          ctx.request?.headers.get(EU_ORG_ID_HEADER);
+        if (!orgId) {
+          throw new APIError("BAD_REQUEST", {
+            message: "missing tenant context",
+          });
+        }
+        const body = ctx.body as { email?: string; newEmail?: string } | undefined;
+        if (!body) return;
+        const next: Record<string, unknown> = { ...body };
+        if (typeof body.email === "string") {
+          next.email = scopeEmail(orgId, body.email);
+        }
+        if (typeof body.newEmail === "string") {
+          next.newEmail = scopeEmail(orgId, body.newEmail);
+        }
+        return {
+          context: {
+            ...ctx,
+            body: next,
+          },
+        };
+      }),
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user, ctx) => {
+            // `ctx` here is the AuthContext, passed directly — NOT the
+            // `HookEndpointContext` used by top-level `hooks.before`. The
+            // Request object lives on `ctx.request`. See
+            // node_modules/better-auth/dist/db/with-hooks.mjs → createWithHooks.
+            //
+            // On the `auth.api.*()` transport (service tests), ctx.request
+            // is undefined and the headers live on ctx.headers instead.
+            const orgId =
+              ctx?.request?.headers.get(EU_ORG_ID_HEADER) ??
+              ctx?.headers?.get(EU_ORG_ID_HEADER);
+            if (!orgId) {
+              throw new APIError("BAD_REQUEST", {
+                message: "cannot create end-user without tenant context",
+              });
+            }
+            return {
+              data: {
+                ...user,
+                organizationId: orgId,
+              },
+            };
+          },
+        },
+      },
+      session: {
+        create: {
+          before: async (session) => {
+            // Denormalize organizationId onto the session so request-time
+            // guards don't need an extra round-trip to eu_user. Also
+            // refuse to mint a session for a disabled player — this is
+            // the sign-in-time half of the soft-ban (the other half is
+            // `setDisabled` deleting existing sessions).
+            const [row] = await db
+              .select({
+                organizationId: schema.euUser.organizationId,
+                disabled: schema.euUser.disabled,
+              })
+              .from(schema.euUser)
+              .where(eq(schema.euUser.id, session.userId))
+              .limit(1);
+            if (!row) {
+              throw new APIError("INTERNAL_SERVER_ERROR", {
+                message: "cannot create session: end-user not found",
+              });
+            }
+            if (row.disabled) {
+              throw new APIError("FORBIDDEN", {
+                message: "end-user is disabled",
+              });
+            }
+            return {
+              data: {
+                ...session,
+                organizationId: row.organizationId,
+              },
+            };
+          },
         },
       },
     },
+  });
+}
+
+type EndUserAuth = ReturnType<typeof buildEndUserAuth>;
+
+let _endUserAuth: EndUserAuth | null = null;
+function resolveEndUserAuth(): EndUserAuth {
+  if (!_endUserAuth) _endUserAuth = buildEndUserAuth();
+  return _endUserAuth;
+}
+
+export const endUserAuth = new Proxy({} as EndUserAuth, {
+  get(_target, prop) {
+    const target = resolveEndUserAuth() as unknown as Record<
+      string | symbol,
+      unknown
+    >;
+    const value = target[prop];
+    if (typeof value === "function") {
+      return (value as (...args: unknown[]) => unknown).bind(target);
+    }
+    return value;
+  },
+  has(_target, prop) {
+    return prop in (resolveEndUserAuth() as unknown as object);
   },
 });
