@@ -3,17 +3,23 @@
  *
  * Configures the hey-api-generated client with:
  * - `ak_` admin API key injection (`x-api-key` header)
+ * - exponential-backoff retry on 429 / 5xx (idempotent methods only)
  *
  * Server SDK is for trusted server-to-server calls only — admin API
  * keys carry full org-level authority and must NEVER ship in browser
- * bundles or game clients. For that use case install
- * `@apollokit/client` instead (publishable key + HMAC).
+ * bundles or game clients. For that case install `@apollokit/client`
+ * instead (publishable key + HMAC).
  *
- * Mirrors the shape of `@apollokit/client`: thin wrapper around the
- * generated `client`, no opinionated unwrap helper. Callers reach for
- * generated functions directly and pull `.data` from the standard
- * envelope themselves — see `examples/smoke.ts` and the README.
+ * Generated services are class-based (one class per OpenAPI tag, e.g.
+ * `BadgeAdminService`, `CharacterService`). Adding a new module on the
+ * server with a new tag automatically produces a new service class on
+ * the next codegen run — this wrapper does not need to change.
  */
+
+import {
+  createRetryInterceptor,
+  type RetryOptions,
+} from "@repo/sdk-core";
 
 import { client } from "./generated/client.gen.js";
 
@@ -26,6 +32,12 @@ export interface ApolloKitServerConfig {
    * Carries full organization-level authority.
    */
   apiKey: string;
+  /**
+   * Retry options for transient failures. Pass `false` to disable
+   * retries entirely. Defaults: 3 attempts, exponential backoff,
+   * idempotent methods (GET/HEAD/OPTIONS) only.
+   */
+  retry?: RetryOptions | false;
 }
 
 /**
@@ -36,7 +48,9 @@ export interface ApolloKitServerConfig {
  * The default import-bound `client` is also configured by this call,
  * so most callers don't need to thread it through.
  */
-export function createServerClient(config: ApolloKitServerConfig): typeof client {
+export function createServerClient(
+  config: ApolloKitServerConfig,
+): typeof client {
   client.setConfig({ baseUrl: config.baseUrl });
 
   // Inject `x-api-key: ak_…` on every request. The middleware
@@ -46,6 +60,13 @@ export function createServerClient(config: ApolloKitServerConfig): typeof client
     request.headers.set("x-api-key", config.apiKey);
     return request;
   });
+
+  if (config.retry !== false) {
+    const retryInterceptor = createRetryInterceptor(
+      config.retry === undefined ? {} : config.retry,
+    );
+    client.interceptors.response.use(retryInterceptor);
+  }
 
   return client;
 }

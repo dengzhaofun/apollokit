@@ -24,6 +24,11 @@
  * announcement.active) work without an end user.
  */
 
+import {
+  createRetryInterceptor,
+  type RetryOptions,
+} from "@repo/sdk-core";
+
 import { client } from "./generated/client.gen.js";
 import { computeHmac } from "./hmac.js";
 
@@ -39,6 +44,12 @@ export interface ApolloKitClientConfig {
    * `x-end-user-id` header. Never include this in browser bundles.
    */
   secret?: string;
+  /**
+   * Retry options for transient failures. Pass `false` to disable
+   * retries entirely. Defaults: 3 attempts, exponential backoff,
+   * idempotent methods (GET/HEAD/OPTIONS) only.
+   */
+  retry?: RetryOptions | false;
 }
 
 /**
@@ -69,6 +80,14 @@ export function createClient(config: ApolloKitClientConfig): typeof client {
       }
       return request;
     });
+  }
+
+  // 3. Retry on transient 429/5xx (idempotent methods only by default).
+  if (config.retry !== false) {
+    const retryInterceptor = createRetryInterceptor(
+      config.retry === undefined ? {} : config.retry,
+    );
+    client.interceptors.response.use(retryInterceptor);
   }
 
   return client;

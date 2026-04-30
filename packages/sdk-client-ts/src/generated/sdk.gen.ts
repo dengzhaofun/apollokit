@@ -18,2352 +18,2433 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
-/**
- * List currently-visible announcements for an end user
- */
-export const announcementClientGetActive = <ThrowOnError extends boolean = false>(options: Options<AnnouncementClientGetActiveData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<AnnouncementClientGetActiveResponses, AnnouncementClientGetActiveErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/announcement/active',
-        ...options
-    });
-};
-
-/**
- * Record an impression for an announcement
- */
-export const announcementClientPostByAliasImpression = <ThrowOnError extends boolean = false>(options: Options<AnnouncementClientPostByAliasImpressionData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<AnnouncementClientPostByAliasImpressionResponses, AnnouncementClientPostByAliasImpressionErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/announcement/{alias}/impression',
-        ...options
-    });
-};
-
-/**
- * Record a CTA click for an announcement
- */
-export const announcementClientPostByAliasClick = <ThrowOnError extends boolean = false>(options: Options<AnnouncementClientPostByAliasClickData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<AnnouncementClientPostByAliasClickResponses, AnnouncementClientPostByAliasClickErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/announcement/{alias}/click',
-        ...options
-    });
-};
-
-/**
- * Fetch the red-dot tree for the calling end user
- */
-export const badgeClientGetTree = <ThrowOnError extends boolean = false>(options?: Options<BadgeClientGetTreeData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<BadgeClientGetTreeResponses, BadgeClientGetTreeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/badge/tree',
-        ...options
-    });
-};
-
-/**
- * Dismiss a red-dot node (mode != auto)
- */
-export const badgeClientPostDismiss = <ThrowOnError extends boolean = false>(options?: Options<BadgeClientPostDismissData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<BadgeClientPostDismissResponses, BadgeClientPostDismissErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/badge/dismiss',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Wipe session-mode dismissals for the caller (called on player login)
- */
-export const badgeClientPostResetSession = <ThrowOnError extends boolean = false>(options?: Options<BadgeClientPostResetSessionData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<BadgeClientPostResetSessionResponses, BadgeClientPostResetSessionErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/badge/reset-session',
-        ...options
-    });
-};
-
-/**
- * Resolve a banner group by alias for an end user
- */
-export const bannerClientGetGroupsByAlias = <ThrowOnError extends boolean = false>(options: Options<BannerClientGetGroupsByAliasData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<BannerClientGetGroupsByAliasResponses, BannerClientGetGroupsByAliasErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/banner/groups/{alias}',
-        ...options
-    });
-};
-
-/**
- * Get the currently active battle-pass season (config only)
- */
-export const battlePassClientGetCurrent = <ThrowOnError extends boolean = false>(options?: Options<BattlePassClientGetCurrentData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<BattlePassClientGetCurrentResponses, BattlePassClientGetCurrentErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/battle-pass/current',
-        ...options
-    });
-};
-
-/**
- * Get the authenticated end user's aggregate battle-pass view
- */
-export const battlePassClientGetBySeasonidAggregate = <ThrowOnError extends boolean = false>(options: Options<BattlePassClientGetBySeasonidAggregateData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<BattlePassClientGetBySeasonidAggregateResponses, BattlePassClientGetBySeasonidAggregateErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/battle-pass/{seasonId}/aggregate',
-        ...options
-    });
-};
-
-/**
- * Claim a single level reward for the authenticated end user
- */
-export const battlePassClientPostBySeasonidClaim = <ThrowOnError extends boolean = false>(options: Options<BattlePassClientPostBySeasonidClaimData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<BattlePassClientPostBySeasonidClaimResponses, BattlePassClientPostBySeasonidClaimErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/battle-pass/{seasonId}/claim',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Claim all available level rewards for the authenticated end user
- */
-export const battlePassClientPostBySeasonidClaimAll = <ThrowOnError extends boolean = false>(options: Options<BattlePassClientPostBySeasonidClaimAllData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<BattlePassClientPostBySeasonidClaimAllResponses, BattlePassClientPostBySeasonidClaimAllErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/battle-pass/{seasonId}/claim-all',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Redeem a code for an end user
- */
-export const cdkeyClientPostRedeem = <ThrowOnError extends boolean = false>(options: Options<CdkeyClientPostRedeemData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<CdkeyClientPostRedeemResponses, CdkeyClientPostRedeemErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/cdkey/redeem',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Perform a check-in for the authenticated end user
- */
-export const checkInClientPostCheckIns = <ThrowOnError extends boolean = false>(options?: Options<CheckInClientPostCheckInsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<CheckInClientPostCheckInsResponses, CheckInClientPostCheckInsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/check-in/check-ins',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Get the authenticated end user's check-in state
- */
-export const checkInClientGetState = <ThrowOnError extends boolean = false>(options: Options<CheckInClientGetStateData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CheckInClientGetStateResponses, CheckInClientGetStateErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/check-in/state',
-        ...options
-    });
-};
-
-/**
- * Fetch a single published CMS entry by alias
- */
-export const cmsClientGetByAliasByTypealiasByEntryalias = <ThrowOnError extends boolean = false>(options: Options<CmsClientGetByAliasByTypealiasByEntryaliasData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CmsClientGetByAliasByTypealiasByEntryaliasResponses, CmsClientGetByAliasByTypealiasByEntryaliasErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/cms/by-alias/{typeAlias}/{entryAlias}',
-        ...options
-    });
-};
-
-/**
- * List published entries within a group
- */
-export const cmsClientGetGroupByTypealiasByGroupkey = <ThrowOnError extends boolean = false>(options: Options<CmsClientGetGroupByTypealiasByGroupkeyData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CmsClientGetGroupByTypealiasByGroupkeyResponses, CmsClientGetGroupByTypealiasByGroupkeyErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/cms/group/{typeAlias}/{groupKey}',
-        ...options
-    });
-};
-
-/**
- * List published entries with a tag (cross-type)
- */
-export const cmsClientGetTagByTag = <ThrowOnError extends boolean = false>(options: Options<CmsClientGetTagByTagData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CmsClientGetTagByTagResponses, CmsClientGetTagByTagErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/cms/tag/{tag}',
-        ...options
-    });
-};
-
-/**
- * List all published entries of a type
- */
-export const cmsClientGetListByTypealias = <ThrowOnError extends boolean = false>(options: Options<CmsClientGetListByTypealiasData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CmsClientGetListByTypealiasResponses, CmsClientGetListByTypealiasErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/cms/list/{typeAlias}',
-        ...options
-    });
-};
-
-/**
- * List albums with per-user progress summary
- */
-export const collectionClientGetAlbums = <ThrowOnError extends boolean = false>(options: Options<CollectionClientGetAlbumsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CollectionClientGetAlbumsResponses, CollectionClientGetAlbumsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/collection/albums',
-        ...options
-    });
-};
-
-/**
- * Album detail — entries, milestones, per-user progress
- */
-export const collectionClientGetAlbumsByKey = <ThrowOnError extends boolean = false>(options: Options<CollectionClientGetAlbumsByKeyData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CollectionClientGetAlbumsByKeyResponses, CollectionClientGetAlbumsByKeyErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/collection/albums/{key}',
-        ...options
-    });
-};
-
-/**
- * Reconcile unlocks from the user's current inventory (safety net)
- */
-export const collectionClientPostAlbumsByKeySync = <ThrowOnError extends boolean = false>(options: Options<CollectionClientPostAlbumsByKeySyncData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<CollectionClientPostAlbumsByKeySyncResponses, CollectionClientPostAlbumsByKeySyncErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/collection/albums/{key}/sync',
-        ...options
-    });
-};
-
-/**
- * Claim a milestone reward (manual path — autoClaim milestones arrive via mail)
- */
-export const collectionClientPostMilestonesByIdClaim = <ThrowOnError extends boolean = false>(options: Options<CollectionClientPostMilestonesByIdClaimData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<CollectionClientPostMilestonesByIdClaimResponses, CollectionClientPostMilestonesByIdClaimErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/collection/milestones/{id}/claim',
-        ...options
-    });
-};
-
-/**
- * List all currency balances for a user
- */
-export const currencyClientGetWallets = <ThrowOnError extends boolean = false>(options: Options<CurrencyClientGetWalletsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CurrencyClientGetWalletsResponses, CurrencyClientGetWalletsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/currency/wallets',
-        ...options
-    });
-};
-
-/**
- * Get balance for a specific currency
- */
-export const currencyClientGetBalanceByKey = <ThrowOnError extends boolean = false>(options: Options<CurrencyClientGetBalanceByKeyData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<CurrencyClientGetBalanceByKeyResponses, CurrencyClientGetBalanceByKeyErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/currency/balance/{key}',
-        ...options
-    });
-};
-
-/**
- * Begin or resume a dialogue script
- */
-export const dialogueClientGetScriptsByAliasStart = <ThrowOnError extends boolean = false>(options: Options<DialogueClientGetScriptsByAliasStartData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<DialogueClientGetScriptsByAliasStartResponses, DialogueClientGetScriptsByAliasStartErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/dialogue/scripts/{alias}/start',
-        ...options
-    });
-};
-
-/**
- * Advance the dialogue session by one step
- */
-export const dialogueClientPostScriptsByAliasAdvance = <ThrowOnError extends boolean = false>(options: Options<DialogueClientPostScriptsByAliasAdvanceData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<DialogueClientPostScriptsByAliasAdvanceResponses, DialogueClientPostScriptsByAliasAdvanceErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/dialogue/scripts/{alias}/advance',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Reset a repeatable dialogue script
- */
-export const dialogueClientPostScriptsByAliasReset = <ThrowOnError extends boolean = false>(options: Options<DialogueClientPostScriptsByAliasResetData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<DialogueClientPostScriptsByAliasResetResponses, DialogueClientPostScriptsByAliasResetErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/dialogue/scripts/{alias}/reset',
-        ...options
-    });
-};
-
-/**
- * List entity instances for the end user
- */
-export const entityClientGetInstances = <ThrowOnError extends boolean = false>(options: Options<EntityClientGetInstancesData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<EntityClientGetInstancesResponses, EntityClientGetInstancesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances',
-        ...options
-    });
-};
-
-/**
- * Get entity instance detail with slots
- */
-export const entityClientGetInstancesByInstanceid = <ThrowOnError extends boolean = false>(options: Options<EntityClientGetInstancesByInstanceidData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<EntityClientGetInstancesByInstanceidResponses, EntityClientGetInstancesByInstanceidErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}',
-        ...options
-    });
-};
-
-/**
- * Acquire a new entity instance
- */
-export const entityClientPostAcquire = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostAcquireData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostAcquireResponses, EntityClientPostAcquireErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/acquire',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Discard (delete) an entity instance
- */
-export const entityClientPostInstancesByInstanceidDiscard = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidDiscardData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidDiscardResponses, EntityClientPostInstancesByInstanceidDiscardErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/discard',
-        ...options
-    });
-};
-
-/**
- * Toggle entity lock
- */
-export const entityClientPostInstancesByInstanceidLock = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidLockData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidLockResponses, EntityClientPostInstancesByInstanceidLockErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/lock',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Add experience points
- */
-export const entityClientPostInstancesByInstanceidAddExp = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidAddExpData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidAddExpResponses, EntityClientPostInstancesByInstanceidAddExpErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/add-exp',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Level up (consumes materials)
- */
-export const entityClientPostInstancesByInstanceidLevelUp = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidLevelUpData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidLevelUpResponses, EntityClientPostInstancesByInstanceidLevelUpErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/level-up',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Rank up (consumes materials)
- */
-export const entityClientPostInstancesByInstanceidRankUp = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidRankUpData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidRankUpResponses, EntityClientPostInstancesByInstanceidRankUpErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/rank-up',
-        ...options
-    });
-};
-
-/**
- * Synthesize (merge) entities
- */
-export const entityClientPostInstancesByInstanceidSynthesize = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidSynthesizeData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidSynthesizeResponses, EntityClientPostInstancesByInstanceidSynthesizeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/synthesize',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Equip an entity into a slot
- */
-export const entityClientPostInstancesByInstanceidEquip = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidEquipData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidEquipResponses, EntityClientPostInstancesByInstanceidEquipErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/equip',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Unequip an entity from a slot
- */
-export const entityClientPostInstancesByInstanceidUnequip = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidUnequipData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidUnequipResponses, EntityClientPostInstancesByInstanceidUnequipErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/unequip',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Change entity skin
- */
-export const entityClientPostInstancesByInstanceidChangeSkin = <ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidChangeSkinData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidChangeSkinResponses, EntityClientPostInstancesByInstanceidChangeSkinErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/instances/{instanceId}/change-skin',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * List formations for a config
- */
-export const entityClientGetFormationsByConfigid = <ThrowOnError extends boolean = false>(options: Options<EntityClientGetFormationsByConfigidData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<EntityClientGetFormationsByConfigidResponses, EntityClientGetFormationsByConfigidErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/formations/{configId}',
-        ...options
-    });
-};
-
-/**
- * Update a formation
- */
-export const entityClientPutFormationsByConfigidByFormationindex = <ThrowOnError extends boolean = false>(options: Options<EntityClientPutFormationsByConfigidByFormationindexData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).put<EntityClientPutFormationsByConfigidByFormationindexResponses, EntityClientPutFormationsByConfigidByFormationindexErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/entity/formations/{configId}/{formationIndex}',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Get the caller's inventory
- */
-export const itemClientGetInventory = <ThrowOnError extends boolean = false>(options?: Options<ItemClientGetInventoryData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<ItemClientGetInventoryResponses, ItemClientGetInventoryErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/item/inventory',
-        ...options
-    });
-};
-
-/**
- * Get the caller's balance for a specific item
- */
-export const itemClientGetBalanceByKey = <ThrowOnError extends boolean = false>(options: Options<ItemClientGetBalanceByKeyData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<ItemClientGetBalanceByKeyResponses, ItemClientGetBalanceByKeyErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/item/balance/{key}',
-        ...options
-    });
-};
-
-/**
- * Use an item (deducts 1 and triggers lottery if linked)
- */
-export const itemClientPostUse = <ThrowOnError extends boolean = false>(options?: Options<ItemClientPostUseData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<ItemClientPostUseResponses, ItemClientPostUseErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/item/use',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Execute an exchange for an end user
- */
-export const exchangeClientPostExecute = <ThrowOnError extends boolean = false>(options?: Options<ExchangeClientPostExecuteData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<ExchangeClientPostExecuteResponses, ExchangeClientPostExecuteErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/exchange/execute',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Send a friend request
- */
-export const friendClientPostRequests = <ThrowOnError extends boolean = false>(options?: Options<FriendClientPostRequestsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<FriendClientPostRequestsResponses, FriendClientPostRequestsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * List incoming pending friend requests
- */
-export const friendClientGetRequestsIncoming = <ThrowOnError extends boolean = false>(options?: Options<FriendClientGetRequestsIncomingData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<FriendClientGetRequestsIncomingResponses, FriendClientGetRequestsIncomingErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests/incoming',
-        ...options
-    });
-};
-
-/**
- * List outgoing pending friend requests
- */
-export const friendClientGetRequestsOutgoing = <ThrowOnError extends boolean = false>(options?: Options<FriendClientGetRequestsOutgoingData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<FriendClientGetRequestsOutgoingResponses, FriendClientGetRequestsOutgoingErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests/outgoing',
-        ...options
-    });
-};
-
-/**
- * Accept a friend request
- */
-export const friendClientPostRequestsByIdAccept = <ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdAcceptData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdAcceptResponses, FriendClientPostRequestsByIdAcceptErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests/{id}/accept',
-        ...options
-    });
-};
-
-/**
- * Reject a friend request
- */
-export const friendClientPostRequestsByIdReject = <ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdRejectData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdRejectResponses, FriendClientPostRequestsByIdRejectErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests/{id}/reject',
-        ...options
-    });
-};
-
-/**
- * Cancel a friend request (sender only)
- */
-export const friendClientPostRequestsByIdCancel = <ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdCancelData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdCancelResponses, FriendClientPostRequestsByIdCancelErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/requests/{id}/cancel',
-        ...options
-    });
-};
-
-/**
- * List friends for an end user
- */
-export const friendClientGetFriends = <ThrowOnError extends boolean = false>(options?: Options<FriendClientGetFriendsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<FriendClientGetFriendsResponses, FriendClientGetFriendsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/friends',
-        ...options
-    });
-};
-
-/**
- * Remove a friend
- */
-export const friendClientDeleteFriendsById = <ThrowOnError extends boolean = false>(options: Options<FriendClientDeleteFriendsByIdData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).delete<FriendClientDeleteFriendsByIdResponses, FriendClientDeleteFriendsByIdErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/friends/{id}',
-        ...options
-    });
-};
-
-/**
- * List mutual friends between two users
- */
-export const friendClientGetFriendsMutual = <ThrowOnError extends boolean = false>(options: Options<FriendClientGetFriendsMutualData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<FriendClientGetFriendsMutualResponses, FriendClientGetFriendsMutualErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/friends/mutual',
-        ...options
-    });
-};
-
-/**
- * List blocked users
- */
-export const friendClientGetBlocks = <ThrowOnError extends boolean = false>(options?: Options<FriendClientGetBlocksData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<FriendClientGetBlocksResponses, FriendClientGetBlocksErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/blocks',
-        ...options
-    });
-};
-
-/**
- * Block a user
- */
-export const friendClientPostBlocks = <ThrowOnError extends boolean = false>(options?: Options<FriendClientPostBlocksData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<FriendClientPostBlocksResponses, FriendClientPostBlocksErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/blocks',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Unblock a user
- */
-export const friendClientDeleteBlocksByBlockeduserid = <ThrowOnError extends boolean = false>(options: Options<FriendClientDeleteBlocksByBlockeduseridData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).delete<FriendClientDeleteBlocksByBlockeduseridResponses, FriendClientDeleteBlocksByBlockeduseridErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend/blocks/{blockedUserId}',
-        ...options
-    });
-};
-
-/**
- * List available gift packages
- */
-export const friendGiftClientGetPackages = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetPackagesData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<FriendGiftClientGetPackagesResponses, FriendGiftClientGetPackagesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/packages',
-        ...options
-    });
-};
-
-/**
- * Send a gift to a friend
- */
-export const friendGiftClientPostSend = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientPostSendData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<FriendGiftClientPostSendResponses, FriendGiftClientPostSendErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/send',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * List pending received gifts
- */
-export const friendGiftClientGetInbox = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetInboxData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<FriendGiftClientGetInboxResponses, FriendGiftClientGetInboxErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/inbox',
-        ...options
-    });
-};
-
-/**
- * List sent gift history
- */
-export const friendGiftClientGetSent = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetSentData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<FriendGiftClientGetSentResponses, FriendGiftClientGetSentErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/sent',
-        ...options
-    });
-};
-
-/**
- * Claim a received gift
- */
-export const friendGiftClientPostSendsByIdClaim = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientPostSendsByIdClaimData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<FriendGiftClientPostSendsByIdClaimResponses, FriendGiftClientPostSendsByIdClaimErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/sends/{id}/claim',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Get today's gift send/receive counts
- */
-export const friendGiftClientGetDailyStatus = <ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetDailyStatusData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<FriendGiftClientGetDailyStatusResponses, FriendGiftClientGetDailyStatusErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/friend-gift/daily-status',
-        ...options
-    });
-};
-
-export const inviteClientGetMyCode = <ThrowOnError extends boolean = false>(options: Options<InviteClientGetMyCodeData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<InviteClientGetMyCodeResponses, InviteClientGetMyCodeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/my-code',
-        ...options
-    });
-};
-
-export const inviteClientPostResetMyCode = <ThrowOnError extends boolean = false>(options: Options<InviteClientPostResetMyCodeData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<InviteClientPostResetMyCodeResponses, InviteClientPostResetMyCodeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/reset-my-code',
-        ...options
-    });
-};
-
-export const inviteClientGetSummary = <ThrowOnError extends boolean = false>(options: Options<InviteClientGetSummaryData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<InviteClientGetSummaryResponses, InviteClientGetSummaryErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/summary',
-        ...options
-    });
-};
-
-export const inviteClientGetInvitees = <ThrowOnError extends boolean = false>(options: Options<InviteClientGetInviteesData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<InviteClientGetInviteesResponses, InviteClientGetInviteesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/invitees',
-        ...options
-    });
-};
-
-export const inviteClientPostBind = <ThrowOnError extends boolean = false>(options: Options<InviteClientPostBindData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<InviteClientPostBindResponses, InviteClientPostBindErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/bind',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-export const inviteClientPostQualify = <ThrowOnError extends boolean = false>(options: Options<InviteClientPostQualifyData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<InviteClientPostQualifyResponses, InviteClientPostQualifyErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/invite/qualify',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * List active guilds
- */
-export const guildClientGetGuilds = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetGuildsResponses, GuildClientGetGuildsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds',
-        ...options
-    });
-};
-
-/**
- * Create a guild
- */
-export const guildClientPostGuilds = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsResponses, GuildClientPostGuildsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Get guild details
- */
-export const guildClientGetGuildsById = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdResponses, GuildClientGetGuildsByIdErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}',
-        ...options
-    });
-};
-
-/**
- * Update guild info (leader/officer)
- */
-export const guildClientPutGuildsById = <ThrowOnError extends boolean = false>(options: Options<GuildClientPutGuildsByIdData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).put<GuildClientPutGuildsByIdResponses, GuildClientPutGuildsByIdErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Get the current user's guild
- */
-export const guildClientGetMyGuild = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetMyGuildData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetMyGuildResponses, GuildClientGetMyGuildErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/my-guild',
-        ...options
-    });
-};
-
-/**
- * Apply to join a guild
- */
-export const guildClientPostGuildsByIdJoin = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdJoinData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdJoinResponses, GuildClientPostGuildsByIdJoinErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/join',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Leave a guild
- */
-export const guildClientPostGuildsByIdLeave = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdLeaveData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdLeaveResponses, GuildClientPostGuildsByIdLeaveErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/leave',
-        ...options
-    });
-};
-
-/**
- * Disband a guild (leader only)
- */
-export const guildClientPostGuildsByIdDisband = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdDisbandData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdDisbandResponses, GuildClientPostGuildsByIdDisbandErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/disband',
-        ...options
-    });
-};
-
-/**
- * List join requests for a guild (officer+)
- */
-export const guildClientGetGuildsByIdRequests = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdRequestsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdRequestsResponses, GuildClientGetGuildsByIdRequestsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/requests',
-        ...options
-    });
-};
-
-/**
- * Accept a join request (officer+)
- */
-export const guildClientPostRequestsByIdAccept = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostRequestsByIdAcceptData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostRequestsByIdAcceptResponses, GuildClientPostRequestsByIdAcceptErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/requests/{id}/accept',
-        ...options
-    });
-};
-
-/**
- * Reject a join request (officer+)
- */
-export const guildClientPostRequestsByIdReject = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostRequestsByIdRejectData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostRequestsByIdRejectResponses, GuildClientPostRequestsByIdRejectErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/requests/{id}/reject',
-        ...options
-    });
-};
-
-/**
- * Invite a user to the guild (officer+)
- */
-export const guildClientPostGuildsByIdInvite = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdInviteData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdInviteResponses, GuildClientPostGuildsByIdInviteErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/invite',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Accept a guild invitation
- */
-export const guildClientPostInvitationsByIdAccept = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostInvitationsByIdAcceptData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostInvitationsByIdAcceptResponses, GuildClientPostInvitationsByIdAcceptErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/invitations/{id}/accept',
-        ...options
-    });
-};
-
-/**
- * Reject a guild invitation
- */
-export const guildClientPostInvitationsByIdReject = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostInvitationsByIdRejectData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostInvitationsByIdRejectResponses, GuildClientPostInvitationsByIdRejectErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/invitations/{id}/reject',
-        ...options
-    });
-};
-
-/**
- * Promote a member to officer (leader only)
- */
-export const guildClientPostGuildsByIdMembersByUseridPromote = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridPromoteData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridPromoteResponses, GuildClientPostGuildsByIdMembersByUseridPromoteErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/members/{userId}/promote',
-        ...options
-    });
-};
-
-/**
- * Demote an officer to member (leader only)
- */
-export const guildClientPostGuildsByIdMembersByUseridDemote = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridDemoteData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridDemoteResponses, GuildClientPostGuildsByIdMembersByUseridDemoteErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/members/{userId}/demote',
-        ...options
-    });
-};
-
-/**
- * Kick a member from the guild (officer+)
- */
-export const guildClientPostGuildsByIdMembersByUseridKick = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridKickData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridKickResponses, GuildClientPostGuildsByIdMembersByUseridKickErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/members/{userId}/kick',
-        ...options
-    });
-};
-
-/**
- * Transfer guild leadership (leader only)
- */
-export const guildClientPostGuildsByIdTransferLeader = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdTransferLeaderData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdTransferLeaderResponses, GuildClientPostGuildsByIdTransferLeaderErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/transfer-leader',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Contribute to the guild (member)
- */
-export const guildClientPostGuildsByIdContribute = <ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdContributeData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdContributeResponses, GuildClientPostGuildsByIdContributeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/contribute',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * List contribution logs for a guild
- */
-export const guildClientGetGuildsByIdContributions = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdContributionsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdContributionsResponses, GuildClientGetGuildsByIdContributionsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/contributions',
-        ...options
-    });
-};
-
-/**
- * List members of a guild
- */
-export const guildClientGetGuildsByIdMembers = <ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdMembersData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdMembersResponses, GuildClientGetGuildsByIdMembersErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/guild/guilds/{id}/members',
-        ...options
-    });
-};
-
-/**
- * Execute a single lottery pull
- */
-export const lotteryClientPostPull = <ThrowOnError extends boolean = false>(options?: Options<LotteryClientPostPullData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<LotteryClientPostPullResponses, LotteryClientPostPullErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/lottery/pull',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Execute multiple lottery pulls
- */
-export const lotteryClientPostMultiPull = <ThrowOnError extends boolean = false>(options?: Options<LotteryClientPostMultiPullData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<LotteryClientPostMultiPullResponses, LotteryClientPostMultiPullErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/lottery/multi-pull',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Get current user's pity state for a pool
- */
-export const lotteryClientGetPoolsByPoolkeyState = <ThrowOnError extends boolean = false>(options: Options<LotteryClientGetPoolsByPoolkeyStateData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<LotteryClientGetPoolsByPoolkeyStateResponses, LotteryClientGetPoolsByPoolkeyStateErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/lottery/pools/{poolKey}/state',
-        ...options
-    });
-};
-
-/**
- * Get current user's pull history for a pool
- */
-export const lotteryClientGetPoolsByPoolkeyHistory = <ThrowOnError extends boolean = false>(options: Options<LotteryClientGetPoolsByPoolkeyHistoryData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<LotteryClientGetPoolsByPoolkeyHistoryResponses, LotteryClientGetPoolsByPoolkeyHistoryErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/lottery/pools/{poolKey}/history',
-        ...options
-    });
-};
-
-/**
- * List an end user's mail inbox
- */
-export const mailClientGetMessages = <ThrowOnError extends boolean = false>(options?: Options<MailClientGetMessagesData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<MailClientGetMessagesResponses, MailClientGetMessagesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/mail/messages',
-        ...options
-    });
-};
-
-/**
- * Get a single inbox message (does not auto-mark read)
- */
-export const mailClientGetMessagesById = <ThrowOnError extends boolean = false>(options: Options<MailClientGetMessagesByIdData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<MailClientGetMessagesByIdResponses, MailClientGetMessagesByIdErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/mail/messages/{id}',
-        ...options
-    });
-};
-
-/**
- * Mark a mail message as read (idempotent)
- */
-export const mailClientPostMessagesByIdRead = <ThrowOnError extends boolean = false>(options: Options<MailClientPostMessagesByIdReadData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<MailClientPostMessagesByIdReadResponses, MailClientPostMessagesByIdReadErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/mail/messages/{id}/read',
-        ...options
-    });
-};
-
-/**
- * Claim rewards attached to a mail message
- */
-export const mailClientPostMessagesByIdClaim = <ThrowOnError extends boolean = false>(options: Options<MailClientPostMessagesByIdClaimData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<MailClientPostMessagesByIdClaimResponses, MailClientPostMessagesByIdClaimErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/mail/messages/{id}/claim',
-        ...options
-    });
-};
-
-/**
- * Purchase a product as the calling end user
- */
-export const shopClientPostPurchase = <ThrowOnError extends boolean = false>(options?: Options<ShopClientPostPurchaseData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<ShopClientPostPurchaseResponses, ShopClientPostPurchaseErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/shop/purchase',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Claim a growth-pack stage reward as the calling end user
- */
-export const shopClientPostClaimStage = <ThrowOnError extends boolean = false>(options?: Options<ShopClientPostClaimStageData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<ShopClientPostClaimStageResponses, ShopClientPostClaimStageErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/shop/claim-stage',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * List products with per-user eligibility
- */
-export const shopClientGetProducts = <ThrowOnError extends boolean = false>(options?: Options<ShopClientGetProductsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<ShopClientGetProductsResponses, ShopClientGetProductsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/shop/products',
-        ...options
-    });
-};
-
-/**
- * Submit a business event to update task progress
- */
-export const taskClientPostEvents = <ThrowOnError extends boolean = false>(options?: Options<TaskClientPostEventsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<TaskClientPostEventsResponses, TaskClientPostEventsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/task/events',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * List tasks with per-user progress
- */
-export const taskClientPostList = <ThrowOnError extends boolean = false>(options?: Options<TaskClientPostListData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<TaskClientPostListResponses, TaskClientPostListErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/task/list',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Manually claim task reward
- */
-export const taskClientPostClaimByTaskid = <ThrowOnError extends boolean = false>(options: Options<TaskClientPostClaimByTaskidData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TaskClientPostClaimByTaskidResponses, TaskClientPostClaimByTaskidErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/task/claim/{taskId}',
-        ...options
-    });
-};
-
-/**
- * Manually claim a staged-reward tier (阶段性奖励)
- */
-export const taskClientPostClaimTier = <ThrowOnError extends boolean = false>(options?: Options<TaskClientPostClaimTierData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<TaskClientPostClaimTierResponses, TaskClientPostClaimTierErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/task/claim-tier',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Create a new team (caller becomes leader)
- */
-export const teamClientPostTeams = <ThrowOnError extends boolean = false>(options?: Options<TeamClientPostTeamsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<TeamClientPostTeamsResponses, TeamClientPostTeamsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Get the current user's active team for a config
- */
-export const teamClientGetMyTeam = <ThrowOnError extends boolean = false>(options: Options<TeamClientGetMyTeamData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<TeamClientGetMyTeamResponses, TeamClientGetMyTeamErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/my-team',
-        ...options
-    });
-};
-
-/**
- * Get a team by id with members
- */
-export const teamClientGetTeamsById = <ThrowOnError extends boolean = false>(options: Options<TeamClientGetTeamsByIdData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<TeamClientGetTeamsByIdResponses, TeamClientGetTeamsByIdErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}',
-        ...options
-    });
-};
-
-/**
- * Join an open team
- */
-export const teamClientPostTeamsByIdJoin = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdJoinData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdJoinResponses, TeamClientPostTeamsByIdJoinErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/join',
-        ...options
-    });
-};
-
-/**
- * Leave a team
- */
-export const teamClientPostTeamsByIdLeave = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdLeaveData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdLeaveResponses, TeamClientPostTeamsByIdLeaveErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/leave',
-        ...options
-    });
-};
-
-/**
- * Dissolve a team (leader only)
- */
-export const teamClientPostTeamsByIdDissolve = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdDissolveData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdDissolveResponses, TeamClientPostTeamsByIdDissolveErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/dissolve',
-        ...options
-    });
-};
-
-/**
- * Kick a member from the team (leader only)
- */
-export const teamClientPostTeamsByIdKickByUserid = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdKickByUseridData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdKickByUseridResponses, TeamClientPostTeamsByIdKickByUseridErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/kick/{userId}',
-        ...options
-    });
-};
-
-/**
- * Transfer team leadership to another member
- */
-export const teamClientPostTeamsByIdTransferLeader = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdTransferLeaderData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdTransferLeaderResponses, TeamClientPostTeamsByIdTransferLeaderErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/transfer-leader',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Update team status (leader only)
- */
-export const teamClientPutTeamsByIdStatus = <ThrowOnError extends boolean = false>(options: Options<TeamClientPutTeamsByIdStatusData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).put<TeamClientPutTeamsByIdStatusResponses, TeamClientPutTeamsByIdStatusErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/status',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Invite a user to the team
- */
-export const teamClientPostTeamsByIdInvite = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdInviteData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdInviteResponses, TeamClientPostTeamsByIdInviteErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/teams/{id}/invite',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Accept a team invitation
- */
-export const teamClientPostInvitationsByIdAccept = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostInvitationsByIdAcceptData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostInvitationsByIdAcceptResponses, TeamClientPostInvitationsByIdAcceptErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/invitations/{id}/accept',
-        ...options
-    });
-};
-
-/**
- * Reject a team invitation
- */
-export const teamClientPostInvitationsByIdReject = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostInvitationsByIdRejectData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostInvitationsByIdRejectResponses, TeamClientPostInvitationsByIdRejectErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/invitations/{id}/reject',
-        ...options
-    });
-};
-
-/**
- * Quick match — join the fullest open team or create a new one
- */
-export const teamClientPostQuickMatch = <ThrowOnError extends boolean = false>(options: Options<TeamClientPostQuickMatchData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<TeamClientPostQuickMatchResponses, TeamClientPostQuickMatchErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/team/quick-match',
-        ...options
-    });
-};
-
-/**
- * List configs with per-user progress summary
- */
-export const levelClientPostConfigs = <ThrowOnError extends boolean = false>(options?: Options<LevelClientPostConfigsData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<LevelClientPostConfigsResponses, LevelClientPostConfigsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/level/configs',
-        ...options
-    });
-};
-
-/**
- * Full config detail — levels, stages, per-user progress
- */
-export const levelClientPostConfigsByKeyOverview = <ThrowOnError extends boolean = false>(options: Options<LevelClientPostConfigsByKeyOverviewData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<LevelClientPostConfigsByKeyOverviewResponses, LevelClientPostConfigsByKeyOverviewErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/level/configs/{key}/overview',
-        ...options
-    });
-};
-
-/**
- * Single level detail with unlock status and progress
- */
-export const levelClientPostLevelsByIdDetail = <ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdDetailData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdDetailResponses, LevelClientPostLevelsByIdDetailErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/level/levels/{id}/detail',
-        ...options
-    });
-};
-
-/**
- * Report a level clear with stars and optional score
- */
-export const levelClientPostLevelsByIdClear = <ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdClearData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdClearResponses, LevelClientPostLevelsByIdClearErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/level/levels/{id}/clear',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Claim clear rewards or a star reward tier
- */
-export const levelClientPostLevelsByIdClaim = <ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdClaimData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdClaimResponses, LevelClientPostLevelsByIdClaimErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/level/levels/{id}/claim',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Top N of the current (or specified) cycle, with self rank.
- */
-export const leaderboardClientGetConfigsByAliasTop = <ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasTopData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasTopResponses, LeaderboardClientGetConfigsByAliasTopErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/leaderboard/configs/{alias}/top',
-        ...options
-    });
-};
-
-/**
- * Entries above/below the caller within window.
- */
-export const leaderboardClientGetConfigsByAliasNeighbors = <ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasNeighborsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasNeighborsResponses, LeaderboardClientGetConfigsByAliasNeighborsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/leaderboard/configs/{alias}/neighbors',
-        ...options
-    });
-};
-
-/**
- * Past settled snapshots for this leaderboard.
- */
-export const leaderboardClientGetConfigsByAliasSnapshots = <ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasSnapshotsData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasSnapshotsResponses, LeaderboardClientGetConfigsByAliasSnapshotsErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/leaderboard/configs/{alias}/snapshots',
-        ...options
-    });
-};
-
-/**
- * Get the caller's current standing in a ladder. Resolves the season by `seasonId` or the active season of `tierConfigAlias`.
- */
-export const rankClientGetState = <ThrowOnError extends boolean = false>(options: Options<RankClientGetStateData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<RankClientGetStateResponses, RankClientGetStateErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/rank/state',
-        ...options
-    });
-};
-
-/**
- * List the caller's recent match participant rows (desc by id).
- */
-export const rankClientGetHistory = <ThrowOnError extends boolean = false>(options: Options<RankClientGetHistoryData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<RankClientGetHistoryResponses, RankClientGetHistoryErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/rank/history',
-        ...options
-    });
-};
-
-/**
- * Read the season leaderboard. Global (no tierId) delegates to the leaderboard module; tier-filtered goes through PG directly.
- */
-export const rankClientGetLeaderboard = <ThrowOnError extends boolean = false>(options: Options<RankClientGetLeaderboardData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<RankClientGetLeaderboardResponses, RankClientGetLeaderboardErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/rank/leaderboard',
-        ...options
-    });
-};
-
-/**
- * List activities currently visible to the caller (teasing / active / settling / ended).
- */
-export const activityClientGetList = <ThrowOnError extends boolean = false>(options: Options<ActivityClientGetListData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<ActivityClientGetListResponses, ActivityClientGetListErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/activity/list',
-        ...options
-    });
-};
-
-/**
- * Single-round-trip view of an activity for the caller.
- */
-export const activityClientGetByAlias = <ThrowOnError extends boolean = false>(options: Options<ActivityClientGetByAliasData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<ActivityClientGetByAliasResponses, ActivityClientGetByAliasErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/activity/{alias}',
-        ...options
-    });
-};
-
-/**
- * Enrol in an activity.
- */
-export const activityClientPostByAliasJoin = <ThrowOnError extends boolean = false>(options: Options<ActivityClientPostByAliasJoinData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<ActivityClientPostByAliasJoinResponses, ActivityClientPostByAliasJoinErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/activity/{alias}/join',
-        ...options
-    });
-};
-
-/**
- * Claim an activity milestone reward.
- */
-export const activityClientPostByAliasClaimMilestone = <ThrowOnError extends boolean = false>(options: Options<ActivityClientPostByAliasClaimMilestoneData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<ActivityClientPostByAliasClaimMilestoneResponses, ActivityClientPostByAliasClaimMilestoneErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/activity/{alias}/claim-milestone',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * List the authenticated end user's assist-pool instances
- */
-export const assistPoolClientGetInstances = <ThrowOnError extends boolean = false>(options?: Options<AssistPoolClientGetInstancesData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).get<AssistPoolClientGetInstancesResponses, AssistPoolClientGetInstancesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/assist-pool/instances',
-        ...options
-    });
-};
-
-/**
- * Initiate an assist-pool instance for the authenticated end user
- */
-export const assistPoolClientPostInstances = <ThrowOnError extends boolean = false>(options?: Options<AssistPoolClientPostInstancesData, ThrowOnError>) => {
-    return (options?.client ?? _heyApiClient).post<AssistPoolClientPostInstancesResponses, AssistPoolClientPostInstancesErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/assist-pool/instances',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Fetch an assist-pool instance (readable by any authenticated end user within the org, so a friend can view the pool before helping)
- */
-export const assistPoolClientGetInstancesByInstanceid = <ThrowOnError extends boolean = false>(options: Options<AssistPoolClientGetInstancesByInstanceidData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<AssistPoolClientGetInstancesByInstanceidResponses, AssistPoolClientGetInstancesByInstanceidErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/assist-pool/instances/{instanceId}',
-        ...options
-    });
-};
-
-/**
- * Contribute to an instance as the authenticated end user (helps someone else's pool)
- */
-export const assistPoolClientPostInstancesByInstanceidContribute = <ThrowOnError extends boolean = false>(options: Options<AssistPoolClientPostInstancesByInstanceidContributeData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).post<AssistPoolClientPostInstancesByInstanceidContributeResponses, AssistPoolClientPostInstancesByInstanceidContributeErrors, ThrowOnError>({
-        security: [
-            {
-                name: 'x-api-key',
-                type: 'apiKey'
-            }
-        ],
-        url: '/api/client/assist-pool/instances/{instanceId}/contribute',
-        ...options
-    });
-};
+export class AnnouncementClientService {
+    /**
+     * List currently-visible announcements for an end user
+     */
+    public static announcementClientGetActive<ThrowOnError extends boolean = false>(options: Options<AnnouncementClientGetActiveData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<AnnouncementClientGetActiveResponses, AnnouncementClientGetActiveErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/announcement/active',
+            ...options
+        });
+    }
+    
+    /**
+     * Record an impression for an announcement
+     */
+    public static announcementClientPostByAliasImpression<ThrowOnError extends boolean = false>(options: Options<AnnouncementClientPostByAliasImpressionData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<AnnouncementClientPostByAliasImpressionResponses, AnnouncementClientPostByAliasImpressionErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/announcement/{alias}/impression',
+            ...options
+        });
+    }
+    
+    /**
+     * Record a CTA click for an announcement
+     */
+    public static announcementClientPostByAliasClick<ThrowOnError extends boolean = false>(options: Options<AnnouncementClientPostByAliasClickData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<AnnouncementClientPostByAliasClickResponses, AnnouncementClientPostByAliasClickErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/announcement/{alias}/click',
+            ...options
+        });
+    }
+    
+}
+
+export class BadgeClientService {
+    /**
+     * Fetch the red-dot tree for the calling end user
+     */
+    public static badgeClientGetTree<ThrowOnError extends boolean = false>(options?: Options<BadgeClientGetTreeData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<BadgeClientGetTreeResponses, BadgeClientGetTreeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/badge/tree',
+            ...options
+        });
+    }
+    
+    /**
+     * Dismiss a red-dot node (mode != auto)
+     */
+    public static badgeClientPostDismiss<ThrowOnError extends boolean = false>(options?: Options<BadgeClientPostDismissData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<BadgeClientPostDismissResponses, BadgeClientPostDismissErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/badge/dismiss',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Wipe session-mode dismissals for the caller (called on player login)
+     */
+    public static badgeClientPostResetSession<ThrowOnError extends boolean = false>(options?: Options<BadgeClientPostResetSessionData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<BadgeClientPostResetSessionResponses, BadgeClientPostResetSessionErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/badge/reset-session',
+            ...options
+        });
+    }
+    
+}
+
+export class BannerClientService {
+    /**
+     * Resolve a banner group by alias for an end user
+     */
+    public static bannerClientGetGroupsByAlias<ThrowOnError extends boolean = false>(options: Options<BannerClientGetGroupsByAliasData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<BannerClientGetGroupsByAliasResponses, BannerClientGetGroupsByAliasErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/banner/groups/{alias}',
+            ...options
+        });
+    }
+    
+}
+
+export class BattlePassClientService {
+    /**
+     * Get the currently active battle-pass season (config only)
+     */
+    public static battlePassClientGetCurrent<ThrowOnError extends boolean = false>(options?: Options<BattlePassClientGetCurrentData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<BattlePassClientGetCurrentResponses, BattlePassClientGetCurrentErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/battle-pass/current',
+            ...options
+        });
+    }
+    
+    /**
+     * Get the authenticated end user's aggregate battle-pass view
+     */
+    public static battlePassClientGetBySeasonidAggregate<ThrowOnError extends boolean = false>(options: Options<BattlePassClientGetBySeasonidAggregateData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<BattlePassClientGetBySeasonidAggregateResponses, BattlePassClientGetBySeasonidAggregateErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/battle-pass/{seasonId}/aggregate',
+            ...options
+        });
+    }
+    
+    /**
+     * Claim a single level reward for the authenticated end user
+     */
+    public static battlePassClientPostBySeasonidClaim<ThrowOnError extends boolean = false>(options: Options<BattlePassClientPostBySeasonidClaimData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<BattlePassClientPostBySeasonidClaimResponses, BattlePassClientPostBySeasonidClaimErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/battle-pass/{seasonId}/claim',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Claim all available level rewards for the authenticated end user
+     */
+    public static battlePassClientPostBySeasonidClaimAll<ThrowOnError extends boolean = false>(options: Options<BattlePassClientPostBySeasonidClaimAllData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<BattlePassClientPostBySeasonidClaimAllResponses, BattlePassClientPostBySeasonidClaimAllErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/battle-pass/{seasonId}/claim-all',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class CdKeyClientService {
+    /**
+     * Redeem a code for an end user
+     */
+    public static cdkeyClientPostRedeem<ThrowOnError extends boolean = false>(options: Options<CdkeyClientPostRedeemData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<CdkeyClientPostRedeemResponses, CdkeyClientPostRedeemErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/cdkey/redeem',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class CheckInClientService {
+    /**
+     * Perform a check-in for the authenticated end user
+     */
+    public static checkInClientPostCheckIns<ThrowOnError extends boolean = false>(options?: Options<CheckInClientPostCheckInsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<CheckInClientPostCheckInsResponses, CheckInClientPostCheckInsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/check-in/check-ins',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Get the authenticated end user's check-in state
+     */
+    public static checkInClientGetState<ThrowOnError extends boolean = false>(options: Options<CheckInClientGetStateData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CheckInClientGetStateResponses, CheckInClientGetStateErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/check-in/state',
+            ...options
+        });
+    }
+    
+}
+
+export class CmsClientService {
+    /**
+     * Fetch a single published CMS entry by alias
+     */
+    public static cmsClientGetByAliasByTypealiasByEntryalias<ThrowOnError extends boolean = false>(options: Options<CmsClientGetByAliasByTypealiasByEntryaliasData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CmsClientGetByAliasByTypealiasByEntryaliasResponses, CmsClientGetByAliasByTypealiasByEntryaliasErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/cms/by-alias/{typeAlias}/{entryAlias}',
+            ...options
+        });
+    }
+    
+    /**
+     * List published entries within a group
+     */
+    public static cmsClientGetGroupByTypealiasByGroupkey<ThrowOnError extends boolean = false>(options: Options<CmsClientGetGroupByTypealiasByGroupkeyData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CmsClientGetGroupByTypealiasByGroupkeyResponses, CmsClientGetGroupByTypealiasByGroupkeyErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/cms/group/{typeAlias}/{groupKey}',
+            ...options
+        });
+    }
+    
+    /**
+     * List published entries with a tag (cross-type)
+     */
+    public static cmsClientGetTagByTag<ThrowOnError extends boolean = false>(options: Options<CmsClientGetTagByTagData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CmsClientGetTagByTagResponses, CmsClientGetTagByTagErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/cms/tag/{tag}',
+            ...options
+        });
+    }
+    
+    /**
+     * List all published entries of a type
+     */
+    public static cmsClientGetListByTypealias<ThrowOnError extends boolean = false>(options: Options<CmsClientGetListByTypealiasData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CmsClientGetListByTypealiasResponses, CmsClientGetListByTypealiasErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/cms/list/{typeAlias}',
+            ...options
+        });
+    }
+    
+}
+
+export class CollectionClientService {
+    /**
+     * List albums with per-user progress summary
+     */
+    public static collectionClientGetAlbums<ThrowOnError extends boolean = false>(options: Options<CollectionClientGetAlbumsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CollectionClientGetAlbumsResponses, CollectionClientGetAlbumsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/collection/albums',
+            ...options
+        });
+    }
+    
+    /**
+     * Album detail — entries, milestones, per-user progress
+     */
+    public static collectionClientGetAlbumsByKey<ThrowOnError extends boolean = false>(options: Options<CollectionClientGetAlbumsByKeyData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CollectionClientGetAlbumsByKeyResponses, CollectionClientGetAlbumsByKeyErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/collection/albums/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Reconcile unlocks from the user's current inventory (safety net)
+     */
+    public static collectionClientPostAlbumsByKeySync<ThrowOnError extends boolean = false>(options: Options<CollectionClientPostAlbumsByKeySyncData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<CollectionClientPostAlbumsByKeySyncResponses, CollectionClientPostAlbumsByKeySyncErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/collection/albums/{key}/sync',
+            ...options
+        });
+    }
+    
+    /**
+     * Claim a milestone reward (manual path — autoClaim milestones arrive via mail)
+     */
+    public static collectionClientPostMilestonesByIdClaim<ThrowOnError extends boolean = false>(options: Options<CollectionClientPostMilestonesByIdClaimData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<CollectionClientPostMilestonesByIdClaimResponses, CollectionClientPostMilestonesByIdClaimErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/collection/milestones/{id}/claim',
+            ...options
+        });
+    }
+    
+}
+
+export class CurrencyClientService {
+    /**
+     * List all currency balances for a user
+     */
+    public static currencyClientGetWallets<ThrowOnError extends boolean = false>(options: Options<CurrencyClientGetWalletsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CurrencyClientGetWalletsResponses, CurrencyClientGetWalletsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/currency/wallets',
+            ...options
+        });
+    }
+    
+    /**
+     * Get balance for a specific currency
+     */
+    public static currencyClientGetBalanceByKey<ThrowOnError extends boolean = false>(options: Options<CurrencyClientGetBalanceByKeyData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<CurrencyClientGetBalanceByKeyResponses, CurrencyClientGetBalanceByKeyErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/currency/balance/{key}',
+            ...options
+        });
+    }
+    
+}
+
+export class DialogueClientService {
+    /**
+     * Begin or resume a dialogue script
+     */
+    public static dialogueClientGetScriptsByAliasStart<ThrowOnError extends boolean = false>(options: Options<DialogueClientGetScriptsByAliasStartData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<DialogueClientGetScriptsByAliasStartResponses, DialogueClientGetScriptsByAliasStartErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/dialogue/scripts/{alias}/start',
+            ...options
+        });
+    }
+    
+    /**
+     * Advance the dialogue session by one step
+     */
+    public static dialogueClientPostScriptsByAliasAdvance<ThrowOnError extends boolean = false>(options: Options<DialogueClientPostScriptsByAliasAdvanceData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<DialogueClientPostScriptsByAliasAdvanceResponses, DialogueClientPostScriptsByAliasAdvanceErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/dialogue/scripts/{alias}/advance',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Reset a repeatable dialogue script
+     */
+    public static dialogueClientPostScriptsByAliasReset<ThrowOnError extends boolean = false>(options: Options<DialogueClientPostScriptsByAliasResetData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<DialogueClientPostScriptsByAliasResetResponses, DialogueClientPostScriptsByAliasResetErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/dialogue/scripts/{alias}/reset',
+            ...options
+        });
+    }
+    
+}
+
+export class EntityClientService {
+    /**
+     * List entity instances for the end user
+     */
+    public static entityClientGetInstances<ThrowOnError extends boolean = false>(options: Options<EntityClientGetInstancesData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<EntityClientGetInstancesResponses, EntityClientGetInstancesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances',
+            ...options
+        });
+    }
+    
+    /**
+     * Get entity instance detail with slots
+     */
+    public static entityClientGetInstancesByInstanceid<ThrowOnError extends boolean = false>(options: Options<EntityClientGetInstancesByInstanceidData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<EntityClientGetInstancesByInstanceidResponses, EntityClientGetInstancesByInstanceidErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Acquire a new entity instance
+     */
+    public static entityClientPostAcquire<ThrowOnError extends boolean = false>(options: Options<EntityClientPostAcquireData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostAcquireResponses, EntityClientPostAcquireErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/acquire',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Discard (delete) an entity instance
+     */
+    public static entityClientPostInstancesByInstanceidDiscard<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidDiscardData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidDiscardResponses, EntityClientPostInstancesByInstanceidDiscardErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/discard',
+            ...options
+        });
+    }
+    
+    /**
+     * Toggle entity lock
+     */
+    public static entityClientPostInstancesByInstanceidLock<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidLockData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidLockResponses, EntityClientPostInstancesByInstanceidLockErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/lock',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Add experience points
+     */
+    public static entityClientPostInstancesByInstanceidAddExp<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidAddExpData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidAddExpResponses, EntityClientPostInstancesByInstanceidAddExpErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/add-exp',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Level up (consumes materials)
+     */
+    public static entityClientPostInstancesByInstanceidLevelUp<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidLevelUpData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidLevelUpResponses, EntityClientPostInstancesByInstanceidLevelUpErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/level-up',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Rank up (consumes materials)
+     */
+    public static entityClientPostInstancesByInstanceidRankUp<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidRankUpData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidRankUpResponses, EntityClientPostInstancesByInstanceidRankUpErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/rank-up',
+            ...options
+        });
+    }
+    
+    /**
+     * Synthesize (merge) entities
+     */
+    public static entityClientPostInstancesByInstanceidSynthesize<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidSynthesizeData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidSynthesizeResponses, EntityClientPostInstancesByInstanceidSynthesizeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/synthesize',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Equip an entity into a slot
+     */
+    public static entityClientPostInstancesByInstanceidEquip<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidEquipData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidEquipResponses, EntityClientPostInstancesByInstanceidEquipErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/equip',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Unequip an entity from a slot
+     */
+    public static entityClientPostInstancesByInstanceidUnequip<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidUnequipData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidUnequipResponses, EntityClientPostInstancesByInstanceidUnequipErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/unequip',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Change entity skin
+     */
+    public static entityClientPostInstancesByInstanceidChangeSkin<ThrowOnError extends boolean = false>(options: Options<EntityClientPostInstancesByInstanceidChangeSkinData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<EntityClientPostInstancesByInstanceidChangeSkinResponses, EntityClientPostInstancesByInstanceidChangeSkinErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/instances/{instanceId}/change-skin',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List formations for a config
+     */
+    public static entityClientGetFormationsByConfigid<ThrowOnError extends boolean = false>(options: Options<EntityClientGetFormationsByConfigidData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<EntityClientGetFormationsByConfigidResponses, EntityClientGetFormationsByConfigidErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/formations/{configId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update a formation
+     */
+    public static entityClientPutFormationsByConfigidByFormationindex<ThrowOnError extends boolean = false>(options: Options<EntityClientPutFormationsByConfigidByFormationindexData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).put<EntityClientPutFormationsByConfigidByFormationindexResponses, EntityClientPutFormationsByConfigidByFormationindexErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/entity/formations/{configId}/{formationIndex}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class ItemClientService {
+    /**
+     * Get the caller's inventory
+     */
+    public static itemClientGetInventory<ThrowOnError extends boolean = false>(options?: Options<ItemClientGetInventoryData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<ItemClientGetInventoryResponses, ItemClientGetInventoryErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/item/inventory',
+            ...options
+        });
+    }
+    
+    /**
+     * Get the caller's balance for a specific item
+     */
+    public static itemClientGetBalanceByKey<ThrowOnError extends boolean = false>(options: Options<ItemClientGetBalanceByKeyData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<ItemClientGetBalanceByKeyResponses, ItemClientGetBalanceByKeyErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/item/balance/{key}',
+            ...options
+        });
+    }
+    
+    /**
+     * Use an item (deducts 1 and triggers lottery if linked)
+     */
+    public static itemClientPostUse<ThrowOnError extends boolean = false>(options?: Options<ItemClientPostUseData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<ItemClientPostUseResponses, ItemClientPostUseErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/item/use',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+}
+
+export class ExchangeClientService {
+    /**
+     * Execute an exchange for an end user
+     */
+    public static exchangeClientPostExecute<ThrowOnError extends boolean = false>(options?: Options<ExchangeClientPostExecuteData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<ExchangeClientPostExecuteResponses, ExchangeClientPostExecuteErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/exchange/execute',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+}
+
+export class FriendClientService {
+    /**
+     * Send a friend request
+     */
+    public static friendClientPostRequests<ThrowOnError extends boolean = false>(options?: Options<FriendClientPostRequestsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<FriendClientPostRequestsResponses, FriendClientPostRequestsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * List incoming pending friend requests
+     */
+    public static friendClientGetRequestsIncoming<ThrowOnError extends boolean = false>(options?: Options<FriendClientGetRequestsIncomingData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<FriendClientGetRequestsIncomingResponses, FriendClientGetRequestsIncomingErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests/incoming',
+            ...options
+        });
+    }
+    
+    /**
+     * List outgoing pending friend requests
+     */
+    public static friendClientGetRequestsOutgoing<ThrowOnError extends boolean = false>(options?: Options<FriendClientGetRequestsOutgoingData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<FriendClientGetRequestsOutgoingResponses, FriendClientGetRequestsOutgoingErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests/outgoing',
+            ...options
+        });
+    }
+    
+    /**
+     * Accept a friend request
+     */
+    public static friendClientPostRequestsByIdAccept<ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdAcceptData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdAcceptResponses, FriendClientPostRequestsByIdAcceptErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests/{id}/accept',
+            ...options
+        });
+    }
+    
+    /**
+     * Reject a friend request
+     */
+    public static friendClientPostRequestsByIdReject<ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdRejectData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdRejectResponses, FriendClientPostRequestsByIdRejectErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests/{id}/reject',
+            ...options
+        });
+    }
+    
+    /**
+     * Cancel a friend request (sender only)
+     */
+    public static friendClientPostRequestsByIdCancel<ThrowOnError extends boolean = false>(options: Options<FriendClientPostRequestsByIdCancelData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<FriendClientPostRequestsByIdCancelResponses, FriendClientPostRequestsByIdCancelErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/requests/{id}/cancel',
+            ...options
+        });
+    }
+    
+    /**
+     * List friends for an end user
+     */
+    public static friendClientGetFriends<ThrowOnError extends boolean = false>(options?: Options<FriendClientGetFriendsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<FriendClientGetFriendsResponses, FriendClientGetFriendsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/friends',
+            ...options
+        });
+    }
+    
+    /**
+     * Remove a friend
+     */
+    public static friendClientDeleteFriendsById<ThrowOnError extends boolean = false>(options: Options<FriendClientDeleteFriendsByIdData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).delete<FriendClientDeleteFriendsByIdResponses, FriendClientDeleteFriendsByIdErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/friends/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * List mutual friends between two users
+     */
+    public static friendClientGetFriendsMutual<ThrowOnError extends boolean = false>(options: Options<FriendClientGetFriendsMutualData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<FriendClientGetFriendsMutualResponses, FriendClientGetFriendsMutualErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/friends/mutual',
+            ...options
+        });
+    }
+    
+    /**
+     * List blocked users
+     */
+    public static friendClientGetBlocks<ThrowOnError extends boolean = false>(options?: Options<FriendClientGetBlocksData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<FriendClientGetBlocksResponses, FriendClientGetBlocksErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/blocks',
+            ...options
+        });
+    }
+    
+    /**
+     * Block a user
+     */
+    public static friendClientPostBlocks<ThrowOnError extends boolean = false>(options?: Options<FriendClientPostBlocksData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<FriendClientPostBlocksResponses, FriendClientPostBlocksErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/blocks',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Unblock a user
+     */
+    public static friendClientDeleteBlocksByBlockeduserid<ThrowOnError extends boolean = false>(options: Options<FriendClientDeleteBlocksByBlockeduseridData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).delete<FriendClientDeleteBlocksByBlockeduseridResponses, FriendClientDeleteBlocksByBlockeduseridErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend/blocks/{blockedUserId}',
+            ...options
+        });
+    }
+    
+}
+
+export class FriendGiftClientService {
+    /**
+     * List available gift packages
+     */
+    public static friendGiftClientGetPackages<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetPackagesData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<FriendGiftClientGetPackagesResponses, FriendGiftClientGetPackagesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/packages',
+            ...options
+        });
+    }
+    
+    /**
+     * Send a gift to a friend
+     */
+    public static friendGiftClientPostSend<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientPostSendData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<FriendGiftClientPostSendResponses, FriendGiftClientPostSendErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/send',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List pending received gifts
+     */
+    public static friendGiftClientGetInbox<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetInboxData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<FriendGiftClientGetInboxResponses, FriendGiftClientGetInboxErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/inbox',
+            ...options
+        });
+    }
+    
+    /**
+     * List sent gift history
+     */
+    public static friendGiftClientGetSent<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetSentData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<FriendGiftClientGetSentResponses, FriendGiftClientGetSentErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/sent',
+            ...options
+        });
+    }
+    
+    /**
+     * Claim a received gift
+     */
+    public static friendGiftClientPostSendsByIdClaim<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientPostSendsByIdClaimData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<FriendGiftClientPostSendsByIdClaimResponses, FriendGiftClientPostSendsByIdClaimErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/sends/{id}/claim',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Get today's gift send/receive counts
+     */
+    public static friendGiftClientGetDailyStatus<ThrowOnError extends boolean = false>(options: Options<FriendGiftClientGetDailyStatusData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<FriendGiftClientGetDailyStatusResponses, FriendGiftClientGetDailyStatusErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/friend-gift/daily-status',
+            ...options
+        });
+    }
+    
+}
+
+export class InviteClientService {
+    public static inviteClientGetMyCode<ThrowOnError extends boolean = false>(options: Options<InviteClientGetMyCodeData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<InviteClientGetMyCodeResponses, InviteClientGetMyCodeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/my-code',
+            ...options
+        });
+    }
+    
+    public static inviteClientPostResetMyCode<ThrowOnError extends boolean = false>(options: Options<InviteClientPostResetMyCodeData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<InviteClientPostResetMyCodeResponses, InviteClientPostResetMyCodeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/reset-my-code',
+            ...options
+        });
+    }
+    
+    public static inviteClientGetSummary<ThrowOnError extends boolean = false>(options: Options<InviteClientGetSummaryData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<InviteClientGetSummaryResponses, InviteClientGetSummaryErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/summary',
+            ...options
+        });
+    }
+    
+    public static inviteClientGetInvitees<ThrowOnError extends boolean = false>(options: Options<InviteClientGetInviteesData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<InviteClientGetInviteesResponses, InviteClientGetInviteesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/invitees',
+            ...options
+        });
+    }
+    
+    public static inviteClientPostBind<ThrowOnError extends boolean = false>(options: Options<InviteClientPostBindData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<InviteClientPostBindResponses, InviteClientPostBindErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/bind',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    public static inviteClientPostQualify<ThrowOnError extends boolean = false>(options: Options<InviteClientPostQualifyData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<InviteClientPostQualifyResponses, InviteClientPostQualifyErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/invite/qualify',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class GuildClientService {
+    /**
+     * List active guilds
+     */
+    public static guildClientGetGuilds<ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetGuildsResponses, GuildClientGetGuildsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds',
+            ...options
+        });
+    }
+    
+    /**
+     * Create a guild
+     */
+    public static guildClientPostGuilds<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsResponses, GuildClientPostGuildsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Get guild details
+     */
+    public static guildClientGetGuildsById<ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdResponses, GuildClientGetGuildsByIdErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update guild info (leader/officer)
+     */
+    public static guildClientPutGuildsById<ThrowOnError extends boolean = false>(options: Options<GuildClientPutGuildsByIdData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).put<GuildClientPutGuildsByIdResponses, GuildClientPutGuildsByIdErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Get the current user's guild
+     */
+    public static guildClientGetMyGuild<ThrowOnError extends boolean = false>(options: Options<GuildClientGetMyGuildData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetMyGuildResponses, GuildClientGetMyGuildErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/my-guild',
+            ...options
+        });
+    }
+    
+    /**
+     * Apply to join a guild
+     */
+    public static guildClientPostGuildsByIdJoin<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdJoinData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdJoinResponses, GuildClientPostGuildsByIdJoinErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/join',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Leave a guild
+     */
+    public static guildClientPostGuildsByIdLeave<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdLeaveData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdLeaveResponses, GuildClientPostGuildsByIdLeaveErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/leave',
+            ...options
+        });
+    }
+    
+    /**
+     * Disband a guild (leader only)
+     */
+    public static guildClientPostGuildsByIdDisband<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdDisbandData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdDisbandResponses, GuildClientPostGuildsByIdDisbandErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/disband',
+            ...options
+        });
+    }
+    
+    /**
+     * List join requests for a guild (officer+)
+     */
+    public static guildClientGetGuildsByIdRequests<ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdRequestsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdRequestsResponses, GuildClientGetGuildsByIdRequestsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/requests',
+            ...options
+        });
+    }
+    
+    /**
+     * Accept a join request (officer+)
+     */
+    public static guildClientPostRequestsByIdAccept<ThrowOnError extends boolean = false>(options: Options<GuildClientPostRequestsByIdAcceptData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostRequestsByIdAcceptResponses, GuildClientPostRequestsByIdAcceptErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/requests/{id}/accept',
+            ...options
+        });
+    }
+    
+    /**
+     * Reject a join request (officer+)
+     */
+    public static guildClientPostRequestsByIdReject<ThrowOnError extends boolean = false>(options: Options<GuildClientPostRequestsByIdRejectData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostRequestsByIdRejectResponses, GuildClientPostRequestsByIdRejectErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/requests/{id}/reject',
+            ...options
+        });
+    }
+    
+    /**
+     * Invite a user to the guild (officer+)
+     */
+    public static guildClientPostGuildsByIdInvite<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdInviteData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdInviteResponses, GuildClientPostGuildsByIdInviteErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/invite',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Accept a guild invitation
+     */
+    public static guildClientPostInvitationsByIdAccept<ThrowOnError extends boolean = false>(options: Options<GuildClientPostInvitationsByIdAcceptData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostInvitationsByIdAcceptResponses, GuildClientPostInvitationsByIdAcceptErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/invitations/{id}/accept',
+            ...options
+        });
+    }
+    
+    /**
+     * Reject a guild invitation
+     */
+    public static guildClientPostInvitationsByIdReject<ThrowOnError extends boolean = false>(options: Options<GuildClientPostInvitationsByIdRejectData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostInvitationsByIdRejectResponses, GuildClientPostInvitationsByIdRejectErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/invitations/{id}/reject',
+            ...options
+        });
+    }
+    
+    /**
+     * Promote a member to officer (leader only)
+     */
+    public static guildClientPostGuildsByIdMembersByUseridPromote<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridPromoteData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridPromoteResponses, GuildClientPostGuildsByIdMembersByUseridPromoteErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/members/{userId}/promote',
+            ...options
+        });
+    }
+    
+    /**
+     * Demote an officer to member (leader only)
+     */
+    public static guildClientPostGuildsByIdMembersByUseridDemote<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridDemoteData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridDemoteResponses, GuildClientPostGuildsByIdMembersByUseridDemoteErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/members/{userId}/demote',
+            ...options
+        });
+    }
+    
+    /**
+     * Kick a member from the guild (officer+)
+     */
+    public static guildClientPostGuildsByIdMembersByUseridKick<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdMembersByUseridKickData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdMembersByUseridKickResponses, GuildClientPostGuildsByIdMembersByUseridKickErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/members/{userId}/kick',
+            ...options
+        });
+    }
+    
+    /**
+     * Transfer guild leadership (leader only)
+     */
+    public static guildClientPostGuildsByIdTransferLeader<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdTransferLeaderData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdTransferLeaderResponses, GuildClientPostGuildsByIdTransferLeaderErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/transfer-leader',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Contribute to the guild (member)
+     */
+    public static guildClientPostGuildsByIdContribute<ThrowOnError extends boolean = false>(options: Options<GuildClientPostGuildsByIdContributeData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<GuildClientPostGuildsByIdContributeResponses, GuildClientPostGuildsByIdContributeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/contribute',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List contribution logs for a guild
+     */
+    public static guildClientGetGuildsByIdContributions<ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdContributionsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdContributionsResponses, GuildClientGetGuildsByIdContributionsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/contributions',
+            ...options
+        });
+    }
+    
+    /**
+     * List members of a guild
+     */
+    public static guildClientGetGuildsByIdMembers<ThrowOnError extends boolean = false>(options: Options<GuildClientGetGuildsByIdMembersData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<GuildClientGetGuildsByIdMembersResponses, GuildClientGetGuildsByIdMembersErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/guild/guilds/{id}/members',
+            ...options
+        });
+    }
+    
+}
+
+export class LotteryClientService {
+    /**
+     * Execute a single lottery pull
+     */
+    public static lotteryClientPostPull<ThrowOnError extends boolean = false>(options?: Options<LotteryClientPostPullData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<LotteryClientPostPullResponses, LotteryClientPostPullErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/lottery/pull',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Execute multiple lottery pulls
+     */
+    public static lotteryClientPostMultiPull<ThrowOnError extends boolean = false>(options?: Options<LotteryClientPostMultiPullData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<LotteryClientPostMultiPullResponses, LotteryClientPostMultiPullErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/lottery/multi-pull',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Get current user's pity state for a pool
+     */
+    public static lotteryClientGetPoolsByPoolkeyState<ThrowOnError extends boolean = false>(options: Options<LotteryClientGetPoolsByPoolkeyStateData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<LotteryClientGetPoolsByPoolkeyStateResponses, LotteryClientGetPoolsByPoolkeyStateErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/lottery/pools/{poolKey}/state',
+            ...options
+        });
+    }
+    
+    /**
+     * Get current user's pull history for a pool
+     */
+    public static lotteryClientGetPoolsByPoolkeyHistory<ThrowOnError extends boolean = false>(options: Options<LotteryClientGetPoolsByPoolkeyHistoryData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<LotteryClientGetPoolsByPoolkeyHistoryResponses, LotteryClientGetPoolsByPoolkeyHistoryErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/lottery/pools/{poolKey}/history',
+            ...options
+        });
+    }
+    
+}
+
+export class MailClientService {
+    /**
+     * List an end user's mail inbox
+     */
+    public static mailClientGetMessages<ThrowOnError extends boolean = false>(options?: Options<MailClientGetMessagesData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<MailClientGetMessagesResponses, MailClientGetMessagesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/mail/messages',
+            ...options
+        });
+    }
+    
+    /**
+     * Get a single inbox message (does not auto-mark read)
+     */
+    public static mailClientGetMessagesById<ThrowOnError extends boolean = false>(options: Options<MailClientGetMessagesByIdData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<MailClientGetMessagesByIdResponses, MailClientGetMessagesByIdErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/mail/messages/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Mark a mail message as read (idempotent)
+     */
+    public static mailClientPostMessagesByIdRead<ThrowOnError extends boolean = false>(options: Options<MailClientPostMessagesByIdReadData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<MailClientPostMessagesByIdReadResponses, MailClientPostMessagesByIdReadErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/mail/messages/{id}/read',
+            ...options
+        });
+    }
+    
+    /**
+     * Claim rewards attached to a mail message
+     */
+    public static mailClientPostMessagesByIdClaim<ThrowOnError extends boolean = false>(options: Options<MailClientPostMessagesByIdClaimData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<MailClientPostMessagesByIdClaimResponses, MailClientPostMessagesByIdClaimErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/mail/messages/{id}/claim',
+            ...options
+        });
+    }
+    
+}
+
+export class ShopClientService {
+    /**
+     * Purchase a product as the calling end user
+     */
+    public static shopClientPostPurchase<ThrowOnError extends boolean = false>(options?: Options<ShopClientPostPurchaseData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<ShopClientPostPurchaseResponses, ShopClientPostPurchaseErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/shop/purchase',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Claim a growth-pack stage reward as the calling end user
+     */
+    public static shopClientPostClaimStage<ThrowOnError extends boolean = false>(options?: Options<ShopClientPostClaimStageData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<ShopClientPostClaimStageResponses, ShopClientPostClaimStageErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/shop/claim-stage',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * List products with per-user eligibility
+     */
+    public static shopClientGetProducts<ThrowOnError extends boolean = false>(options?: Options<ShopClientGetProductsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<ShopClientGetProductsResponses, ShopClientGetProductsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/shop/products',
+            ...options
+        });
+    }
+    
+}
+
+export class TaskClientService {
+    /**
+     * Submit a business event to update task progress
+     */
+    public static taskClientPostEvents<ThrowOnError extends boolean = false>(options?: Options<TaskClientPostEventsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<TaskClientPostEventsResponses, TaskClientPostEventsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/task/events',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * List tasks with per-user progress
+     */
+    public static taskClientPostList<ThrowOnError extends boolean = false>(options?: Options<TaskClientPostListData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<TaskClientPostListResponses, TaskClientPostListErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/task/list',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Manually claim task reward
+     */
+    public static taskClientPostClaimByTaskid<ThrowOnError extends boolean = false>(options: Options<TaskClientPostClaimByTaskidData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TaskClientPostClaimByTaskidResponses, TaskClientPostClaimByTaskidErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/task/claim/{taskId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Manually claim a staged-reward tier (阶段性奖励)
+     */
+    public static taskClientPostClaimTier<ThrowOnError extends boolean = false>(options?: Options<TaskClientPostClaimTierData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<TaskClientPostClaimTierResponses, TaskClientPostClaimTierErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/task/claim-tier',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+}
+
+export class TeamClientService {
+    /**
+     * Create a new team (caller becomes leader)
+     */
+    public static teamClientPostTeams<ThrowOnError extends boolean = false>(options?: Options<TeamClientPostTeamsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<TeamClientPostTeamsResponses, TeamClientPostTeamsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Get the current user's active team for a config
+     */
+    public static teamClientGetMyTeam<ThrowOnError extends boolean = false>(options: Options<TeamClientGetMyTeamData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<TeamClientGetMyTeamResponses, TeamClientGetMyTeamErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/my-team',
+            ...options
+        });
+    }
+    
+    /**
+     * Get a team by id with members
+     */
+    public static teamClientGetTeamsById<ThrowOnError extends boolean = false>(options: Options<TeamClientGetTeamsByIdData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<TeamClientGetTeamsByIdResponses, TeamClientGetTeamsByIdErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Join an open team
+     */
+    public static teamClientPostTeamsByIdJoin<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdJoinData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdJoinResponses, TeamClientPostTeamsByIdJoinErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/join',
+            ...options
+        });
+    }
+    
+    /**
+     * Leave a team
+     */
+    public static teamClientPostTeamsByIdLeave<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdLeaveData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdLeaveResponses, TeamClientPostTeamsByIdLeaveErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/leave',
+            ...options
+        });
+    }
+    
+    /**
+     * Dissolve a team (leader only)
+     */
+    public static teamClientPostTeamsByIdDissolve<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdDissolveData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdDissolveResponses, TeamClientPostTeamsByIdDissolveErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/dissolve',
+            ...options
+        });
+    }
+    
+    /**
+     * Kick a member from the team (leader only)
+     */
+    public static teamClientPostTeamsByIdKickByUserid<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdKickByUseridData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdKickByUseridResponses, TeamClientPostTeamsByIdKickByUseridErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/kick/{userId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Transfer team leadership to another member
+     */
+    public static teamClientPostTeamsByIdTransferLeader<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdTransferLeaderData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdTransferLeaderResponses, TeamClientPostTeamsByIdTransferLeaderErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/transfer-leader',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Update team status (leader only)
+     */
+    public static teamClientPutTeamsByIdStatus<ThrowOnError extends boolean = false>(options: Options<TeamClientPutTeamsByIdStatusData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).put<TeamClientPutTeamsByIdStatusResponses, TeamClientPutTeamsByIdStatusErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/status',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Invite a user to the team
+     */
+    public static teamClientPostTeamsByIdInvite<ThrowOnError extends boolean = false>(options: Options<TeamClientPostTeamsByIdInviteData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostTeamsByIdInviteResponses, TeamClientPostTeamsByIdInviteErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/teams/{id}/invite',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Accept a team invitation
+     */
+    public static teamClientPostInvitationsByIdAccept<ThrowOnError extends boolean = false>(options: Options<TeamClientPostInvitationsByIdAcceptData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostInvitationsByIdAcceptResponses, TeamClientPostInvitationsByIdAcceptErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/invitations/{id}/accept',
+            ...options
+        });
+    }
+    
+    /**
+     * Reject a team invitation
+     */
+    public static teamClientPostInvitationsByIdReject<ThrowOnError extends boolean = false>(options: Options<TeamClientPostInvitationsByIdRejectData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostInvitationsByIdRejectResponses, TeamClientPostInvitationsByIdRejectErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/invitations/{id}/reject',
+            ...options
+        });
+    }
+    
+    /**
+     * Quick match — join the fullest open team or create a new one
+     */
+    public static teamClientPostQuickMatch<ThrowOnError extends boolean = false>(options: Options<TeamClientPostQuickMatchData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<TeamClientPostQuickMatchResponses, TeamClientPostQuickMatchErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/team/quick-match',
+            ...options
+        });
+    }
+    
+}
+
+export class LevelClientService {
+    /**
+     * List configs with per-user progress summary
+     */
+    public static levelClientPostConfigs<ThrowOnError extends boolean = false>(options?: Options<LevelClientPostConfigsData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<LevelClientPostConfigsResponses, LevelClientPostConfigsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/level/configs',
+            ...options
+        });
+    }
+    
+    /**
+     * Full config detail — levels, stages, per-user progress
+     */
+    public static levelClientPostConfigsByKeyOverview<ThrowOnError extends boolean = false>(options: Options<LevelClientPostConfigsByKeyOverviewData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<LevelClientPostConfigsByKeyOverviewResponses, LevelClientPostConfigsByKeyOverviewErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/level/configs/{key}/overview',
+            ...options
+        });
+    }
+    
+    /**
+     * Single level detail with unlock status and progress
+     */
+    public static levelClientPostLevelsByIdDetail<ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdDetailData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdDetailResponses, LevelClientPostLevelsByIdDetailErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/level/levels/{id}/detail',
+            ...options
+        });
+    }
+    
+    /**
+     * Report a level clear with stars and optional score
+     */
+    public static levelClientPostLevelsByIdClear<ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdClearData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdClearResponses, LevelClientPostLevelsByIdClearErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/level/levels/{id}/clear',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Claim clear rewards or a star reward tier
+     */
+    public static levelClientPostLevelsByIdClaim<ThrowOnError extends boolean = false>(options: Options<LevelClientPostLevelsByIdClaimData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<LevelClientPostLevelsByIdClaimResponses, LevelClientPostLevelsByIdClaimErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/level/levels/{id}/claim',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class LeaderboardClientService {
+    /**
+     * Top N of the current (or specified) cycle, with self rank.
+     */
+    public static leaderboardClientGetConfigsByAliasTop<ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasTopData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasTopResponses, LeaderboardClientGetConfigsByAliasTopErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/leaderboard/configs/{alias}/top',
+            ...options
+        });
+    }
+    
+    /**
+     * Entries above/below the caller within window.
+     */
+    public static leaderboardClientGetConfigsByAliasNeighbors<ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasNeighborsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasNeighborsResponses, LeaderboardClientGetConfigsByAliasNeighborsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/leaderboard/configs/{alias}/neighbors',
+            ...options
+        });
+    }
+    
+    /**
+     * Past settled snapshots for this leaderboard.
+     */
+    public static leaderboardClientGetConfigsByAliasSnapshots<ThrowOnError extends boolean = false>(options: Options<LeaderboardClientGetConfigsByAliasSnapshotsData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<LeaderboardClientGetConfigsByAliasSnapshotsResponses, LeaderboardClientGetConfigsByAliasSnapshotsErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/leaderboard/configs/{alias}/snapshots',
+            ...options
+        });
+    }
+    
+}
+
+export class RankClientService {
+    /**
+     * Get the caller's current standing in a ladder. Resolves the season by `seasonId` or the active season of `tierConfigAlias`.
+     */
+    public static rankClientGetState<ThrowOnError extends boolean = false>(options: Options<RankClientGetStateData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<RankClientGetStateResponses, RankClientGetStateErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/rank/state',
+            ...options
+        });
+    }
+    
+    /**
+     * List the caller's recent match participant rows (desc by id).
+     */
+    public static rankClientGetHistory<ThrowOnError extends boolean = false>(options: Options<RankClientGetHistoryData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<RankClientGetHistoryResponses, RankClientGetHistoryErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/rank/history',
+            ...options
+        });
+    }
+    
+    /**
+     * Read the season leaderboard. Global (no tierId) delegates to the leaderboard module; tier-filtered goes through PG directly.
+     */
+    public static rankClientGetLeaderboard<ThrowOnError extends boolean = false>(options: Options<RankClientGetLeaderboardData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<RankClientGetLeaderboardResponses, RankClientGetLeaderboardErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/rank/leaderboard',
+            ...options
+        });
+    }
+    
+}
+
+export class ActivityClientService {
+    /**
+     * List activities currently visible to the caller (teasing / active / settling / ended).
+     */
+    public static activityClientGetList<ThrowOnError extends boolean = false>(options: Options<ActivityClientGetListData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<ActivityClientGetListResponses, ActivityClientGetListErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/activity/list',
+            ...options
+        });
+    }
+    
+    /**
+     * Single-round-trip view of an activity for the caller.
+     */
+    public static activityClientGetByAlias<ThrowOnError extends boolean = false>(options: Options<ActivityClientGetByAliasData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<ActivityClientGetByAliasResponses, ActivityClientGetByAliasErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/activity/{alias}',
+            ...options
+        });
+    }
+    
+    /**
+     * Enrol in an activity.
+     */
+    public static activityClientPostByAliasJoin<ThrowOnError extends boolean = false>(options: Options<ActivityClientPostByAliasJoinData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<ActivityClientPostByAliasJoinResponses, ActivityClientPostByAliasJoinErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/activity/{alias}/join',
+            ...options
+        });
+    }
+    
+    /**
+     * Claim an activity milestone reward.
+     */
+    public static activityClientPostByAliasClaimMilestone<ThrowOnError extends boolean = false>(options: Options<ActivityClientPostByAliasClaimMilestoneData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<ActivityClientPostByAliasClaimMilestoneResponses, ActivityClientPostByAliasClaimMilestoneErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/activity/{alias}/claim-milestone',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+}
+
+export class AssistPoolClientService {
+    /**
+     * List the authenticated end user's assist-pool instances
+     */
+    public static assistPoolClientGetInstances<ThrowOnError extends boolean = false>(options?: Options<AssistPoolClientGetInstancesData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).get<AssistPoolClientGetInstancesResponses, AssistPoolClientGetInstancesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/assist-pool/instances',
+            ...options
+        });
+    }
+    
+    /**
+     * Initiate an assist-pool instance for the authenticated end user
+     */
+    public static assistPoolClientPostInstances<ThrowOnError extends boolean = false>(options?: Options<AssistPoolClientPostInstancesData, ThrowOnError>) {
+        return (options?.client ?? _heyApiClient).post<AssistPoolClientPostInstancesResponses, AssistPoolClientPostInstancesErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/assist-pool/instances',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            }
+        });
+    }
+    
+    /**
+     * Fetch an assist-pool instance (readable by any authenticated end user within the org, so a friend can view the pool before helping)
+     */
+    public static assistPoolClientGetInstancesByInstanceid<ThrowOnError extends boolean = false>(options: Options<AssistPoolClientGetInstancesByInstanceidData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).get<AssistPoolClientGetInstancesByInstanceidResponses, AssistPoolClientGetInstancesByInstanceidErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/assist-pool/instances/{instanceId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Contribute to an instance as the authenticated end user (helps someone else's pool)
+     */
+    public static assistPoolClientPostInstancesByInstanceidContribute<ThrowOnError extends boolean = false>(options: Options<AssistPoolClientPostInstancesByInstanceidContributeData, ThrowOnError>) {
+        return (options.client ?? _heyApiClient).post<AssistPoolClientPostInstancesByInstanceidContributeResponses, AssistPoolClientPostInstancesByInstanceidContributeErrors, ThrowOnError>({
+            security: [
+                {
+                    name: 'x-api-key',
+                    type: 'apiKey'
+                }
+            ],
+            url: '/api/client/assist-pool/instances/{instanceId}/contribute',
+            ...options
+        });
+    }
+    
+}
