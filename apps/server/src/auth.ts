@@ -7,7 +7,6 @@ import {
   lastLoginMethod,
   organization,
 } from "better-auth/plugins";
-import { emailHarmony } from "better-auth-harmony";
 import { asc, eq } from "drizzle-orm";
 
 import { db } from "./db";
@@ -16,6 +15,7 @@ import {
   sendPasswordResetEmail,
   sendVerifyEmail,
 } from "./lib/mailer";
+import { normalizeEmail } from "./lib/normalize-email";
 import { member } from "./schema";
 
 // Lazy via Proxy —— `betterAuth({...})` 编译 plugin chain(organization +
@@ -170,11 +170,44 @@ function buildAdminAuth() {
       // Cookie-only (storeInDatabase defaults false) —— daveyplate AuthView
       // 读 `better-auth.last_used_login_method` cookie 高亮上次登录方式。
       lastLoginMethod(),
-      // Email 规范化(gmail dot/plus 别名 + googlemail) + 唯一性兜底,防同
-      // 一邮箱多账号注册薅奖励。
-      emailHarmony(),
+      // Email 规范化通过下面的 databaseHooks.user.* 实现 —— 我们之前用过
+      // `better-auth-harmony`,但它在顶层 import 把 validator.js + mailchecker
+      // 拉进 bundle,推爆了 CF Workers startup CPU 限额(code 10021)。改用
+      // src/lib/normalize-email.ts 自写的轻量版,保留 Gmail dot/plus 规则,
+      // 不带 disposable-email 黑名单。auth.config.ts 里仍引 emailHarmony 用
+      // 于 schema 生成(只在 Node CLI 跑,不进 worker bundle)。
     ],
     databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            // 写入 user.normalized_email —— 替代被踢出 bundle 的 emailHarmony
+            // 的运行时部分。UNIQUE 约束(见 drizzle/0007)阻同邮箱多账号。
+            return {
+              data: {
+                ...user,
+                normalizedEmail: normalizeEmail(user.email),
+              },
+            };
+          },
+        },
+        update: {
+          before: async (user) => {
+            // 用户改 email 时跟着更新 normalized_email。Better Auth 在 update
+            // 钩子里只把"将变更的字段"传过来,所以仅当 email 出现时计算。
+            if (typeof user.email === "string") {
+              return {
+                data: {
+                  ...user,
+                  normalizedEmail: normalizeEmail(user.email),
+                },
+              };
+            }
+            // 没改 email 就 no-op,保持原值。
+            return;
+          },
+        },
+      },
       session: {
         create: {
           before: async (session) => {
