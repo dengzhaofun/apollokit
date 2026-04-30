@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vitest";
 
-import { buildToolsForSurface } from "./tools";
+import {
+  buildApplyTool,
+  buildBaseTools,
+  buildPatchTools,
+} from "./tools";
 import type { AdminSurface, ChatExecutionContext } from "./types";
 
 const FAKE_CTX: ChatExecutionContext = { organizationId: "org-test" };
 
-const BASE_TOOLS = [
+const BASE_TOOL_NAMES = [
   "askClarification",
   "navigateTo",
   "searchDocs",
@@ -15,33 +19,35 @@ const BASE_TOOLS = [
   "analyzeActivity",
 ];
 
-describe("buildToolsForSurface", () => {
-  test("dashboard exposes base tools (no apply*)", () => {
-    const tools = buildToolsForSurface("dashboard", FAKE_CTX);
-    expect(Object.keys(tools).sort()).toEqual([...BASE_TOOLS].sort());
+describe("buildBaseTools", () => {
+  test("exposes every always-on tool", () => {
+    const tools = buildBaseTools(FAKE_CTX);
+    expect(Object.keys(tools).sort()).toEqual([...BASE_TOOL_NAMES].sort());
+  });
+});
+
+describe("buildApplyTool", () => {
+  test("dashboard returns no apply tool", () => {
+    expect(Object.keys(buildApplyTool("dashboard"))).toEqual([]);
   });
 
-  test("check-in:list exposes base tools only (no apply* on list pages)", () => {
-    const tools = buildToolsForSurface("check-in:list", FAKE_CTX);
-    expect(Object.keys(tools).sort()).toEqual([...BASE_TOOLS].sort());
+  test("check-in:list returns no apply tool (list is not a form surface)", () => {
+    expect(Object.keys(buildApplyTool("check-in:list"))).toEqual([]);
   });
 
-  test("check-in:create exposes base tools + applyCheckInConfig", () => {
-    const tools = buildToolsForSurface("check-in:create", FAKE_CTX);
-    expect(Object.keys(tools).sort()).toEqual(
-      [...BASE_TOOLS, "applyCheckInConfig"].sort(),
-    );
+  test("check-in:create exposes applyCheckInConfig", () => {
+    expect(Object.keys(buildApplyTool("check-in:create"))).toEqual([
+      "applyCheckInConfig",
+    ]);
   });
 
   test("check-in:edit matches :create", () => {
-    const create = Object.keys(buildToolsForSurface("check-in:create", FAKE_CTX)).sort();
-    const edit = Object.keys(buildToolsForSurface("check-in:edit", FAKE_CTX)).sort();
-    expect(edit).toEqual(create);
+    expect(Object.keys(buildApplyTool("check-in:edit"))).toEqual(
+      Object.keys(buildApplyTool("check-in:create")),
+    );
   });
 
-  test("every registered apply module gets its apply tool on :create", () => {
-    // Sanity: each newly-registered module's :create surface should
-    // surface its apply tool. Pulled from the apply-registry spec.
+  test("every registered apply module surfaces its apply tool on :create", () => {
     const cases: Array<{ surface: AdminSurface; toolName: string }> = [
       { surface: "announcement:create", toolName: "applyAnnouncementConfig" },
       { surface: "assist-pool:create", toolName: "applyAssistPoolConfig" },
@@ -58,22 +64,55 @@ describe("buildToolsForSurface", () => {
       { surface: "team:create", toolName: "applyTeamConfig" },
     ];
     for (const { surface, toolName } of cases) {
-      const tools = buildToolsForSurface(surface, FAKE_CTX);
-      expect(Object.keys(tools)).toContain(toolName);
+      expect(Object.keys(buildApplyTool(surface))).toContain(toolName);
     }
   });
 
-  test("modules without an apply tool registered (e.g. activity) get only base tools on :create", () => {
-    // activity is in ADMIN_MODULES but not in APPLY_TOOL_BY_MODULE.
-    const tools = buildToolsForSurface("activity:create", FAKE_CTX);
-    const applyTools = Object.keys(tools).filter((n) => n.startsWith("apply"));
-    expect(applyTools).toEqual([]);
+  test("modules without an apply tool registered (e.g. activity) return no apply tool", () => {
+    expect(Object.keys(buildApplyTool("activity:create"))).toEqual([]);
+  });
+});
+
+describe("buildPatchTools", () => {
+  test("returns nothing when no modules supplied", () => {
+    expect(Object.keys(buildPatchTools([], "propose"))).toEqual([]);
+    expect(Object.keys(buildPatchTools([], "execute"))).toEqual([]);
   });
 
-  test("dashboard does NOT expose any apply* tool", () => {
-    const tools = buildToolsForSurface("dashboard", FAKE_CTX);
-    for (const name of Object.keys(tools)) {
-      expect(name.startsWith("apply")).toBe(false);
-    }
+  test("'propose' variant has no execute (form-fill flow)", () => {
+    const tools = buildPatchTools(["check-in"], "propose");
+    expect(Object.keys(tools)).toContain("patchCheckInConfig");
+    expect("execute" in tools.patchCheckInConfig!).toBe(false);
+  });
+
+  test("'execute' variant has execute (global-assistant flow)", () => {
+    const tools = buildPatchTools(["check-in"], "execute");
+    expect(Object.keys(tools)).toContain("patchCheckInConfig");
+    expect(typeof (tools.patchCheckInConfig as { execute?: unknown }).execute).toBe(
+      "function",
+    );
+  });
+
+  test("unknown module ids are silently dropped", () => {
+    const tools = buildPatchTools(["check-in", "no-such-module"], "propose");
+    expect(Object.keys(tools)).toEqual(["patchCheckInConfig"]);
+  });
+
+  test("all 7 patch-registered modules round-trip through both variants", () => {
+    const modules = [
+      "activity",
+      "announcement",
+      "character",
+      "check-in",
+      "dialogue",
+      "item",
+      "task",
+    ];
+    const propose = buildPatchTools(modules, "propose");
+    const execute = buildPatchTools(modules, "execute");
+    expect(Object.keys(propose).length).toBe(7);
+    expect(Object.keys(execute).length).toBe(7);
+    // Same wire names across variants — frontend renders by name.
+    expect(Object.keys(propose).sort()).toEqual(Object.keys(execute).sort());
   });
 });

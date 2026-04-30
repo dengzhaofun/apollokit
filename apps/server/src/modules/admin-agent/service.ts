@@ -1,14 +1,19 @@
 import { env } from "cloudflare:workers";
-import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
+import {
+  createAgentUIStreamResponse,
+  ToolLoopAgent,
+  type UIMessage,
+} from "ai";
 
 import type { AppDeps } from "../../deps";
+import { agentExecDeps } from "./agents/exec-deps";
+import { createAgentForRequest } from "./agents/registry";
+import type { AgentToolContext } from "./agents/types";
 import { getMention } from "./mentions/registry";
 import type {
   MentionRef,
   MentionSnapshot,
 } from "./mentions/types";
-import { buildSystemPrompt } from "./prompts";
-import { buildToolsForSurface } from "./tools";
 import type { ChatExecutionContext, ChatRequestBody } from "./types";
 
 /**
@@ -44,46 +49,44 @@ export function detectUserLocale(messages: UIMessage[]): "zh" | "en" {
 type AdminAgentDeps = Pick<AppDeps, "ai">;
 
 /**
- * Model used for the admin agent. Configurable via the
- * `OPENROUTER_ADMIN_AGENT_MODEL` env var so each deployment can pick
- * a model that's actually available in its region (OpenRouter
- * region-blocks vary by upstream provider — OpenAI and Anthropic
- * models are blocked in mainland China, Google/Qwen/DeepSeek work).
+ * Single AI agent service for the entire admin dashboard. Tools and
+ * prompt are resolved per-request from `context.surface` + `agentName`,
+ * so adding a new module's AI assist or a new agent does NOT require a
+ * new HTTP endpoint — only a tool + prompt registration in `tools/` and
+ * `prompts.ts`, and (for new agents) one entry in `agents/registry.ts`.
  *
- * Default: `google/gemini-2.5-flash` — fast, cheap, strong at
- * structured-output/tool-calls, and broadly available.
+ * The model id is configurable via `OPENROUTER_ADMIN_AGENT_MODEL` (env
+ * var; OpenRouter region-blocks vary by upstream provider — OpenAI and
+ * Anthropic models are blocked in mainland China, Moonshot/Qwen/DeepSeek
+ * work). Default per agent definition; current default is
+ * `deepseek/deepseek-chat-v3.1` (DeepSeek V3.1 — strong tool-calling +
+ * tight instruction-following, region-unblocked).
  */
-const DEFAULT_MODEL = "google/gemini-2.5-flash";
-
-function resolveModelId(): string {
+function resolveModelId(defaultId: string): string {
   // Cast through `unknown`: `OPENROUTER_ADMIN_AGENT_MODEL` is an
   // optional secret that Cloudflare's typegen doesn't know about until
   // someone runs `pnpm cf-typegen` after adding it. Treat absent as
   // "use default" rather than failing the build.
   const fromEnv = (env as unknown as Record<string, string | undefined>)
     .OPENROUTER_ADMIN_AGENT_MODEL;
-  return fromEnv ?? DEFAULT_MODEL;
+  return fromEnv ?? defaultId;
 }
 
 export type AdminAgentService = ReturnType<typeof createAdminAgentService>;
 
-/**
- * Single AI agent for the entire admin dashboard. Tools and prompt are
- * resolved per-request from `context.surface`, so adding a new module's
- * AI assist does NOT require a new HTTP endpoint — only a tool + prompt
- * registration in `tools/` and `prompts.ts`.
- */
 export function createAdminAgentService(d: AdminAgentDeps) {
   return {
     /**
      * `execCtx` carries the per-request `organizationId` from the route
-     * handler (read from the Hono session). Query tools' `execute`
-     * closures need it to scope DB reads to the right tenant — passing
-     * it explicitly is more robust than relying on AsyncLocalStorage
-     * propagation across the streamText / SSE boundary.
+     * handler (read from the Hono session). Patch tools' `execute`
+     * callbacks read it from `experimental_context` (set on the
+     * `ToolLoopAgent` constructor below). Query tools still use closures
+     * because they're stateless module-level singletons would break the
+     * existing test surface — that's a deliberate trade-off, not an
+     * inconsistency.
      */
     async streamChat(
-      { messages, context }: ChatRequestBody,
+      { messages, context, agentName }: ChatRequestBody,
       execCtx: ChatExecutionContext,
     ) {
       // Detect user's input locale from their latest message so the
@@ -92,28 +95,20 @@ export function createAdminAgentService(d: AdminAgentDeps) {
       // codepoint in the last user message means Chinese; everything
       // else defaults to English. Cheap and good enough.
       const locale = detectUserLocale(messages);
-      // Resolve any @-mentions in parallel with the rest of the prep.
+      // Resolve any @-mentions before composing prompts/tools.
       // `resolveMentions` is org-scoped and tolerates missing/stale
       // refs (returns a "已失效" snapshot instead of throwing) so the
       // chat can proceed even if the user mentioned something that
       // was deleted between popover-select and submit.
-      const [modelMessages, baseSystem, snapshots] = await Promise.all([
-        // `convertToModelMessages` is async in AI SDK v6 (it may need to
-        // resolve file parts / data parts), so this whole call is async.
-        convertToModelMessages(messages),
-        // `buildSystemPrompt` is also async because it inlines the docs
-        // TOC (cached per isolate per locale, so cold-start only).
-        buildSystemPrompt(context.surface, context.draft, locale),
-        resolveMentions(execCtx.organizationId, context.mentions ?? []),
-      ]);
-
-      const mentionSection = buildMentionSystemSection(snapshots);
-      const system = mentionSection ? `${baseSystem}\n\n${mentionSection}` : baseSystem;
+      const snapshots = await resolveMentions(
+        execCtx.organizationId,
+        context.mentions ?? [],
+      );
 
       // Tool extras: each mentioned resource's descriptor may declare a
       // `toolModuleId` to enable. Dedupe so the same module mentioned
-      // twice doesn't double-register (it's idempotent anyway, but tidy).
-      const extraToolModules = Array.from(
+      // twice doesn't double-register (idempotent anyway, but tidy).
+      const mentionedModuleIds = Array.from(
         new Set(
           snapshots
             .map((s) => s.toolModuleId)
@@ -121,20 +116,45 @@ export function createAdminAgentService(d: AdminAgentDeps) {
         ),
       );
 
-      return streamText({
-        model: d.ai.model(resolveModelId()),
-        system,
-        messages: modelMessages,
-        tools: buildToolsForSurface(
-          context.surface,
-          execCtx,
-          extraToolModules,
-        ),
-        // Bound the agent's reasoning budget. With askClarification /
-        // applyConfig / readDoc as the main outcomes, ~8 steps allows
-        // a searchDocs → readDoc → answer chain to complete; beyond
-        // that the model is usually looping.
-        stopWhen: stepCountIs(8),
+      const def = createAgentForRequest(agentName, execCtx);
+      const system = await def.buildSystem({
+        surface: context.surface,
+        draft: context.draft,
+        mentions: snapshots,
+        locale,
+      });
+      const buildToolsInput = {
+        surface: context.surface,
+        mentionedModuleIds,
+      };
+      const tools = def.buildTools(buildToolsInput);
+      const toolChoice = def.buildToolChoice?.(buildToolsInput);
+
+      // Per-request data threaded into tool `execute` callbacks via AI
+      // SDK v6's `experimental_context`. Tools read it via the second
+      // arg of `execute` (`{ experimental_context }`). Set on the agent
+      // constructor — `ToolLoopAgentSettings` carries it directly.
+      const toolContext: AgentToolContext = {
+        execCtx,
+        deps: agentExecDeps,
+      };
+
+      const agent = new ToolLoopAgent({
+        model: d.ai.model(resolveModelId(def.modelId)),
+        instructions: system,
+        tools,
+        ...(toolChoice ? { toolChoice } : {}),
+        stopWhen: def.stopWhen,
+        experimental_context: toolContext,
+      });
+
+      // `createAgentUIStreamResponse` validates the incoming UI messages,
+      // converts them to model messages internally, runs the agent's
+      // `.stream()`, and returns a streaming `Response`. The route
+      // handler returns this Response directly.
+      return createAgentUIStreamResponse({
+        agent,
+        uiMessages: messages,
       });
     },
   };
@@ -195,33 +215,4 @@ export async function resolveMentions(
   return settled
     .map((r) => (r.status === "fulfilled" ? r.value : null))
     .filter((s): s is MentionSnapshot => s != null);
-}
-
-/**
- * Format the mentioned-resource lookup table for the LLM system prompt.
- *
- * The user message keeps natural text ("@7日签到 帮我关闭它") — this
- * section tells the model what each `@<name>` actually refers to and
- * what tool to call for changes. Returns `null` when no mentions exist
- * so the caller skips concatenation.
- */
-export function buildMentionSystemSection(
-  snapshots: MentionSnapshot[],
-): string | null {
-  if (snapshots.length === 0) return null;
-  const lines = snapshots.map((s) => `- ${s.contextLine}`);
-  return [
-    "## 当前对话引用的资源 (@-mentions)",
-    "用户在消息中以 @<name> 形式引用了下列资源：",
-    "",
-    ...lines,
-    "",
-    "### 如何对 @资源 执行操作",
-    "**修改现有资源**（关闭、重命名、改字段、调时间等）→ 用 **patch* tool**（如 `patchCheckInConfig`）：",
-    "  - `key` 字段填上面 (id=...) 或 (alias=...) 里的值",
-    "  - `patch` 字段**只放用户明确要改的字段**，其它一概不要带（不要把上面 context 里的字段全抄过去重写）",
-    "  - 例：用户说\"关闭它\" → `patchCheckInConfig({ key: 'cfg_xxx', patch: { isActive: false } })`，**不要**带 name/resetMode/timezone 这些没说要改的字段",
-    "**新建一个类似的资源** → 才用 apply* tool（apply 是回填创建表单用的，要求所有必需字段；用错会覆盖原配置）",
-    "**只是想看资源详情** → 用 describeConfig",
-  ].join("\n");
 }

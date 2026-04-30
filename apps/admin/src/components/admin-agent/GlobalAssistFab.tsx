@@ -76,11 +76,11 @@ export function GlobalAssistFab() {
               </Button>
             </div>
             <SheetDescription>
-              问配置查询、模块说明，或直接到对应模块的创建表单里让 AI 帮你回填。
+              问问题、查配置，或 @-提及资源让 AI 提议修改（你审核确认后写入）。要回填创建表单去对应模块。
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-hidden">
-            <AIAssistPanel />
+            <AIAssistPanel agentName="global-assistant" />
           </div>
         </SheetContent>
       </Sheet>
