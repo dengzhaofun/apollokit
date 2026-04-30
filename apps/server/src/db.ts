@@ -17,27 +17,14 @@ type DB = NodePgDatabase<typeof schema>;
 // that reads from here on every method access.
 const dbStore = new AsyncLocalStorage<DB>();
 
-// Lazy memoized — `upstashCache({...})` 在模块加载时读 env、构造 Upstash
-// REST client、注册 drizzle hook。这是顶层即时副作用,直接计入 startup
-// CPU(参见 CF Workers Builds 的 10021 限额回归)。退到首个 DB 调用路径
-// (`getNodeFallback` / `withDbContext`),跟 `pg.Client.connect()` 同帧,
-// 相对量可忽略。`global: false` 必须保留 —— `true` 会 cache 所有查询,
-// 行为剧变。
-let cacheResolved = false;
-let cacheInstance: ReturnType<typeof upstashCache> | undefined;
-function getDrizzleCache() {
-  if (!cacheResolved) {
-    cacheResolved = true;
-    if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
-      cacheInstance = upstashCache({
+const cache =
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+    ? upstashCache({
         url: env.UPSTASH_REDIS_REST_URL,
         token: env.UPSTASH_REDIS_REST_TOKEN,
         global: false,
-      });
-    }
-  }
-  return cacheInstance;
-}
+      })
+    : undefined;
 
 // Node fallback for vitest, drizzle-kit migrations driven from Node, and
 // the Better Auth CLI. None of those run inside workerd, so the I/O
@@ -62,7 +49,7 @@ function getNodeFallback(): DB {
     connectionString: url,
     options: "-c TimeZone=UTC",
   });
-  nodeFallback = drizzle({ client: pool, schema, cache: getDrizzleCache() });
+  nodeFallback = drizzle({ client: pool, schema, cache });
   return nodeFallback;
 }
 
@@ -112,6 +99,6 @@ export async function withDbContext<T>(
     connectionString: bindings.HYPERDRIVE.connectionString,
   });
   await client.connect();
-  const requestDb = drizzle({ client, schema, cache: getDrizzleCache() });
+  const requestDb = drizzle({ client, schema, cache });
   return dbStore.run(requestDb, fn);
 }
