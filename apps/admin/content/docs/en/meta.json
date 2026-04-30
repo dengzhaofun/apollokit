@@ -43,6 +43,7 @@
     "analytics",
     "---Integration---",
     "webhooks",
+    "mcp",
     "sdk",
     "---API Reference---",
     "api"

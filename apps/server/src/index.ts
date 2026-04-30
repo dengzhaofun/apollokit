@@ -76,6 +76,7 @@ import {
   lotteryClientRouter,
 } from "./modules/lottery";
 import { mailRouter, mailClientRouter } from "./modules/mail";
+import { mcpRouter } from "./modules/mcp";
 import { navigationRouter } from "./modules/navigation";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
@@ -272,6 +273,10 @@ app.route("/api/invite", inviteRouter);
 app.route("/api/guild", guildRouter);
 app.route("/api/lottery", lotteryRouter);
 app.route("/api/mail", mailRouter);
+// MCP — public Streamable HTTP endpoint for LLM clients (Claude.ai, Cursor,
+// custom agent hosts). NOT a normal admin module: no envelope, no OpenAPI,
+// JSON-RPC over HTTP. See `modules/mcp/routes.ts` for the rationale.
+app.route("/api/mcp", mcpRouter);
 app.route("/api/navigation", navigationRouter);
 app.route("/api/shop", shopRouter);
 app.route("/api/storage-box", storageBoxRouter);
