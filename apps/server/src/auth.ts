@@ -2,11 +2,20 @@ import { apiKey } from "@better-auth/api-key";
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization } from "better-auth/plugins";
+import {
+  haveIBeenPwned,
+  lastLoginMethod,
+  organization,
+} from "better-auth/plugins";
+import { emailHarmony } from "better-auth-harmony";
 import { asc, eq } from "drizzle-orm";
 
 import { db } from "./db";
-import { sendInviteEmail } from "./lib/mailer";
+import {
+  sendInviteEmail,
+  sendPasswordResetEmail,
+  sendVerifyEmail,
+} from "./lib/mailer";
 import { member } from "./schema";
 
 // Lazy via Proxy —— `betterAuth({...})` 编译 plugin chain(organization +
@@ -17,6 +26,33 @@ import { member } from "./schema";
 // 调用点完全不变 —— Proxy 把每次属性访问转发到 memoized 实例,函数访问
 // 自动 bind target 保留 `this`。`$Infer` 等类型字段在运行时不会被访问
 // (只用于 `typeof auth.$Infer.Session`),Proxy 返回 undefined 不影响。
+//
+// 注意:每个新加的"在顶层调用 env.X"的代码都会把 startup CPU 的水位往上
+// 推一点,新加 binding 引用一律放到 `buildAdminAuth()` 内部,首次请求时
+// 才解析。
+
+/**
+ * Better Auth secondaryStorage 适配器(Cloudflare KV)。
+ *
+ * 共享一个通用 `apollokit-kv` namespace —— 这里加 `auth:` 前缀防止与未来
+ * 其他 KV 用途(Tinybird 查询缓存 `tb:`、OpenGraph 抓取 `og:`、幂等键
+ * `idem:`)撞 key。Better Auth 内部的 key(rateLimit 计数 / session 缓存
+ * 等)对前缀无感,统一在这层加上即可。
+ */
+function kvSecondaryStorage(kv: KVNamespace, prefix = "auth:") {
+  return {
+    get: async (key: string) => kv.get(`${prefix}${key}`),
+    set: async (key: string, value: string, ttl?: number) => {
+      await kv.put(
+        `${prefix}${key}`,
+        value,
+        ttl ? { expirationTtl: ttl } : undefined,
+      );
+    },
+    delete: async (key: string) => kv.delete(`${prefix}${key}`),
+  };
+}
+
 function buildAdminAuth() {
   return betterAuth({
     database: drizzleAdapter(db, { provider: "pg" }),
@@ -30,8 +66,63 @@ function buildAdminAuth() {
       "http://localhost:3000",
       "https://apollokit-admin.limitless-ai.workers.dev",
     ],
+    // Cloudflare KV 当 secondaryStorage —— rateLimit 计数器走 KV(memory
+    // 在多 isolate 间不共享、database 每请求打 Neon 太重),session 也可借
+    // cookieCache+KV 减少 Neon 命中。CF KV 是最终一致(~60s 全球传播),
+    // 对 session 完全 OK(cookie token 才是 source of truth);对 rateLimit
+    // 是软限流(并发竞争下计数会偏低),需要硬限流时再叠 CF 内置 Rate
+    // Limiting API 在边缘做第一道防线。
+    secondaryStorage: kvSecondaryStorage(env.KV),
+    session: {
+      // 5 分钟 cookie 内嵌 cached session,过期后回源 KV/DB。Better Auth
+      // 会用 secret 给 cookie 签名防篡改。
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60,
+      },
+    },
     emailAndPassword: {
       enabled: true,
+      // 测试环境(VITEST)关掉强制验证,因为 vitest 跑 Node + 无 EMAIL binding,
+      // 测试用例 sign-up 后要立刻拿 session cookie 跑业务断言。production /
+      // wrangler dev 都仍走 requireEmailVerification = true。
+      requireEmailVerification: !process.env.VITEST,
+      resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetUrl: url,
+        });
+      },
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendVerifyEmail({
+          to: user.email,
+          name: user.name,
+          verifyUrl: url,
+        });
+      },
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      expiresIn: 60 * 60 * 24, // 24 hours
+    },
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+      storage: "secondary-storage",
+      // 收紧敏感端点的速率 —— 默认 60s/100 是兜底,登录 / 注册 / 重置
+      // 密码 / 2FA(后续接入)单独压低。Better Auth 的 customRules 按
+      // 路径(相对 /api/auth)匹配。
+      customRules: {
+        "/sign-in/email": { window: 60, max: 5 },
+        "/sign-up/email": { window: 60, max: 3 },
+        "/forget-password": { window: 60, max: 3 },
+        "/reset-password": { window: 60, max: 5 },
+        "/two-factor/*": { window: 60, max: 5 },
+      },
     },
     // Google OAuth —— redirectURI 默认 `${baseURL}/api/auth/callback/google`,
     // baseURL 来自 BETTER_AUTH_URL,必须是 admin domain(浏览器从 Google 域
@@ -74,6 +165,14 @@ function buildAdminAuth() {
           references: "organization",
         },
       ]),
+      // Block compromised passwords against haveibeenpwned (k-anonymous).
+      haveIBeenPwned(),
+      // Cookie-only (storeInDatabase defaults false) —— daveyplate AuthView
+      // 读 `better-auth.last_used_login_method` cookie 高亮上次登录方式。
+      lastLoginMethod(),
+      // Email 规范化(gmail dot/plus 别名 + googlemail) + 唯一性兜底,防同
+      // 一邮箱多账号注册薅奖励。
+      emailHarmony(),
     ],
     databaseHooks: {
       session: {

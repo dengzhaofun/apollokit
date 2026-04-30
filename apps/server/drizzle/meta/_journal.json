@@ -50,6 +50,13 @@
       "when": 1777448984124,
       "tag": "0006_wakeful_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777801200003,
+      "tag": "0007_lying_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

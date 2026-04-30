@@ -3,11 +3,23 @@
 // env via `cloudflare:workers`, which doesn't resolve in Node. This file
 // mirrors the same config shape but reads from process.env so the CLI can
 // introspect the schema. Loaded by `dotenv -e .dev.vars` in package.json.
+//
+// What lives in this file (vs auth.ts):
+//   Anything that affects the *schema* — plugin list, email/password
+//   toggle, social providers (which back the `account` table). Runtime-only
+//   config (secondaryStorage, rateLimit, cookieCache, sendVerificationEmail
+//   hook bodies, databaseHooks) lives in auth.ts and is intentionally NOT
+//   mirrored here, since the CLI never executes those code paths.
 import { apiKey } from "@better-auth/api-key";
 import { neon } from "@neondatabase/serverless";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization } from "better-auth/plugins";
+import {
+  haveIBeenPwned,
+  lastLoginMethod,
+  organization,
+} from "better-auth/plugins";
+import { emailHarmony } from "better-auth-harmony";
 import { drizzle } from "drizzle-orm/neon-http";
 
 import * as schema from "./src/schema";
@@ -31,5 +43,15 @@ export const auth = betterAuth({
         references: "organization",
       },
     ]),
+    // Block compromised passwords against haveibeenpwned (k-anonymous, no
+    // password leaves the worker).
+    haveIBeenPwned(),
+    // Cookie-only (storeInDatabase defaults to false) — daveyplate AuthView
+    // reads `better-auth.last_used_login_method` to highlight last-used
+    // sign-in button.
+    lastLoginMethod(),
+    // Normalizes email on write (gmail dot/plus aliases, googlemail) and
+    // adds `user.normalizedEmail` (unique) to prevent duplicate signups.
+    emailHarmony(),
   ],
 });

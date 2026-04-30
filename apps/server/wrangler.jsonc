@@ -108,7 +108,22 @@
   ],
   "send_email": [
     { "name": "EMAIL" }
+  ],
+  // 通用 KV namespace —— Better Auth 的 secondaryStorage(rateLimit + 可选
+  // session 缓存)走这里,key 通过 src/auth.ts 的适配层带 "auth:" 前缀。未来
+  // 其他 KV 用途(Tinybird 查询缓存 / OG 抓取 / 幂等键)用别的 prefix 复用
+  // 同一个 namespace,避免 wrangler.jsonc 越来越多 binding。
+  //
+  // 创建命令(在主仓跑,KV namespace 是账户级,跨 worktree 共享):
+  //   wrangler kv namespace create apollokit-kv
+  //   wrangler kv namespace create apollokit-kv --preview
+  // 把命令输出的 id / preview_id 填到下面。
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "d831a09e6e004eea9e334e2b5c4a4d2b",
+      "preview_id": "74ebf75cb80347e89e1800ba23e0e19e"
+    }
   ]
-  // "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],
   // "ai":            { "binding": "AI" }
 }
