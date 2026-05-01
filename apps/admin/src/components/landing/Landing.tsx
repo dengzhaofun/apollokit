@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
 import {
+  Activity,
   ArrowRight,
   ArrowLeftRight,
   BookOpen,
@@ -8,6 +8,7 @@ import {
   Check,
   Coins,
   Contact,
+  Database,
   Dices,
   FolderOpen,
   GalleryHorizontal,
@@ -26,6 +27,7 @@ import {
   MessagesSquare,
   Package,
   PartyPopper,
+  PieChart,
   PiggyBank,
   Plug,
   Radio,
@@ -39,6 +41,7 @@ import {
   Users,
   Wand2,
   WandSparkles,
+  Webhook,
   Zap,
   type LucideIcon,
 } from "lucide-react"
@@ -163,13 +166,6 @@ const HERO_ICONS_OUTER: LucideIcon[] = [
 ]
 
 function PlanetLogo({ size = "size-20" }: { size?: string }) {
-  const [badgeOpen, setBadgeOpen] = useState(false)
-  useEffect(() => {
-    // Land after the hero `ak-rise` finishes (~700ms) so the dot pops in
-    // as the final beat of the entrance, not on top of the rise.
-    const id = window.setTimeout(() => setBadgeOpen(true), 750)
-    return () => window.clearTimeout(id)
-  }, [])
   return (
     <div
       className={`${size} relative grid place-items-center overflow-hidden rounded-[28%] bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,.45)] ring-1 ring-foreground/20`}
@@ -179,13 +175,6 @@ function PlanetLogo({ size = "size-20" }: { size?: string }) {
         alt="ApolloKit"
         className="size-3/4 object-contain"
       />
-      <span
-        className="t-badge -right-1 -top-1"
-        data-open={badgeOpen ? "true" : "false"}
-        aria-hidden
-      >
-        <span className="t-badge-dot size-3 rounded-full bg-[var(--ak-accent-2)] shadow-[0_0_24px_var(--ak-glow-2)]" />
-      </span>
     </div>
   )
 }
@@ -310,7 +299,7 @@ function Hero() {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 ak-grid-bg" aria-hidden />
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14">
-        <div className="ak-rise">
+        <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
             通用游戏后端 + AI 副驾驶，一个 SDK 接入就够
@@ -406,10 +395,10 @@ function Hero() {
               { k: "4", v: "步集成完毕" },
               { k: "全球", v: "就近响应" },
               { k: "14", v: "AI 模块覆盖" },
-            ].map((s, i) => (
+            ].map((s) => (
               <div key={s.v}>
                 <dt className="text-3xl font-black tracking-tight text-foreground">
-                  <PopInChars text={s.k} delayMs={650 + i * 110} />
+                  {s.k}
                 </dt>
                 <dd className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
                   {s.v}
@@ -497,10 +486,10 @@ function Capabilities() {
             desc="好友、公会、组队、排行榜、天梯——关系链与赛季结算内建在平台里，不用再自研。"
           />
           <CapabilityCard
-            icon={LineChart}
+            icon={Activity}
             tag="analytics"
-            title="数据与事件"
-            desc="每一次经济流动、活动触发自动记录。统一的事件格式，让漏斗、回流、留存曲线一目了然。"
+            title="实时分析"
+            desc="经济流动、活动触发自动入仓。秒级出漏斗、留存、回流曲线，活动一开服立刻能复盘 — 不用自己接 BI。"
           />
           <CapabilityCard
             icon={Plug}
@@ -753,7 +742,7 @@ function AICopilot() {
 
 function CopilotMock() {
   return (
-    <div className="ak-rise relative">
+    <div className="relative">
       {/* mini 控制台 */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 shadow-[0_30px_80px_-30px_var(--ak-glow-2)] backdrop-blur-sm">
         <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-3">
@@ -864,6 +853,222 @@ function MockField({
           strokeWidth={2}
         />
       )}
+    </div>
+  )
+}
+
+function AnalyticsPreview() {
+  const bullets: Array<{ icon: LucideIcon; t: string; d: string }> = [
+    {
+      icon: Activity,
+      t: "事件自动入仓",
+      d: "30+ 模块全部自动入仓实时分析引擎，零埋点零 ETL，新模块上线即被捕获。",
+    },
+    {
+      icon: LineChart,
+      t: "实时漏斗与留存",
+      d: "D1 / D7 / D30 留存按事件秒级计算，活动调一次参数立刻看曲线变化。",
+    },
+    {
+      icon: PieChart,
+      t: "活动 A/B 立刻复盘",
+      d: "开服当天拉数据看效果。组别、分层、付费层级 — 切片随便组合。",
+    },
+    {
+      icon: Zap,
+      t: "数据 API 拉报表",
+      d: "Pipe Token 直接出 JSON / CSV，BI、看板、Slack Bot 一接即查。",
+    },
+  ]
+  return (
+    <section id="analytics" className="relative py-24">
+      <div
+        className="ak-glow"
+        style={{
+          bottom: "10%",
+          left: "-6%",
+          width: "55%",
+          height: "55%",
+          background: "var(--ak-glow-1)",
+        }}
+      />
+      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+        <div>
+          <SectionEyebrow>数据 · 实时复盘</SectionEyebrow>
+          <SectionTitle>
+            事件自动入仓，
+            <br className="hidden md:block" />
+            复盘秒级出图。
+          </SectionTitle>
+          <p className="mt-5 max-w-xl text-muted-foreground">
+            ApolloKit 内置实时分析引擎，发奖、抽奖、活动触发自动入仓。
+            漏斗、留存、回流曲线开服当天就能拉，运营自己看数，不用排期等数据团队。
+          </p>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {bullets.map(({ icon: Icon, t, d }) => (
+              <div
+                key={t}
+                className="rounded-2xl border border-border bg-card/60 p-5 transition-colors hover:border-foreground/30"
+              >
+                <div className="grid size-10 place-items-center rounded-xl bg-foreground/5 text-foreground ring-1 ring-border">
+                  <Icon className="size-5" strokeWidth={1.75} />
+                </div>
+                <h3 className="mt-4 text-base font-bold tracking-tight">{t}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {d}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <AnalyticsMock />
+      </div>
+    </section>
+  )
+}
+
+function AnalyticsMock() {
+  const kpis = [
+    { k: "DAU", v: "12,481", d: "+8.4%" },
+    { k: "D7 留存", v: "38%", d: "+2.1pt" },
+    { k: "7D ARPU", v: "¥4.2", d: "+12%" },
+  ]
+  const funnel = [
+    { name: "注册", pct: 100, count: "32,140" },
+    { name: "完成新手", pct: 76, count: "24,426" },
+    { name: "首充", pct: 18, count: "5,785" },
+    { name: "D7 复访", pct: 38, count: "12,213" },
+  ]
+  return (
+    <div className="relative">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 shadow-[0_30px_80px_-30px_var(--ak-glow-1)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-3">
+          <span className="size-3 rounded-full bg-red-400/80" />
+          <span className="size-3 rounded-full bg-yellow-400/80" />
+          <span className="size-3 rounded-full bg-green-400/80" />
+          <span className="ml-3 truncate font-mono text-xs text-muted-foreground">
+            apollokit · 仪表盘 · 概览
+          </span>
+          <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
+            实时 · 1m
+          </span>
+        </div>
+
+        <div className="space-y-5 p-5">
+          {/* KPI 卡 */}
+          <div className="grid grid-cols-3 gap-3">
+            {kpis.map((k) => (
+              <div
+                key={k.k}
+                className="rounded-xl border border-border bg-background/60 p-3"
+              >
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {k.k}
+                </div>
+                <div className="mt-1 text-2xl font-black tracking-tight">
+                  {k.v}
+                </div>
+                <div className="mt-0.5 text-[11px] font-semibold text-emerald-500">
+                  {k.d}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Sparkline */}
+          <div className="rounded-xl border border-border bg-background/60 p-4">
+            <div className="mb-2 flex items-baseline justify-between">
+              <div className="text-xs font-semibold">DAU vs 付费 DAU · 14d</div>
+              <div className="flex gap-3 font-mono text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-[var(--ak-accent)]" />
+                  DAU
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
+                  付费
+                </span>
+              </div>
+            </div>
+            <svg
+              viewBox="0 0 320 80"
+              className="h-20 w-full"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              {/* 网格底线 */}
+              <line
+                x1="0"
+                y1="60"
+                x2="320"
+                y2="60"
+                stroke="currentColor"
+                strokeWidth="1"
+                opacity="0.08"
+                strokeDasharray="2 4"
+              />
+              {/* 主曲线（DAU） */}
+              <path
+                d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18"
+                fill="none"
+                stroke="var(--ak-accent)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* DAU 区域填充 */}
+              <path
+                d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18 L 320 80 L 0 80 Z"
+                fill="var(--ak-accent)"
+                opacity="0.08"
+              />
+              {/* 付费曲线 */}
+              <path
+                d="M0 70 L 25 68 L 50 65 L 75 62 L 100 60 L 125 56 L 150 58 L 175 52 L 200 50 L 225 48 L 250 44 L 275 42 L 300 38 L 320 40"
+                fill="none"
+                stroke="var(--ak-accent-2)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          {/* Funnel */}
+          <div className="rounded-xl border border-border bg-background/60 p-4">
+            <div className="mb-3 flex items-baseline justify-between">
+              <div className="text-xs font-semibold">新手漏斗 · 7d</div>
+              <div className="font-mono text-[10px] text-muted-foreground">
+                32,140 注册
+              </div>
+            </div>
+            <div className="space-y-2">
+              {funnel.map((s) => (
+                <div key={s.name} className="flex items-center gap-3">
+                  <div className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">
+                    {s.name}
+                  </div>
+                  <div className="relative h-5 flex-1 overflow-hidden rounded-md bg-foreground/5">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-md bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)]/70"
+                      style={{ width: `${s.pct}%` }}
+                    />
+                    <div className="relative z-10 flex h-full items-center px-2 font-mono text-[10px] font-semibold text-foreground/90 mix-blend-luminosity">
+                      {s.pct}%
+                    </div>
+                  </div>
+                  <div className="w-14 shrink-0 text-right font-mono text-[11px] text-muted-foreground">
+                    {s.count}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1020,6 +1225,256 @@ function CodeComment({ children }: { children: React.ReactNode }) {
 }
 function CodeLine({ children }: { children?: React.ReactNode }) {
   return <div>{children}&nbsp;</div>
+}
+
+function EventsAndWebhooks() {
+  return (
+    <section id="events" className="relative py-24">
+      <div className="absolute inset-0 ak-dots-bg opacity-50" aria-hidden />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <SectionEyebrow>事件 & Webhook · 平台与你的服务联动</SectionEyebrow>
+          <SectionTitle>
+            每个动作都是事件 ——
+            <br className="hidden md:block" />
+            而事件可以跑到任何地方。
+          </SectionTitle>
+          <p className="mx-auto mt-5 max-w-2xl text-muted-foreground">
+            玩家领奖、活动触发、抽奖结算……ApolloKit 把它们抽象成统一事件流。
+            异步队列 fan-out 不阻塞主请求；HMAC 签名 Webhook 推到你的服务；
+            Trigger 引擎让事件互相联动。
+          </p>
+        </div>
+
+        <div className="mt-16 grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-center">
+          <EventFlowDiagram />
+          <WebhookCodeWindow />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function EventFlowDiagram() {
+  const targets: Array<{
+    icon: LucideIcon
+    title: string
+    sub: string
+  }> = [
+    {
+      icon: Webhook,
+      title: "你的服务器",
+      sub: "HTTPS · HMAC 签名 · 自动重试",
+    },
+    {
+      icon: Zap,
+      title: "Trigger 联动",
+      sub: "事件互触发 · 平台内闭环",
+    },
+    {
+      icon: Database,
+      title: "实时数据仓",
+      sub: "秒级查询 · 自助分析",
+    },
+  ]
+  const otherEvents = [
+    "mail.sent",
+    "lottery.drawn",
+    "mission.completed",
+    "shop.purchased",
+    "guild.joined",
+    "+20 个事件",
+  ]
+
+  return (
+    <div className="relative">
+      <div className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm md:p-8">
+        {/* 中央事件 chip */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--ak-accent-2)]/60 bg-background px-4 py-2.5 font-mono text-sm font-semibold shadow-[0_10px_30px_-12px_var(--ak-glow-2)]">
+            <Radio
+              className="size-4 text-[var(--ak-accent-2)]"
+              strokeWidth={2}
+            />
+            inventory.granted
+          </div>
+        </div>
+
+        {/* 连线 SVG */}
+        <svg
+          viewBox="0 0 400 64"
+          preserveAspectRatio="none"
+          className="mt-3 h-12 w-full"
+          aria-hidden
+        >
+          <defs>
+            <marker
+              id="ev-arrow"
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M0 0 L 10 5 L 0 10 Z" fill="var(--ak-accent-2)" />
+            </marker>
+          </defs>
+          <path
+            d="M200 0 Q 200 32 67 56"
+            stroke="var(--ak-accent-2)"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            fill="none"
+            markerEnd="url(#ev-arrow)"
+            opacity="0.6"
+          />
+          <path
+            d="M200 0 L 200 56"
+            stroke="var(--ak-accent-2)"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            fill="none"
+            markerEnd="url(#ev-arrow)"
+            opacity="0.6"
+          />
+          <path
+            d="M200 0 Q 200 32 333 56"
+            stroke="var(--ak-accent-2)"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            fill="none"
+            markerEnd="url(#ev-arrow)"
+            opacity="0.6"
+          />
+        </svg>
+
+        {/* 三个目标卡 */}
+        <div className="grid grid-cols-3 gap-3">
+          {targets.map(({ icon: Icon, title, sub }) => (
+            <div
+              key={title}
+              className="rounded-xl border border-border bg-background/70 p-3 text-center"
+            >
+              <div className="mx-auto grid size-10 place-items-center rounded-lg bg-foreground/5 text-foreground ring-1 ring-border">
+                <Icon className="size-4" strokeWidth={1.75} />
+              </div>
+              <div className="mt-2 text-xs font-bold tracking-tight">
+                {title}
+              </div>
+              <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                {sub}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 底部其他事件 chips */}
+        <div className="mt-7 border-t border-border/60 pt-4">
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            同样可订阅
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {otherEvents.map((name) => (
+              <span
+                key={name}
+                className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1 font-mono text-[10px] text-muted-foreground"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WebhookCodeWindow() {
+  return (
+    <div className="relative">
+      <div
+        className="ak-glow"
+        style={{
+          top: "-10%",
+          right: "-5%",
+          width: "55%",
+          height: "55%",
+          background: "var(--ak-glow-2)",
+        }}
+      />
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-[oklch(0.18_0_0)] text-[oklch(0.93_0_0)] shadow-[0_30px_80px_-30px_var(--ak-glow-1)]">
+        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+          <span className="size-3 rounded-full bg-red-400/80" />
+          <span className="size-3 rounded-full bg-yellow-400/80" />
+          <span className="size-3 rounded-full bg-green-400/80" />
+          <span className="ml-3 truncate font-mono text-xs text-white/60">
+            POST · /webhooks/inventory
+          </span>
+          <span className="ml-auto shrink-0 font-mono text-[10px] text-white/40">
+            production
+          </span>
+        </div>
+        <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed">
+          <code>
+            <CodeLine>
+              <CodeComment>{"// 平台推送 · HMAC 签名 · 失败自动重试"}</CodeComment>
+            </CodeLine>
+            <CodeLine>
+              <CodeVar>X-ApolloKit-Event</CodeVar>:{" "}
+              <CodeStr>&quot;inventory.granted&quot;</CodeStr>
+            </CodeLine>
+            <CodeLine>
+              <CodeVar>X-ApolloKit-Signature</CodeVar>:{" "}
+              <CodeStr>&quot;sha256=a1b2c3d4…&quot;</CodeStr>
+            </CodeLine>
+            <CodeLine>
+              <CodeVar>X-ApolloKit-Delivery</CodeVar>:{" "}
+              <CodeStr>&quot;7c1d-46f2-…&quot;</CodeStr>
+            </CodeLine>
+            <CodeLine />
+            <CodeLine>{"{"}</CodeLine>
+            <CodeLine>
+              {"  "}
+              <CodeVar>&quot;event&quot;</CodeVar>:{" "}
+              <CodeStr>&quot;inventory.granted&quot;</CodeStr>,
+            </CodeLine>
+            <CodeLine>
+              {"  "}
+              <CodeVar>&quot;userId&quot;</CodeVar>:{" "}
+              <CodeStr>&quot;u_82f3a1&quot;</CodeStr>,
+            </CodeLine>
+            <CodeLine>
+              {"  "}
+              <CodeVar>&quot;items&quot;</CodeVar>: [
+            </CodeLine>
+            <CodeLine>
+              {"    { "}
+              <CodeVar>&quot;itemId&quot;</CodeVar>:{" "}
+              <CodeStr>&quot;gem&quot;</CodeStr>,{" "}
+              <CodeVar>&quot;count&quot;</CodeVar>: <CodeNum>500</CodeNum>
+              {" },"}
+            </CodeLine>
+            <CodeLine>{"  ],"}</CodeLine>
+            <CodeLine>
+              {"  "}
+              <CodeVar>&quot;source&quot;</CodeVar>: {"{ "}
+              <CodeVar>&quot;module&quot;</CodeVar>:{" "}
+              <CodeStr>&quot;mail&quot;</CodeStr>,{" "}
+              <CodeVar>&quot;id&quot;</CodeVar>:{" "}
+              <CodeStr>&quot;m_a4e1&quot;</CodeStr>
+              {" },"}
+            </CodeLine>
+            <CodeLine>
+              {"  "}
+              <CodeVar>&quot;ts&quot;</CodeVar>: <CodeNum>1730482156</CodeNum>
+            </CodeLine>
+            <CodeLine>{"}"}</CodeLine>
+          </code>
+        </pre>
+      </div>
+    </div>
+  )
 }
 
 function Stack() {
@@ -1243,41 +1698,6 @@ function PricingPreview() {
   )
 }
 
-/**
- * Per-character entrance using the transitions-dev "number pop-in" snippet.
- * Renders hidden until `delayMs` elapses, then arms the keyframe so the
- * characters slide + blur in. The last two characters carry data-stagger
- * markers so they trail behind by 1× / 2× --digit-stagger.
- */
-function PopInChars({ text, delayMs = 0 }: { text: string; delayMs?: number }) {
-  const [armed, setArmed] = useState(false)
-  useEffect(() => {
-    const id = window.setTimeout(() => setArmed(true), delayMs)
-    return () => window.clearTimeout(id)
-  }, [delayMs])
-  const chars = [...text]
-  return (
-    <span
-      className={armed ? "t-digit-group is-animating" : "t-digit-group"}
-      style={armed ? undefined : { opacity: 0 }}
-    >
-      {chars.map((ch, i) => {
-        const stagger =
-          i === chars.length - 2
-            ? "1"
-            : i === chars.length - 1
-              ? "2"
-              : undefined
-        return (
-          <span key={i} className="t-digit" data-stagger={stagger}>
-            {ch}
-          </span>
-        )
-      })}
-    </span>
-  )
-}
-
 export default function Landing() {
   return (
     <MarketingShell>
@@ -1286,7 +1706,9 @@ export default function Landing() {
       <ModuleMatrix />
       <Workflow />
       <AICopilot />
+      <AnalyticsPreview />
       <CodeShowcase />
+      <EventsAndWebhooks />
       <Stack />
       <PricingPreview />
       <FinalCTA />

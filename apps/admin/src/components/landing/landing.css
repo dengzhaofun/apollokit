@@ -9,28 +9,6 @@
   --ak-glow-2: color-mix(in oklch, var(--ak-accent-2) 24%, transparent);
   --ak-glow-3: color-mix(in oklch, var(--ak-accent-3) 22%, transparent);
 
-  /* transitions-dev tokens (number pop-in) */
-  --digit-dur: 500ms;
-  --digit-distance: 8px;
-  --digit-stagger: 70ms;
-  --digit-blur: 2px;
-  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
-  --digit-dir-x: 0;
-  --digit-dir-y: 1;
-
-  /* transitions-dev tokens (notification badge) */
-  --badge-slide-dur: 260ms;
-  --badge-pop-dur: 500ms;
-  --badge-pop-close-dur: 180ms;
-  --badge-fade-dur: 400ms;
-  --badge-fade-close-dur: 180ms;
-  --badge-blur: 2px;
-  --badge-offset-x: -8.2px;
-  --badge-offset-y: 12.4px;
-  --badge-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --badge-pop-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
-  --badge-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
-
   /* Clip stray horizontal overflow from decorative blurs/glows on mobile.
      `clip` (unlike `hidden`) doesn't create a scroll container, so the
      sticky TopNav keeps working. */
@@ -173,90 +151,10 @@
   .ak-orbit-reverse,
   .ak-orbit-item,
   .ak-tile:hover::after,
-  .t-digit-group .t-digit,
-  .t-badge,
-  .t-badge-dot {
+  .ak-pulse {
     animation: none !important;
     transition: none !important;
   }
-}
-
-/* transitions-dev — number pop-in (jakubantalik/transitions-dev #02). */
-@keyframes t-digit-pop-in {
-  0% {
-    transform: translate(
-      calc(var(--digit-distance) * var(--digit-dir-x)),
-      calc(var(--digit-distance) * var(--digit-dir-y))
-    );
-    opacity: 0;
-    filter: blur(var(--digit-blur));
-  }
-  100% {
-    transform: translate(0, 0);
-    opacity: 1;
-    filter: blur(0);
-  }
-}
-
-.t-digit-group {
-  display: inline-flex;
-  align-items: baseline;
-}
-.t-digit {
-  display: inline-block;
-  will-change: transform, opacity, filter;
-}
-.t-digit-group.is-animating .t-digit {
-  animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
-}
-.t-digit-group.is-animating .t-digit[data-stagger="1"] {
-  animation-delay: var(--digit-stagger);
-}
-.t-digit-group.is-animating .t-digit[data-stagger="2"] {
-  animation-delay: calc(var(--digit-stagger) * 2);
-}
-
-/* transitions-dev — notification badge (jakubantalik/transitions-dev #03).
-   Position (top/right) is intentionally left to the consumer (Tailwind
-   utilities on the .t-badge element). */
-@keyframes t-badge-slide-in {
-  from {
-    transform: translate(var(--badge-offset-x), var(--badge-offset-y));
-  }
-  to {
-    transform: translate(0, 0);
-  }
-}
-
-.t-badge {
-  position: absolute;
-  pointer-events: none;
-  will-change: transform;
-}
-.t-badge[data-open="true"] {
-  animation: t-badge-slide-in var(--badge-slide-dur) var(--badge-slide-ease);
-}
-
-.t-badge-dot {
-  display: block;
-  transform-origin: center;
-  transform: scale(1);
-  opacity: 1;
-  filter: blur(0);
-  transition:
-    transform var(--badge-pop-dur) var(--badge-pop-ease),
-    opacity var(--badge-fade-dur) var(--badge-pop-ease),
-    filter var(--badge-pop-dur) var(--badge-pop-ease);
-  will-change: transform, opacity, filter;
-}
-.t-badge[data-open="false"] .t-badge-dot {
-  transform: scale(0);
-  opacity: 0;
-  filter: blur(var(--badge-blur));
-  transition:
-    transform var(--badge-pop-close-dur) var(--badge-close-ease),
-    opacity var(--badge-fade-close-dur) var(--badge-close-ease),
-    filter var(--badge-pop-close-dur) var(--badge-close-ease);
 }
 
 /* Pulse dot used in workflow. */
@@ -274,20 +172,4 @@
 
 .ak-pulse {
   animation: ak-pulse 2.4s ease-in-out infinite;
-}
-
-/* Subtle fade + lift on mount for each section. */
-@keyframes ak-rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.ak-rise {
-  animation: ak-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
