@@ -4,21 +4,18 @@ export { computeHmac } from "./hmac.js";
 export { ApolloKitApiError, isErrorEnvelope } from "./errors.js";
 export type { ApolloKitErrorEnvelope } from "./errors.js";
 
-// End-user auth (players signing up / in). MVP: email + password only.
+// End-user auth (players signing up / in). Backed by better-auth's
+// official client — see ./auth-client.ts for the full surface and the
+// `@apollokit/client/react` subpath for the React-specific variant.
 export {
-  signUpEmail,
-  signInEmail,
-  signOut,
-  getSession,
-  signInSocial,
-} from "./auth.js";
+  createApolloClientAuth,
+  buildApolloAuthFetch,
+  resolveApolloAuthBaseURL,
+} from "./auth-client.js";
 export type {
-  SignUpEmailInput,
-  SignInEmailInput,
-  EndUserProfile,
-  EndUserSession,
-  SignInResult,
-} from "./auth.js";
+  ApolloClientAuth,
+  CreateApolloClientAuthConfig,
+} from "./auth-client.js";
 
 // Re-export all generated types and SDK functions
 export * from "./generated/types.gen.js";

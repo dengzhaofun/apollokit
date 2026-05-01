@@ -12,6 +12,7 @@ import {
   ApolloKitApiError,
   BadgeClientService,
   CheckInClientService,
+  createApolloClientAuth,
   createClient,
   isErrorEnvelope,
   signEndUser,
@@ -76,4 +77,35 @@ async function manualOverride() {
   }
 }
 
-export { browserDemo, nodeDemo, manualOverride }
+async function authDemo() {
+  // End-user auth — backed by better-auth's official client. The SDK
+  // wires up the cpk_ key + the server's `/api/client/auth` base path;
+  // every method on the returned object is straight better-auth.
+  const auth = createApolloClientAuth({
+    baseURL: 'https://api.example.com',
+    publishableKey: 'cpk_smoke_example',
+  })
+
+  await auth.signUp.email({
+    email: 'player@example.com',
+    password: 'super-secret-1234',
+    name: 'Player One',
+  })
+
+  const signIn = await auth.signIn.email({
+    email: 'player@example.com',
+    password: 'super-secret-1234',
+  })
+  if (signIn.data?.token) {
+    console.log(`bearer token (Node): ${signIn.data.token.slice(0, 8)}…`)
+  }
+
+  const session = await auth.getSession()
+  if (session.data?.user) {
+    console.log(`signed in as ${session.data.user.email}`)
+  }
+
+  await auth.signOut()
+}
+
+export { browserDemo, nodeDemo, manualOverride, authDemo }

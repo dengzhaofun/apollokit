@@ -127,23 +127,52 @@ createClient({
 
 ## End-user auth
 
-Email + password sign-up / sign-in for end users (separate Better Auth
-instance from admin):
+End-user sign-up / sign-in / session is powered by
+[better-auth](https://www.better-auth.com)'s official client, pointed at
+the player-facing auth instance on the apollokit server. The factory
+just wires up the cpk\_ key and the server's `/api/client/auth` base
+path — every method on the returned client is straight better-auth.
+
+### Framework-agnostic (Node / browser / Workers)
 
 ```ts
-import { signUpEmail, signInEmail, getSession, signOut } from "@apollokit/client";
+import { createApolloClientAuth } from "@apollokit/client";
 
-const config = { baseUrl: "https://api.example.com", publishableKey: "cpk_…" };
+const auth = createApolloClientAuth({
+  baseURL: "https://api.example.com",
+  publishableKey: "cpk_…",
+});
 
-await signUpEmail(config, { email, password, name });
-const { user, token } = await signInEmail(config, { email, password });
-const session = await getSession(config); // null when signed-out
-await signOut(config);
+await auth.signUp.email({ email, password, name });
+const { data } = await auth.signIn.email({ email, password });
+const session = await auth.getSession();
+await auth.signOut();
 ```
 
-In the browser the session rides on cookies (`credentials: "include"`).
-On Node / native clients pass the returned `token` as
-`Authorization: Bearer <token>` on subsequent business calls.
+### React (TanStack Start, Next, plain React)
+
+```ts
+import { createApolloClientAuthReact } from "@apollokit/client/react";
+
+export const auth = createApolloClientAuthReact({
+  baseURL: "https://api.example.com",
+  publishableKey: "cpk_…",
+});
+
+// in a component:
+const { data: session, isPending } = auth.useSession();
+```
+
+In the browser the session rides on cookies that better-auth sets
+automatically. On Node / native clients use the bearer token from the
+sign-in response on subsequent business calls.
+
+> The full method surface (password reset, email verification, social
+> providers, etc.) is whatever the apollokit server's better-auth
+> instance exposes — see the
+> [better-auth client docs](https://www.better-auth.com/docs/concepts/client).
+> Adding a plugin server-side is enough; the SDK does not need to be
+> regenerated.
 
 ## Regenerating
 
