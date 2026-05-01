@@ -210,9 +210,9 @@ export function DataTable<T>({
   return (
     <div className="space-y-3">
       {(showSearch || toolbar) && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
           {showSearch && onSearchChange ? (
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative w-full md:flex-1 md:max-w-sm">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchValue ?? ""}
@@ -222,7 +222,7 @@ export function DataTable<T>({
               />
             </div>
           ) : null}
-          {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
+          {toolbar ? <div className="flex flex-wrap items-center gap-2">{toolbar}</div> : null}
         </div>
       )}
 
@@ -249,7 +249,13 @@ export function DataTable<T>({
         />
       ) : null}
 
-      <div className="rounded-xl border bg-card shadow-sm">
+      <div
+        className={
+          sortableActive
+            ? "rounded-xl border bg-card shadow-sm"
+            : "overflow-x-auto rounded-xl border bg-card shadow-sm"
+        }
+      >
         <DataTableInner
           table={table}
           rows={rows}
@@ -322,7 +328,6 @@ function DataTableInner<T>({
   sortableActive,
   sortable,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ReturnType<typeof useReactTable<T>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rows: any[]
