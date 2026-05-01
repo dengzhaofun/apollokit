@@ -141,6 +141,7 @@ export function AnnouncementTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(r) => r.id}
       filters={ANNOUNCEMENT_FILTER_DEFS}

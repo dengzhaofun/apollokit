@@ -1815,6 +1815,8 @@
   "command_palette_no_results": "No matches found.",
   "data_table_search_placeholder": "Search…",
   "data_table_no_results": "No matches",
+  "data_table_filters": "Filters",
+  "data_table_filters_reset": "Reset",
   "data_table_reorder_actions": "Reorder",
   "data_table_pagination_summary": "Page {page} · {count} rows",
   "data_table_page_size": "Page size",

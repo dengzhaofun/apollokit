@@ -57,7 +57,7 @@ function LogsPage() {
         description={m.analytics_logs_subtitle()}
       />
       <PageBody>
-        <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,380px)]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_minmax(280px,380px)]">
           <ClientOnly
             fallback={<SkeletonBlock label={m.common_loading()} tall />}
           >

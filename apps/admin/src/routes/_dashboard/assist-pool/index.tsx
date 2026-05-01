@@ -127,6 +127,7 @@ function AssistPoolListPage() {
       <PageBody>
         <DataTable
           columns={columns}
+          mobileLayout="cards"
           data={list.items}
           getRowId={(row) => row.id}
           filters={ASSIST_POOL_CONFIG_FILTER_DEFS}

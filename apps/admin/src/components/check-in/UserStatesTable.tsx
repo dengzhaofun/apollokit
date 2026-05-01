@@ -69,6 +69,7 @@ export function UserStatesTable({ configKey, route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.endUserId}
       filters={CHECK_IN_USER_STATE_FILTER_DEFS}

@@ -167,6 +167,7 @@ export function DefinitionTable({
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={items}
       getRowId={(row) => row.id}
       pageIndex={1}

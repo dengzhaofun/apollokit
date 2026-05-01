@@ -29,6 +29,7 @@ import {
   useReactTable,
   type ColumnDef,
   type Row,
+  type RowData,
 } from "@tanstack/react-table"
 import { Search } from "lucide-react"
 import { type ReactNode } from "react"
@@ -39,6 +40,9 @@ import {
   SortableTableProvider,
   SortableTableRow,
 } from "#/components/common/SortableTable"
+import { useIsMobile } from "#/hooks/use-mobile"
+
+import { DataCardList } from "./DataCardList"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -72,6 +76,20 @@ import { DataTableFilterToolbar } from "./DataTableFilterToolbar"
 import type { FilterDef, FilterValue } from "#/hooks/use-list-search"
 import type { RuleGroupType } from "#/components/ui/query-builder"
 
+// Extend tanstack-table's ColumnMeta with mobile-card-list slots so
+// callers can tag columns via `meta: { primary: true }` etc. with full
+// type-checking. See `DataCardList.tsx` for runtime semantics.
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** Render this column as the card header on mobile (defaults to first non-actions column). */
+    primary?: boolean
+    /** Render this column in the card's top-right action slot on mobile. */
+    isActions?: boolean
+    /** Hide this column from the mobile card view entirely. */
+    hideOnMobile?: boolean
+  }
+}
+
 interface Props<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[]
@@ -82,6 +100,17 @@ interface Props<T> {
   empty?: ReactNode
   /** Optional left-side content next to the search box (e.g. extra buttons). */
   toolbar?: ReactNode
+
+  /**
+   * Mobile (`< 768px`) rendering mode. Defaults to `"scroll"` — the
+   * regular `<Table>` is rendered inside a horizontal-scroll container.
+   * `"cards"` switches to a card list (`<DataCardList>`) on mobile only;
+   * desktop / tablet still get the table. Tag columns via `meta.primary`
+   * / `meta.isActions` / `meta.hideOnMobile` to fine-tune card layout —
+   * sensible defaults work without any annotation. Sortable mode keeps
+   * the table on mobile too (DnD doesn't make sense on a phone).
+   */
+  mobileLayout?: "scroll" | "cards"
 
   // ─── Pagination (server-driven cursor) ─────────────────────────────
   /** Current page index, 1-based, for display only. */
@@ -154,6 +183,7 @@ export function DataTable<T>({
   isLoading,
   empty,
   toolbar,
+  mobileLayout = "scroll",
   pageIndex,
   canPrev,
   canNext,
@@ -177,6 +207,7 @@ export function DataTable<T>({
   getRowId,
   sortable,
 }: Props<T>) {
+  const isMobile = useIsMobile()
   const table = useReactTable({
     data,
     columns,
@@ -207,12 +238,17 @@ export function DataTable<T>({
     !(searchValue && searchValue.trim() !== "")
   const totalColSpan = columns.length + (sortableActive ? 2 : 0)
 
+  // Mobile cards: opt-in via `mobileLayout="cards"`, only when not
+  // sortable (DnD doesn't translate to a phone) and only at < md.
+  const useCardLayout =
+    mobileLayout === "cards" && isMobile && !sortableActive
+
   return (
     <div className="space-y-3">
       {(showSearch || toolbar) && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
           {showSearch && onSearchChange ? (
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative w-full md:flex-1 md:max-w-sm">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchValue ?? ""}
@@ -222,7 +258,7 @@ export function DataTable<T>({
               />
             </div>
           ) : null}
-          {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
+          {toolbar ? <div className="flex flex-wrap items-center gap-2">{toolbar}</div> : null}
         </div>
       )}
 
@@ -249,17 +285,32 @@ export function DataTable<T>({
         />
       ) : null}
 
-      <div className="rounded-xl border bg-card shadow-sm">
-        <DataTableInner
-          table={table}
-          rows={rows}
-          isLoading={isLoading}
-          columns={columns}
-          empty={empty}
-          totalColSpan={totalColSpan}
-          sortableActive={sortableActive}
-          sortable={sortable}
-        />
+      <div
+        className={
+          sortableActive || useCardLayout
+            ? "rounded-xl border bg-card shadow-sm"
+            : "overflow-x-auto rounded-xl border bg-card shadow-sm"
+        }
+      >
+        {useCardLayout ? (
+          <DataCardList
+            table={table}
+            rows={rows}
+            isLoading={isLoading}
+            empty={empty}
+          />
+        ) : (
+          <DataTableInner
+            table={table}
+            rows={rows}
+            isLoading={isLoading}
+            columns={columns}
+            empty={empty}
+            totalColSpan={totalColSpan}
+            sortableActive={sortableActive}
+            sortable={sortable}
+          />
+        )}
       </div>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -322,7 +373,6 @@ function DataTableInner<T>({
   sortableActive,
   sortable,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ReturnType<typeof useReactTable<T>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rows: any[]

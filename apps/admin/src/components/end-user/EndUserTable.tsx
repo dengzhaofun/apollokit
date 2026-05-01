@@ -122,6 +122,7 @@ export function EndUserTable({ route, toolbar }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       toolbar={toolbar}
       getRowId={(r) => r.id}

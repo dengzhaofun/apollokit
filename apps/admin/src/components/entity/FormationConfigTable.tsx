@@ -65,6 +65,7 @@ export function FormationConfigTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={ENTITY_FORMATION_CONFIG_FILTER_DEFS}
