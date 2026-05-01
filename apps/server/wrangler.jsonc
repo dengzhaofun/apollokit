@@ -57,6 +57,7 @@
   // via the wildcard export pattern ("./utils/*"), which wrangler's esbuild doesn't resolve.
   // Use relative paths so esbuild treats them as file paths, not package specifiers.
   "alias": {
+    "@better-auth/core/utils/async": "./node_modules/@better-auth/core/dist/utils/async.mjs",
     "@better-auth/core/utils/id": "./node_modules/@better-auth/core/dist/utils/id.mjs",
     "@better-auth/core/utils/json": "./node_modules/@better-auth/core/dist/utils/json.mjs",
     "@better-auth/core/utils/ip": "./node_modules/@better-auth/core/dist/utils/ip.mjs",

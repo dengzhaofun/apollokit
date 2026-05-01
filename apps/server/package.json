@@ -24,8 +24,8 @@
     "openapi:dump": "bash scripts/dump-openapi.sh"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.6.2",
-    "@better-auth/core": "1.6.2",
+    "@better-auth/api-key": "^1.6.9",
+    "@better-auth/core": "^1.6.9",
     "@hono/mcp": "^0.2.5",
     "@hono/zod-openapi": "^1.3.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -35,15 +35,15 @@
     "@sentry/cloudflare": "^10.50.0",
     "@tinybirdco/sdk": "^0.0.66",
     "@upstash/redis": "^1.37.0",
-    "ai": "6.0.168",
-    "better-auth": "^1.6.2",
+    "ai": "^6.0.172",
+    "better-auth": "^1.6.9",
     "croner": "^10.0.1",
     "drizzle-orm": "^0.45.2",
     "filtrex": "^3.1.0",
     "hono": "^4.12.15",
     "json-logic-js": "^2.0.5",
     "pg": "^8.20.0",
-    "zod": "^4.3.6"
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "@better-auth/cli": "^1.4.21",
