@@ -392,7 +392,7 @@ function AIAssistPanelInner({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2">
+      <div className="flex shrink-0 items-start justify-between gap-2 border-b px-4 py-3">
         <div className="min-w-0">
           <p className="text-xs font-medium text-foreground">AI 助手</p>
           <p className="text-[11px] text-muted-foreground">
