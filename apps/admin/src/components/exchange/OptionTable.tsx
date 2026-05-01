@@ -1,3 +1,4 @@
+import { useMoveExchangeOption } from "#/hooks/use-move"
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -22,6 +23,7 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<ExchangeOption>()
 
 function ActionsCell({ option }: { option: ExchangeOption }) {
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -138,6 +140,7 @@ interface Props {
 export function OptionTable({ configKey, route }: Props) {
   const list = useExchangeOptions(configKey, route)
   const columns = useColumns()
+  const moveMutation = useMoveExchangeOption()
   return (
     <DataTable
       columns={columns}
@@ -157,6 +160,7 @@ export function OptionTable({ configKey, route }: Props) {
           | undefined
       }
       onAdvancedQueryChange={list.setAdvanced}
+      sortable={{ onMove: (id, body) => moveMutation.mutate({ id, body }), disabled: moveMutation.isPending }}
       {...list.tableProps}
     />
   )

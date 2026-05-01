@@ -24,7 +24,7 @@ export interface LevelConfig {
   coverImage: string | null
   icon: string | null
   hasStages: boolean
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -39,7 +39,7 @@ export interface LevelStage {
   description: string | null
   icon: string | null
   unlockRule: UnlockRule | null
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -59,7 +59,7 @@ export interface Level {
   unlockRule: UnlockRule | null
   clearRewards: RewardEntry[] | null
   starRewards: StarRewardTier[] | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -74,7 +74,6 @@ export interface CreateConfigInput {
   coverImage?: string | null
   icon?: string | null
   hasStages?: boolean
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -85,7 +84,6 @@ export interface CreateStageInput {
   description?: string | null
   icon?: string | null
   unlockRule?: UnlockRule | null
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 export type UpdateStageInput = Partial<CreateStageInput>
@@ -101,7 +99,6 @@ export interface CreateLevelInput {
   unlockRule?: UnlockRule | null
   clearRewards?: RewardEntry[] | null
   starRewards?: StarRewardTier[] | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }

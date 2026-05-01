@@ -26,7 +26,6 @@ export function TierForm({
       alias: defaultValues?.alias ?? "",
       baseWeight: defaultValues?.baseWeight ?? 100,
       color: defaultValues?.color ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -35,7 +34,6 @@ export function TierForm({
         alias: value.alias || null,
         baseWeight: value.baseWeight,
         color: value.color || null,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       }
       await onSubmit(input)
@@ -132,20 +130,6 @@ export function TierForm({
           )}
         </form.Field>
 
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor={field.name}>Sort Order</Label>
-              <Input
-                id={field.name}
-                type="number"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
-            </div>
-          )}
-        </form.Field>
       </div>
 
       <form.Field name="isActive">

@@ -49,7 +49,7 @@ describe("banner service", () => {
     ).rejects.toMatchObject({ code: "banner.group_not_found" });
   });
 
-  test("create banner defaults sortOrder to tail", async () => {
+  test("create banner defaults sortOrder to tail (fractional key)", async () => {
     const group = await svc.createGroup(orgId, {
       alias: "sort-test",
       name: "sort test",
@@ -70,8 +70,10 @@ describe("banner service", () => {
       imageUrlDesktop: "https://cdn.example.com/d.png",
       linkAction: link,
     });
-    expect(b1.sortOrder).toBe(0);
-    expect(b2.sortOrder).toBe(1);
+    expect(typeof b1.sortOrder).toBe("string");
+    expect(typeof b2.sortOrder).toBe("string");
+    expect(b1.sortOrder).not.toBe("");
+    expect(b2.sortOrder > b1.sortOrder).toBe(true);
   });
 
   test("multicast banner requires non-empty targetUserIds", async () => {
@@ -205,8 +207,68 @@ describe("banner service", () => {
     // valid full swap
     const reordered = await svc.reorderBanners(orgId, group.id, [b.id, a.id]);
     expect(reordered.map((x) => x.id)).toEqual([b.id, a.id]);
-    expect(reordered[0]!.sortOrder).toBe(0);
-    expect(reordered[1]!.sortOrder).toBe(1);
+    // After reorder, the "first" row's key is lexicographically less than the
+    // "second" row's key, regardless of the specific fractional values.
+    expect(reordered[0]!.sortOrder < reordered[1]!.sortOrder).toBe(true);
+  });
+
+  test("moveBanner — position: first / last / before / after", async () => {
+    const group = await svc.createGroup(orgId, {
+      alias: "move-test",
+      name: "move",
+    });
+    const link: LinkAction = { type: "none" };
+    const mk = (title: string) =>
+      svc.createBanner(orgId, group.id, {
+        title,
+        imageUrlMobile: "https://cdn.example.com/m.png",
+        imageUrlDesktop: "https://cdn.example.com/d.png",
+        linkAction: link,
+      });
+    const a = await mk("A");
+    const b = await mk("B");
+    const c = await mk("C");
+    const d = await mk("D");
+
+    // start order: A, B, C, D (by createdAt and tail-append keys)
+
+    // Move D to top
+    await svc.moveBanner(orgId, d.id, { position: "first" });
+    let resolved = await svc.getClientGroupByAlias(orgId, "move-test", "u-1");
+    expect(resolved.banners.map((x) => x.title)).toEqual(["D", "A", "B", "C"]);
+
+    // Move A to bottom
+    await svc.moveBanner(orgId, a.id, { position: "last" });
+    resolved = await svc.getClientGroupByAlias(orgId, "move-test", "u-1");
+    expect(resolved.banners.map((x) => x.title)).toEqual(["D", "B", "C", "A"]);
+
+    // Move C before D (i.e. up one)
+    await svc.moveBanner(orgId, c.id, { before: d.id });
+    resolved = await svc.getClientGroupByAlias(orgId, "move-test", "u-1");
+    expect(resolved.banners.map((x) => x.title)).toEqual(["C", "D", "B", "A"]);
+
+    // Move B after A (move to end one step at a time)
+    await svc.moveBanner(orgId, b.id, { after: a.id });
+    resolved = await svc.getClientGroupByAlias(orgId, "move-test", "u-1");
+    expect(resolved.banners.map((x) => x.title)).toEqual(["C", "D", "A", "B"]);
+  });
+
+  test("moveBanner — unknown sibling id surfaces banner.not_found", async () => {
+    const group = await svc.createGroup(orgId, {
+      alias: "move-404",
+      name: "move-404",
+    });
+    const link: LinkAction = { type: "none" };
+    const a = await svc.createBanner(orgId, group.id, {
+      title: "A",
+      imageUrlMobile: "https://cdn.example.com/m.png",
+      imageUrlDesktop: "https://cdn.example.com/d.png",
+      linkAction: link,
+    });
+    const stranger = "00000000-0000-0000-0000-000000000000";
+    await expect(
+      svc.moveBanner(orgId, a.id, { before: stranger }),
+    ).rejects.toMatchObject({ code: "banner.not_found" });
   });
 
   test("delete group cascades to banners", async () => {

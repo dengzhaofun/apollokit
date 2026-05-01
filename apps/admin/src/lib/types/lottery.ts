@@ -28,7 +28,7 @@ export interface LotteryTier {
   baseWeight: number
   color: string | null
   icon: string | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -50,7 +50,7 @@ export interface LotteryPrize {
   globalStockUsed: number
   fallbackPrizeId: string | null
   isActive: boolean
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -130,7 +130,6 @@ export interface CreateTierInput {
   baseWeight: number
   color?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -141,7 +140,6 @@ export interface UpdateTierInput {
   baseWeight?: number
   color?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -156,7 +154,6 @@ export interface CreatePrizeInput {
   globalStockLimit?: number | null
   fallbackPrizeId?: string | null
   isActive?: boolean
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 
@@ -170,7 +167,6 @@ export interface UpdatePrizeInput {
   globalStockLimit?: number | null
   fallbackPrizeId?: string | null
   isActive?: boolean
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 

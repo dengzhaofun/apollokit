@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
 import { pageOf } from "../../lib/pagination";
 import { LinkActionSchema } from "../link/validators";
 import {
@@ -63,7 +64,6 @@ export const CreateBannerSchema = z
     imageUrlDesktop: z.string().url().max(2048),
     altText: z.string().max(500).nullable().optional(),
     linkAction: LinkActionSchema,
-    sortOrder: z.number().int().optional(),
     visibleFrom: z.string().datetime().nullable().optional(),
     visibleUntil: z.string().datetime().nullable().optional(),
     targetType: TargetTypeSchema.optional(),
@@ -89,20 +89,28 @@ export const UpdateBannerSchema = CreateBannerSchema.partial().openapi(
 export type CreateBannerInput = z.input<typeof CreateBannerSchema>;
 export type UpdateBannerInput = z.input<typeof UpdateBannerSchema>;
 
-// ─── Reorder schema ─────────────────────────────────────────────
+// ─── Reorder schemas ────────────────────────────────────────────
 
 export const ReorderBannersSchema = z
   .object({
     /**
      * The complete, ordered list of banner ids in the group. Service layer
      * verifies it exactly matches the current membership — partial reorders
-     * must still send the full set (prevents drift / duplicate sortOrders).
+     * must still send the full set (prevents drift).
      */
     bannerIds: z.array(z.string().uuid()).min(1),
   })
   .openapi("BannerReorderRequest");
 
 export type ReorderBannersInput = z.input<typeof ReorderBannersSchema>;
+
+/**
+ * Single-row move — drag-drop / move-to-top / move-to-bottom / move-up /
+ * move-down all collapse onto this body shape. See
+ * `lib/fractional-order.ts → MoveBodySchema`.
+ */
+export const MoveBannerSchema = MoveBodySchema.openapi("BannerMoveRequest");
+export type MoveBannerInput = z.input<typeof MoveBannerSchema>;
 
 // ─── Params / path ─────────────────────────────────────────────
 
@@ -152,7 +160,7 @@ export const BannerResponseSchema = z
     imageUrlDesktop: z.string(),
     altText: z.string().nullable(),
     linkAction: LinkActionSchema,
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     visibleFrom: z.string().nullable(),
     visibleUntil: z.string().nullable(),
     targetType: TargetTypeSchema,
@@ -180,7 +188,7 @@ export const ClientBannerResponseSchema = z
     imageUrlDesktop: z.string(),
     altText: z.string().nullable(),
     linkAction: LinkActionSchema,
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
   })
   .openapi("ClientBanner");
 

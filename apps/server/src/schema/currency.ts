@@ -11,6 +11,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import { organization } from "./auth";
 
 /**
@@ -41,7 +43,7 @@ export const currencies = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     activityId: uuid("activity_id"),
     activityNodeId: uuid("activity_node_id"),

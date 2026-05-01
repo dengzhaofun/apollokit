@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -338,6 +339,35 @@ shopRouter.openapi(
 
 shopRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/categories/{key}/move",
+    tags: [TAG_CAT],
+    summary: "Move a shop category (drag/top/bottom/up/down)",
+    request: {
+      params: KeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ShopCategoryResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await shopService.moveCategory(orgId, key, body);
+    return c.json(ok(serializeCategory(row)), 200);
+  },
+);
+
+shopRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -450,6 +480,35 @@ shopRouter.openapi(
       c.req.valid("param").id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeTag(row)), 200);
+  },
+);
+
+shopRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/tags/{key}/move",
+    tags: [TAG_TAG],
+    summary: "Move a shop tag (drag/top/bottom/up/down)",
+    request: {
+      params: KeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ShopTagResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await shopService.moveTag(orgId, key, body);
     return c.json(ok(serializeTag(row)), 200);
   },
 );
@@ -572,6 +631,35 @@ shopRouter.openapi(
       c.req.valid("param").id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeProduct(row)), 200);
+  },
+);
+
+shopRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/products/{key}/move",
+    tags: [TAG_PROD],
+    summary: "Move a shop product (drag/top/bottom/up/down, scoped per category)",
+    request: {
+      params: KeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ShopProductResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await shopService.moveProduct(orgId, key, body);
     return c.json(ok(serializeProduct(row)), 200);
   },
 );
@@ -716,6 +804,35 @@ shopRouter.openapi(
       c.req.valid("param").stageId,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeStage(row)), 200);
+  },
+);
+
+shopRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/stages/{stageId}/move",
+    tags: [TAG_STG],
+    summary: "Move a growth stage (drag/top/bottom/up/down, scoped per product)",
+    request: {
+      params: StageIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ShopGrowthStageResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { stageId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await shopService.moveGrowthStage(orgId, stageId, body);
     return c.json(ok(serializeStage(row)), 200);
   },
 );

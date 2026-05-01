@@ -331,7 +331,10 @@ export function assembleTree(input: AssembleInput): BadgeTreeNode[] {
   }
   // Sort siblings by sortOrder for deterministic output.
   for (const list of nodesByParent.values()) {
-    list.sort((a, b) => a.sortOrder - b.sortOrder || a.key.localeCompare(b.key));
+    list.sort(
+      (a, b) =>
+        a.sortOrder.localeCompare(b.sortOrder) || a.key.localeCompare(b.key),
+    );
   }
 
   function buildNode(node: BadgeNode): BadgeTreeNode {

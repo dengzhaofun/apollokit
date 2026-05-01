@@ -217,3 +217,21 @@ export function useReorderBanners() {
       qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) }),
   })
 }
+
+import type { MoveBody } from "#/components/common/SortableList"
+
+export function useMoveBanner() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string
+      groupId: string
+      body: MoveBody
+    }) => api.post(`/api/banner/banners/${id}/move`, body),
+    onSuccess: (_row, vars) =>
+      qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) }),
+  })
+}

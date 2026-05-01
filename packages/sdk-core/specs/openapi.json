@@ -685,7 +685,11 @@
             "additionalProperties": {}
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -817,10 +821,6 @@
             ],
             "additionalProperties": {}
           },
-          "sortOrder": {
-            "type": "integer",
-            "default": 0
-          },
           "isActive": {
             "type": "boolean",
             "default": true
@@ -923,13 +923,54 @@
             ],
             "additionalProperties": {}
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           }
         }
+      },
+      "MoveBody": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "before": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "before"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "after": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "after"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "position": {
+                "type": "string",
+                "enum": [
+                  "first",
+                  "last"
+                ]
+              }
+            },
+            "required": [
+              "position"
+            ]
+          }
+        ],
+        "description": "Where to place the moved row. Exactly one of before/after/position must be set."
       },
       "BadgeValidateTreeResponse": {
         "type": "object",
@@ -1074,9 +1115,6 @@
             "minLength": 1,
             "maxLength": 255,
             "pattern": "^[^\\s]+$"
-          },
-          "sortOrder": {
-            "type": "integer"
           }
         },
         "required": [
@@ -1787,7 +1825,11 @@
             "$ref": "#/components/schemas/LinkAction"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "visibleFrom": {
             "type": [
@@ -1971,9 +2013,6 @@
           "linkAction": {
             "$ref": "#/components/schemas/LinkAction"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "visibleFrom": {
             "type": [
               "string",
@@ -2043,6 +2082,50 @@
           "bannerIds"
         ]
       },
+      "BannerMoveRequest": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "before": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "before"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "after": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "after"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "position": {
+                "type": "string",
+                "enum": [
+                  "first",
+                  "last"
+                ]
+              }
+            },
+            "required": [
+              "position"
+            ]
+          }
+        ],
+        "description": "Where to place the moved row. Exactly one of before/after/position must be set."
+      },
       "BannerUpdateRequest": {
         "type": "object",
         "properties": {
@@ -2070,9 +2153,6 @@
           },
           "linkAction": {
             "$ref": "#/components/schemas/LinkAction"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "visibleFrom": {
             "type": [
@@ -2579,10 +2659,6 @@
                     "null"
                   ],
                   "minimum": 0
-                },
-                "sortOrder": {
-                  "type": "integer",
-                  "minimum": 0
                 }
               },
               "required": [
@@ -2643,7 +2719,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           }
         },
         "required": [
@@ -2830,7 +2910,11 @@
                   ]
                 },
                 "sortOrder": {
-                  "type": "integer"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9]+$",
+                  "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+                  "example": "a0"
                 }
               },
               "required": [
@@ -5261,7 +5345,11 @@
             "type": "string"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -5346,9 +5434,6 @@
               "custom"
             ],
             "description": "Display classification for the album. Non-semantic — affects UI only."
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -5438,9 +5523,6 @@
             ],
             "description": "Display classification for the album. Non-semantic — affects UI only."
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -5482,7 +5564,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -5533,9 +5619,6 @@
             ],
             "maxLength": 1024
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "metadata": {
             "type": [
               "object",
@@ -5584,9 +5667,6 @@
               "null"
             ],
             "maxLength": 1024
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -5644,7 +5724,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "hiddenUntilUnlocked": {
             "type": "boolean"
@@ -5741,9 +5825,6 @@
               "null"
             ],
             "maxLength": 32
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "hiddenUntilUnlocked": {
             "type": "boolean"
@@ -5858,9 +5939,6 @@
             ],
             "maxLength": 32
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "hiddenUntilUnlocked": {
             "type": "boolean"
           },
@@ -5961,7 +6039,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -6063,9 +6145,6 @@
           "autoClaim": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "metadata": {
             "type": [
               "object",
@@ -6139,9 +6218,6 @@
           },
           "autoClaim": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -6278,7 +6354,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -6358,9 +6438,6 @@
               "null"
             ],
             "maxLength": 2000
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -6447,9 +6524,6 @@
               "null"
             ],
             "maxLength": 2000
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -7833,7 +7907,11 @@
             ]
           },
           "sortOrder": {
-            "type": "number"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -8091,9 +8169,6 @@
               "inputCount"
             ]
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -8334,9 +8409,6 @@
               "sameBlueprint",
               "inputCount"
             ]
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -8594,7 +8666,11 @@
             ]
           },
           "sortOrder": {
-            "type": "number"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -8869,9 +8945,6 @@
             ],
             "minimum": 1
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -9124,9 +9197,6 @@
             ],
             "minimum": 1
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -9199,7 +9269,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "number"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -9270,9 +9344,6 @@
           "isDefault": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -9329,9 +9400,6 @@
           },
           "isDefault": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -9550,7 +9618,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -9609,9 +9681,6 @@
             ],
             "maxLength": 2000,
             "description": "Icon URL for this category."
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -9676,9 +9745,6 @@
               "null"
             ],
             "maxLength": 2000
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -10494,7 +10560,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -10620,9 +10690,6 @@
               "null"
             ],
             "exclusiveMinimum": 0
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -10750,9 +10817,6 @@
               "null"
             ],
             "exclusiveMinimum": 0
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -11143,7 +11207,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -11232,9 +11300,6 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -11328,9 +11393,6 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -12598,7 +12660,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -12671,9 +12737,6 @@
               "null"
             ],
             "maxLength": 500
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -12749,9 +12812,6 @@
               "null"
             ],
             "maxLength": 500
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -12848,7 +12908,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -12960,9 +13024,6 @@
           "isActive": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "metadata": {
             "type": [
               "object",
@@ -13069,9 +13130,6 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -13862,7 +13920,11 @@
             "type": "string"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "createdAt": {
             "type": "string"
@@ -13943,7 +14005,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -14028,9 +14094,6 @@
             "minLength": 1,
             "maxLength": 2048,
             "description": "URL or CDN path to an image asset."
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -14147,9 +14210,6 @@
             "maxLength": 2048,
             "description": "URL or CDN path to an image asset."
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -14194,7 +14254,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -14261,9 +14325,6 @@
             "minLength": 1,
             "maxLength": 2048,
             "description": "URL or CDN path to an image asset."
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -14337,9 +14398,6 @@
             "minLength": 1,
             "maxLength": 2048,
             "description": "URL or CDN path to an image asset."
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -14532,7 +14590,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -14780,9 +14842,6 @@
               "null"
             ],
             "exclusiveMinimum": 0
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -15037,9 +15096,6 @@
             ],
             "exclusiveMinimum": 0
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -15157,7 +15213,11 @@
             }
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -15252,9 +15312,6 @@
               ]
             },
             "minItems": 1
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -15351,9 +15408,6 @@
               ]
             },
             "minItems": 1
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -15714,7 +15768,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -15842,9 +15900,6 @@
             "type": "boolean",
             "description": "Only meaningful for type='fixed'. If true, early withdrawal forfeits accrued interest."
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -15964,9 +16019,6 @@
           },
           "allowEarlyWithdraw": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -16505,7 +16557,11 @@
             "type": "string"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -16580,9 +16636,6 @@
               "achievement",
               "custom"
             ]
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -16662,9 +16715,6 @@
               "achievement",
               "custom"
             ]
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -16841,7 +16891,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -17147,9 +17201,6 @@
           "isHidden": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "activityId": {
             "type": [
               "string",
@@ -17406,9 +17457,6 @@
           },
           "isHidden": {
             "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "activityId": {
             "type": [
@@ -17962,7 +18010,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -18041,9 +18093,6 @@
           "hasStages": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -18103,9 +18152,6 @@
           "hasStages": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -18162,7 +18208,11 @@
           },
           "unlockRule": {},
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -18215,9 +18265,6 @@
           },
           "unlockRule": {
             "$ref": "#/components/schemas/LevelUnlockRule"
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "metadata": {
             "type": [
@@ -18397,9 +18444,6 @@
           "unlockRule": {
             "$ref": "#/components/schemas/LevelUnlockRule"
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "metadata": {
             "type": [
               "object",
@@ -18553,7 +18597,11 @@
             }
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -18725,9 +18773,6 @@
               ]
             }
           },
-          "sortOrder": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -18876,9 +18921,6 @@
                 "rewards"
               ]
             }
-          },
-          "sortOrder": {
-            "type": "integer"
           },
           "isActive": {
             "type": "boolean"
@@ -24597,7 +24639,11 @@
             "$ref": "#/components/schemas/LinkAction"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           }
         },
         "required": [
@@ -24898,7 +24944,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "hidden": {
             "type": "boolean"
@@ -24990,7 +25040,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlockedCount": {
             "type": "integer"
@@ -26344,7 +26398,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "currentValue": {
             "type": "integer"
@@ -26793,7 +26851,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -26861,7 +26923,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -27042,7 +27108,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -28983,6 +29053,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/badge/nodes/{id}/move": {
+      "post": {
+        "tags": [
+          "Badge (Admin)"
+        ],
+        "summary": "Move a badge node (drag/top/bottom/up/down)",
+        "operationId": "badge_admin_post_nodes_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BadgeNode"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -31369,6 +31568,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banner/banners/{id}/move": {
+      "post": {
+        "tags": [
+          "Banner (Admin)"
+        ],
+        "summary": "Move a banner — drag-drop / top / bottom / up / down all map to this endpoint",
+        "operationId": "banner_admin_post_banners_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BannerMoveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Banner"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -40108,6 +40436,137 @@
         }
       }
     },
+    "/api/collection/albums/{key}/move": {
+      "post": {
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Move an album (drag/top/bottom/up/down)",
+        "operationId": "collection_post_albums_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Album id or alias."
+            },
+            "required": true,
+            "description": "Album id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CollectionAlbum"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/collection/albums/{key}/groups": {
       "post": {
         "tags": [
@@ -40516,6 +40975,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collection/groups/{id}/move": {
+      "post": {
+        "tags": [
+          "Collection Groups"
+        ],
+        "summary": "Move a group (drag/top/bottom/up/down, scoped per album)",
+        "operationId": "collection_groups_post_groups_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CollectionGroup"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -41189,6 +41777,135 @@
         }
       }
     },
+    "/api/collection/entries/{id}/move": {
+      "post": {
+        "tags": [
+          "Collection Entries"
+        ],
+        "summary": "Move an entry (drag/top/bottom/up/down, scoped per album+group)",
+        "operationId": "collection_entries_post_entries_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CollectionEntry"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/collection/albums/{key}/milestones": {
       "post": {
         "tags": [
@@ -41597,6 +42314,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collection/milestones/{id}/move": {
+      "post": {
+        "tags": [
+          "Collection Milestones"
+        ],
+        "summary": "Move a milestone (drag/top/bottom/up/down, scoped per album/group/entry)",
+        "operationId": "collection_milestones_post_milestones_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CollectionMilestone"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -42507,6 +43353,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/currency/definitions/{key}/move": {
+      "post": {
+        "tags": [
+          "Currency Definitions"
+        ],
+        "summary": "Move a currency definition (drag/top/bottom/up/down)",
+        "operationId": "currency_definitions_post_definitions_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CurrencyDefinition"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -44437,6 +45414,137 @@
         }
       }
     },
+    "/api/entity/schemas/{key}/move": {
+      "post": {
+        "tags": [
+          "Entity Schemas (Admin)"
+        ],
+        "summary": "Move an entity schema (drag/top/bottom/up/down)",
+        "operationId": "entity_schemas_admin_post_schemas_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Schema ID (uuid) or alias",
+              "example": "hero"
+            },
+            "required": true,
+            "description": "Schema ID (uuid) or alias",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/EntitySchema"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entity/blueprints": {
       "get": {
         "tags": [
@@ -45055,6 +46163,137 @@
         }
       }
     },
+    "/api/entity/blueprints/{key}/move": {
+      "post": {
+        "tags": [
+          "Entity Blueprints (Admin)"
+        ],
+        "summary": "Move a blueprint (drag/top/bottom/up/down, scoped per schema)",
+        "operationId": "entity_blueprints_admin_post_blueprints_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Blueprint ID (uuid) or alias",
+              "example": "fire-warrior"
+            },
+            "required": true,
+            "description": "Blueprint ID (uuid) or alias",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/EntityBlueprint"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/entity/blueprints/{id}/skins": {
       "get": {
         "tags": [
@@ -45470,6 +46709,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/entity/skins/{skinId}/move": {
+      "post": {
+        "tags": [
+          "Entity Skins (Admin)"
+        ],
+        "summary": "Move a skin (drag/top/bottom/up/down, scoped per blueprint)",
+        "operationId": "entity_skins_admin_post_skins_by_skinid_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Skin UUID"
+            },
+            "required": true,
+            "description": "Skin UUID",
+            "name": "skinId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/EntitySkin"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -46687,6 +48057,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/item/categories/{key}/move": {
+      "post": {
+        "tags": [
+          "Item Categories"
+        ],
+        "summary": "Move an item category (drag/top/bottom/up/down)",
+        "operationId": "item_categories_post_categories_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ItemCategory"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -49020,6 +50521,137 @@
         }
       }
     },
+    "/api/exchange/options/{optionId}/move": {
+      "post": {
+        "tags": [
+          "Exchange Options"
+        ],
+        "summary": "Move an exchange option (drag/top/bottom/up/down)",
+        "operationId": "exchange_options_post_options_by_optionid_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Option UUID."
+            },
+            "required": true,
+            "description": "Option UUID.",
+            "name": "optionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ExchangeOption"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/exchange/options/{optionId}/execute": {
       "post": {
         "tags": [
@@ -50488,6 +52120,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friend-gift/packages/{id}/move": {
+      "post": {
+        "tags": [
+          "Friend Gift"
+        ],
+        "summary": "Move a gift package (drag/top/bottom/up/down)",
+        "operationId": "friend_gift_post_packages_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Package id."
+            },
+            "required": true,
+            "description": "Package id.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FriendGiftPackage"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -53979,6 +55742,137 @@
         }
       }
     },
+    "/api/lottery/tiers/{tierId}/move": {
+      "post": {
+        "tags": [
+          "Lottery Tiers"
+        ],
+        "summary": "Move a tier (drag/top/bottom/up/down, scoped per pool)",
+        "operationId": "lottery_tiers_post_tiers_by_tierid_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tier UUID."
+            },
+            "required": true,
+            "description": "Tier UUID.",
+            "name": "tierId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LotteryTier"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/lottery/pools/{poolKey}/tiers/{tierId}/prizes": {
       "post": {
         "tags": [
@@ -54565,6 +56459,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lottery/prizes/{prizeId}/move": {
+      "post": {
+        "tags": [
+          "Lottery Prizes"
+        ],
+        "summary": "Move a prize (drag/top/bottom/up/down, scoped per pool)",
+        "operationId": "lottery_prizes_post_prizes_by_prizeid_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Prize UUID."
+            },
+            "required": true,
+            "description": "Prize UUID.",
+            "name": "prizeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LotteryPrize"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -57265,6 +59290,137 @@
         }
       }
     },
+    "/api/shop/categories/{key}/move": {
+      "post": {
+        "tags": [
+          "Shop Categories"
+        ],
+        "summary": "Move a shop category (drag/top/bottom/up/down)",
+        "operationId": "shop_categories_post_categories_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShopCategory"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shop/tags": {
       "post": {
         "tags": [
@@ -57803,6 +59959,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/tags/{key}/move": {
+      "post": {
+        "tags": [
+          "Shop Tags"
+        ],
+        "summary": "Move a shop tag (drag/top/bottom/up/down)",
+        "operationId": "shop_tags_post_tags_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShopTag"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -58575,6 +60862,137 @@
         }
       }
     },
+    "/api/shop/products/{key}/move": {
+      "post": {
+        "tags": [
+          "Shop Products"
+        ],
+        "summary": "Move a shop product (drag/top/bottom/up/down, scoped per category)",
+        "operationId": "shop_products_post_products_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id or alias."
+            },
+            "required": true,
+            "description": "Id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShopProduct"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shop/products/{productId}/stages": {
       "get": {
         "tags": [
@@ -59106,6 +61524,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/stages/{stageId}/move": {
+      "post": {
+        "tags": [
+          "Shop Growth Stages"
+        ],
+        "summary": "Move a growth stage (drag/top/bottom/up/down, scoped per product)",
+        "operationId": "shop_growth_stages_post_stages_by_stageid_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShopGrowthStage"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -60130,6 +62677,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage-box/configs/{id}/move": {
+      "post": {
+        "tags": [
+          "Storage Box Configs"
+        ],
+        "summary": "Move a storage box config (drag/top/bottom/up/down)",
+        "operationId": "storage_box_configs_post_configs_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "UUID or alias."
+            },
+            "required": true,
+            "description": "UUID or alias.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/StorageBoxConfig"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -62275,6 +64953,135 @@
         }
       }
     },
+    "/api/task/categories/{id}/move": {
+      "post": {
+        "tags": [
+          "Task Categories"
+        ],
+        "summary": "Move a task category (drag/top/bottom/up/down)",
+        "operationId": "task_categories_post_categories_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TaskCategory"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/task/definitions": {
       "post": {
         "tags": [
@@ -62957,6 +65764,137 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/task/definitions/{key}/move": {
+      "post": {
+        "tags": [
+          "Task Definitions"
+        ],
+        "summary": "Move a task definition (drag/top/bottom/up/down)",
+        "operationId": "task_definitions_post_definitions_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Task definition id or alias."
+            },
+            "required": true,
+            "description": "Task definition id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TaskDefinition"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -65195,6 +68133,137 @@
         }
       }
     },
+    "/api/level/configs/{key}/move": {
+      "post": {
+        "tags": [
+          "Level"
+        ],
+        "summary": "Move a level config (drag/top/bottom/up/down)",
+        "operationId": "level_post_configs_by_key_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Config id or alias."
+            },
+            "required": true,
+            "description": "Config id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LevelConfig"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/level/configs/{id}/stages": {
       "get": {
         "tags": [
@@ -65599,6 +68668,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/level/stages/{id}/move": {
+      "post": {
+        "tags": [
+          "Level Stages"
+        ],
+        "summary": "Move a stage (drag/top/bottom/up/down, scoped per config)",
+        "operationId": "level_stages_post_stages_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LevelStage"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -66199,6 +69397,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNullEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/level/levels/{id}/move": {
+      "post": {
+        "tags": [
+          "Level Levels"
+        ],
+        "summary": "Move a level (drag/top/bottom/up/down, scoped per config)",
+        "operationId": "level_levels_post_levels_by_id_move",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LevelLevel"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
                 }
               }
             }
@@ -95708,298 +99035,5 @@
       }
     }
   },
-  "webhooks": {},
-  "tags": [
-    {
-      "name": "Activity"
-    },
-    {
-      "name": "Activity (Client)"
-    },
-    {
-      "name": "Announcement (Admin)"
-    },
-    {
-      "name": "Announcement (Client)"
-    },
-    {
-      "name": "Assist Pool"
-    },
-    {
-      "name": "Assist Pool (Client)"
-    },
-    {
-      "name": "Assist Pool Instances"
-    },
-    {
-      "name": "Audit Log"
-    },
-    {
-      "name": "Badge (Admin)"
-    },
-    {
-      "name": "Badge (Client)"
-    },
-    {
-      "name": "Banner (Admin)"
-    },
-    {
-      "name": "Banner (Client)"
-    },
-    {
-      "name": "Battle Pass"
-    },
-    {
-      "name": "Battle Pass (Client)"
-    },
-    {
-      "name": "CDKey (Client)"
-    },
-    {
-      "name": "CDKey Batches"
-    },
-    {
-      "name": "CDKey Codes"
-    },
-    {
-      "name": "CDKey Logs"
-    },
-    {
-      "name": "CDKey Redemption"
-    },
-    {
-      "name": "CMS"
-    },
-    {
-      "name": "CMS (Client)"
-    },
-    {
-      "name": "Character"
-    },
-    {
-      "name": "Check-In"
-    },
-    {
-      "name": "Check-In (Client)"
-    },
-    {
-      "name": "Check-In Rewards"
-    },
-    {
-      "name": "Client Credentials"
-    },
-    {
-      "name": "Collection"
-    },
-    {
-      "name": "Collection (Client)"
-    },
-    {
-      "name": "Collection Entries"
-    },
-    {
-      "name": "Collection Groups"
-    },
-    {
-      "name": "Collection Milestones"
-    },
-    {
-      "name": "Collection Ops"
-    },
-    {
-      "name": "Currency (Client)"
-    },
-    {
-      "name": "Currency Definitions"
-    },
-    {
-      "name": "Currency Ledger"
-    },
-    {
-      "name": "Currency Wallet"
-    },
-    {
-      "name": "Dialogue (Admin)"
-    },
-    {
-      "name": "Dialogue (Client)"
-    },
-    {
-      "name": "End User"
-    },
-    {
-      "name": "Entity (Client)"
-    },
-    {
-      "name": "Entity Blueprints (Admin)"
-    },
-    {
-      "name": "Entity Formations (Admin)"
-    },
-    {
-      "name": "Entity Schemas (Admin)"
-    },
-    {
-      "name": "Entity Skins (Admin)"
-    },
-    {
-      "name": "Event Catalog"
-    },
-    {
-      "name": "Exchange (Client)"
-    },
-    {
-      "name": "Exchange Configs"
-    },
-    {
-      "name": "Exchange Execution"
-    },
-    {
-      "name": "Exchange Options"
-    },
-    {
-      "name": "Friend"
-    },
-    {
-      "name": "Friend (Client)"
-    },
-    {
-      "name": "Friend Gift"
-    },
-    {
-      "name": "Friend Gift (Client)"
-    },
-    {
-      "name": "Guild"
-    },
-    {
-      "name": "Guild (Client)"
-    },
-    {
-      "name": "Invite (Admin)"
-    },
-    {
-      "name": "Invite (Client)"
-    },
-    {
-      "name": "Item (Client)"
-    },
-    {
-      "name": "Item Categories"
-    },
-    {
-      "name": "Item Definitions"
-    },
-    {
-      "name": "Item Inventory"
-    },
-    {
-      "name": "Leaderboard"
-    },
-    {
-      "name": "Leaderboard (Client)"
-    },
-    {
-      "name": "Level"
-    },
-    {
-      "name": "Level (Client)"
-    },
-    {
-      "name": "Level Levels"
-    },
-    {
-      "name": "Level Stages"
-    },
-    {
-      "name": "Lottery (Client)"
-    },
-    {
-      "name": "Lottery Pity Rules"
-    },
-    {
-      "name": "Lottery Pools"
-    },
-    {
-      "name": "Lottery Prizes"
-    },
-    {
-      "name": "Lottery Pull"
-    },
-    {
-      "name": "Lottery Tiers"
-    },
-    {
-      "name": "Mail (Admin)"
-    },
-    {
-      "name": "Mail (Client)"
-    },
-    {
-      "name": "Media Library (Admin)"
-    },
-    {
-      "name": "Meta"
-    },
-    {
-      "name": "Navigation"
-    },
-    {
-      "name": "Rank (Admin)"
-    },
-    {
-      "name": "Rank (Client)"
-    },
-    {
-      "name": "Shop (Client)"
-    },
-    {
-      "name": "Shop Categories"
-    },
-    {
-      "name": "Shop Execution"
-    },
-    {
-      "name": "Shop Growth Stages"
-    },
-    {
-      "name": "Shop Products"
-    },
-    {
-      "name": "Shop Tags"
-    },
-    {
-      "name": "Storage Box Configs"
-    },
-    {
-      "name": "Storage Box Transactions"
-    },
-    {
-      "name": "Task (Client)"
-    },
-    {
-      "name": "Task Assignments"
-    },
-    {
-      "name": "Task Categories"
-    },
-    {
-      "name": "Task Definitions"
-    },
-    {
-      "name": "Team"
-    },
-    {
-      "name": "Team (Client)"
-    },
-    {
-      "name": "Triggers"
-    },
-    {
-      "name": "Webhooks"
-    },
-    {
-      "name": "analytics"
-    }
-  ]
+  "webhooks": {}
 }

@@ -49,7 +49,6 @@ export function PrizeForm({
       isRateUp: defaultValues?.isRateUp ?? false,
       rateUpWeight: defaultValues?.rateUpWeight ?? 0,
       globalStockLimit: defaultValues?.globalStockLimit ?? (null as number | null),
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -62,7 +61,6 @@ export function PrizeForm({
         isRateUp: value.isRateUp,
         rateUpWeight: value.rateUpWeight,
         globalStockLimit: value.globalStockLimit,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       }
       if (value.tierId) {
@@ -245,21 +243,6 @@ export function PrizeForm({
           )}
         </form.Field>
 
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="flex items-center gap-2">
-              <Label htmlFor={field.name}>Order</Label>
-              <Input
-                id={field.name}
-                type="number"
-                className="w-20"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
-            </div>
-          )}
-        </form.Field>
       </div>
 
       <div className="flex items-center gap-2">

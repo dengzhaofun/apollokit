@@ -11,6 +11,7 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -55,7 +56,7 @@ function serializeConfig(row: {
   coverImage: string | null;
   icon: string | null;
   hasStages: boolean;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -86,7 +87,7 @@ function serializeStage(row: {
   description: string | null;
   icon: string | null;
   unlockRule: unknown;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -120,7 +121,7 @@ function serializeLevel(row: {
   unlockRule: unknown;
   clearRewards: unknown;
   starRewards: unknown;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -257,6 +258,33 @@ levelRouter.openapi(
 
 levelRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/configs/{key}/move",
+    tags: [TAG],
+    summary: "Move a level config (drag/top/bottom/up/down)",
+    request: {
+      params: ConfigKeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(ConfigResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await levelService.moveConfig(orgId, key, body);
+    return c.json(ok(serializeConfig(row)), 200);
+  },
+);
+
+levelRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/configs/{id}",
     tags: [TAG],
@@ -345,6 +373,33 @@ levelRouter.openapi(
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.updateStage(orgId, id, c.req.valid("json"));
+    return c.json(ok(serializeStage(row)), 200);
+  },
+);
+
+levelRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/stages/{id}/move",
+    tags: [TAG_STAGE],
+    summary: "Move a stage (drag/top/bottom/up/down, scoped per config)",
+    request: {
+      params: StageIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(StageResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await levelService.moveStage(orgId, id, body);
     return c.json(ok(serializeStage(row)), 200);
   },
 );
@@ -477,6 +532,33 @@ levelRouter.openapi(
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await levelService.updateLevel(orgId, id, c.req.valid("json"));
+    return c.json(ok(serializeLevel(row)), 200);
+  },
+);
+
+levelRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/levels/{id}/move",
+    tags: [TAG_LEVEL],
+    summary: "Move a level (drag/top/bottom/up/down, scoped per config)",
+    request: {
+      params: LevelIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(LevelResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await levelService.moveLevel(orgId, id, body);
     return c.json(ok(serializeLevel(row)), 200);
   },
 );

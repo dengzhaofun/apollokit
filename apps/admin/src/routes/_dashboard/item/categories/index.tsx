@@ -182,7 +182,6 @@ function EditCategoryDialog({
             name: category.name,
             alias: category.alias,
             icon: category.icon,
-            sortOrder: category.sortOrder,
             isActive: category.isActive,
           }}
           isPending={updateMutation.isPending}

@@ -29,7 +29,6 @@ export type BadgeNodeFormValues = {
   dismissMode: BadgeDismissMode
   dismissConfigJson: string
   visibilityRuleJson: string
-  sortOrder: number
   isActive: boolean
   jsonError: string
 }
@@ -103,7 +102,6 @@ export function useBadgeNodeForm({
         dismissMode: value.dismissMode,
         dismissConfig,
         visibilityRule,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       })
     },

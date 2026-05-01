@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
 import { useItemCategories } from "#/hooks/use-item"
+import { useMoveItemCategory } from "#/hooks/use-move"
 import { openEditModal } from "#/lib/modal-search"
 import type { ItemCategory } from "#/lib/types/item"
 import * as m from "#/paraglide/messages.js"
@@ -21,6 +22,7 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<ItemCategory>()
 
 function ActionsCell({ category }: { category: ItemCategory }) {
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -86,10 +88,6 @@ function useColumns(): ColumnDef<ItemCategory, unknown>[] {
           )
         },
       }),
-      columnHelper.accessor("sortOrder", {
-        header: () => m.common_sort_order(),
-        cell: (info) => info.getValue(),
-      }),
       columnHelper.accessor("isActive", {
         header: () => m.common_status(),
         cell: (info) => (
@@ -121,11 +119,13 @@ export function CategoryTable({ route }: CategoryTableProps) {
   const list = useItemCategories(route)
   const columns = useColumns()
 
+  const moveMutation = useMoveItemCategory()
   return (
     <DataTable
       columns={columns}
       data={list.items}
       getRowId={(row) => row.id}
+      sortable={{ onMove: (id, body) => moveMutation.mutate({ id, body }), disabled: moveMutation.isPending }}
       {...list.tableProps}
     />
   )

@@ -9,6 +9,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -258,6 +259,33 @@ entityRouter.openapi(
 
 entityRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/schemas/{key}/move",
+    tags: [TAG_SCHEMA],
+    summary: "Move an entity schema (drag/top/bottom/up/down)",
+    request: {
+      params: SchemaKeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(SchemaResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await entityService.moveSchema(orgId, key, body);
+    return c.json(ok(serializeSchema(row)), 200);
+  },
+);
+
+entityRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/schemas/{id}",
     tags: [TAG_SCHEMA],
@@ -411,6 +439,35 @@ entityRouter.openapi(
 
 entityRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/blueprints/{key}/move",
+    tags: [TAG_BLUEPRINT],
+    summary: "Move a blueprint (drag/top/bottom/up/down, scoped per schema)",
+    request: {
+      params: BlueprintKeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(BlueprintResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await entityService.moveBlueprint(orgId, key, body);
+    return c.json(ok(serializeBlueprint(row)), 200);
+  },
+);
+
+entityRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/blueprints/{id}",
     tags: [TAG_BLUEPRINT],
@@ -515,6 +572,33 @@ entityRouter.openapi(
     const { skinId } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await entityService.updateSkin(orgId, skinId, input);
+    return c.json(ok(serializeSkin(row)), 200);
+  },
+);
+
+entityRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/skins/{skinId}/move",
+    tags: [TAG_SKIN],
+    summary: "Move a skin (drag/top/bottom/up/down, scoped per blueprint)",
+    request: {
+      params: SkinIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(SkinResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { skinId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await entityService.moveSkin(orgId, skinId, body);
     return c.json(ok(serializeSkin(row)), 200);
   },
 );

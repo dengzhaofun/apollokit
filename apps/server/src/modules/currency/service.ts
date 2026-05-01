@@ -22,10 +22,11 @@
  *    needing compare-and-set semantics can extend the `WHERE`.
  */
 
-import { and, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -111,6 +112,11 @@ export function createCurrencyService(d: CurrencyDeps) {
       organizationId: string,
       input: CreateCurrencyInput,
     ): Promise<CurrencyDefinition> {
+      const sortOrder = await appendKey(db, {
+        table: currencies,
+        sortColumn: currencies.sortOrder,
+        scopeWhere: eq(currencies.organizationId, organizationId),
+      });
       try {
         const [row] = await db
           .insert(currencies)
@@ -120,7 +126,7 @@ export function createCurrencyService(d: CurrencyDeps) {
             alias: input.alias ?? null,
             description: input.description ?? null,
             icon: input.icon ?? null,
-            sortOrder: input.sortOrder ?? 0,
+            sortOrder,
             isActive: input.isActive ?? true,
             activityId: input.activityId ?? null,
             activityNodeId: input.activityNodeId ?? null,
@@ -149,8 +155,6 @@ export function createCurrencyService(d: CurrencyDeps) {
       if (patch.description !== undefined)
         updateValues.description = patch.description;
       if (patch.icon !== undefined) updateValues.icon = patch.icon;
-      if (patch.sortOrder !== undefined)
-        updateValues.sortOrder = patch.sortOrder;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
       if (patch.activityId !== undefined)
         updateValues.activityId = patch.activityId;
@@ -179,6 +183,23 @@ export function createCurrencyService(d: CurrencyDeps) {
         }
         throw err;
       }
+    },
+
+    async moveDefinition(
+      organizationId: string,
+      key: string,
+      body: MoveBody,
+    ): Promise<CurrencyDefinition> {
+      const existing = await loadByKey(organizationId, key);
+      return moveAndReturn<CurrencyDefinition>(db, {
+        table: currencies,
+        sortColumn: currencies.sortOrder,
+        idColumn: currencies.id,
+        partitionWhere: eq(currencies.organizationId, organizationId)!,
+        id: existing.id,
+        body,
+        notFound: (sid) => new CurrencyNotFound(sid),
+      });
     },
 
     async deleteDefinition(
@@ -222,7 +243,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         .select()
         .from(currencies)
         .where(where)
-        .orderBy(desc(currencies.createdAt), desc(currencies.id))
+        .orderBy(asc(currencies.sortOrder), asc(currencies.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

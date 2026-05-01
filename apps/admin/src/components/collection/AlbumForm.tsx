@@ -42,7 +42,6 @@ export function AlbumForm({
   const [scope, setScope] = useState<AlbumScope>(
     (initial?.scope as AlbumScope) ?? "custom",
   )
-  const [sortOrder, setSortOrder] = useState<number>(initial?.sortOrder ?? 0)
   const [isActive, setIsActive] = useState(initial?.isActive ?? true)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,7 +53,6 @@ export function AlbumForm({
       coverImage: coverImage || null,
       icon: icon || null,
       scope,
-      sortOrder,
       isActive,
     })
   }
@@ -129,15 +127,6 @@ export function AlbumForm({
               </SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div>
-          <Label htmlFor="sortOrder">{m.collection_field_sort_order()}</Label>
-          <Input
-            id="sortOrder"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
-          />
         </div>
         <div className="flex items-end gap-2">
           <Switch

@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -44,7 +45,7 @@ function serializeDefinition(row: {
   name: string;
   description: string | null;
   icon: string | null;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   activityId: string | null;
   activityNodeId: string | null;
@@ -216,6 +217,35 @@ currencyRouter.openapi(
       id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeDefinition(row)), 200);
+  },
+);
+
+currencyRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/definitions/{key}/move",
+    tags: [TAG_DEF],
+    summary: "Move a currency definition (drag/top/bottom/up/down)",
+    request: {
+      params: KeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(CurrencyDefinitionResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await currencyService.moveDefinition(orgId, key, body);
     return c.json(ok(serializeDefinition(row)), 200);
   },
 );

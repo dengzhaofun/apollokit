@@ -19596,7 +19596,11 @@
                   ]
                 },
                 "sortOrder": {
-                  "type": "integer"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9]+$",
+                  "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+                  "example": "a0"
                 }
               },
               "required": [
@@ -22498,7 +22502,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -23638,7 +23646,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -23695,7 +23707,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -23763,7 +23779,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlocked": {
             "type": "boolean"
@@ -24058,7 +24078,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "currentValue": {
             "type": "integer"
@@ -24463,7 +24487,11 @@
             "type": "integer"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -24548,7 +24576,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -24808,7 +24840,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -25240,7 +25276,11 @@
             "type": "string"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "isActive": {
             "type": "boolean"
@@ -25303,7 +25343,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "metadata": {
             "type": [
@@ -25378,7 +25422,11 @@
             ]
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "hidden": {
             "type": "boolean"
@@ -25470,7 +25518,11 @@
             "type": "boolean"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           },
           "unlockedCount": {
             "type": "integer"
@@ -25838,7 +25890,11 @@
             "$ref": "#/components/schemas/LinkAction"
           },
           "sortOrder": {
-            "type": "integer"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.",
+            "example": "a0"
           }
         },
         "required": [

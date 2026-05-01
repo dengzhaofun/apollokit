@@ -32,10 +32,11 @@
  *    `accruedInterest + projectInterest(...)`.
  */
 
-import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -199,6 +200,7 @@ export function createStorageBoxService(
       await validateAcceptedCurrencies(organizationId, input.acceptedCurrencyIds);
 
       try {
+        const __sortKey = await appendKey(db, { table: storageBoxConfigs, sortColumn: storageBoxConfigs.sortOrder, scopeWhere: eq(storageBoxConfigs.organizationId, organizationId)! });
         const [row] = await db
           .insert(storageBoxConfigs)
           .values({
@@ -215,7 +217,7 @@ export function createStorageBoxService(
             minDeposit: input.minDeposit ?? null,
             maxDeposit: input.maxDeposit ?? null,
             allowEarlyWithdraw: input.allowEarlyWithdraw ?? false,
-            sortOrder: input.sortOrder ?? 0,
+            sortOrder: __sortKey,
             isActive: input.isActive ?? true,
             metadata: input.metadata ?? null,
           })
@@ -273,8 +275,6 @@ export function createStorageBoxService(
         updateValues.maxDeposit = patch.maxDeposit;
       if (patch.allowEarlyWithdraw !== undefined)
         updateValues.allowEarlyWithdraw = patch.allowEarlyWithdraw;
-      if (patch.sortOrder !== undefined)
-        updateValues.sortOrder = patch.sortOrder;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
@@ -299,6 +299,23 @@ export function createStorageBoxService(
         }
         throw err;
       }
+    },
+
+    async moveConfig(
+      organizationId: string,
+      key: string,
+      body: MoveBody,
+    ): Promise<StorageBoxConfig> {
+      const existing = await loadConfigByKey(organizationId, key);
+      return moveAndReturn<StorageBoxConfig>(db, {
+        table: storageBoxConfigs,
+        sortColumn: storageBoxConfigs.sortOrder,
+        idColumn: storageBoxConfigs.id,
+        partitionWhere: eq(storageBoxConfigs.organizationId, organizationId)!,
+        id: existing.id,
+        body,
+        notFound: (sid) => new StorageBoxConfigNotFound(sid),
+      });
     },
 
     async deleteConfig(organizationId: string, id: string): Promise<void> {
@@ -331,7 +348,7 @@ export function createStorageBoxService(
         .select()
         .from(storageBoxConfigs)
         .where(and(...conds))
-        .orderBy(desc(storageBoxConfigs.createdAt), desc(storageBoxConfigs.id))
+        .orderBy(asc(storageBoxConfigs.sortOrder), asc(storageBoxConfigs.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

@@ -113,7 +113,6 @@ function LevelCreatePage() {
               ? sortedTiers.map(({ stars, rewards }) => ({ stars, rewards }))
               : null,
           metadata: metadata ? JSON.parse(metadata) : null,
-          sortOrder,
           isActive,
         },
       })

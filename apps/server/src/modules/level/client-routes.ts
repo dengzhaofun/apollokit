@@ -21,6 +21,7 @@
  */
 
 import { z } from "@hono/zod-openapi";
+import { FractionalKeySchema } from "../../lib/fractional-order";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getEndUserId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
@@ -53,7 +54,7 @@ function serializeConfig(row: {
   coverImage: string | null;
   icon: string | null;
   hasStages: boolean;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -104,7 +105,7 @@ function toLevelView(
     icon: string | null;
     difficulty: string | null;
     maxStars: number;
-    sortOrder: number;
+    sortOrder: string;
     unlocked: boolean;
     status: "unlocked" | "cleared" | null;
     stars: number;
@@ -156,7 +157,7 @@ const ClientLevelDetailSchema = z
     icon: z.string().nullable(),
     difficulty: z.string().nullable(),
     maxStars: z.number().int(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     unlocked: z.boolean(),
     status: z.string().nullable(),
     stars: z.number().int(),

@@ -15,7 +15,7 @@ export interface StorageBoxConfig {
   minDeposit: number | null
   maxDeposit: number | null
   allowEarlyWithdraw: boolean
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -68,7 +68,6 @@ export interface CreateStorageBoxConfigInput {
   minDeposit?: number | null
   maxDeposit?: number | null
   allowEarlyWithdraw?: boolean
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -86,7 +85,6 @@ export interface UpdateStorageBoxConfigInput {
   minDeposit?: number | null
   maxDeposit?: number | null
   allowEarlyWithdraw?: boolean
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }

@@ -40,7 +40,6 @@ function SkinCreatePage() {
           alias: value.alias || null,
           rarity: value.rarity || null,
           isDefault: value.isDefault,
-          sortOrder: value.sortOrder,
           isActive: value.isActive,
         })
         toast.success(m.entity_skin_created())

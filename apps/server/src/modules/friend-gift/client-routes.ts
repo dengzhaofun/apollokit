@@ -43,7 +43,7 @@ function serializePackage(row: {
   icon: string | null;
   giftItems: { definitionId: string; quantity: number }[];
   isActive: boolean;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;

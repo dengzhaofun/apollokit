@@ -66,7 +66,6 @@ export function DefinitionForm({
         "broadcast",
       defaultAssignmentTtlSeconds:
         defaultValues?.defaultAssignmentTtlSeconds ?? ("" as number | ""),
-      sortOrder: defaultValues?.sortOrder ?? 0,
       activityId: defaultValues?.activityId ?? (null as string | null),
       rewards: (defaultValues?.rewards ?? []) as RewardEntry[],
       rewardTiers: (defaultValues?.rewardTiers ?? []) as TaskRewardTier[],
@@ -103,7 +102,6 @@ export function DefinitionForm({
         visibility: value.visibility,
         defaultAssignmentTtlSeconds:
           value.visibility === "assigned" ? ttlSeconds : null,
-        sortOrder: value.sortOrder,
         activityId: value.activityId,
         rewards: value.rewards,
         rewardTiers: sortedTiers,
@@ -365,19 +363,6 @@ export function DefinitionForm({
           )}
         </form.Field>
 
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-2">
-              <Label>{m.common_sort_order()}</Label>
-              <Input
-                type="number"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
-            </div>
-          )}
-        </form.Field>
       </div>
 
       <div className="flex items-center gap-6">

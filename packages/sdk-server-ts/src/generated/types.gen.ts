@@ -184,7 +184,6 @@ export type BadgeNodeCreateRequest = {
     visibilityRule?: {
         [key: string]: unknown;
     } | null;
-    sortOrder?: number;
     isActive?: boolean;
 };
 
@@ -206,7 +205,10 @@ export type BadgeNode = {
     visibilityRule: {
         [key: string]: unknown;
     } | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -227,8 +229,18 @@ export type BadgeNodeUpdateRequest = {
     visibilityRule?: {
         [key: string]: unknown;
     } | null;
-    sortOrder?: number;
     isActive?: boolean;
+};
+
+/**
+ * Where to place the moved row. Exactly one of before/after/position must be set.
+ */
+export type MoveBody = {
+    before: string;
+} | {
+    after: string;
+} | {
+    position: 'first' | 'last';
 };
 
 export type BadgeValidateTreeResponse = {
@@ -260,7 +272,6 @@ export type BadgeFromTemplateInput = {
     displayLabelKey?: string | null;
     signalKey?: string | null;
     signalKeyPrefix?: string | null;
-    sortOrder?: number;
 };
 
 export type BadgeSignalInput = {
@@ -426,7 +437,6 @@ export type BannerCreateRequest = {
     imageUrlDesktop: string;
     altText?: string | null;
     linkAction: LinkAction;
-    sortOrder?: number;
     visibleFrom?: string | null;
     visibleUntil?: string | null;
     /**
@@ -452,7 +462,10 @@ export type Banner = {
     imageUrlDesktop: string;
     altText: string | null;
     linkAction: LinkAction;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     visibleFrom: string | null;
     visibleUntil: string | null;
     /**
@@ -476,7 +489,6 @@ export type BannerUpdateRequest = {
     imageUrlDesktop?: string;
     altText?: string | null;
     linkAction?: LinkAction;
-    sortOrder?: number;
     visibleFrom?: string | null;
     visibleUntil?: string | null;
     /**
@@ -491,6 +503,17 @@ export type BannerUpdateRequest = {
     metadata?: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * Where to place the moved row. Exactly one of before/after/position must be set.
+ */
+export type BannerMoveRequest = {
+    before: string;
+} | {
+    after: string;
+} | {
+    position: 'first' | 'last';
 };
 
 export type BattlePassCreateConfig = {
@@ -556,7 +579,6 @@ export type BattlePassBindTasks = {
         xpReward: number;
         category: 'daily' | 'weekly' | 'season' | 'event';
         weekIndex?: number | null;
-        sortOrder?: number;
     }>;
 };
 
@@ -604,7 +626,10 @@ export type BattlePassAggregateView = {
         xpReward: number;
         category: 'daily' | 'weekly' | 'season' | 'event';
         weekIndex: number | null;
-        sortOrder: number;
+        /**
+         * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+         */
+        sortOrder: string;
     }>;
 };
 
@@ -1219,7 +1244,6 @@ export type CollectionCreateAlbum = {
      * Display classification for the album. Non-semantic — affects UI only.
      */
     scope?: 'hero' | 'monster' | 'equipment' | 'custom';
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -1238,7 +1262,10 @@ export type CollectionAlbum = {
     coverImage: string | null;
     icon: string | null;
     scope: string;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -1268,7 +1295,6 @@ export type CollectionUpdateAlbum = {
      * Display classification for the album. Non-semantic — affects UI only.
      */
     scope?: 'hero' | 'monster' | 'equipment' | 'custom';
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -1282,7 +1308,6 @@ export type CollectionCreateGroup = {
     name: string;
     description?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -1298,7 +1323,10 @@ export type CollectionGroup = {
     name: string;
     description: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -1314,7 +1342,6 @@ export type CollectionUpdateGroup = {
     name?: string;
     description?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -1333,7 +1360,6 @@ export type CollectionCreateEntry = {
     description?: string | null;
     image?: string | null;
     rarity?: string | null;
-    sortOrder?: number;
     hiddenUntilUnlocked?: boolean;
     /**
      * How entries unlock. Only 'item' is implemented in MVP; 'event' is reserved.
@@ -1359,7 +1385,10 @@ export type CollectionEntry = {
     description: string | null;
     image: string | null;
     rarity: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     hiddenUntilUnlocked: boolean;
     triggerType: string;
     triggerItemDefinitionId: string | null;
@@ -1392,7 +1421,6 @@ export type CollectionUpdateEntry = {
     description?: string | null;
     image?: string | null;
     rarity?: string | null;
-    sortOrder?: number;
     hiddenUntilUnlocked?: boolean;
     /**
      * How entries unlock. Only 'item' is implemented in MVP; 'event' is reserved.
@@ -1423,7 +1451,6 @@ export type CollectionCreateMilestone = {
         count: number;
     }>;
     autoClaim?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -1447,7 +1474,10 @@ export type CollectionMilestone = {
         count: number;
     }>;
     autoClaim: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -1468,7 +1498,6 @@ export type CollectionUpdateMilestone = {
         count: number;
     }>;
     autoClaim?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -1512,7 +1541,6 @@ export type CurrencyCreateDefinition = {
     alias?: string | null;
     description?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Soft link to activity_configs.id when the currency is activity-scoped. NULL = permanent.
@@ -1534,7 +1562,10 @@ export type CurrencyDefinition = {
     name: string;
     description: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     activityId: string | null;
     activityNodeId: string | null;
@@ -1561,7 +1592,6 @@ export type CurrencyUpdateDefinition = {
     alias?: string | null;
     description?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     activityId?: string | null;
     activityNodeId?: string | null;
@@ -1815,7 +1845,6 @@ export type EntityCreateSchema = {
         sameBlueprint: boolean;
         inputCount: number;
     };
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -1869,7 +1898,10 @@ export type EntitySchema = {
         sameBlueprint: boolean;
         inputCount: number;
     };
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata?: unknown;
     createdAt: string;
@@ -1921,7 +1953,6 @@ export type EntityUpdateSchema = {
         sameBlueprint: boolean;
         inputCount: number;
     };
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -1993,7 +2024,6 @@ export type EntityCreateBlueprint = {
         };
     } | null;
     maxLevel?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Soft link to activity_configs.id when the blueprint is activity-scoped. NULL = permanent.
@@ -2061,7 +2091,10 @@ export type EntityBlueprint = {
         };
     } | null;
     maxLevel: number | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     activityId: string | null;
     activityNodeId: string | null;
@@ -2123,7 +2156,6 @@ export type EntityUpdateBlueprint = {
         };
     } | null;
     maxLevel?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     activityId?: string | null;
     activityNodeId?: string | null;
@@ -2149,7 +2181,10 @@ export type EntitySkin = {
         [key: string]: number;
     };
     isDefault: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata?: unknown;
     createdAt: string;
@@ -2170,7 +2205,6 @@ export type EntityCreateSkin = {
         [key: string]: number;
     };
     isDefault?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2194,7 +2228,6 @@ export type EntityUpdateSkin = {
         [key: string]: number;
     };
     isDefault?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2272,7 +2305,6 @@ export type ItemCreateCategory = {
      * Icon URL for this category.
      */
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2288,7 +2320,10 @@ export type ItemCategory = {
     alias: string | null;
     name: string;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -2312,7 +2347,6 @@ export type ItemUpdateCategory = {
      */
     alias?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2558,7 +2592,6 @@ export type ExchangeCreateOption = {
     }>;
     userLimit?: number | null;
     globalLimit?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2587,7 +2620,10 @@ export type ExchangeOption = {
     userLimit: number | null;
     globalLimit: number | null;
     globalCount: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -2619,7 +2655,6 @@ export type ExchangeUpdateOption = {
     }>;
     userLimit?: number | null;
     globalLimit?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -2751,7 +2786,6 @@ export type FriendGiftCreatePackage = {
         quantity: number;
     }>;
     isActive?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -2772,7 +2806,10 @@ export type FriendGiftPackage = {
         quantity: number;
     }>;
     isActive: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -2801,7 +2838,6 @@ export type FriendGiftUpdatePackage = {
         quantity: number;
     }>;
     isActive?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -3105,7 +3141,6 @@ export type LotteryCreateTier = {
     baseWeight: number;
     color?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3124,7 +3159,10 @@ export type LotteryTier = {
     baseWeight: number;
     color: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -3150,7 +3188,6 @@ export type LotteryUpdateTier = {
     baseWeight?: number;
     color?: string | null;
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3180,7 +3217,6 @@ export type LotteryCreatePrize = {
     globalStockLimit?: number | null;
     fallbackPrizeId?: string | null;
     isActive?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -3208,7 +3244,10 @@ export type LotteryPrize = {
     globalStockUsed: number;
     fallbackPrizeId: string | null;
     isActive: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -3238,7 +3277,6 @@ export type LotteryUpdatePrize = {
     globalStockLimit?: number | null;
     fallbackPrizeId?: string | null;
     isActive?: boolean;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -3453,7 +3491,10 @@ export type NavigationFavorite = {
     organizationId: string;
     userId: string;
     routePath: string;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     createdAt: string;
     updatedAt: string;
 };
@@ -3474,7 +3515,6 @@ export type ShopCreateCategory = {
      * URL or CDN path to an image asset.
      */
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3494,7 +3534,10 @@ export type ShopCategory = {
     coverImage: string | null;
     icon: string | null;
     level: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -3527,7 +3570,6 @@ export type ShopUpdateCategory = {
      * URL or CDN path to an image asset.
      */
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3551,7 +3593,6 @@ export type ShopCreateTag = {
      * URL or CDN path to an image asset.
      */
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3568,7 +3609,10 @@ export type ShopTag = {
     name: string;
     color: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -3599,7 +3643,6 @@ export type ShopUpdateTag = {
      * URL or CDN path to an image asset.
      */
     icon?: string | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -3642,7 +3685,6 @@ export type ShopCreateProduct = {
     refreshLimit?: number | null;
     userLimit?: number | null;
     globalLimit?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     activityId?: string | null;
     activityNodeId?: string | null;
@@ -3685,7 +3727,10 @@ export type ShopProduct = {
     userLimit: number | null;
     globalLimit: number | null;
     globalCount: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -3736,7 +3781,6 @@ export type ShopUpdateProduct = {
     refreshLimit?: number | null;
     userLimit?: number | null;
     globalLimit?: number | null;
-    sortOrder?: number;
     isActive?: boolean;
     activityId?: string | null;
     activityNodeId?: string | null;
@@ -3766,7 +3810,6 @@ export type ShopCreateGrowthStage = {
         id: string;
         count: number;
     }>;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -3791,7 +3834,10 @@ export type ShopGrowthStage = {
         id: string;
         count: number;
     }>;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -3816,7 +3862,6 @@ export type ShopUpdateGrowthStage = {
         id: string;
         count: number;
     }>;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -3902,7 +3947,6 @@ export type StorageBoxCreateConfig = {
      * Only meaningful for type='fixed'. If true, early withdrawal forfeits accrued interest.
      */
     allowEarlyWithdraw?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     metadata?: {
         [key: string]: unknown;
@@ -3924,7 +3968,10 @@ export type StorageBoxConfig = {
     minDeposit: number | null;
     maxDeposit: number | null;
     allowEarlyWithdraw: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -3957,7 +4004,6 @@ export type StorageBoxUpdateConfig = {
     minDeposit?: number | null;
     maxDeposit?: number | null;
     allowEarlyWithdraw?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     metadata?: {
         [key: string]: unknown;
@@ -4083,7 +4129,6 @@ export type TaskCreateCategory = {
     description?: string | null;
     icon?: string | null;
     scope?: 'task' | 'achievement' | 'custom';
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -4101,7 +4146,10 @@ export type TaskCategory = {
     description: string | null;
     icon: string | null;
     scope: string;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -4127,7 +4175,6 @@ export type TaskUpdateCategory = {
     description?: string | null;
     icon?: string | null;
     scope?: 'task' | 'achievement' | 'custom';
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -4207,7 +4254,6 @@ export type TaskCreateDefinition = {
     } | null;
     isActive?: boolean;
     isHidden?: boolean;
-    sortOrder?: number;
     /**
      * Soft link to an activity. Null means this is a permanent task.
      */
@@ -4267,7 +4313,10 @@ export type TaskDefinition = {
     isHidden: boolean;
     visibility: string;
     defaultAssignmentTtlSeconds: number | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -4323,7 +4372,6 @@ export type TaskUpdateDefinition = {
     } | null;
     isActive?: boolean;
     isHidden?: boolean;
-    sortOrder?: number;
     activityId?: string | null;
     activityNodeId?: string | null;
     visibility?: 'broadcast' | 'assigned';
@@ -4485,7 +4533,6 @@ export type LevelCreateConfig = {
     coverImage?: string | null;
     icon?: string | null;
     hasStages?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -4504,7 +4551,10 @@ export type LevelConfig = {
     coverImage: string | null;
     icon: string | null;
     hasStages: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -4523,7 +4573,6 @@ export type LevelUpdateConfig = {
     coverImage?: string | null;
     icon?: string | null;
     hasStages?: boolean;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -4542,7 +4591,6 @@ export type LevelCreateStage = {
     description?: string | null;
     icon?: string | null;
     unlockRule?: LevelUnlockRule;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -4559,7 +4607,10 @@ export type LevelStage = {
     description: string | null;
     icon: string | null;
     unlockRule?: unknown;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -4572,7 +4623,6 @@ export type LevelUpdateStage = {
     description?: string | null;
     icon?: string | null;
     unlockRule?: LevelUnlockRule;
-    sortOrder?: number;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
      */
@@ -4610,7 +4660,6 @@ export type LevelCreateLevel = {
             count: number;
         }>;
     }> | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -4645,7 +4694,10 @@ export type LevelLevel = {
             count: number;
         }>;
     }> | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -4679,7 +4731,6 @@ export type LevelUpdateLevel = {
             count: number;
         }>;
     }> | null;
-    sortOrder?: number;
     isActive?: boolean;
     /**
      * Arbitrary JSON blob for tenant-specific extensions.
@@ -6343,7 +6394,10 @@ export type BattlePassSeasonTask = {
     xpReward: number;
     category: 'daily' | 'weekly' | 'season' | 'event';
     weekIndex: number | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
 };
 
 export type BattlePassLevelReward = {
@@ -7104,6 +7158,58 @@ export type BadgeAdminPatchNodesByIdResponses = {
 };
 
 export type BadgeAdminPatchNodesByIdResponse = BadgeAdminPatchNodesByIdResponses[keyof BadgeAdminPatchNodesByIdResponses];
+
+export type BadgeAdminPostNodesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/badge/nodes/{id}/move';
+};
+
+export type BadgeAdminPostNodesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BadgeAdminPostNodesByIdMoveError = BadgeAdminPostNodesByIdMoveErrors[keyof BadgeAdminPostNodesByIdMoveErrors];
+
+export type BadgeAdminPostNodesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: BadgeNode;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BadgeAdminPostNodesByIdMoveResponse = BadgeAdminPostNodesByIdMoveResponses[keyof BadgeAdminPostNodesByIdMoveResponses];
 
 export type BadgeAdminPostNodesValidateTreeData = {
     body?: never;
@@ -8137,6 +8243,58 @@ export type BannerAdminPatchBannersByIdResponses = {
 };
 
 export type BannerAdminPatchBannersByIdResponse = BannerAdminPatchBannersByIdResponses[keyof BannerAdminPatchBannersByIdResponses];
+
+export type BannerAdminPostBannersByIdMoveData = {
+    body?: BannerMoveRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/banner/banners/{id}/move';
+};
+
+export type BannerAdminPostBannersByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type BannerAdminPostBannersByIdMoveError = BannerAdminPostBannersByIdMoveErrors[keyof BannerAdminPostBannersByIdMoveErrors];
+
+export type BannerAdminPostBannersByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Banner;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type BannerAdminPostBannersByIdMoveResponse = BannerAdminPostBannersByIdMoveResponses[keyof BannerAdminPostBannersByIdMoveResponses];
 
 export type BattlePassGetConfigsData = {
     body?: never;
@@ -11888,6 +12046,61 @@ export type CollectionPatchAlbumsByIdResponses = {
 
 export type CollectionPatchAlbumsByIdResponse = CollectionPatchAlbumsByIdResponses[keyof CollectionPatchAlbumsByIdResponses];
 
+export type CollectionPostAlbumsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Album id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/collection/albums/{key}/move';
+};
+
+export type CollectionPostAlbumsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CollectionPostAlbumsByKeyMoveError = CollectionPostAlbumsByKeyMoveErrors[keyof CollectionPostAlbumsByKeyMoveErrors];
+
+export type CollectionPostAlbumsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CollectionAlbum;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CollectionPostAlbumsByKeyMoveResponse = CollectionPostAlbumsByKeyMoveResponses[keyof CollectionPostAlbumsByKeyMoveResponses];
+
 export type CollectionGroupsGetAlbumsByKeyGroupsData = {
     body?: never;
     path: {
@@ -12096,6 +12309,58 @@ export type CollectionGroupsPatchGroupsByIdResponses = {
 };
 
 export type CollectionGroupsPatchGroupsByIdResponse = CollectionGroupsPatchGroupsByIdResponses[keyof CollectionGroupsPatchGroupsByIdResponses];
+
+export type CollectionGroupsPostGroupsByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/groups/{id}/move';
+};
+
+export type CollectionGroupsPostGroupsByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CollectionGroupsPostGroupsByIdMoveError = CollectionGroupsPostGroupsByIdMoveErrors[keyof CollectionGroupsPostGroupsByIdMoveErrors];
+
+export type CollectionGroupsPostGroupsByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CollectionGroup;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CollectionGroupsPostGroupsByIdMoveResponse = CollectionGroupsPostGroupsByIdMoveResponses[keyof CollectionGroupsPostGroupsByIdMoveResponses];
 
 export type CollectionEntriesGetAlbumsByKeyEntriesData = {
     body?: never;
@@ -12361,6 +12626,58 @@ export type CollectionEntriesPatchEntriesByIdResponses = {
 
 export type CollectionEntriesPatchEntriesByIdResponse = CollectionEntriesPatchEntriesByIdResponses[keyof CollectionEntriesPatchEntriesByIdResponses];
 
+export type CollectionEntriesPostEntriesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/entries/{id}/move';
+};
+
+export type CollectionEntriesPostEntriesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CollectionEntriesPostEntriesByIdMoveError = CollectionEntriesPostEntriesByIdMoveErrors[keyof CollectionEntriesPostEntriesByIdMoveErrors];
+
+export type CollectionEntriesPostEntriesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CollectionEntry;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CollectionEntriesPostEntriesByIdMoveResponse = CollectionEntriesPostEntriesByIdMoveResponses[keyof CollectionEntriesPostEntriesByIdMoveResponses];
+
 export type CollectionMilestonesGetAlbumsByKeyMilestonesData = {
     body?: never;
     path: {
@@ -12569,6 +12886,58 @@ export type CollectionMilestonesPatchMilestonesByIdResponses = {
 };
 
 export type CollectionMilestonesPatchMilestonesByIdResponse = CollectionMilestonesPatchMilestonesByIdResponses[keyof CollectionMilestonesPatchMilestonesByIdResponses];
+
+export type CollectionMilestonesPostMilestonesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/collection/milestones/{id}/move';
+};
+
+export type CollectionMilestonesPostMilestonesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CollectionMilestonesPostMilestonesByIdMoveError = CollectionMilestonesPostMilestonesByIdMoveErrors[keyof CollectionMilestonesPostMilestonesByIdMoveErrors];
+
+export type CollectionMilestonesPostMilestonesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CollectionMilestone;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CollectionMilestonesPostMilestonesByIdMoveResponse = CollectionMilestonesPostMilestonesByIdMoveResponses[keyof CollectionMilestonesPostMilestonesByIdMoveResponses];
 
 export type CollectionOpsGetAlbumsByKeyStatsData = {
     body?: never;
@@ -12964,6 +13333,61 @@ export type CurrencyDefinitionsPatchDefinitionsByIdResponses = {
 };
 
 export type CurrencyDefinitionsPatchDefinitionsByIdResponse = CurrencyDefinitionsPatchDefinitionsByIdResponses[keyof CurrencyDefinitionsPatchDefinitionsByIdResponses];
+
+export type CurrencyDefinitionsPostDefinitionsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/currency/definitions/{key}/move';
+};
+
+export type CurrencyDefinitionsPostDefinitionsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type CurrencyDefinitionsPostDefinitionsByKeyMoveError = CurrencyDefinitionsPostDefinitionsByKeyMoveErrors[keyof CurrencyDefinitionsPostDefinitionsByKeyMoveErrors];
+
+export type CurrencyDefinitionsPostDefinitionsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CurrencyDefinition;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type CurrencyDefinitionsPostDefinitionsByKeyMoveResponse = CurrencyDefinitionsPostDefinitionsByKeyMoveResponses[keyof CurrencyDefinitionsPostDefinitionsByKeyMoveResponses];
 
 export type CurrencyWalletGetWalletsData = {
     body?: never;
@@ -13764,6 +14188,61 @@ export type EntitySchemasAdminPatchSchemasByIdResponses = {
 
 export type EntitySchemasAdminPatchSchemasByIdResponse = EntitySchemasAdminPatchSchemasByIdResponses[keyof EntitySchemasAdminPatchSchemasByIdResponses];
 
+export type EntitySchemasAdminPostSchemasByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Schema ID (uuid) or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/entity/schemas/{key}/move';
+};
+
+export type EntitySchemasAdminPostSchemasByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type EntitySchemasAdminPostSchemasByKeyMoveError = EntitySchemasAdminPostSchemasByKeyMoveErrors[keyof EntitySchemasAdminPostSchemasByKeyMoveErrors];
+
+export type EntitySchemasAdminPostSchemasByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: EntitySchema;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type EntitySchemasAdminPostSchemasByKeyMoveResponse = EntitySchemasAdminPostSchemasByKeyMoveResponses[keyof EntitySchemasAdminPostSchemasByKeyMoveResponses];
+
 export type EntityBlueprintsAdminGetBlueprintsData = {
     body?: never;
     path?: never;
@@ -14038,6 +14517,61 @@ export type EntityBlueprintsAdminPatchBlueprintsByIdResponses = {
 
 export type EntityBlueprintsAdminPatchBlueprintsByIdResponse = EntityBlueprintsAdminPatchBlueprintsByIdResponses[keyof EntityBlueprintsAdminPatchBlueprintsByIdResponses];
 
+export type EntityBlueprintsAdminPostBlueprintsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Blueprint ID (uuid) or alias
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/entity/blueprints/{key}/move';
+};
+
+export type EntityBlueprintsAdminPostBlueprintsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type EntityBlueprintsAdminPostBlueprintsByKeyMoveError = EntityBlueprintsAdminPostBlueprintsByKeyMoveErrors[keyof EntityBlueprintsAdminPostBlueprintsByKeyMoveErrors];
+
+export type EntityBlueprintsAdminPostBlueprintsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: EntityBlueprint;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type EntityBlueprintsAdminPostBlueprintsByKeyMoveResponse = EntityBlueprintsAdminPostBlueprintsByKeyMoveResponses[keyof EntityBlueprintsAdminPostBlueprintsByKeyMoveResponses];
+
 export type EntitySkinsAdminGetBlueprintsByIdSkinsData = {
     body?: never;
     path: {
@@ -14252,6 +14786,61 @@ export type EntitySkinsAdminPatchSkinsBySkinidResponses = {
 };
 
 export type EntitySkinsAdminPatchSkinsBySkinidResponse = EntitySkinsAdminPatchSkinsBySkinidResponses[keyof EntitySkinsAdminPatchSkinsBySkinidResponses];
+
+export type EntitySkinsAdminPostSkinsBySkinidMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Skin UUID
+         */
+        skinId: string;
+    };
+    query?: never;
+    url: '/api/entity/skins/{skinId}/move';
+};
+
+export type EntitySkinsAdminPostSkinsBySkinidMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type EntitySkinsAdminPostSkinsBySkinidMoveError = EntitySkinsAdminPostSkinsBySkinidMoveErrors[keyof EntitySkinsAdminPostSkinsBySkinidMoveErrors];
+
+export type EntitySkinsAdminPostSkinsBySkinidMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: EntitySkin;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type EntitySkinsAdminPostSkinsBySkinidMoveResponse = EntitySkinsAdminPostSkinsBySkinidMoveResponses[keyof EntitySkinsAdminPostSkinsBySkinidMoveResponses];
 
 export type EntityFormationsAdminGetFormationConfigsData = {
     body?: never;
@@ -14798,6 +15387,61 @@ export type ItemCategoriesPatchCategoriesByIdResponses = {
 };
 
 export type ItemCategoriesPatchCategoriesByIdResponse = ItemCategoriesPatchCategoriesByIdResponses[keyof ItemCategoriesPatchCategoriesByIdResponses];
+
+export type ItemCategoriesPostCategoriesByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/item/categories/{key}/move';
+};
+
+export type ItemCategoriesPostCategoriesByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ItemCategoriesPostCategoriesByKeyMoveError = ItemCategoriesPostCategoriesByKeyMoveErrors[keyof ItemCategoriesPostCategoriesByKeyMoveErrors];
+
+export type ItemCategoriesPostCategoriesByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ItemCategory;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ItemCategoriesPostCategoriesByKeyMoveResponse = ItemCategoriesPostCategoriesByKeyMoveResponses[keyof ItemCategoriesPostCategoriesByKeyMoveResponses];
 
 export type ItemDefinitionsGetDefinitionsData = {
     body?: never;
@@ -15804,6 +16448,61 @@ export type ExchangeOptionsPatchOptionsByOptionidResponses = {
 
 export type ExchangeOptionsPatchOptionsByOptionidResponse = ExchangeOptionsPatchOptionsByOptionidResponses[keyof ExchangeOptionsPatchOptionsByOptionidResponses];
 
+export type ExchangeOptionsPostOptionsByOptionidMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Option UUID.
+         */
+        optionId: string;
+    };
+    query?: never;
+    url: '/api/exchange/options/{optionId}/move';
+};
+
+export type ExchangeOptionsPostOptionsByOptionidMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExchangeOptionsPostOptionsByOptionidMoveError = ExchangeOptionsPostOptionsByOptionidMoveErrors[keyof ExchangeOptionsPostOptionsByOptionidMoveErrors];
+
+export type ExchangeOptionsPostOptionsByOptionidMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExchangeOption;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExchangeOptionsPostOptionsByOptionidMoveResponse = ExchangeOptionsPostOptionsByOptionidMoveResponses[keyof ExchangeOptionsPostOptionsByOptionidMoveResponses];
+
 export type ExchangeExecutionPostOptionsByOptionidExecuteData = {
     body?: ExchangeExecuteRequest;
     path: {
@@ -16490,6 +17189,61 @@ export type FriendGiftPutPackagesByIdResponses = {
 };
 
 export type FriendGiftPutPackagesByIdResponse = FriendGiftPutPackagesByIdResponses[keyof FriendGiftPutPackagesByIdResponses];
+
+export type FriendGiftPostPackagesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Package id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/friend-gift/packages/{id}/move';
+};
+
+export type FriendGiftPostPackagesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type FriendGiftPostPackagesByIdMoveError = FriendGiftPostPackagesByIdMoveErrors[keyof FriendGiftPostPackagesByIdMoveErrors];
+
+export type FriendGiftPostPackagesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: FriendGiftPackage;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type FriendGiftPostPackagesByIdMoveResponse = FriendGiftPostPackagesByIdMoveResponses[keyof FriendGiftPostPackagesByIdMoveResponses];
 
 export type FriendGiftGetSendsData = {
     body?: never;
@@ -17995,6 +18749,61 @@ export type LotteryTiersPatchTiersByTieridResponses = {
 
 export type LotteryTiersPatchTiersByTieridResponse = LotteryTiersPatchTiersByTieridResponses[keyof LotteryTiersPatchTiersByTieridResponses];
 
+export type LotteryTiersPostTiersByTieridMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Tier UUID.
+         */
+        tierId: string;
+    };
+    query?: never;
+    url: '/api/lottery/tiers/{tierId}/move';
+};
+
+export type LotteryTiersPostTiersByTieridMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type LotteryTiersPostTiersByTieridMoveError = LotteryTiersPostTiersByTieridMoveErrors[keyof LotteryTiersPostTiersByTieridMoveErrors];
+
+export type LotteryTiersPostTiersByTieridMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: LotteryTier;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type LotteryTiersPostTiersByTieridMoveResponse = LotteryTiersPostTiersByTieridMoveResponses[keyof LotteryTiersPostTiersByTieridMoveResponses];
+
 export type LotteryPrizesPostPoolsByPoolkeyTiersByTieridPrizesData = {
     body?: LotteryCreatePrize;
     path: {
@@ -18281,6 +19090,61 @@ export type LotteryPrizesPatchPrizesByPrizeidResponses = {
 };
 
 export type LotteryPrizesPatchPrizesByPrizeidResponse = LotteryPrizesPatchPrizesByPrizeidResponses[keyof LotteryPrizesPatchPrizesByPrizeidResponses];
+
+export type LotteryPrizesPostPrizesByPrizeidMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Prize UUID.
+         */
+        prizeId: string;
+    };
+    query?: never;
+    url: '/api/lottery/prizes/{prizeId}/move';
+};
+
+export type LotteryPrizesPostPrizesByPrizeidMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type LotteryPrizesPostPrizesByPrizeidMoveError = LotteryPrizesPostPrizesByPrizeidMoveErrors[keyof LotteryPrizesPostPrizesByPrizeidMoveErrors];
+
+export type LotteryPrizesPostPrizesByPrizeidMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: LotteryPrize;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type LotteryPrizesPostPrizesByPrizeidMoveResponse = LotteryPrizesPostPrizesByPrizeidMoveResponses[keyof LotteryPrizesPostPrizesByPrizeidMoveResponses];
 
 export type LotteryPityRulesGetPoolsByPoolkeyPityRulesData = {
     body?: never;
@@ -19461,6 +20325,61 @@ export type ShopCategoriesPatchCategoriesByIdResponses = {
 
 export type ShopCategoriesPatchCategoriesByIdResponse = ShopCategoriesPatchCategoriesByIdResponses[keyof ShopCategoriesPatchCategoriesByIdResponses];
 
+export type ShopCategoriesPostCategoriesByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/categories/{key}/move';
+};
+
+export type ShopCategoriesPostCategoriesByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ShopCategoriesPostCategoriesByKeyMoveError = ShopCategoriesPostCategoriesByKeyMoveErrors[keyof ShopCategoriesPostCategoriesByKeyMoveErrors];
+
+export type ShopCategoriesPostCategoriesByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ShopCategory;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ShopCategoriesPostCategoriesByKeyMoveResponse = ShopCategoriesPostCategoriesByKeyMoveResponses[keyof ShopCategoriesPostCategoriesByKeyMoveResponses];
+
 export type ShopTagsGetTagsData = {
     body?: never;
     path?: never;
@@ -19727,6 +20646,61 @@ export type ShopTagsPatchTagsByIdResponses = {
 };
 
 export type ShopTagsPatchTagsByIdResponse = ShopTagsPatchTagsByIdResponses[keyof ShopTagsPatchTagsByIdResponses];
+
+export type ShopTagsPostTagsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/tags/{key}/move';
+};
+
+export type ShopTagsPostTagsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ShopTagsPostTagsByKeyMoveError = ShopTagsPostTagsByKeyMoveErrors[keyof ShopTagsPostTagsByKeyMoveErrors];
+
+export type ShopTagsPostTagsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ShopTag;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ShopTagsPostTagsByKeyMoveResponse = ShopTagsPostTagsByKeyMoveResponses[keyof ShopTagsPostTagsByKeyMoveResponses];
 
 export type ShopProductsGetProductsData = {
     body?: never;
@@ -20007,6 +20981,61 @@ export type ShopProductsPatchProductsByIdResponses = {
 
 export type ShopProductsPatchProductsByIdResponse = ShopProductsPatchProductsByIdResponses[keyof ShopProductsPatchProductsByIdResponses];
 
+export type ShopProductsPostProductsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/shop/products/{key}/move';
+};
+
+export type ShopProductsPostProductsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ShopProductsPostProductsByKeyMoveError = ShopProductsPostProductsByKeyMoveErrors[keyof ShopProductsPostProductsByKeyMoveErrors];
+
+export type ShopProductsPostProductsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ShopProduct;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ShopProductsPostProductsByKeyMoveResponse = ShopProductsPostProductsByKeyMoveResponses[keyof ShopProductsPostProductsByKeyMoveResponses];
+
 export type ShopGrowthStagesGetProductsByProductidStagesData = {
     body?: never;
     path: {
@@ -20261,6 +21290,58 @@ export type ShopGrowthStagesPatchStagesByStageidResponses = {
 };
 
 export type ShopGrowthStagesPatchStagesByStageidResponse = ShopGrowthStagesPatchStagesByStageidResponses[keyof ShopGrowthStagesPatchStagesByStageidResponses];
+
+export type ShopGrowthStagesPostStagesByStageidMoveData = {
+    body?: MoveBody;
+    path: {
+        stageId: string;
+    };
+    query?: never;
+    url: '/api/shop/stages/{stageId}/move';
+};
+
+export type ShopGrowthStagesPostStagesByStageidMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ShopGrowthStagesPostStagesByStageidMoveError = ShopGrowthStagesPostStagesByStageidMoveErrors[keyof ShopGrowthStagesPostStagesByStageidMoveErrors];
+
+export type ShopGrowthStagesPostStagesByStageidMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ShopGrowthStage;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ShopGrowthStagesPostStagesByStageidMoveResponse = ShopGrowthStagesPostStagesByStageidMoveResponses[keyof ShopGrowthStagesPostStagesByStageidMoveResponses];
 
 export type ShopExecutionPostProductsByIdPurchaseData = {
     body?: ShopPurchaseRequest;
@@ -20695,6 +21776,61 @@ export type StorageBoxConfigsPatchConfigsByIdResponses = {
 };
 
 export type StorageBoxConfigsPatchConfigsByIdResponse = StorageBoxConfigsPatchConfigsByIdResponses[keyof StorageBoxConfigsPatchConfigsByIdResponses];
+
+export type StorageBoxConfigsPostConfigsByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * UUID or alias.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/storage-box/configs/{id}/move';
+};
+
+export type StorageBoxConfigsPostConfigsByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type StorageBoxConfigsPostConfigsByIdMoveError = StorageBoxConfigsPostConfigsByIdMoveErrors[keyof StorageBoxConfigsPostConfigsByIdMoveErrors];
+
+export type StorageBoxConfigsPostConfigsByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: StorageBoxConfig;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type StorageBoxConfigsPostConfigsByIdMoveResponse = StorageBoxConfigsPostConfigsByIdMoveResponses[keyof StorageBoxConfigsPostConfigsByIdMoveResponses];
 
 export type StorageBoxTransactionsPostDepositsData = {
     body?: StorageBoxDepositRequest;
@@ -21588,6 +22724,58 @@ export type TaskCategoriesPatchCategoriesByIdResponses = {
 
 export type TaskCategoriesPatchCategoriesByIdResponse = TaskCategoriesPatchCategoriesByIdResponses[keyof TaskCategoriesPatchCategoriesByIdResponses];
 
+export type TaskCategoriesPostCategoriesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/task/categories/{id}/move';
+};
+
+export type TaskCategoriesPostCategoriesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TaskCategoriesPostCategoriesByIdMoveError = TaskCategoriesPostCategoriesByIdMoveErrors[keyof TaskCategoriesPostCategoriesByIdMoveErrors];
+
+export type TaskCategoriesPostCategoriesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TaskCategory;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TaskCategoriesPostCategoriesByIdMoveResponse = TaskCategoriesPostCategoriesByIdMoveResponses[keyof TaskCategoriesPostCategoriesByIdMoveResponses];
+
 export type TaskDefinitionsGetDefinitionsData = {
     body?: never;
     path?: never;
@@ -21896,6 +23084,61 @@ export type TaskDefinitionsPatchDefinitionsByKeyResponses = {
 };
 
 export type TaskDefinitionsPatchDefinitionsByKeyResponse = TaskDefinitionsPatchDefinitionsByKeyResponses[keyof TaskDefinitionsPatchDefinitionsByKeyResponses];
+
+export type TaskDefinitionsPostDefinitionsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Task definition id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/task/definitions/{key}/move';
+};
+
+export type TaskDefinitionsPostDefinitionsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type TaskDefinitionsPostDefinitionsByKeyMoveError = TaskDefinitionsPostDefinitionsByKeyMoveErrors[keyof TaskDefinitionsPostDefinitionsByKeyMoveErrors];
+
+export type TaskDefinitionsPostDefinitionsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: TaskDefinition;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type TaskDefinitionsPostDefinitionsByKeyMoveResponse = TaskDefinitionsPostDefinitionsByKeyMoveResponses[keyof TaskDefinitionsPostDefinitionsByKeyMoveResponses];
 
 export type TaskAssignmentsGetDefinitionsByKeyAssignmentsData = {
     body?: never;
@@ -22841,6 +24084,61 @@ export type LevelPutConfigsByIdResponses = {
 
 export type LevelPutConfigsByIdResponse = LevelPutConfigsByIdResponses[keyof LevelPutConfigsByIdResponses];
 
+export type LevelPostConfigsByKeyMoveData = {
+    body?: MoveBody;
+    path: {
+        /**
+         * Config id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/level/configs/{key}/move';
+};
+
+export type LevelPostConfigsByKeyMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type LevelPostConfigsByKeyMoveError = LevelPostConfigsByKeyMoveErrors[keyof LevelPostConfigsByKeyMoveErrors];
+
+export type LevelPostConfigsByKeyMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: LevelConfig;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type LevelPostConfigsByKeyMoveResponse = LevelPostConfigsByKeyMoveResponses[keyof LevelPostConfigsByKeyMoveResponses];
+
 export type LevelStagesGetConfigsByIdStagesData = {
     body?: never;
     path: {
@@ -23043,6 +24341,58 @@ export type LevelStagesPutStagesByIdResponses = {
 };
 
 export type LevelStagesPutStagesByIdResponse = LevelStagesPutStagesByIdResponses[keyof LevelStagesPutStagesByIdResponses];
+
+export type LevelStagesPostStagesByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/stages/{id}/move';
+};
+
+export type LevelStagesPostStagesByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type LevelStagesPostStagesByIdMoveError = LevelStagesPostStagesByIdMoveErrors[keyof LevelStagesPostStagesByIdMoveErrors];
+
+export type LevelStagesPostStagesByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: LevelStage;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type LevelStagesPostStagesByIdMoveResponse = LevelStagesPostStagesByIdMoveResponses[keyof LevelStagesPostStagesByIdMoveResponses];
 
 export type LevelLevelsGetConfigsByIdLevelsData = {
     body?: never;
@@ -23303,6 +24653,58 @@ export type LevelLevelsPutLevelsByIdResponses = {
 };
 
 export type LevelLevelsPutLevelsByIdResponse = LevelLevelsPutLevelsByIdResponses[keyof LevelLevelsPutLevelsByIdResponses];
+
+export type LevelLevelsPostLevelsByIdMoveData = {
+    body?: MoveBody;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/level/levels/{id}/move';
+};
+
+export type LevelLevelsPostLevelsByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type LevelLevelsPostLevelsByIdMoveError = LevelLevelsPostLevelsByIdMoveErrors[keyof LevelLevelsPostLevelsByIdMoveErrors];
+
+export type LevelLevelsPostLevelsByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: LevelLevel;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type LevelLevelsPostLevelsByIdMoveResponse = LevelLevelsPostLevelsByIdMoveResponses[keyof LevelLevelsPostLevelsByIdMoveResponses];
 
 export type LeaderboardGetConfigsData = {
     body?: never;

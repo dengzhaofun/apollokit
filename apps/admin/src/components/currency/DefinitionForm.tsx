@@ -127,23 +127,6 @@ export function DefinitionForm({
         )}
       </form.Field>
 
-      <form.Field name="sortOrder">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name} className="inline-flex items-center gap-1.5">
-              {m.currency_sort_order()}
-              <FieldHint>{m.currency_sort_hint()}</FieldHint>
-            </Label>
-            <Input
-              id={field.name}
-              type="number"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(Number(e.target.value))}
-            />
-          </div>
-        )}
-      </form.Field>
 
       <form.Field name="isActive">
         {(field) => (

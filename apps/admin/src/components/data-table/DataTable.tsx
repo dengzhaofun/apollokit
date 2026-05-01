@@ -33,6 +33,13 @@ import {
 import { Search } from "lucide-react"
 import { type ReactNode } from "react"
 
+import {
+  type MoveBody,
+  RowMoveActions,
+  SortableTableProvider,
+  SortableTableRow,
+} from "#/components/common/SortableTable"
+
 import { Button } from "#/components/ui/button"
 import {
   Empty,
@@ -120,6 +127,23 @@ interface Props<T> {
 
   /** Custom rowId for stable selection. */
   getRowId?: (row: T, index: number) => string
+
+  /**
+   * Opt-in fractional-key sorting. When set, each row gets:
+   *   - a leading drag handle column (▣)
+   *   - a trailing actions column with 置顶 / ▲ / ▼ / 置后 buttons
+   *
+   * Drag-drop and the 4 buttons all call `onMove(id, body)` which
+   * should fire the corresponding `useMoveX` mutation. Filters /
+   * search / advanced query disable the sort UI (re-ordering inside
+   * a filtered subset doesn't make geographic sense — restore the
+   * unfiltered view to reorder).
+   */
+  sortable?: {
+    onMove: (id: string, body: MoveBody) => void
+    /** Disable while a mutation is in flight. */
+    disabled?: boolean
+  }
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200] as const
@@ -151,6 +175,7 @@ export function DataTable<T>({
   advancedQuery,
   onAdvancedQueryChange,
   getRowId,
+  sortable,
 }: Props<T>) {
   const table = useReactTable({
     data,
@@ -170,6 +195,17 @@ export function DataTable<T>({
   const hasModeToggle = !!(mode && onModeChange)
   const showFilterRow = hasFilters || hasModeToggle
   const isAdvanced = mode === "advanced"
+
+  // Sort UI only makes sense without active filters / search / advanced
+  // mode — re-ordering inside a filtered subset is ambiguous. The
+  // sortable prop is opt-in; we further auto-disable it whenever the
+  // caller has narrowed the row set.
+  const sortableActive =
+    !!sortable &&
+    !hasActiveFilters &&
+    !isAdvanced &&
+    !(searchValue && searchValue.trim() !== "")
+  const totalColSpan = columns.length + (sortableActive ? 2 : 0)
 
   return (
     <div className="space-y-3">
@@ -214,59 +250,16 @@ export function DataTable<T>({
       ) : null}
 
       <div className="rounded-xl border bg-card shadow-sm">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {h.isPlaceholder
-                      ? null
-                      : flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={`skeleton-${i}`}>
-                  {columns.map((_c, ci) => (
-                    <TableCell key={ci}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 p-0">
-                  {empty ?? (
-                    <Empty className="border-0">
-                      <EmptyHeader>
-                        <EmptyTitle>{m.data_table_no_results()}</EmptyTitle>
-                        <EmptyDescription>
-                          {m.command_palette_no_results()}
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  )}
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <DataTableInner
+          table={table}
+          rows={rows}
+          isLoading={isLoading}
+          columns={columns}
+          empty={empty}
+          totalColSpan={totalColSpan}
+          sortableActive={sortableActive}
+          sortable={sortable}
+        />
       </div>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -316,3 +309,147 @@ export function DataTable<T>({
 }
 
 export type DataTableRow<T> = Row<T>
+
+// ─── Inner — branches on sortable to wrap in DnD context ─────────────
+
+function DataTableInner<T>({
+  table,
+  rows,
+  isLoading,
+  columns,
+  empty,
+  totalColSpan,
+  sortableActive,
+  sortable,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  table: ReturnType<typeof useReactTable<T>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rows: any[]
+  isLoading: boolean | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  columns: ColumnDef<T, any>[]
+  empty: ReactNode
+  totalColSpan: number
+  sortableActive: boolean
+  sortable: Props<T>["sortable"]
+}) {
+  const headerGroups = table.getHeaderGroups()
+
+  const headerCells = (
+    <>
+      {sortableActive ? <TableHead className="w-8" /> : null}
+      {headerGroups.map((hg) =>
+        hg.headers.map((h) => (
+          <TableHead key={h.id}>
+            {h.isPlaceholder
+              ? null
+              : flexRender(h.column.columnDef.header, h.getContext())}
+          </TableHead>
+        )),
+      )}
+      {sortableActive ? (
+        <TableHead className="w-40 text-right">
+          {m.data_table_reorder_actions()}
+        </TableHead>
+      ) : null}
+    </>
+  )
+
+  const bodyContent = isLoading ? (
+    Array.from({ length: 5 }).map((_, i) => (
+      <TableRow key={`skeleton-${i}`}>
+        {sortableActive ? (
+          <TableCell>
+            <Skeleton className="h-4 w-4" />
+          </TableCell>
+        ) : null}
+        {columns.map((_c, ci) => (
+          <TableCell key={ci}>
+            <Skeleton className="h-4 w-full" />
+          </TableCell>
+        ))}
+        {sortableActive ? (
+          <TableCell>
+            <Skeleton className="h-4 w-full" />
+          </TableCell>
+        ) : null}
+      </TableRow>
+    ))
+  ) : rows.length === 0 ? (
+    <TableRow>
+      <TableCell colSpan={totalColSpan} className="h-32 p-0">
+        {empty ?? (
+          <Empty className="border-0">
+            <EmptyHeader>
+              <EmptyTitle>{m.data_table_no_results()}</EmptyTitle>
+              <EmptyDescription>
+                {m.command_palette_no_results()}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+      </TableCell>
+    </TableRow>
+  ) : sortableActive ? (
+    rows.map((row, idx) => (
+      <SortableTableRow key={row.id} id={row.id}>
+        {row.getVisibleCells().map((cell: { id: string; column: { columnDef: { cell: unknown } }; getContext: () => unknown }) => (
+          <TableCell key={cell.id}>
+            {flexRender(
+              cell.column.columnDef.cell as never,
+              cell.getContext() as never,
+            )}
+          </TableCell>
+        ))}
+        <TableCell className="text-right">
+          <div className="flex items-center justify-end gap-0.5">
+            <RowMoveActions
+              id={row.id}
+              prevId={rows[idx - 1]?.id}
+              nextId={rows[idx + 1]?.id}
+              isFirst={idx === 0}
+              isLast={idx === rows.length - 1}
+            />
+          </div>
+        </TableCell>
+      </SortableTableRow>
+    ))
+  ) : (
+    rows.map((row) => (
+      <TableRow key={row.id}>
+        {row.getVisibleCells().map((cell: { id: string; column: { columnDef: { cell: unknown } }; getContext: () => unknown }) => (
+          <TableCell key={cell.id}>
+            {flexRender(
+              cell.column.columnDef.cell as never,
+              cell.getContext() as never,
+            )}
+          </TableCell>
+        ))}
+      </TableRow>
+    ))
+  )
+
+  const tableNode = (
+    <Table>
+      <TableHeader>
+        <TableRow>{headerCells}</TableRow>
+      </TableHeader>
+      <TableBody>{bodyContent}</TableBody>
+    </Table>
+  )
+
+  if (sortableActive && sortable) {
+    return (
+      <SortableTableProvider
+        items={rows.map((r) => ({ id: r.id }))}
+        onMove={sortable.onMove}
+        disabled={sortable.disabled}
+      >
+        {tableNode}
+      </SortableTableProvider>
+    )
+  }
+
+  return tableNode
+}

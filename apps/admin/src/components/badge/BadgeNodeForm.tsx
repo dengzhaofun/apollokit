@@ -360,20 +360,6 @@ export function BadgeNodeForm({
         </form.Field>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <form.Field name="sortOrder">
-            {(field) => (
-              <div className="space-y-1">
-                <Label htmlFor="sortOrder">{m.badge_field_sort_order()}</Label>
-                <Input
-                  id="sortOrder"
-                  type="number"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(Number(e.target.value) || 0)}
-                />
-              </div>
-            )}
-          </form.Field>
           <form.Field name="isActive">
             {(field) => (
               <div className="flex items-center justify-between rounded-md border px-3">

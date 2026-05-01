@@ -46,7 +46,7 @@ export type BadgeNode = {
   dismissMode: string
   dismissConfig: Record<string, unknown> | null
   visibilityRule: Record<string, unknown> | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -66,7 +66,6 @@ export type CreateBadgeNodeInput = {
   dismissMode?: BadgeDismissMode
   dismissConfig?: Record<string, unknown> | null
   visibilityRule?: Record<string, unknown> | null
-  sortOrder?: number
   isActive?: boolean
 }
 
@@ -140,7 +139,6 @@ export type BadgeFromTemplateInput = {
   displayLabelKey?: string | null
   signalKey?: string | null
   signalKeyPrefix?: string | null
-  sortOrder?: number
 }
 
 export type BadgeSignalInput = {

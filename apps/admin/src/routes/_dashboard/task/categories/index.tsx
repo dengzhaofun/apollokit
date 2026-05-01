@@ -231,7 +231,6 @@ function CategoryFormInline({
             name,
             alias: alias || null,
             scope: scope as "task" | "achievement" | "custom",
-            sortOrder,
           },
         })
         toast.success("Category updated")
@@ -240,7 +239,6 @@ function CategoryFormInline({
           name,
           alias: alias || null,
           scope: scope as "task" | "achievement" | "custom",
-          sortOrder,
         })
         toast.success("Category created")
       }

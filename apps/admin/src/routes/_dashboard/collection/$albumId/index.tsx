@@ -714,7 +714,6 @@ function MilestonesTab({
                       label: values.label,
                       rewardItems: values.rewardItems,
                       autoClaim: values.autoClaim,
-                      sortOrder: values.sortOrder,
                     },
                   })
                   toast.success(m.collection_milestone_saved())

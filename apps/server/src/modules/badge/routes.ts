@@ -27,6 +27,7 @@ import {
   envelopeOf,
   ok,
 } from "../../lib/response";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
@@ -146,6 +147,35 @@ badgeRouter.openapi(
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await badgeService.updateNode(orgId, id, input);
+    return c.json(ok(badgeService._serializeNode(row)), 200);
+  },
+);
+
+badgeRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/nodes/{id}/move",
+    tags: [TAG],
+    summary: "Move a badge node (drag/top/bottom/up/down)",
+    request: {
+      params: NodeIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(BadgeNodeResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await badgeService.moveNode(orgId, id, body);
     return c.json(ok(badgeService._serializeNode(row)), 200);
   },
 );

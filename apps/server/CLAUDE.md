@@ -146,6 +146,31 @@ When you do reach for `db.transaction(async tx => …)`, keep it short:
 no third-party HTTP calls inside, no long awaits, no fan-out. A
 mis-scoped transaction will starve the per-Worker Hyperdrive pool.
 
+## Sort order — fractional indexing, not integers
+
+Every `sort_order` column in the codebase is a **base62 fractional
+indexing key** (e.g. `a0`, `a0V`, `Zz`), produced by
+`lib/fractional-order.ts`. Lex order matches insert / move semantics:
+
+- New rows go through `appendKey(db, { table, sortColumn, scopeWhere })`
+  (no user-supplied integer); a single UPDATE is enough to move a row
+  via `resolveMoveKey(...)`. Reorder = O(1) write, no full-partition
+  shift.
+- Every module that has a sortable resource exposes a uniform
+  `POST /api/<module>/<resource>/{id}/move` endpoint with body shape
+  `{ before: id } | { after: id } | { position: "first" | "last" }` —
+  drag-drop / move-to-top / move-to-bottom / move-up / move-down all
+  collapse onto this one endpoint.
+
+Schema rule: declare `sort_order` columns with the
+`fractionalSortKey("sort_order").notNull()` helper from
+`schema/_fractional-sort.ts`, NOT `text("sort_order")`. The helper
+emits `text COLLATE "C"` so byte-order comparisons are stable
+regardless of the database's default locale (the cluster default on
+mac dev / many Linux distros is `en_US.UTF-8` which collates
+case-insensitively and silently breaks `'Zz' < 'a0'`). When you write
+your own migration SQL by hand, include `COLLATE "C"` explicitly.
+
 ## Route mounting — everything business-facing lives under `/api/*`
 
 Better Auth claims `/api/auth/*`. All business module routers mount
@@ -428,7 +453,6 @@ tests.
 - Don't import `../../db` from `service.ts`.
 - Don't use Better Auth's `user.id` as an end-user id anywhere.
 - Don't name an end-user column `user_id`.
-- Don't call `db.transaction(...)` — it will throw at runtime.
 - Don't put event-log tables inside a module.
 - Don't add a new dep to a service factory by fishing it in as an
   import — add it to `AppDeps` and extend the factory's `Pick`.

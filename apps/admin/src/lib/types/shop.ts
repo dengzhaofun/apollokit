@@ -30,7 +30,7 @@ export interface ShopCategory {
   coverImage: string | null
   icon: string | null
   level: number
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -48,7 +48,7 @@ export interface ShopTag {
   name: string
   color: string | null
   icon: string | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -77,7 +77,7 @@ export interface ShopProduct {
   userLimit: number | null
   globalLimit: number | null
   globalCount: number
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   activityId: string | null
   activityNodeId: string | null
@@ -97,7 +97,7 @@ export interface ShopGrowthStage {
   triggerType: ShopGrowthTriggerType
   triggerConfig: Record<string, unknown> | null
   rewardItems: RewardEntry[]
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -149,7 +149,6 @@ export interface CreateShopCategoryInput {
   description?: string | null
   coverImage?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -161,7 +160,6 @@ export interface UpdateShopCategoryInput {
   description?: string | null
   coverImage?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -171,7 +169,6 @@ export interface CreateShopTagInput {
   alias?: string | null
   color?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -181,7 +178,6 @@ export interface UpdateShopTagInput {
   alias?: string | null
   color?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -205,7 +201,6 @@ export interface CreateShopProductInput {
   refreshLimit?: number | null
   userLimit?: number | null
   globalLimit?: number | null
-  sortOrder?: number
   isActive?: boolean
   activityId?: string | null
   activityNodeId?: string | null
@@ -225,7 +220,6 @@ export interface CreateShopGrowthStageInput {
   triggerType: ShopGrowthTriggerType
   triggerConfig?: Record<string, unknown> | null
   rewardItems: RewardEntry[]
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 
@@ -236,7 +230,6 @@ export interface UpdateShopGrowthStageInput {
   triggerType?: ShopGrowthTriggerType
   triggerConfig?: Record<string, unknown> | null
   rewardItems?: RewardEntry[]
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 

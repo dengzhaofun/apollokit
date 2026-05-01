@@ -105,7 +105,6 @@ export function BannerForm({
         imageUrlDesktop: value.imageUrlDesktop.trim(),
         altText: value.altText.trim() ? value.altText : null,
         linkAction: value.linkAction,
-        sortOrder: value.sortOrder,
         visibleFrom: localInputToIso(value.visibleFrom),
         visibleUntil: localInputToIso(value.visibleUntil),
         targetType: value.targetType,
@@ -219,20 +218,6 @@ export function BannerForm({
       </form.Field>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-1">
-              <Label htmlFor="sort">{m.banner_field_sort_order()}</Label>
-              <Input
-                id="sort"
-                type="number"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value) || 0)}
-              />
-            </div>
-          )}
-        </form.Field>
 
         <form.Field name="visibleFrom">
           {(field) => (

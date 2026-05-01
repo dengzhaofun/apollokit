@@ -66,10 +66,11 @@
  * loser sees `inserted=false` and reports "already done".
  */
 
-import { and, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -261,6 +262,7 @@ export function createCollectionService(
     input: CreateAlbumInput,
   ): Promise<CollectionAlbum> {
     try {
+      const __sortKey = await appendKey(db, { table: collectionAlbums, sortColumn: collectionAlbums.sortOrder, scopeWhere: eq(collectionAlbums.organizationId, organizationId)! });
       const [row] = await db
         .insert(collectionAlbums)
         .values({
@@ -271,7 +273,7 @@ export function createCollectionService(
           coverImage: input.coverImage ?? null,
           icon: input.icon ?? null,
           scope: input.scope ?? "custom",
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -299,7 +301,6 @@ export function createCollectionService(
     if (patch.coverImage !== undefined) values.coverImage = patch.coverImage;
     if (patch.icon !== undefined) values.icon = patch.icon;
     if (patch.scope !== undefined) values.scope = patch.scope;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
@@ -324,6 +325,23 @@ export function createCollectionService(
       }
       throw err;
     }
+  }
+
+  async function moveAlbum(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<CollectionAlbum> {
+    const existing = await loadAlbumByKey(organizationId, key);
+    return moveAndReturn<CollectionAlbum>(db, {
+      table: collectionAlbums,
+      sortColumn: collectionAlbums.sortOrder,
+      idColumn: collectionAlbums.id,
+      partitionWhere: eq(collectionAlbums.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new CollectionAlbumNotFound(sid),
+    });
   }
 
   async function deleteAlbum(
@@ -359,7 +377,7 @@ export function createCollectionService(
       .select()
       .from(collectionAlbums)
       .where(and(...conds))
-      .orderBy(desc(collectionAlbums.createdAt), desc(collectionAlbums.id))
+      .orderBy(asc(collectionAlbums.sortOrder), asc(collectionAlbums.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -379,6 +397,7 @@ export function createCollectionService(
     input: CreateGroupInput,
   ): Promise<CollectionGroup> {
     const album = await loadAlbumByKey(organizationId, albumKey);
+    const __sortKey = await appendKey(db, { table: collectionGroups, sortColumn: collectionGroups.sortOrder, scopeWhere: eq(collectionGroups.organizationId, organizationId)! });
     const [row] = await db
       .insert(collectionGroups)
       .values({
@@ -387,7 +406,7 @@ export function createCollectionService(
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
-        sortOrder: input.sortOrder ?? 0,
+        sortOrder: __sortKey,
         metadata: input.metadata ?? null,
       })
       .returning();
@@ -404,7 +423,6 @@ export function createCollectionService(
     if (patch.name !== undefined) values.name = patch.name;
     if (patch.description !== undefined) values.description = patch.description;
     if (patch.icon !== undefined) values.icon = patch.icon;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
@@ -423,6 +441,26 @@ export function createCollectionService(
       .returning();
     if (!row) throw new CollectionGroupNotFound(id);
     return row;
+  }
+
+  async function moveGroup(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<CollectionGroup> {
+    const existing = await loadGroupById(organizationId, id);
+    return moveAndReturn<CollectionGroup>(db, {
+      table: collectionGroups,
+      sortColumn: collectionGroups.sortOrder,
+      idColumn: collectionGroups.id,
+      partitionWhere: and(
+        eq(collectionGroups.organizationId, organizationId),
+        eq(collectionGroups.albumId, existing.albumId),
+      )!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new CollectionGroupNotFound(sid),
+    });
   }
 
   async function deleteGroup(
@@ -506,6 +544,7 @@ export function createCollectionService(
     }
 
     try {
+      const __sortKey = await appendKey(db, { table: collectionEntries, sortColumn: collectionEntries.sortOrder, scopeWhere: eq(collectionEntries.organizationId, organizationId)! });
       const [row] = await db
         .insert(collectionEntries)
         .values({
@@ -517,7 +556,7 @@ export function createCollectionService(
           description: input.description ?? null,
           image: input.image ?? null,
           rarity: input.rarity ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           hiddenUntilUnlocked: input.hiddenUntilUnlocked ?? false,
           triggerType: input.triggerType ?? "item",
           triggerItemDefinitionId: input.triggerItemDefinitionId ?? null,
@@ -572,7 +611,6 @@ export function createCollectionService(
     if (patch.description !== undefined) values.description = patch.description;
     if (patch.image !== undefined) values.image = patch.image;
     if (patch.rarity !== undefined) values.rarity = patch.rarity;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.hiddenUntilUnlocked !== undefined)
       values.hiddenUntilUnlocked = patch.hiddenUntilUnlocked;
     if (patch.triggerType !== undefined) values.triggerType = patch.triggerType;
@@ -603,6 +641,36 @@ export function createCollectionService(
       }
       throw err;
     }
+  }
+
+  async function moveEntry(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<CollectionEntry> {
+    const existing = await loadEntryById(organizationId, id);
+    // Scope by (albumId, groupId) — entries can sit directly under an album
+    // (groupId = null) or in a specific group, both are independent partitions.
+    const partitionWhere = existing.groupId
+      ? and(
+          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.albumId, existing.albumId),
+          eq(collectionEntries.groupId, existing.groupId),
+        )!
+      : and(
+          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.albumId, existing.albumId),
+          isNull(collectionEntries.groupId),
+        )!;
+    return moveAndReturn<CollectionEntry>(db, {
+      table: collectionEntries,
+      sortColumn: collectionEntries.sortOrder,
+      idColumn: collectionEntries.id,
+      partitionWhere,
+      id: existing.id,
+      body,
+      notFound: (sid) => new CollectionEntryNotFound(sid),
+    });
   }
 
   async function deleteEntry(
@@ -674,6 +742,7 @@ export function createCollectionService(
     const threshold =
       input.scope === "entry" ? 1 : Math.max(1, input.threshold ?? 1);
 
+    const __sortKey = await appendKey(db, { table: collectionMilestones, sortColumn: collectionMilestones.sortOrder, scopeWhere: eq(collectionMilestones.organizationId, organizationId)! });
     const [row] = await db
       .insert(collectionMilestones)
       .values({
@@ -686,7 +755,7 @@ export function createCollectionService(
         label: input.label ?? null,
         rewardItems: input.rewardItems,
         autoClaim: input.autoClaim ?? false,
-        sortOrder: input.sortOrder ?? 0,
+        sortOrder: __sortKey,
         metadata: input.metadata ?? null,
       })
       .returning();
@@ -710,7 +779,6 @@ export function createCollectionService(
     if (patch.label !== undefined) values.label = patch.label;
     if (patch.rewardItems !== undefined) values.rewardItems = patch.rewardItems;
     if (patch.autoClaim !== undefined) values.autoClaim = patch.autoClaim;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) return existing;
@@ -727,6 +795,52 @@ export function createCollectionService(
       .returning();
     if (!row) throw new CollectionMilestoneNotFound(id);
     return row;
+  }
+
+  async function moveMilestone(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<CollectionMilestone> {
+    const existing = await loadMilestoneById(organizationId, id);
+    // Milestones partition by their attachment scope:
+    //   scope='album' → (albumId only, groupId/entryId NULL)
+    //   scope='group' → (albumId, groupId)
+    //   scope='entry' → (albumId, entryId)
+    let partitionWhere: SQL;
+    if (existing.scope === "album") {
+      partitionWhere = and(
+        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.albumId, existing.albumId),
+        eq(collectionMilestones.scope, "album"),
+      )!;
+    } else if (existing.scope === "group" && existing.groupId) {
+      partitionWhere = and(
+        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.albumId, existing.albumId),
+        eq(collectionMilestones.groupId, existing.groupId),
+        eq(collectionMilestones.scope, "group"),
+      )!;
+    } else if (existing.scope === "entry" && existing.entryId) {
+      partitionWhere = and(
+        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.albumId, existing.albumId),
+        eq(collectionMilestones.entryId, existing.entryId),
+        eq(collectionMilestones.scope, "entry"),
+      )!;
+    } else {
+      // Fallback: org-wide scope (shouldn't happen if scope FK invariants hold)
+      partitionWhere = eq(collectionMilestones.organizationId, organizationId)!;
+    }
+    return moveAndReturn<CollectionMilestone>(db, {
+      table: collectionMilestones,
+      sortColumn: collectionMilestones.sortOrder,
+      idColumn: collectionMilestones.id,
+      partitionWhere,
+      id: existing.id,
+      body,
+      notFound: (sid) => new CollectionMilestoneNotFound(sid),
+    });
   }
 
   async function deleteMilestone(
@@ -1543,23 +1657,27 @@ export function createCollectionService(
     // Albums
     createAlbum,
     updateAlbum,
+    moveAlbum,
     deleteAlbum,
     listAlbums,
     getAlbum,
     // Groups
     createGroup,
     updateGroup,
+    moveGroup,
     deleteGroup,
     listGroups,
     // Entries
     createEntry,
     bulkCreateEntries,
     updateEntry,
+    moveEntry,
     deleteEntry,
     listEntries,
     // Milestones
     createMilestone,
     updateMilestone,
+    moveMilestone,
     deleteMilestone,
     listMilestones,
     // Hooks & runtime

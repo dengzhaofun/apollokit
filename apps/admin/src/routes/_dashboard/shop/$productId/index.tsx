@@ -145,7 +145,6 @@ function EditShopProductPanel({
       refreshLimit: product.refreshLimit,
       userLimit: product.userLimit,
       globalLimit: product.globalLimit,
-      sortOrder: product.sortOrder,
       isActive: product.isActive,
       tagIds: product.tags.map((t) => t.id),
     },

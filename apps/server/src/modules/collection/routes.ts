@@ -10,6 +10,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -63,7 +64,7 @@ function serializeAlbum(row: {
   coverImage: string | null;
   icon: string | null;
   scope: string;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -93,7 +94,7 @@ function serializeGroup(row: {
   name: string;
   description: string | null;
   icon: string | null;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -122,7 +123,7 @@ function serializeEntry(row: {
   description: string | null;
   image: string | null;
   rarity: string | null;
-  sortOrder: number;
+  sortOrder: string;
   hiddenUntilUnlocked: boolean;
   triggerType: string;
   triggerItemDefinitionId: string | null;
@@ -163,7 +164,7 @@ function serializeMilestone(row: {
   label: string | null;
   rewardItems: RewardEntry[];
   autoClaim: boolean;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -299,6 +300,33 @@ collectionRouter.openapi(
 
 collectionRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/albums/{key}/move",
+    tags: [TAG],
+    summary: "Move an album (drag/top/bottom/up/down)",
+    request: {
+      params: AlbumKeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(AlbumResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await collectionService.moveAlbum(orgId, key, body);
+    return c.json(ok(serializeAlbum(row)), 200);
+  },
+);
+
+collectionRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/albums/{id}",
     tags: [TAG],
@@ -395,6 +423,33 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeGroup(row)), 200);
+  },
+);
+
+collectionRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/groups/{id}/move",
+    tags: [TAG_GROUP],
+    summary: "Move a group (drag/top/bottom/up/down, scoped per album)",
+    request: {
+      params: GroupIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(GroupResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await collectionService.moveGroup(orgId, id, body);
     return c.json(ok(serializeGroup(row)), 200);
   },
 );
@@ -536,6 +591,33 @@ collectionRouter.openapi(
 
 collectionRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/entries/{id}/move",
+    tags: [TAG_ENTRY],
+    summary: "Move an entry (drag/top/bottom/up/down, scoped per album+group)",
+    request: {
+      params: EntryIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(EntryResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await collectionService.moveEntry(orgId, id, body);
+    return c.json(ok(serializeEntry(row)), 200);
+  },
+);
+
+collectionRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/entries/{id}",
     tags: [TAG_ENTRY],
@@ -638,6 +720,35 @@ collectionRouter.openapi(
       id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeMilestone(row)), 200);
+  },
+);
+
+collectionRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/milestones/{id}/move",
+    tags: [TAG_MILESTONE],
+    summary: "Move a milestone (drag/top/bottom/up/down, scoped per album/group/entry)",
+    request: {
+      params: MilestoneIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(MilestoneResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await collectionService.moveMilestone(orgId, id, body);
     return c.json(ok(serializeMilestone(row)), 200);
   },
 );

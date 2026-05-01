@@ -35,6 +35,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { nKeysBetween } from "../../lib/fractional-order";
 import { grantRewards, type RewardServices } from "../../lib/rewards";
 import { activityConfigs } from "../../schema/activity";
 import {
@@ -407,15 +408,16 @@ export function createBattlePassService(
 
     if (input.bindings.length === 0) return;
 
+    const keys = nKeysBetween(null, null, input.bindings.length);
     await db.insert(battlePassSeasonTasks).values(
-      input.bindings.map((b) => ({
+      input.bindings.map((b, i) => ({
         seasonId: config.id,
         organizationId,
         taskDefinitionId: b.taskDefinitionId,
         xpReward: b.xpReward,
         category: b.category,
         weekIndex: b.weekIndex ?? null,
-        sortOrder: b.sortOrder ?? 0,
+        sortOrder: keys[i]!,
       })),
     );
   }

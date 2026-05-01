@@ -102,7 +102,6 @@ function CategoryDetailPage() {
                   name: category.name,
                   alias: category.alias,
                   icon: category.icon,
-                  sortOrder: category.sortOrder,
                   isActive: category.isActive,
                 }}
                 submitLabel={m.common_save_changes()}

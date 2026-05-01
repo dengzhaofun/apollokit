@@ -22,10 +22,11 @@
  *    admin grants and system rewards (check-in, exchange) call it.
  */
 
-import { and, desc, eq, ilike, or, sql, sum, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql, sum, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import { logger } from "../../lib/logger";
 import {
@@ -402,6 +403,7 @@ export function createItemService(d: ItemDeps) {
       input: CreateCategoryInput,
     ): Promise<ItemCategory> {
       try {
+        const __sortKey = await appendKey(db, { table: itemCategories, sortColumn: itemCategories.sortOrder, scopeWhere: eq(itemCategories.organizationId, organizationId)! });
         const [row] = await db
           .insert(itemCategories)
           .values({
@@ -409,7 +411,7 @@ export function createItemService(d: ItemDeps) {
             name: input.name,
             alias: input.alias ?? null,
             icon: input.icon ?? null,
-            sortOrder: input.sortOrder ?? 0,
+            sortOrder: __sortKey,
             isActive: input.isActive ?? true,
             metadata: input.metadata ?? null,
           })
@@ -434,7 +436,6 @@ export function createItemService(d: ItemDeps) {
       if (patch.name !== undefined) updateValues.name = patch.name;
       if (patch.alias !== undefined) updateValues.alias = patch.alias;
       if (patch.icon !== undefined) updateValues.icon = patch.icon;
-      if (patch.sortOrder !== undefined) updateValues.sortOrder = patch.sortOrder;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
@@ -459,6 +460,23 @@ export function createItemService(d: ItemDeps) {
         }
         throw err;
       }
+    },
+
+    async moveCategory(
+      organizationId: string,
+      key: string,
+      body: MoveBody,
+    ): Promise<ItemCategory> {
+      const existing = await loadCategoryByKey(organizationId, key);
+      return moveAndReturn<ItemCategory>(db, {
+        table: itemCategories,
+        sortColumn: itemCategories.sortOrder,
+        idColumn: itemCategories.id,
+        partitionWhere: eq(itemCategories.organizationId, organizationId)!,
+        id: existing.id,
+        body,
+        notFound: (sid) => new ItemCategoryNotFound(sid),
+      });
     },
 
     async deleteCategory(organizationId: string, id: string): Promise<void> {
@@ -495,7 +513,7 @@ export function createItemService(d: ItemDeps) {
         .select()
         .from(itemCategories)
         .where(and(...conditions))
-        .orderBy(desc(itemCategories.createdAt), desc(itemCategories.id))
+        .orderBy(asc(itemCategories.sortOrder), asc(itemCategories.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

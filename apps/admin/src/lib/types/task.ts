@@ -31,7 +31,7 @@ export interface TaskCategory {
   description: string | null
   icon: string | null
   scope: string
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -65,7 +65,7 @@ export interface TaskDefinition {
   isHidden: boolean
   visibility: string
   defaultAssignmentTtlSeconds: number | null
-  sortOrder: number
+  sortOrder: string
   activityId: string | null
   activityNodeId: string | null
   metadata: Record<string, unknown> | null
@@ -79,7 +79,6 @@ export interface CreateCategoryInput {
   description?: string | null
   icon?: string | null
   scope?: CategoryScope
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -111,7 +110,6 @@ export interface CreateDefinitionInput {
   isHidden?: boolean
   visibility?: TaskVisibility
   defaultAssignmentTtlSeconds?: number | null
-  sortOrder?: number
   activityId?: string | null
   activityNodeId?: string | null
   metadata?: Record<string, unknown> | null

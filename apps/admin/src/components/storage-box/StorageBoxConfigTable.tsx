@@ -1,3 +1,4 @@
+import { useMoveStorageBoxConfig } from "#/hooks/use-move"
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -23,6 +24,7 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<StorageBoxConfig>()
 
 function ActionsCell({ config }: { config: StorageBoxConfig }) {
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -151,6 +153,7 @@ interface Props {
 export function StorageBoxConfigTable({ route }: Props) {
   const list = useStorageBoxConfigs(route)
   const columns = useColumns()
+  const moveMutation = useMoveStorageBoxConfig()
   return (
     <DataTable
       columns={columns}
@@ -170,6 +173,7 @@ export function StorageBoxConfigTable({ route }: Props) {
           | undefined
       }
       onAdvancedQueryChange={list.setAdvanced}
+      sortable={{ onMove: (id, body) => moveMutation.mutate({ id, body }), disabled: moveMutation.isPending }}
       {...list.tableProps}
     />
   )

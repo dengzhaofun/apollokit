@@ -49,7 +49,6 @@ export function StageForm({
   const [rewardItems, setRewardItems] = useState<RewardEntry[]>(
     defaultValues?.rewardItems ?? [],
   )
-  const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
   const [error, setError] = useState("")
 
   function handleSubmit(e: React.FormEvent) {
@@ -76,7 +75,6 @@ export function StageForm({
       triggerType,
       triggerConfig: parsed,
       rewardItems: validRewards,
-      sortOrder,
     })
   }
 
@@ -91,15 +89,6 @@ export function StageForm({
             min={1}
             value={stageIndex}
             onChange={(e) => setStageIndex(Number(e.target.value) || 1)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="stage-sort">{m.shop_sort_order()}</Label>
-          <Input
-            id="stage-sort"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value))}
           />
         </div>
       </div>

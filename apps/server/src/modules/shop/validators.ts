@@ -21,6 +21,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf, PaginationQuerySchema } from "../../lib/pagination";
 
 // ─── Primitives ──────────────────────────────────────────────────
@@ -93,7 +95,6 @@ export const CreateCategorySchema = z
     description: z.string().max(2000).nullable().optional(),
     coverImage: UrlOrPathSchema.nullable().optional(),
     icon: UrlOrPathSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -107,7 +108,6 @@ export const UpdateCategorySchema = z
     description: z.string().max(2000).nullable().optional(),
     coverImage: UrlOrPathSchema.nullable().optional(),
     icon: UrlOrPathSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -124,7 +124,6 @@ export const CreateTagSchema = z
     name: z.string().min(1).max(200),
     color: ColorSchema.nullable().optional(),
     icon: UrlOrPathSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -136,7 +135,6 @@ export const UpdateTagSchema = z
     name: z.string().min(1).max(200).optional(),
     color: ColorSchema.nullable().optional(),
     icon: UrlOrPathSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -306,7 +304,6 @@ const ProductBaseShape = {
   refreshLimit: z.number().int().positive().nullable().optional(),
   userLimit: z.number().int().positive().nullable().optional(),
   globalLimit: z.number().int().positive().nullable().optional(),
-  sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
   activityId: z.string().uuid().nullable().optional(),
   activityNodeId: z.string().uuid().nullable().optional(),
@@ -342,7 +339,6 @@ export const UpdateProductSchema = z
     refreshLimit: z.number().int().positive().nullable().optional(),
     userLimit: z.number().int().positive().nullable().optional(),
     globalLimit: z.number().int().positive().nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
@@ -422,7 +418,6 @@ export const CreateGrowthStageSchema = z
     triggerType: GrowthTriggerTypeSchema,
     triggerConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     rewardItems: z.array(ItemEntrySchema).min(1),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .superRefine(refineTriggerConfig)
@@ -436,7 +431,6 @@ export const UpdateGrowthStageSchema = z
     triggerType: GrowthTriggerTypeSchema.optional(),
     triggerConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     rewardItems: z.array(ItemEntrySchema).min(1).optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .superRefine(refineTriggerConfig)
@@ -635,7 +629,7 @@ export const ShopCategoryResponseSchema = z
     coverImage: z.string().nullable(),
     icon: z.string().nullable(),
     level: z.number().int(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -659,7 +653,7 @@ export const ShopTagResponseSchema = z
     name: z.string(),
     color: z.string().nullable(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -690,7 +684,7 @@ export const ShopProductResponseSchema = z
     userLimit: z.number().int().nullable(),
     globalLimit: z.number().int().nullable(),
     globalCount: z.number().int(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -710,7 +704,7 @@ export const ShopGrowthStageResponseSchema = z
     triggerType: GrowthTriggerTypeSchema,
     triggerConfig: z.record(z.string(), z.unknown()).nullable(),
     rewardItems: z.array(ItemResponseSchema),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),

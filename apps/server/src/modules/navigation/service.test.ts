@@ -53,7 +53,8 @@ describe("navigation favorites service", () => {
     const items = await svc.list(orgId, userId)
     expect(items).toHaveLength(1)
     expect(items[0]!.routePath).toBe("/shop")
-    expect(items[0]!.sortOrder).toBe(1)
+    expect(typeof items[0]!.sortOrder).toBe("string")
+    expect(items[0]!.sortOrder.length).toBeGreaterThan(0)
   })
 
   test("add multiple — list is sorted by sortOrder desc (most recent first)", async () => {
@@ -64,7 +65,10 @@ describe("navigation favorites service", () => {
       await svc.add(localOrg, userId, "/c")
       const items = await svc.list(localOrg, userId)
       expect(items.map((i) => i.routePath)).toEqual(["/c", "/b", "/a"])
-      expect(items.map((i) => i.sortOrder)).toEqual([3, 2, 1])
+      // fractional keys: /c was appended last so it has the largest key, DESC sort puts it first
+      const keys = items.map((i) => i.sortOrder)
+      expect(keys[0]! > keys[1]!).toBe(true)
+      expect(keys[1]! > keys[2]!).toBe(true)
     } finally {
       await deleteTestOrg(localOrg)
     }

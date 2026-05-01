@@ -8,6 +8,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -119,7 +121,6 @@ export const CreateSchemaInput = z
     levelConfig: LevelConfigSchema.optional(),
     rankConfig: RankConfigSchema.optional(),
     synthesisConfig: SynthesisConfigSchema.optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -137,7 +138,6 @@ export const UpdateSchemaInput = z
     levelConfig: LevelConfigSchema.optional(),
     rankConfig: RankConfigSchema.optional(),
     synthesisConfig: SynthesisConfigSchema.optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -161,7 +161,6 @@ export const CreateBlueprintInput = z
     rankUpCosts: z.array(RankUpCostSchema).optional(),
     synthesisCost: SynthesisCostConfigSchema.nullable().optional(),
     maxLevel: z.number().int().min(1).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     activityId: z.string().uuid().nullable().optional().openapi({
       description:
@@ -187,7 +186,6 @@ export const UpdateBlueprintInput = z
     rankUpCosts: z.array(RankUpCostSchema).optional(),
     synthesisCost: SynthesisCostConfigSchema.nullable().optional(),
     maxLevel: z.number().int().min(1).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
@@ -205,7 +203,6 @@ export const CreateSkinInput = z
     assets: AssetBundleSchema.optional(),
     statBonuses: StatsMapSchema.optional(),
     isDefault: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -219,7 +216,6 @@ export const UpdateSkinInput = z
     assets: AssetBundleSchema.optional(),
     statBonuses: StatsMapSchema.optional(),
     isDefault: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -320,7 +316,7 @@ export const SchemaResponseSchema = z
     levelConfig: LevelConfigSchema,
     rankConfig: RankConfigSchema,
     synthesisConfig: SynthesisConfigSchema,
-    sortOrder: z.number(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.unknown().nullable(),
     createdAt: z.string(),
@@ -350,7 +346,7 @@ export const BlueprintResponseSchema = z
     rankUpCosts: z.array(RankUpCostSchema),
     synthesisCost: SynthesisCostConfigSchema.nullable(),
     maxLevel: z.number().nullable(),
-    sortOrder: z.number(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     activityId: z.string().nullable(),
     activityNodeId: z.string().nullable(),
@@ -375,7 +371,7 @@ export const SkinResponseSchema = z
     assets: AssetBundleSchema,
     statBonuses: StatsMapSchema,
     isDefault: z.boolean(),
-    sortOrder: z.number(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.unknown().nullable(),
     createdAt: z.string(),

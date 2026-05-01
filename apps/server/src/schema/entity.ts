@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -147,7 +149,7 @@ export const entitySchemas = pgTable(
       .$type<SynthesisConfig>()
       .default({ enabled: false, sameBlueprint: true, inputCount: 2 })
       .notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -211,7 +213,7 @@ export const entityBlueprints = pgTable(
       .notNull(),
     synthesisCost: jsonb("synthesis_cost").$type<SynthesisCostConfig | null>(),
     maxLevel: integer("max_level"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     /**
      * Soft link to an `activity_configs.id` when this blueprint is
@@ -269,7 +271,7 @@ export const entityBlueprintSkins = pgTable(
       .default({})
       .notNull(),
     isDefault: boolean("is_default").default(false).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

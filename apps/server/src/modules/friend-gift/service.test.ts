@@ -113,7 +113,6 @@ describe("friend-gift service", () => {
       description: "A lovely bouquet",
       giftItems: [{ definitionId: "item-flower", quantity: 1 }],
       isActive: true,
-      sortOrder: 10,
     });
 
     expect(pkg.organizationId).toBe(orgId);
@@ -123,7 +122,8 @@ describe("friend-gift service", () => {
       { definitionId: "item-flower", quantity: 1 },
     ]);
     expect(pkg.isActive).toBe(true);
-    expect(pkg.sortOrder).toBe(10);
+    expect(typeof pkg.sortOrder).toBe("string");
+    expect(pkg.sortOrder.length).toBeGreaterThan(0);
     packageId = pkg.id;
   });
 

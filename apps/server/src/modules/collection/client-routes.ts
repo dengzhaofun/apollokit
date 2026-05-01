@@ -50,7 +50,7 @@ function serializeAlbum(row: {
   coverImage: string | null;
   icon: string | null;
   scope: string;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -80,7 +80,7 @@ function serializeGroup(row: {
   name: string;
   description: string | null;
   icon: string | null;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;

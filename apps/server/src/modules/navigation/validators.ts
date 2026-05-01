@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi"
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 /**
  * routePath shape — must look like an absolute path with safe URL
  * characters. We deliberately do NOT validate against an enum of known
@@ -42,7 +44,7 @@ export const FavoriteResponseSchema = z
     organizationId: z.string(),
     userId: z.string(),
     routePath: z.string(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     createdAt: z.string(),
     updatedAt: z.string(),
   })

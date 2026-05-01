@@ -56,7 +56,6 @@ export function StorageBoxConfigForm({
       minDeposit: defaultValues?.minDeposit ?? (null as number | null),
       maxDeposit: defaultValues?.maxDeposit ?? (null as number | null),
       allowEarlyWithdraw: defaultValues?.allowEarlyWithdraw ?? false,
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -73,7 +72,6 @@ export function StorageBoxConfigForm({
         minDeposit: value.minDeposit,
         maxDeposit: value.maxDeposit,
         allowEarlyWithdraw: value.allowEarlyWithdraw,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       }
       await onSubmit(input)
@@ -375,20 +373,6 @@ export function StorageBoxConfigForm({
         </form.Field>
       </div>
 
-      <form.Field name="sortOrder">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_sort_order()}</Label>
-            <Input
-              id={field.name}
-              type="number"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(Number(e.target.value) || 0)}
-            />
-          </div>
-        )}
-      </form.Field>
 
       <form.Field name="isActive">
         {(field) => (

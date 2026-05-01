@@ -59,7 +59,6 @@ export function EntryForm({
   const [hiddenUntilUnlocked, setHidden] = useState<boolean>(
     initial?.hiddenUntilUnlocked ?? false,
   )
-  const [sortOrder, setSortOrder] = useState<number>(initial?.sortOrder ?? 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -74,7 +73,6 @@ export function EntryForm({
         triggerItemDefinitionId === NONE ? null : triggerItemDefinitionId,
       triggerQuantity,
       hiddenUntilUnlocked: hiddenUntilUnlocked,
-      sortOrder,
       triggerType: "item",
     })
   }
@@ -187,17 +185,6 @@ export function EntryForm({
             min={1}
             value={triggerQuantity}
             onChange={(e) => setTriggerQuantity(Number(e.target.value) || 1)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="e-sortOrder">
-            {m.collection_field_sort_order()}
-          </Label>
-          <Input
-            id="e-sortOrder"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
           />
         </div>
         <div className="flex items-end gap-2">

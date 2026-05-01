@@ -37,11 +37,11 @@ describe("currency service", () => {
         name: "Gem",
         alias: "cur-gem",
         icon: "gem-icon",
-        sortOrder: 1,
       });
       expect(gem.name).toBe("Gem");
       expect(gem.alias).toBe("cur-gem");
-      expect(gem.sortOrder).toBe(1);
+      expect(typeof gem.sortOrder).toBe("string");
+      expect(gem.sortOrder.length).toBeGreaterThan(0);
       expect(gem.isActive).toBe(true);
       expect(gem.activityId).toBeNull();
 
@@ -66,14 +66,13 @@ describe("currency service", () => {
       const c = await svc.createDefinition(orgId, {
         name: "Before",
         alias: "cur-upd",
-        sortOrder: 0,
       });
       const after = await svc.updateDefinition(orgId, c.id, {
         name: "After",
-        sortOrder: 10,
       });
       expect(after.name).toBe("After");
-      expect(after.sortOrder).toBe(10);
+      // sortOrder is now an opaque fractional key, not user-settable on update
+      expect(typeof after.sortOrder).toBe("string");
       // alias unchanged
       expect(after.alias).toBe("cur-upd");
     });

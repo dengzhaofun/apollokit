@@ -179,7 +179,6 @@ function TagEditForm({ tag, onSubmit, isPending }: TagEditFormProps) {
   const [name, setName] = useState(tag.name)
   const [alias, setAlias] = useState(tag.alias ?? "")
   const [color, setColor] = useState(tag.color ?? "#64748b")
-  const [sortOrder, setSortOrder] = useState(tag.sortOrder)
   const [isActive, setIsActive] = useState(tag.isActive)
 
   return (
@@ -191,7 +190,6 @@ function TagEditForm({ tag, onSubmit, isPending }: TagEditFormProps) {
           name,
           alias: alias || null,
           color: color || null,
-          sortOrder,
           isActive,
         })
       }}
@@ -230,15 +228,6 @@ function TagEditForm({ tag, onSubmit, isPending }: TagEditFormProps) {
           />
         </div>
         <p className="text-xs text-muted-foreground">{m.shop_color_hint()}</p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="tag-sort">{m.shop_sort_order()}</Label>
-        <Input
-          id="tag-sort"
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
-        />
       </div>
       <div className="flex items-center gap-3">
         <Switch

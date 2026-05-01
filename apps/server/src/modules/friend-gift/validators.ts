@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -71,7 +73,6 @@ export const CreatePackageSchema = z
       description: "Items deducted from sender and granted to receiver.",
     }),
     isActive: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("FriendGiftCreatePackage");
@@ -84,7 +85,6 @@ export const UpdatePackageSchema = z
     icon: z.string().max(500).nullable().optional(),
     giftItems: z.array(GiftItemSchema).min(1).optional(),
     isActive: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("FriendGiftUpdatePackage");
@@ -170,7 +170,7 @@ export const PackageResponseSchema = z
     icon: z.string().nullable(),
     giftItems: z.array(GiftItemSchema),
     isActive: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),

@@ -13,6 +13,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -46,7 +48,7 @@ export const shopCategories = pgTable(
     coverImage: text("cover_image"),
     icon: text("icon"),
     level: integer("level").default(0).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -85,7 +87,7 @@ export const shopTags = pgTable(
     name: text("name").notNull(),
     color: text("color"),
     icon: text("icon"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -162,7 +164,7 @@ export const shopProducts = pgTable(
     globalLimit: integer("global_limit"),
     globalCount: integer("global_count").default(0).notNull(),
 
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     /**
      * Soft link to an `activity_configs.id` when this product belongs
@@ -273,7 +275,7 @@ export const shopGrowthStages = pgTable(
     triggerType: text("trigger_type").notNull(),
     triggerConfig: jsonb("trigger_config"),
     rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

@@ -83,10 +83,14 @@ function buildAdminAuth() {
     },
     emailAndPassword: {
       enabled: true,
-      // 测试环境(VITEST)关掉强制验证,因为 vitest 跑 Node + 无 EMAIL binding,
-      // 测试用例 sign-up 后要立刻拿 session cookie 跑业务断言。production /
-      // wrangler dev 都仍走 requireEmailVerification = true。
-      requireEmailVerification: !process.env.VITEST,
+      // 测试环境(VITEST)和本地 wrangler dev 关掉强制验证:
+      //   - VITEST 跑 Node + 无 EMAIL binding,sign-up 后要立刻拿 session
+      //     cookie 跑业务断言。
+      //   - wrangler dev 没配 RESEND/SES 密钥时验证邮件发不出去,开发体验
+      //     会卡死;改用 NODE_ENV !== 'production' 一并关掉,让本地一注册
+      //     就能登录。production 仍是默认的强制验证。
+      requireEmailVerification:
+        process.env.NODE_ENV === "production" && !process.env.VITEST,
       resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
       sendResetPassword: async ({ user, url }) => {
         await sendPasswordResetEmail({

@@ -29,7 +29,6 @@ export type ShopProductFormValues = {
   refreshLimit: number | ""
   userLimit: number | ""
   globalLimit: number | ""
-  sortOrder: number
   isActive: boolean
   tagIds: string[]
   formError: string
@@ -86,7 +85,6 @@ export function useProductForm({
       refreshLimit: defaultValues?.refreshLimit ?? "",
       userLimit: defaultValues?.userLimit ?? "",
       globalLimit: defaultValues?.globalLimit ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
       tagIds: defaultValues?.tagIds ?? [],
       formError: "",
@@ -131,7 +129,6 @@ export function useProductForm({
             : null,
         userLimit: value.userLimit === "" ? null : Number(value.userLimit),
         globalLimit: value.globalLimit === "" ? null : Number(value.globalLimit),
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
         activityId,
         tagIds: value.tagIds,

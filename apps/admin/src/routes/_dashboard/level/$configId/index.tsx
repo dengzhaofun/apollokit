@@ -162,7 +162,6 @@ function ConfigInfoTab({
   const [coverImage, setCoverImage] = useState(initial.coverImage ?? "")
   const [icon, setIcon] = useState(initial.icon ?? "")
   const [hasStages, setHasStages] = useState(initial.hasStages)
-  const [sortOrder, setSortOrder] = useState(initial.sortOrder)
   const [isActive, setIsActive] = useState(initial.isActive)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -177,7 +176,6 @@ function ConfigInfoTab({
           coverImage: coverImage || null,
           icon: icon || null,
           hasStages,
-          sortOrder,
           isActive,
         },
       })
@@ -228,15 +226,6 @@ function ConfigInfoTab({
       <div className="flex items-center gap-3">
         <Switch checked={hasStages} onCheckedChange={setHasStages} />
         <Label>{m.level_config_has_stages()}</Label>
-      </div>
-
-      <div className="space-y-2">
-        <Label>{m.common_sort_order()}</Label>
-        <Input
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
-        />
       </div>
 
       <div className="flex items-center gap-3">
@@ -407,7 +396,6 @@ function StageForm({
     description: string | null
     icon: string | null
     unlockRule: UnlockRule | null
-    sortOrder: number
     metadata: Record<string, unknown> | null
   }) => void
 }) {
@@ -417,7 +405,6 @@ function StageForm({
   const [unlockRule, setUnlockRule] = useState(
     initial?.unlockRule ? JSON.stringify(initial.unlockRule, null, 2) : "",
   )
-  const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0)
   const [metadata, setMetadata] = useState(
     initial?.metadata ? JSON.stringify(initial.metadata, null, 2) : "",
   )
@@ -429,7 +416,6 @@ function StageForm({
       description: description || null,
       icon: icon || null,
       unlockRule: unlockRule ? JSON.parse(unlockRule) : null,
-      sortOrder,
       metadata: metadata ? JSON.parse(metadata) : null,
     })
   }
@@ -458,14 +444,6 @@ function StageForm({
           onChange={(e) => setUnlockRule(e.target.value)}
           rows={4}
           placeholder='{"type":"auto"}'
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>{m.common_sort_order()}</Label>
-        <Input
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
         />
       </div>
       <div className="space-y-2">
