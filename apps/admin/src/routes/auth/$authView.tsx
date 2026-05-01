@@ -1,7 +1,9 @@
 import { AuthView } from "@daveyplate/better-auth-ui"
 import { createFileRoute } from "@tanstack/react-router"
 import { ShieldCheckIcon, SparklesIcon, ZapIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 
+import { authClient } from "#/lib/auth-client"
 import { seo } from "#/lib/seo"
 import { getLocale } from "#/paraglide/runtime.js"
 
@@ -143,8 +145,50 @@ function AuthViewPage() {
             </span>
           </div>
           <AuthView pathname={authView} />
+          <OneTapTrigger authView={authView} />
         </div>
       </div>
     </main>
   )
+}
+
+/**
+ * Google One Tap 触发器。
+ *
+ * 1. 仅在 sign-in / sign-up 视图触发,其他视图(forgot-password / verify-email
+ *    等)跳过 —— 这些路径用户多半已知道账号,弹 One Tap 是噪音。
+ * 2. 已登录态跳过,避免在已登录用户撞回登录页时再弹。
+ * 3. 同 SignedInBouncer 的 SSR 防御模式:外层 mounted-gate,`useSession`
+ *    只在客户端 hydration 后跑(better-auth/react 的 store 在 Vite SSR
+ *    下有双 React 实例风险,见 routes/index.tsx 注释)。
+ * 4. UI 不会被 GIS 失败阻塞 —— `<AuthView>` 自带的邮箱/密码 + Google 按钮
+ *    永远是 fallback。
+ */
+function OneTapTrigger({ authView }: { authView: string }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  if (!mounted) return null
+  if (authView !== "sign-in" && authView !== "sign-up") return null
+  return <OneTapTriggerClient />
+}
+
+function OneTapTriggerClient() {
+  const { data: session, isPending } = authClient.useSession()
+
+  useEffect(() => {
+    if (isPending) return
+    if (session?.user) return
+    void authClient.oneTap({
+      callbackURL: "/dashboard",
+      onPromptNotification: (notification) => {
+        // GIS 弹窗被用户关闭/跳过/达到 maxAttempts —— 仅 warn,UI 上 AuthView
+        // 自带的 Google 按钮就是 fallback。
+        console.warn("[oneTap] dismissed/skipped", notification)
+      },
+    })
+  }, [isPending, session?.user])
+
+  return null
 }

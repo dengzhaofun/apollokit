@@ -5,6 +5,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import {
   haveIBeenPwned,
   lastLoginMethod,
+  oneTap,
   organization,
 } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
@@ -174,6 +175,10 @@ function buildAdminAuth() {
       // Cookie-only (storeInDatabase defaults false) —— daveyplate AuthView
       // 读 `better-auth.last_used_login_method` cookie 高亮上次登录方式。
       lastLoginMethod(),
+      // Google One Tap —— 服务端只校验前端传来的 Google ID token,自动复用
+      // socialProviders.google 的 clientId。无需新表/迁移/env。前端通过
+      // authClient.oneTap() 触发 GIS 弹窗(见 admin/src/lib/auth-client.ts)。
+      oneTap(),
       // Email 规范化通过下面的 databaseHooks.user.* 实现 —— 我们之前用过
       // `better-auth-harmony`,但它在顶层 import 把 validator.js + mailchecker
       // 拉进 bundle,推爆了 CF Workers startup CPU 限额(code 10021)。改用
