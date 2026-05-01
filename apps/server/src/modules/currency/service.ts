@@ -304,6 +304,7 @@ export function createCurrencyService(d: CurrencyDeps) {
       grants: Array<{ currencyId: string; amount: number }>;
       source: string;
       sourceId?: string;
+      context?: { activityId?: string; activityNodeId?: string };
     }): Promise<CurrencyGrantResult> {
       const results: CurrencyGrantResult["grants"] = [];
 
@@ -353,6 +354,8 @@ export function createCurrencyService(d: CurrencyDeps) {
           delta: g.amount,
           source: params.source,
           sourceId: params.sourceId ?? null,
+          activityId: params.context?.activityId ?? null,
+          activityNodeId: params.context?.activityNodeId ?? null,
           balanceBefore: before,
           balanceAfter: after,
         });
@@ -374,6 +377,7 @@ export function createCurrencyService(d: CurrencyDeps) {
       deductions: Array<{ currencyId: string; amount: number }>;
       source: string;
       sourceId?: string;
+      context?: { activityId?: string; activityNodeId?: string };
     }): Promise<CurrencyDeductResult> {
       const results: CurrencyDeductResult["deductions"] = [];
 
@@ -422,6 +426,8 @@ export function createCurrencyService(d: CurrencyDeps) {
           delta: -d.amount,
           source: params.source,
           sourceId: params.sourceId ?? null,
+          activityId: params.context?.activityId ?? null,
+          activityNodeId: params.context?.activityNodeId ?? null,
           balanceBefore: before,
           balanceAfter: after,
         });

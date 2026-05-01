@@ -135,6 +135,14 @@ export const currencyLedger = pgTable(
     delta: integer("delta").notNull(),
     source: text("source").notNull(),
     sourceId: text("source_id"),
+    /**
+     * Cross-cutting activity context for grants/deductions that happen
+     * inside an activity scope. Soft links — no FK — so the ledger row
+     * survives even after the activity is purged. NULL means the ledger
+     * row is not associated with any activity (e.g. shop purchase).
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     balanceBefore: integer("balance_before"),
     balanceAfter: integer("balance_after"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -146,5 +154,6 @@ export const currencyLedger = pgTable(
     ),
     index("currency_ledger_source_idx").on(table.source, table.sourceId),
     index("currency_ledger_currency_idx").on(table.currencyId),
+    index("currency_ledger_activity_idx").on(table.activityId),
   ],
 );

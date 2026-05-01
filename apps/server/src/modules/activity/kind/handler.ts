@@ -7,7 +7,7 @@
  * Kind Handler **不代理通用子系统**。
  *
  * 职责边界（刻意收窄，避免过度抽象）：
- *   ① 加载 / 校验本 kind 的配置（专属 FK 表或 kindMetadata jsonb）
+ *   ① 加载 / 校验本 kind 的配置（专属 FK 表或 activity.metadata.kind jsonb）
  *   ② 生命周期 hook：活动在状态机流转时本 kind 要做的事
  *   ③ Kind 特有命令（纪行的 grant-tier / claim-level 等）
  *   ④ Kind 聚合视图（组装跨子系统的玩家视图）
@@ -84,7 +84,7 @@ export interface ActivityKindHandler<
 
   /**
    * 从 activity 行加载本 kind 的完整配置。通常从专属 FK 表里查
-   * （如 `battle_pass_configs`），或从 `activity.kindMetadata` jsonb
+   * （如 `battle_pass_configs`），或从 `activity.metadata.kind` jsonb
    * 里解析。配置不存在返回 null。
    */
   loadConfig(

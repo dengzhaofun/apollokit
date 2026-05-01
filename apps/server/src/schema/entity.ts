@@ -330,8 +330,18 @@ export const entityInstances = pgTable(
     acquiredAt: timestamp("acquired_at").defaultNow().notNull(),
     /**
      * Soft link to an `activity_configs.id` when this entity instance
-     * was granted as an activity-scoped item (spring-festival badge,
-     * one-time pass, …). NULL means permanent player inventory.
+     * was granted inside an activity scope (spring-festival badge,
+     * one-time pass, weekly-ladder reward, …). NULL means permanent
+     * player inventory not bound to any activity.
+     *
+     * The instance's `activity_id` records *which* activity caused the
+     * grant — could be either:
+     *   1. The blueprint itself was activity-scoped (`bp.activity_id`
+     *      not null), so every instance of it is by definition that
+     *      activity's; or
+     *   2. The blueprint is permanent but the grant happened inside an
+     *      activity context (e.g. weekly-ladder reward gives a permanent
+     *      hero blueprint as a prize).
      *
      * When the activity archives, the activity service's cleanup path
      * acts on rows matching `activity_id` per the activity's
@@ -339,8 +349,12 @@ export const entityInstances = pgTable(
      *   - purge   → DELETE these rows
      *   - convert → run the conversion map (future), then DELETE
      *   - keep    → no-op (stays as a souvenir)
+     *
+     * `activity_node_id` further pins which node within the activity
+     * triggered the grant — useful for per-node analytics.
      */
     activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     version: integer("version").default(1).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

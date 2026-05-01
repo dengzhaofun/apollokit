@@ -24,7 +24,35 @@ import type {
 
 const KEY = ["activities"] as const
 
-export const ACTIVITY_FILTER_DEFS: FilterDef[] = []
+export const ACTIVITY_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "draft", label: "Draft" },
+      { value: "scheduled", label: "Scheduled" },
+      { value: "teasing", label: "Teasing" },
+      { value: "active", label: "Active" },
+      { value: "settling", label: "Settling" },
+      { value: "ended", label: "Ended" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+  {
+    id: "kind",
+    label: "Kind",
+    type: "select",
+    options: [
+      { value: "generic", label: "Generic" },
+      { value: "check_in_only", label: "Check-In Only" },
+      { value: "board_game", label: "Board Game" },
+      { value: "gacha", label: "Gacha" },
+      { value: "season_pass", label: "Season Pass" },
+      { value: "custom", label: "Custom" },
+    ],
+  },
+]
 
 /** Paginated activities — URL-driven. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

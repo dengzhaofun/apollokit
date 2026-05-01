@@ -263,6 +263,7 @@ function ActivityDetailPage() {
               <ActivityForm
                 defaultValues={activity}
                 disableAliasEdit
+                lockTimeEdit={activity.status !== "draft"}
                 isPending={updateMutation.isPending}
                 submitLabel={m.activity_detail_save_label()}
                 onSubmit={async (values) => {

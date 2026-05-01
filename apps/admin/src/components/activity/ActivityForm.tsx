@@ -100,6 +100,13 @@ interface Props {
   isPending?: boolean
   submitLabel?: string
   disableAliasEdit?: boolean
+  /**
+   * Lock the time fields (visibleAt / startAt / endAt / rewardEndAt /
+   * hiddenAt) when the activity has already left the draft phase. The
+   * server will reject changes anyway; this is a UX hint that surfaces
+   * the constraint *before* the user fills in invalid values.
+   */
+  lockTimeEdit?: boolean
 }
 
 export function ActivityForm({
@@ -108,6 +115,7 @@ export function ActivityForm({
   isPending,
   submitLabel,
   disableAliasEdit = false,
+  lockTimeEdit = false,
 }: Props) {
   const [advancedMode, setAdvancedMode] = useState(() =>
     shouldStartInAdvancedMode(defaultValues),
@@ -128,9 +136,6 @@ export function ActivityForm({
       endAtLocal: toLocalInput(defaultValues?.endAt),
       rewardEndAtLocal: toLocalInput(defaultValues?.rewardEndAt),
       hiddenAtLocal: toLocalInput(defaultValues?.hiddenAt),
-      currencyJson: defaultValues?.currency
-        ? JSON.stringify(defaultValues.currency, null, 2)
-        : "",
       milestoneTiersJson: JSON.stringify(
         defaultValues?.milestoneTiers ?? [],
         null,
@@ -152,7 +157,6 @@ export function ActivityForm({
     onSubmit: async ({ value }) => {
       let milestoneTiers: ActivityMilestoneTier[] = []
       let globalRewards: RewardEntry[] = []
-      let currency = null as CreateActivityInput["currency"]
       try {
         milestoneTiers = JSON.parse(
           value.milestoneTiersJson,
@@ -164,13 +168,6 @@ export function ActivityForm({
         globalRewards = JSON.parse(value.globalRewardsJson) as RewardEntry[]
       } catch {
         /* ignore */
-      }
-      if (value.currencyJson.trim()) {
-        try {
-          currency = JSON.parse(value.currencyJson)
-        } catch {
-          /* ignore */
-        }
       }
 
       let membership: ActivityMembershipConfig | null = null
@@ -195,7 +192,6 @@ export function ActivityForm({
         endAt: fromLocalInput(value.endAtLocal),
         rewardEndAt: fromLocalInput(value.rewardEndAtLocal),
         hiddenAt: fromLocalInput(value.hiddenAtLocal),
-        currency,
         milestoneTiers,
         globalRewards,
         cleanupRule: { mode: value.cleanupMode as "purge" | "convert" | "keep" },
@@ -313,11 +309,17 @@ export function ActivityForm({
             : m.activity_lifecycle_simple_description()
         }
       >
+        {lockTimeEdit ? (
+          <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            {m.activity_lifecycle_locked_warning()}
+          </div>
+        ) : null}
         <div className="mb-3 flex items-center justify-end">
           <Button
             type="button"
             size="sm"
             variant="ghost"
+            disabled={lockTimeEdit}
             onClick={() => {
               if (advancedMode) {
                 // 切回简单模式：用 start/end 重新推导其余 3 个
@@ -347,6 +349,7 @@ export function ActivityForm({
                 <Input
                   id={field.name}
                   type="datetime-local"
+                  disabled={lockTimeEdit}
                   value={field.state.value}
                   onChange={(e) => {
                     const v = e.target.value
@@ -368,6 +371,7 @@ export function ActivityForm({
                 <Input
                   id={field.name}
                   type="datetime-local"
+                  disabled={lockTimeEdit}
                   value={field.state.value}
                   onChange={(e) => {
                     const v = e.target.value
@@ -399,6 +403,7 @@ export function ActivityForm({
                     <Input
                       id={field.name}
                       type="datetime-local"
+                      disabled={lockTimeEdit}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       required
@@ -415,6 +420,7 @@ export function ActivityForm({
                     <Input
                       id={field.name}
                       type="datetime-local"
+                      disabled={lockTimeEdit}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       required
@@ -431,6 +437,7 @@ export function ActivityForm({
                     <Input
                       id={field.name}
                       type="datetime-local"
+                      disabled={lockTimeEdit}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       required
@@ -451,24 +458,9 @@ export function ActivityForm({
 
       {/* Section 3:经济 / 奖励 / 成员配置 —— 全 JSON */}
       <FormSection
-        title="经济 / 奖励配置"
-        description="货币定义、里程碑奖励、全局奖励、成员管理 —— 全部 JSON 编辑(带语法高亮 + 校验)"
+        title={m.activity_section_rewards_title()}
+        description={m.activity_section_rewards_desc()}
       >
-        <form.Field name="currencyJson">
-          {(field) => (
-            <div className="flex flex-col gap-1.5">
-              <Label>{m.activity_field_currency_json()}</Label>
-              <JsonEditor
-                value={field.state.value}
-                onChange={(v) => field.handleChange(v)}
-                placeholder='{"alias":"festival_point","name":"Festival Points","icon":"🧧"}'
-                height={120}
-                aria-label={m.activity_field_currency_json()}
-              />
-            </div>
-          )}
-        </form.Field>
-
         <form.Field name="milestoneTiersJson">
           {(field) => (
             <div className="flex flex-col gap-1.5">

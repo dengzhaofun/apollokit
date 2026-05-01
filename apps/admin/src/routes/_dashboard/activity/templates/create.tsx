@@ -61,10 +61,6 @@ function CreateActivityTemplatePage() {
         description: m.activity_template_create_default_description(),
         kind: "generic",
         timezone: "Asia/Shanghai",
-        currency: {
-          alias: "challenge_point",
-          name: m.activity_template_create_default_currency_name(),
-        },
         milestoneTiers: [
           {
             alias: "m1",
@@ -347,14 +343,14 @@ function CreateActivityTemplatePage() {
               onChange={(e) => setNodesBlueprintJson(e.target.value)}
               rows={8}
               className="font-mono text-xs"
-              placeholder='[{"alias":"daily_checkin","nodeType":"check_in","refIdStrategy":"fixed","fixedRefId":"<uuid>","orderIndex":0}]'
+              placeholder='[{"alias":"daily_checkin","nodeType":"check_in","refIdStrategy":"reuse_shared","fixedRefId":"<uuid>","orderIndex":0}]'
             />
             <p className="text-xs text-muted-foreground">
               {m.activity_template_create_nodes_hint_intro()}<code className="mx-1 rounded bg-muted px-1">refIdStrategy</code>:
               {" "}
-              <code className="rounded bg-muted px-1">fixed</code>{m.activity_template_create_nodes_hint_fixed()}
-              <code className="rounded bg-muted px-1">omit</code>{m.activity_template_create_nodes_hint_omit()}
-              <code className="rounded bg-muted px-1">link_only</code>{m.activity_template_create_nodes_hint_link_only()}
+              <code className="rounded bg-muted px-1">reuse_shared</code>{m.activity_template_create_nodes_hint_fixed()}
+              <code className="rounded bg-muted px-1">virtual</code>{m.activity_template_create_nodes_hint_omit()}
+              <code className="rounded bg-muted px-1">manual_link</code>{m.activity_template_create_nodes_hint_link_only()}
             </p>
           </div>
 

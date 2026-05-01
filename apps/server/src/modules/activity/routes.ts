@@ -70,14 +70,8 @@ function serializeActivity(row: ActivityConfig) {
     hiddenAt: row.hiddenAt.toISOString(),
     timezone: row.timezone,
     status: row.status,
-    currency: row.currency as {
-      alias: string;
-      name: string;
-      icon?: string | null;
-    } | null,
     milestoneTiers: row.milestoneTiers,
     globalRewards: row.globalRewards,
-    kindMetadata: row.kindMetadata as Record<string, unknown> | null,
     cleanupRule: row.cleanupRule,
     joinRequirement: row.joinRequirement as Record<string, unknown> | null,
     visibility: row.visibility as "public" | "hidden" | "targeted",

@@ -42,12 +42,6 @@ export type ActionType =
 import type { RewardEntry } from "./rewards"
 export type { RewardEntry }
 
-export interface ActivityCurrency {
-  alias: string
-  name: string
-  icon?: string | null
-}
-
 export interface ActivityMilestoneTier {
   alias: string
   points: number
@@ -88,10 +82,8 @@ export interface Activity {
   hiddenAt: string
   timezone: string
   status: ActivityState
-  currency: ActivityCurrency | null
   milestoneTiers: ActivityMilestoneTier[]
   globalRewards: RewardEntry[]
-  kindMetadata: Record<string, unknown> | null
   cleanupRule: ActivityCleanupRule
   joinRequirement: Record<string, unknown> | null
   visibility: ActivityVisibility
@@ -150,10 +142,8 @@ export interface CreateActivityInput {
   rewardEndAt: string
   hiddenAt: string
   timezone?: string
-  currency?: ActivityCurrency | null
   milestoneTiers?: ActivityMilestoneTier[]
   globalRewards?: RewardEntry[]
-  kindMetadata?: Record<string, unknown> | null
   cleanupRule?: ActivityCleanupRule
   joinRequirement?: Record<string, unknown> | null
   visibility?: ActivityVisibility
@@ -263,7 +253,7 @@ export type ActivityTemplateRecurrence =
 export interface ActivityNodeBlueprint {
   alias: string
   nodeType: NodeType
-  refIdStrategy: "fixed" | "omit" | "link_only"
+  refIdStrategy: "reuse_shared" | "virtual" | "manual_link"
   fixedRefId?: string | null
   orderIndex?: number
   unlockRule?: Record<string, unknown> | null

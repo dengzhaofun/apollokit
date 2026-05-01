@@ -60,6 +60,9 @@ import {
 import { assistPoolConfigs } from "../../schema/assist-pool";
 import { bannerGroups } from "../../schema/banner";
 import { checkInConfigs } from "../../schema/check-in";
+import { currencies } from "../../schema/currency";
+import { entityBlueprints, entitySchemas } from "../../schema/entity";
+import { itemCategories, itemDefinitions } from "../../schema/item";
 import { leaderboardConfigs } from "../../schema/leaderboard";
 import { lotteryPools } from "../../schema/lottery";
 import { shopProducts } from "../../schema/shop";
@@ -67,6 +70,7 @@ import { taskDefinitions } from "../../schema/task";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { appendKey } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import type { RewardEntry } from "../../lib/rewards";
 import { logger } from "../../lib/logger";
@@ -78,6 +82,9 @@ import {
   activitySchedules,
   activityTemplates,
   activityUserRewards,
+  type ActivityCurrencyBlueprint,
+  type ActivityEntityBlueprintBlueprint,
+  type ActivityItemDefinitionBlueprint,
   type ActivityMembershipConfig,
   type ActivityNodeBlueprint,
   type ActivityScheduleBlueprint,
@@ -160,6 +167,34 @@ declare module "../../lib/event-bus" {
       // false when the user was re-marking `lastActiveAt`. Downstream
       // analytics can filter to first-time participation.
       firstTime: boolean;
+    };
+    "activity.created": {
+      organizationId: string;
+      activityId: string;
+      alias: string;
+      kind: ActivityKind;
+      templateId: string | null;
+    };
+    "activity.updated": {
+      organizationId: string;
+      activityId: string;
+      alias: string;
+      // List of patch keys that actually mutated the row. Empty array
+      // means the call was a no-op (caller passed only equal values).
+      changedFields: string[];
+    };
+    "activity.deleted": {
+      organizationId: string;
+      activityId: string;
+      alias: string;
+    };
+    "activity.published": {
+      organizationId: string;
+      activityId: string;
+      alias: string;
+      // The state derived right after publish — usually "scheduled" /
+      // "teasing" / "active" depending on now vs the time fields.
+      newState: ActivityState;
     };
   }
 }
@@ -270,10 +305,8 @@ export function createActivityService(
             hiddenAt: t.hiddenAt,
             timezone: input.timezone ?? "UTC",
             status: "draft",
-            currency: input.currency ?? null,
             milestoneTiers: input.milestoneTiers ?? [],
             globalRewards: input.globalRewards ?? [],
-            kindMetadata: input.kindMetadata ?? null,
             cleanupRule: input.cleanupRule ?? { mode: "purge" },
             joinRequirement: input.joinRequirement ?? null,
             visibility: (input.visibility ??
@@ -286,6 +319,13 @@ export function createActivityService(
           })
           .returning();
         if (!row) throw new Error("insert returned no row");
+        await events.emit("activity.created", {
+          organizationId,
+          activityId: row.id,
+          alias: row.alias,
+          kind: row.kind as ActivityKind,
+          templateId: row.templateId,
+        });
         return row;
       } catch (err) {
         if (isUniqueViolation(err))
@@ -317,13 +357,10 @@ export function createActivityService(
       if (patch.hiddenAt !== undefined)
         values.hiddenAt = new Date(patch.hiddenAt);
       if (patch.timezone !== undefined) values.timezone = patch.timezone;
-      if (patch.currency !== undefined) values.currency = patch.currency;
       if (patch.milestoneTiers !== undefined)
         values.milestoneTiers = patch.milestoneTiers as ActivityMilestoneTier[];
       if (patch.globalRewards !== undefined)
         values.globalRewards = patch.globalRewards as RewardEntry[];
-      if (patch.kindMetadata !== undefined)
-        values.kindMetadata = patch.kindMetadata;
       if (patch.cleanupRule !== undefined) values.cleanupRule = patch.cleanupRule;
       if (patch.joinRequirement !== undefined)
         values.joinRequirement = patch.joinRequirement;
@@ -357,6 +394,12 @@ export function createActivityService(
         )
         .returning();
       if (!row) throw new ActivityNotFound(idOrAlias);
+      await events.emit("activity.updated", {
+        organizationId,
+        activityId: row.id,
+        alias: row.alias,
+        changedFields: Object.keys(values),
+      });
       return row;
     },
 
@@ -364,7 +407,7 @@ export function createActivityService(
       organizationId: string,
       id: string,
     ): Promise<void> {
-      const deleted = await db
+      const [deleted] = await db
         .delete(activityConfigs)
         .where(
           and(
@@ -372,8 +415,13 @@ export function createActivityService(
             eq(activityConfigs.organizationId, organizationId),
           ),
         )
-        .returning({ id: activityConfigs.id });
-      if (deleted.length === 0) throw new ActivityNotFound(id);
+        .returning({ id: activityConfigs.id, alias: activityConfigs.alias });
+      if (!deleted) throw new ActivityNotFound(id);
+      await events.emit("activity.deleted", {
+        organizationId,
+        activityId: deleted.id,
+        alias: deleted.alias,
+      });
     },
 
     async getActivity(
@@ -436,6 +484,15 @@ export function createActivityService(
         organizationId,
         activityId: row.id,
         previousState: "draft",
+        newState: nextStatus,
+      });
+      // Surface a distinct "user clicked publish" signal alongside the
+      // generic state.changed — webhook subscribers can listen to one or
+      // the other to avoid double-firing.
+      await events.emit("activity.published", {
+        organizationId,
+        activityId: row.id,
+        alias: row.alias,
         newState: nextStatus,
       });
       return row;
@@ -1324,6 +1381,9 @@ export function createActivityService(
         aliasPattern: string;
         nodesBlueprint?: ActivityNodeBlueprint[];
         schedulesBlueprint?: ActivityScheduleBlueprint[];
+        currenciesBlueprint?: ActivityCurrencyBlueprint[];
+        itemDefinitionsBlueprint?: ActivityItemDefinitionBlueprint[];
+        entityBlueprintsBlueprint?: ActivityEntityBlueprintBlueprint[];
         autoPublish?: boolean;
         enabled?: boolean;
       },
@@ -1345,6 +1405,9 @@ export function createActivityService(
             aliasPattern: input.aliasPattern,
             nodesBlueprint: input.nodesBlueprint ?? [],
             schedulesBlueprint: input.schedulesBlueprint ?? [],
+            currenciesBlueprint: input.currenciesBlueprint ?? [],
+            itemDefinitionsBlueprint: input.itemDefinitionsBlueprint ?? [],
+            entityBlueprintsBlueprint: input.entityBlueprintsBlueprint ?? [],
             autoPublish: input.autoPublish ?? false,
             nextInstanceAt: nextAt,
             enabled: input.enabled ?? true,
@@ -1459,16 +1522,12 @@ export function createActivityService(
             (payload.timezone as string | undefined) ??
             (rec.mode !== "manual" ? rec.timezone : "UTC"),
           status: "draft",
-          currency: (payload.currency as typeof activityConfigs.$inferInsert.currency) ??
-            null,
           milestoneTiers:
             (payload.milestoneTiers as typeof activityConfigs.$inferInsert.milestoneTiers) ??
             [],
           globalRewards:
             (payload.globalRewards as typeof activityConfigs.$inferInsert.globalRewards) ??
             [],
-          kindMetadata:
-            (payload.kindMetadata as Record<string, unknown> | null) ?? null,
           cleanupRule:
             (payload.cleanupRule as typeof activityConfigs.$inferInsert.cleanupRule) ??
             { mode: "purge" },
@@ -1487,9 +1546,147 @@ export function createActivityService(
         .returning();
       if (!row) throw new Error("activity insert returned no row");
 
-      // Clone nodes from blueprint. "fixed" reuses the same refId each
-      // instance (shared underlying config); "omit" leaves refId null
-      // (virtual node); "link_only" also leaves refId null — admin
+      const aliasTimezone =
+        (payload.timezone as string | undefined) ??
+        (rec.mode !== "manual" ? rec.timezone : "UTC");
+
+      // ── Per-cycle resources: currencies / item_definitions /
+      // entity_blueprints. Each blueprint produces a NEW row in the
+      // catalog table with `activity_id = row.id`, so per-cycle wallets
+      // and inventories are naturally isolated (a fresh currencyId /
+      // definitionId / blueprintId per cycle = a fresh wallet/inventory
+      // row per player).
+      const currenciesBlueprint =
+        (tpl.currenciesBlueprint ?? []) as ActivityCurrencyBlueprint[];
+      for (const bp of currenciesBlueprint) {
+        const alias = expandAliasPattern(bp.aliasPattern, startAt, aliasTimezone);
+        const sortOrder = await appendKey(db, {
+          table: currencies,
+          sortColumn: currencies.sortOrder,
+          scopeWhere: eq(currencies.organizationId, params.organizationId),
+        });
+        try {
+          await db.insert(currencies).values({
+            organizationId: params.organizationId,
+            alias,
+            name: bp.name,
+            description: bp.description ?? null,
+            icon: bp.icon ?? null,
+            sortOrder,
+            activityId: row.id,
+            metadata: bp.metadata ?? null,
+          });
+        } catch (err) {
+          if (isUniqueViolation(err))
+            throw new ActivityAliasConflict(`currency:${alias}`);
+          throw err;
+        }
+      }
+
+      const itemDefinitionsBlueprint =
+        (tpl.itemDefinitionsBlueprint ??
+          []) as ActivityItemDefinitionBlueprint[];
+      for (const bp of itemDefinitionsBlueprint) {
+        const alias = expandAliasPattern(bp.aliasPattern, startAt, aliasTimezone);
+        let categoryId: string | null = null;
+        if (bp.categoryAlias) {
+          const cat = await db
+            .select({ id: itemCategories.id })
+            .from(itemCategories)
+            .where(
+              and(
+                eq(itemCategories.organizationId, params.organizationId),
+                eq(itemCategories.alias, bp.categoryAlias),
+              ),
+            )
+            .limit(1);
+          if (!cat[0])
+            throw new ActivityInvalidInput(
+              `unknown item category alias '${bp.categoryAlias}' in itemDefinitionsBlueprint`,
+            );
+          categoryId = cat[0].id;
+        }
+        // Local validation mirroring item module's create rules:
+        // non-stackable items can't have stackLimit / holdLimit > 1.
+        const stackable = bp.stackable ?? true;
+        const stackLimit = stackable ? (bp.stackLimit ?? null) : null;
+        const holdLimit = stackable ? (bp.holdLimit ?? null) : null;
+        try {
+          await db.insert(itemDefinitions).values({
+            organizationId: params.organizationId,
+            categoryId,
+            alias,
+            name: bp.name,
+            description: bp.description ?? null,
+            icon: bp.icon ?? null,
+            stackable,
+            stackLimit,
+            holdLimit,
+            activityId: row.id,
+            metadata: bp.metadata ?? null,
+          });
+        } catch (err) {
+          if (isUniqueViolation(err))
+            throw new ActivityAliasConflict(`item:${alias}`);
+          throw err;
+        }
+      }
+
+      const entityBlueprintsBlueprint =
+        (tpl.entityBlueprintsBlueprint ??
+          []) as ActivityEntityBlueprintBlueprint[];
+      for (const bp of entityBlueprintsBlueprint) {
+        const alias = expandAliasPattern(bp.aliasPattern, startAt, aliasTimezone);
+        const sch = await db
+          .select({ id: entitySchemas.id })
+          .from(entitySchemas)
+          .where(
+            and(
+              eq(entitySchemas.organizationId, params.organizationId),
+              eq(entitySchemas.alias, bp.schemaAlias),
+            ),
+          )
+          .limit(1);
+        if (!sch[0])
+          throw new ActivityInvalidInput(
+            `unknown entity schema alias '${bp.schemaAlias}' in entityBlueprintsBlueprint`,
+          );
+        const sortOrder = await appendKey(db, {
+          table: entityBlueprints,
+          sortColumn: entityBlueprints.sortOrder,
+          scopeWhere: and(
+            eq(entityBlueprints.organizationId, params.organizationId),
+            eq(entityBlueprints.schemaId, sch[0].id),
+          ),
+        });
+        try {
+          await db.insert(entityBlueprints).values({
+            organizationId: params.organizationId,
+            schemaId: sch[0].id,
+            alias,
+            name: bp.name,
+            description: bp.description ?? null,
+            icon: bp.icon ?? null,
+            rarity: bp.rarity ?? null,
+            tags: bp.tags ?? {},
+            assets: bp.assets ?? {},
+            baseStats: bp.baseStats ?? {},
+            statGrowth: bp.statGrowth ?? {},
+            maxLevel: bp.maxLevel ?? null,
+            sortOrder,
+            activityId: row.id,
+            metadata: bp.metadata ?? null,
+          });
+        } catch (err) {
+          if (isUniqueViolation(err))
+            throw new ActivityAliasConflict(`entityBlueprint:${alias}`);
+          throw err;
+        }
+      }
+
+      // Clone nodes from blueprint. "reuse_shared" reuses the same refId each
+      // instance (shared underlying config); "virtual" leaves refId null
+      // (virtual node); "manual_link" also leaves refId null — admin
       // will attach it manually after spawn.
       const nodesBlueprint = (tpl.nodesBlueprint ?? []) as ActivityNodeBlueprint[];
       if (nodesBlueprint.length > 0) {
@@ -1499,7 +1696,7 @@ export function createActivityService(
             organizationId: params.organizationId,
             alias: bp.alias,
             nodeType: bp.nodeType,
-            refId: bp.refIdStrategy === "fixed" ? (bp.fixedRefId ?? null) : null,
+            refId: bp.refIdStrategy === "reuse_shared" ? (bp.fixedRefId ?? null) : null,
             orderIndex: bp.orderIndex ?? 0,
             unlockRule: bp.unlockRule ?? null,
             nodeConfig: bp.nodeConfig ?? null,
@@ -1841,16 +2038,20 @@ function isNodeUnlocked(
  * Steps:
  *   1. Disable every `activity_schedules` row for this activity so the
  *      scanner stops picking them up.
- *   2. Fetch the activity's `cleanup_rule`. Three modes:
- *      - "purge"   → DELETE every `entity_instances` row with
- *                    `activity_id = self.id`. Cascades through equipment
- *                    slots / formations via existing FKs.
+ *   2. Fetch the activity's `cleanup_rule`. Three modes apply uniformly
+ *      to all per-cycle resources (currencies / item_definitions /
+ *      entity_blueprints / entity_instances) bound by `activity_id`:
+ *      - "purge"   → DELETE every row. CASCADE through currency_wallets /
+ *                    item_inventories / equipment slots via existing FKs,
+ *                    so per-player balances and inventories vanish too.
  *      - "convert" → (stub) emit an event carrying the conversion map
  *                    so the host game can choose how to compensate
  *                    players, then DELETE the rows. The real payout
- *                    path needs `itemService.grantItems` wiring —
- *                    parked as a TODO but schema supports it.
- *      - "keep"    → no-op. Entities stay bound to archived activity.
+ *                    path needs mail-broadcast wiring — parked as a
+ *                    TODO but schema supports it.
+ *      - "keep"    → mark catalog resources `is_active = false` so they
+ *                    don't pollute the live catalog UI, but leave rows
+ *                    intact (entity_instances become souvenirs).
  *
  * All DB writes are single statements. Failures are logged so one
  * broken row doesn't block the rest of the tick.
@@ -1874,7 +2075,23 @@ async function runArchiveCleanup(
     conversionMap?: Record<string, unknown>;
   };
 
-  if (rule.mode === "keep") return;
+  if (rule.mode === "keep") {
+    // Mark per-cycle catalog rows inactive so admin/catalog UIs hide
+    // them. entity_instances stay untouched as souvenirs.
+    await db
+      .update(currencies)
+      .set({ isActive: false })
+      .where(eq(currencies.activityId, activity.id));
+    await db
+      .update(itemDefinitions)
+      .set({ isActive: false })
+      .where(eq(itemDefinitions.activityId, activity.id));
+    await db
+      .update(entityBlueprints)
+      .set({ isActive: false })
+      .where(eq(entityBlueprints.activityId, activity.id));
+    return;
+  }
 
   if (rule.mode === "convert") {
     // Log how many rows would convert; do not implement payout yet —
@@ -1891,9 +2108,24 @@ async function runArchiveCleanup(
     );
   }
 
-  // purge (also fall-through for convert in MVP)
+  // purge (also fall-through for convert in MVP).
+  // Order matters: instances first (FK to blueprints), then catalog rows.
+  // Catalog DELETE cascades to currency_wallets / item_inventories /
+  // entity_slot_assignments via existing FKs.
   await db.execute(sql`
     DELETE FROM entity_instances
+    WHERE activity_id = ${activity.id}
+  `);
+  await db.execute(sql`
+    DELETE FROM currencies
+    WHERE activity_id = ${activity.id}
+  `);
+  await db.execute(sql`
+    DELETE FROM item_definitions
+    WHERE activity_id = ${activity.id}
+  `);
+  await db.execute(sql`
+    DELETE FROM entity_blueprints
     WHERE activity_id = ${activity.id}
   `);
 }

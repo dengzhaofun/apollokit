@@ -16,18 +16,6 @@ import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
 /**
- * Activity currency definition (embedded in activity_configs.currency).
- * Activity points are kept as a single counter in
- * activity_members.activity_points — this jsonb just describes how
- * to render it.
- */
-export type ActivityCurrency = {
-  alias: string;
-  name: string;
-  icon?: string | null;
-};
-
-/**
  * Per-activity membership & optional queue-number config, embedded in
  * activity_configs.membership.
  *
@@ -124,7 +112,6 @@ export const activityConfigs = pgTable(
     hiddenAt: timestamp("hidden_at").notNull(),
     timezone: text("timezone").notNull().default("UTC"),
     status: text("status").notNull().default("draft"), // "draft"|"scheduled"|"teasing"|"active"|"settling"|"ended"|"archived"
-    currency: jsonb("currency").$type<ActivityCurrency | null>(),
     milestoneTiers: jsonb("milestone_tiers")
       .$type<ActivityMilestoneTier[]>()
       .default([])
@@ -133,7 +120,6 @@ export const activityConfigs = pgTable(
       .$type<RewardEntry[]>()
       .default([])
       .notNull(),
-    kindMetadata: jsonb("kind_metadata"),
     cleanupRule: jsonb("cleanup_rule")
       .$type<ActivityCleanupRule>()
       .default({ mode: "purge" })
@@ -387,7 +373,7 @@ export const activityPointLogs = pgTable(
  *   - `emit_bus_event`  — emit a local runtime event (in-worker)
  *   - `grant_reward`    — grant RewardEntry[] to all participants
  *   - `broadcast_mail`  — multicast a mail message to all participants
- *   - `set_flag`        — (phase 3) flip a flag in kind_metadata
+ *   - `set_flag`        — (phase 3) flip a flag inside `metadata.kind` jsonb
  *
  * External webhook delivery has moved out of activity into a dedicated
  * module; see `src/modules/webhooks/`.
@@ -446,7 +432,7 @@ export const activitySchedules = pgTable(
  *
  * `templatePayload` holds every activity_configs field that should be
  * copied verbatim to each new instance (name, description, kind,
- * currency, milestoneTiers, globalRewards, cleanupRule, kindMetadata,
+ * milestoneTiers, globalRewards, cleanupRule, metadata,
  * joinRequirement, visibility, themeColor, bannerImage).
  *
  * `durationSpec` is relative seconds from the generated start_at:
@@ -488,25 +474,86 @@ export type ActivityTemplateRecurrence =
 /**
  * Blueprint entry for a node. Copied verbatim at instantiation time;
  * `refIdStrategy` controls what happens with the underlying resource:
- *   - "fixed"      → reuse the same refId every instance (shared config)
- *   - "omit"       → no refId (virtual node — game_board / custom)
- *   - "link_only"  → skip auto-mount; admin will attach refId manually
+ *   - "reuse_shared" → reuse the same refId every instance (shared config)
+ *   - "virtual"      → no refId (virtual node — game_board / custom)
+ *   - "manual_link"  → skip auto-mount; admin will attach refId manually
  *
  * For "per_instance_create" (每期新建底层资源) we need a creation
  * payload for the target module — that's intentionally out of MVP
- * scope because each module's Create input is different. "fixed" +
- * "omit" cover the common周赛 pattern: shared signin/tasks reused
+ * scope because each module's Create input is different. "reuse_shared" +
+ * "virtual" cover the common 周赛 pattern: shared signin/tasks reused
  * across weeks, virtual game board per activity.
+ *
+ * Per-instance currency / item / entity blueprint resources are now
+ * driven by the typed `currenciesBlueprint` / `itemDefinitionsBlueprint` /
+ * `entityBlueprintsBlueprint` arrays on `activity_templates`, not via
+ * this node-level strategy.
  */
 export type ActivityNodeBlueprint = {
   alias: string;
   nodeType: string;
-  refIdStrategy: "fixed" | "omit" | "link_only";
+  refIdStrategy: "reuse_shared" | "virtual" | "manual_link";
   fixedRefId?: string | null;
   orderIndex?: number;
   unlockRule?: Record<string, unknown> | null;
   nodeConfig?: Record<string, unknown> | null;
   enabled?: boolean;
+};
+
+/**
+ * Per-cycle currency definition spawned at template instantiation time.
+ *
+ * `aliasPattern` is interpolated with the same tokens as the activity's
+ * top-level aliasPattern (`{year}` `{month}` `{day}` `{week}` `{ts}`),
+ * because `currencies.alias` is unique per org — every cycle's currency
+ * row needs a distinct alias.
+ *
+ * `name` and `description` also accept the same tokens so the UI can
+ * say "S2 Week 14 Token" instead of a static label.
+ */
+export type ActivityCurrencyBlueprint = {
+  aliasPattern: string;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+/**
+ * Per-cycle item definition. `categoryAlias` resolves to a category id
+ * at instantiation time (the category itself is permanent — only the
+ * item def is per-cycle).
+ */
+export type ActivityItemDefinitionBlueprint = {
+  aliasPattern: string;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  categoryAlias?: string | null;
+  stackable?: boolean;
+  stackLimit?: number | null;
+  holdLimit?: number | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+/**
+ * Per-cycle entity blueprint. `schemaAlias` resolves to a schema id at
+ * instantiation time — the schema (hero / weapon / pet category) is a
+ * permanent definition, only individual blueprint variants are per-cycle.
+ */
+export type ActivityEntityBlueprintBlueprint = {
+  aliasPattern: string;
+  schemaAlias: string;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  rarity?: string | null;
+  tags?: Record<string, string>;
+  assets?: Record<string, string>;
+  baseStats?: Record<string, number>;
+  statGrowth?: Record<string, number>;
+  maxLevel?: number | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type ActivityScheduleBlueprint = {
@@ -549,6 +596,25 @@ export const activityTemplates = pgTable(
       .notNull(),
     schedulesBlueprint: jsonb("schedules_blueprint")
       .$type<ActivityScheduleBlueprint[]>()
+      .default([])
+      .notNull(),
+    /**
+     * Per-cycle resource blueprints — at each instantiation a new row
+     * is inserted into the corresponding catalog table (currencies /
+     * item_definitions / entity_blueprints) with `activity_id` set to
+     * the new instance, achieving full per-cycle isolation. The matching
+     * rows are cleaned up by `runArchiveCleanup` per `cleanup_rule`.
+     */
+    currenciesBlueprint: jsonb("currencies_blueprint")
+      .$type<ActivityCurrencyBlueprint[]>()
+      .default([])
+      .notNull(),
+    itemDefinitionsBlueprint: jsonb("item_definitions_blueprint")
+      .$type<ActivityItemDefinitionBlueprint[]>()
+      .default([])
+      .notNull(),
+    entityBlueprintsBlueprint: jsonb("entity_blueprints_blueprint")
+      .$type<ActivityEntityBlueprintBlueprint[]>()
       .default([])
       .notNull(),
     autoPublish: boolean("auto_publish").default(false).notNull(),
