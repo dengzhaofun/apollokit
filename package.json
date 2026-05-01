@@ -29,6 +29,10 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "lightningcss"
-    ]
+    ],
+    "overrides": {
+      "@better-auth/utils": "0.4.0",
+      "better-call": "1.3.5"
+    }
   }
 }
