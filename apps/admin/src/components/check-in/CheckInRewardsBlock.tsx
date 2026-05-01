@@ -1,126 +1,243 @@
-import { useMemo } from "react"
+import { useState } from "react"
+import { toast } from "sonner"
 
-import { Input } from "#/components/ui/input"
-import { Label } from "#/components/ui/label"
 import {
-  RewardScheduleSection,
-  type RewardScheduleKeyFieldsProps,
-  type RewardTrack,
-} from "#/components/rewards/RewardScheduleSection"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog"
+import { useCheckInConfig } from "#/hooks/use-check-in"
 import {
   useCheckInRewards,
   useCreateCheckInReward,
-  useUpdateCheckInReward,
   useDeleteCheckInReward,
+  useUpdateCheckInReward,
 } from "#/hooks/use-check-in-rewards"
+import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 import type { CheckInReward } from "#/lib/types/check-in-reward"
 import type { RewardEntry } from "#/lib/types/rewards"
 
-type Draft = {
-  id: string
-  dayNumber: number
-  rewardItems: RewardEntry[]
-}
-
-function DayKeyFields({
-  draft,
-  onChange,
-}: RewardScheduleKeyFieldsProps<Draft>) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor="reward-day">{m.checkin_day_number_label()}</Label>
-      <Input
-        id="reward-day"
-        type="number"
-        min={1}
-        value={draft.dayNumber}
-        onChange={(e) =>
-          onChange({ ...draft, dayNumber: Number(e.target.value) || 1 })
-        }
-      />
-      <p className="text-xs text-muted-foreground">
-        {m.checkin_day_number_hint()}
-      </p>
-    </div>
-  )
-}
-
-function toDraft(reward: CheckInReward): Draft {
-  return {
-    id: reward.id,
-    dayNumber: reward.dayNumber,
-    rewardItems: reward.rewardItems,
-  }
-}
+import { DirtyRewardsAlert } from "./reward-scheduler/DirtyRewardsAlert"
+import { RewardCellDialog } from "./reward-scheduler/RewardCellDialog"
+import { RewardFreeformView } from "./reward-scheduler/RewardFreeformView"
+import { RewardMonthView } from "./reward-scheduler/RewardMonthView"
+import { RewardTargetView } from "./reward-scheduler/RewardTargetView"
+import { RewardWeekView } from "./reward-scheduler/RewardWeekView"
+import { maxDayForConfig, useRewardMap } from "./reward-scheduler/use-reward-map"
 
 interface Props {
   configKey: string
 }
 
+interface DialogState {
+  mode: "create" | "edit"
+  dayNumber: number
+  dayNumberEditable: boolean
+  initial: { dayNumber: number; rewardItems: RewardEntry[] }
+  existingId: string | null
+}
+
+/**
+ * Top-level dispatcher for the check-in reward editor. Picks the right
+ * view (week / month / target / freeform) based on `resetMode + target`,
+ * and owns the single shared cell-edit dialog so each view stays purely
+ * presentational.
+ */
 export function CheckInRewardsBlock({ configKey }: Props) {
-  const { data: rewards, isPending } = useCheckInRewards(configKey)
+  const { data: config, isPending: configPending } = useCheckInConfig(configKey)
+  const { data: rewards, isPending: rewardsPending } =
+    useCheckInRewards(configKey)
+
   const createMutation = useCreateCheckInReward()
   const updateMutation = useUpdateCheckInReward()
   const deleteMutation = useDeleteCheckInReward()
 
-  const list = (rewards ?? [])
-    .map(toDraft)
-    .sort((a, b) => a.dayNumber - b.dayNumber)
+  const [dialog, setDialog] = useState<DialogState | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<CheckInReward | null>(null)
 
-  const nextDay =
-    list.length === 0 ? 1 : Math.max(...list.map((r) => r.dayNumber)) + 1
+  const map = useRewardMap(config, rewards)
 
-  const tracks = useMemo<RewardTrack<Draft>[]>(
-    () => [
-      {
-        id: "main",
-        label: m.reward_section_title(),
-        getRewards: (d) => d.rewardItems,
-        setRewards: (d, rewardItems) => ({ ...d, rewardItems }),
+  if (configPending || !config) {
+    return (
+      <section
+        id="rewards"
+        className="rounded-xl border bg-card p-6 text-sm text-muted-foreground"
+      >
+        {m.common_loading()}
+      </section>
+    )
+  }
+
+  function openSlot(dayNumber: number, existing: CheckInReward | undefined) {
+    setDialog({
+      mode: existing ? "edit" : "create",
+      dayNumber,
+      dayNumberEditable: false,
+      initial: {
+        dayNumber,
+        rewardItems: existing?.rewardItems ?? [],
       },
-    ],
-    [],
-  )
+      existingId: existing?.id ?? null,
+    })
+  }
+
+  function openOrphan(reward: CheckInReward) {
+    setDialog({
+      mode: "edit",
+      dayNumber: reward.dayNumber,
+      dayNumberEditable: true,
+      initial: {
+        dayNumber: reward.dayNumber,
+        rewardItems: reward.rewardItems,
+      },
+      existingId: reward.id,
+    })
+  }
+
+  async function handleSubmit(payload: {
+    dayNumber: number
+    rewardItems: RewardEntry[]
+  }) {
+    if (!dialog) return
+    if (dialog.mode === "create") {
+      await createMutation.mutateAsync({
+        configKey,
+        dayNumber: payload.dayNumber,
+        rewardItems: payload.rewardItems,
+      })
+    } else if (dialog.existingId) {
+      await updateMutation.mutateAsync({
+        rewardId: dialog.existingId,
+        dayNumber: payload.dayNumber,
+        rewardItems: payload.rewardItems,
+      })
+    }
+  }
+
+  async function handleDialogDelete() {
+    if (!dialog?.existingId) return
+    await deleteMutation.mutateAsync(dialog.existingId)
+  }
+
+  async function confirmOrphanDelete() {
+    if (!pendingDelete) return
+    try {
+      await deleteMutation.mutateAsync(pendingDelete.id)
+      setPendingDelete(null)
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.body.error : m.common_failed_action(),
+      )
+    }
+  }
+
+  // Freeform view (none + target=null) keeps its own RewardScheduleSection
+  // shell with a built-in Add button — render it without the standard header.
+  if (config.resetMode === "none" && config.target == null) {
+    return (
+      <section id="rewards" className="space-y-3">
+        <RewardFreeformView
+          configKey={configKey}
+          rewards={rewards ?? []}
+          isPending={rewardsPending}
+        />
+      </section>
+    )
+  }
+
+  const sectionTitle =
+    config.resetMode === "week"
+      ? m.checkin_view_week_title()
+      : config.resetMode === "month"
+        ? m.checkin_view_month_title()
+        : m.checkin_view_target_title()
 
   return (
-    <RewardScheduleSection<Draft>
-      anchorId="rewards"
-      highlightAddOnMount
-      list={list}
-      isPending={isPending}
-      getId={(d) => d.id}
-      keyLabel={(d) => `Day ${d.dayNumber}`}
-      newDraft={() => ({
-        id: "",
-        dayNumber: nextDay,
-        rewardItems: [],
-      })}
-      KeyFields={DayKeyFields}
-      validate={(d) => {
-        if (!Number.isFinite(d.dayNumber) || d.dayNumber < 1) {
-          return m.reward_key_required()
-        }
-        return null
-      }}
-      tracks={tracks}
-      onCreate={async (draft) => {
-        await createMutation.mutateAsync({
-          configKey,
-          dayNumber: draft.dayNumber,
-          rewardItems: draft.rewardItems,
-        })
-      }}
-      onUpdate={async (draft) => {
-        await updateMutation.mutateAsync({
-          rewardId: draft.id,
-          dayNumber: draft.dayNumber,
-          rewardItems: draft.rewardItems,
-        })
-      }}
-      onDelete={async (draft) => {
-        await deleteMutation.mutateAsync(draft.id)
-      }}
-    />
+    <section id="rewards" className="space-y-3">
+      <h3 className="text-sm font-semibold">{sectionTitle}</h3>
+
+      <DirtyRewardsAlert
+        orphans={map.orphans}
+        onEdit={openOrphan}
+        onDelete={(r) => setPendingDelete(r)}
+      />
+
+      {rewardsPending ? (
+        <div className="flex h-16 items-center justify-center text-sm text-muted-foreground">
+          {m.common_loading()}
+        </div>
+      ) : config.resetMode === "week" ? (
+        <RewardWeekView
+          config={config}
+          byDay={map.byDay}
+          onOpenSlot={openSlot}
+        />
+      ) : config.resetMode === "month" ? (
+        <RewardMonthView
+          config={config}
+          byDay={map.byDay}
+          onOpenSlot={openSlot}
+        />
+      ) : config.target != null ? (
+        <RewardTargetView
+          target={config.target}
+          byDay={map.byDay}
+          onOpenSlot={openSlot}
+        />
+      ) : null}
+
+      {dialog ? (
+        <RewardCellDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setDialog(null)
+          }}
+          mode={dialog.mode}
+          initial={dialog.initial}
+          dayNumberEditable={dialog.dayNumberEditable}
+          dayNumberMax={maxDayForConfig(config)}
+          slotLabel={m.checkin_reward_day_n({ n: dialog.dayNumber })}
+          onSubmit={handleSubmit}
+          onDelete={dialog.existingId ? handleDialogDelete : undefined}
+        />
+      ) : null}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {m.reward_delete_confirm_title()}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete
+                ? m.checkin_reward_day_n({ n: pendingDelete.dayNumber })
+                : null}
+              {" — "}
+              {m.reward_delete_confirm_desc()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmOrphanDelete}
+            >
+              {m.common_delete()}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   )
 }

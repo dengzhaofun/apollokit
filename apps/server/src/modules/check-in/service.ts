@@ -127,6 +127,46 @@ function validateTargetForMode(target: number | null | undefined, mode: ResetMod
   }
 }
 
+/**
+ * Reward `dayNumber` must fit inside the config's cycle length:
+ *   - week  → 1..7
+ *   - month → 1..31
+ *   - none + target → 1..target
+ *   - none + null target → any positive integer (free-form schedule)
+ *
+ * The zod schema can only see one row at a time, so it can't enforce
+ * this; the service layer is the single source of truth. Throwing
+ * `CheckInInvalidInput` keeps the HTTP envelope at 400 and lets clients
+ * surface the specific message.
+ */
+function validateDayNumberForConfig(
+  config: CheckInConfig,
+  dayNumber: number,
+) {
+  if (!Number.isInteger(dayNumber) || dayNumber < 1) {
+    throw new CheckInInvalidInput("dayNumber must be a positive integer");
+  }
+  if (config.resetMode === "week" && dayNumber > 7) {
+    throw new CheckInInvalidInput(
+      "dayNumber must be 1..7 for resetMode='week'",
+    );
+  }
+  if (config.resetMode === "month" && dayNumber > 31) {
+    throw new CheckInInvalidInput(
+      "dayNumber must be 1..31 for resetMode='month'",
+    );
+  }
+  if (
+    config.resetMode === "none" &&
+    config.target !== null &&
+    dayNumber > config.target
+  ) {
+    throw new CheckInInvalidInput(
+      `dayNumber must be 1..${config.target} for this config's target`,
+    );
+  }
+}
+
 function computeCompletion(
   target: number | null,
   currentCycleDays: number,
@@ -624,9 +664,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       },
     ) {
       const config = await loadConfigByKey(organizationId, configKey);
-      if (input.dayNumber < 1) {
-        throw new CheckInInvalidInput("dayNumber must be >= 1");
-      }
+      validateDayNumberForConfig(config, input.dayNumber);
       const [row] = await db
         .insert(checkInRewards)
         .values({
@@ -651,10 +689,30 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       },
     ) {
       const updateValues: Partial<typeof checkInRewards.$inferInsert> = {};
+
+      // When dayNumber changes, validate against the owning config's
+      // resetMode/target. Single round-trip via JOIN keeps the hot path tight.
       if (patch.dayNumber !== undefined) {
-        if (patch.dayNumber < 1) {
-          throw new CheckInInvalidInput("dayNumber must be >= 1");
-        }
+        const rows = await db
+          .select({
+            reward: checkInRewards,
+            config: checkInConfigs,
+          })
+          .from(checkInRewards)
+          .innerJoin(
+            checkInConfigs,
+            eq(checkInRewards.configId, checkInConfigs.id),
+          )
+          .where(
+            and(
+              eq(checkInRewards.id, rewardId),
+              eq(checkInRewards.organizationId, organizationId),
+            ),
+          )
+          .limit(1);
+        const found = rows[0];
+        if (!found) throw new CheckInConfigNotFound(rewardId);
+        validateDayNumberForConfig(found.config, patch.dayNumber);
         updateValues.dayNumber = patch.dayNumber;
       }
       if (patch.rewardItems !== undefined)
