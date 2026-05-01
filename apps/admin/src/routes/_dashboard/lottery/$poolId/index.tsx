@@ -309,7 +309,6 @@ function LotteryPoolDetailPage() {
                     alias: editingTier.alias,
                     baseWeight: editingTier.baseWeight,
                     color: editingTier.color,
-                    sortOrder: editingTier.sortOrder,
                     isActive: editingTier.isActive,
                   } : undefined}
                   submitLabel={editingTier ? "Save Changes" : "Create"}
@@ -405,7 +404,6 @@ function LotteryPoolDetailPage() {
                     isRateUp: editingPrize.isRateUp,
                     rateUpWeight: editingPrize.rateUpWeight,
                     globalStockLimit: editingPrize.globalStockLimit,
-                    sortOrder: editingPrize.sortOrder,
                     isActive: editingPrize.isActive,
                     tierId: editingPrize.tierId,
                   } : undefined}

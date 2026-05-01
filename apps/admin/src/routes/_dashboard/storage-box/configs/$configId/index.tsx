@@ -114,7 +114,6 @@ function StorageBoxConfigDetailPage() {
                   minDeposit: config.minDeposit,
                   maxDeposit: config.maxDeposit,
                   allowEarlyWithdraw: config.allowEarlyWithdraw,
-                  sortOrder: config.sortOrder,
                   isActive: config.isActive,
                 }}
                 submitLabel={m.common_save_changes()}

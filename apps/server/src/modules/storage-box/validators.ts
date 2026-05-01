@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -53,7 +55,6 @@ export const CreateConfigSchema = z
       description:
         "Only meaningful for type='fixed'. If true, early withdrawal forfeits accrued interest.",
     }),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -73,7 +74,6 @@ export const UpdateConfigSchema = z
     minDeposit: z.number().int().positive().nullable().optional(),
     maxDeposit: z.number().int().positive().nullable().optional(),
     allowEarlyWithdraw: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -145,7 +145,7 @@ export const ConfigResponseSchema = z
     minDeposit: z.number().int().nullable(),
     maxDeposit: z.number().int().nullable(),
     allowEarlyWithdraw: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),

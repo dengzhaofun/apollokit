@@ -81,7 +81,7 @@ export interface EntitySchema {
   levelConfig: LevelConfig
   rankConfig: RankConfig
   synthesisConfig: SynthesisConfig
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -105,7 +105,7 @@ export interface EntityBlueprint {
   rankUpCosts: RankUpCost[]
   synthesisCost: SynthesisCostConfig | null
   maxLevel: number | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   activityId: string | null
   activityNodeId: string | null
@@ -124,7 +124,7 @@ export interface EntityBlueprintSkin {
   assets: Record<string, string>
   statBonuses: Record<string, number>
   isDefault: boolean
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -158,7 +158,6 @@ export interface CreateSchemaInput {
   levelConfig?: LevelConfig
   rankConfig?: RankConfig
   synthesisConfig?: SynthesisConfig
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -174,7 +173,6 @@ export interface UpdateSchemaInput {
   levelConfig?: LevelConfig
   rankConfig?: RankConfig
   synthesisConfig?: SynthesisConfig
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -194,7 +192,6 @@ export interface CreateBlueprintInput {
   rankUpCosts?: RankUpCost[]
   synthesisCost?: SynthesisCostConfig | null
   maxLevel?: number | null
-  sortOrder?: number
   isActive?: boolean
   activityId?: string | null
   activityNodeId?: string | null
@@ -215,7 +212,6 @@ export interface UpdateBlueprintInput {
   rankUpCosts?: RankUpCost[]
   synthesisCost?: SynthesisCostConfig | null
   maxLevel?: number | null
-  sortOrder?: number
   isActive?: boolean
   activityId?: string | null
   activityNodeId?: string | null
@@ -229,7 +225,6 @@ export interface CreateSkinInput {
   assets?: Record<string, string>
   statBonuses?: Record<string, number>
   isDefault?: boolean
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -241,7 +236,6 @@ export interface UpdateSkinInput {
   assets?: Record<string, string>
   statBonuses?: Record<string, number>
   isDefault?: boolean
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }

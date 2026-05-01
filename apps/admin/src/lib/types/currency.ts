@@ -5,7 +5,7 @@ export interface CurrencyDefinition {
   name: string
   description: string | null
   icon: string | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   activityId: string | null
   activityNodeId: string | null
@@ -70,7 +70,6 @@ export interface CreateCurrencyInput {
   alias?: string | null
   description?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   activityId?: string | null
   activityNodeId?: string | null
@@ -82,7 +81,6 @@ export interface UpdateCurrencyInput {
   alias?: string | null
   description?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   activityId?: string | null
   activityNodeId?: string | null

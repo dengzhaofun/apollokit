@@ -8,7 +8,7 @@ export type NavigationFavorite = {
   organizationId: string
   userId: string
   routePath: string
-  sortOrder: number
+  sortOrder: string
   createdAt: string
   updatedAt: string
 }

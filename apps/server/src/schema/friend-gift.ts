@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import { organization } from "./auth";
 
 /**
@@ -65,7 +67,7 @@ export const friendGiftPackages = pgTable(
       .$type<{ definitionId: string; quantity: number }[]>()
       .notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

@@ -64,7 +64,6 @@ function GiftPackageCreatePage() {
         icon: icon || null,
         giftItems: validItems,
         isActive,
-        sortOrder,
       })
       toast.success(m.gift_package_created())
       navigate({ to: "/friend-gift" })

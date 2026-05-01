@@ -11,6 +11,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import { organization } from "./auth";
 import { currencies } from "./currency";
 
@@ -56,7 +58,7 @@ export const storageBoxConfigs = pgTable(
     allowEarlyWithdraw: boolean("allow_early_withdraw")
       .default(false)
       .notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

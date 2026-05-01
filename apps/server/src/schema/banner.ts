@@ -11,6 +11,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { LinkAction } from "../modules/link/types";
 import { organization } from "./auth";
 
@@ -80,7 +82,9 @@ export const bannerGroups = pgTable(
  *   AND (targetType = 'broadcast'
  *        OR targetUserIds @> [endUserId]::jsonb)
  *
- * Ordering is stable by `sortOrder ASC, createdAt ASC`.
+ * Ordering is stable by `sortOrder ASC, createdAt ASC`. `sortOrder` is a
+ * base62 fractional indexing key (see `lib/fractional-order.ts`); text
+ * lex-sort is the natural ordering, no integer arithmetic needed.
  */
 export const banners = pgTable(
   "banners",
@@ -99,7 +103,10 @@ export const banners = pgTable(
     imageUrlDesktop: text("image_url_desktop").notNull(),
     altText: text("alt_text"),
     linkAction: jsonb("link_action").$type<LinkAction>().notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    // Fractional indexing key (base62, lex-sortable). Service layer sets this
+    // via `lib/fractional-order.ts → appendKey / resolveMoveKey`. See
+    // `apps/server/src/lib/fractional-order.ts` for the contract.
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     visibleFrom: timestamp("visible_from"),
     visibleUntil: timestamp("visible_until"),
     // 'broadcast' | 'multicast' — Zod-enforced at the validator layer.

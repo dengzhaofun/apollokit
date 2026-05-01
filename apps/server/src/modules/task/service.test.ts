@@ -813,6 +813,7 @@ describe("task service", () => {
           prerequisiteTaskIds: [],
           rewards: [{ type: "item", id: "x", count: 1 }],
           autoClaim: false,
+          sortOrder: "a0",
         })
         .returning();
 

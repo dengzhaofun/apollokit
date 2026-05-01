@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import {
   BADGE_AGGREGATIONS,
   BADGE_DISMISS_MODES,
@@ -49,7 +51,6 @@ export const CreateNodeSchema = z
     dismissMode: z.enum(BADGE_DISMISS_MODES).default("auto"),
     dismissConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable().optional(),
-    sortOrder: z.number().int().default(0),
     isActive: z.boolean().default(true),
   })
   .openapi("BadgeNodeCreateRequest");
@@ -68,7 +69,6 @@ export const UpdateNodeSchema = z
     dismissMode: z.enum(BADGE_DISMISS_MODES).optional(),
     dismissConfig: z.record(z.string(), z.unknown()).nullable().optional(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
   })
   .openapi("BadgeNodeUpdateRequest");
@@ -100,7 +100,7 @@ export const BadgeNodeResponseSchema = z
     dismissMode: z.string(),
     dismissConfig: z.record(z.string(), z.unknown()).nullable(),
     visibilityRule: z.record(z.string(), z.unknown()).nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -283,7 +283,6 @@ export const FromTemplateInputSchema = z
     displayLabelKey: z.string().max(200).nullable().optional(),
     signalKey: SignalKeySchema.nullable().optional(),
     signalKeyPrefix: SignalKeyPrefixSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
   })
   .openapi("BadgeFromTemplateInput");
 

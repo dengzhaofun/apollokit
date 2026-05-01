@@ -132,7 +132,6 @@ export function StageList({ stages }: StageListProps) {
                   triggerType: editing.triggerType,
                   triggerConfig: editing.triggerConfig,
                   rewardItems: editing.rewardItems,
-                  sortOrder: editing.sortOrder,
                 }}
                 isPending={updateMutation.isPending}
                 submitLabel={m.common_save_changes()}

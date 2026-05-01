@@ -32,6 +32,7 @@ import {
   CreateBannerSchema,
   GroupIdParamSchema,
   IdParamSchema,
+  MoveBannerSchema,
   ReorderBannersSchema,
   UpdateBannerGroupSchema,
   UpdateBannerSchema,
@@ -337,6 +338,34 @@ bannerRouter.openapi(
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await bannerService.getBanner(orgId, id);
+    return c.json(ok(serializeBanner(row)), 200);
+  },
+);
+
+bannerRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/banners/{id}/move",
+    tags: [TAG],
+    summary:
+      "Move a banner — drag-drop / top / bottom / up / down all map to this endpoint",
+    request: {
+      params: IdParamSchema,
+      body: { content: { "application/json": { schema: MoveBannerSchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(BannerResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await bannerService.moveBanner(orgId, id, body);
     return c.json(ok(serializeBanner(row)), 200);
   },
 );

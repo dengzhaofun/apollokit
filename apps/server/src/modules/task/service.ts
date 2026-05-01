@@ -9,10 +9,11 @@
  * Phase 2: Event processing, progress tracking, reward claiming.
  */
 
-import { and, desc, eq, gt, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -267,7 +268,7 @@ export function createTaskService(
       .select()
       .from(taskCategories)
       .where(where)
-      .orderBy(desc(taskCategories.createdAt), desc(taskCategories.id))
+      .orderBy(asc(taskCategories.sortOrder), asc(taskCategories.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -284,6 +285,7 @@ export function createTaskService(
     input: CreateCategoryInput,
   ): Promise<TaskCategory> {
     try {
+      const __sortKey = await appendKey(db, { table: taskCategories, sortColumn: taskCategories.sortOrder, scopeWhere: eq(taskCategories.organizationId, organizationId)! });
       const [row] = await db
         .insert(taskCategories)
         .values({
@@ -293,7 +295,7 @@ export function createTaskService(
           description: input.description ?? null,
           icon: input.icon ?? null,
           scope: input.scope ?? "task",
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -320,7 +322,6 @@ export function createTaskService(
     if (patch.description !== undefined) values.description = patch.description;
     if (patch.icon !== undefined) values.icon = patch.icon;
     if (patch.scope !== undefined) values.scope = patch.scope;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
@@ -345,6 +346,23 @@ export function createTaskService(
       }
       throw err;
     }
+  }
+
+  async function moveCategory(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<TaskCategory> {
+    const existing = await loadCategoryById(organizationId, id);
+    return moveAndReturn<TaskCategory>(db, {
+      table: taskCategories,
+      sortColumn: taskCategories.sortOrder,
+      idColumn: taskCategories.id,
+      partitionWhere: eq(taskCategories.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new TaskCategoryNotFound(sid),
+    });
   }
 
   async function deleteCategory(
@@ -404,7 +422,7 @@ export function createTaskService(
       .select()
       .from(taskDefinitions)
       .where(where)
-      .orderBy(desc(taskDefinitions.createdAt), desc(taskDefinitions.id))
+      .orderBy(asc(taskDefinitions.sortOrder), asc(taskDefinitions.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -441,6 +459,7 @@ export function createTaskService(
     }
 
     try {
+      const __sortKey = await appendKey(db, { table: taskDefinitions, sortColumn: taskDefinitions.sortOrder, scopeWhere: eq(taskDefinitions.organizationId, organizationId)! });
       const [row] = await db
         .insert(taskDefinitions)
         .values({
@@ -469,7 +488,7 @@ export function createTaskService(
           isHidden: input.isHidden ?? false,
           visibility: input.visibility ?? "broadcast",
           defaultAssignmentTtlSeconds: input.defaultAssignmentTtlSeconds ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           activityId: input.activityId ?? null,
           activityNodeId: input.activityNodeId ?? null,
           metadata: input.metadata ?? null,
@@ -574,7 +593,6 @@ export function createTaskService(
     if (patch.navigation !== undefined) values.navigation = patch.navigation;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.isHidden !== undefined) values.isHidden = patch.isHidden;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.activityId !== undefined) values.activityId = patch.activityId;
     if (patch.activityNodeId !== undefined)
       values.activityNodeId = patch.activityNodeId;
@@ -604,6 +622,23 @@ export function createTaskService(
       }
       throw err;
     }
+  }
+
+  async function moveDefinition(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<TaskDefinition> {
+    const existing = await loadDefinitionByKey(organizationId, key);
+    return moveAndReturn<TaskDefinition>(db, {
+      table: taskDefinitions,
+      sortColumn: taskDefinitions.sortOrder,
+      idColumn: taskDefinitions.id,
+      partitionWhere: eq(taskDefinitions.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new TaskDefinitionNotFound(sid),
+    });
   }
 
   async function deleteDefinition(
@@ -2054,12 +2089,14 @@ export function createTaskService(
     getCategory,
     createCategory,
     updateCategory,
+    moveCategory,
     deleteCategory,
     // Definition CRUD
     listDefinitions,
     getDefinition,
     createDefinition,
     updateDefinition,
+    moveDefinition,
     deleteDefinition,
     // Event processing (Phase 2)
     processEvent,

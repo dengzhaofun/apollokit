@@ -43,7 +43,6 @@ function GiftPackageDetailPage() {
   const [editDescription, setEditDescription] = useState("")
   const [editIcon, setEditIcon] = useState("")
   const [editIsActive, setEditIsActive] = useState(true)
-  const [editSortOrder, setEditSortOrder] = useState(0)
   const [editGiftItems, setEditGiftItems] = useState<GiftItemRow[]>([])
 
   function startEditing() {
@@ -53,7 +52,6 @@ function GiftPackageDetailPage() {
     setEditDescription(pkg.description ?? "")
     setEditIcon(pkg.icon ?? "")
     setEditIsActive(pkg.isActive)
-    setEditSortOrder(pkg.sortOrder)
     setEditGiftItems(
       pkg.giftItems.length > 0
         ? pkg.giftItems.map((i) => ({ ...i }))
@@ -92,7 +90,6 @@ function GiftPackageDetailPage() {
           icon: editIcon || null,
           giftItems: validItems,
           isActive: editIsActive,
-          sortOrder: editSortOrder,
         },
       })
       toast.success(m.gift_package_updated())
@@ -269,18 +266,6 @@ function GiftPackageDetailPage() {
                     <Plus className="size-4" />
                     {m.common_add()}
                   </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="editSortOrder">
-                    {m.common_sort_order()}
-                  </Label>
-                  <Input
-                    id="editSortOrder"
-                    type="number"
-                    value={editSortOrder}
-                    onChange={(e) => setEditSortOrder(Number(e.target.value))}
-                  />
                 </div>
 
                 <div className="flex items-center gap-2">

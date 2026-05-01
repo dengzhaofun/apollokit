@@ -7,7 +7,6 @@ export type CurrencyFormValues = {
   alias: string
   description: string
   icon: string
-  sortOrder: number
   isActive: boolean
   activityId: string | null
 }
@@ -25,7 +24,6 @@ export function useDefinitionForm({
       alias: defaultValues?.alias ?? "",
       description: defaultValues?.description ?? "",
       icon: defaultValues?.icon ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
       activityId: defaultValues?.activityId ?? (null as string | null),
     } as CurrencyFormValues,
@@ -35,7 +33,6 @@ export function useDefinitionForm({
         alias: value.alias || null,
         description: value.description || null,
         icon: value.icon || null,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
         activityId: value.activityId,
       })

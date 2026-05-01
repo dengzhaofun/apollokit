@@ -1795,6 +1795,7 @@
   "command_palette_no_results": "未找到匹配项。",
   "data_table_search_placeholder": "搜索…",
   "data_table_no_results": "无匹配结果",
+  "data_table_reorder_actions": "排序",
   "data_table_pagination_summary": "第 {page} 页 · 当前 {count} 条",
   "data_table_page_size": "每页",
   "data_table_prev": "上一页",

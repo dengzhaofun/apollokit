@@ -1,3 +1,4 @@
+import { useMoveShopProduct } from "#/hooks/use-move"
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -183,6 +184,7 @@ export function ProductTable({
   })
   const columns = useColumns()
 
+  const moveMutation = useMoveShopProduct()
   return (
     <DataTable
       columns={columns}
@@ -202,6 +204,7 @@ export function ProductTable({
           | undefined
       }
       onAdvancedQueryChange={list.setAdvanced}
+      sortable={{ onMove: (id, body) => moveMutation.mutate({ id, body }), disabled: moveMutation.isPending }}
       {...list.tableProps}
     />
   )

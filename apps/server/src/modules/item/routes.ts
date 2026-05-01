@@ -5,6 +5,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -44,7 +45,7 @@ function serializeCategory(row: {
   alias: string | null;
   name: string;
   icon: string | null;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -204,6 +205,35 @@ itemRouter.openapi(
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const row = await itemService.updateCategory(orgId, id, c.req.valid("json"));
+    return c.json(ok(serializeCategory(row)), 200);
+  },
+);
+
+itemRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/categories/{key}/move",
+    tags: [TAG_CAT],
+    summary: "Move an item category (drag/top/bottom/up/down)",
+    request: {
+      params: KeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ItemCategoryResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await itemService.moveCategory(orgId, key, body);
     return c.json(ok(serializeCategory(row)), 200);
   },
 );

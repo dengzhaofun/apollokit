@@ -28,7 +28,6 @@ export function GroupForm({
   const [name, setName] = useState(initial?.name ?? "")
   const [description, setDescription] = useState(initial?.description ?? "")
   const [icon, setIcon] = useState(initial?.icon ?? "")
-  const [sortOrder, setSortOrder] = useState<number>(initial?.sortOrder ?? 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +35,6 @@ export function GroupForm({
       name,
       description: description || null,
       icon: icon || null,
-      sortOrder,
     })
   }
 
@@ -67,15 +65,6 @@ export function GroupForm({
             id="g-icon"
             value={icon}
             onChange={(e) => setIcon(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="g-sortOrder">{m.collection_field_sort_order()}</Label>
-          <Input
-            id="g-sortOrder"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
           />
         </div>
       </div>

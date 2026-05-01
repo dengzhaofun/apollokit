@@ -37,6 +37,7 @@
 import { and, asc, desc, eq, isNull, inArray, like, or, sql } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import {
   badgeDismissals,
   badgeNodes,
@@ -310,6 +311,15 @@ export function createBadgeService(d: BadgeDeps) {
       parentKey: input.parentKey ?? null,
     });
 
+    const sortOrder = await appendKey(db, {
+      table: badgeNodes,
+      sortColumn: badgeNodes.sortOrder,
+      scopeWhere: and(
+        eq(badgeNodes.organizationId, organizationId),
+        isNull(badgeNodes.deletedAt),
+      )!,
+    });
+
     try {
       const [row] = await db
         .insert(badgeNodes)
@@ -326,7 +336,7 @@ export function createBadgeService(d: BadgeDeps) {
           dismissMode: input.dismissMode,
           dismissConfig: input.dismissConfig ?? null,
           visibilityRule: input.visibilityRule ?? null,
-          sortOrder: input.sortOrder,
+          sortOrder,
           isActive: input.isActive,
         })
         .returning();
@@ -392,7 +402,6 @@ export function createBadgeService(d: BadgeDeps) {
           input.visibilityRule === undefined
             ? existing.visibilityRule
             : input.visibilityRule,
-        sortOrder: input.sortOrder ?? existing.sortOrder,
         isActive:
           input.isActive === undefined ? existing.isActive : input.isActive,
       })
@@ -406,6 +415,26 @@ export function createBadgeService(d: BadgeDeps) {
       .returning();
     if (!row) throw new BadgeNodeNotFound(id);
     return row;
+  }
+
+  async function moveNode(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<BadgeNode> {
+    await ensureNodeById(organizationId, id);
+    return moveAndReturn<BadgeNode>(db, {
+      table: badgeNodes,
+      sortColumn: badgeNodes.sortOrder,
+      idColumn: badgeNodes.id,
+      partitionWhere: and(
+        eq(badgeNodes.organizationId, organizationId),
+        isNull(badgeNodes.deletedAt),
+      )!,
+      id,
+      body,
+      notFound: (sid) => new BadgeNodeNotFound(sid),
+    });
   }
 
   /**
@@ -904,7 +933,6 @@ export function createBadgeService(d: BadgeDeps) {
         (tpl.defaults as unknown as { dismissConfig?: Record<string, unknown> })
           .dismissConfig ?? null,
       visibilityRule: null,
-      sortOrder: input.sortOrder ?? tpl.defaults.sortOrder,
       isActive: tpl.defaults.isActive,
     });
   }
@@ -1030,6 +1058,7 @@ export function createBadgeService(d: BadgeDeps) {
     // node CRUD
     createNode,
     updateNode,
+    moveNode,
     deleteNode,
     listNodes: loadLiveNodes,
     getNode: ensureNodeByKey,

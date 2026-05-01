@@ -1,3 +1,4 @@
+import { useMoveEntitySchema } from "#/hooks/use-move"
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -52,6 +53,7 @@ function useColumns(): ColumnDef<EntitySchema, unknown>[] {
         header: () => m.entity_level_config(),
         cell: (info) => {
           const cfg = info.getValue()
+
           return (
             <Badge variant={cfg.enabled ? "default" : "outline"}>
               {cfg.enabled ? `Lv.${cfg.maxLevel}` : m.entity_disabled()}
@@ -99,6 +101,7 @@ interface Props {
 export function SchemaTable({ route }: Props) {
   const list = useEntitySchemas(route)
   const columns = useColumns()
+  const moveMutation = useMoveEntitySchema()
   return (
     <DataTable
       columns={columns}
@@ -118,6 +121,7 @@ export function SchemaTable({ route }: Props) {
           | undefined
       }
       onAdvancedQueryChange={list.setAdvanced}
+      sortable={{ onMove: (id, body) => moveMutation.mutate({ id, body }), disabled: moveMutation.isPending }}
       {...list.tableProps}
     />
   )

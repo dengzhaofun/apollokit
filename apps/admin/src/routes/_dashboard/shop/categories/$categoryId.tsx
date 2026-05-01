@@ -88,7 +88,6 @@ function ShopCategoryEditPage() {
                   description: category.description,
                   coverImage: category.coverImage,
                   icon: category.icon,
-                  sortOrder: category.sortOrder,
                   isActive: category.isActive,
                 }}
                 isPending={updateMutation.isPending}

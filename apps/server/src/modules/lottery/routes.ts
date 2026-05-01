@@ -5,6 +5,7 @@
 import { z } from "@hono/zod-openapi";
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -95,7 +96,7 @@ function serializeTier(row: {
   baseWeight: number;
   color: string | null;
   icon: string | null;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -133,7 +134,7 @@ function serializePrize(row: {
   globalStockUsed: number;
   fallbackPrizeId: string | null;
   isActive: boolean;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -462,6 +463,35 @@ lotteryRouter.openapi(
 
 lotteryRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/tiers/{tierId}/move",
+    tags: [TAG_TIER],
+    summary: "Move a tier (drag/top/bottom/up/down, scoped per pool)",
+    request: {
+      params: TierIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(LotteryTierResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { tierId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await lotteryService.moveTier(orgId, tierId, body);
+    return c.json(ok(serializeTier(row)), 200);
+  },
+);
+
+lotteryRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/tiers/{tierId}",
     tags: [TAG_TIER],
@@ -599,6 +629,35 @@ lotteryRouter.openapi(
       prizeId,
       c.req.valid("json"),
     );
+    return c.json(ok(serializePrize(row)), 200);
+  },
+);
+
+lotteryRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/prizes/{prizeId}/move",
+    tags: [TAG_PRIZE],
+    summary: "Move a prize (drag/top/bottom/up/down, scoped per pool)",
+    request: {
+      params: PrizeIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(LotteryPrizeResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { prizeId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await lotteryService.movePrize(orgId, prizeId, body);
     return c.json(ok(serializePrize(row)), 200);
   },
 );

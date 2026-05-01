@@ -20,6 +20,7 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm"
 
 import type { AppDeps } from "../../deps"
+import { appendKey } from "../../lib/fractional-order"
 import { navigationFavorites } from "../../schema/navigation"
 import {
   NavigationFavoriteLimitReached,
@@ -75,22 +76,24 @@ export function createNavigationService(d: NavigationDeps) {
       throw new NavigationFavoriteLimitReached(FAVORITE_LIMIT)
     }
 
-    // Single-statement upsert: new sortOrder = (max+1) for this user+org,
-    // computed inline so two concurrent inserts don't race on a separate
-    // read+write. ON CONFLICT keeps the existing sortOrder (re-pinning
-    // an already-pinned route is a no-op), only bumps updatedAt.
+    // Compute the new fractional key (tail-append) before the insert. ON
+    // CONFLICT keeps the existing sortOrder (re-pinning an already-pinned
+    // route is a no-op), only bumps updatedAt.
+    const sortOrder = await appendKey(db, {
+      table: navigationFavorites,
+      sortColumn: navigationFavorites.sortOrder,
+      scopeWhere: and(
+        eq(navigationFavorites.organizationId, organizationId),
+        eq(navigationFavorites.userId, userId),
+      )!,
+    })
     const rows = await db
       .insert(navigationFavorites)
       .values({
         organizationId,
         userId,
         routePath,
-        sortOrder: sql<number>`COALESCE((
-          SELECT MAX(${navigationFavorites.sortOrder}) + 1
-          FROM ${navigationFavorites}
-          WHERE ${navigationFavorites.organizationId} = ${organizationId}
-            AND ${navigationFavorites.userId} = ${userId}
-        ), 1)`,
+        sortOrder,
       })
       .onConflictDoUpdate({
         target: [

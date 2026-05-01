@@ -6,6 +6,8 @@
  */
 
 import { z } from "@hono/zod-openapi";
+
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
 import { sql } from "drizzle-orm";
 
 import { defineListFilter, f } from "../../lib/list-filter";
@@ -196,7 +198,6 @@ export const CreateCategorySchema = z
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     scope: z.enum(CATEGORY_SCOPES).optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -209,7 +210,6 @@ export const UpdateCategorySchema = z
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     scope: z.enum(CATEGORY_SCOPES).optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -284,7 +284,6 @@ export const CreateDefinitionSchema = z
     navigation: NavigationSchema,
     isActive: z.boolean().optional(),
     isHidden: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     activityId: z.string().uuid().nullable().optional().openapi({
       description:
         "Soft link to an activity. Null means this is a permanent task.",
@@ -383,7 +382,6 @@ export const UpdateDefinitionSchema = z
     navigation: NavigationSchema,
     isActive: z.boolean().optional(),
     isHidden: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
     visibility: z.enum(TASK_VISIBILITIES).optional(),
@@ -499,7 +497,7 @@ export const CategoryResponseSchema = z
     description: z.string().nullable(),
     icon: z.string().nullable(),
     scope: z.string(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -546,7 +544,7 @@ export const DefinitionResponseSchema = z
     isHidden: z.boolean(),
     visibility: z.string(),
     defaultAssignmentTtlSeconds: z.number().int().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -581,7 +579,7 @@ export const ClientTaskViewSchema = z
         label: z.string().optional(),
       })
       .nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     // Progress fields
     currentValue: z.number().int(),
     isCompleted: z.boolean(),

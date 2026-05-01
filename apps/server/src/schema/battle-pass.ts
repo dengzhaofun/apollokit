@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -117,7 +119,7 @@ export const battlePassSeasonTasks = pgTable(
     category: text("category").notNull(),
     /** 按周解锁时使用，null 表示一直开放。 */
     weekIndex: integer("week_index"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

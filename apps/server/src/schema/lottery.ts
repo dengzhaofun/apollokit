@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -97,7 +99,7 @@ export const lotteryTiers = pgTable(
     baseWeight: integer("base_weight").notNull(),
     color: text("color"),
     icon: text("icon"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -154,7 +156,7 @@ export const lotteryPrizes = pgTable(
     globalStockUsed: integer("global_stock_used").default(0).notNull(),
     fallbackPrizeId: uuid("fallback_prize_id"),
     isActive: boolean("is_active").default(true).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

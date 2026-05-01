@@ -43,6 +43,7 @@ import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import {
   buildPage,
   clampLimit,
@@ -228,6 +229,7 @@ export function createFriendGiftService(
       input: CreatePackageInput,
     ): Promise<FriendGiftPackage> {
       try {
+        const __sortKey = await appendKey(db, { table: friendGiftPackages, sortColumn: friendGiftPackages.sortOrder, scopeWhere: eq(friendGiftPackages.organizationId, organizationId)! });
         const [row] = await db
           .insert(friendGiftPackages)
           .values({
@@ -238,7 +240,7 @@ export function createFriendGiftService(
             icon: input.icon ?? null,
             giftItems: input.giftItems,
             isActive: input.isActive ?? true,
-            sortOrder: input.sortOrder ?? 0,
+            sortOrder: __sortKey,
             metadata: input.metadata ?? null,
           })
           .returning();
@@ -291,7 +293,7 @@ export function createFriendGiftService(
         .select()
         .from(friendGiftPackages)
         .where(and(...conditions))
-        .orderBy(desc(friendGiftPackages.createdAt), desc(friendGiftPackages.id))
+        .orderBy(asc(friendGiftPackages.sortOrder), asc(friendGiftPackages.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },
@@ -309,7 +311,6 @@ export function createFriendGiftService(
       if (patch.icon !== undefined) updateValues.icon = patch.icon;
       if (patch.giftItems !== undefined) updateValues.giftItems = patch.giftItems;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
-      if (patch.sortOrder !== undefined) updateValues.sortOrder = patch.sortOrder;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
       if (Object.keys(updateValues).length === 0) {
@@ -347,6 +348,22 @@ export function createFriendGiftService(
         }
         throw err;
       }
+    },
+
+    async movePackage(
+      organizationId: string,
+      id: string,
+      body: MoveBody,
+    ): Promise<FriendGiftPackage> {
+      return moveAndReturn<FriendGiftPackage>(db, {
+        table: friendGiftPackages,
+        sortColumn: friendGiftPackages.sortOrder,
+        idColumn: friendGiftPackages.id,
+        partitionWhere: eq(friendGiftPackages.organizationId, organizationId)!,
+        id,
+        body,
+        notFound: (sid) => new FriendGiftPackageNotFound(sid),
+      });
     },
 
     async deletePackage(

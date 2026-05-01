@@ -459,20 +459,6 @@ export function ProductForm({ form, isPending, submitLabel }: ProductFormProps) 
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor="prod-sort">{m.shop_sort_order()}</Label>
-              <Input
-                id="prod-sort"
-                type="number"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
-            </div>
-          )}
-        </form.Field>
         <form.Field name="isActive">
           {(field) => (
             <div className="flex items-center gap-3 pt-6">

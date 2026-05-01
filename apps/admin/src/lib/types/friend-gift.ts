@@ -18,7 +18,7 @@ export interface FriendGiftPackage {
   icon: string | null
   giftItems: { definitionId: string; quantity: number }[]
   isActive: boolean
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -53,7 +53,6 @@ export interface CreateFriendGiftPackageInput {
   icon?: string | null
   giftItems: { definitionId: string; quantity: number }[]
   isActive?: boolean
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }
 
@@ -64,6 +63,5 @@ export interface UpdateFriendGiftPackageInput {
   icon?: string | null
   giftItems?: { definitionId: string; quantity: number }[]
   isActive?: boolean
-  sortOrder?: number
   metadata?: Record<string, unknown> | null
 }

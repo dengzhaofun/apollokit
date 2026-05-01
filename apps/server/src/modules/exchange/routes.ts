@@ -3,6 +3,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -68,7 +69,7 @@ function serializeOption(row: {
   userLimit: number | null;
   globalLimit: number | null;
   globalCount: number;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -305,6 +306,35 @@ exchangeRouter.openapi(
       optionId,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeOption(row)), 200);
+  },
+);
+
+exchangeRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/options/{optionId}/move",
+    tags: [TAG_OPT],
+    summary: "Move an exchange option (drag/top/bottom/up/down)",
+    request: {
+      params: OptionIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(ExchangeOptionResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { optionId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await exchangeService.moveOption(orgId, optionId, body);
     return c.json(ok(serializeOption(row)), 200);
   },
 );

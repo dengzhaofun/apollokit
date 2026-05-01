@@ -75,6 +75,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "d
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -297,6 +298,7 @@ export function createLevelService(
     },
   ): Promise<LevelConfig> {
     try {
+      const __sortKey = await appendKey(db, { table: levelConfigs, sortColumn: levelConfigs.sortOrder, scopeWhere: eq(levelConfigs.organizationId, organizationId)! });
       const [row] = await db
         .insert(levelConfigs)
         .values({
@@ -307,7 +309,7 @@ export function createLevelService(
           coverImage: input.coverImage ?? null,
           icon: input.icon ?? null,
           hasStages: input.hasStages ?? false,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -344,7 +346,6 @@ export function createLevelService(
     if (patch.coverImage !== undefined) values.coverImage = patch.coverImage;
     if (patch.icon !== undefined) values.icon = patch.icon;
     if (patch.hasStages !== undefined) values.hasStages = patch.hasStages;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
@@ -371,6 +372,23 @@ export function createLevelService(
       }
       throw err;
     }
+  }
+
+  async function moveConfig(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<LevelConfig> {
+    const existing = await loadConfigByKey(organizationId, key);
+    return moveAndReturn<LevelConfig>(db, {
+      table: levelConfigs,
+      sortColumn: levelConfigs.sortOrder,
+      idColumn: levelConfigs.id,
+      partitionWhere: eq(levelConfigs.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new LevelConfigNotFound(sid),
+    });
   }
 
   async function deleteConfig(
@@ -406,7 +424,7 @@ export function createLevelService(
       .select()
       .from(levelConfigs)
       .where(and(...conds))
-      .orderBy(desc(levelConfigs.createdAt), desc(levelConfigs.id))
+      .orderBy(asc(levelConfigs.sortOrder), asc(levelConfigs.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -442,6 +460,7 @@ export function createLevelService(
     // Verify config exists and belongs to this org
     await loadConfigById(organizationId, configId);
 
+    const __sortKey = await appendKey(db, { table: levelStages, sortColumn: levelStages.sortOrder, scopeWhere: eq(levelStages.organizationId, organizationId)! });
     const [row] = await db
       .insert(levelStages)
       .values({
@@ -451,7 +470,7 @@ export function createLevelService(
         description: input.description ?? null,
         icon: input.icon ?? null,
         unlockRule: input.unlockRule ?? null,
-        sortOrder: input.sortOrder ?? 0,
+        sortOrder: __sortKey,
         metadata: input.metadata ?? null,
       })
       .returning();
@@ -476,7 +495,6 @@ export function createLevelService(
     if (patch.description !== undefined) values.description = patch.description;
     if (patch.icon !== undefined) values.icon = patch.icon;
     if (patch.unlockRule !== undefined) values.unlockRule = patch.unlockRule;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
@@ -495,6 +513,26 @@ export function createLevelService(
       .returning();
     if (!row) throw new LevelStageNotFound(id);
     return row;
+  }
+
+  async function moveStage(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<LevelStage> {
+    const existing = await loadStageById(organizationId, id);
+    return moveAndReturn<LevelStage>(db, {
+      table: levelStages,
+      sortColumn: levelStages.sortOrder,
+      idColumn: levelStages.id,
+      partitionWhere: and(
+        eq(levelStages.organizationId, organizationId),
+        eq(levelStages.configId, existing.configId),
+      )!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new LevelStageNotFound(sid),
+    });
   }
 
   async function deleteStage(
@@ -554,6 +592,7 @@ export function createLevelService(
     await loadConfigById(organizationId, configId);
 
     try {
+      const __sortKey = await appendKey(db, { table: levels, sortColumn: levels.sortOrder, scopeWhere: eq(levels.organizationId, organizationId)! });
       const [row] = await db
         .insert(levels)
         .values({
@@ -569,7 +608,7 @@ export function createLevelService(
           unlockRule: input.unlockRule ?? null,
           clearRewards: input.clearRewards ?? null,
           starRewards: input.starRewards ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -615,7 +654,6 @@ export function createLevelService(
     if (patch.clearRewards !== undefined)
       values.clearRewards = patch.clearRewards;
     if (patch.starRewards !== undefined) values.starRewards = patch.starRewards;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
@@ -642,6 +680,26 @@ export function createLevelService(
       }
       throw err;
     }
+  }
+
+  async function moveLevel(
+    organizationId: string,
+    id: string,
+    body: MoveBody,
+  ): Promise<Level> {
+    const existing = await loadLevelById(organizationId, id);
+    return moveAndReturn<Level>(db, {
+      table: levels,
+      sortColumn: levels.sortOrder,
+      idColumn: levels.id,
+      partitionWhere: and(
+        eq(levels.organizationId, organizationId),
+        eq(levels.configId, existing.configId),
+      )!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new LevelNotFound(sid),
+    });
   }
 
   async function deleteLevel(
@@ -785,7 +843,11 @@ export function createLevelService(
 
     // Build level views with unlock status
     const levelViews = allLevels
-      .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.getTime() - b.createdAt.getTime())
+      .sort(
+        (a, b) =>
+          a.sortOrder.localeCompare(b.sortOrder) ||
+          a.createdAt.getTime() - b.createdAt.getTime(),
+      )
       .map((l) => {
         const unlocked = evaluateUnlockRule(
           l.unlockRule as UnlockRule | null,
@@ -1190,6 +1252,7 @@ export function createLevelService(
     // Config CRUD
     createConfig,
     updateConfig,
+    moveConfig,
     deleteConfig,
     listConfigs,
     getConfig,
@@ -1197,11 +1260,13 @@ export function createLevelService(
     // Stage CRUD
     createStage,
     updateStage,
+    moveStage,
     deleteStage,
     listStages,
     // Level CRUD
     createLevel,
     updateLevel,
+    moveLevel,
     deleteLevel,
     listLevels,
     // Client methods

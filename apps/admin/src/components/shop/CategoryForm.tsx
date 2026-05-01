@@ -46,7 +46,6 @@ export function CategoryForm({
   )
   const [coverImage, setCoverImage] = useState(defaultValues?.coverImage ?? "")
   const [icon, setIcon] = useState(defaultValues?.icon ?? "")
-  const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
   const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
 
   const parentOptions = parents.filter((p) => p.id !== excludeId)
@@ -64,7 +63,6 @@ export function CategoryForm({
           description: description || null,
           coverImage: coverImage || null,
           icon: icon || null,
-          sortOrder,
           isActive,
         })
       }}
@@ -128,16 +126,6 @@ export function CategoryForm({
           <Label>{m.common_icon()}</Label>
           <MediaPickerDialog value={icon || null} onChange={setIcon} />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="cat-sort">{m.shop_sort_order()}</Label>
-        <Input
-          id="cat-sort"
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
-        />
       </div>
 
       <div className="flex items-center gap-3">

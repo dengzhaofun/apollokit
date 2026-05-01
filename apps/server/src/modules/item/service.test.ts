@@ -37,12 +37,12 @@ describe("item service", () => {
         name: "Weapons",
         alias: "cat-weapons",
         icon: "sword",
-        sortOrder: 1,
       });
       expect(cat.name).toBe("Weapons");
       expect(cat.alias).toBe("cat-weapons");
       expect(cat.icon).toBe("sword");
-      expect(cat.sortOrder).toBe(1);
+      expect(typeof cat.sortOrder).toBe("string");
+      expect(cat.sortOrder.length).toBeGreaterThan(0);
       expect(cat.isActive).toBe(true);
       expect(cat.organizationId).toBe(orgId);
 

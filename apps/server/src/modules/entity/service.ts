@@ -21,6 +21,7 @@ import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-o
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -136,6 +137,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     input: CreateSchemaInputType,
   ): Promise<EntitySchema> {
     try {
+      const __sortKey = await appendKey(db, { table: entitySchemas, sortColumn: entitySchemas.sortOrder, scopeWhere: eq(entitySchemas.organizationId, organizationId)! });
       const rows = await db
         .insert(entitySchemas)
         .values({
@@ -154,7 +156,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
             sameBlueprint: true,
             inputCount: 2,
           },
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -189,7 +191,6 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (input.rankConfig !== undefined) patch.rankConfig = input.rankConfig;
     if (input.synthesisConfig !== undefined)
       patch.synthesisConfig = input.synthesisConfig;
-    if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     if (input.isActive !== undefined) patch.isActive = input.isActive;
     if (input.metadata !== undefined) patch.metadata = input.metadata;
 
@@ -212,6 +213,23 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         throw new EntityAliasConflict(input.alias ?? "");
       throw err;
     }
+  }
+
+  async function moveSchema(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<EntitySchema> {
+    const existing = await loadSchemaByKey(organizationId, key);
+    return moveAndReturn<EntitySchema>(db, {
+      table: entitySchemas,
+      sortColumn: entitySchemas.sortOrder,
+      idColumn: entitySchemas.id,
+      partitionWhere: eq(entitySchemas.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new EntitySchemaNotFound(sid),
+    });
   }
 
   async function deleteSchema(
@@ -246,7 +264,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .select()
       .from(entitySchemas)
       .where(and(...conds))
-      .orderBy(desc(entitySchemas.createdAt), desc(entitySchemas.id))
+      .orderBy(asc(entitySchemas.sortOrder), asc(entitySchemas.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -293,6 +311,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     await loadSchemaByKey(organizationId, input.schemaId);
 
     try {
+      const __sortKey = await appendKey(db, { table: entityBlueprints, sortColumn: entityBlueprints.sortOrder, scopeWhere: eq(entityBlueprints.organizationId, organizationId)! });
       const rows = await db
         .insert(entityBlueprints)
         .values({
@@ -311,7 +330,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
           rankUpCosts: input.rankUpCosts ?? [],
           synthesisCost: input.synthesisCost ?? null,
           maxLevel: input.maxLevel ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           activityId: input.activityId ?? null,
           activityNodeId: input.activityNodeId ?? null,
@@ -349,7 +368,6 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (input.synthesisCost !== undefined)
       patch.synthesisCost = input.synthesisCost;
     if (input.maxLevel !== undefined) patch.maxLevel = input.maxLevel;
-    if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     if (input.isActive !== undefined) patch.isActive = input.isActive;
     if (input.activityId !== undefined) patch.activityId = input.activityId;
     if (input.activityNodeId !== undefined)
@@ -375,6 +393,27 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         throw new EntityAliasConflict(input.alias ?? "");
       throw err;
     }
+  }
+
+  async function moveBlueprint(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<EntityBlueprint> {
+    const existing = await loadBlueprintByKey(organizationId, key);
+    // Scope by schemaId so blueprints reorder within their parent schema only.
+    return moveAndReturn<EntityBlueprint>(db, {
+      table: entityBlueprints,
+      sortColumn: entityBlueprints.sortOrder,
+      idColumn: entityBlueprints.id,
+      partitionWhere: and(
+        eq(entityBlueprints.organizationId, organizationId),
+        eq(entityBlueprints.schemaId, existing.schemaId),
+      )!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new EntityBlueprintNotFound(sid),
+    });
   }
 
   async function deleteBlueprint(
@@ -419,7 +458,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .select()
       .from(entityBlueprints)
       .where(and(...conditions))
-      .orderBy(desc(entityBlueprints.createdAt), desc(entityBlueprints.id))
+      .orderBy(asc(entityBlueprints.sortOrder), asc(entityBlueprints.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -463,6 +502,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     await loadBlueprintByKey(organizationId, blueprintId);
 
     try {
+      const __sortKey = await appendKey(db, { table: entityBlueprintSkins, sortColumn: entityBlueprintSkins.sortOrder, scopeWhere: eq(entityBlueprintSkins.organizationId, organizationId)! });
       const rows = await db
         .insert(entityBlueprintSkins)
         .values({
@@ -474,7 +514,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
           assets: input.assets ?? {},
           statBonuses: input.statBonuses ?? {},
           isDefault: input.isDefault ?? false,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -501,7 +541,6 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (input.assets !== undefined) patch.assets = input.assets;
     if (input.statBonuses !== undefined) patch.statBonuses = input.statBonuses;
     if (input.isDefault !== undefined) patch.isDefault = input.isDefault;
-    if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     if (input.isActive !== undefined) patch.isActive = input.isActive;
     if (input.metadata !== undefined) patch.metadata = input.metadata;
 
@@ -524,6 +563,26 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         throw new EntityAliasConflict(input.alias ?? "");
       throw err;
     }
+  }
+
+  async function moveSkin(
+    organizationId: string,
+    skinId: string,
+    body: MoveBody,
+  ): Promise<EntityBlueprintSkin> {
+    const existing = await loadSkinById(organizationId, skinId);
+    return moveAndReturn<EntityBlueprintSkin>(db, {
+      table: entityBlueprintSkins,
+      sortColumn: entityBlueprintSkins.sortOrder,
+      idColumn: entityBlueprintSkins.id,
+      partitionWhere: and(
+        eq(entityBlueprintSkins.organizationId, organizationId),
+        eq(entityBlueprintSkins.blueprintId, existing.blueprintId),
+      )!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new EntitySkinNotFound(sid),
+    });
   }
 
   async function deleteSkin(
@@ -1659,6 +1718,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     // Schema
     createSchema,
     updateSchema,
+    moveSchema,
     deleteSchema,
     listSchemas,
     getSchema,
@@ -1666,6 +1726,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     // Blueprint
     createBlueprint,
     updateBlueprint,
+    moveBlueprint,
     deleteBlueprint,
     listBlueprints,
     getBlueprint,
@@ -1673,6 +1734,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     // Skin
     createSkin,
     updateSkin,
+    moveSkin,
     deleteSkin,
     listSkins,
     getSkin,

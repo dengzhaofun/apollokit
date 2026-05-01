@@ -12,6 +12,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 import { ALBUM_SCOPES, MILESTONE_SCOPES, TRIGGER_TYPES } from "./types";
 
@@ -70,7 +72,6 @@ export const CreateAlbumSchema = z
     coverImage: z.string().max(1024).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     scope: AlbumScopeSchema.optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -84,7 +85,6 @@ export const UpdateAlbumSchema = z
     coverImage: z.string().max(1024).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     scope: AlbumScopeSchema.optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -97,7 +97,6 @@ export const CreateGroupSchema = z
     name: z.string().min(1).max(200),
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("CollectionCreateGroup");
@@ -107,7 +106,6 @@ export const UpdateGroupSchema = z
     name: z.string().min(1).max(200).optional(),
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("CollectionUpdateGroup");
@@ -122,7 +120,6 @@ export const CreateEntrySchema = z
     description: z.string().max(2000).nullable().optional(),
     image: z.string().max(1024).nullable().optional(),
     rarity: z.string().max(32).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     hiddenUntilUnlocked: z.boolean().optional(),
     triggerType: TriggerTypeSchema.optional(),
     triggerItemDefinitionId: z.string().uuid().nullable().optional(),
@@ -168,7 +165,6 @@ export const UpdateEntrySchema = z
     description: z.string().max(2000).nullable().optional(),
     image: z.string().max(1024).nullable().optional(),
     rarity: z.string().max(32).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     hiddenUntilUnlocked: z.boolean().optional(),
     triggerType: TriggerTypeSchema.optional(),
     triggerItemDefinitionId: z.string().uuid().nullable().optional(),
@@ -188,7 +184,6 @@ export const CreateMilestoneSchema = z
     label: z.string().max(200).nullable().optional(),
     rewardItems: z.array(RewardItemSchema).min(1),
     autoClaim: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .superRefine((val, ctx) => {
@@ -242,7 +237,6 @@ export const UpdateMilestoneSchema = z
     label: z.string().max(200).nullable().optional(),
     rewardItems: z.array(RewardItemSchema).min(1).optional(),
     autoClaim: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("CollectionUpdateMilestone");
@@ -321,7 +315,7 @@ export const AlbumResponseSchema = z
     coverImage: z.string().nullable(),
     icon: z.string().nullable(),
     scope: z.string(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -341,7 +335,7 @@ export const GroupResponseSchema = z
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -365,7 +359,7 @@ export const EntryResponseSchema = z
     description: z.string().nullable(),
     image: z.string().nullable(),
     rarity: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     hiddenUntilUnlocked: z.boolean(),
     triggerType: z.string(),
     triggerItemDefinitionId: z.string().nullable(),
@@ -394,7 +388,7 @@ export const MilestoneResponseSchema = z
     label: z.string().nullable(),
     rewardItems: z.array(RewardItemSchema),
     autoClaim: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -419,7 +413,7 @@ export const ClientEntryViewSchema = z
     description: z.string().nullable(),
     image: z.string().nullable(),
     rarity: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     hidden: z.boolean(),
     unlocked: z.boolean(),
     unlockedAt: z.string().nullable(),
@@ -436,7 +430,7 @@ export const ClientMilestoneViewSchema = z
     label: z.string().nullable(),
     rewardItems: z.array(RewardItemSchema),
     autoClaim: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     unlockedCount: z.number().int(),
     reached: z.boolean(),
     claimed: z.boolean(),

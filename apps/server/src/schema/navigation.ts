@@ -1,12 +1,12 @@
 import {
   index,
-  integer,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 
+import { fractionalSortKey } from "./_fractional-sort";
 import { organization, user } from "./auth"
 
 /**
@@ -24,11 +24,10 @@ import { organization, user } from "./auth"
  * enum because that list would silently drift from the admin's
  * `NavRoute` union.
  *
- * `sortOrder` is the on-screen ordering (higher = more recent). On
- * insert we set it to `(max(sortOrder) for this user/org) + 1`, so
- * the most-recently-pinned item floats to the top. The column is an
- * `integer` so a future drag-reorder feature can rewrite it without a
- * schema change.
+ * `sortOrder` is a base62 fractional indexing key (see
+ * `lib/fractional-order.ts`). New favorites are appended via `appendKey`
+ * so the most-recently-pinned item lands at the tail; the renderer
+ * reverses to put it at the top.
  */
 export const navigationFavorites = pgTable(
   "navigation_favorites",
@@ -43,7 +42,7 @@ export const navigationFavorites = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     routePath: text("route_path").notNull(),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

@@ -112,7 +112,6 @@ function OptionDetailPage() {
                   rewardItems: option.rewardItems,
                   userLimit: option.userLimit,
                   globalLimit: option.globalLimit,
-                  sortOrder: option.sortOrder,
                   isActive: option.isActive,
                 }}
                 submitLabel={m.common_save_changes()}

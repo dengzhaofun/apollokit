@@ -305,9 +305,6 @@ export function applyCurrencyDefinitionToForm(
     form.setFieldValue("description", input.description ?? "")
   }
   if (input.icon !== undefined) form.setFieldValue("icon", input.icon ?? "")
-  if (input.sortOrder !== undefined) {
-    form.setFieldValue("sortOrder", input.sortOrder)
-  }
   if (input.isActive !== undefined) form.setFieldValue("isActive", input.isActive)
   if (input.activityId !== undefined) {
     form.setFieldValue("activityId", input.activityId)
@@ -443,9 +440,6 @@ export function applyBadgeNodeToForm(
         : "",
     )
   }
-  if (input.sortOrder !== undefined) {
-    form.setFieldValue("sortOrder", input.sortOrder)
-  }
   if (input.isActive !== undefined) {
     form.setFieldValue("isActive", input.isActive)
   }
@@ -515,9 +509,6 @@ export function applyShopProductToForm(
   }
   if (input.globalLimit !== undefined) {
     form.setFieldValue("globalLimit", input.globalLimit ?? "")
-  }
-  if (input.sortOrder !== undefined) {
-    form.setFieldValue("sortOrder", input.sortOrder)
   }
   if (input.isActive !== undefined) {
     form.setFieldValue("isActive", input.isActive)

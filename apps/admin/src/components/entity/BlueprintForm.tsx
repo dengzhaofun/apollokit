@@ -34,7 +34,6 @@ export function BlueprintForm({
       baseStats: defaultValues?.baseStats ?? {} as Record<string, number>,
       statGrowth: defaultValues?.statGrowth ?? {} as Record<string, number>,
       maxLevel: defaultValues?.maxLevel ?? null as number | null,
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
       activityId: defaultValues?.activityId ?? (null as string | null),
     },
@@ -50,7 +49,6 @@ export function BlueprintForm({
         baseStats: value.baseStats,
         statGrowth: value.statGrowth,
         maxLevel: value.maxLevel,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
         activityId: value.activityId,
       }
@@ -273,18 +271,6 @@ export function BlueprintForm({
                 onCheckedChange={field.handleChange}
               />
               <Label>{m.common_active()}</Label>
-            </div>
-          )}
-        </form.Field>
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-2">
-              <Label>{m.common_sort_order()}</Label>
-              <Input
-                type="number"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
             </div>
           )}
         </form.Field>

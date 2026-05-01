@@ -25,7 +25,7 @@ import {
   useCreateBanner,
   useDeleteBanner,
   useDeleteBannerGroup,
-  useReorderBanners,
+  useMoveBanner,
   useUpdateBanner,
 } from "#/hooks/use-banner"
 import { ApiError } from "#/lib/api-client"
@@ -52,7 +52,7 @@ function BannerGroupDetailPage() {
   const navigateLocal = useNavigate({ from: Route.fullPath })
   const { data: group } = useBannerGroup(groupId)
   const { data: banners, isPending, error } = useAllBanners(groupId)
-  const reorderMutation = useReorderBanners()
+  const moveMutation = useMoveBanner()
   const deleteBannerMutation = useDeleteBanner()
   const deleteGroupMutation = useDeleteBannerGroup()
   const [groupDeleteOpen, setGroupDeleteOpen] = useState(false)
@@ -73,19 +73,12 @@ function BannerGroupDetailPage() {
     })
   }
 
-  async function handleMove(bannerId: string, direction: "up" | "down") {
-    if (!banners) return
-    const idx = banners.findIndex((b) => b.id === bannerId)
-    if (idx < 0) return
-    const swap = direction === "up" ? idx - 1 : idx + 1
-    if (swap < 0 || swap >= banners.length) return
-    const reordered = [...banners]
-    ;[reordered[idx], reordered[swap]] = [reordered[swap]!, reordered[idx]!]
+  async function handleMove(
+    bannerId: string,
+    body: { before: string } | { after: string } | { position: "first" | "last" },
+  ) {
     try {
-      await reorderMutation.mutateAsync({
-        groupId,
-        bannerIds: reordered.map((b) => b.id),
-      })
+      await moveMutation.mutateAsync({ id: bannerId, groupId, body })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
     }
@@ -223,7 +216,7 @@ function BannerGroupDetailPage() {
               onMove={handleMove}
               onDelete={(id) => setBannerDeleteId(id)}
               isBusy={
-                reorderMutation.isPending || deleteBannerMutation.isPending
+                moveMutation.isPending || deleteBannerMutation.isPending
               }
             />
           )}

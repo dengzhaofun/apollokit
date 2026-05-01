@@ -10,6 +10,7 @@
 
 import type { HonoEnv } from "../../env";
 import { PaginationQuerySchema } from "../../lib/pagination";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
@@ -216,6 +217,33 @@ storageBoxRouter.openapi(
       id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeConfig(row)), 200);
+  },
+);
+
+storageBoxRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/configs/{id}/move",
+    tags: [TAG_CFG],
+    summary: "Move a storage box config (drag/top/bottom/up/down)",
+    request: {
+      params: IdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(ConfigResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await storageBoxService.moveConfig(orgId, id, body);
     return c.json(ok(serializeConfig(row)), 200);
   },
 );

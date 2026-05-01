@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 import { itemDefinitions } from "./item";
@@ -88,7 +90,7 @@ export const collectionAlbums = pgTable(
     coverImage: text("cover_image"),
     icon: text("icon"),
     scope: text("scope").default("custom").notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -125,7 +127,7 @@ export const collectionGroups = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -177,7 +179,7 @@ export const collectionEntries = pgTable(
     description: text("description"),
     image: text("image"),
     rarity: text("rarity"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     hiddenUntilUnlocked: boolean("hidden_until_unlocked")
       .default(false)
       .notNull(),
@@ -252,7 +254,7 @@ export const collectionMilestones = pgTable(
     label: text("label"),
     rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     autoClaim: boolean("auto_claim").default(false).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

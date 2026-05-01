@@ -253,7 +253,6 @@ function EditCurrencyDialogLoaded({
       alias: currency.alias,
       description: currency.description,
       icon: currency.icon,
-      sortOrder: currency.sortOrder,
       isActive: currency.isActive,
       activityId: currency.activityId,
     },

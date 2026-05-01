@@ -13,7 +13,7 @@ export interface CollectionAlbum {
   coverImage: string | null
   icon: string | null
   scope: string
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -27,7 +27,7 @@ export interface CollectionGroup {
   name: string
   description: string | null
   icon: string | null
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -43,7 +43,7 @@ export interface CollectionEntry {
   description: string | null
   image: string | null
   rarity: string | null
-  sortOrder: number
+  sortOrder: string
   hiddenUntilUnlocked: boolean
   triggerType: string
   triggerItemDefinitionId: string | null
@@ -64,7 +64,7 @@ export interface CollectionMilestone {
   label: string | null
   rewardItems: RewardEntry[]
   autoClaim: boolean
-  sortOrder: number
+  sortOrder: string
   metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
@@ -77,7 +77,6 @@ export interface CreateAlbumInput {
   coverImage?: string | null
   icon?: string | null
   scope?: AlbumScope
-  sortOrder?: number
   isActive?: boolean
 }
 export type UpdateAlbumInput = Partial<CreateAlbumInput>
@@ -86,7 +85,6 @@ export interface CreateGroupInput {
   name: string
   description?: string | null
   icon?: string | null
-  sortOrder?: number
 }
 export type UpdateGroupInput = Partial<CreateGroupInput>
 
@@ -97,7 +95,6 @@ export interface CreateEntryInput {
   description?: string | null
   image?: string | null
   rarity?: string | null
-  sortOrder?: number
   hiddenUntilUnlocked?: boolean
   triggerType?: TriggerType
   triggerItemDefinitionId?: string | null
@@ -113,14 +110,12 @@ export interface CreateMilestoneInput {
   label?: string | null
   rewardItems: RewardEntry[]
   autoClaim?: boolean
-  sortOrder?: number
 }
 export interface UpdateMilestoneInput {
   threshold?: number
   label?: string | null
   rewardItems?: RewardEntry[]
   autoClaim?: boolean
-  sortOrder?: number
 }
 
 export interface AlbumListResponse {

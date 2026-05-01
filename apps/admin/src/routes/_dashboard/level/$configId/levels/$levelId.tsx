@@ -176,7 +176,6 @@ function LevelEditForm({
   const [metadata, setMetadata] = useState(
     initial.metadata ? JSON.stringify(initial.metadata, null, 2) : "",
   )
-  const [sortOrder, setSortOrder] = useState(initial.sortOrder)
   const [isActive, setIsActive] = useState(initial.isActive)
 
   const starTracks = useMemo<RewardTrack<StarTierDraft>[]>(
@@ -213,7 +212,6 @@ function LevelEditForm({
               ? sortedTiers.map(({ stars, rewards }) => ({ stars, rewards }))
               : null,
           metadata: metadata ? JSON.parse(metadata) : null,
-          sortOrder,
           isActive,
         },
       })
@@ -351,15 +349,6 @@ function LevelEditForm({
           onChange={(e) => setMetadata(e.target.value)}
           rows={3}
           placeholder="{}"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>{m.common_sort_order()}</Label>
-        <Input
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
         />
       </div>
 

@@ -55,7 +55,6 @@ describe("badge service", () => {
       signalMatchMode: "none",
       aggregation: "any",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
     expect(node.key).toBe("home");
@@ -72,7 +71,6 @@ describe("badge service", () => {
       signalMatchMode: "none",
       aggregation: "any",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
     await expect(
@@ -90,7 +88,6 @@ describe("badge service", () => {
         signalMatchMode: "exact",
         aggregation: "none",
         dismissMode: "auto",
-        sortOrder: 0,
         isActive: true,
       }),
     ).rejects.toMatchObject({ code: "badge.invalid_signal_binding" });
@@ -140,7 +137,6 @@ describe("badge service", () => {
       signalMatchMode: "none",
       aggregation: "any",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
     await svc.createNode(orgId, {
@@ -151,7 +147,6 @@ describe("badge service", () => {
       signalKeyPrefix: "mail.pt.",
       aggregation: "sum",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -187,7 +182,6 @@ describe("badge service", () => {
       signalKeyPrefix: "pc.inbox.",
       aggregation: "sum",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -229,7 +223,6 @@ describe("badge service", () => {
       signalKey: "man.alert",
       aggregation: "none",
       dismissMode: "manual",
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -262,7 +255,6 @@ describe("badge service", () => {
       signalKey: "ver.promo",
       aggregation: "none",
       dismissMode: "version",
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -310,7 +302,6 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "cooldown",
       dismissConfig: { cooldownSec: 60 },
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -358,7 +349,6 @@ describe("badge service", () => {
       aggregation: "none",
       dismissMode: "daily",
       dismissConfig: { periodType: "daily", timezone: "UTC" },
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -404,7 +394,6 @@ describe("badge service", () => {
       signalKey: "sess.a",
       aggregation: "none",
       dismissMode: "session",
-      sortOrder: 0,
       isActive: true,
     });
     await svc.createNode(orgId, {
@@ -414,7 +403,6 @@ describe("badge service", () => {
       signalKey: "sess.b",
       aggregation: "none",
       dismissMode: "manual",
-      sortOrder: 0,
       isActive: true,
     });
 
@@ -464,7 +452,6 @@ describe("badge service", () => {
       signalKey: "pv.reward",
       aggregation: "none",
       dismissMode: "auto",
-      sortOrder: 0,
       isActive: true,
     });
     await svc.signal(orgId, {

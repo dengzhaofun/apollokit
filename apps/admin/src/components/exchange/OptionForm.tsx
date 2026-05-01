@@ -42,7 +42,6 @@ export function OptionForm({
   const [globalLimit, setGlobalLimit] = useState<number | null>(
     defaultValues?.globalLimit ?? null,
   )
-  const [sortOrder, setSortOrder] = useState(defaultValues?.sortOrder ?? 0)
   const [isActive, setIsActive] = useState(defaultValues?.isActive ?? true)
   const [nameError, setNameError] = useState("")
 
@@ -64,7 +63,6 @@ export function OptionForm({
       rewardItems: validRewards,
       userLimit,
       globalLimit,
-      sortOrder,
       isActive,
     }
     onSubmit(input)
@@ -142,16 +140,6 @@ export function OptionForm({
             placeholder={m.common_unlimited()}
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="opt-sortOrder">{m.common_sort_order()}</Label>
-        <Input
-          id="opt-sortOrder"
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
-        />
       </div>
 
       <div className="flex items-center gap-3">

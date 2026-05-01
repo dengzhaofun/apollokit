@@ -55,7 +55,6 @@ export function MilestoneForm({
   const [autoClaim, setAutoClaim] = useState<boolean>(
     initial?.autoClaim ?? false,
   )
-  const [sortOrder, setSortOrder] = useState<number>(initial?.sortOrder ?? 0)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -84,7 +83,6 @@ export function MilestoneForm({
       label: label || null,
       rewardItems,
       autoClaim,
-      sortOrder,
     }
     if (scope === "entry") {
       payload.entryId = entryId
@@ -217,28 +215,15 @@ export function MilestoneForm({
         entries={rewardItems}
         onChange={setRewardItems}
       />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <Label htmlFor="m-sortOrder">
-            {m.collection_field_sort_order()}
-          </Label>
-          <Input
-            id="m-sortOrder"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
-          />
-        </div>
-        <div className="flex items-end gap-2">
-          <Switch
-            id="m-autoClaim"
-            checked={autoClaim}
-            onCheckedChange={setAutoClaim}
-          />
-          <Label htmlFor="m-autoClaim">
-            {m.collection_milestone_field_auto_claim()}
-          </Label>
-        </div>
+      <div className="flex items-end gap-2">
+        <Switch
+          id="m-autoClaim"
+          checked={autoClaim}
+          onCheckedChange={setAutoClaim}
+        />
+        <Label htmlFor="m-autoClaim">
+          {m.collection_milestone_field_auto_claim()}
+        </Label>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end gap-2">

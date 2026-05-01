@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
 import { CURRENCY_FILTER_DEFS, useCurrencies } from "#/hooks/use-currency"
+import { useMoveCurrency } from "#/hooks/use-move"
 import { openEditModal } from "#/lib/modal-search"
 import type { CurrencyDefinition } from "#/lib/types/currency"
 import * as m from "#/paraglide/messages.js"
@@ -97,10 +98,6 @@ function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
           )
         },
       }),
-      columnHelper.accessor("sortOrder", {
-        header: () => m.currency_sort_order(),
-        cell: (info) => info.getValue(),
-      }),
       columnHelper.accessor("isActive", {
         header: () => m.common_status(),
         cell: (info) => (
@@ -131,6 +128,7 @@ interface Props {
 export function DefinitionTable({ route }: Props) {
   const list = useCurrencies(route)
   const columns = useColumns()
+  const moveMutation = useMoveCurrency()
   return (
     <DataTable
       columns={columns}
@@ -149,7 +147,10 @@ export function DefinitionTable({ route }: Props) {
           | import("#/components/ui/query-builder").RuleGroupType
           | undefined
       }
-      onAdvancedQueryChange={list.setAdvanced}
+      sortable={{
+        onMove: (id, body) => moveMutation.mutate({ id, body }),
+        disabled: moveMutation.isPending,
+      }}
       {...list.tableProps}
     />
   )

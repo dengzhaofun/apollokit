@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -87,7 +89,6 @@ export const CreateTierSchema = z
     }),
     color: z.string().max(20).nullable().optional(),
     icon: z.string().max(500).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -100,7 +101,6 @@ export const UpdateTierSchema = z
     baseWeight: z.number().int().positive().optional(),
     color: z.string().max(20).nullable().optional(),
     icon: z.string().max(500).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -126,7 +126,6 @@ export const CreatePrizeSchema = z
     globalStockLimit: z.number().int().positive().nullable().optional(),
     fallbackPrizeId: z.string().uuid().nullable().optional(),
     isActive: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LotteryCreatePrize");
@@ -142,7 +141,6 @@ export const UpdatePrizeSchema = z
     globalStockLimit: z.number().int().positive().nullable().optional(),
     fallbackPrizeId: z.string().uuid().nullable().optional(),
     isActive: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LotteryUpdatePrize");
@@ -318,7 +316,7 @@ export const LotteryTierResponseSchema = z
     baseWeight: z.number().int(),
     color: z.string().nullable(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -342,7 +340,7 @@ export const LotteryPrizeResponseSchema = z
     globalStockUsed: z.number().int(),
     fallbackPrizeId: z.string().nullable(),
     isActive: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),

@@ -7,6 +7,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import {
   BATTLE_PASS_CURVE_TYPES,
   BATTLE_PASS_TASK_CATEGORIES,
@@ -195,7 +197,6 @@ export const BindTasksSchema = z
           xpReward: z.number().int().positive(),
           category: z.enum(BATTLE_PASS_TASK_CATEGORIES),
           weekIndex: z.number().int().nonnegative().nullable().optional(),
-          sortOrder: z.number().int().nonnegative().optional(),
         }),
       )
       .max(500),
@@ -279,7 +280,7 @@ export const BattlePassSeasonTaskResponseSchema = z
     xpReward: z.number().int(),
     category: z.enum(BATTLE_PASS_TASK_CATEGORIES),
     weekIndex: z.number().int().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
   })
   .openapi("BattlePassSeasonTask");
 

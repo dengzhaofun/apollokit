@@ -18,7 +18,7 @@
  * See the plan document for concurrency analysis and risk discussion.
  */
 
-import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 import {
   buildPage,
@@ -30,6 +30,7 @@ import {
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import type { RewardEntry } from "../../lib/rewards";
 import {
@@ -306,6 +307,7 @@ export function createExchangeService(
       input: CreateOptionInput,
     ): Promise<ExchangeOption> {
       const config = await loadConfigByKey(organizationId, configKey);
+      const __sortKey = await appendKey(db, { table: exchangeOptions, sortColumn: exchangeOptions.sortOrder, scopeWhere: eq(exchangeOptions.organizationId, organizationId)! });
       const [row] = await db
         .insert(exchangeOptions)
         .values({
@@ -317,7 +319,7 @@ export function createExchangeService(
           rewardItems: input.rewardItems,
           userLimit: input.userLimit ?? null,
           globalLimit: input.globalLimit ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -346,7 +348,6 @@ export function createExchangeService(
       if (patch.userLimit !== undefined) updateValues.userLimit = patch.userLimit;
       if (patch.globalLimit !== undefined)
         updateValues.globalLimit = patch.globalLimit;
-      if (patch.sortOrder !== undefined) updateValues.sortOrder = patch.sortOrder;
       if (patch.isActive !== undefined) updateValues.isActive = patch.isActive;
       if (patch.metadata !== undefined) updateValues.metadata = patch.metadata;
 
@@ -359,6 +360,30 @@ export function createExchangeService(
         .returning();
       if (!row) throw new ExchangeOptionNotFound(optionId);
       return row;
+    },
+
+    async moveOption(
+      organizationId: string,
+      optionId: string,
+      body: MoveBody,
+    ): Promise<ExchangeOption> {
+      const existing = await loadOptionById(optionId);
+      if (existing.organizationId !== organizationId) {
+        throw new ExchangeOptionNotFound(optionId);
+      }
+      // Scope by configId so reordering is per-exchange-config.
+      return moveAndReturn<ExchangeOption>(db, {
+        table: exchangeOptions,
+        sortColumn: exchangeOptions.sortOrder,
+        idColumn: exchangeOptions.id,
+        partitionWhere: and(
+          eq(exchangeOptions.organizationId, organizationId),
+          eq(exchangeOptions.configId, existing.configId),
+        )!,
+        id: optionId,
+        body,
+        notFound: (sid) => new ExchangeOptionNotFound(sid),
+      });
     },
 
     async deleteOption(
@@ -394,7 +419,7 @@ export function createExchangeService(
         .select()
         .from(exchangeOptions)
         .where(and(...conditions))
-        .orderBy(desc(exchangeOptions.createdAt), desc(exchangeOptions.id))
+        .orderBy(asc(exchangeOptions.sortOrder), asc(exchangeOptions.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

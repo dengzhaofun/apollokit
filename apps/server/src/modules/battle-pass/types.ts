@@ -117,7 +117,7 @@ export interface BattlePassAggregateView {
     xpReward: number;
     category: BattlePassTaskCategory;
     weekIndex: number | null;
-    sortOrder: number;
+    sortOrder: string;
   }>;
 }
 

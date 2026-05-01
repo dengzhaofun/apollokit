@@ -13,6 +13,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -87,7 +89,7 @@ export const taskCategories = pgTable(
     description: text("description"),
     icon: text("icon"),
     scope: text("scope").default("task").notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -221,7 +223,7 @@ export const taskDefinitions = pgTable(
      * NULL = no default expiry (callers decide per-call).
      */
     defaultAssignmentTtlSeconds: integer("default_assignment_ttl_seconds"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     /**
      * Soft link to an `activity_configs.id` when this task belongs to
      * an activity's `task_group` node. NULL = standalone (permanent)

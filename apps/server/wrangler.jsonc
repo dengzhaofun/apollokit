@@ -79,7 +79,11 @@
     {
       "binding": "HYPERDRIVE",
       "id": "7097d0a17c784fdfa2abf21c83782744",
-      "localConnectionString": "postgres://dengzhao@localhost:5432/apollokit_dev?sslmode=disable"
+      // Dummy password placeholder — local pg under `trust` auth ignores it,
+      // but recent `wrangler dev` / miniflare validate the URL format and
+      // refuse to start without a password segment. Real prod credentials
+      // live in the Hyperdrive binding stored against the worker.
+      "localConnectionString": "postgres://dengzhao:dummy@localhost:5432/apollokit_dev?sslmode=disable"
     }
   ],
   // Secrets used by the worker (configured via .dev.vars in dev, `wrangler secret put` in prod):

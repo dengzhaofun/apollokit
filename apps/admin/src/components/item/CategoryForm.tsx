@@ -38,7 +38,6 @@ export function CategoryForm({
       name: defaultValues?.name ?? "",
       alias: defaultValues?.alias ?? "",
       icon: defaultValues?.icon ?? "",
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -46,7 +45,6 @@ export function CategoryForm({
         name: value.name,
         alias: value.alias || null,
         icon: value.icon || null,
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       }
       await onSubmit(input)
@@ -125,20 +123,6 @@ export function CategoryForm({
         )}
       </form.Field>
 
-      <form.Field name="sortOrder">
-        {(field) => (
-          <div className="space-y-2">
-            <Label htmlFor={field.name}>{m.common_sort_order()}</Label>
-            <Input
-              id={field.name}
-              type="number"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(Number(e.target.value))}
-            />
-          </div>
-        )}
-      </form.Field>
 
       <form.Field name="isActive">
         {(field) => (

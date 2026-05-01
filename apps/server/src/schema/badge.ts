@@ -56,6 +56,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import { organization } from "./auth";
 
 // ─── DisplayType / aggregation / dismissMode enums ────────────────
@@ -146,7 +148,7 @@ export const badgeNodes = pgTable(
     dismissConfig: jsonb("dismiss_config").$type<Record<string, unknown>>(),
     visibilityRule: jsonb("visibility_rule").$type<Record<string, unknown>>(),
 
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

@@ -23,7 +23,7 @@ export interface ExchangeOption {
   userLimit: number | null
   globalLimit: number | null
   globalCount: number
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -67,7 +67,6 @@ export interface CreateOptionInput {
   rewardItems: RewardEntry[]
   userLimit?: number | null
   globalLimit?: number | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -79,7 +78,6 @@ export interface UpdateOptionInput {
   rewardItems?: RewardEntry[]
   userLimit?: number | null
   globalLimit?: number | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }

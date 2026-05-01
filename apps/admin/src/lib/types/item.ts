@@ -4,7 +4,7 @@ export interface ItemCategory {
   alias: string | null
   name: string
   icon: string | null
-  sortOrder: number
+  sortOrder: string
   isActive: boolean
   metadata: Record<string, unknown> | null
   createdAt: string
@@ -76,7 +76,6 @@ export interface CreateCategoryInput {
   name: string
   alias?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }
@@ -85,7 +84,6 @@ export interface UpdateCategoryInput {
   name?: string
   alias?: string | null
   icon?: string | null
-  sortOrder?: number
   isActive?: boolean
   metadata?: Record<string, unknown> | null
 }

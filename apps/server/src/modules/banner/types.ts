@@ -29,7 +29,7 @@ export type ClientBanner = {
   imageUrlDesktop: string;
   altText: string | null;
   linkAction: LinkAction;
-  sortOrder: number;
+  sortOrder: string;
 };
 
 export type ClientBannerGroup = {

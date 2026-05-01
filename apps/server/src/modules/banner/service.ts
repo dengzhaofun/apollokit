@@ -21,31 +21,36 @@
  *   AND (targetType = 'broadcast'
  *        OR targetUserIds @> to_jsonb(ARRAY[endUserId]))
  *
- * Ordering: `sortOrder ASC, createdAt ASC` for stable pagination-free lists.
+ * Ordering: `sortOrder ASC, createdAt ASC`. `sortOrder` is a base62
+ * fractional indexing key (see `lib/fractional-order.ts`); text lex-sort
+ * is the natural ordering.
  *
  * ---------------------------------------------------------------------
- * Reorder — full-set validation
+ * Move / reorder
  * ---------------------------------------------------------------------
  *
- * `reorderBanners` requires the caller to pass the complete, ordered list
- * of banner ids in the group. The service re-reads the current membership
- * and aborts with BannerReorderMismatch if the sets differ. This prevents
- * drift (stale frontend sending 9 ids when 10 exist) and duplicate
- * sortOrders arising from partial reorders.
+ * Single-row moves (`moveBanner`) compute a new fractional key between the
+ * target's neighbours and write one row — no transaction needed.
  *
- * We emit one UPDATE per banner inside a `Promise.all` rather than a
- * `db.transaction()` — a concurrent admin create could insert a new
- * banner with sortOrder colliding with what we just assigned, which is
- * fine because the next reorder / manual edit fixes it and no data is
- * lost. sortOrder is not a unique constraint. (Drag-reorder with strict
- * atomic semantics is a separate follow-up; see plan
- * `serverless-noen-vectorized-eagle.md`.)
+ * `reorderBanners` (legacy bulk endpoint) still accepts the complete
+ * ordered list and re-keys every row. We compute N evenly-spaced keys via
+ * `nKeysBetween(null, null, N)` and emit one UPDATE per row in
+ * `Promise.all`. A concurrent insert during the reorder lands at the tail
+ * with a key strictly greater than every reordered row, so the visible
+ * order is "old order with the new arrival appended" — not corrupt.
  */
 
 import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import {
+  appendKey,
+  type MoveBody,
+  MoveSiblingNotFound,
+  nKeysBetween,
+  resolveMoveKey,
+} from "../../lib/fractional-order";
 import {
   buildPage,
   clampLimit,
@@ -339,22 +344,14 @@ export function createBannerService(d: BannerDeps) {
       const targetUserIds =
         targetType === "multicast" ? input.targetUserIds ?? null : null;
 
-      // Default sortOrder: max(existing) + 1 so new banners land at the end.
-      let nextSortOrder = input.sortOrder;
-      if (nextSortOrder === undefined) {
-        const [max] = await db
-          .select({
-            max: sql<number | null>`MAX(${banners.sortOrder})`,
-          })
-          .from(banners)
-          .where(
-            and(
-              eq(banners.organizationId, organizationId),
-              eq(banners.groupId, groupId),
-            ),
-          );
-        nextSortOrder = (max?.max ?? -1) + 1;
-      }
+      const sortOrder = await appendKey(db, {
+        table: banners,
+        sortColumn: banners.sortOrder,
+        scopeWhere: and(
+          eq(banners.organizationId, organizationId),
+          eq(banners.groupId, groupId),
+        )!,
+      });
 
       const [row] = await db
         .insert(banners)
@@ -366,7 +363,7 @@ export function createBannerService(d: BannerDeps) {
           imageUrlDesktop: input.imageUrlDesktop,
           altText: input.altText ?? null,
           linkAction: input.linkAction as unknown as LinkAction,
-          sortOrder: nextSortOrder,
+          sortOrder,
           visibleFrom: toDate(input.visibleFrom ?? null),
           visibleUntil: toDate(input.visibleUntil ?? null),
           targetType,
@@ -420,7 +417,6 @@ export function createBannerService(d: BannerDeps) {
       if (input.altText !== undefined) patch.altText = input.altText;
       if (input.linkAction !== undefined)
         patch.linkAction = input.linkAction as unknown as LinkAction;
-      if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
       if (input.visibleFrom !== undefined)
         patch.visibleFrom = toDate(input.visibleFrom);
       if (input.visibleUntil !== undefined)
@@ -482,16 +478,21 @@ export function createBannerService(d: BannerDeps) {
         eq(banners.organizationId, organizationId),
         eq(banners.groupId, groupId),
       ];
-      const seek = cursorWhere(params.cursor, banners.createdAt, banners.id);
-      if (seek) conds.push(seek);
       if (params.q) {
         conds.push(ilike(banners.title, `%${params.q}%`));
       }
+      // Order by sortOrder ASC so the admin list matches the visible
+      // order on the client API (`getClientGroupByAlias`). The ▲▼ / drag
+      // interactions feel right — the row you just moved up actually
+      // moves up in the table. Cursor pagination is skipped here because
+      // banner groups are bounded (a few dozen at most); the limit + 1
+      // peek is enough to surface a "next page" affordance without a
+      // proper sortOrder-based cursor.
       const rows = await db
         .select()
         .from(banners)
         .where(and(...conds))
-        .orderBy(desc(banners.createdAt), desc(banners.id))
+        .orderBy(asc(banners.sortOrder), asc(banners.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },
@@ -538,13 +539,12 @@ export function createBannerService(d: BannerDeps) {
         }
       }
 
-      // Emit per-banner updates. sortOrder is NOT unique so there is no
-      // intermediate-state conflict; the final ordering is what matters.
+      const keys = nKeysBetween(null, null, orderedIds.length);
       await Promise.all(
         orderedIds.map((id, index) =>
           db
             .update(banners)
-            .set({ sortOrder: index })
+            .set({ sortOrder: keys[index]! })
             .where(
               and(
                 eq(banners.id, id),
@@ -565,6 +565,64 @@ export function createBannerService(d: BannerDeps) {
           ),
         )
         .orderBy(asc(banners.sortOrder), asc(banners.createdAt));
+    },
+
+    async moveBanner(
+      organizationId: string,
+      id: string,
+      body: MoveBody,
+    ): Promise<Banner> {
+      const existing = await loadBannerById(organizationId, id);
+
+      const scopeWhere = and(
+        eq(banners.organizationId, organizationId),
+        eq(banners.groupId, existing.groupId),
+        sql`${banners.id} <> ${id}`,
+      )!;
+
+      let newKey: string;
+      try {
+        newKey = await resolveMoveKey(db, {
+          ref: {
+            table: banners,
+            sortColumn: banners.sortOrder,
+            scopeWhere,
+          },
+          body,
+          lookupSiblingKey: async (siblingId) => {
+            const rows = await db
+              .select({ key: banners.sortOrder })
+              .from(banners)
+              .where(
+                and(
+                  eq(banners.id, siblingId),
+                  eq(banners.organizationId, organizationId),
+                  eq(banners.groupId, existing.groupId),
+                ),
+              )
+              .limit(1);
+            return rows[0]?.key ?? null;
+          },
+        });
+      } catch (err) {
+        if (err instanceof MoveSiblingNotFound) {
+          throw new BannerNotFound(err.siblingId);
+        }
+        throw err;
+      }
+
+      const [row] = await db
+        .update(banners)
+        .set({ sortOrder: newKey })
+        .where(
+          and(
+            eq(banners.id, id),
+            eq(banners.organizationId, organizationId),
+          ),
+        )
+        .returning();
+      if (!row) throw new BannerNotFound(id);
+      return row;
     },
 
     // ─── Client — resolve by alias ─────────────────────────────

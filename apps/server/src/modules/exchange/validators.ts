@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 
 const AliasRegex = /^[a-z0-9][a-z0-9\-_]*$/;
@@ -68,7 +70,6 @@ export const CreateOptionSchema = z
     }),
     userLimit: z.number().int().positive().nullable().optional(),
     globalLimit: z.number().int().positive().nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -82,7 +83,6 @@ export const UpdateOptionSchema = z
     rewardItems: z.array(ExchangeItemEntrySchema).min(1).optional(),
     userLimit: z.number().int().positive().nullable().optional(),
     globalLimit: z.number().int().positive().nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -178,7 +178,7 @@ export const ExchangeOptionResponseSchema = z
     userLimit: z.number().int().nullable(),
     globalLimit: z.number().int().nullable(),
     globalCount: z.number().int(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),

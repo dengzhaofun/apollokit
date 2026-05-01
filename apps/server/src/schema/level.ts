@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { fractionalSortKey } from "./_fractional-sort";
+
 import type { RewardEntry } from "../lib/rewards";
 import { organization } from "./auth";
 
@@ -88,7 +90,7 @@ export const levelConfigs = pgTable(
     coverImage: text("cover_image"),
     icon: text("icon"),
     hasStages: boolean("has_stages").default(false).notNull(),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -130,7 +132,7 @@ export const levelStages = pgTable(
     description: text("description"),
     icon: text("icon"),
     unlockRule: jsonb("unlock_rule"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -186,7 +188,7 @@ export const levels = pgTable(
     unlockRule: jsonb("unlock_rule"),
     clearRewards: jsonb("clear_rewards").$type<RewardEntry[]>(),
     starRewards: jsonb("star_rewards"),
-    sortOrder: integer("sort_order").default(0).notNull(),
+    sortOrder: fractionalSortKey("sort_order").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

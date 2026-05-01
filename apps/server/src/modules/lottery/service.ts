@@ -18,10 +18,11 @@
  * state written once at the end.
  */
 
-import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -377,6 +378,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       input: CreateTierInput,
     ): Promise<LotteryTier> {
       const pool = await loadPoolByKey(organizationId, poolKey);
+      const __sortKey = await appendKey(db, { table: lotteryTiers, sortColumn: lotteryTiers.sortOrder, scopeWhere: eq(lotteryTiers.organizationId, organizationId)! });
       const [row] = await db
         .insert(lotteryTiers)
         .values({
@@ -387,7 +389,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           baseWeight: input.baseWeight,
           color: input.color ?? null,
           icon: input.icon ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -407,7 +409,6 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       if (patch.baseWeight !== undefined) v.baseWeight = patch.baseWeight;
       if (patch.color !== undefined) v.color = patch.color;
       if (patch.icon !== undefined) v.icon = patch.icon;
-      if (patch.sortOrder !== undefined) v.sortOrder = patch.sortOrder;
       if (patch.isActive !== undefined) v.isActive = patch.isActive;
       if (patch.metadata !== undefined) v.metadata = patch.metadata;
 
@@ -438,6 +439,37 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .returning();
       if (!row) throw new LotteryTierNotFound(tierId);
       return row;
+    },
+
+    async moveTier(
+      organizationId: string,
+      tierId: string,
+      body: MoveBody,
+    ): Promise<LotteryTier> {
+      const tierRows = await db
+        .select()
+        .from(lotteryTiers)
+        .where(
+          and(
+            eq(lotteryTiers.id, tierId),
+            eq(lotteryTiers.organizationId, organizationId),
+          ),
+        )
+        .limit(1);
+      const tier = tierRows[0];
+      if (!tier) throw new LotteryTierNotFound(tierId);
+      return moveAndReturn<LotteryTier>(db, {
+        table: lotteryTiers,
+        sortColumn: lotteryTiers.sortOrder,
+        idColumn: lotteryTiers.id,
+        partitionWhere: and(
+          eq(lotteryTiers.organizationId, organizationId),
+          eq(lotteryTiers.poolId, tier.poolId),
+        )!,
+        id: tier.id,
+        body,
+        notFound: (sid) => new LotteryTierNotFound(sid),
+      });
     },
 
     async deleteTier(
@@ -475,7 +507,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .select()
         .from(lotteryTiers)
         .where(and(...conds))
-        .orderBy(desc(lotteryTiers.createdAt), desc(lotteryTiers.id))
+        .orderBy(asc(lotteryTiers.sortOrder), asc(lotteryTiers.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },
@@ -489,6 +521,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       input: CreatePrizeInput,
     ): Promise<LotteryPrize> {
       const pool = await loadPoolByKey(organizationId, poolKey);
+      const __sortKey = await appendKey(db, { table: lotteryPrizes, sortColumn: lotteryPrizes.sortOrder, scopeWhere: eq(lotteryPrizes.organizationId, organizationId)! });
       const [row] = await db
         .insert(lotteryPrizes)
         .values({
@@ -504,7 +537,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           globalStockLimit: input.globalStockLimit ?? null,
           fallbackPrizeId: input.fallbackPrizeId ?? null,
           isActive: input.isActive ?? true,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           metadata: input.metadata ?? null,
         })
         .returning();
@@ -529,7 +562,6 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       if (patch.fallbackPrizeId !== undefined)
         v.fallbackPrizeId = patch.fallbackPrizeId;
       if (patch.isActive !== undefined) v.isActive = patch.isActive;
-      if (patch.sortOrder !== undefined) v.sortOrder = patch.sortOrder;
       if (patch.metadata !== undefined) v.metadata = patch.metadata;
 
       if (Object.keys(v).length === 0) {
@@ -559,6 +591,37 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .returning();
       if (!row) throw new LotteryPrizeNotFound(prizeId);
       return row;
+    },
+
+    async movePrize(
+      organizationId: string,
+      prizeId: string,
+      body: MoveBody,
+    ): Promise<LotteryPrize> {
+      const prizeRows = await db
+        .select()
+        .from(lotteryPrizes)
+        .where(
+          and(
+            eq(lotteryPrizes.id, prizeId),
+            eq(lotteryPrizes.organizationId, organizationId),
+          ),
+        )
+        .limit(1);
+      const prize = prizeRows[0];
+      if (!prize) throw new LotteryPrizeNotFound(prizeId);
+      return moveAndReturn<LotteryPrize>(db, {
+        table: lotteryPrizes,
+        sortColumn: lotteryPrizes.sortOrder,
+        idColumn: lotteryPrizes.id,
+        partitionWhere: and(
+          eq(lotteryPrizes.organizationId, organizationId),
+          eq(lotteryPrizes.poolId, prize.poolId),
+        )!,
+        id: prize.id,
+        body,
+        notFound: (sid) => new LotteryPrizeNotFound(sid),
+      });
     },
 
     async deletePrize(
@@ -594,7 +657,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .select()
         .from(lotteryPrizes)
         .where(and(...conds))
-        .orderBy(desc(lotteryPrizes.createdAt), desc(lotteryPrizes.id))
+        .orderBy(asc(lotteryPrizes.sortOrder), asc(lotteryPrizes.createdAt))
         .limit(limit + 1);
       return buildPage(rows, limit);
     },

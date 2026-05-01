@@ -91,7 +91,10 @@ export type BattlePassAggregateView = {
         xpReward: number;
         category: 'daily' | 'weekly' | 'season' | 'event';
         weekIndex: number | null;
-        sortOrder: number;
+        /**
+         * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+         */
+        sortOrder: string;
     }>;
 };
 
@@ -915,7 +918,10 @@ export type LevelClientLevelDetail = {
     icon: string | null;
     difficulty: string | null;
     maxStars: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     unlocked: boolean;
     status: string | null;
     stars: number;
@@ -1191,7 +1197,10 @@ export type LevelConfig = {
     coverImage: string | null;
     icon: string | null;
     hasStages: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -1205,7 +1214,10 @@ export type LevelClientStageView = {
     name: string;
     description: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     unlocked: boolean;
     levels: Array<LevelClientLevelView>;
 };
@@ -1220,7 +1232,10 @@ export type LevelClientLevelView = {
     icon: string | null;
     difficulty: string | null;
     maxStars: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     unlocked: boolean;
     status: 'unlocked' | 'cleared' | null;
     stars: number;
@@ -1285,7 +1300,10 @@ export type TaskClientView = {
         };
         label?: string;
     } | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     currentValue: number;
     isCompleted: boolean;
     completedAt: string | null;
@@ -1371,7 +1389,10 @@ export type ShopProduct = {
     userLimit: number | null;
     globalLimit: number | null;
     globalCount: number;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -1388,7 +1409,10 @@ export type ShopTag = {
     name: string;
     color: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -1448,7 +1472,10 @@ export type FriendGiftPackage = {
         quantity: number;
     }>;
     isActive: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -1552,7 +1579,10 @@ export type CollectionAlbum = {
     coverImage: string | null;
     icon: string | null;
     scope: string;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     isActive: boolean;
     metadata: {
         [key: string]: unknown;
@@ -1568,7 +1598,10 @@ export type CollectionGroup = {
     name: string;
     description: string | null;
     icon: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     metadata: {
         [key: string]: unknown;
     } | null;
@@ -1585,7 +1618,10 @@ export type CollectionClientEntryView = {
     description: string | null;
     image: string | null;
     rarity: string | null;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     hidden: boolean;
     unlocked: boolean;
     unlockedAt: string | null;
@@ -1604,7 +1640,10 @@ export type CollectionClientMilestoneView = {
         count: number;
     }>;
     autoClaim: boolean;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
     unlockedCount: number;
     reached: boolean;
     claimed: boolean;
@@ -1696,7 +1735,10 @@ export type ClientBanner = {
     imageUrlDesktop: string;
     altText: string | null;
     linkAction: LinkAction;
-    sortOrder: number;
+    /**
+     * Lexicographically-comparable fractional indexing key. Treat as opaque on the client side.
+     */
+    sortOrder: string;
 };
 
 export type BadgeTreeNode = {

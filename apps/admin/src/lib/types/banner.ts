@@ -28,7 +28,7 @@ export interface Banner {
   imageUrlDesktop: string
   altText: string | null
   linkAction: LinkAction
-  sortOrder: number
+  sortOrder: string
   visibleFrom: string | null
   visibleUntil: string | null
   targetType: BannerTargetType
@@ -58,7 +58,6 @@ export interface CreateBannerInput {
   imageUrlDesktop: string
   altText?: string | null
   linkAction: LinkAction
-  sortOrder?: number
   visibleFrom?: string | null
   visibleUntil?: string | null
   targetType?: BannerTargetType

@@ -37,7 +37,6 @@ export function SchemaForm({
       synthesisEnabled: defaultValues?.synthesisConfig?.enabled ?? false,
       sameBlueprint: defaultValues?.synthesisConfig?.sameBlueprint ?? true,
       inputCount: defaultValues?.synthesisConfig?.inputCount ?? 3,
-      sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
     },
     onSubmit: async ({ value }) => {
@@ -56,7 +55,6 @@ export function SchemaForm({
           sameBlueprint: value.sameBlueprint,
           inputCount: value.inputCount,
         },
-        sortOrder: value.sortOrder,
         isActive: value.isActive,
       }
       await onSubmit(input)
@@ -460,18 +458,6 @@ export function SchemaForm({
                 onCheckedChange={field.handleChange}
               />
               <Label>{m.common_active()}</Label>
-            </div>
-          )}
-        </form.Field>
-        <form.Field name="sortOrder">
-          {(field) => (
-            <div className="space-y-2">
-              <Label>{m.common_sort_order()}</Label>
-              <Input
-                type="number"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-              />
             </div>
           )}
         </form.Field>

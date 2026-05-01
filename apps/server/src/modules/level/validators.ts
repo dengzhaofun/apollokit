@@ -16,6 +16,8 @@
 
 import { z } from "@hono/zod-openapi";
 
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
+
 import { pageOf } from "../../lib/pagination";
 import { CLAIM_TYPES, LEVEL_STATUSES } from "./types";
 
@@ -93,7 +95,6 @@ export const CreateConfigSchema = z
     coverImage: z.string().max(1024).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     hasStages: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -107,7 +108,6 @@ export const UpdateConfigSchema = z
     coverImage: z.string().max(1024).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     hasStages: z.boolean().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -123,7 +123,7 @@ export const ConfigResponseSchema = z
     coverImage: z.string().nullable(),
     icon: z.string().nullable(),
     hasStages: z.boolean(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -143,7 +143,6 @@ export const CreateStageSchema = z
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     unlockRule: UnlockRuleSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LevelCreateStage");
@@ -154,7 +153,6 @@ export const UpdateStageSchema = z
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(1024).nullable().optional(),
     unlockRule: UnlockRuleSchema.nullable().optional(),
-    sortOrder: z.number().int().optional(),
     metadata: MetadataSchema,
   })
   .openapi("LevelUpdateStage");
@@ -168,7 +166,7 @@ export const StageResponseSchema = z
     description: z.string().nullable(),
     icon: z.string().nullable(),
     unlockRule: z.unknown().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -195,7 +193,6 @@ export const CreateLevelSchema = z
     unlockRule: UnlockRuleSchema.nullable().optional(),
     clearRewards: z.array(RewardItemSchema).nullable().optional(),
     starRewards: z.array(StarRewardTierSchema).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -213,7 +210,6 @@ export const UpdateLevelSchema = z
     unlockRule: UnlockRuleSchema.nullable().optional(),
     clearRewards: z.array(RewardItemSchema).nullable().optional(),
     starRewards: z.array(StarRewardTierSchema).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -234,7 +230,7 @@ export const LevelResponseSchema = z
     unlockRule: z.unknown().nullable(),
     clearRewards: z.array(RewardItemSchema).nullable(),
     starRewards: z.array(StarRewardTierSchema).nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),
@@ -337,7 +333,7 @@ export const ClientLevelViewSchema = z
     icon: z.string().nullable(),
     difficulty: z.string().nullable(),
     maxStars: z.number().int(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     unlocked: z.boolean(),
     status: z.enum(LEVEL_STATUSES).nullable(),
     stars: z.number().int(),
@@ -355,7 +351,7 @@ export const ClientStageViewSchema = z
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     unlocked: z.boolean(),
     levels: z.array(ClientLevelViewSchema),
   })

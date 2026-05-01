@@ -8,6 +8,7 @@
 import { z } from "@hono/zod-openapi";
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -52,7 +53,7 @@ function serializeCategory(row: {
   description: string | null;
   icon: string | null;
   scope: string;
-  sortOrder: number;
+  sortOrder: string;
   isActive: boolean;
   metadata: unknown;
   createdAt: Date;
@@ -101,7 +102,7 @@ function serializeDefinition(row: {
   isHidden: boolean;
   visibility: string;
   defaultAssignmentTtlSeconds: number | null;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -260,6 +261,33 @@ taskRouter.openapi(
 
 taskRouter.openapi(
   createAdminRoute({
+    method: "post",
+    path: "/categories/{id}/move",
+    tags: [TAG_CAT],
+    summary: "Move a task category (drag/top/bottom/up/down)",
+    request: {
+      params: CategoryIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(CategoryResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await taskService.moveCategory(orgId, id, body);
+    return c.json(ok(serializeCategory(row)), 200);
+  },
+);
+
+taskRouter.openapi(
+  createAdminRoute({
     method: "delete",
     path: "/categories/{id}",
     tags: [TAG_CAT],
@@ -394,6 +422,35 @@ taskRouter.openapi(
       key,
       c.req.valid("json"),
     );
+    return c.json(ok(serializeDefinition(row)), 200);
+  },
+);
+
+taskRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/definitions/{key}/move",
+    tags: [TAG_DEF],
+    summary: "Move a task definition (drag/top/bottom/up/down)",
+    request: {
+      params: DefinitionKeyParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": { schema: envelopeOf(DefinitionResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await taskService.moveDefinition(orgId, key, body);
     return c.json(ok(serializeDefinition(row)), 200);
   },
 );

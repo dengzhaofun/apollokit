@@ -1,4 +1,6 @@
 import { z } from "@hono/zod-openapi";
+
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
 import { sql } from "drizzle-orm";
 
 import { defineListFilter, f } from "../../lib/list-filter";
@@ -36,7 +38,6 @@ export const CreateCategorySchema = z
     icon: z.string().max(2000).nullable().optional().openapi({
       description: "Icon URL for this category.",
     }),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -47,7 +48,6 @@ export const UpdateCategorySchema = z
     name: z.string().min(1).max(200).optional(),
     alias: AliasSchema.nullable().optional(),
     icon: z.string().max(2000).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     metadata: MetadataSchema,
   })
@@ -195,7 +195,7 @@ export const ItemCategoryResponseSchema = z
     alias: z.string().nullable(),
     name: z.string(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
     createdAt: z.string(),

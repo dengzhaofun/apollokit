@@ -6,6 +6,7 @@
  */
 
 import type { HonoEnv } from "../../env";
+import { MoveBodySchema } from "../../lib/fractional-order";
 import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
@@ -60,7 +61,7 @@ function serializePackage(row: {
   icon: string | null;
   giftItems: { definitionId: string; quantity: number }[];
   isActive: boolean;
-  sortOrder: number;
+  sortOrder: string;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -286,6 +287,34 @@ friendGiftRouter.openapi(
       id,
       c.req.valid("json"),
     );
+    return c.json(ok(serializePackage(row)), 200);
+  },
+);
+
+// POST /friend-gift/packages/:id/move
+friendGiftRouter.openapi(
+  createAdminRoute({
+    method: "post",
+    path: "/packages/{id}/move",
+    tags: [TAG],
+    summary: "Move a gift package (drag/top/bottom/up/down)",
+    request: {
+      params: PackageIdParamSchema,
+      body: { content: { "application/json": { schema: MoveBodySchema } } },
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(PackageResponseSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const row = await friendGiftService.movePackage(orgId, id, body);
     return c.json(ok(serializePackage(row)), 200);
   },
 );

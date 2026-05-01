@@ -1,3 +1,4 @@
+import { useMoveTaskDefinition } from "#/hooks/use-move"
 import { Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -25,6 +26,7 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<TaskDefinition>()
 
 function ActionsCell({ def }: { def: TaskDefinition }) {
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -161,6 +163,7 @@ export function DefinitionTable({
   })
   const columns = useColumns()
   const items = query.data?.items ?? []
+  const moveMutation = useMoveTaskDefinition()
   return (
     <DataTable
       columns={columns}
@@ -175,6 +178,10 @@ export function DefinitionTable({
       onPageSizeChange={() => {}}
       isLoading={query.isPending}
       showSearch={false}
+      sortable={{
+        onMove: (id, body) => moveMutation.mutate({ id, body }),
+        disabled: moveMutation.isPending,
+      }}
     />
   )
 }

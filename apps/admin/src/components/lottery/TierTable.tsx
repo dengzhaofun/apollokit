@@ -7,6 +7,11 @@ import {
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 
 import {
+  RowMoveActions,
+  SortableTableProvider,
+  SortableTableRow,
+} from "#/components/common/SortableTable"
+import {
   Table,
   TableBody,
   TableCell,
@@ -22,7 +27,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { useMoveLotteryTier } from "#/hooks/use-move"
 import type { LotteryTier } from "#/lib/types/lottery"
+import * as m from "#/paraglide/messages.js"
 
 const columnHelper = createColumnHelper<LotteryTier>()
 
@@ -33,6 +40,7 @@ interface TierTableProps {
 }
 
 export function TierTable({ data, onEdit, onDelete }: TierTableProps) {
+  const moveMutation = useMoveLotteryTier()
   const columns = [
     columnHelper.accessor("name", {
       header: "Name",
@@ -61,9 +69,6 @@ export function TierTable({ data, onEdit, onDelete }: TierTableProps) {
         )
       },
     }),
-    columnHelper.accessor("sortOrder", {
-      header: "Order",
-    }),
     columnHelper.accessor("isActive", {
       header: "Status",
       cell: (info) => (
@@ -77,6 +82,7 @@ export function TierTable({ data, onEdit, onDelete }: TierTableProps) {
       header: "",
       cell: (info) => {
         const tier = info.row.original
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -108,41 +114,66 @@ export function TierTable({ data, onEdit, onDelete }: TierTableProps) {
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
+  const rows = table.getRowModel().rows
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id}>
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(header.column.columnDef.header, header.getContext())}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length ? (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
+    <SortableTableProvider
+      items={data}
+      onMove={(id, body) => moveMutation.mutate({ id, body })}
+      disabled={moveMutation.isPending}
+    >
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              <TableHead className="w-8" />
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
               ))}
+              <TableHead className="w-40 text-right">
+                {m.data_table_reorder_actions()}
+              </TableHead>
             </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center">
-              No tiers yet. Add tiers for gacha-style two-level selection.
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {rows.length ? (
+            rows.map((row, idx) => (
+              <SortableTableRow key={row.id} id={row.original.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-0.5">
+                    <RowMoveActions
+                      id={row.original.id}
+                      prevId={data[idx - 1]?.id}
+                      nextId={data[idx + 1]?.id}
+                      isFirst={idx === 0}
+                      isLast={idx === data.length - 1}
+                    />
+                  </div>
+                </TableCell>
+              </SortableTableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={7} className="h-24 text-center">
+                No tiers yet. Add tiers for gacha-style two-level selection.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </SortableTableProvider>
   )
 }

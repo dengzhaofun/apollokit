@@ -1,4 +1,6 @@
 import { z } from "@hono/zod-openapi";
+
+import { FractionalKeySchema, MoveBodySchema } from "../../lib/fractional-order";
 import { sql } from "drizzle-orm";
 
 import { defineListFilter, f } from "../../lib/list-filter";
@@ -35,7 +37,6 @@ export const CreateCurrencySchema = z
     alias: AliasSchema.nullable().optional(),
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(2000).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     activityId: z.string().uuid().nullable().optional().openapi({
       description:
@@ -52,7 +53,6 @@ export const UpdateCurrencySchema = z
     alias: AliasSchema.nullable().optional(),
     description: z.string().max(2000).nullable().optional(),
     icon: z.string().max(2000).nullable().optional(),
-    sortOrder: z.number().int().optional(),
     isActive: z.boolean().optional(),
     activityId: z.string().uuid().nullable().optional(),
     activityNodeId: z.string().uuid().nullable().optional(),
@@ -179,7 +179,7 @@ export const CurrencyDefinitionResponseSchema = z
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
-    sortOrder: z.number().int(),
+    sortOrder: FractionalKeySchema,
     isActive: z.boolean(),
     activityId: z.string().nullable(),
     activityNodeId: z.string().nullable(),

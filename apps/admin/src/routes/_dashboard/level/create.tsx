@@ -40,7 +40,6 @@ function LevelCreatePage() {
         coverImage: coverImage || null,
         icon: icon || null,
         hasStages,
-        sortOrder,
         isActive,
       })
       toast.success(m.level_config_created())

@@ -42,6 +42,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "d
 
 import type { AppDeps } from "../../deps";
 import { isUniqueViolation } from "../../lib/db-errors";
+import { type MoveBody, appendKey, moveAndReturn, nKeysBetween } from "../../lib/fractional-order";
 import { looksLikeId } from "../../lib/key-resolver";
 import {
   buildPage,
@@ -273,6 +274,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         );
     }
     try {
+      const __sortKey = await appendKey(db, { table: shopCategories, sortColumn: shopCategories.sortOrder, scopeWhere: eq(shopCategories.organizationId, organizationId)! });
       const [row] = await db
         .insert(shopCategories)
         .values({
@@ -284,7 +286,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           coverImage: input.coverImage ?? null,
           icon: input.icon ?? null,
           level,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -331,7 +333,6 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (patch.description !== undefined) values.description = patch.description;
     if (patch.coverImage !== undefined) values.coverImage = patch.coverImage;
     if (patch.icon !== undefined) values.icon = patch.icon;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
     if (level !== existing.level) values.level = level;
@@ -356,6 +357,23 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         throw new ShopCategoryAliasConflict(patch.alias);
       throw err;
     }
+  }
+
+  async function moveCategory(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<ShopCategory> {
+    const existing = await loadCategoryByKey(organizationId, key);
+    return moveAndReturn<ShopCategory>(db, {
+      table: shopCategories,
+      sortColumn: shopCategories.sortOrder,
+      idColumn: shopCategories.id,
+      partitionWhere: eq(shopCategories.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new ShopCategoryNotFound(sid),
+    });
   }
 
   async function deleteCategory(
@@ -416,6 +434,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     input: CreateTagInput,
   ): Promise<ShopTag> {
     try {
+      const __sortKey = await appendKey(db, { table: shopTags, sortColumn: shopTags.sortOrder, scopeWhere: eq(shopTags.organizationId, organizationId)! });
       const [row] = await db
         .insert(shopTags)
         .values({
@@ -424,7 +443,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           name: input.name,
           color: input.color ?? null,
           icon: input.icon ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           metadata: input.metadata ?? null,
         })
@@ -449,7 +468,6 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (patch.name !== undefined) values.name = patch.name;
     if (patch.color !== undefined) values.color = patch.color;
     if (patch.icon !== undefined) values.icon = patch.icon;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
     if (Object.keys(values).length === 0) return existing;
@@ -471,6 +489,23 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         throw new ShopTagAliasConflict(patch.alias);
       throw err;
     }
+  }
+
+  async function moveTag(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<ShopTag> {
+    const existing = await loadTagByKey(organizationId, key);
+    return moveAndReturn<ShopTag>(db, {
+      table: shopTags,
+      sortColumn: shopTags.sortOrder,
+      idColumn: shopTags.id,
+      partitionWhere: eq(shopTags.organizationId, organizationId)!,
+      id: existing.id,
+      body,
+      notFound: (sid) => new ShopTagNotFound(sid),
+    });
   }
 
   async function deleteTag(
@@ -517,7 +552,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .select()
       .from(shopTags)
       .where(and(...conditions))
-      .orderBy(desc(shopTags.createdAt), desc(shopTags.id))
+      .orderBy(asc(shopTags.sortOrder), asc(shopTags.createdAt))
       .limit(limit + 1);
     return buildPage(rows, limit);
   }
@@ -577,6 +612,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     }
 
     try {
+      const __sortKey = await appendKey(db, { table: shopProducts, sortColumn: shopProducts.sortOrder, scopeWhere: eq(shopProducts.organizationId, organizationId)! });
       const [row] = await db
         .insert(shopProducts)
         .values({
@@ -599,7 +635,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           refreshLimit: input.refreshLimit ?? null,
           userLimit: input.userLimit ?? null,
           globalLimit: input.globalLimit ?? null,
-          sortOrder: input.sortOrder ?? 0,
+          sortOrder: __sortKey,
           isActive: input.isActive ?? true,
           activityId: input.activityId ?? null,
           activityNodeId: input.activityNodeId ?? null,
@@ -657,7 +693,6 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (patch.refreshLimit !== undefined) values.refreshLimit = patch.refreshLimit;
     if (patch.userLimit !== undefined) values.userLimit = patch.userLimit;
     if (patch.globalLimit !== undefined) values.globalLimit = patch.globalLimit;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.isActive !== undefined) values.isActive = patch.isActive;
     if (patch.activityId !== undefined) values.activityId = patch.activityId;
     if (patch.activityNodeId !== undefined)
@@ -693,6 +728,34 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     return { ...row, tags: tagsMap.get(row.id) ?? [] };
   }
 
+  async function moveProduct(
+    organizationId: string,
+    key: string,
+    body: MoveBody,
+  ): Promise<ShopProduct> {
+    const existing = await loadProductByKey(organizationId, key);
+    // Scope by categoryId so products reorder within their category. Products
+    // without a category share an "uncategorized" partition.
+    const partitionWhere = existing.categoryId
+      ? and(
+          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.categoryId, existing.categoryId),
+        )!
+      : and(
+          eq(shopProducts.organizationId, organizationId),
+          isNull(shopProducts.categoryId),
+        )!;
+    return moveAndReturn<ShopProduct>(db, {
+      table: shopProducts,
+      sortColumn: shopProducts.sortOrder,
+      idColumn: shopProducts.id,
+      partitionWhere,
+      id: existing.id,
+      body,
+      notFound: (sid) => new ShopProductNotFound(sid),
+    });
+  }
+
   async function deleteProduct(
     organizationId: string,
     id: string,
@@ -707,6 +770,37 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       )
       .returning({ id: shopProducts.id });
     if (deleted.length === 0) throw new ShopProductNotFound(id);
+  }
+
+  async function moveGrowthStage(
+    organizationId: string,
+    stageId: string,
+    body: MoveBody,
+  ): Promise<ShopGrowthStage> {
+    const stageRows = await db
+      .select()
+      .from(shopGrowthStages)
+      .where(
+        and(
+          eq(shopGrowthStages.id, stageId),
+          eq(shopGrowthStages.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    const stage = stageRows[0];
+    if (!stage) throw new ShopGrowthStageNotFound(stageId);
+    return moveAndReturn<ShopGrowthStage>(db, {
+      table: shopGrowthStages,
+      sortColumn: shopGrowthStages.sortOrder,
+      idColumn: shopGrowthStages.id,
+      partitionWhere: and(
+        eq(shopGrowthStages.organizationId, organizationId),
+        eq(shopGrowthStages.productId, stage.productId),
+      )!,
+      id: stage.id,
+      body,
+      notFound: (sid) => new ShopGrowthStageNotFound(sid),
+    });
   }
 
   async function getProduct(
@@ -804,7 +898,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .select()
       .from(shopProducts)
       .where(and(...conds))
-      .orderBy(desc(shopProducts.createdAt), desc(shopProducts.id))
+      .orderBy(asc(shopProducts.sortOrder), asc(shopProducts.createdAt))
       .limit(limit + 1);
 
     const page = buildPage(rows, limit);
@@ -839,6 +933,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       throw new ShopInvalidInput(
         "growth stages only apply to productType='growth_pack'",
       );
+    const __sortKey = await appendKey(db, { table: shopGrowthStages, sortColumn: shopGrowthStages.sortOrder, scopeWhere: eq(shopGrowthStages.organizationId, organizationId)! });
     const [row] = await db
       .insert(shopGrowthStages)
       .values({
@@ -850,7 +945,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         triggerType: input.triggerType,
         triggerConfig: input.triggerConfig ?? null,
         rewardItems: input.rewardItems,
-        sortOrder: input.sortOrder ?? 0,
+        sortOrder: __sortKey,
         metadata: input.metadata ?? null,
       })
       .returning();
@@ -874,7 +969,6 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (patch.triggerConfig !== undefined)
       values.triggerConfig = patch.triggerConfig;
     if (patch.rewardItems !== undefined) values.rewardItems = patch.rewardItems;
-    if (patch.sortOrder !== undefined) values.sortOrder = patch.sortOrder;
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
     if (Object.keys(values).length === 0) return existing;
     const [row] = await db
@@ -919,10 +1013,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .delete(shopGrowthStages)
       .where(eq(shopGrowthStages.productId, product.id));
     if (input.stages.length === 0) return [];
+    const keys = nKeysBetween(null, null, input.stages.length);
     const rows = await db
       .insert(shopGrowthStages)
       .values(
-        input.stages.map((s) => ({
+        input.stages.map((s, i) => ({
           productId: product.id,
           organizationId,
           stageIndex: s.stageIndex,
@@ -931,7 +1026,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           triggerType: s.triggerType,
           triggerConfig: s.triggerConfig ?? null,
           rewardItems: s.rewardItems,
-          sortOrder: s.sortOrder ?? 0,
+          sortOrder: keys[i]!,
           metadata: s.metadata ?? null,
         })),
       )
@@ -1688,6 +1783,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     // categories
     createCategory,
     updateCategory,
+    moveCategory,
     deleteCategory,
     listCategories,
     listCategoryTree,
@@ -1695,6 +1791,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     // tags
     createTag,
     updateTag,
+    moveTag,
     deleteTag,
     listTags,
     listAllTags,
@@ -1702,6 +1799,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     // products
     createProduct,
     updateProduct,
+    moveProduct,
     deleteProduct,
     getProduct,
     listProducts,
@@ -1709,6 +1807,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     listStages,
     createStage,
     updateStage,
+    moveGrowthStage,
     deleteStage,
     upsertStages,
     // purchase + claim

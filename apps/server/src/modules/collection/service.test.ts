@@ -150,7 +150,6 @@ describe("collection service", () => {
     test("create group + list", async () => {
       const g = await svc.createGroup(orgId, "c-dragons", {
         name: "Elemental Dragons",
-        sortOrder: 1,
       });
       expect(g.name).toBe("Elemental Dragons");
       dragonsGroupId = g.id;
