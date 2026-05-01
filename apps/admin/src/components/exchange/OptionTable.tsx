@@ -144,6 +144,7 @@ export function OptionTable({ configKey, route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={EXCHANGE_OPTION_FILTER_DEFS}

@@ -133,6 +133,7 @@ function CdkeyListPage() {
       <main className="flex-1 p-6">
         <DataTable
           columns={columns}
+          mobileLayout="cards"
           data={list.items}
           getRowId={(row) => row.id}
           filters={CDKEY_BATCH_FILTER_DEFS}

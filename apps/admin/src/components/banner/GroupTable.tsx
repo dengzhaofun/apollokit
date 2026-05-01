@@ -83,6 +83,7 @@ export function GroupTable({ route, ...rest }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={BANNER_GROUP_FILTER_DEFS}

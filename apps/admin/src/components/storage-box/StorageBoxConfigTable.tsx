@@ -157,6 +157,7 @@ export function StorageBoxConfigTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={STORAGE_BOX_CONFIG_FILTER_DEFS}

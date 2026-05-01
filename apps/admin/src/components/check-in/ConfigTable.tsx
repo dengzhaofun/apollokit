@@ -162,6 +162,7 @@ export function ConfigTable({ route, ...rest }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={CHECK_IN_CONFIG_FILTER_DEFS}

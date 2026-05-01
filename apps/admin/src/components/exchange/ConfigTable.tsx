@@ -118,6 +118,7 @@ export function ExchangeConfigTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={EXCHANGE_CONFIG_FILTER_DEFS}

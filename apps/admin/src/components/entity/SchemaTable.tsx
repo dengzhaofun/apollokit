@@ -105,6 +105,7 @@ export function SchemaTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={ENTITY_SCHEMA_FILTER_DEFS}

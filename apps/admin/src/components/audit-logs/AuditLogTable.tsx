@@ -181,6 +181,7 @@ export function AuditLogTable({ route, toolbar }: Props) {
     <>
       <DataTable
         columns={columns}
+        mobileLayout="cards"
         data={list.items}
         toolbar={toolbar}
         getRowId={(r) => r.id}
