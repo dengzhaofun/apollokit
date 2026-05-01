@@ -64,7 +64,7 @@ import type {
   CreateNodeInput,
   CreateScheduleInput,
 } from "#/lib/types/activity"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -309,6 +309,83 @@ function ActivityDetailPage() {
   )
 }
 
+/**
+ * Picks the next time anchor relevant to the current phase and renders
+ * a live "in 3d 4h" countdown. Refreshes every minute — the granularity
+ * runtime cron already ticks at, so finer updates would be misleading.
+ */
+function ActivityCountdownCard({
+  activity,
+}: {
+  activity: import("#/lib/types/activity").Activity
+}) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const status = activity.status
+  const v = new Date(activity.visibleAt).getTime()
+  const s = new Date(activity.startAt).getTime()
+  const e = new Date(activity.endAt).getTime()
+  const r = new Date(activity.rewardEndAt).getTime()
+  const h = new Date(activity.hiddenAt).getTime()
+  const t = now.getTime()
+
+  let target: number | null = null
+  let labelKey: () => string = m.activity_countdown_to_visible
+  if (status === "draft") {
+    target = null
+  } else if (t < v) {
+    target = v
+    labelKey = m.activity_countdown_to_visible
+  } else if (t < s) {
+    target = s
+    labelKey = m.activity_countdown_to_active
+  } else if (t < e) {
+    target = e
+    labelKey = m.activity_countdown_to_end
+  } else if (t < r) {
+    target = r
+    labelKey = m.activity_countdown_to_reward_end
+  } else if (t < h) {
+    target = h
+    labelKey = m.activity_countdown_to_archive
+  }
+
+  if (target === null) {
+    return (
+      <div className="rounded-xl border bg-card p-4 text-sm shadow-sm">
+        <span className="text-muted-foreground">
+          {m.activity_countdown_idle()}
+        </span>
+      </div>
+    )
+  }
+
+  const remainMs = Math.max(0, target - t)
+  const totalMin = Math.floor(remainMs / 60_000)
+  const days = Math.floor(totalMin / (60 * 24))
+  const hours = Math.floor((totalMin % (60 * 24)) / 60)
+  const mins = totalMin % 60
+
+  return (
+    <div className="rounded-xl border bg-gradient-to-br from-amber-50 to-card p-4 text-sm shadow-sm dark:from-amber-950/30">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          {labelKey()}
+        </span>
+        <span className="font-mono text-base">
+          {days > 0 ? `${days}d ` : ""}
+          {hours > 0 || days > 0 ? `${hours}h ` : ""}
+          {mins}m
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function OverviewPanel({
   activity,
 }: {
@@ -318,6 +395,8 @@ function OverviewPanel({
     format(new Date(iso), "yyyy-MM-dd HH:mm:ss")
   return (
     <div className="grid gap-4">
+      <ActivityCountdownCard activity={activity} />
+
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_timeline()}</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">

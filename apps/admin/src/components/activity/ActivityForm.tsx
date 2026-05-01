@@ -1,7 +1,9 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 
+import { ActivityMilestonesEditor } from "#/components/activity/ActivityMilestonesEditor"
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
+import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
@@ -136,16 +138,9 @@ export function ActivityForm({
       endAtLocal: toLocalInput(defaultValues?.endAt),
       rewardEndAtLocal: toLocalInput(defaultValues?.rewardEndAt),
       hiddenAtLocal: toLocalInput(defaultValues?.hiddenAt),
-      milestoneTiersJson: JSON.stringify(
-        defaultValues?.milestoneTiers ?? [],
-        null,
-        2,
-      ),
-      globalRewardsJson: JSON.stringify(
-        defaultValues?.globalRewards ?? [],
-        null,
-        2,
-      ),
+      milestoneTiers: (defaultValues?.milestoneTiers ??
+        []) as ActivityMilestoneTier[],
+      globalRewards: (defaultValues?.globalRewards ?? []) as RewardEntry[],
       cleanupMode: (defaultValues?.cleanupRule?.mode ?? "purge") as
         | "purge"
         | "convert"
@@ -155,20 +150,8 @@ export function ActivityForm({
         : "",
     },
     onSubmit: async ({ value }) => {
-      let milestoneTiers: ActivityMilestoneTier[] = []
-      let globalRewards: RewardEntry[] = []
-      try {
-        milestoneTiers = JSON.parse(
-          value.milestoneTiersJson,
-        ) as ActivityMilestoneTier[]
-      } catch {
-        /* ignore */
-      }
-      try {
-        globalRewards = JSON.parse(value.globalRewardsJson) as RewardEntry[]
-      } catch {
-        /* ignore */
-      }
+      const milestoneTiers = value.milestoneTiers
+      const globalRewards = value.globalRewards
 
       let membership: ActivityMembershipConfig | null = null
       if (value.membershipJson.trim()) {
@@ -461,31 +444,29 @@ export function ActivityForm({
         title={m.activity_section_rewards_title()}
         description={m.activity_section_rewards_desc()}
       >
-        <form.Field name="milestoneTiersJson">
+        <form.Field name="milestoneTiers">
           {(field) => (
-            <div className="flex flex-col gap-1.5">
-              <Label>{m.activity_field_milestones_json()}</Label>
-              <JsonEditor
+            <div className="flex flex-col gap-2">
+              <Label className="inline-flex items-center gap-1.5">
+                {m.activity_milestones_label()}
+                <FieldHint>{m.activity_milestones_hint()}</FieldHint>
+              </Label>
+              <ActivityMilestonesEditor
                 value={field.state.value}
-                onChange={(v) => field.handleChange(v)}
-                placeholder='[{"alias":"m1","points":100,"rewards":[{"type":"item","id":"gold-uuid","count":1000}]}]'
-                height={200}
-                aria-label={m.activity_field_milestones_json()}
+                onChange={(next) => field.handleChange(next)}
               />
             </div>
           )}
         </form.Field>
 
-        <form.Field name="globalRewardsJson">
+        <form.Field name="globalRewards">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label>{m.activity_field_global_rewards_json()}</Label>
-              <JsonEditor
-                value={field.state.value}
-                onChange={(v) => field.handleChange(v)}
-                placeholder='[{"type":"item","id":"trophy-uuid","count":1}]'
-                height={140}
-                aria-label={m.activity_field_global_rewards_json()}
+              <RewardEntryEditor
+                label={m.activity_global_rewards_label()}
+                hint={m.activity_global_rewards_hint()}
+                entries={field.state.value}
+                onChange={(next) => field.handleChange(next)}
               />
             </div>
           )}

@@ -1,7 +1,6 @@
 import { Plus } from "lucide-react"
 
 import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
 import { ItemRewardRow } from "#/components/item/ItemRewardRow"
 import { cn } from "#/lib/utils"
 import * as m from "#/paraglide/messages.js"
