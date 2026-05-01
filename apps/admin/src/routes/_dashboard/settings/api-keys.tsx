@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { useIsMobile } from "#/hooks/use-mobile"
 import {
   Dialog,
   DialogContent,
@@ -83,10 +84,11 @@ function AdminKeysTab() {
   const { data: keys, isPending, error } = useAdminKeys()
   const [showCreate, setShowCreate] = useState(false)
   const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const isMobile = useIsMobile()
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {m.apikeys_admin_keys_desc()}
         </p>
@@ -110,8 +112,14 @@ function AdminKeysTab() {
         <div className="flex h-40 items-center justify-center text-muted-foreground">
           {m.apikeys_no_admin_keys()}
         </div>
+      ) : isMobile ? (
+        <div className="divide-y rounded-xl border bg-card shadow-sm">
+          {keys.map((k: Record<string, unknown>) => (
+            <AdminKeyCard key={k.id as string} apiKey={k} />
+          ))}
+        </div>
       ) : (
-        <div className="rounded-xl border bg-card shadow-sm">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -179,25 +187,84 @@ function AdminKeyRow({ apiKey }: { apiKey: Record<string, unknown> }) {
         </TableCell>
       </TableRow>
 
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{m.apikeys_delete_admin_key_title()}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {m.apikeys_delete_admin_key_desc()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => revoke.mutate(apiKey.id as string)}
-            >
-              {m.common_delete()}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <RevokeAdminKeyDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        onConfirm={() => revoke.mutate(apiKey.id as string)}
+      />
     </>
+  )
+}
+
+function AdminKeyCard({ apiKey }: { apiKey: Record<string, unknown> }) {
+  const revoke = useRevokeAdminKey()
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2 p-3">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="truncate text-sm font-medium">
+            {(apiKey.name as string) || "Unnamed"}
+          </div>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <dt>{m.common_created()}</dt>
+            <dd className="text-right">
+              {new Date(apiKey.createdAt as string).toLocaleDateString()}
+            </dd>
+            <dt>{m.apikeys_expires()}</dt>
+            <dd className="text-right">
+              {apiKey.expiresAt
+                ? new Date(apiKey.expiresAt as string).toLocaleDateString()
+                : "Never"}
+            </dd>
+          </dl>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-destructive"
+          onClick={() => setShowConfirm(true)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+
+      <RevokeAdminKeyDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        onConfirm={() => revoke.mutate(apiKey.id as string)}
+      />
+    </>
+  )
+}
+
+function RevokeAdminKeyDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConfirm: () => void
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{m.apikeys_delete_admin_key_title()}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {m.apikeys_delete_admin_key_desc()}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {m.common_delete()}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 
@@ -270,10 +337,11 @@ function ClientCredentialsTab() {
     publishableKey: string
     secret: string
   } | null>(null)
+  const isMobile = useIsMobile()
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {m.apikeys_client_credentials_desc()}
         </p>
@@ -297,8 +365,14 @@ function ClientCredentialsTab() {
         <div className="flex h-40 items-center justify-center text-muted-foreground">
           {m.apikeys_no_credentials()}
         </div>
+      ) : isMobile ? (
+        <div className="divide-y rounded-xl border bg-card shadow-sm">
+          {credentials.map((cred) => (
+            <ClientCredentialCard key={cred.id} credential={cred} />
+          ))}
+        </div>
       ) : (
-        <div className="rounded-xl border bg-card shadow-sm">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -427,26 +501,135 @@ function ClientCredentialRow({
         </TableCell>
       </TableRow>
 
-      <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{m.apikeys_delete_credential_title()}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {m.apikeys_delete_credential_desc()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => remove.mutate(credential.id)}
-            >
-              {m.common_delete()}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+      <DeleteCredentialDialog
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        onConfirm={() => remove.mutate(credential.id)}
+      />
     </>
+  )
+}
+
+function ClientCredentialCard({
+  credential,
+}: {
+  credential: {
+    id: string
+    name: string
+    publishableKey: string
+    devMode: boolean
+    enabled: boolean
+    createdAt: string
+  }
+}) {
+  const revoke = useRevokeClientCredential()
+  const remove = useDeleteClientCredential()
+  const updateDevMode = useUpdateDevMode()
+  const [showDelete, setShowDelete] = useState(false)
+
+  return (
+    <>
+      <div className="space-y-2 p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm font-medium">
+                {credential.name}
+              </span>
+              {credential.enabled ? (
+                <Badge variant="default">{m.common_active()}</Badge>
+              ) : (
+                <Badge variant="secondary">Disabled</Badge>
+              )}
+            </div>
+            <div className="mt-1 flex items-center gap-1">
+              <code className="truncate text-xs">
+                {credential.publishableKey.slice(0, 20)}...
+              </code>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 shrink-0 p-0"
+                onClick={() =>
+                  navigator.clipboard.writeText(credential.publishableKey)
+                }
+              >
+                <Copy className="size-3" />
+              </Button>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-destructive"
+            title={m.common_delete()}
+            onClick={() => setShowDelete(true)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
+          <dt className="text-muted-foreground">{m.apikeys_dev_mode()}</dt>
+          <dd className="justify-self-end">
+            <Switch
+              checked={credential.devMode}
+              onCheckedChange={(checked) =>
+                updateDevMode.mutate({ id: credential.id, devMode: checked })
+              }
+            />
+          </dd>
+          <dt className="text-muted-foreground">{m.common_created()}</dt>
+          <dd className="text-right">
+            {new Date(credential.createdAt).toLocaleDateString()}
+          </dd>
+        </dl>
+        {credential.enabled ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-destructive"
+            onClick={() => revoke.mutate(credential.id)}
+          >
+            {m.common_revoke()}
+          </Button>
+        ) : null}
+      </div>
+
+      <DeleteCredentialDialog
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        onConfirm={() => remove.mutate(credential.id)}
+      />
+    </>
+  )
+}
+
+function DeleteCredentialDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConfirm: () => void
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{m.apikeys_delete_credential_title()}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {m.apikeys_delete_credential_desc()}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {m.common_delete()}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 

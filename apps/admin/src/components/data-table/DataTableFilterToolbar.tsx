@@ -11,7 +11,8 @@
  * page with only `?q=` search has no use for advanced mode).
  */
 
-import { XIcon } from "lucide-react"
+import { Filter, XIcon } from "lucide-react"
+import { useState } from "react"
 
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -24,9 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "#/components/ui/sheet"
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group"
+import { useIsMobile } from "#/hooks/use-mobile"
 import type { FilterDef, FilterValue } from "#/hooks/use-list-search"
 import { cn } from "#/lib/utils"
+import * as m from "#/paraglide/messages.js"
 
 interface Props {
   filterDefs: FilterDef[]
@@ -65,11 +74,101 @@ export function DataTableFilterToolbar({
   showAdvancedToggle = true,
   className,
 }: Props) {
+  const isMobile = useIsMobile()
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   if (filterDefs.length === 0 && !showAdvancedToggle) return null
 
   // Advanced mode owns its own filter UI (the QueryBuilder) — hide
   // the per-field facets to avoid two filter UIs racing.
   const showFacets = mode === "basic"
+
+  // Mobile: collapse facet chips into a Sheet to keep the row compact.
+  // ToggleGroup stays inline because mode switching is a 1-tap action
+  // worth keeping visible. Facets can be many and width-hungry.
+  if (isMobile && filterDefs.length > 0) {
+    return (
+      <div className={cn("flex items-center gap-2", className)}>
+        {showFacets ? (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => setSheetOpen(true)}
+            >
+              <Filter className="size-3.5" />
+              {m.data_table_filters()}
+              {activeFilterCount > 0 ? (
+                <Badge
+                  variant="secondary"
+                  className="ml-1 rounded-sm px-1 font-normal"
+                >
+                  {activeFilterCount}
+                </Badge>
+              ) : null}
+            </Button>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetContent side="right" className="flex flex-col gap-0">
+                <SheetHeader>
+                  <SheetTitle>{m.data_table_filters()}</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-1 flex-col gap-3 overflow-auto p-4">
+                  {filterDefs.map((def) => (
+                    <div key={def.id} className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {def.label}
+                      </span>
+                      <FilterControl
+                        def={def}
+                        value={filterValues[def.id]}
+                        onChange={(v) => onFilterChange(def.id, v)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {hasActiveFilters ? (
+                  <div className="border-t p-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        onResetFilters()
+                        setSheetOpen(false)
+                      }}
+                    >
+                      {m.data_table_filters_reset()}
+                      <XIcon className="ml-2 size-3" />
+                    </Button>
+                  </div>
+                ) : null}
+              </SheetContent>
+            </Sheet>
+          </>
+        ) : null}
+
+        {showAdvancedToggle && filterDefs.length > 0 ? (
+          <ToggleGroup
+            size="sm"
+            value={[mode]}
+            onValueChange={(v) => {
+              const next = v[0]
+              if (next === "basic" || next === "advanced") onModeChange(next)
+            }}
+            className="ml-auto h-8"
+          >
+            <ToggleGroupItem value="basic" className="h-8 px-3 text-xs">
+              Basic
+            </ToggleGroupItem>
+            <ToggleGroupItem value="advanced" className="h-8 px-3 text-xs">
+              Advanced
+            </ToggleGroupItem>
+          </ToggleGroup>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
     <div
@@ -96,7 +195,7 @@ export function DataTableFilterToolbar({
           onClick={onResetFilters}
           className="h-8 px-2 lg:px-3"
         >
-          Reset
+          {m.data_table_filters_reset()}
           {activeFilterCount > 0 ? (
             <Badge variant="secondary" className="ml-2 rounded-sm px-1 font-normal">
               {activeFilterCount}

@@ -27,6 +27,7 @@ function useColumns(): ColumnDef<FriendGiftPackage, unknown>[] {
     () => [
       columnHelper.accessor("name", {
         header: () => m.common_name(),
+        meta: { primary: true },
         cell: (info) => (
           <Link
             to="/friend-gift/packages/$packageId"
@@ -125,6 +126,7 @@ function FriendGiftPage() {
         <DataTable
           columns={columns}
           data={list.items}
+          mobileLayout="cards"
           getRowId={(row) => row.id}
           {...list.tableProps}
         />
