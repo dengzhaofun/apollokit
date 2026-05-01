@@ -293,6 +293,82 @@ describe("check-in service", () => {
       expect(row.organizationId).toBe(orgId);
     }
   });
+
+  test("createReward rejects dayNumber above week mode limit", async () => {
+    await svc.createConfig(orgId, {
+      name: "RewardWeek",
+      alias: "rw-week",
+      resetMode: "week",
+      timezone: "UTC",
+    });
+    await expect(
+      svc.createReward(orgId, "rw-week", {
+        dayNumber: 8,
+        rewardItems: [{ type: "currency", id: "gold", count: 100 }],
+      }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("createReward rejects dayNumber above month mode limit", async () => {
+    await svc.createConfig(orgId, {
+      name: "RewardMonth",
+      alias: "rw-month",
+      resetMode: "month",
+      timezone: "UTC",
+    });
+    await expect(
+      svc.createReward(orgId, "rw-month", {
+        dayNumber: 32,
+        rewardItems: [{ type: "currency", id: "gold", count: 100 }],
+      }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("createReward rejects dayNumber above none-mode target", async () => {
+    await svc.createConfig(orgId, {
+      name: "RewardTarget",
+      alias: "rw-target",
+      resetMode: "none",
+      target: 10,
+      timezone: "UTC",
+    });
+    await expect(
+      svc.createReward(orgId, "rw-target", {
+        dayNumber: 11,
+        rewardItems: [{ type: "currency", id: "gold", count: 100 }],
+      }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
+
+  test("createReward accepts large dayNumber when none-mode has no target", async () => {
+    await svc.createConfig(orgId, {
+      name: "RewardFreeform",
+      alias: "rw-freeform",
+      resetMode: "none",
+      timezone: "UTC",
+    });
+    const row = await svc.createReward(orgId, "rw-freeform", {
+      dayNumber: 999,
+      rewardItems: [{ type: "currency", id: "gold", count: 100 }],
+    });
+    expect(row.dayNumber).toBe(999);
+  });
+
+  test("updateReward rejects dayNumber going out of cycle bounds", async () => {
+    await svc.createConfig(orgId, {
+      name: "RewardPatch",
+      alias: "rw-patch",
+      resetMode: "week",
+      timezone: "UTC",
+    });
+    const row = await svc.createReward(orgId, "rw-patch", {
+      dayNumber: 3,
+      rewardItems: [{ type: "currency", id: "gold", count: 100 }],
+    });
+    await expect(
+      svc.updateReward(orgId, row.id, { dayNumber: 9 }),
+    ).rejects.toMatchObject({ code: "check_in.invalid_input" });
+  });
 });
 
 describe("check-in service — activity-bound writable gate", () => {
