@@ -1,10 +1,9 @@
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, Pencil, X } from "lucide-react"
 import { useState } from "react"
 
 import { AssetGrid } from "#/components/media-library/AssetGrid"
 import { FolderTree } from "#/components/media-library/FolderTree"
 import { UploadButton } from "#/components/media-library/UploadButton"
-import { Button } from "#/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -17,27 +16,37 @@ import { resolveAssetUrl } from "#/lib/api-client"
 import type { MediaAsset } from "#/lib/types/media-library"
 import * as m from "#/paraglide/messages.js"
 
+type MediaPickerSize = "sm" | "md" | "lg"
+
 interface MediaPickerDialogProps {
-  /** Current URL (if any) shown as a thumbnail on the trigger button. */
+  /** Current URL (if any) shown as the thumbnail. */
   value?: string | null
   onChange: (url: string) => void
+  /** Empty-state hint + aria-label for the trigger. Defaults to "Select image". */
   buttonLabel?: string
+  /** Extra classes applied to the outer wrapper (e.g. width overrides). */
   triggerClassName?: string
+  /** Thumbnail size: sm (6rem) / md (8rem, default) / lg (10rem). */
+  size?: MediaPickerSize
+}
+
+const SIZE_CLASS: Record<MediaPickerSize, string> = {
+  sm: "size-24",
+  md: "size-32",
+  lg: "size-40",
 }
 
 /**
- * Opens a dialog letting the user either pick an existing asset from
- * the media library or upload a new one. On pick/upload complete,
- * the absolute public URL is handed back via `onChange`.
- *
- * For forms that just store an image URL string (e.g. BannerForm),
- * this is a drop-in replacement for a plain `<Input placeholder="https://...">`.
+ * Click the thumbnail itself to pick / upload an asset. Hover shows a
+ * "replace" overlay; the corner X clears the field value (does NOT
+ * delete the asset from the media library).
  */
 export function MediaPickerDialog({
   value,
   onChange,
   buttonLabel,
   triggerClassName,
+  size,
 }: MediaPickerDialogProps) {
   const [open, setOpen] = useState(false)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
@@ -49,42 +58,64 @@ export function MediaPickerDialog({
   }
 
   const resolvedLabel = buttonLabel ?? m.media_picker_trigger()
+  const sizeClass = SIZE_CLASS[size ?? "md"]
 
   return (
     <>
-      <div className={`flex items-center gap-3 ${triggerClassName ?? ""}`}>
-        {value ? (
-          <div className="size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
-            <img
-              src={value}
-              alt=""
-              className="size-full object-cover"
-              onError={(e) => {
-                // Don't let a stale/blocked URL break the layout.
-                ;(e.target as HTMLImageElement).style.opacity = "0.2"
-              }}
-            />
-          </div>
-        ) : (
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
-            <ImageIcon className="size-5" />
-          </div>
-        )}
-        <div className="flex flex-1 flex-col gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setOpen(true)}
-          >
-            {resolvedLabel}
-          </Button>
+      <div className={`group relative ${sizeClass} ${triggerClassName ?? ""}`}>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={resolvedLabel}
+          title={value || resolvedLabel}
+          className={`relative size-full overflow-hidden rounded-md border-2 bg-muted/30 transition hover:border-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            value
+              ? "border-solid border-border"
+              : "border-dashed border-muted-foreground/40"
+          }`}
+        >
           {value ? (
-            <div className="truncate text-xs text-muted-foreground" title={value}>
-              {value}
+            <>
+              <img
+                src={value}
+                alt=""
+                className="size-full object-cover"
+                onError={(e) => {
+                  // Don't let a stale/blocked URL break the layout.
+                  ;(e.target as HTMLImageElement).style.opacity = "0.2"
+                }}
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/45 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+                <Pencil className="size-5 text-white" />
+                <span className="text-xs font-medium text-white">
+                  {m.media_picker_replace()}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground transition group-hover:text-foreground">
+              <ImageIcon className="size-6" />
+              <span className="px-2 text-center text-xs leading-tight">
+                {resolvedLabel}
+              </span>
             </div>
-          ) : null}
-        </div>
+          )}
+        </button>
+
+        {value ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onChange("")
+            }}
+            aria-label={m.media_picker_clear()}
+            title={m.media_picker_clear()}
+            className="absolute -right-2 -top-2 rounded-full border bg-background p-1 text-muted-foreground opacity-0 shadow-sm transition hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-3.5" />
+          </button>
+        ) : null}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

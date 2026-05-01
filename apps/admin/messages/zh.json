@@ -1045,6 +1045,8 @@
   "media_asset_copy_link": "复制链接",
   "media_asset_delete": "删除",
   "media_picker_trigger": "选择图片",
+  "media_picker_replace": "更换",
+  "media_picker_clear": "清除",
   "media_picker_title": "选择素材",
   "media_picker_description": "从云盘选一张已上传的素材，或直接上传新素材到默认目录。",
   "media_picker_tab_library": "从云盘选择",

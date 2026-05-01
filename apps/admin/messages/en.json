@@ -1045,6 +1045,8 @@
   "media_asset_copy_link": "Copy link",
   "media_asset_delete": "Delete",
   "media_picker_trigger": "Select image",
+  "media_picker_replace": "Replace",
+  "media_picker_clear": "Clear",
   "media_picker_title": "Select asset",
   "media_picker_description": "Pick an existing asset from the drive, or upload a new one into the default folder.",
   "media_picker_tab_library": "From library",
