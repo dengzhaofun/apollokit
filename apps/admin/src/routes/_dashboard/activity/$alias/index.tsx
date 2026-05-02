@@ -79,9 +79,6 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import * as m from "#/paraglide/messages.js"
-import { getLocale } from "#/paraglide/runtime.js"
-
-const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/activity/$alias/")({
   component: ActivityDetailPage,
@@ -116,13 +113,10 @@ function ActivityDetailPage() {
     return (
       <PageShell>
         <ErrorState
-          title={t("活动加载失败", "Failed to load activity")}
-          description={t(
-            "可能是这个活动被删了,或者网络异常。返回列表重新进入试试。",
-            "The activity may have been removed, or the network is flaky. Try going back to the list.",
-          )}
+          title={m.activity_detail_load_failed_title()}
+          description={m.activity_detail_load_failed_desc()}
           onRetry={() => window.location.reload()}
-          retryLabel={t("重试", "Retry")}
+          retryLabel={m.common_retry()}
           error={error instanceof Error ? error : null}
         />
       </PageShell>
@@ -181,7 +175,7 @@ function ActivityDetailPage() {
     meta.push({
       icon: <CalendarRangeIcon />,
       label: format(new Date(activity.createdAt), "yyyy-MM-dd HH:mm"),
-      key: t("创建于", "Created"),
+      key: m.activity_detail_meta_created(),
     })
   }
 
@@ -224,7 +218,7 @@ function ActivityDetailPage() {
               disabled={deleteMutation.isPending}
               onClick={async () => {
                 const ok = await confirm({
-                  title: t("删除活动?", "Delete activity?"),
+                  title: m.activity_detail_delete_title(),
                   description: m.activity_detail_delete_confirm({ name: activity.name }),
                   confirmLabel: m.common_delete(),
                   danger: true,
@@ -758,7 +752,7 @@ function NodesPanel({
                             size="sm"
                             onClick={async () => {
                               const ok = await confirm({
-                                title: t("删除节点?", "Delete node?"),
+                                title: m.activity_nodes_delete_title(),
                                 description: m.activity_nodes_delete_confirm({ alias: n.alias }),
                                 confirmLabel: m.common_delete(),
                                 danger: true,
@@ -1018,7 +1012,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                     size="sm"
                     onClick={async () => {
                       const ok = await confirm({
-                        title: t("删除排期?", "Delete schedule?"),
+                        title: m.activity_schedules_delete_title(),
                         description: m.activity_schedules_delete_confirm({ alias: s.alias }),
                         confirmLabel: m.common_delete(),
                         danger: true,
@@ -1243,7 +1237,7 @@ function MembersPanel({
                           disabled={leaveMutation.isPending}
                           onClick={async () => {
                             const ok = await confirm({
-                              title: t("移除成员?", "Remove member?"),
+                              title: m.activity_members_remove_title(),
                               description: m.activity_members_leave_confirm({ endUserId: member.endUserId }),
                               confirmLabel: m.activity_members_leave(),
                               danger: true,
