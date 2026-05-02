@@ -13,7 +13,6 @@ import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
 import { ActivityPhaseBadge } from "#/components/activity/ActivityPhaseBadge"
-import { InlineCheckInCreateDialog } from "#/components/activity/InlineCheckInCreateDialog"
 import {
   STATE_LABELS,
   STATE_VARIANT,
@@ -479,7 +478,6 @@ function NodesPanel({
     orderIndex: 0,
   })
   const [creatorOpen, setCreatorOpen] = useState(false)
-  const [inlineCheckInOpen, setInlineCheckInOpen] = useState(false)
 
   return (
     <div className="flex flex-col gap-4">
@@ -488,13 +486,6 @@ function NodesPanel({
         activityId={activityId}
         open={creatorOpen}
         onOpenChange={setCreatorOpen}
-      />
-
-      <InlineCheckInCreateDialog
-        activityKey={activityKey}
-        activityId={activityId}
-        open={inlineCheckInOpen}
-        onOpenChange={setInlineCheckInOpen}
       />
 
       <div className="flex items-center justify-between gap-3">
@@ -506,18 +497,9 @@ function NodesPanel({
         ) : (
           <div />
         )}
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setInlineCheckInOpen(true)}
-          >
-            {m.activity_nodes_create_inline_check_in()}
-          </Button>
-          <Button size="sm" onClick={() => setCreatorOpen(true)}>
-            {m.activity_nodes_create_button()}
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => setCreatorOpen(true)}>
+          {m.activity_nodes_create_button()}
+        </Button>
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
