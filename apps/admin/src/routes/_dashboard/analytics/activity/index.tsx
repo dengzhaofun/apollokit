@@ -53,6 +53,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { EventNamePicker } from "#/components/analytics/EventNamePicker"
 import {
   isValidJsonKey,
   useTenantEventStream,
@@ -61,6 +62,8 @@ import {
   type TenantTraceRow,
 } from "#/lib/tinybird"
 import * as m from "#/paraglide/messages.js"
+
+const OUTCOME_OPTIONS = ["ok", "error", "denied"] as const
 
 export const Route = createFileRoute("/_dashboard/analytics/activity/")({
   component: ActivityPage,
@@ -245,23 +248,50 @@ function ActivityInner() {
                   </SelectContent>
                 </Select>
               </div>
-              <FilterInput
-                label={m.analytics_activity_filter_event()}
-                value={draft.event}
-                onChange={(v) => setDraft((d) => ({ ...d, event: v }))}
-                placeholder="task.completed"
-              />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {m.analytics_activity_filter_event()}
+                </label>
+                <EventNamePicker
+                  listId="activity-event-names"
+                  value={draft.event}
+                  onChange={(v) => setDraft((d) => ({ ...d, event: v }))}
+                  from={w.from}
+                  to={w.to}
+                  placeholder="task.completed"
+                />
+              </div>
               <FilterInput
                 label={m.analytics_activity_filter_source()}
                 value={draft.source}
                 onChange={(v) => setDraft((d) => ({ ...d, source: v }))}
               />
-              <FilterInput
-                label={m.analytics_activity_filter_outcome()}
-                value={draft.outcome}
-                onChange={(v) => setDraft((d) => ({ ...d, outcome: v }))}
-                placeholder="ok | error | denied"
-              />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {m.analytics_activity_filter_outcome()}
+                </label>
+                <Select
+                  value={draft.outcome === "" ? "__all__" : draft.outcome}
+                  onValueChange={(v) => {
+                    const next = !v || v === "__all__" ? "" : v
+                    setDraft((d) => ({ ...d, outcome: next }))
+                  }}
+                >
+                  <SelectTrigger size="sm" className="font-mono text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">
+                      {m.analytics_activity_outcome_all()}
+                    </SelectItem>
+                    {OUTCOME_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o} className="font-mono">
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <FilterInput
                 label={m.analytics_activity_filter_end_user_id()}
                 value={draft.endUserId}
