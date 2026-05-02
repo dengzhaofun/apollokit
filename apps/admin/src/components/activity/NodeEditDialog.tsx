@@ -14,6 +14,10 @@ import {
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Textarea } from "#/components/ui/textarea"
+import {
+  UnlockRuleEditor,
+  type UnlockRule,
+} from "#/components/activity/UnlockRuleEditor"
 import { useUpdateActivityNode } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import type { ActivityNode } from "#/lib/types/activity"
@@ -58,27 +62,12 @@ interface Props {
 export function NodeEditDialog({ activityKey, node, open, onOpenChange }: Props) {
   const update = useUpdateActivityNode(activityKey)
   const [orderIndex, setOrderIndex] = useState<number>(node?.orderIndex ?? 0)
-  const [unlockRuleJson, setUnlockRuleJson] = useState<string>(() =>
-    node?.unlockRule ? JSON.stringify(node.unlockRule, null, 2) : "",
+  const [unlockRule, setUnlockRule] = useState<UnlockRule | null>(
+    () => (node?.unlockRule as UnlockRule | null) ?? null,
   )
   const [nodeConfigJson, setNodeConfigJson] = useState<string>(() =>
     node?.nodeConfig ? JSON.stringify(node.nodeConfig, null, 2) : "",
   )
-
-  // Re-sync when a different node is opened.
-  if (
-    node &&
-    open &&
-    (orderIndex !== node.orderIndex ||
-      unlockRuleJson !==
-        (node.unlockRule ? JSON.stringify(node.unlockRule, null, 2) : "") ||
-      nodeConfigJson !==
-        (node.nodeConfig ? JSON.stringify(node.nodeConfig, null, 2) : ""))
-  ) {
-    // no-op — the controlled inputs handle their own state. Re-sync runs
-    // through `key={node.id}` on the dialog from the parent so stale state
-    // never carries over.
-  }
 
   if (!node) return null
 
@@ -86,16 +75,7 @@ export function NodeEditDialog({ activityKey, node, open, onOpenChange }: Props)
 
   async function handleSubmit() {
     if (!node) return
-    let unlockRule: Record<string, unknown> | null = null
     let nodeConfig: Record<string, unknown> | null = null
-    try {
-      unlockRule = unlockRuleJson.trim()
-        ? (JSON.parse(unlockRuleJson) as Record<string, unknown>)
-        : null
-    } catch {
-      toast.error(m.activity_node_edit_unlock_invalid())
-      return
-    }
     try {
       nodeConfig = nodeConfigJson.trim()
         ? (JSON.parse(nodeConfigJson) as Record<string, unknown>)
@@ -108,7 +88,7 @@ export function NodeEditDialog({ activityKey, node, open, onOpenChange }: Props)
       await update.mutateAsync({
         id: node.id,
         orderIndex,
-        unlockRule,
+        unlockRule: unlockRule as Record<string, unknown> | null,
         nodeConfig,
       })
       toast.success(m.activity_node_edit_save_success())
@@ -175,17 +155,8 @@ export function NodeEditDialog({ activityKey, node, open, onOpenChange }: Props)
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="node-unlock-rule">
-              {m.activity_node_edit_unlock_rule_label()}
-            </Label>
-            <Textarea
-              id="node-unlock-rule"
-              rows={4}
-              value={unlockRuleJson}
-              onChange={(e) => setUnlockRuleJson(e.target.value)}
-              placeholder='{"requirePrevNodeAliases": ["day1"], "minActivityPoints": 100}'
-              className="font-mono text-xs"
-            />
+            <Label>{m.activity_node_edit_unlock_rule_label()}</Label>
+            <UnlockRuleEditor value={unlockRule} onChange={setUnlockRule} />
             <p className="text-xs text-muted-foreground">
               {m.activity_node_edit_unlock_rule_hint()}
             </p>
