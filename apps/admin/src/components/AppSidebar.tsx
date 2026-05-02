@@ -26,6 +26,7 @@ import {
   Monitor,
   Moon,
   Radio,
+  Workflow,
   Zap,
   Bell,
   Mail,
@@ -109,6 +110,8 @@ type NavRoute =
   | "/analytics/modules"
   | "/analytics/activity"
   | "/analytics/logs"
+  | "/analytics/explore"
+  | "/analytics/funnel"
   | "/audit-logs"
   | "/check-in"
   | "/item"
@@ -208,6 +211,16 @@ function getNavGroups(): NavGroup[] {
           title: m.nav_module_analytics,
           to: "/analytics/modules",
           icon: LineChart,
+        },
+        {
+          title: m.nav_explore_analytics,
+          to: "/analytics/explore",
+          icon: LineChart,
+        },
+        {
+          title: m.nav_funnel_analytics,
+          to: "/analytics/funnel",
+          icon: Workflow,
         },
         {
           title: m.nav_activity_analytics,
