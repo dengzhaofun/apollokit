@@ -13,6 +13,12 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Textarea } from "#/components/ui/textarea"
+import {
+  ActivityResourceBlueprintsEditor,
+  type CurrencyBlueprintRow,
+  type EntityBlueprintRow,
+  type ItemBlueprintRow,
+} from "#/components/activity/ActivityResourceBlueprintsEditor"
 import { useCreateActivityTemplate } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import type {
@@ -75,6 +81,18 @@ function CreateActivityTemplatePage() {
   const [schedulesBlueprintJson, setSchedulesBlueprintJson] = useState(
     JSON.stringify([], null, 2),
   )
+  // Per-cycle resource blueprints — currencies / item_definitions /
+  // entity_blueprints rows are spawned fresh per cycle by the server's
+  // instantiateTemplate path.
+  const [currenciesBlueprint, setCurrenciesBlueprint] = useState<
+    CurrencyBlueprintRow[]
+  >([])
+  const [itemDefinitionsBlueprint, setItemDefinitionsBlueprint] = useState<
+    ItemBlueprintRow[]
+  >([])
+  const [entityBlueprintsBlueprint, setEntityBlueprintsBlueprint] = useState<
+    EntityBlueprintRow[]
+  >([])
   const [autoPublish, setAutoPublish] = useState(true)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -126,6 +144,9 @@ function CreateActivityTemplatePage() {
       aliasPattern,
       nodesBlueprint,
       schedulesBlueprint,
+      currenciesBlueprint,
+      itemDefinitionsBlueprint,
+      entityBlueprintsBlueprint,
       autoPublish,
     }
 
@@ -349,6 +370,17 @@ function CreateActivityTemplatePage() {
               <code className="mx-1 rounded bg-muted px-1">fireAtOffsetSeconds</code>{m.activity_template_create_schedules_hint()}
             </p>
           </div>
+
+          <ActivityResourceBlueprintsEditor
+            currencies={currenciesBlueprint}
+            itemDefinitions={itemDefinitionsBlueprint}
+            entityBlueprints={entityBlueprintsBlueprint}
+            onChange={(next) => {
+              setCurrenciesBlueprint(next.currencies)
+              setItemDefinitionsBlueprint(next.itemDefinitions)
+              setEntityBlueprintsBlueprint(next.entityBlueprints)
+            }}
+          />
 
           <div className="flex items-center gap-3 rounded-md border p-3">
             <input
