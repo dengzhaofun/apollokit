@@ -33,6 +33,7 @@ function useColumns(): ColumnDef<Character, unknown>[] {
       }),
       columnHelper.accessor("name", {
         header: () => m.character_col_name(),
+        meta: { primary: true },
         cell: (info) => (
           <Link
             to="/character"
@@ -95,6 +96,7 @@ export function CharacterTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={CHARACTER_FILTER_DEFS}

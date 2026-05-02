@@ -30,7 +30,26 @@ export interface PipeGrant {
 
 export interface SignTenantTokenOptions {
   ttlSeconds?: number;
+  /**
+   * Per-token requests-per-second cap, enforced by Tinybird (returns 429
+   * past the limit). Tracked by JWT `name`, which we set to
+   * `tenant:${orgId}` — every tenant gets its own bucket.
+   *
+   * Default 10 rps is enough to render any single dashboard page in one
+   * burst; protects against a single tenant looping a query and burning
+   * Tinybird usage. Bump per-tenant via plan tier when SaaS pricing
+   * lands.
+   */
+  rps?: number;
 }
+
+/**
+ * Default rate limit for tenant-issued JWTs. Aggressive but humane:
+ * the explore page fires ~3 parallel requests on load (events list,
+ * timeseries, KPIs); this leaves headroom for ~3 such page loads/s
+ * before the user notices throttling.
+ */
+const DEFAULT_TENANT_RPS = 10;
 
 /**
  * Sign a JWT that lets the browser query the named pipes — and only
@@ -46,6 +65,7 @@ export async function signTenantToken(
   opts: SignTenantTokenOptions = {},
 ): Promise<string> {
   const ttl = opts.ttlSeconds ?? 600;
+  const rps = opts.rps ?? DEFAULT_TENANT_RPS;
   const now = Math.floor(Date.now() / 1000);
 
   const payload = {
@@ -57,6 +77,7 @@ export async function signTenantToken(
       resource: g.pipe,
       fixed_params: { org_id: orgId, ...(g.fixedParams ?? {}) },
     })),
+    limits: { rps },
   };
 
   return sign(payload, cfg.signingKey, "HS256");

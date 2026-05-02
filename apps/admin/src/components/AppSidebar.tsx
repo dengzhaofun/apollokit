@@ -26,10 +26,12 @@ import {
   Monitor,
   Moon,
   Radio,
+  Workflow,
   Zap,
   Bell,
   Mail,
   Map as MapIcon,
+  MapPin,
   MessagesSquare,
   Search,
   Package,
@@ -109,8 +111,11 @@ type NavRoute =
   | "/analytics/modules"
   | "/analytics/activity"
   | "/analytics/logs"
+  | "/analytics/explore"
+  | "/analytics/funnel"
   | "/audit-logs"
   | "/check-in"
+  | "/offline-check-in"
   | "/item"
   | "/item/definitions"
   | "/item/categories"
@@ -210,6 +215,16 @@ function getNavGroups(): NavGroup[] {
           icon: LineChart,
         },
         {
+          title: m.nav_explore_analytics,
+          to: "/analytics/explore",
+          icon: LineChart,
+        },
+        {
+          title: m.nav_funnel_analytics,
+          to: "/analytics/funnel",
+          icon: Workflow,
+        },
+        {
           title: m.nav_activity_analytics,
           to: "/analytics/activity",
           icon: Activity,
@@ -265,6 +280,7 @@ function getNavGroups(): NavGroup[] {
       icon: Megaphone,
       items: [
         { title: m.nav_checkin, to: "/check-in", icon: CalendarCheck },
+        { title: m.nav_offline_checkin, to: "/offline-check-in", icon: MapPin },
         { title: m.nav_banner, to: "/banner", icon: GalleryHorizontal },
         { title: m.nav_announcement, to: "/announcement", icon: Megaphone },
         { title: m.nav_activity, to: "/activity", icon: PartyPopper },

@@ -42,6 +42,7 @@ function useColumns(): ColumnDef<TeamConfig, unknown>[] {
     () => [
       columnHelper.accessor("name", {
         header: () => m.common_name(),
+        meta: { primary: true },
         cell: (info) => (
           <Link
             to="/team"
@@ -114,6 +115,7 @@ function TeamPage() {
           columns={columns}
           data={list.items}
           isLoading={list.isLoading}
+          mobileLayout="cards"
           getRowId={(row) => row.id}
           pageIndex={list.pageIndex}
           canPrev={list.canPrev}

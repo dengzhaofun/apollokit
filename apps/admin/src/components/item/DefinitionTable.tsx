@@ -149,6 +149,7 @@ export function DefinitionTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={filterDefs}

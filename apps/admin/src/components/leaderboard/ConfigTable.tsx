@@ -86,6 +86,7 @@ export function LeaderboardConfigTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       empty={

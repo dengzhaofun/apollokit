@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { useIsMobile } from "#/hooks/use-mobile"
 import { useMoveBadgeNode } from "#/hooks/use-move"
 import type { BadgeNode } from "#/lib/types/badge"
 import * as m from "#/paraglide/messages.js"
@@ -80,6 +81,37 @@ function flattenTree(nodes: BadgeNode[]): TreeRow[] {
 export function BadgeNodeTable({ data }: Props) {
   const moveMutation = useMoveBadgeNode()
   const rows = useMemo(() => flattenTree(data), [data])
+  const isMobile = useIsMobile()
+
+  // Mobile: tree DnD doesn't translate to a phone (drag handles + cross-row
+  // hit testing are too small), so render a card list with depth-indented
+  // entries instead. Keep the ▲▼ / 置顶 / 置后 reorder buttons (which work
+  // fine via tap) so users can still rearrange siblings without DnD —
+  // `RowMoveActions` reads the move handler from `SortableTableProvider`'s
+  // context, so we still wrap in the provider (its `useSortable` is opt-in
+  // per row via `SortableTableRow`, which we don't render on mobile).
+  if (isMobile) {
+    if (rows.length === 0) {
+      return (
+        <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
+          {m.badge_empty()}
+        </div>
+      )
+    }
+    return (
+      <SortableTableProvider
+        items={rows}
+        onMove={(id, body) => moveMutation.mutate({ id, body })}
+        disabled={moveMutation.isPending}
+      >
+        <div className="divide-y">
+          {rows.map((row) => (
+            <BadgeNodeCard key={row.id} row={row} />
+          ))}
+        </div>
+      </SortableTableProvider>
+    )
+  }
 
   return (
     <SortableTableProvider
@@ -190,5 +222,70 @@ export function BadgeNodeTable({ data }: Props) {
         </TableBody>
       </Table>
     </SortableTableProvider>
+  )
+}
+
+function BadgeNodeCard({ row }: { row: TreeRow }) {
+  return (
+    <div
+      className="space-y-2 p-3"
+      style={{ paddingLeft: `${0.75 + row.depth * 1.25}rem` }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          {row.depth > 0 ? (
+            <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+          ) : null}
+          <Link
+            to="/badge/$nodeId"
+            params={{ nodeId: row.id }}
+            className="truncate font-mono text-sm hover:underline"
+          >
+            {row.key}
+          </Link>
+          <RedDot
+            displayType={row.displayType as RedDotDisplayType}
+            count={1}
+            forceVisible
+            className="ml-1 shrink-0"
+          />
+        </div>
+        <Badge
+          variant={row.isActive ? "default" : "outline"}
+          className="shrink-0"
+        >
+          {row.isActive ? m.common_active() : m.common_inactive()}
+        </Badge>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Badge variant="outline">{row.displayType}</Badge>
+        <Badge variant="secondary">{row.dismissMode}</Badge>
+        <Badge variant="outline">{row.aggregation}</Badge>
+      </div>
+      <div className="text-xs">
+        {row.signalMatchMode === "exact" && row.signalKey ? (
+          <code className="rounded bg-muted px-1.5 py-0.5">
+            {row.signalKey}
+          </code>
+        ) : row.signalMatchMode === "prefix" && row.signalKeyPrefix ? (
+          <code className="rounded bg-muted px-1.5 py-0.5">
+            {row.signalKeyPrefix}*
+          </code>
+        ) : (
+          <span className="text-muted-foreground">
+            {m.badge_match_none_hint()}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center justify-end gap-0.5">
+        <RowMoveActions
+          id={row.id}
+          prevId={row.siblingPrevId}
+          nextId={row.siblingNextId}
+          isFirst={row.isFirstSibling}
+          isLast={row.isLastSibling}
+        />
+      </div>
+    </div>
   )
 }

@@ -139,6 +139,7 @@ export function LotteryPoolTable({ route, ...rest }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={LOTTERY_POOL_FILTER_DEFS}

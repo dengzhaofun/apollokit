@@ -29,6 +29,7 @@ import { registerActivitySubscribers } from "./activity";
 import { registerAnnouncementSubscribers } from "./announcement";
 import { registerAssistPoolSubscribers } from "./assist-pool";
 import { registerCheckInSubscribers } from "./check-in";
+import { registerOfflineCheckInSubscribers } from "./offline-check-in";
 import { registerCollectionSubscribers } from "./collection";
 import { registerExchangeSubscribers } from "./exchange";
 import { registerFriendSubscribers } from "./friend";
@@ -65,6 +66,7 @@ export function registerAnalyticsSubscribers(
   registerFriendGiftSubscribers(events, analytics);
   // Phase 2c — basic interactions
   registerCheckInSubscribers(events, analytics);
+  registerOfflineCheckInSubscribers(events, analytics);
   registerMailSubscribers(events, analytics);
   // Phase 3 — mid-priority emits (direct-writer events live in-service)
   registerCollectionSubscribers(events, analytics);

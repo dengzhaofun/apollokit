@@ -98,6 +98,7 @@ export function EntryTable({ typeAlias, status, groupKey, tag, route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={CMS_ENTRY_FILTER_DEFS}

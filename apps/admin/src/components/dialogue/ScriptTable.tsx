@@ -87,6 +87,7 @@ export function ScriptTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={DIALOGUE_SCRIPT_FILTER_DEFS}

@@ -9,6 +9,7 @@ export * from "./battle-pass";
 export * from "./cdkey";
 export * from "./character";
 export * from "./check-in";
+export * from "./offline-check-in";
 export * from "./client-credential";
 export * from "./cms";
 export * from "./end-user-auth";

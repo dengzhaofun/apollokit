@@ -188,6 +188,7 @@ export function ProductTable({
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={SHOP_PRODUCT_FILTER_DEFS}

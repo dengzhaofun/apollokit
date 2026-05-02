@@ -105,6 +105,7 @@ export function ActivityTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={ACTIVITY_FILTER_DEFS}

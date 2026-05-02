@@ -112,6 +112,7 @@ export function MessageTable({ route }: Props) {
   return (
     <DataTable
       columns={columns}
+      mobileLayout="cards"
       data={list.items}
       getRowId={(row) => row.id}
       filters={MAIL_MESSAGE_FILTER_DEFS}
