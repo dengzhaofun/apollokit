@@ -15,12 +15,7 @@ import type { ActivityState, ActivityTimeline } from "./types";
 export function deriveState(
   config: Pick<
     ActivityConfig,
-    | "status"
-    | "visibleAt"
-    | "startAt"
-    | "endAt"
-    | "rewardEndAt"
-    | "hiddenAt"
+    "status" | "visibleAt" | "startAt" | "endAt" | "hiddenAt"
   >,
   now: Date,
 ): ActivityState {
@@ -28,8 +23,7 @@ export function deriveState(
   if (config.status === "draft") return "draft";
   const t = now.getTime();
   if (t >= config.hiddenAt.getTime()) return "archived";
-  if (t >= config.rewardEndAt.getTime()) return "ended";
-  if (t >= config.endAt.getTime()) return "settling";
+  if (t >= config.endAt.getTime()) return "ended";
   if (t >= config.startAt.getTime()) return "active";
   if (t >= config.visibleAt.getTime()) return "teasing";
   return "scheduled";
@@ -38,12 +32,7 @@ export function deriveState(
 export function deriveTimeline(
   config: Pick<
     ActivityConfig,
-    | "status"
-    | "visibleAt"
-    | "startAt"
-    | "endAt"
-    | "rewardEndAt"
-    | "hiddenAt"
+    "status" | "visibleAt" | "startAt" | "endAt" | "hiddenAt"
   >,
   now: Date,
 ): ActivityTimeline {
@@ -55,20 +44,18 @@ export function deriveTimeline(
     msToVisible: Math.max(0, config.visibleAt.getTime() - t),
     msToStart: Math.max(0, config.startAt.getTime() - t),
     msToEnd: Math.max(0, config.endAt.getTime() - t),
-    msToRewardEnd: Math.max(0, config.rewardEndAt.getTime() - t),
     msToHidden: Math.max(0, config.hiddenAt.getTime() - t),
   };
 }
 
 /**
- * Validate that the five time points respect the required ordering.
+ * Validate that the four time points respect the required ordering.
  * Callers throw `ActivityInvalidInput` with a helpful message.
  */
 export function validateTimeOrder(t: {
   visibleAt: Date;
   startAt: Date;
   endAt: Date;
-  rewardEndAt: Date;
   hiddenAt: Date;
 }): string | null {
   if (!(t.visibleAt.getTime() <= t.startAt.getTime())) {
@@ -77,11 +64,8 @@ export function validateTimeOrder(t: {
   if (!(t.startAt.getTime() < t.endAt.getTime())) {
     return "startAt must be < endAt";
   }
-  if (!(t.endAt.getTime() <= t.rewardEndAt.getTime())) {
-    return "endAt must be <= rewardEndAt";
-  }
-  if (!(t.rewardEndAt.getTime() <= t.hiddenAt.getTime())) {
-    return "rewardEndAt must be <= hiddenAt";
+  if (!(t.endAt.getTime() <= t.hiddenAt.getTime())) {
+    return "endAt must be <= hiddenAt";
   }
   return null;
 }
@@ -110,7 +94,6 @@ export function computeNextFireAt(
     visibleAt: Date;
     startAt: Date;
     endAt: Date;
-    rewardEndAt: Date;
     hiddenAt: Date;
     timezone?: string;
   },
@@ -126,11 +109,9 @@ export function computeNextFireAt(
           ? activity.visibleAt
           : schedule.offsetFrom === "end_at"
             ? activity.endAt
-            : schedule.offsetFrom === "reward_end_at"
-              ? activity.rewardEndAt
-              : schedule.offsetFrom === "hidden_at"
-                ? activity.hiddenAt
-                : activity.startAt; // default: start_at
+            : schedule.offsetFrom === "hidden_at"
+              ? activity.hiddenAt
+              : activity.startAt; // default: start_at
       return new Date(anchor.getTime() + schedule.offsetSeconds * 1000);
     }
     case "cron": {

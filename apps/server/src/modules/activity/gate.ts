@@ -8,8 +8,10 @@
  * `apps/server/src/modules/activity/time.ts`; here we only translate it
  * into two simple gates:
  *
- *   - WRITABLE  = { active }              participation, score submit, …
- *   - CLAIMABLE = { active, settling }    reward / milestone claim
+ *   - WRITABLE  = { active }          participation, score submit, …
+ *   - CLAIMABLE = { active, ended }   reward / payout claim (ended is the
+ *                                     post-endAt grace window before
+ *                                     hiddenAt → archived)
  *
  * Phase is computed live via `deriveState(row, now)` — never read from
  * the persisted `status` column directly, since cron lags by up to one
@@ -36,7 +38,7 @@ import type { ActivityState } from "./types";
 type Db = AppDeps["db"];
 
 const WRITABLE: ReadonlySet<ActivityState> = new Set(["active"]);
-const CLAIMABLE: ReadonlySet<ActivityState> = new Set(["active", "settling"]);
+const CLAIMABLE: ReadonlySet<ActivityState> = new Set(["active", "ended"]);
 
 /**
  * Resolve live phase for a batch of activities in a single query.
@@ -58,7 +60,6 @@ export async function getActivityPhases(
       visibleAt: activityConfigs.visibleAt,
       startAt: activityConfigs.startAt,
       endAt: activityConfigs.endAt,
-      rewardEndAt: activityConfigs.rewardEndAt,
       hiddenAt: activityConfigs.hiddenAt,
     })
     .from(activityConfigs)
@@ -89,7 +90,7 @@ export async function assertActivityWritable(
 
 /**
  * Throw `ActivityNotInClaimablePhase` unless the activity is `active`
- * or `settling`. Use at every "claim reward" entry point.
+ * or `ended`. Use at every "claim reward" entry point.
  */
 export async function assertActivityClaimable(
   db: Db,

@@ -41,7 +41,6 @@ function CreateActivityTemplatePage() {
   // duration
   const [teaseHours, setTeaseHours] = useState(24)
   const [activeDays, setActiveDays] = useState(7)
-  const [rewardHours, setRewardHours] = useState(48)
   const [hiddenHours, setHiddenHours] = useState(168)
 
   // recurrence
@@ -61,13 +60,6 @@ function CreateActivityTemplatePage() {
         description: m.activity_template_create_default_description(),
         kind: "generic",
         timezone: "Asia/Shanghai",
-        milestoneTiers: [
-          {
-            alias: "m1",
-            points: 100,
-            rewards: [{ type: "item", id: "gold-uuid", count: 1000 }],
-          },
-        ],
         globalRewards: [{ type: "item", id: "trophy-uuid", count: 1 }],
         visibility: "public",
         cleanupRule: { mode: "purge" },
@@ -128,7 +120,6 @@ function CreateActivityTemplatePage() {
       durationSpec: {
         teaseSeconds: teaseHours * 3600,
         activeSeconds: activeDays * 86400,
-        rewardSeconds: rewardHours * 3600,
         hiddenSeconds: hiddenHours * 3600,
       },
       recurrence,
@@ -216,15 +207,6 @@ function CreateActivityTemplatePage() {
                   min={1}
                   value={activeDays}
                   onChange={(e) => setActiveDays(Number(e.target.value) || 1)}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>{m.activity_template_create_field_reward_hours()}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={rewardHours}
-                  onChange={(e) => setRewardHours(Number(e.target.value) || 0)}
                 />
               </div>
               <div className="flex flex-col gap-1.5">

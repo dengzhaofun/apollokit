@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the activity module.
  *
  * Player-facing (client-credential) routes are deferred — for MVP the
- * player ops (`join`, `addPoints`, `claimMilestone`, aggregated view)
+ * player ops (`join`, `addPoints`, aggregated view)
  * live here under admin auth so games can proxy through their own
  * backend. When client-routes lands the same service methods are
  * re-exposed behind `requireClientCredential`.
@@ -26,7 +26,6 @@ import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
   AddPointsBody,
-  ClaimMilestoneBody,
   CreateActivitySchema,
   CreateActivityTemplateBody,
   CreateNodeSchema,
@@ -66,11 +65,9 @@ function serializeActivity(row: ActivityConfig) {
     visibleAt: row.visibleAt.toISOString(),
     startAt: row.startAt.toISOString(),
     endAt: row.endAt.toISOString(),
-    rewardEndAt: row.rewardEndAt.toISOString(),
     hiddenAt: row.hiddenAt.toISOString(),
     timezone: row.timezone,
     status: row.status,
-    milestoneTiers: row.milestoneTiers,
     globalRewards: row.globalRewards,
     cleanupRule: row.cleanupRule,
     joinRequirement: row.joinRequirement as Record<string, unknown> | null,
@@ -664,7 +661,6 @@ activityRouter.openapi(
           "application/json": {
             schema: envelopeOf(z.object({
               balance: z.number().int(),
-              unlockedMilestones: z.array(z.string()),
             }),)
           },
         },
@@ -688,39 +684,6 @@ activityRouter.openapi(
   },
 );
 
-activityRouter.openapi(
-  createAdminRoute({
-    method: "post",
-    path: "/{key}/claim-milestone",
-    tags: [TAG],
-    summary: "Claim an activity milestone reward",
-    request: {
-      params: KeyParam,
-      body: { content: { "application/json": { schema: ClaimMilestoneBody } } },
-    },
-    responses: {
-      200: {
-        description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
-        },
-      },
-      ...commonErrorResponses,
-    },
-  }),
-  async (c) => {
-    const orgId = getOrgId(c);
-    const { key } = c.req.valid("param");
-    const body = c.req.valid("json");
-    const result = await activityService.claimMilestone({
-      organizationId: orgId,
-      activityIdOrAlias: key,
-      endUserId: body.endUserId,
-      milestoneAlias: body.milestoneAlias,
-    });
-    return c.json(ok(result), 200);
-  },
-);
 
 activityRouter.openapi(
   createAdminRoute({
@@ -812,12 +775,6 @@ activityRouter.openapi(
                 avgPoints: z.number(),
                 maxPoints: z.number(),
                 p50Points: z.number(),
-                milestoneClaims: z.array(
-                  z.object({
-                    milestoneAlias: z.string(),
-                    count: z.number().int(),
-                  }),
-                ),
                 pointsBuckets: z.array(
                   z.object({
                     bucket: z.string(),

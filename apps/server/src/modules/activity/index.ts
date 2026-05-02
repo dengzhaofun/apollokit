@@ -2,7 +2,7 @@
  * Activity module barrel.
  *
  * The service depends on the shared `deps` and a lazy getter for
- * `mailService` (for milestone reward dispatch + broadcast_mail
+ * `mailService` (for schedule grant_reward dispatch + broadcast_mail
  * schedule actions). Mail is imported via function to avoid module
  * load-order coupling — the barrel is always loaded AFTER mail's.
  */
@@ -40,19 +40,6 @@ registerEvent({
     { path: "actionConfig", type: "object", required: true },
   ],
   capabilities: ["analytics", "webhook"],
-});
-
-registerEvent({
-  name: "activity.milestone.claimed",
-  owner: "activity",
-  description: "A user claimed an activity milestone reward.",
-  fields: [
-    { path: "organizationId", type: "string", required: true },
-    { path: "activityId", type: "string", required: true },
-    { path: "endUserId", type: "string", required: true },
-    { path: "milestoneAlias", type: "string", required: true },
-  ],
-  capabilities: ["task-trigger", "analytics", "webhook", "trigger-rule"],
 });
 
 registerEvent({

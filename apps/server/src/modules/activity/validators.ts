@@ -19,12 +19,6 @@ const RewardEntrySchema = z.object({
   count: z.number().int().positive(),
 });
 
-const MilestoneTierSchema = z.object({
-  alias: z.string().min(1).max(64).regex(AliasRegex),
-  points: z.number().int().nonnegative(),
-  rewards: z.array(RewardEntrySchema).min(1),
-});
-
 const CleanupRuleSchema = z.object({
   mode: z.enum(CLEANUP_MODES),
   conversionMap: z
@@ -63,10 +57,8 @@ export const CreateActivitySchema = z
     visibleAt: z.string().datetime(),
     startAt: z.string().datetime(),
     endAt: z.string().datetime(),
-    rewardEndAt: z.string().datetime(),
     hiddenAt: z.string().datetime(),
     timezone: z.string().min(1).max(64).default("UTC").optional(),
-    milestoneTiers: z.array(MilestoneTierSchema).default([]).optional(),
     globalRewards: z.array(RewardEntrySchema).default([]).optional(),
     cleanupRule: CleanupRuleSchema.default({ mode: "purge" }).optional(),
     joinRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -86,10 +78,8 @@ export const UpdateActivitySchema = z
     visibleAt: z.string().datetime().optional(),
     startAt: z.string().datetime().optional(),
     endAt: z.string().datetime().optional(),
-    rewardEndAt: z.string().datetime().optional(),
     hiddenAt: z.string().datetime().optional(),
     timezone: z.string().min(1).max(64).optional(),
-    milestoneTiers: z.array(MilestoneTierSchema).optional(),
     globalRewards: z.array(RewardEntrySchema).optional(),
     cleanupRule: CleanupRuleSchema.optional(),
     joinRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -133,7 +123,7 @@ export const CreateScheduleSchema = z
     triggerKind: z.enum(TRIGGER_KINDS),
     fireAt: z.string().datetime().nullable().optional(),
     offsetFrom: z
-      .enum(["visible_at", "start_at", "end_at", "reward_end_at", "hidden_at"])
+      .enum(["visible_at", "start_at", "end_at", "hidden_at"])
       .nullable()
       .optional(),
     offsetSeconds: z.number().int().nullable().optional(),
@@ -185,23 +175,9 @@ export const AddPointsBody = z
   })
   .openapi("ActivityAddPoints");
 
-export const ClaimMilestoneBody = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    milestoneAlias: z.string().min(1).max(64),
-  })
-  .openapi("ActivityClaimMilestone");
-
-export const ClaimMilestoneClientBody = z
-  .object({
-    milestoneAlias: z.string().min(1).max(64),
-  })
-  .openapi("ActivityClaimMilestoneClient");
-
 const DurationSpecSchema = z.object({
   teaseSeconds: z.number().int().nonnegative(),
   activeSeconds: z.number().int().positive(),
-  rewardSeconds: z.number().int().nonnegative(),
   hiddenSeconds: z.number().int().nonnegative(),
 });
 
@@ -330,11 +306,9 @@ export const ActivityConfigResponseSchema = z
     visibleAt: z.string(),
     startAt: z.string(),
     endAt: z.string(),
-    rewardEndAt: z.string(),
     hiddenAt: z.string(),
     timezone: z.string(),
     status: z.string(),
-    milestoneTiers: z.array(MilestoneTierSchema),
     globalRewards: z.array(RewardEntrySchema),
     cleanupRule: CleanupRuleSchema,
     joinRequirement: z.record(z.string(), z.unknown()).nullable(),

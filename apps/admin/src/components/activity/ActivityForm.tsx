@@ -1,7 +1,6 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 
-import { ActivityMilestonesEditor } from "#/components/activity/ActivityMilestonesEditor"
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -19,7 +18,6 @@ import { Textarea } from "#/components/ui/textarea"
 import type {
   ActivityKind,
   ActivityMembershipConfig,
-  ActivityMilestoneTier,
   CreateActivityInput,
   RewardEntry,
 } from "#/lib/types/activity"
@@ -50,25 +48,23 @@ function addDaysLocal(localVal: string, days: number): string {
 }
 
 /**
- * 简单模式下，从 startAt/endAt 推出剩余 3 个时间点：
- *   - visibleAt   = startAt          (无预热期)
- *   - rewardEndAt = endAt + 7 天     (默认 7 天领奖窗口)
- *   - hiddenAt    = rewardEndAt + 30 天  (默认 30 天后归档)
+ * 简单模式下，从 startAt/endAt 推出剩余 2 个时间点：
+ *   - visibleAt   = startAt              (无预热期)
+ *   - hiddenAt    = endAt + 30 天        (默认 30 天后归档；endAt → hiddenAt
+ *                                         之间是 ended phase，玩家可继续领奖)
  * 想自定义就切到进阶模式。
  */
 function deriveSimpleTimes(startLocal: string, endLocal: string) {
-  const rewardEnd = addDaysLocal(endLocal, 7)
   return {
     visibleAtLocal: startLocal,
-    rewardEndAtLocal: rewardEnd,
-    hiddenAtLocal: addDaysLocal(rewardEnd, 30),
+    hiddenAtLocal: addDaysLocal(endLocal, 30),
   }
 }
 
 /**
  * 决定打开表单时默认是简单还是进阶模式：
- * 编辑现有活动时，如果 visibleAt/rewardEndAt/hiddenAt 与简单模式
- * 推导值偏离很多（比如有真预热期、奖励窗口非 7 天），就走进阶模式
+ * 编辑现有活动时，如果 visibleAt/hiddenAt 与简单模式
+ * 推导值偏离很多（比如有真预热期、归档窗口非 30 天），就走进阶模式
  * 让用户看到所有字段；新建（默认值都为空）就走简单模式。
  */
 function shouldStartInAdvancedMode(
@@ -76,7 +72,6 @@ function shouldStartInAdvancedMode(
     visibleAt: string
     startAt: string
     endAt: string
-    rewardEndAt: string
     hiddenAt: string
   }>,
 ): boolean {
@@ -86,12 +81,10 @@ function shouldStartInAdvancedMode(
   const derived = deriveSimpleTimes(startLocal, endLocal)
   const cur = {
     visibleAtLocal: toLocalInput(defaults.visibleAt),
-    rewardEndAtLocal: toLocalInput(defaults.rewardEndAt),
     hiddenAtLocal: toLocalInput(defaults.hiddenAt),
   }
   return (
     cur.visibleAtLocal !== derived.visibleAtLocal ||
-    cur.rewardEndAtLocal !== derived.rewardEndAtLocal ||
     cur.hiddenAtLocal !== derived.hiddenAtLocal
   )
 }
@@ -103,10 +96,10 @@ interface Props {
   submitLabel?: string
   disableAliasEdit?: boolean
   /**
-   * Lock the time fields (visibleAt / startAt / endAt / rewardEndAt /
-   * hiddenAt) when the activity has already left the draft phase. The
-   * server will reject changes anyway; this is a UX hint that surfaces
-   * the constraint *before* the user fills in invalid values.
+   * Lock the time fields (visibleAt / startAt / endAt / hiddenAt) when
+   * the activity has already left the draft phase. The server will
+   * reject changes anyway; this is a UX hint that surfaces the
+   * constraint *before* the user fills in invalid values.
    */
   lockTimeEdit?: boolean
 }
@@ -136,10 +129,7 @@ export function ActivityForm({
       visibleAtLocal: toLocalInput(defaultValues?.visibleAt),
       startAtLocal: toLocalInput(defaultValues?.startAt),
       endAtLocal: toLocalInput(defaultValues?.endAt),
-      rewardEndAtLocal: toLocalInput(defaultValues?.rewardEndAt),
       hiddenAtLocal: toLocalInput(defaultValues?.hiddenAt),
-      milestoneTiers: (defaultValues?.milestoneTiers ??
-        []) as ActivityMilestoneTier[],
       globalRewards: (defaultValues?.globalRewards ?? []) as RewardEntry[],
       cleanupMode: (defaultValues?.cleanupRule?.mode ?? "purge") as
         | "purge"
@@ -150,7 +140,6 @@ export function ActivityForm({
         : "",
     },
     onSubmit: async ({ value }) => {
-      const milestoneTiers = value.milestoneTiers
       const globalRewards = value.globalRewards
 
       let membership: ActivityMembershipConfig | null = null
@@ -173,9 +162,7 @@ export function ActivityForm({
         visibleAt: fromLocalInput(value.visibleAtLocal),
         startAt: fromLocalInput(value.startAtLocal),
         endAt: fromLocalInput(value.endAtLocal),
-        rewardEndAt: fromLocalInput(value.rewardEndAtLocal),
         hiddenAt: fromLocalInput(value.hiddenAtLocal),
-        milestoneTiers,
         globalRewards,
         cleanupRule: { mode: value.cleanupMode as "purge" | "convert" | "keep" },
         membership,
@@ -305,13 +292,12 @@ export function ActivityForm({
             disabled={lockTimeEdit}
             onClick={() => {
               if (advancedMode) {
-                // 切回简单模式：用 start/end 重新推导其余 3 个
+                // 切回简单模式：用 start/end 重新推导其余 2 个
                 const start = form.getFieldValue("startAtLocal")
                 const end = form.getFieldValue("endAtLocal")
                 if (start && end) {
                   const d = deriveSimpleTimes(start, end)
                   form.setFieldValue("visibleAtLocal", d.visibleAtLocal)
-                  form.setFieldValue("rewardEndAtLocal", d.rewardEndAtLocal)
                   form.setFieldValue("hiddenAtLocal", d.hiddenAtLocal)
                 }
               }
@@ -359,14 +345,9 @@ export function ActivityForm({
                   onChange={(e) => {
                     const v = e.target.value
                     field.handleChange(v)
-                    // 简单模式下，结束时间改了就重新推导 rewardEnd / hidden
+                    // 简单模式下，结束时间改了就重新推导 hidden
                     if (!advancedMode && v) {
-                      const rewardEnd = addDaysLocal(v, 7)
-                      form.setFieldValue("rewardEndAtLocal", rewardEnd)
-                      form.setFieldValue(
-                        "hiddenAtLocal",
-                        addDaysLocal(rewardEnd, 30),
-                      )
+                      form.setFieldValue("hiddenAtLocal", addDaysLocal(v, 30))
                     }
                   }}
                   required
@@ -382,23 +363,6 @@ export function ActivityForm({
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor={field.name}>
                       {m.activity_field_visible_at()}
-                    </Label>
-                    <Input
-                      id={field.name}
-                      type="datetime-local"
-                      disabled={lockTimeEdit}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
-              </form.Field>
-              <form.Field name="rewardEndAtLocal">
-                {(field) => (
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={field.name}>
-                      {m.activity_field_reward_end_at()}
                     </Label>
                     <Input
                       id={field.name}
@@ -444,21 +408,6 @@ export function ActivityForm({
         title={m.activity_section_rewards_title()}
         description={m.activity_section_rewards_desc()}
       >
-        <form.Field name="milestoneTiers">
-          {(field) => (
-            <div className="flex flex-col gap-2">
-              <Label className="inline-flex items-center gap-1.5">
-                {m.activity_milestones_label()}
-                <FieldHint>{m.activity_milestones_hint()}</FieldHint>
-              </Label>
-              <ActivityMilestonesEditor
-                value={field.state.value}
-                onChange={(next) => field.handleChange(next)}
-              />
-            </div>
-          )}
-        </form.Field>
-
         <form.Field name="globalRewards">
           {(field) => (
             <div className="flex flex-col gap-1.5">

@@ -34,7 +34,6 @@ export const ACTIVITY_FILTER_DEFS: FilterDef[] = [
       { value: "scheduled", label: "Scheduled" },
       { value: "teasing", label: "Teasing" },
       { value: "active", label: "Active" },
-      { value: "settling", label: "Settling" },
       { value: "ended", label: "Ended" },
       { value: "archived", label: "Archived" },
     ],
@@ -134,7 +133,6 @@ export type ActivityPhase =
   | "scheduled"
   | "teasing"
   | "active"
-  | "settling"
   | "ended"
   | "archived"
 
@@ -306,7 +304,6 @@ export interface ActivityAnalytics {
   avgPoints: number
   maxPoints: number
   p50Points: number
-  milestoneClaims: Array<{ milestoneAlias: string; count: number }>
   pointsBuckets: Array<{ bucket: string; count: number }>
 }
 

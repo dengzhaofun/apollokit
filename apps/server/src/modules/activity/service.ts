@@ -8,8 +8,8 @@
  * Time model
  * ---------------------------------------------------------------------
  *
- * Five time columns (visibleAt / startAt / endAt / rewardEndAt /
- * hiddenAt) drive the state machine. `deriveState(config, now)` is a
+ * Four time columns (visibleAt / startAt / endAt / hiddenAt) drive the
+ * state machine. `deriveState(config, now)` is a
  * total function — reads always use the live answer. `status` is the
  * cron-persisted snapshot, used for:
  *   - Indexing ("find all active activities")
@@ -27,10 +27,6 @@
  * - `join`                  → unique(activity_id, end_user_id) on
  *                             activity_members. Retry returns the
  *                             existing row.
- * - `claimMilestone`        → unique(activity_id, end_user_id,
- *                             reward_key="milestone:<alias>") on
- *                             activity_user_rewards; conflict = already
- *                             claimed.
  * - Schedule firing         → cron updates `enabled=false` atomically
  *                             for one-shot kinds before dispatching.
  * - Archive cleanup         → `status='archived'` flips exactly once;
@@ -97,8 +93,6 @@ import {
   ActivityLeaveNotAllowed,
   ActivityMemberNoQueueNumber,
   ActivityMemberNotFound,
-  ActivityMilestoneNotFound,
-  ActivityMilestoneNotReached,
   ActivityNodeNotFound,
   ActivityNotFound,
   ActivityQueueAlreadyRedeemed,
@@ -121,7 +115,6 @@ import type {
   ActivityKind,
   ActivityMemberRow,
   ActivityMemberStatus,
-  ActivityMilestoneTier,
   ActivityNode,
   ActivityState,
   ActivityTimeline,
@@ -151,12 +144,6 @@ declare module "../../lib/event-bus" {
       actionType: string;
       firedAt: Date;
       actionConfig: Record<string, unknown>;
-    };
-    "activity.milestone.claimed": {
-      organizationId: string;
-      activityId: string;
-      endUserId: string;
-      milestoneAlias: string;
     };
     "activity.joined": {
       organizationId: string;
@@ -264,7 +251,6 @@ export function createActivityService(
     visibleAt: Date;
     startAt: Date;
     endAt: Date;
-    rewardEndAt: Date;
     hiddenAt: Date;
   }) {
     const err = validateTimeOrder(t);
@@ -282,7 +268,6 @@ export function createActivityService(
         visibleAt: new Date(input.visibleAt),
         startAt: new Date(input.startAt),
         endAt: new Date(input.endAt),
-        rewardEndAt: new Date(input.rewardEndAt),
         hiddenAt: new Date(input.hiddenAt),
       };
       assertTimeOrder(t);
@@ -301,11 +286,9 @@ export function createActivityService(
             visibleAt: t.visibleAt,
             startAt: t.startAt,
             endAt: t.endAt,
-            rewardEndAt: t.rewardEndAt,
             hiddenAt: t.hiddenAt,
             timezone: input.timezone ?? "UTC",
             status: "draft",
-            milestoneTiers: input.milestoneTiers ?? [],
             globalRewards: input.globalRewards ?? [],
             cleanupRule: input.cleanupRule ?? { mode: "purge" },
             joinRequirement: input.joinRequirement ?? null,
@@ -352,13 +335,9 @@ export function createActivityService(
       if (patch.startAt !== undefined)
         values.startAt = new Date(patch.startAt);
       if (patch.endAt !== undefined) values.endAt = new Date(patch.endAt);
-      if (patch.rewardEndAt !== undefined)
-        values.rewardEndAt = new Date(patch.rewardEndAt);
       if (patch.hiddenAt !== undefined)
         values.hiddenAt = new Date(patch.hiddenAt);
       if (patch.timezone !== undefined) values.timezone = patch.timezone;
-      if (patch.milestoneTiers !== undefined)
-        values.milestoneTiers = patch.milestoneTiers as ActivityMilestoneTier[];
       if (patch.globalRewards !== undefined)
         values.globalRewards = patch.globalRewards as RewardEntry[];
       if (patch.cleanupRule !== undefined) values.cleanupRule = patch.cleanupRule;
@@ -378,7 +357,6 @@ export function createActivityService(
         visibleAt: (values.visibleAt ?? existing.visibleAt) as Date,
         startAt: (values.startAt ?? existing.startAt) as Date,
         endAt: (values.endAt ?? existing.endAt) as Date,
-        rewardEndAt: (values.rewardEndAt ?? existing.rewardEndAt) as Date,
         hiddenAt: (values.hiddenAt ?? existing.hiddenAt) as Date,
       };
       assertTimeOrder(t);
@@ -976,10 +954,7 @@ export function createActivityService(
       source: string;
       sourceRef?: string;
       now?: Date;
-    }): Promise<{
-      balance: number;
-      unlockedMilestones: string[];
-    }> {
+    }): Promise<{ balance: number }> {
       const activity = await loadByKey(
         params.organizationId,
         params.activityIdOrAlias,
@@ -991,7 +966,7 @@ export function createActivityService(
       if (params.delta > 0 && state !== "active") {
         throw new ActivityWrongState("earn points in", state);
       }
-      if (params.delta < 0 && !["active", "settling", "ended"].includes(state)) {
+      if (params.delta < 0 && !["active", "ended"].includes(state)) {
         throw new ActivityWrongState("spend points in", state);
       }
 
@@ -1032,137 +1007,7 @@ export function createActivityService(
         sourceRef: params.sourceRef ?? null,
       });
 
-      // Which new milestones did this push over the line?
-      const tiers = (activity.milestoneTiers ??
-        []) as ActivityMilestoneTier[];
-      const previousBalance = balance - params.delta;
-      const unlockedMilestones = tiers
-        .filter(
-          (t) =>
-            balance >= t.points &&
-            previousBalance < t.points &&
-            !(row!.milestonesAchieved ?? []).includes(t.alias),
-        )
-        .map((t) => t.alias);
-
-      return { balance, unlockedMilestones };
-    },
-
-    /**
-     * Claim a milestone. Idempotent — the unique key
-     * (activity_id, end_user_id, reward_key="milestone:<alias>") makes
-     * double-claim cases surface as `already_claimed`.
-     */
-    async claimMilestone(params: {
-      organizationId: string;
-      activityIdOrAlias: string;
-      endUserId: string;
-      milestoneAlias: string;
-      now?: Date;
-    }): Promise<{
-      claimed: boolean;
-      rewards: RewardEntry[];
-      balance: number;
-    }> {
-      const activity = await loadByKey(
-        params.organizationId,
-        params.activityIdOrAlias,
-      );
-      const now = params.now ?? new Date();
-      const state = deriveState(activity, now);
-      if (!["active", "settling"].includes(state)) {
-        throw new ActivityWrongState("claim milestone in", state);
-      }
-
-      const tiers = (activity.milestoneTiers ??
-        []) as ActivityMilestoneTier[];
-      const tier = tiers.find((t) => t.alias === params.milestoneAlias);
-      if (!tier) throw new ActivityMilestoneNotFound(params.milestoneAlias);
-
-      // Load current points.
-      const progressRows = await db
-        .select()
-        .from(activityMembers)
-        .where(
-          and(
-            eq(activityMembers.activityId, activity.id),
-            eq(activityMembers.endUserId, params.endUserId),
-          ),
-        )
-        .limit(1);
-      const progress = progressRows[0];
-      if (!progress || progress.activityPoints < tier.points) {
-        throw new ActivityMilestoneNotReached(
-          params.milestoneAlias,
-          tier.points,
-          progress?.activityPoints ?? 0,
-        );
-      }
-
-      // Insert dedup claim row. Duplicate throws 23505 → already claimed.
-      const rewardKey = `milestone:${params.milestoneAlias}`;
-      try {
-        await db.insert(activityUserRewards).values({
-          activityId: activity.id,
-          organizationId: params.organizationId,
-          endUserId: params.endUserId,
-          rewardKey,
-          rewards: tier.rewards,
-        });
-      } catch (err) {
-        if (isUniqueViolation(err)) {
-          return {
-            claimed: false,
-            rewards: tier.rewards,
-            balance: progress.activityPoints,
-          };
-        }
-        throw err;
-      }
-
-      // Append milestone alias to the cached list (for O(1) reads).
-      await db
-        .update(activityMembers)
-        .set({
-          milestonesAchieved: sql`coalesce(${activityMembers.milestonesAchieved}, '[]'::jsonb) || ${JSON.stringify([params.milestoneAlias])}::jsonb`,
-        })
-        .where(eq(activityMembers.id, progress.id));
-
-      // Dispatch the rewards via mail (idempotent by rewardKey).
-      const mail = mailGetter();
-      if (mail) {
-        try {
-          await mail.sendUnicast(
-            params.organizationId,
-            params.endUserId,
-            {
-              title: `Milestone: ${activity.name}`,
-              content: `You reached "${params.milestoneAlias}" — rewards inside.`,
-              rewards: tier.rewards,
-              originSource: "activity_milestone",
-              originSourceId: `${activity.id}:${params.endUserId}:${rewardKey}`,
-            },
-          );
-        } catch (err) {
-          logger.error(
-            `[activity] milestone mail failed activity=${activity.id} user=${params.endUserId}:`,
-            err,
-          );
-        }
-      }
-
-      await events.emit("activity.milestone.claimed", {
-        organizationId: params.organizationId,
-        activityId: activity.id,
-        endUserId: params.endUserId,
-        milestoneAlias: params.milestoneAlias,
-      });
-
-      return {
-        claimed: true,
-        rewards: tier.rewards,
-        balance: progress.activityPoints,
-      };
+      return { balance };
     },
 
     /**
@@ -1184,7 +1029,7 @@ export function createActivityService(
       const now = params.now ?? new Date();
       const timeline = deriveTimeline(activity, now);
 
-      const [progressRows, nodeRows] = await Promise.all([
+      const [progressRows, nodeRows, claimedKeys] = await Promise.all([
         db
           .select()
           .from(activityMembers)
@@ -1200,11 +1045,27 @@ export function createActivityService(
           .from(activityNodes)
           .where(eq(activityNodes.activityId, activity.id))
           .orderBy(activityNodes.orderIndex),
+        db
+          .select({ rewardKey: activityUserRewards.rewardKey })
+          .from(activityUserRewards)
+          .where(
+            and(
+              eq(activityUserRewards.activityId, activity.id),
+              eq(activityUserRewards.endUserId, params.endUserId),
+            ),
+          ),
       ]);
 
       const progress = progressRows[0] ?? null;
+      // `requirePrevNodeAliases` is checked against `node:<alias>` reward
+      // keys recorded in `activity_user_rewards` (per-node claim-once
+      // grants). This used to be sourced from `milestonesAchieved` which
+      // was milestone-shaped, not node-shaped — never actually worked.
+      // Now sourced correctly from the unified rewards ledger.
       const completedAliases = new Set<string>(
-        progress?.milestonesAchieved ?? [],
+        claimedKeys
+          .map((r) => r.rewardKey)
+          .filter((k) => k.startsWith("node:")),
       );
 
       // Two layers of "enabled" collapse into one derived value the UI
@@ -1252,7 +1113,6 @@ export function createActivityService(
      *   participants — how many users joined
      *   completed / dropped — their status breakdown
      *   avgPoints / maxPoints / p50Points — central tendencies
-     *   milestoneClaims — map of milestone alias -> how many users claimed
      *   pointsBuckets — histogram for UI rendering
      */
     async getActivityAnalytics(params: {
@@ -1265,7 +1125,6 @@ export function createActivityService(
       avgPoints: number;
       maxPoints: number;
       p50Points: number;
-      milestoneClaims: Array<{ milestoneAlias: string; count: number }>;
       pointsBuckets: Array<{ bucket: string; count: number }>;
     }> {
       const activity = await loadByKey(
@@ -1318,23 +1177,6 @@ export function createActivityService(
       const maxPoints = Number(stats?.max ?? 0) || 0;
       const p50Points = Number(stats?.p50 ?? 0) || 0;
 
-      const milestoneRowsRaw = await db.execute(sql<{
-        reward_key: string;
-        cnt: number;
-      }>`
-        SELECT reward_key, COUNT(*)::int AS cnt
-        FROM activity_user_rewards
-        WHERE activity_id = ${activity.id}
-          AND reward_key LIKE 'milestone:%'
-        GROUP BY reward_key
-      `);
-      const milestoneClaims = (
-        milestoneRowsRaw.rows as Array<{ reward_key: string; cnt: number }>
-      ).map((r) => ({
-        milestoneAlias: r.reward_key.replace(/^milestone:/, ""),
-        count: Number(r.cnt),
-      }));
-
       const bucketsRaw = await db.execute(sql<{ bucket: string; cnt: number }>`
         SELECT
           CASE
@@ -1362,7 +1204,6 @@ export function createActivityService(
         avgPoints,
         maxPoints,
         p50Points,
-        milestoneClaims,
         pointsBuckets,
       };
     },
@@ -1483,11 +1324,8 @@ export function createActivityService(
       const ds = tpl.durationSpec as ActivityTemplateDurationSpec;
       const visibleAt = new Date(startAt.getTime() - ds.teaseSeconds * 1000);
       const endAt = new Date(startAt.getTime() + ds.activeSeconds * 1000);
-      const rewardEndAt = new Date(
-        endAt.getTime() + ds.rewardSeconds * 1000,
-      );
       const hiddenAt = new Date(
-        rewardEndAt.getTime() + ds.hiddenSeconds * 1000,
+        endAt.getTime() + ds.hiddenSeconds * 1000,
       );
 
       const newAlias = expandAliasPattern(
@@ -1516,15 +1354,11 @@ export function createActivityService(
           visibleAt,
           startAt,
           endAt,
-          rewardEndAt,
           hiddenAt,
           timezone:
             (payload.timezone as string | undefined) ??
             (rec.mode !== "manual" ? rec.timezone : "UTC"),
           status: "draft",
-          milestoneTiers:
-            (payload.milestoneTiers as typeof activityConfigs.$inferInsert.milestoneTiers) ??
-            [],
           globalRewards:
             (payload.globalRewards as typeof activityConfigs.$inferInsert.globalRewards) ??
             [],
@@ -1726,7 +1560,6 @@ export function createActivityService(
               visibleAt,
               startAt,
               endAt,
-              rewardEndAt,
               hiddenAt,
               timezone:
                 (payload.timezone as string | undefined) ??
@@ -1759,7 +1592,6 @@ export function createActivityService(
             visibleAt,
             startAt,
             endAt,
-            rewardEndAt,
             hiddenAt,
           },
           now,
@@ -2339,8 +2171,6 @@ function validateDurationSpec(ds: ActivityTemplateDurationSpec): void {
     throw new ActivityInvalidInput("durationSpec.teaseSeconds must be >= 0");
   if (!Number.isFinite(ds.activeSeconds) || ds.activeSeconds <= 0)
     throw new ActivityInvalidInput("durationSpec.activeSeconds must be > 0");
-  if (!Number.isFinite(ds.rewardSeconds) || ds.rewardSeconds < 0)
-    throw new ActivityInvalidInput("durationSpec.rewardSeconds must be >= 0");
   if (!Number.isFinite(ds.hiddenSeconds) || ds.hiddenSeconds < 0)
     throw new ActivityInvalidInput("durationSpec.hiddenSeconds must be >= 0");
 }

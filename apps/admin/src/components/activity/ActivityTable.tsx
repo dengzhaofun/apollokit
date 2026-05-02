@@ -14,7 +14,6 @@ const STATE_VARIANT: Record<ActivityState, "default" | "outline" | "secondary"> 
   scheduled: "outline",
   teasing: "secondary",
   active: "default",
-  settling: "secondary",
   ended: "outline",
   archived: "outline",
 }
@@ -24,7 +23,6 @@ const STATE_LABELS: Record<ActivityState, () => string> = {
   scheduled: m.activity_state_scheduled,
   teasing: m.activity_state_teasing,
   active: m.activity_state_active,
-  settling: m.activity_state_settling,
   ended: m.activity_state_ended,
   archived: m.activity_state_archived,
 }

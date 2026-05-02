@@ -177,7 +177,7 @@ export function createBattlePassService(
 
   /**
    * 根据 activity 状态机判断某季目前能否领奖。委托给统一的活动期 gate
-   * (`assertActivityClaimable`)：仅 phase ∈ {active, settling} 通过。
+   * (`assertActivityClaimable`)：仅 phase ∈ {active, ended} 通过。
    *
    * 历史实现（在 PR #80 之前）写在这里，重复了状态机判断逻辑且把
    * `status` 列当 archived 哨兵；现在改成 deriveState 实时算，跨模块
@@ -946,11 +946,7 @@ export function createBattlePassService(
       .where(
         and(
           eq(battlePassConfigs.organizationId, organizationId),
-          inArray(activityConfigs.status, [
-            "active",
-            "settling",
-            "ended",
-          ]),
+          inArray(activityConfigs.status, ["active", "ended"]),
         ),
       )
       .orderBy(asc(activityConfigs.startAt));

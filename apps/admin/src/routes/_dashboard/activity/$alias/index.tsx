@@ -329,7 +329,6 @@ function ActivityCountdownCard({
   const v = new Date(activity.visibleAt).getTime()
   const s = new Date(activity.startAt).getTime()
   const e = new Date(activity.endAt).getTime()
-  const r = new Date(activity.rewardEndAt).getTime()
   const h = new Date(activity.hiddenAt).getTime()
   const t = now.getTime()
 
@@ -346,9 +345,6 @@ function ActivityCountdownCard({
   } else if (t < e) {
     target = e
     labelKey = m.activity_countdown_to_end
-  } else if (t < r) {
-    target = r
-    labelKey = m.activity_countdown_to_reward_end
   } else if (t < h) {
     target = h
     labelKey = m.activity_countdown_to_archive
@@ -413,10 +409,6 @@ function OverviewPanel({
             {fmt(activity.endAt)}
           </div>
           <div>
-            <span className="text-muted-foreground">rewardEndAt: </span>
-            {fmt(activity.rewardEndAt)}
-          </div>
-          <div>
             <span className="text-muted-foreground">hiddenAt: </span>
             {fmt(activity.hiddenAt)}
           </div>
@@ -432,12 +424,6 @@ function OverviewPanel({
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_rewards()}</h2>
         <div className="space-y-3 text-sm">
-          <div>
-            <div className="text-muted-foreground">{m.activity_overview_milestones()}</div>
-            <pre className="mt-1 max-h-60 overflow-auto rounded-lg bg-muted p-3 text-xs">
-              {JSON.stringify(activity.milestoneTiers, null, 2)}
-            </pre>
-          </div>
           <div>
             <div className="text-muted-foreground">{m.activity_overview_global_rewards()}</div>
             <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-muted p-3 text-xs">
@@ -1094,33 +1080,6 @@ function AnalyticsPanel({ activityKey }: { activityKey: string }) {
         )}
       </div>
 
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">{m.activity_analytics_milestone_claims()}</h3>
-        {data.milestoneClaims.length === 0 ? (
-          <div className="text-muted-foreground">{m.activity_analytics_no_claims()}</div>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {data.milestoneClaims
-              .slice()
-              .sort((a, b) => b.count - a.count)
-              .map((mc) => (
-                <li
-                  key={mc.milestoneAlias}
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                >
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {mc.milestoneAlias}
-                  </code>
-                  <span className="ml-auto font-mono">
-                    {m.activity_analytics_claim_count({
-                      count: mc.count.toLocaleString(),
-                    })}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        )}
-      </div>
     </div>
   )
 }

@@ -49,7 +49,7 @@ export class ActivityNotInClaimablePhase extends ModuleError {
     super(
       "activity.not_in_claimable_phase",
       409,
-      `activity ${activityId} is in phase=${phase}; claims allowed only in {active, settling}`,
+      `activity ${activityId} is in phase=${phase}; claims allowed only in {active, ended}`,
     );
   }
 }
@@ -57,26 +57,6 @@ export class ActivityNotInClaimablePhase extends ModuleError {
 export class ActivityNodeNotFound extends ModuleError {
   constructor(alias: string) {
     super("activity.node_not_found", 404, `activity node not found: ${alias}`);
-  }
-}
-
-export class ActivityMilestoneNotFound extends ModuleError {
-  constructor(alias: string) {
-    super(
-      "activity.milestone_not_found",
-      404,
-      `milestone not found: ${alias}`,
-    );
-  }
-}
-
-export class ActivityMilestoneNotReached extends ModuleError {
-  constructor(alias: string, need: number, have: number) {
-    super(
-      "activity.milestone_not_reached",
-      409,
-      `milestone ${alias} requires ${need} points, have ${have}`,
-    );
   }
 }
 

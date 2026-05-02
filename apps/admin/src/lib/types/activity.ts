@@ -13,7 +13,6 @@ export type ActivityState =
   | "scheduled"
   | "teasing"
   | "active"
-  | "settling"
   | "ended"
   | "archived"
 
@@ -41,12 +40,6 @@ export type ActionType =
 
 import type { RewardEntry } from "./rewards"
 export type { RewardEntry }
-
-export interface ActivityMilestoneTier {
-  alias: string
-  points: number
-  rewards: RewardEntry[]
-}
 
 export interface ActivityCleanupRule {
   mode: "purge" | "convert" | "keep"
@@ -78,11 +71,9 @@ export interface Activity {
   visibleAt: string
   startAt: string
   endAt: string
-  rewardEndAt: string
   hiddenAt: string
   timezone: string
   status: ActivityState
-  milestoneTiers: ActivityMilestoneTier[]
   globalRewards: RewardEntry[]
   cleanupRule: ActivityCleanupRule
   joinRequirement: Record<string, unknown> | null
@@ -139,10 +130,8 @@ export interface CreateActivityInput {
   visibleAt: string
   startAt: string
   endAt: string
-  rewardEndAt: string
   hiddenAt: string
   timezone?: string
-  milestoneTiers?: ActivityMilestoneTier[]
   globalRewards?: RewardEntry[]
   cleanupRule?: ActivityCleanupRule
   joinRequirement?: Record<string, unknown> | null
@@ -231,7 +220,6 @@ export interface ActivityViewForUser {
 export type ActivityTemplateDurationSpec = {
   teaseSeconds: number
   activeSeconds: number
-  rewardSeconds: number
   hiddenSeconds: number
 }
 

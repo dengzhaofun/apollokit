@@ -41,17 +41,6 @@ export type ActivityMembershipConfig = {
 };
 
 /**
- * A milestone triggered by total accumulated activity points.
- * `alias` is unique within the activity so `activity_user_rewards` can
- * key on `reward_key = "milestone:<alias>"`.
- */
-export type ActivityMilestoneTier = {
-  alias: string;
-  points: number;
-  rewards: RewardEntry[];
-};
-
-/**
  * Gate on a node being interactable. Combined with AND semantics.
  * Left `jsonb` to keep the shape evolvable — validators enforce known
  * keys.
@@ -83,7 +72,7 @@ export type ActivityCleanupRule = {
  *
  * Five time points drive the state machine (see
  * `modules/activity/service.ts → deriveState`):
- *   visible_at ≤ start_at < end_at ≤ reward_end_at ≤ hidden_at
+ *   visible_at ≤ start_at < end_at ≤ hidden_at
  *
  * The `status` column is the cron-persisted snapshot of the derived
  * state. Reads can recompute `deriveState(config, now)` for sub-minute
@@ -108,14 +97,9 @@ export const activityConfigs = pgTable(
     visibleAt: timestamp("visible_at").notNull(),
     startAt: timestamp("start_at").notNull(),
     endAt: timestamp("end_at").notNull(),
-    rewardEndAt: timestamp("reward_end_at").notNull(),
     hiddenAt: timestamp("hidden_at").notNull(),
     timezone: text("timezone").notNull().default("UTC"),
-    status: text("status").notNull().default("draft"), // "draft"|"scheduled"|"teasing"|"active"|"settling"|"ended"|"archived"
-    milestoneTiers: jsonb("milestone_tiers")
-      .$type<ActivityMilestoneTier[]>()
-      .default([])
-      .notNull(),
+    status: text("status").notNull().default("draft"), // "draft"|"scheduled"|"teasing"|"active"|"ended"|"archived"
     globalRewards: jsonb("global_rewards")
       .$type<RewardEntry[]>()
       .default([])
@@ -152,7 +136,6 @@ export const activityConfigs = pgTable(
       table.visibleAt,
       table.startAt,
       table.endAt,
-      table.rewardEndAt,
       table.hiddenAt,
     ),
   ],
@@ -213,10 +196,10 @@ export const activityNodes = pgTable(
  * row — "member" is the primary concept; progress/points are
  * properties of a member.
  *
- * `activityPoints` is the single counter for the activity's native
- * currency. `milestonesAchieved` is a stringlist of claimed milestone
- * aliases for O(1) "already claimed?" checks. `nodeState` stores per-
- * node runtime data (e.g. board_game position, gacha pity counters).
+ * `activityPoints` is the single counter for activity-scoped progress
+ * (used by leaderboard nodes, simple participation counters, etc.).
+ * `nodeState` stores per-node runtime data (e.g. board_game position,
+ * gacha pity counters).
  *
  * `queueNumber` is the optional offline queue ticket (enabled when
  * activityConfigs.membership.queue.enabled). One-shot: once
@@ -247,10 +230,6 @@ export const activityMembers = pgTable(
     lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
     activityPoints: bigint("activity_points", { mode: "number" })
       .default(0)
-      .notNull(),
-    milestonesAchieved: jsonb("milestones_achieved")
-      .$type<string[]>()
-      .default([])
       .notNull(),
     nodeState: jsonb("node_state")
       .$type<Record<string, unknown>>()
@@ -293,9 +272,9 @@ export const activityMembers = pgTable(
  * Idempotency ledger for activity reward payouts.
  *
  * `rewardKey` is a stable identifier for "what was given":
- *   - "milestone:<alias>"    — a milestone tier payout
+ *   - "schedule:<alias>"     — a scheduled grant_reward action's payout
  *   - "node:<nodeAlias>:*"   — per-node specific grants (claim-once)
- *   - "global_complete"       — the activity_configs.global_rewards payout
+ *   - "global_complete"      — the activity_configs.global_rewards payout
  *
  * The unique (activity_id, end_user_id, reward_key) prevents double
  * payment across retries, cron reruns, or concurrent requests.
@@ -432,14 +411,13 @@ export const activitySchedules = pgTable(
  *
  * `templatePayload` holds every activity_configs field that should be
  * copied verbatim to each new instance (name, description, kind,
- * milestoneTiers, globalRewards, cleanupRule, metadata,
+ * globalRewards, cleanupRule, metadata,
  * joinRequirement, visibility, themeColor, bannerImage).
  *
  * `durationSpec` is relative seconds from the generated start_at:
  *   visibleAt  = startAt - teaseSeconds
  *   endAt      = startAt + activeSeconds
- *   rewardEndAt= endAt + rewardSeconds
- *   hiddenAt   = rewardEndAt + hiddenSeconds
+ *   hiddenAt   = endAt + hiddenSeconds
  *
  * `recurrence` drives when the next start_at falls:
  *   - mode: "weekly"  → dayOfWeek + hourOfDay + timezone
@@ -452,7 +430,6 @@ export const activitySchedules = pgTable(
 export type ActivityTemplateDurationSpec = {
   teaseSeconds: number;
   activeSeconds: number;
-  rewardSeconds: number;
   hiddenSeconds: number;
 };
 

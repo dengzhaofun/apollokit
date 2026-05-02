@@ -387,15 +387,14 @@ describe("check-in service — activity-bound writable gate", () => {
   /** Seed an activity at a chosen phase relative to `now`. */
   async function seedActivity(opts: {
     alias: string;
-    phaseAt: "active" | "teasing" | "settling" | "ended";
+    phaseAt: "active" | "teasing" | "ended";
   }): Promise<string> {
     const { activityConfigs } = await import("../../schema/activity");
     const now = Date.now();
     const offsetMap = {
       active: 0,
       teasing: -1.5 * HOUR, // anchor in past so now is between visibleAt and startAt
-      settling: +1.5 * HOUR, // anchor in past so now is between endAt and rewardEndAt
-      ended: +2.5 * HOUR, // anchor far enough in past that now > rewardEndAt
+      ended: +1.5 * HOUR, // anchor in past so now is between endAt and hiddenAt
     };
     const anchor = new Date(now - offsetMap[opts.phaseAt]);
     const [row] = await db
@@ -409,7 +408,6 @@ describe("check-in service — activity-bound writable gate", () => {
         visibleAt: new Date(anchor.getTime() - 2 * HOUR),
         startAt: new Date(anchor.getTime() - HOUR),
         endAt: new Date(anchor.getTime() + HOUR),
-        rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
         hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
       })
       .returning({ id: activityConfigs.id });
@@ -435,7 +433,7 @@ describe("check-in service — activity-bound writable gate", () => {
     expect(r.state.totalDays).toBe(1);
   });
 
-  test.each(["teasing", "settling", "ended"] as const)(
+  test.each(["teasing", "ended"] as const)(
     "%s activity → check-in throws activity.not_in_writable_phase, no row written",
     async (phase) => {
       const activityId = await seedActivity({
