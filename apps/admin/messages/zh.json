@@ -1690,6 +1690,7 @@
   "activity_nodes_select_assist_pool": "assist_pool 辅助池",
   "activity_nodes_select_custom": "custom 自定义",
   "activity_nodes_field_ref_id": "refId (可选)",
+  "activity_node_alias_unified_hint": "Alias 从下方表单的 alias 字段读取——只填一次，资源 alias 和活动节点 alias 共用同一个值。",
   "activity_nodes_field_ref_id_manual_placeholder": "手动填入 UUID",
   "activity_nodes_field_ref_id_loading": "加载中…",
   "activity_nodes_field_ref_id_pick": "从已有资源中选",

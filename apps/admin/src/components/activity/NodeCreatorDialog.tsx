@@ -128,6 +128,28 @@ interface Props {
  * default the resource alias to the same value when the user leaves
  * it blank in the body form.
  */
+/**
+ * Node types whose body Form has its own `alias` field that doubles as
+ * the node alias. For these we hide the dialog-level "Node alias" input
+ * so the operator only fills alias once — the section reads the form
+ * value and passes it through `mountNode(refId, formAlias)`.
+ *
+ * `custom` has no body form (operator clicks a button) and `game_board`
+ * is a virtual placeholder, so they keep the dialog-level input.
+ */
+const FORM_OWNS_ALIAS: ReadonlySet<NodeType> = new Set([
+  "check_in",
+  "task_group",
+  "lottery",
+  "leaderboard",
+  "banner",
+  "exchange",
+  "assist_pool",
+  "entity_blueprint",
+  "item_definition",
+  "currency_definition",
+])
+
 export function NodeCreatorDialog({
   activityKey,
   activityId,
@@ -138,6 +160,8 @@ export function NodeCreatorDialog({
   const [nodeAlias, setNodeAlias] = useState("")
   const [orderIndex, setOrderIndex] = useState(0)
 
+  const formOwnsAlias = FORM_OWNS_ALIAS.has(nodeType)
+
   const createNode = useCreateActivityNode(activityKey)
 
   function reset() {
@@ -146,9 +170,17 @@ export function NodeCreatorDialog({
     setOrderIndex((n) => n + 1)
   }
 
-  async function mountNode(refId: string | null) {
+  async function mountNode(
+    refId: string | null,
+    aliasOverride?: string | null,
+  ) {
+    const finalAlias = aliasOverride?.trim() || nodeAlias
+    if (!finalAlias) {
+      toast.error(m.activity_node_alias_required())
+      return
+    }
     await createNode.mutateAsync({
-      alias: nodeAlias,
+      alias: finalAlias,
       nodeType,
       refId,
       orderIndex,
@@ -170,7 +202,13 @@ export function NodeCreatorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-3 py-2">
+        <div
+          className={
+            formOwnsAlias
+              ? "grid grid-cols-2 gap-3 py-2"
+              : "grid grid-cols-3 gap-3 py-2"
+          }
+        >
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_node_field_type()}</Label>
             <Select
@@ -194,17 +232,19 @@ export function NodeCreatorDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_alias()}</Label>
-            <Input
-              value={nodeAlias}
-              onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
-              placeholder="day7_checkin"
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.activity_node_field_alias_help()}
-            </p>
-          </div>
+          {formOwnsAlias ? null : (
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_node_field_alias()}</Label>
+              <Input
+                value={nodeAlias}
+                onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
+                placeholder="custom_node"
+              />
+              <p className="text-xs text-muted-foreground">
+                {m.activity_node_field_alias_help()}
+              </p>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_node_field_order()}</Label>
             <Input
@@ -214,6 +254,11 @@ export function NodeCreatorDialog({
             />
           </div>
         </div>
+        {formOwnsAlias ? (
+          <p className="-mt-1 text-xs text-muted-foreground">
+            {m.activity_node_alias_unified_hint()}
+          </p>
+        ) : null}
 
         <div className="rounded-lg border p-4">
           <NodeFormSection
@@ -243,49 +288,54 @@ interface SectionProps {
   nodeType: NodeType
   activityId: string
   nodeAlias: string
-  mountNode: (refId: string | null) => Promise<void>
+  /**
+   * Mount the just-created (or just-picked) resource as an activity
+   * node. Pass the form's `alias` value as `aliasOverride` so the
+   * node alias and the resource alias stay in sync — the operator
+   * fills alias only once inside the body form.
+   */
+  mountNode: (
+    refId: string | null,
+    aliasOverride?: string | null,
+  ) => Promise<void>
   mountPending: boolean
 }
 
 function NodeFormSection(props: SectionProps) {
-  function aliasRequired() {
-    if (!props.nodeAlias) {
-      toast.error(m.activity_node_alias_required())
-      return true
-    }
-    return false
-  }
-
+  // Alias is now validated centrally inside `mountNode` (it picks the
+  // form's alias as override, falling back to the dialog-level
+  // nodeAlias). Sections just pass through `props.mountNode` and let
+  // it surface any "alias required" toast.
   switch (props.nodeType) {
     case "check_in":
-      return <CheckInSection {...props} aliasRequired={aliasRequired} />
+      return <CheckInSection {...props} />
     case "lottery":
-      return <LotterySection {...props} aliasRequired={aliasRequired} />
+      return <LotterySection {...props} />
     case "banner":
-      return <BannerSection {...props} aliasRequired={aliasRequired} />
+      return <BannerSection {...props} />
     case "task_group":
-      return <TaskSection {...props} aliasRequired={aliasRequired} />
+      return <TaskSection {...props} />
     case "exchange":
-      return <ShopSection {...props} aliasRequired={aliasRequired} />
+      return <ShopSection {...props} />
     case "leaderboard":
-      return <LeaderboardSection {...props} aliasRequired={aliasRequired} />
+      return <LeaderboardSection {...props} />
     case "game_board":
     case "entity_blueprint":
-      return <EntitySection {...props} aliasRequired={aliasRequired} />
+      return <EntitySection {...props} />
     case "item_definition":
-      return <ItemSection {...props} aliasRequired={aliasRequired} />
+      return <ItemSection {...props} />
     case "currency_definition":
-      return <CurrencySection {...props} aliasRequired={aliasRequired} />
+      return <CurrencySection {...props} />
     case "assist_pool":
-      return <AssistPoolSection {...props} aliasRequired={aliasRequired} />
+      return <AssistPoolSection {...props} />
     case "custom":
-      return <CustomSection {...props} aliasRequired={aliasRequired} />
+      return <CustomSection {...props} />
     default:
       return null
   }
 }
 
-type SectionImplProps = SectionProps & { aliasRequired: () => boolean }
+type SectionImplProps = SectionProps
 
 function reportError(err: unknown) {
   if (err instanceof ApiError) toast.error(err.body.error)
@@ -296,14 +346,12 @@ function CheckInSection(props: SectionImplProps) {
   const create = useCreateCheckInConfig()
   const form = useCheckInForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const config = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(config.id)
+        await props.mountNode(config.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -322,14 +370,12 @@ function LotterySection(props: SectionImplProps) {
   const create = useCreateLotteryPool()
   const form = useLotteryPoolForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const pool = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(pool.id)
+        await props.mountNode(pool.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -348,14 +394,12 @@ function BannerSection(props: SectionImplProps) {
   const create = useCreateBannerGroup()
   const form = useBannerGroupForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const group = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(group.id)
+        await props.mountNode(group.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -379,14 +423,12 @@ function TaskSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_task_group()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
+      onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
             activityId: props.activityId,
           })
-          await props.mountNode(def.id)
+          await props.mountNode(def.id, values.alias)
         } catch (err) {
           reportError(err)
         }
@@ -399,14 +441,12 @@ function ShopSection(props: SectionImplProps) {
   const create = useCreateShopProduct()
   const form = useShopProductForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const product = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(product.id)
+        await props.mountNode(product.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -425,14 +465,12 @@ function LeaderboardSection(props: SectionImplProps) {
   const create = useCreateLeaderboardConfig()
   const form = useLeaderboardForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const cfg = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(cfg.id)
+        await props.mountNode(cfg.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -489,14 +527,12 @@ function EntitySection(props: SectionImplProps) {
           }}
           isPending={create.isPending || props.mountPending}
           submitLabel={m.activity_node_submit_entity_blueprint()}
-          onSubmit={async (values) => {
-            if (props.aliasRequired()) return
-            try {
+          onSubmit={async (values) => {            try {
               const bp = await create.mutateAsync({
                 ...values,
                 activityId: props.activityId,
               })
-              await props.mountNode(bp.id)
+              await props.mountNode(bp.id, values.alias)
             } catch (err) {
               reportError(err)
             }
@@ -514,14 +550,12 @@ function ItemSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_item_definition()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
+      onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
             activityId: props.activityId,
           })
-          await props.mountNode(def.id)
+          await props.mountNode(def.id, values.alias)
         } catch (err) {
           reportError(err)
         }
@@ -534,14 +568,12 @@ function CurrencySection(props: SectionImplProps) {
   const create = useCreateCurrency()
   const form = useCurrencyDefinitionForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const def = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(def.id)
+        await props.mountNode(def.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -560,14 +592,12 @@ function AssistPoolSection(props: SectionImplProps) {
   const create = useCreateAssistPoolConfig()
   const form = useAssistPoolForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const cfg = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(cfg.id)
+        await props.mountNode(cfg.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -590,9 +620,7 @@ function CustomSection(props: SectionImplProps) {
       </p>
       <Button
         disabled={props.mountPending}
-        onClick={async () => {
-          if (props.aliasRequired()) return
-          try {
+        onClick={async () => {          try {
             await props.mountNode(null)
           } catch (err) {
             reportError(err)
