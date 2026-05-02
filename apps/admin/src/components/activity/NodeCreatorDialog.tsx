@@ -160,6 +160,28 @@ export function NodeCreatorDialog({
   const [nodeAlias, setNodeAlias] = useState("")
   const [orderIndex, setOrderIndex] = useState(0)
 
+  /**
+   * All node types the operator has visited at least once during this
+   * dialog session. Visited sections stay mounted (just hidden) so
+   * their form state survives nodeType switching — operator can fill a
+   * task form, peek at leaderboard, then come back to task without
+   * losing what was typed.
+   *
+   * Lazy: we don't mount all 12 sections up front, only the ones the
+   * operator actually visits. First visit mounts; subsequent visits
+   * just toggle visibility.
+   */
+  const [mountedTypes, setMountedTypes] = useState<Set<NodeType>>(
+    () => new Set([nodeType]),
+  )
+
+  function selectType(next: NodeType) {
+    setNodeType(next)
+    setMountedTypes((prev) =>
+      prev.has(next) ? prev : new Set([...prev, next]),
+    )
+  }
+
   const formOwnsAlias = FORM_OWNS_ALIAS.has(nodeType)
 
   const createNode = useCreateActivityNode(activityKey)
@@ -168,6 +190,7 @@ export function NodeCreatorDialog({
     setNodeType("check_in")
     setNodeAlias("")
     setOrderIndex((n) => n + 1)
+    setMountedTypes(new Set(["check_in"]))
   }
 
   async function mountNode(
@@ -222,7 +245,7 @@ export function NodeCreatorDialog({
               <Label>{m.activity_node_field_type()}</Label>
               <Select
                 value={nodeType}
-                onValueChange={(v) => setNodeType(v as NodeType)}
+                onValueChange={(v) => selectType(v as NodeType)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -269,14 +292,32 @@ export function NodeCreatorDialog({
             </p>
           ) : null}
 
+          {/*
+            Render every visited nodeType section, but only show the
+            active one. Hidden sections preserve their form state so
+            switching back doesn't lose what the operator typed.
+            Form ids: only the active section gets the canonical
+            NODE_CREATOR_FORM_ID (which the footer's submit button
+            targets); others get a unique disambiguated id so the DOM
+            stays valid (no duplicate ids).
+          */}
           <div className="mt-4 rounded-lg border p-4">
-            <NodeFormSection
-              nodeType={nodeType}
-              activityId={activityId}
-              nodeAlias={nodeAlias}
-              mountNode={mountNode}
-              mountPending={createNode.isPending}
-            />
+            {Array.from(mountedTypes).map((nt) => (
+              <div key={nt} hidden={nt !== nodeType}>
+                <NodeFormSection
+                  nodeType={nt}
+                  activityId={activityId}
+                  nodeAlias={nodeAlias}
+                  mountNode={mountNode}
+                  mountPending={createNode.isPending}
+                  formId={
+                    nt === nodeType
+                      ? NODE_CREATOR_FORM_ID
+                      : `${NODE_CREATOR_FORM_ID}-${nt}`
+                  }
+                />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -332,6 +373,14 @@ interface SectionProps {
     aliasOverride?: string | null,
   ) => Promise<void>
   mountPending: boolean
+  /**
+   * DOM id given to this section's `<form>`. The dialog footer's
+   * submit button targets `NODE_CREATOR_FORM_ID` directly, so only
+   * the active section receives that id; inactive sections (kept
+   * mounted to preserve filled fields across nodeType switches)
+   * receive a unique id and stay invisible to the footer button.
+   */
+  formId: string
 }
 
 function NodeFormSection(props: SectionProps) {
@@ -396,7 +445,7 @@ function CheckInSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_check_in()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -422,7 +471,7 @@ function LotterySection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_lottery()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -448,7 +497,7 @@ function BannerSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_banner()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -463,7 +512,7 @@ function TaskSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_task_group()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
       onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
@@ -499,7 +548,7 @@ function ShopSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_exchange()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -525,7 +574,7 @@ function LeaderboardSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_leaderboard()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -573,7 +622,7 @@ function EntitySection(props: SectionImplProps) {
           isPending={create.isPending || props.mountPending}
           submitLabel={m.activity_node_submit_entity_blueprint()}
           hideSubmitButton
-          id={NODE_CREATOR_FORM_ID}
+          id={props.formId}
           onSubmit={async (values) => {            try {
               const bp = await create.mutateAsync({
                 ...values,
@@ -598,7 +647,7 @@ function ItemSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_item_definition()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
       onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
@@ -634,7 +683,7 @@ function CurrencySection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_currency_definition()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
@@ -660,7 +709,7 @@ function AssistPoolSection(props: SectionImplProps) {
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_assist_pool()}
       hideSubmitButton
-      id={NODE_CREATOR_FORM_ID}
+      id={props.formId}
     />
   )
 }
