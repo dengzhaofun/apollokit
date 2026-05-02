@@ -181,7 +181,7 @@ export function ActivityForm({
       {/* Section 1:基本信息 */}
       <FormSection
         title={m.activity_field_alias_label() + " · " + m.activity_field_name()}
-        description="活动的展示文案 + 唯一标识"
+        description={m.activity_section_basic_desc()}
       >
         <FormGrid cols={2}>
           <form.Field name="alias">
@@ -443,7 +443,7 @@ export function ActivityForm({
       {/* Section 4:清理策略 */}
       <FormSection
         title={m.activity_field_cleanup_mode()}
-        description="活动结束后玩家持有的活动货币 / 临时道具的去向"
+        description={m.activity_section_cleanup_desc()}
       >
         <form.Field name="cleanupMode">
           {(field) => (

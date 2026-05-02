@@ -6,6 +6,7 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { useActivityForUser } from "#/hooks/use-activity"
 import { PageHeaderActions } from "#/components/PageHeader"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute(
   "/_dashboard/activity/$alias/users/$endUserId/",
@@ -141,7 +142,9 @@ function ActivityUserDetailPage() {
                           variant={unlocked ? "default" : "outline"}
                           className="ml-auto"
                         >
-                          {unlocked ? "已解锁" : "未解锁"}
+                          {unlocked
+                            ? m.activity_node_unlocked()
+                            : m.activity_node_locked()}
                         </Badge>
                       )}
                     </li>

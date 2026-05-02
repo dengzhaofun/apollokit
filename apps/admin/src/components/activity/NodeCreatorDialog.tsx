@@ -300,8 +300,16 @@ export function NodeCreatorDialog({
             NODE_CREATOR_FORM_ID (which the footer's submit button
             targets); others get a unique disambiguated id so the DOM
             stays valid (no duplicate ids).
+
+            Compact density via descendant utilities — each module's
+            standalone Form was tuned for a full-page edit screen
+            (space-y-6 / space-y-8). Inside this dialog those gaps make
+            the body feel sparse and force more scrolling than needed.
+            We override common spacing tokens to a tighter cadence here
+            so the visual rhythm matches the dialog context, without
+            having to add a `density` prop to all 12 forms.
           */}
-          <div className="mt-4 rounded-lg border p-4">
+          <div className="mt-3 rounded-lg border p-3 [&_form.space-y-8]:space-y-4 [&_form.space-y-6]:space-y-4 [&_form>section.space-y-4]:space-y-3 [&_form>section]:py-1">
             {Array.from(mountedTypes).map((nt) => (
               <div key={nt} hidden={nt !== nodeType}>
                 <NodeFormSection

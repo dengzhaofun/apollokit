@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CalendarRangeIcon,
   PartyPopperIcon,
+  Pencil,
   Rocket,
   Trash2,
   Undo2,
@@ -19,6 +20,7 @@ import {
   STATE_VARIANT,
 } from "#/components/activity/ActivityTable"
 import { NodeCreatorDialog } from "#/components/activity/NodeCreatorDialog"
+import { NodeEditDialog } from "#/components/activity/NodeEditDialog"
 import {
   confirm,
   DetailHeader,
@@ -62,6 +64,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type {
   ActivityMemberStatus,
+  ActivityNode,
   CreateNodeInput,
   CreateScheduleInput,
 } from "#/lib/types/activity"
@@ -479,6 +482,7 @@ function NodesPanel({
     orderIndex: 0,
   })
   const [creatorOpen, setCreatorOpen] = useState(false)
+  const [editNode, setEditNode] = useState<ActivityNode | null>(null)
 
   return (
     <div className="flex flex-col gap-4">
@@ -487,6 +491,15 @@ function NodesPanel({
         activityId={activityId}
         open={creatorOpen}
         onOpenChange={setCreatorOpen}
+      />
+      <NodeEditDialog
+        key={editNode?.id ?? "none"}
+        activityKey={activityKey}
+        node={editNode}
+        open={!!editNode}
+        onOpenChange={(o) => {
+          if (!o) setEditNode(null)
+        }}
       />
 
       <div className="flex items-center justify-between gap-3">
@@ -717,6 +730,23 @@ function NodesPanel({
                               ? m.activity_nodes_visibility_tooltip_node_off()
                               : m.activity_nodes_visibility_tooltip_resource_off()
                           : ""}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditNode(n)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent>
+                        {m.activity_nodes_edit_tooltip()}
                       </TooltipContent>
                     </Tooltip>
 
