@@ -1,0 +1,18 @@
+{
+  "title": "Offline Check-In",
+  "pages": [
+    "offline_check_in_get_campaigns",
+    "offline_check_in_post_campaigns",
+    "offline_check_in_get_campaigns_by_key",
+    "offline_check_in_patch_campaigns_by_id",
+    "offline_check_in_delete_campaigns_by_id",
+    "offline_check_in_get_campaigns_by_key_spots",
+    "offline_check_in_post_campaigns_by_key_spots",
+    "offline_check_in_patch_spots_by_id",
+    "offline_check_in_delete_spots_by_id",
+    "offline_check_in_post_spots_by_id_qr_tokens",
+    "offline_check_in_post_spots_by_id_manual_code_rotate",
+    "offline_check_in_get_campaigns_by_key_progress",
+    "offline_check_in_post_campaigns_by_key_check_ins"
+  ]
+}

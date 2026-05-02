@@ -8,6 +8,7 @@
     "friend_gift_get_packages_by_id",
     "friend_gift_delete_packages_by_id",
     "friend_gift_put_packages_by_id",
+    "friend_gift_post_packages_by_id_move",
     "friend_gift_get_sends",
     "friend_gift_get_sends_by_id"
   ]

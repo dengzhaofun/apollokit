@@ -9,7 +9,7 @@ export type IssueAnalyticsTokenBody = {
     /**
      * Pipes this JWT may query. Must be a non-empty subset.
      */
-    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace'>;
+    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace' | 'tenant_event_names' | 'tenant_event_timeseries' | 'tenant_event_timeseries_fast' | 'tenant_event_funnel' | 'tenant_event_stream' | 'experiment_metric_breakdown'>;
     /**
      * Token lifetime. Default 600s (10 min).
      */
@@ -23,7 +23,7 @@ export type IssueAnalyticsTokenResponse = {
      * Base URL for Tinybird pipes — concat `<pipe>.json?token=...`.
      */
     baseUrl: string;
-    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace'>;
+    pipes: Array<'tenant_request_overview' | 'tenant_event_counts' | 'tenant_trace' | 'tenant_event_names' | 'tenant_event_timeseries' | 'tenant_event_timeseries_fast' | 'tenant_event_funnel' | 'tenant_event_stream' | 'experiment_metric_breakdown'>;
 };
 
 export type AnnouncementList = {
@@ -1036,6 +1036,434 @@ export type CheckInUpdateReward = {
     metadata?: {
         [key: string]: unknown;
     } | null;
+};
+
+export type OfflineCheckInCreateCampaign = {
+    name: string;
+    /**
+     * Optional human-readable key, unique within the project.
+     */
+    alias?: string | null;
+    description?: string | null;
+    bannerImage?: string | null;
+    /**
+     * Campaign progression flavor.
+     */
+    mode: 'collect' | 'daily';
+    completionRule: OfflineCheckInCompletionRule;
+    completionRewards?: Array<RewardEntry>;
+    startAt?: string | null;
+    endAt?: string | null;
+    /**
+     * IANA timezone id, e.g. 'Asia/Shanghai'.
+     */
+    timezone?: string;
+    collectionAlbumId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type OfflineCheckInCampaign = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    bannerImage: string | null;
+    /**
+     * Campaign progression flavor.
+     */
+    mode: 'collect' | 'daily';
+    completionRule: OfflineCheckInCompletionRule;
+    completionRewards: Array<RewardEntry>;
+    startAt: string | null;
+    endAt: string | null;
+    timezone: string;
+    /**
+     * Campaign lifecycle status.
+     */
+    status: 'draft' | 'published' | 'active' | 'ended';
+    collectionAlbumId: string | null;
+    activityNodeId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInCampaignList = {
+    items: Array<OfflineCheckInCampaign>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
+};
+
+export type OfflineCheckInUpdateCampaign = {
+    name?: string;
+    /**
+     * Optional human-readable key, unique within the project.
+     */
+    alias?: string | null;
+    description?: string | null;
+    bannerImage?: string | null;
+    completionRule?: OfflineCheckInCompletionRule;
+    completionRewards?: Array<RewardEntry>;
+    startAt?: string | null;
+    endAt?: string | null;
+    /**
+     * IANA timezone id, e.g. 'Asia/Shanghai'.
+     */
+    timezone?: string;
+    /**
+     * Campaign lifecycle status.
+     */
+    status?: 'draft' | 'published' | 'active' | 'ended';
+    collectionAlbumId?: string | null;
+    activityNodeId?: string | null;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type OfflineCheckInCreateSpot = {
+    /**
+     * Optional human-readable key, unique within the project.
+     */
+    alias: string;
+    name: string;
+    description?: string | null;
+    coverImage?: string | null;
+    latitude: number;
+    longitude: number;
+    geofenceRadiusM?: number;
+    verification: OfflineCheckInVerification;
+    spotRewards?: Array<RewardEntry>;
+    collectionEntryAliases?: Array<string>;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type OfflineCheckInSpot = {
+    id: string;
+    campaignId: string;
+    organizationId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    latitude: number;
+    longitude: number;
+    geofenceRadiusM: number;
+    verification: OfflineCheckInVerification;
+    spotRewards: Array<RewardEntry>;
+    collectionEntryAliases: Array<string>;
+    sortOrder: string;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInSpotList = {
+    items: Array<OfflineCheckInSpot>;
+};
+
+export type OfflineCheckInUpdateSpot = {
+    /**
+     * Optional human-readable key, unique within the project.
+     */
+    alias?: string;
+    name?: string;
+    description?: string | null;
+    coverImage?: string | null;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadiusM?: number;
+    verification?: OfflineCheckInVerification;
+    spotRewards?: Array<RewardEntry>;
+    collectionEntryAliases?: Array<string>;
+    isActive?: boolean;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type OfflineCheckInMintQrTokens = {
+    /**
+     * Number of one-time tokens to mint.
+     */
+    count?: number;
+    ttlSeconds?: number;
+};
+
+export type OfflineCheckInMintQrTokensResult = {
+    tokens: Array<string>;
+    expiresAt: string;
+};
+
+export type OfflineCheckInManualCode = {
+    code: string;
+    /**
+     * ISO timestamp at which the current code expires; the next rotation will produce a new value.
+     */
+    rotatesAt: string;
+};
+
+export type OfflineCheckInProgressList = {
+    items: Array<OfflineCheckInUserProgress>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
+};
+
+export type OfflineCheckInRequest = {
+    /**
+     * The spot's alias (unique within the campaign).
+     */
+    spotAlias: string;
+    /**
+     * The SaaS tenant's business user id. Required only on the admin endpoint; client endpoint reads it from headers.
+     */
+    endUserId: string;
+    lat?: number;
+    lng?: number;
+    accuracyM?: number;
+    qrToken?: string;
+    manualCode?: string;
+    mediaAssetId?: string | null;
+    deviceFingerprint?: string;
+};
+
+export type OfflineCheckInResult = {
+    accepted: boolean;
+    granted: Array<RewardEntry>;
+    justCompleted: boolean;
+    verifiedVia: Array<'gps' | 'qr' | 'manual_code' | 'photo'>;
+    progress: OfflineCheckInUserProgress;
+    distanceM: number | null;
+    rejectReason: string | null;
+};
+
+export type ExperimentCreate = {
+    /**
+     * Stable identifier referenced from client code. Lowercase, digits, underscore. Cannot be changed after creation.
+     */
+    key: string;
+    name: string;
+    description?: string | null;
+    /**
+     * Variant returned when no assignment row exists (e.g. paused experiments, never-seen users).
+     */
+    controlVariantKey?: string;
+    /**
+     * Traffic split. Each entry references a variant_key on this experiment; sum of percent must equal exactly 100. Pass [] for a draft that hasn't configured allocation yet.
+     */
+    trafficAllocation?: Array<ExperimentTrafficSlice>;
+    /**
+     * JSONLogic targeting rule. null / {} matches all users. Non-matching users are OMITTED from evaluate response — no assignment, no exposure event.
+     */
+    targetingRules?: unknown;
+    primaryMetric?: ExperimentPrimaryMetric;
+    metricWindowDays?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type Experiment = {
+    id: string;
+    organizationId: string;
+    key: string;
+    name: string;
+    description: string | null;
+    /**
+     * Experiment lifecycle status.
+     */
+    status: 'draft' | 'running' | 'paused' | 'archived';
+    /**
+     * Traffic split. Each entry references a variant_key on this experiment; sum of percent must equal exactly 100. Pass [] for a draft that hasn't configured allocation yet.
+     */
+    trafficAllocation: Array<ExperimentTrafficSlice>;
+    controlVariantKey: string;
+    targetingRules?: unknown;
+    primaryMetric: ExperimentPrimaryMetric;
+    metricWindowDays: number;
+    startedAt: string | null;
+    endedAt: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+    variantsCount?: number;
+    assignedUsers?: number;
+};
+
+export type ExperimentList = {
+    items: Array<Experiment>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
+};
+
+export type ExperimentUpdate = {
+    name?: string;
+    description?: string | null;
+    /**
+     * Per-experiment-unique variant identifier.
+     */
+    controlVariantKey?: string;
+    /**
+     * Traffic split. Each entry references a variant_key on this experiment; sum of percent must equal exactly 100. Pass [] for a draft that hasn't configured allocation yet.
+     */
+    trafficAllocation?: Array<ExperimentTrafficSlice>;
+    /**
+     * JSONLogic targeting rule. null / {} matches all users. Non-matching users are OMITTED from evaluate response — no assignment, no exposure event.
+     */
+    targetingRules?: unknown;
+    primaryMetric?: ExperimentPrimaryMetric;
+    metricWindowDays?: number;
+    /**
+     * Arbitrary JSON blob for tenant-specific extensions.
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type ExperimentTransition = {
+    /**
+     * Experiment lifecycle status.
+     */
+    to: 'draft' | 'running' | 'paused' | 'archived';
+};
+
+export type ExperimentVariantList = {
+    items: Array<ExperimentVariant>;
+};
+
+export type ExperimentVariantCreate = {
+    /**
+     * Per-experiment-unique variant identifier.
+     */
+    variantKey: string;
+    name: string;
+    description?: string | null;
+    isControl?: boolean;
+    /**
+     * Optional remote-config payload; clients receive it via evaluate. Leave null for pure traffic-split usage.
+     */
+    configJson?: unknown;
+};
+
+export type ExperimentVariant = {
+    id: string;
+    experimentId: string;
+    organizationId: string;
+    variantKey: string;
+    name: string;
+    description: string | null;
+    isControl: boolean;
+    configJson?: unknown;
+    sortOrder: string;
+    createdAt: string;
+    updatedAt: string;
+    assignedUsers?: number;
+};
+
+export type ExperimentVariantUpdate = {
+    /**
+     * Per-experiment-unique variant identifier.
+     */
+    variantKey?: string;
+    name?: string;
+    description?: string | null;
+    isControl?: boolean;
+    configJson?: unknown;
+};
+
+export type ExperimentVariantMove = {
+    before?: string;
+    after?: string;
+    position?: 'first' | 'last';
+};
+
+export type ExperimentAssignmentList = {
+    items: Array<ExperimentAssignment>;
+    /**
+     * Opaque cursor for the next page, or null if no more rows.
+     */
+    nextCursor: string | null;
+};
+
+export type ExperimentPrimaryMetric = {
+    /**
+     * Event name to count as a conversion.
+     */
+    event: string;
+    /**
+     * Optional JSONLogic sub-filter against the conversion event's event_data.
+     */
+    filter?: unknown;
+    /**
+     * How to compute the rate. exposed_users = converted_unique_users / exposed_unique_users (Bernoulli, what z-test math expects). events = total_event_count / exposed_unique_users (per-user count).
+     */
+    denominator: 'exposed_users' | 'events';
+} | null;
+
+export type ExperimentPreviewBucketingRequest = {
+    /**
+     * Optional. If supplied, returns this user's variant. If omitted, only the sampled distribution is returned.
+     */
+    end_user_id?: string;
+    /**
+     * Number of synthetic endUserIds to sample for the distribution chart.
+     */
+    sample_size?: number;
+    /**
+     * Optional fixed attributes used during sampling. Lets the operator preview targeting-rule hit rate against a representative attribute profile (e.g. { country: 'JP', plan: 'free' }).
+     */
+    attributes_sample?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ExperimentPreviewBucketingResponse = {
+    userVariant: {
+        variantId: string;
+        variantKey: string;
+    } | null;
+    distribution: Array<{
+        variantKey: string;
+        count: number;
+        percent: number;
+    }>;
+    targetingHitRate: number | null;
 };
 
 export type CreateCredential = {
@@ -6322,6 +6750,77 @@ export type CmsFieldDef = {
     };
 };
 
+export type ExperimentAssignment = {
+    experimentId: string;
+    endUserId: string;
+    organizationId: string;
+    variantId: string;
+    variantKey: string;
+    assignedAt: string;
+};
+
+export type ExperimentTrafficSlice = {
+    /**
+     * Per-experiment-unique variant identifier.
+     */
+    variant_key: string;
+    /**
+     * Traffic share, 0..100. Sum across all entries must equal 100.
+     */
+    percent: number;
+};
+
+export type RewardEntry = {
+    type: 'item' | 'entity' | 'currency';
+    id: string;
+    count: number;
+};
+
+export type OfflineCheckInUserProgress = {
+    campaignId: string;
+    endUserId: string;
+    organizationId: string;
+    spotsCompleted: Array<string>;
+    totalCount: number;
+    lastSpotId: string | null;
+    lastCheckInAt: string | null;
+    dailyCount: number;
+    dailyDates: Array<string>;
+    completedAt: string | null;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInVerification = {
+    methods: Array<OfflineCheckInVerificationMethod>;
+    combinator: 'any' | 'all';
+};
+
+export type OfflineCheckInVerificationMethod = {
+    kind: 'gps';
+    radiusM: number;
+} | {
+    kind: 'qr';
+    mode: 'static' | 'one_time';
+} | {
+    kind: 'manual_code';
+    staffOnly?: boolean;
+} | {
+    kind: 'photo';
+    required?: boolean;
+};
+
+export type OfflineCheckInCompletionRule = {
+    kind: 'all';
+} | {
+    kind: 'n_of_m';
+    n: number;
+} | {
+    kind: 'daily_total';
+    days: number;
+};
+
 export type CheckInUserState = {
     configId: string;
     endUserId: string;
@@ -6379,12 +6878,6 @@ export type BattlePassLevelCurve = {
     type: 'arithmetic';
     base: number;
     step: number;
-};
-
-export type RewardEntry = {
-    type: 'item' | 'entity' | 'currency';
-    id: string;
-    count: number;
 };
 
 export type BattlePassSeasonTask = {
@@ -10287,6 +10780,1490 @@ export type CheckInRewardsPatchRewardsByRewardidResponses = {
 };
 
 export type CheckInRewardsPatchRewardsByRewardidResponse = CheckInRewardsPatchRewardsByRewardidResponses[keyof CheckInRewardsPatchRewardsByRewardidResponses];
+
+export type OfflineCheckInGetCampaignsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        status?: 'draft' | 'published' | 'active' | 'ended';
+        cursor?: string;
+        limit?: number;
+        q?: string;
+    };
+    url: '/api/offline-check-in/campaigns';
+};
+
+export type OfflineCheckInGetCampaignsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInGetCampaignsError = OfflineCheckInGetCampaignsErrors[keyof OfflineCheckInGetCampaignsErrors];
+
+export type OfflineCheckInGetCampaignsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInCampaignList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInGetCampaignsResponse = OfflineCheckInGetCampaignsResponses[keyof OfflineCheckInGetCampaignsResponses];
+
+export type OfflineCheckInPostCampaignsData = {
+    body?: OfflineCheckInCreateCampaign;
+    path?: never;
+    query?: never;
+    url: '/api/offline-check-in/campaigns';
+};
+
+export type OfflineCheckInPostCampaignsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPostCampaignsError = OfflineCheckInPostCampaignsErrors[keyof OfflineCheckInPostCampaignsErrors];
+
+export type OfflineCheckInPostCampaignsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: OfflineCheckInCampaign;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPostCampaignsResponse = OfflineCheckInPostCampaignsResponses[keyof OfflineCheckInPostCampaignsResponses];
+
+export type OfflineCheckInGetCampaignsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{key}';
+};
+
+export type OfflineCheckInGetCampaignsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInGetCampaignsByKeyError = OfflineCheckInGetCampaignsByKeyErrors[keyof OfflineCheckInGetCampaignsByKeyErrors];
+
+export type OfflineCheckInGetCampaignsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInCampaign;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInGetCampaignsByKeyResponse = OfflineCheckInGetCampaignsByKeyResponses[keyof OfflineCheckInGetCampaignsByKeyResponses];
+
+export type OfflineCheckInDeleteCampaignsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{id}';
+};
+
+export type OfflineCheckInDeleteCampaignsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInDeleteCampaignsByIdError = OfflineCheckInDeleteCampaignsByIdErrors[keyof OfflineCheckInDeleteCampaignsByIdErrors];
+
+export type OfflineCheckInDeleteCampaignsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type OfflineCheckInDeleteCampaignsByIdResponse = OfflineCheckInDeleteCampaignsByIdResponses[keyof OfflineCheckInDeleteCampaignsByIdResponses];
+
+export type OfflineCheckInPatchCampaignsByIdData = {
+    body?: OfflineCheckInUpdateCampaign;
+    path: {
+        /**
+         * Campaign id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{id}';
+};
+
+export type OfflineCheckInPatchCampaignsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPatchCampaignsByIdError = OfflineCheckInPatchCampaignsByIdErrors[keyof OfflineCheckInPatchCampaignsByIdErrors];
+
+export type OfflineCheckInPatchCampaignsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInCampaign;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPatchCampaignsByIdResponse = OfflineCheckInPatchCampaignsByIdResponses[keyof OfflineCheckInPatchCampaignsByIdResponses];
+
+export type OfflineCheckInGetCampaignsByKeySpotsData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{key}/spots';
+};
+
+export type OfflineCheckInGetCampaignsByKeySpotsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInGetCampaignsByKeySpotsError = OfflineCheckInGetCampaignsByKeySpotsErrors[keyof OfflineCheckInGetCampaignsByKeySpotsErrors];
+
+export type OfflineCheckInGetCampaignsByKeySpotsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInSpotList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInGetCampaignsByKeySpotsResponse = OfflineCheckInGetCampaignsByKeySpotsResponses[keyof OfflineCheckInGetCampaignsByKeySpotsResponses];
+
+export type OfflineCheckInPostCampaignsByKeySpotsData = {
+    body?: OfflineCheckInCreateSpot;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{key}/spots';
+};
+
+export type OfflineCheckInPostCampaignsByKeySpotsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPostCampaignsByKeySpotsError = OfflineCheckInPostCampaignsByKeySpotsErrors[keyof OfflineCheckInPostCampaignsByKeySpotsErrors];
+
+export type OfflineCheckInPostCampaignsByKeySpotsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: OfflineCheckInSpot;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPostCampaignsByKeySpotsResponse = OfflineCheckInPostCampaignsByKeySpotsResponses[keyof OfflineCheckInPostCampaignsByKeySpotsResponses];
+
+export type OfflineCheckInDeleteSpotsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Spot id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/spots/{id}';
+};
+
+export type OfflineCheckInDeleteSpotsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInDeleteSpotsByIdError = OfflineCheckInDeleteSpotsByIdErrors[keyof OfflineCheckInDeleteSpotsByIdErrors];
+
+export type OfflineCheckInDeleteSpotsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type OfflineCheckInDeleteSpotsByIdResponse = OfflineCheckInDeleteSpotsByIdResponses[keyof OfflineCheckInDeleteSpotsByIdResponses];
+
+export type OfflineCheckInPatchSpotsByIdData = {
+    body?: OfflineCheckInUpdateSpot;
+    path: {
+        /**
+         * Spot id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/spots/{id}';
+};
+
+export type OfflineCheckInPatchSpotsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPatchSpotsByIdError = OfflineCheckInPatchSpotsByIdErrors[keyof OfflineCheckInPatchSpotsByIdErrors];
+
+export type OfflineCheckInPatchSpotsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInSpot;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPatchSpotsByIdResponse = OfflineCheckInPatchSpotsByIdResponses[keyof OfflineCheckInPatchSpotsByIdResponses];
+
+export type OfflineCheckInPostSpotsByIdQrTokensData = {
+    body?: OfflineCheckInMintQrTokens;
+    path: {
+        /**
+         * Spot id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/spots/{id}/qr-tokens';
+};
+
+export type OfflineCheckInPostSpotsByIdQrTokensErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPostSpotsByIdQrTokensError = OfflineCheckInPostSpotsByIdQrTokensErrors[keyof OfflineCheckInPostSpotsByIdQrTokensErrors];
+
+export type OfflineCheckInPostSpotsByIdQrTokensResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInMintQrTokensResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPostSpotsByIdQrTokensResponse = OfflineCheckInPostSpotsByIdQrTokensResponses[keyof OfflineCheckInPostSpotsByIdQrTokensResponses];
+
+export type OfflineCheckInPostSpotsByIdManualCodeRotateData = {
+    body?: never;
+    path: {
+        /**
+         * Spot id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/spots/{id}/manual-code:rotate';
+};
+
+export type OfflineCheckInPostSpotsByIdManualCodeRotateErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPostSpotsByIdManualCodeRotateError = OfflineCheckInPostSpotsByIdManualCodeRotateErrors[keyof OfflineCheckInPostSpotsByIdManualCodeRotateErrors];
+
+export type OfflineCheckInPostSpotsByIdManualCodeRotateResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInManualCode;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPostSpotsByIdManualCodeRotateResponse = OfflineCheckInPostSpotsByIdManualCodeRotateResponses[keyof OfflineCheckInPostSpotsByIdManualCodeRotateResponses];
+
+export type OfflineCheckInGetCampaignsByKeyProgressData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: {
+        /**
+         * Opaque cursor from the previous response's `nextCursor`. Omit for first page.
+         */
+        cursor?: string;
+        /**
+         * Page size, 1..200. Defaults to 50.
+         */
+        limit?: number;
+        /**
+         * Optional case-insensitive search. The set of columns matched is module-specific.
+         */
+        q?: string;
+    };
+    url: '/api/offline-check-in/campaigns/{key}/progress';
+};
+
+export type OfflineCheckInGetCampaignsByKeyProgressErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInGetCampaignsByKeyProgressError = OfflineCheckInGetCampaignsByKeyProgressErrors[keyof OfflineCheckInGetCampaignsByKeyProgressErrors];
+
+export type OfflineCheckInGetCampaignsByKeyProgressResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInProgressList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInGetCampaignsByKeyProgressResponse = OfflineCheckInGetCampaignsByKeyProgressResponses[keyof OfflineCheckInGetCampaignsByKeyProgressResponses];
+
+export type OfflineCheckInPostCampaignsByKeyCheckInsData = {
+    body?: OfflineCheckInRequest;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/offline-check-in/campaigns/{key}/check-ins';
+};
+
+export type OfflineCheckInPostCampaignsByKeyCheckInsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInPostCampaignsByKeyCheckInsError = OfflineCheckInPostCampaignsByKeyCheckInsErrors[keyof OfflineCheckInPostCampaignsByKeyCheckInsErrors];
+
+export type OfflineCheckInPostCampaignsByKeyCheckInsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInPostCampaignsByKeyCheckInsResponse = OfflineCheckInPostCampaignsByKeyCheckInsResponses[keyof OfflineCheckInPostCampaignsByKeyCheckInsResponses];
+
+export type ExperimentGetExperimentsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        status?: 'draft' | 'running' | 'paused' | 'archived';
+        cursor?: string;
+        limit?: number;
+        q?: string;
+    };
+    url: '/api/experiment/experiments';
+};
+
+export type ExperimentGetExperimentsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentGetExperimentsError = ExperimentGetExperimentsErrors[keyof ExperimentGetExperimentsErrors];
+
+export type ExperimentGetExperimentsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentGetExperimentsResponse = ExperimentGetExperimentsResponses[keyof ExperimentGetExperimentsResponses];
+
+export type ExperimentPostExperimentsData = {
+    body?: ExperimentCreate;
+    path?: never;
+    query?: never;
+    url: '/api/experiment/experiments';
+};
+
+export type ExperimentPostExperimentsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPostExperimentsError = ExperimentPostExperimentsErrors[keyof ExperimentPostExperimentsErrors];
+
+export type ExperimentPostExperimentsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: Experiment;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPostExperimentsResponse = ExperimentPostExperimentsResponses[keyof ExperimentPostExperimentsResponses];
+
+export type ExperimentGetExperimentsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment id (uuid) or key (alias).
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{key}';
+};
+
+export type ExperimentGetExperimentsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentGetExperimentsByKeyError = ExperimentGetExperimentsByKeyErrors[keyof ExperimentGetExperimentsByKeyErrors];
+
+export type ExperimentGetExperimentsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Experiment;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentGetExperimentsByKeyResponse = ExperimentGetExperimentsByKeyResponses[keyof ExperimentGetExperimentsByKeyResponses];
+
+export type ExperimentDeleteExperimentsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{id}';
+};
+
+export type ExperimentDeleteExperimentsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentDeleteExperimentsByIdError = ExperimentDeleteExperimentsByIdErrors[keyof ExperimentDeleteExperimentsByIdErrors];
+
+export type ExperimentDeleteExperimentsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type ExperimentDeleteExperimentsByIdResponse = ExperimentDeleteExperimentsByIdResponses[keyof ExperimentDeleteExperimentsByIdResponses];
+
+export type ExperimentPatchExperimentsByIdData = {
+    body?: ExperimentUpdate;
+    path: {
+        /**
+         * Experiment id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{id}';
+};
+
+export type ExperimentPatchExperimentsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPatchExperimentsByIdError = ExperimentPatchExperimentsByIdErrors[keyof ExperimentPatchExperimentsByIdErrors];
+
+export type ExperimentPatchExperimentsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Experiment;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPatchExperimentsByIdResponse = ExperimentPatchExperimentsByIdResponses[keyof ExperimentPatchExperimentsByIdResponses];
+
+export type ExperimentPostExperimentsByIdTransitionData = {
+    body?: ExperimentTransition;
+    path: {
+        /**
+         * Experiment id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{id}:transition';
+};
+
+export type ExperimentPostExperimentsByIdTransitionErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPostExperimentsByIdTransitionError = ExperimentPostExperimentsByIdTransitionErrors[keyof ExperimentPostExperimentsByIdTransitionErrors];
+
+export type ExperimentPostExperimentsByIdTransitionResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Experiment;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPostExperimentsByIdTransitionResponse = ExperimentPostExperimentsByIdTransitionResponses[keyof ExperimentPostExperimentsByIdTransitionResponses];
+
+export type ExperimentGetExperimentsByKeyVariantsData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment id (uuid) or key (alias).
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{key}/variants';
+};
+
+export type ExperimentGetExperimentsByKeyVariantsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentGetExperimentsByKeyVariantsError = ExperimentGetExperimentsByKeyVariantsErrors[keyof ExperimentGetExperimentsByKeyVariantsErrors];
+
+export type ExperimentGetExperimentsByKeyVariantsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentVariantList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentGetExperimentsByKeyVariantsResponse = ExperimentGetExperimentsByKeyVariantsResponses[keyof ExperimentGetExperimentsByKeyVariantsResponses];
+
+export type ExperimentPostExperimentsByKeyVariantsData = {
+    body?: ExperimentVariantCreate;
+    path: {
+        /**
+         * Experiment id (uuid) or key (alias).
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{key}/variants';
+};
+
+export type ExperimentPostExperimentsByKeyVariantsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPostExperimentsByKeyVariantsError = ExperimentPostExperimentsByKeyVariantsErrors[keyof ExperimentPostExperimentsByKeyVariantsErrors];
+
+export type ExperimentPostExperimentsByKeyVariantsResponses = {
+    /**
+     * Created
+     */
+    201: {
+        code: 'ok';
+        data: ExperimentVariant;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPostExperimentsByKeyVariantsResponse = ExperimentPostExperimentsByKeyVariantsResponses[keyof ExperimentPostExperimentsByKeyVariantsResponses];
+
+export type ExperimentDeleteVariantsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Variant id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/variants/{id}';
+};
+
+export type ExperimentDeleteVariantsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentDeleteVariantsByIdError = ExperimentDeleteVariantsByIdErrors[keyof ExperimentDeleteVariantsByIdErrors];
+
+export type ExperimentDeleteVariantsByIdResponses = {
+    /**
+     * Deleted
+     */
+    200: ApiNullEnvelope;
+};
+
+export type ExperimentDeleteVariantsByIdResponse = ExperimentDeleteVariantsByIdResponses[keyof ExperimentDeleteVariantsByIdResponses];
+
+export type ExperimentPatchVariantsByIdData = {
+    body?: ExperimentVariantUpdate;
+    path: {
+        /**
+         * Variant id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/variants/{id}';
+};
+
+export type ExperimentPatchVariantsByIdErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPatchVariantsByIdError = ExperimentPatchVariantsByIdErrors[keyof ExperimentPatchVariantsByIdErrors];
+
+export type ExperimentPatchVariantsByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentVariant;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPatchVariantsByIdResponse = ExperimentPatchVariantsByIdResponses[keyof ExperimentPatchVariantsByIdResponses];
+
+export type ExperimentPostVariantsByIdMoveData = {
+    body?: ExperimentVariantMove;
+    path: {
+        /**
+         * Variant id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/variants/{id}/move';
+};
+
+export type ExperimentPostVariantsByIdMoveErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPostVariantsByIdMoveError = ExperimentPostVariantsByIdMoveErrors[keyof ExperimentPostVariantsByIdMoveErrors];
+
+export type ExperimentPostVariantsByIdMoveResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentVariant;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPostVariantsByIdMoveResponse = ExperimentPostVariantsByIdMoveResponses[keyof ExperimentPostVariantsByIdMoveResponses];
+
+export type ExperimentGetExperimentsByKeyAssignmentsData = {
+    body?: never;
+    path: {
+        /**
+         * Experiment id (uuid) or key (alias).
+         */
+        key: string;
+    };
+    query?: {
+        /**
+         * Opaque cursor from the previous response's `nextCursor`. Omit for first page.
+         */
+        cursor?: string;
+        /**
+         * Page size, 1..200. Defaults to 50.
+         */
+        limit?: number;
+        /**
+         * Optional case-insensitive search. The set of columns matched is module-specific.
+         */
+        q?: string;
+    };
+    url: '/api/experiment/experiments/{key}/assignments';
+};
+
+export type ExperimentGetExperimentsByKeyAssignmentsErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentGetExperimentsByKeyAssignmentsError = ExperimentGetExperimentsByKeyAssignmentsErrors[keyof ExperimentGetExperimentsByKeyAssignmentsErrors];
+
+export type ExperimentGetExperimentsByKeyAssignmentsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentAssignmentList;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentGetExperimentsByKeyAssignmentsResponse = ExperimentGetExperimentsByKeyAssignmentsResponses[keyof ExperimentGetExperimentsByKeyAssignmentsResponses];
+
+export type ExperimentPatchExperimentsByIdPrimaryMetricData = {
+    body?: {
+        primaryMetric: ExperimentPrimaryMetric;
+        metricWindowDays?: number;
+    };
+    path: {
+        /**
+         * Experiment id.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{id}/primary-metric';
+};
+
+export type ExperimentPatchExperimentsByIdPrimaryMetricErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPatchExperimentsByIdPrimaryMetricError = ExperimentPatchExperimentsByIdPrimaryMetricErrors[keyof ExperimentPatchExperimentsByIdPrimaryMetricErrors];
+
+export type ExperimentPatchExperimentsByIdPrimaryMetricResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: Experiment;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPatchExperimentsByIdPrimaryMetricResponse = ExperimentPatchExperimentsByIdPrimaryMetricResponses[keyof ExperimentPatchExperimentsByIdPrimaryMetricResponses];
+
+export type ExperimentPostExperimentsByKeyPreviewBucketingData = {
+    body?: ExperimentPreviewBucketingRequest;
+    path: {
+        /**
+         * Experiment id (uuid) or key (alias).
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/experiment/experiments/{key}/preview-bucketing';
+};
+
+export type ExperimentPostExperimentsByKeyPreviewBucketingErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentPostExperimentsByKeyPreviewBucketingError = ExperimentPostExperimentsByKeyPreviewBucketingErrors[keyof ExperimentPostExperimentsByKeyPreviewBucketingErrors];
+
+export type ExperimentPostExperimentsByKeyPreviewBucketingResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentPreviewBucketingResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentPostExperimentsByKeyPreviewBucketingResponse = ExperimentPostExperimentsByKeyPreviewBucketingResponses[keyof ExperimentPostExperimentsByKeyPreviewBucketingResponses];
 
 export type ClientCredentialsGetRootData = {
     body?: never;

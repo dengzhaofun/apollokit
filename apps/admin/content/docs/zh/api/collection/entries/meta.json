@@ -5,6 +5,7 @@
     "collection_entries_post_albums_by_key_entries",
     "collection_entries_post_albums_by_key_entries_bulk",
     "collection_entries_patch_entries_by_id",
-    "collection_entries_delete_entries_by_id"
+    "collection_entries_delete_entries_by_id",
+    "collection_entries_post_entries_by_id_move"
   ]
 }

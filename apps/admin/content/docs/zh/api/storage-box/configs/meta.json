@@ -5,6 +5,7 @@
     "storage_box_configs_post_configs",
     "storage_box_configs_get_configs_by_id",
     "storage_box_configs_patch_configs_by_id",
-    "storage_box_configs_delete_configs_by_id"
+    "storage_box_configs_delete_configs_by_id",
+    "storage_box_configs_post_configs_by_id_move"
   ]
 }

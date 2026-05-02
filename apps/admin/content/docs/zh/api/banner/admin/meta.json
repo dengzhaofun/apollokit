@@ -11,6 +11,7 @@
     "banner_admin_post_groups_by_groupid_banners_reorder",
     "banner_admin_get_banners_by_id",
     "banner_admin_patch_banners_by_id",
-    "banner_admin_delete_banners_by_id"
+    "banner_admin_delete_banners_by_id",
+    "banner_admin_post_banners_by_id_move"
   ]
 }

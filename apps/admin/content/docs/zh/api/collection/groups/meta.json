@@ -4,6 +4,7 @@
     "collection_groups_get_albums_by_key_groups",
     "collection_groups_post_albums_by_key_groups",
     "collection_groups_patch_groups_by_id",
-    "collection_groups_delete_groups_by_id"
+    "collection_groups_delete_groups_by_id",
+    "collection_groups_post_groups_by_id_move"
   ]
 }

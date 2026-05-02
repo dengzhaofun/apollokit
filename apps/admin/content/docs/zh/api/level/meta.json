@@ -5,6 +5,7 @@
     "level_post_configs",
     "level_get_configs_by_key",
     "level_delete_configs_by_id",
-    "level_put_configs_by_id"
+    "level_put_configs_by_id",
+    "level_post_configs_by_key_move"
   ]
 }

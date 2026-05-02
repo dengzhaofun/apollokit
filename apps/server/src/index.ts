@@ -41,6 +41,10 @@ import {
   offlineCheckInClientRouter,
 } from "./modules/offline-check-in";
 import {
+  experimentRouter,
+  experimentClientRouter,
+} from "./modules/experiment";
+import {
   clientCredentialRouter,
 } from "./modules/client-credentials";
 import { cmsRouter, cmsClientRouter } from "./modules/cms";
@@ -279,6 +283,7 @@ app.route("/api/cdkey", cdkeyRouter);
 app.route("/api/character", characterRouter);
 app.route("/api/check-in", checkInRouter);
 app.route("/api/offline-check-in", offlineCheckInRouter);
+app.route("/api/experiment", experimentRouter);
 app.route("/api/client-credentials", clientCredentialRouter);
 app.route("/api/cms", cmsRouter);
 app.route("/api/end-user", endUserRouter);
@@ -321,6 +326,7 @@ app.route("/api/client/battle-pass", battlePassClientRouter);
 app.route("/api/client/cdkey", cdkeyClientRouter);
 app.route("/api/client/check-in", checkInClientRouter);
 app.route("/api/client/offline-check-in", offlineCheckInClientRouter);
+app.route("/api/client/experiment", experimentClientRouter);
 app.route("/api/client/cms", cmsClientRouter);
 app.route("/api/client/collection", collectionClientRouter);
 app.route("/api/client/currency", currencyClientRouter);

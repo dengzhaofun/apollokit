@@ -584,6 +584,118 @@ export type TenantEventStreamParams = InferParams<typeof tenantEventStream>;
 export type TenantEventStreamOutput = InferOutputRow<typeof tenantEventStream>;
 
 /**
+ * v1.5 — Experiment metric breakdown for the decision panel.
+ *
+ * For each variant of an experiment, returns exposed_users +
+ * converted_users + event_count over a (configurable) per-user
+ * conversion window starting at first exposure.
+ *
+ * Semantics:
+ *   - **exposed_users**: distinct end_user_ids whose first
+ *     `experiment.exposure` event for this experiment fell inside
+ *     [date_from, date_to].
+ *   - **converted_users**: subset of those whose `metric_event` fired
+ *     at least once in [first_exposed_at, first_exposed_at +
+ *     window_days].
+ *   - **event_count**: total `metric_event` count from the same users
+ *     in the same per-user window.
+ *
+ * Optional filter on the conversion event: a single flat
+ * `JSONExtractString(event_data, json_path_filter) = json_value_filter`
+ * check. v1.5 only supports flat equality — the admin form restricts
+ * to that shape; richer JSONLogic-on-conversion-events lands in v2.
+ *
+ * Why "first_exposed_at + window_days" instead of just date_to:
+ * standard A/B-testing practice locks conversion windows per user
+ * from their assignment moment. Otherwise users assigned late in
+ * the analysis window get unfairly less conversion time.
+ */
+export const experimentMetricBreakdown = defineEndpoint(
+  "experiment_metric_breakdown",
+  {
+    description:
+      "Per-variant exposure + conversion counts for an experiment's primary metric.",
+    params: {
+      org_id: p.string(),
+      experiment_id: p.string(),
+      metric_event: p.string(),
+      date_from: p.dateTime(),
+      date_to: p.dateTime(),
+      window_days: p.int32().optional(7),
+      json_path_filter: p.string().optional(""),
+      json_value_filter: p.string().optional(""),
+    },
+    nodes: [
+      node({
+        name: "endpoint",
+        sql: `
+          WITH exposures AS (
+            SELECT
+              JSONExtractString(event_data, 'variant_key') AS variant_key,
+              end_user_id,
+              min(timestamp) AS exposed_at
+            FROM events
+            WHERE org_id = {{String(org_id, '', required=True)}}
+              AND event = 'experiment.exposure'
+              AND JSONExtractString(event_data, 'experiment_id') = {{String(experiment_id, '', required=True)}}
+              AND timestamp BETWEEN parseDateTimeBestEffort({{String(date_from, '1970-01-01T00:00:00Z', required=True)}})
+                                 AND parseDateTimeBestEffort({{String(date_to,   '2099-12-31T23:59:59Z', required=True)}})
+              AND end_user_id != ''
+            GROUP BY variant_key, end_user_id
+          ),
+          conversions AS (
+            SELECT
+              end_user_id,
+              timestamp,
+              event_data
+            FROM events
+            WHERE org_id = {{String(org_id, '', required=True)}}
+              AND event = {{String(metric_event, '', required=True)}}
+              AND end_user_id != ''
+              {% if defined(json_path_filter) and json_path_filter != '' %}
+              AND JSONExtractString(event_data, {{String(json_path_filter)}}) = {{String(json_value_filter)}}
+              {% end %}
+          ),
+          joined AS (
+            SELECT
+              e.variant_key,
+              e.end_user_id,
+              countIf(
+                c.timestamp >= e.exposed_at
+                AND c.timestamp <= e.exposed_at + INTERVAL {{Int32(window_days, 7)}} DAY
+              ) AS evts_in_window
+            FROM exposures e
+            LEFT JOIN conversions c USING (end_user_id)
+            GROUP BY e.variant_key, e.end_user_id
+          )
+          SELECT
+            variant_key,
+            count() AS exposed_users,
+            countIf(evts_in_window > 0) AS converted_users,
+            sum(evts_in_window)         AS event_count
+          FROM joined
+          GROUP BY variant_key
+          ORDER BY variant_key
+        `,
+      }),
+    ],
+    output: {
+      variant_key: t.string(),
+      exposed_users: t.uint64(),
+      converted_users: t.uint64(),
+      event_count: t.uint64(),
+    },
+  },
+);
+
+export type ExperimentMetricBreakdownParams = InferParams<
+  typeof experimentMetricBreakdown
+>;
+export type ExperimentMetricBreakdownOutput = InferOutputRow<
+  typeof experimentMetricBreakdown
+>;
+
+/**
  * Fast-path companion of `tenant_event_timeseries`. Reads from the
  * pre-aggregated `events_hourly_agg` instead of the raw `events`
  * datasource.
@@ -682,6 +794,7 @@ export const tinybirdResources = {
     tenantEventFunnel,
     tenantEventStream,
     eventsToHourlyAgg,
+    experimentMetricBreakdown,
   },
 } as const;
 

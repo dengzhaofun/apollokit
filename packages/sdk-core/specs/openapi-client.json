@@ -1785,6 +1785,499 @@
         }
       }
     },
+    "/api/client/offline-check-in/campaigns/{key}": {
+      "get": {
+        "tags": [
+          "Offline Check-In (Client)"
+        ],
+        "summary": "Fetch a campaign + its spots (by id or alias)",
+        "operationId": "offline_check_in_client_get_campaigns_by_key",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Campaign id or alias."
+            },
+            "required": true,
+            "description": "Campaign id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfflineCheckInClientCampaign"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/offline-check-in/campaigns/{key}/me": {
+      "get": {
+        "tags": [
+          "Offline Check-In (Client)"
+        ],
+        "summary": "Get my progress for the campaign",
+        "operationId": "offline_check_in_client_get_campaigns_by_key_me",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Campaign id or alias."
+            },
+            "required": true,
+            "description": "Campaign id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfflineCheckInUserProgress"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/offline-check-in/campaigns/{key}/check-in": {
+      "post": {
+        "tags": [
+          "Offline Check-In (Client)"
+        ],
+        "summary": "Perform a check-in at one of the campaign's spots",
+        "operationId": "offline_check_in_client_post_campaigns_by_key_check_in",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Campaign id or alias."
+            },
+            "required": true,
+            "description": "Campaign id or alias.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfflineCheckInClientRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OfflineCheckInResult"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/experiment/evaluate": {
+      "post": {
+        "tags": [
+          "Experiment (Client)"
+        ],
+        "summary": "Evaluate one or more experiments for the current end user. Sticky bucketing — same user always gets the same variant per experiment.",
+        "operationId": "experiment_client_post_evaluate",
+        "security": [
+          {
+            "ClientCredential": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentEvaluateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ExperimentEvaluateResponse"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/client/cms/by-alias/{typeAlias}/{entryAlias}": {
       "get": {
         "tags": [
@@ -19847,6 +20340,245 @@
           "remaining"
         ]
       },
+      "OfflineCheckInClientCampaign": {
+        "type": "object",
+        "properties": {
+          "campaign": {
+            "$ref": "#/components/schemas/OfflineCheckInCampaign"
+          },
+          "spots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfflineCheckInSpot"
+            }
+          }
+        },
+        "required": [
+          "campaign",
+          "spots"
+        ]
+      },
+      "OfflineCheckInUserProgress": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          },
+          "endUserId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "spotsCompleted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalCount": {
+            "type": "integer"
+          },
+          "lastSpotId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastCheckInAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dailyCount": {
+            "type": "integer"
+          },
+          "dailyDates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaignId",
+          "endUserId",
+          "organizationId",
+          "spotsCompleted",
+          "totalCount",
+          "lastSpotId",
+          "lastCheckInAt",
+          "dailyCount",
+          "dailyDates",
+          "completedAt",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OfflineCheckInClientRequest": {
+        "type": "object",
+        "properties": {
+          "spotAlias": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The spot's alias (unique within the campaign).",
+            "example": "main-stage"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyM": {
+            "type": "number",
+            "minimum": 0
+          },
+          "qrToken": {
+            "type": "string"
+          },
+          "manualCode": {
+            "type": "string"
+          },
+          "mediaAssetId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "deviceFingerprint": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "spotAlias"
+        ]
+      },
+      "OfflineCheckInResult": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "granted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardEntry"
+            }
+          },
+          "justCompleted": {
+            "type": "boolean"
+          },
+          "verifiedVia": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "gps",
+                "qr",
+                "manual_code",
+                "photo"
+              ]
+            }
+          },
+          "progress": {
+            "$ref": "#/components/schemas/OfflineCheckInUserProgress"
+          },
+          "distanceM": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "rejectReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "accepted",
+          "granted",
+          "justCompleted",
+          "verifiedVia",
+          "progress",
+          "distanceM",
+          "rejectReason"
+        ]
+      },
+      "ExperimentEvaluateRequest": {
+        "type": "object",
+        "properties": {
+          "experiment_keys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Stable identifier referenced from client code. Lowercase, digits, underscore. Cannot be changed after creation.",
+              "example": "onboarding_flow"
+            },
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "List of experiment keys to evaluate in one round-trip.",
+            "example": [
+              "onboarding_flow"
+            ]
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "User attributes for targeting rule evaluation. Tenant-defined keys (plan, cohort, daysSinceSignup, etc). Server-derived keys like `country` and `userAgent` are merged in automatically — SDK values OVERRIDE server-derived on conflict, so the tenant can spoof for testing if needed.",
+            "example": {
+              "plan": "free",
+              "cohort": "beta",
+              "country": "JP"
+            }
+          }
+        },
+        "required": [
+          "experiment_keys"
+        ]
+      },
+      "ExperimentEvaluateResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ExperimentEvaluatedVariant"
+            }
+          }
+        },
+        "required": [
+          "results"
+        ]
+      },
       "CmsClientEntry": {
         "type": "object",
         "properties": {
@@ -25586,6 +26318,417 @@
           "unclaimedMilestones"
         ]
       },
+      "ExperimentEvaluatedVariant": {
+        "type": "object",
+        "properties": {
+          "variantKey": {
+            "type": "string"
+          },
+          "config": {}
+        },
+        "required": [
+          "variantKey"
+        ]
+      },
+      "RewardEntry": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "item",
+              "entity",
+              "currency"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "count"
+        ]
+      },
+      "OfflineCheckInCampaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "alias": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bannerImage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "collect",
+              "daily"
+            ],
+            "description": "Campaign progression flavor."
+          },
+          "completionRule": {
+            "$ref": "#/components/schemas/OfflineCheckInCompletionRule"
+          },
+          "completionRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardEntry"
+            }
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "active",
+              "ended"
+            ],
+            "description": "Campaign lifecycle status."
+          },
+          "collectionAlbumId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activityNodeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "alias",
+          "name",
+          "description",
+          "bannerImage",
+          "mode",
+          "completionRule",
+          "completionRewards",
+          "startAt",
+          "endAt",
+          "timezone",
+          "status",
+          "collectionAlbumId",
+          "activityNodeId",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OfflineCheckInSpot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "campaignId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coverImage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "geofenceRadiusM": {
+            "type": "integer"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/OfflineCheckInVerification"
+          },
+          "spotRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardEntry"
+            }
+          },
+          "collectionEntryAliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sortOrder": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "campaignId",
+          "organizationId",
+          "alias",
+          "name",
+          "description",
+          "coverImage",
+          "latitude",
+          "longitude",
+          "geofenceRadiusM",
+          "verification",
+          "spotRewards",
+          "collectionEntryAliases",
+          "sortOrder",
+          "isActive",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OfflineCheckInVerification": {
+        "type": "object",
+        "properties": {
+          "methods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfflineCheckInVerificationMethod"
+            },
+            "minItems": 1
+          },
+          "combinator": {
+            "type": "string",
+            "enum": [
+              "any",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "combinator"
+        ]
+      },
+      "OfflineCheckInVerificationMethod": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "gps"
+                ]
+              },
+              "radiusM": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "kind",
+              "radiusM"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "qr"
+                ]
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "static",
+                  "one_time"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "mode"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "manual_code"
+                ]
+              },
+              "staffOnly": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "photo"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          }
+        ]
+      },
+      "OfflineCheckInCompletionRule": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "all"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "n_of_m"
+                ]
+              },
+              "n": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "n"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "daily_total"
+                ]
+              },
+              "days": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "days"
+            ]
+          }
+        ]
+      },
       "CheckInUserState": {
         "type": "object",
         "properties": {
@@ -25681,32 +26824,6 @@
           "tierCode",
           "idempotent",
           "rewardEntries"
-        ]
-      },
-      "RewardEntry": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "item",
-              "entity",
-              "currency"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "count": {
-            "type": "integer",
-            "exclusiveMinimum": 0
-          }
-        },
-        "required": [
-          "type",
-          "id",
-          "count"
         ]
       },
       "BattlePassTier": {

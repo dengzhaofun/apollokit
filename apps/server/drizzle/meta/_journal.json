@@ -71,6 +71,20 @@
       "when": 1777801200005,
       "tag": "0009_aromatic_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777801200006,
+      "tag": "0010_last_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1777801200007,
+      "tag": "0011_gigantic_leo",
+      "breakpoints": true
     }
   ]
 }

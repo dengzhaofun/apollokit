@@ -4,6 +4,7 @@
     "entity_skins_admin_get_blueprints_by_id_skins",
     "entity_skins_admin_post_blueprints_by_id_skins",
     "entity_skins_admin_patch_skins_by_skinid",
-    "entity_skins_admin_delete_skins_by_skinid"
+    "entity_skins_admin_delete_skins_by_skinid",
+    "entity_skins_admin_post_skins_by_skinid_move"
   ]
 }

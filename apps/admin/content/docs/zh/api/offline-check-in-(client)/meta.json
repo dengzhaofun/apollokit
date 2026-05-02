@@ -1,0 +1,8 @@
+{
+  "title": "Offline Check-In (Client)",
+  "pages": [
+    "offline_check_in_client_get_campaigns_by_key",
+    "offline_check_in_client_get_campaigns_by_key_me",
+    "offline_check_in_client_post_campaigns_by_key_check_in"
+  ]
+}

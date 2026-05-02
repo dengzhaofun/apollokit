@@ -5,6 +5,7 @@
     "entity_schemas_admin_post_schemas",
     "entity_schemas_admin_get_schemas_by_key",
     "entity_schemas_admin_patch_schemas_by_id",
-    "entity_schemas_admin_delete_schemas_by_id"
+    "entity_schemas_admin_delete_schemas_by_id",
+    "entity_schemas_admin_post_schemas_by_key_move"
   ]
 }

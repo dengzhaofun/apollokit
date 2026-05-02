@@ -4,6 +4,7 @@
     "exchange_options_get_configs_by_configkey_options",
     "exchange_options_post_configs_by_configkey_options",
     "exchange_options_patch_options_by_optionid",
-    "exchange_options_delete_options_by_optionid"
+    "exchange_options_delete_options_by_optionid",
+    "exchange_options_post_options_by_optionid_move"
   ]
 }
