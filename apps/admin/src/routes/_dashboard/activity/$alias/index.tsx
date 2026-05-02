@@ -13,6 +13,7 @@ import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
 import { ActivityPhaseBadge } from "#/components/activity/ActivityPhaseBadge"
+import { RefIdPicker } from "#/components/activity/RefIdPicker"
 import {
   STATE_LABELS,
   STATE_VARIANT,
@@ -546,12 +547,10 @@ function NodesPanel({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_nodes_field_ref_id()}</Label>
-            <Input
-              value={form.refId ?? ""}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, refId: e.target.value || null }))
-              }
-              placeholder="check_in_configs.id …"
+            <RefIdPicker
+              nodeType={form.nodeType}
+              value={form.refId ?? null}
+              onChange={(v) => setForm((s) => ({ ...s, refId: v }))}
             />
           </div>
           <div className="flex flex-col gap-1.5">
