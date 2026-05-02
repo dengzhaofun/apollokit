@@ -5,6 +5,7 @@
     "shop_products_post_products",
     "shop_products_get_products_by_key",
     "shop_products_patch_products_by_id",
-    "shop_products_delete_products_by_id"
+    "shop_products_delete_products_by_id",
+    "shop_products_post_products_by_key_move"
   ]
 }

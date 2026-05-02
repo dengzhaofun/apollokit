@@ -28,6 +28,7 @@ import {
   Radio,
   Workflow,
   Zap,
+  Beaker,
   Bell,
   Mail,
   Map as MapIcon,
@@ -116,6 +117,7 @@ type NavRoute =
   | "/audit-logs"
   | "/check-in"
   | "/offline-check-in"
+  | "/experiment"
   | "/item"
   | "/item/definitions"
   | "/item/categories"
@@ -340,6 +342,7 @@ function getNavGroups(): NavGroup[] {
       items: [
         { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
         { title: m.nav_triggers, to: "/triggers", icon: Zap },
+        { title: m.nav_experiment, to: "/experiment", icon: Beaker },
       ],
     },
   ]

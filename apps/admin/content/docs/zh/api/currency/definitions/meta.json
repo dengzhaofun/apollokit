@@ -5,6 +5,7 @@
     "currency_definitions_post_definitions",
     "currency_definitions_get_definitions_by_key",
     "currency_definitions_patch_definitions_by_id",
-    "currency_definitions_delete_definitions_by_id"
+    "currency_definitions_delete_definitions_by_id",
+    "currency_definitions_post_definitions_by_key_move"
   ]
 }

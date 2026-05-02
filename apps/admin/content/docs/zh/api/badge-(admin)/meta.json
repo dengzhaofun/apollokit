@@ -5,6 +5,7 @@
     "badge_admin_post_nodes",
     "badge_admin_patch_nodes_by_id",
     "badge_admin_delete_nodes_by_id",
+    "badge_admin_post_nodes_by_id_move",
     "badge_admin_post_nodes_validate_tree",
     "badge_admin_get_templates",
     "badge_admin_post_nodes_from_template",

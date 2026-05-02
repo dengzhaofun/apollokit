@@ -5,6 +5,7 @@
     "shop_growth_stages_post_products_by_productid_stages",
     "shop_growth_stages_put_products_by_productid_stages",
     "shop_growth_stages_patch_stages_by_stageid",
-    "shop_growth_stages_delete_stages_by_stageid"
+    "shop_growth_stages_delete_stages_by_stageid",
+    "shop_growth_stages_post_stages_by_stageid_move"
   ]
 }

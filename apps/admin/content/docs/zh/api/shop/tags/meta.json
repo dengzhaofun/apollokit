@@ -5,6 +5,7 @@
     "shop_tags_post_tags",
     "shop_tags_get_tags_by_key",
     "shop_tags_patch_tags_by_id",
-    "shop_tags_delete_tags_by_id"
+    "shop_tags_delete_tags_by_id",
+    "shop_tags_post_tags_by_key_move"
   ]
 }

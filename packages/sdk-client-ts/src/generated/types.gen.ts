@@ -160,6 +160,70 @@ export type CheckInUserStateView = {
     remaining: number | null;
 };
 
+export type OfflineCheckInClientCampaign = {
+    campaign: OfflineCheckInCampaign;
+    spots: Array<OfflineCheckInSpot>;
+};
+
+export type OfflineCheckInUserProgress = {
+    campaignId: string;
+    endUserId: string;
+    organizationId: string;
+    spotsCompleted: Array<string>;
+    totalCount: number;
+    lastSpotId: string | null;
+    lastCheckInAt: string | null;
+    dailyCount: number;
+    dailyDates: Array<string>;
+    completedAt: string | null;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInClientRequest = {
+    /**
+     * The spot's alias (unique within the campaign).
+     */
+    spotAlias: string;
+    lat?: number;
+    lng?: number;
+    accuracyM?: number;
+    qrToken?: string;
+    manualCode?: string;
+    mediaAssetId?: string | null;
+    deviceFingerprint?: string;
+};
+
+export type OfflineCheckInResult = {
+    accepted: boolean;
+    granted: Array<RewardEntry>;
+    justCompleted: boolean;
+    verifiedVia: Array<'gps' | 'qr' | 'manual_code' | 'photo'>;
+    progress: OfflineCheckInUserProgress;
+    distanceM: number | null;
+    rejectReason: string | null;
+};
+
+export type ExperimentEvaluateRequest = {
+    /**
+     * List of experiment keys to evaluate in one round-trip.
+     */
+    experiment_keys: Array<string>;
+    /**
+     * User attributes for targeting rule evaluation. Tenant-defined keys (plan, cohort, daysSinceSignup, etc). Server-derived keys like `country` and `userAgent` are merged in automatically — SDK values OVERRIDE server-derived on conflict, so the tenant can spoof for testing if needed.
+     */
+    attributes?: {
+        [key: string]: unknown;
+    };
+};
+
+export type ExperimentEvaluateResponse = {
+    results: {
+        [key: string]: ExperimentEvaluatedVariant;
+    };
+};
+
 export type CmsClientEntry = {
     typeAlias: string;
     alias: string;
@@ -1658,6 +1722,98 @@ export type CollectionClientAlbumSummary = {
     unclaimedMilestones: number;
 };
 
+export type ExperimentEvaluatedVariant = {
+    variantKey: string;
+    config?: unknown;
+};
+
+export type RewardEntry = {
+    type: 'item' | 'entity' | 'currency';
+    id: string;
+    count: number;
+};
+
+export type OfflineCheckInCampaign = {
+    id: string;
+    organizationId: string;
+    alias: string | null;
+    name: string;
+    description: string | null;
+    bannerImage: string | null;
+    /**
+     * Campaign progression flavor.
+     */
+    mode: 'collect' | 'daily';
+    completionRule: OfflineCheckInCompletionRule;
+    completionRewards: Array<RewardEntry>;
+    startAt: string | null;
+    endAt: string | null;
+    timezone: string;
+    /**
+     * Campaign lifecycle status.
+     */
+    status: 'draft' | 'published' | 'active' | 'ended';
+    collectionAlbumId: string | null;
+    activityNodeId: string | null;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInSpot = {
+    id: string;
+    campaignId: string;
+    organizationId: string;
+    alias: string;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    latitude: number;
+    longitude: number;
+    geofenceRadiusM: number;
+    verification: OfflineCheckInVerification;
+    spotRewards: Array<RewardEntry>;
+    collectionEntryAliases: Array<string>;
+    sortOrder: string;
+    isActive: boolean;
+    metadata: {
+        [key: string]: unknown;
+    } | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type OfflineCheckInVerification = {
+    methods: Array<OfflineCheckInVerificationMethod>;
+    combinator: 'any' | 'all';
+};
+
+export type OfflineCheckInVerificationMethod = {
+    kind: 'gps';
+    radiusM: number;
+} | {
+    kind: 'qr';
+    mode: 'static' | 'one_time';
+} | {
+    kind: 'manual_code';
+    staffOnly?: boolean;
+} | {
+    kind: 'photo';
+    required?: boolean;
+};
+
+export type OfflineCheckInCompletionRule = {
+    kind: 'all';
+} | {
+    kind: 'n_of_m';
+    n: number;
+} | {
+    kind: 'daily_total';
+    days: number;
+};
+
 export type CheckInUserState = {
     configId: string;
     endUserId: string;
@@ -1679,12 +1835,6 @@ export type BattlePassClaimOutcome = {
     tierCode: string;
     idempotent: boolean;
     rewardEntries: Array<RewardEntry>;
-};
-
-export type RewardEntry = {
-    type: 'item' | 'entity' | 'currency';
-    id: string;
-    count: number;
 };
 
 export type BattlePassTier = {
@@ -2565,6 +2715,221 @@ export type CheckInClientGetStateResponses = {
 };
 
 export type CheckInClientGetStateResponse = CheckInClientGetStateResponses[keyof CheckInClientGetStateResponses];
+
+export type OfflineCheckInClientGetCampaignsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/client/offline-check-in/campaigns/{key}';
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyError = OfflineCheckInClientGetCampaignsByKeyErrors[keyof OfflineCheckInClientGetCampaignsByKeyErrors];
+
+export type OfflineCheckInClientGetCampaignsByKeyResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInClientCampaign;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyResponse = OfflineCheckInClientGetCampaignsByKeyResponses[keyof OfflineCheckInClientGetCampaignsByKeyResponses];
+
+export type OfflineCheckInClientGetCampaignsByKeyMeData = {
+    body?: never;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/client/offline-check-in/campaigns/{key}/me';
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyMeErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyMeError = OfflineCheckInClientGetCampaignsByKeyMeErrors[keyof OfflineCheckInClientGetCampaignsByKeyMeErrors];
+
+export type OfflineCheckInClientGetCampaignsByKeyMeResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInUserProgress;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInClientGetCampaignsByKeyMeResponse = OfflineCheckInClientGetCampaignsByKeyMeResponses[keyof OfflineCheckInClientGetCampaignsByKeyMeResponses];
+
+export type OfflineCheckInClientPostCampaignsByKeyCheckInData = {
+    body?: OfflineCheckInClientRequest;
+    path: {
+        /**
+         * Campaign id or alias.
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/api/client/offline-check-in/campaigns/{key}/check-in';
+};
+
+export type OfflineCheckInClientPostCampaignsByKeyCheckInErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type OfflineCheckInClientPostCampaignsByKeyCheckInError = OfflineCheckInClientPostCampaignsByKeyCheckInErrors[keyof OfflineCheckInClientPostCampaignsByKeyCheckInErrors];
+
+export type OfflineCheckInClientPostCampaignsByKeyCheckInResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: OfflineCheckInResult;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type OfflineCheckInClientPostCampaignsByKeyCheckInResponse = OfflineCheckInClientPostCampaignsByKeyCheckInResponses[keyof OfflineCheckInClientPostCampaignsByKeyCheckInResponses];
+
+export type ExperimentClientPostEvaluateData = {
+    body?: ExperimentEvaluateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/client/experiment/evaluate';
+};
+
+export type ExperimentClientPostEvaluateErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type ExperimentClientPostEvaluateError = ExperimentClientPostEvaluateErrors[keyof ExperimentClientPostEvaluateErrors];
+
+export type ExperimentClientPostEvaluateResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: ExperimentEvaluateResponse;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type ExperimentClientPostEvaluateResponse = ExperimentClientPostEvaluateResponses[keyof ExperimentClientPostEvaluateResponses];
 
 export type CmsClientGetByAliasByTypealiasByEntryaliasData = {
     body?: never;

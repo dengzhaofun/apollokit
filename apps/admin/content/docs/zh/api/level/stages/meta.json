@@ -4,6 +4,7 @@
     "level_stages_get_configs_by_id_stages",
     "level_stages_post_configs_by_id_stages",
     "level_stages_delete_stages_by_id",
-    "level_stages_put_stages_by_id"
+    "level_stages_put_stages_by_id",
+    "level_stages_post_stages_by_id_move"
   ]
 }

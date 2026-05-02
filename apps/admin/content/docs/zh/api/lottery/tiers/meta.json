@@ -4,6 +4,7 @@
     "lottery_tiers_get_pools_by_poolkey_tiers",
     "lottery_tiers_post_pools_by_poolkey_tiers",
     "lottery_tiers_patch_tiers_by_tierid",
-    "lottery_tiers_delete_tiers_by_tierid"
+    "lottery_tiers_delete_tiers_by_tierid",
+    "lottery_tiers_post_tiers_by_tierid_move"
   ]
 }

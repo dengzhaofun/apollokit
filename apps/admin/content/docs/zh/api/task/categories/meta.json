@@ -5,6 +5,7 @@
     "task_categories_post_categories",
     "task_categories_get_categories_by_id",
     "task_categories_patch_categories_by_id",
-    "task_categories_delete_categories_by_id"
+    "task_categories_delete_categories_by_id",
+    "task_categories_post_categories_by_id_move"
   ]
 }

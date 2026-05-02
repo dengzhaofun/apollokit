@@ -174,6 +174,46 @@ sign-in response on subsequent business calls.
 > Adding a plugin server-side is enough; the SDK does not need to be
 > regenerated.
 
+## Resilient experiment evaluation (`safeEvaluate`)
+
+The auto-generated `ExperimentClientService.experimentClientPostEvaluate`
+throws on network errors. For game clients where a single transient
+blip would hang player launch, use the resilient wrapper:
+
+```ts
+import { safeEvaluate } from "@apollokit/client";
+
+const variants = await safeEvaluate({
+  keys: ["onboarding_flow", "shop_price_tier"],
+  // Tenant-supplied attributes for targeting rules
+  attributes: { plan: "free", cohort: "beta", country: "JP" },
+  // Used only when the network call AND the in-memory cache both miss
+  fallback: {
+    onboarding_flow: "control",
+    shop_price_tier: "control",
+  },
+});
+
+if (variants.onboarding_flow?.variantKey === "A") {
+  // …show variant A onboarding
+}
+const mult =
+  (variants.shop_price_tier?.config as { rewardMultiplier?: number })
+    ?.rewardMultiplier ?? 1;
+```
+
+Three layers of resilience built in:
+
+1. **Try/catch** — never throws. Caller doesn't have to wrap.
+2. **In-memory cache (60 s TTL)** — repeat calls with the same
+   `keys + attributes` skip the round-trip. Stale entries also
+   become a fallback if a later call fails.
+3. **Caller fallback** — `{ key: 'control' }` map applied only when
+   both network AND cache miss, so the game still has a defined
+   variant for every requested experiment.
+
+Call `clearSafeEvaluateCache()` on player log-out to drop the cache.
+
 ## Regenerating
 
 ```bash

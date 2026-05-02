@@ -1,0 +1,19 @@
+{
+  "title": "Experiment",
+  "pages": [
+    "experiment_get_experiments",
+    "experiment_post_experiments",
+    "experiment_get_experiments_by_key",
+    "experiment_patch_experiments_by_id",
+    "experiment_delete_experiments_by_id",
+    "experiment_post_experiments_by_id_transition",
+    "experiment_get_experiments_by_key_variants",
+    "experiment_post_experiments_by_key_variants",
+    "experiment_patch_variants_by_id",
+    "experiment_delete_variants_by_id",
+    "experiment_post_variants_by_id_move",
+    "experiment_get_experiments_by_key_assignments",
+    "experiment_patch_experiments_by_id_primary_metric",
+    "experiment_post_experiments_by_key_preview_bucketing"
+  ]
+}

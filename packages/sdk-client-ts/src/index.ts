@@ -20,3 +20,14 @@ export type {
 // Re-export all generated types and SDK functions
 export * from "./generated/types.gen.js";
 export * from "./generated/sdk.gen.js";
+
+// v1.5 — resilient experiment evaluation helper. Hand-written; lives
+// outside `generated/` so it survives `pnpm sdks:generate`.
+export {
+  safeEvaluate,
+  clearSafeEvaluateCache,
+} from "./safe-evaluate.js";
+export type {
+  SafeEvaluateOptions,
+  SafeEvaluateResult,
+} from "./safe-evaluate.js";

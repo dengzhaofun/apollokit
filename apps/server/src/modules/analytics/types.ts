@@ -9,6 +9,7 @@ export const ALL_TENANT_PIPES: readonly TenantPipeName[] = [
   "tenant_event_timeseries_fast",
   "tenant_event_funnel",
   "tenant_event_stream",
+  "experiment_metric_breakdown",
 ] as const;
 
 export type { TenantPipeName };

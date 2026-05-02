@@ -35,6 +35,7 @@ export const TENANT_PIPES = [
   "tenant_event_timeseries_fast",
   "tenant_event_funnel",
   "tenant_event_stream",
+  "experiment_metric_breakdown",
 ] as const
 
 export type TenantPipeName = (typeof TENANT_PIPES)[number]
@@ -555,5 +556,67 @@ export function useTenantEventStream(args: {
       limit,
     },
     { enabled: jsonFilterOk && (args.enabled ?? true) },
+  )
+}
+
+// ============================================================================
+// v1.5 — Experiment metric breakdown
+// ============================================================================
+
+/** `experiment_metric_breakdown` row shape — server pipe output. */
+export interface ExperimentMetricBreakdownRow {
+  variant_key: string
+  exposed_users: number
+  converted_users: number
+  event_count: number
+}
+
+/**
+ * Per-variant exposure + conversion counts for the decision panel.
+ *
+ * Disabled by default until the caller has both an experiment_id AND
+ * a metric_event — the analytics tab forwards `enabled: false` until
+ * the operator has picked something to analyze, so we don't burn
+ * Tinybird scans on every keystroke.
+ *
+ * `from`/`to` bound the EXPOSURE window. Conversion events may fall
+ * outside `to` (up to `windowDays` after each user's first exposure)
+ * — handled in the pipe SQL.
+ */
+export function useExperimentMetricBreakdown(args: {
+  experimentId: string
+  metricEvent: string
+  from: Date | string
+  to: Date | string
+  windowDays?: number
+  jsonPathFilter?: string
+  jsonValueFilter?: string
+  enabled?: boolean
+}) {
+  const toIso = (v: Date | string) =>
+    typeof v === "string" ? v : v.toISOString()
+  const jsonOk =
+    !args.jsonPathFilter ||
+    args.jsonPathFilter === "" ||
+    isValidJsonKey(args.jsonPathFilter)
+
+  return useTinybirdQuery<ExperimentMetricBreakdownRow>(
+    "experiment_metric_breakdown",
+    {
+      experiment_id: args.experimentId,
+      metric_event: args.metricEvent,
+      date_from: toIso(args.from),
+      date_to: toIso(args.to),
+      window_days: args.windowDays ?? 7,
+      json_path_filter: args.jsonPathFilter ?? "",
+      json_value_filter: args.jsonValueFilter ?? "",
+    },
+    {
+      enabled:
+        !!args.experimentId &&
+        !!args.metricEvent &&
+        jsonOk &&
+        (args.enabled ?? true),
+    },
   )
 }
