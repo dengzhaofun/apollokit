@@ -322,7 +322,6 @@ function DataTableInner<T>({
   sortableActive,
   sortable,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ReturnType<typeof useReactTable<T>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rows: any[]
