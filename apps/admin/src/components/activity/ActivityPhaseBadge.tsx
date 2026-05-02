@@ -14,9 +14,9 @@ import * as m from "#/paraglide/messages.js"
  *
  * Color signal:
  *   - active   → green (default badge) — players can do everything
- *   - settling → blue/secondary       — claims still allowed, no new participation
  *   - teasing  → yellow/outline       — visible but participation blocked
- *   - ended/archived → gray/outline   — read-only / hidden
+ *   - ended    → gray/outline         — read-only, claims still allowed in grace window
+ *   - archived → gray/outline         — fully hidden / cleaned up
  *   - draft/scheduled → outline       — not yet exposed to players
  */
 const PHASE_VARIANT: Record<
@@ -36,7 +36,6 @@ const PHASE_VARIANT: Record<
     variant: "default",
     className: "bg-emerald-600 hover:bg-emerald-600",
   },
-  settling: { variant: "secondary" },
   ended: { variant: "outline", className: "text-muted-foreground" },
   archived: { variant: "outline", className: "text-muted-foreground" },
 }
@@ -51,8 +50,6 @@ function phaseLabel(phase: ActivityPhase): string {
       return m.activity_phase_teasing()
     case "active":
       return m.activity_phase_active()
-    case "settling":
-      return m.activity_phase_settling()
     case "ended":
       return m.activity_phase_ended()
     case "archived":
@@ -70,8 +67,6 @@ function phaseTooltip(phase: ActivityPhase): string {
       return m.activity_phase_teasing_tooltip()
     case "active":
       return m.activity_phase_active_tooltip()
-    case "settling":
-      return m.activity_phase_settling_tooltip()
     case "ended":
       return m.activity_phase_ended_tooltip()
     case "archived":

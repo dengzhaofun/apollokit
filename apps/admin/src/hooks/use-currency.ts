@@ -38,15 +38,17 @@ export const CURRENCY_FILTER_DEFS: FilterDef[] = [
     trueLabel: "Active",
     falseLabel: "Inactive",
   },
-  {
-    id: "activityId",
-    label: "Activity",
-    type: "select",
-    options: [{ value: "null", label: "Permanent only" }],
-  },
 ]
 
-/** URL-driven currencies list — wired into <DataTable />. */
+/**
+ * URL-driven currencies list — wired into <DataTable />.
+ *
+ * Default scope: only permanent / non-activity-bound currencies. Activity-
+ * scoped currencies are managed inside the activity's own detail page.
+ * The list page intentionally does not expose an "Activity" filter —
+ * separating "global catalog" from "activity inner loop" prevents the
+ * two workflows from leaking into each other.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useCurrencies(route: any) {
   return useListSearch<CurrencyDefinition>({
@@ -60,6 +62,7 @@ export function useCurrencies(route: any) {
           limit,
           q,
           adv,
+          activityId: "null",
           ...filters,
         })}`,
       ),

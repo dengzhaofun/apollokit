@@ -93,20 +93,36 @@ export function useDeleteEntitySchema() {
 
 export const ENTITY_BLUEPRINT_FILTER_DEFS: FilterDef[] = []
 
-/** Paginated entity blueprints — URL-driven. */
+/**
+ * Paginated entity blueprints — URL-driven. Default scope: permanent
+ * / non-activity-bound only. Activity detail pages pass an explicit
+ * `activityId` to scope to that activity.
+ */
 export function useEntityBlueprints(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
-  extraQuery: { schemaId?: string } = {},
+  extraQuery: { schemaId?: string; activityId?: string } = {},
 ) {
-  const { schemaId } = extraQuery
+  const { schemaId, activityId } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<EntityBlueprint>({
     route,
-    queryKey: [...BLUEPRINTS_KEY, { schemaId: schemaId ?? null }],
+    queryKey: [
+      ...BLUEPRINTS_KEY,
+      { schemaId: schemaId ?? null, activityId: effectiveActivityId },
+    ],
     filterDefs: ENTITY_BLUEPRINT_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EntityBlueprint>>(
-        `/api/entity/blueprints?${buildQs({ cursor, limit, q, adv, ...filters, schemaId })}`,
+        `/api/entity/blueprints?${buildQs({
+          cursor,
+          limit,
+          q,
+          adv,
+          ...filters,
+          schemaId,
+          activityId: effectiveActivityId,
+        })}`,
       ),
   })
 }

@@ -25,18 +25,22 @@ const bannersKey = (groupId: string) =>
 
 export const BANNER_GROUP_FILTER_DEFS: FilterDef[] = []
 
-/** Paginated banner groups — URL-driven. */
+/**
+ * Paginated banner groups — URL-driven. Default scope: permanent /
+ * non-activity-bound only.
+ */
 export function useBannerGroups(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<BannerGroup>({
     route,
     queryKey: [
       ...GROUPS_KEY,
-      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+      { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: BANNER_GROUP_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
@@ -47,7 +51,7 @@ export function useBannerGroups(
           q,
           adv,
           ...filters,
-          activityId,
+          activityId: effectiveActivityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),

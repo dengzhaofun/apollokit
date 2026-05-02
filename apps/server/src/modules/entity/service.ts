@@ -905,6 +905,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     blueprintId: string,
     source: string,
     sourceId?: string,
+    context?: { activityId?: string; activityNodeId?: string },
   ): Promise<EntityInstance> {
     const bp = await loadBlueprintByKey(organizationId, blueprintId);
     const schema = await loadSchemaByKey(organizationId, bp.schemaId);
@@ -927,6 +928,16 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     // Compute initial stats (level 1, no equipment, no skin)
     const initialStats = computeStats(bp, { level: 1, rankKey: initialRank }, []);
 
+    // The instance's `activity_id` records *which* activity owned the
+    // grant. Prefer the explicit context (a player completing a task in
+    // activity X grants a non-activity-bound blueprint) over the
+    // blueprint's own activity_id (which only fires when the blueprint
+    // itself was provisioned per-activity).
+    const instanceActivityId =
+      context?.activityId ?? bp.activityId ?? null;
+    const instanceActivityNodeId =
+      context?.activityNodeId ?? bp.activityNodeId ?? null;
+
     const rows = await db
       .insert(entityInstances)
       .values({
@@ -938,6 +949,8 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         exp: 0,
         rankKey: initialRank,
         computedStats: initialStats,
+        activityId: instanceActivityId,
+        activityNodeId: instanceActivityNodeId,
       })
       .returning();
 
@@ -948,6 +961,8 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       blueprintId: bp.id,
       source,
       sourceId,
+      activityId: instanceActivityId,
+      activityNodeId: instanceActivityNodeId,
     });
 
     return inst;

@@ -93,27 +93,6 @@ deps.events.on("level.cleared", async (evt) => {
   }
 });
 
-// Same pattern for activity milestone claims — tenants who want a
-// "most-milestones-claimed" leaderboard just declare a config with
-// `metricKey = "activity.milestone.claimed"`.
-deps.events.on("activity.milestone.claimed", async (evt) => {
-  try {
-    await leaderboardService.contribute({
-      organizationId: evt.organizationId,
-      endUserId: evt.endUserId,
-      metricKey: "activity.milestone.claimed",
-      value: 1,
-      activityContext: { activityId: evt.activityId },
-      source: `activity:${evt.activityId}:milestone:${evt.milestoneAlias}`,
-      idempotencyKey: `activity:${evt.activityId}:${evt.endUserId}:${evt.milestoneAlias}`,
-    });
-  } catch (err) {
-    logger.error(
-      "[leaderboard] activity.milestone.claimed subscriber failed:",
-      err,
-    );
-  }
-});
 
 export { leaderboardRouter } from "./routes";
 export { leaderboardClientRouter } from "./client-routes";

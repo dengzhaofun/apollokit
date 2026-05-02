@@ -128,6 +128,28 @@ interface Props {
  * default the resource alias to the same value when the user leaves
  * it blank in the body form.
  */
+/**
+ * Node types whose body Form has its own `alias` field that doubles as
+ * the node alias. For these we hide the dialog-level "Node alias" input
+ * so the operator only fills alias once — the section reads the form
+ * value and passes it through `mountNode(refId, formAlias)`.
+ *
+ * `custom` has no body form (operator clicks a button) and `game_board`
+ * is a virtual placeholder, so they keep the dialog-level input.
+ */
+const FORM_OWNS_ALIAS: ReadonlySet<NodeType> = new Set([
+  "check_in",
+  "task_group",
+  "lottery",
+  "leaderboard",
+  "banner",
+  "exchange",
+  "assist_pool",
+  "entity_blueprint",
+  "item_definition",
+  "currency_definition",
+])
+
 export function NodeCreatorDialog({
   activityKey,
   activityId,
@@ -138,17 +160,50 @@ export function NodeCreatorDialog({
   const [nodeAlias, setNodeAlias] = useState("")
   const [orderIndex, setOrderIndex] = useState(0)
 
+  /**
+   * All node types the operator has visited at least once during this
+   * dialog session. Visited sections stay mounted (just hidden) so
+   * their form state survives nodeType switching — operator can fill a
+   * task form, peek at leaderboard, then come back to task without
+   * losing what was typed.
+   *
+   * Lazy: we don't mount all 12 sections up front, only the ones the
+   * operator actually visits. First visit mounts; subsequent visits
+   * just toggle visibility.
+   */
+  const [mountedTypes, setMountedTypes] = useState<Set<NodeType>>(
+    () => new Set([nodeType]),
+  )
+
+  function selectType(next: NodeType) {
+    setNodeType(next)
+    setMountedTypes((prev) =>
+      prev.has(next) ? prev : new Set([...prev, next]),
+    )
+  }
+
+  const formOwnsAlias = FORM_OWNS_ALIAS.has(nodeType)
+
   const createNode = useCreateActivityNode(activityKey)
 
   function reset() {
     setNodeType("check_in")
     setNodeAlias("")
     setOrderIndex((n) => n + 1)
+    setMountedTypes(new Set(["check_in"]))
   }
 
-  async function mountNode(refId: string | null) {
+  async function mountNode(
+    refId: string | null,
+    aliasOverride?: string | null,
+  ) {
+    const finalAlias = aliasOverride?.trim() || nodeAlias
+    if (!finalAlias) {
+      toast.error(m.activity_node_alias_required())
+      return
+    }
     await createNode.mutateAsync({
-      alias: nodeAlias,
+      alias: finalAlias,
       nodeType,
       refId,
       orderIndex,
@@ -162,7 +217,15 @@ export function NodeCreatorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
+      {/*
+        Layout — DialogContent is a flex column capped at 85vh:
+          DialogHeader (shrink-0) + scrollable middle (flex-1 overflow-y-auto)
+          + DialogFooter (shrink-0).
+        This keeps header + footer always visible no matter how tall the
+        body form is — operators don't have to scroll to the bottom of a
+        long form just to find the "Create & Mount" button.
+      */}
+      <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{m.activity_node_create_title()}</DialogTitle>
           <DialogDescription>
@@ -170,59 +233,100 @@ export function NodeCreatorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-3 py-2">
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_type()}</Label>
-            <Select
-              value={nodeType}
-              onValueChange={(v) => setNodeType(v as NodeType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {groups.map((g) => (
-                  <SelectGroup key={g.label}>
-                    <SelectLabel>{g.label}</SelectLabel>
-                    {g.types.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div
+            className={
+              formOwnsAlias
+                ? "grid grid-cols-2 gap-3 py-2"
+                : "grid grid-cols-3 gap-3 py-2"
+            }
+          >
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_node_field_type()}</Label>
+              <Select
+                value={nodeType}
+                onValueChange={(v) => selectType(v as NodeType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups.map((g) => (
+                    <SelectGroup key={g.label}>
+                      <SelectLabel>{g.label}</SelectLabel>
+                      {g.types.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {formOwnsAlias ? null : (
+              <div className="flex flex-col gap-1.5">
+                <Label>{m.activity_node_field_alias()}</Label>
+                <Input
+                  value={nodeAlias}
+                  onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
+                  placeholder="custom_node"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {m.activity_node_field_alias_help()}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_node_field_order()}</Label>
+              <Input
+                type="number"
+                value={orderIndex}
+                onChange={(e) => setOrderIndex(Number(e.target.value) || 0)}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_alias()}</Label>
-            <Input
-              value={nodeAlias}
-              onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
-              placeholder="day7_checkin"
-            />
-            <p className="text-xs text-muted-foreground">
-              {m.activity_node_field_alias_help()}
+          {formOwnsAlias ? (
+            <p className="-mt-1 text-xs text-muted-foreground">
+              {m.activity_node_alias_unified_hint()}
             </p>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_order()}</Label>
-            <Input
-              type="number"
-              value={orderIndex}
-              onChange={(e) => setOrderIndex(Number(e.target.value) || 0)}
-            />
-          </div>
-        </div>
+          ) : null}
 
-        <div className="rounded-lg border p-4">
-          <NodeFormSection
-            nodeType={nodeType}
-            activityId={activityId}
-            nodeAlias={nodeAlias}
-            mountNode={mountNode}
-            mountPending={createNode.isPending}
-          />
+          {/*
+            Render every visited nodeType section, but only show the
+            active one. Hidden sections preserve their form state so
+            switching back doesn't lose what the operator typed.
+            Form ids: only the active section gets the canonical
+            NODE_CREATOR_FORM_ID (which the footer's submit button
+            targets); others get a unique disambiguated id so the DOM
+            stays valid (no duplicate ids).
+
+            Compact density via descendant utilities — each module's
+            standalone Form was tuned for a full-page edit screen
+            (space-y-6 / space-y-8). Inside this dialog those gaps make
+            the body feel sparse and force more scrolling than needed.
+            We override common spacing tokens to a tighter cadence here
+            so the visual rhythm matches the dialog context, without
+            having to add a `density` prop to all 12 forms.
+          */}
+          <div className="mt-3 rounded-lg border p-3 [&_form.space-y-8]:space-y-4 [&_form.space-y-6]:space-y-4 [&_form>section.space-y-4]:space-y-3 [&_form>section]:py-1">
+            {Array.from(mountedTypes).map((nt) => (
+              <div key={nt} hidden={nt !== nodeType}>
+                <NodeFormSection
+                  nodeType={nt}
+                  activityId={activityId}
+                  nodeAlias={nodeAlias}
+                  mountNode={mountNode}
+                  mountPending={createNode.isPending}
+                  formId={
+                    nt === nodeType
+                      ? NODE_CREATOR_FORM_ID
+                      : `${NODE_CREATOR_FORM_ID}-${nt}`
+                  }
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <DialogFooter>
@@ -233,59 +337,95 @@ export function NodeCreatorDialog({
           >
             {m.common_cancel()}
           </Button>
+          {nodeType === "custom" ? (
+            <Button
+              type="button"
+              disabled={createNode.isPending}
+              onClick={() => mountNode(null)}
+            >
+              {m.activity_node_submit_custom()}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              form={NODE_CREATOR_FORM_ID}
+              disabled={createNode.isPending}
+            >
+              {m.activity_node_create_submit()}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
 
+/**
+ * Single form id every section's body form should set on its `<form>`,
+ * so the dialog footer's submit button can target it via `form={...}`.
+ */
+const NODE_CREATOR_FORM_ID = "node-creator-form"
+
 interface SectionProps {
   nodeType: NodeType
   activityId: string
   nodeAlias: string
-  mountNode: (refId: string | null) => Promise<void>
+  /**
+   * Mount the just-created (or just-picked) resource as an activity
+   * node. Pass the form's `alias` value as `aliasOverride` so the
+   * node alias and the resource alias stay in sync — the operator
+   * fills alias only once inside the body form.
+   */
+  mountNode: (
+    refId: string | null,
+    aliasOverride?: string | null,
+  ) => Promise<void>
   mountPending: boolean
+  /**
+   * DOM id given to this section's `<form>`. The dialog footer's
+   * submit button targets `NODE_CREATOR_FORM_ID` directly, so only
+   * the active section receives that id; inactive sections (kept
+   * mounted to preserve filled fields across nodeType switches)
+   * receive a unique id and stay invisible to the footer button.
+   */
+  formId: string
 }
 
 function NodeFormSection(props: SectionProps) {
-  function aliasRequired() {
-    if (!props.nodeAlias) {
-      toast.error(m.activity_node_alias_required())
-      return true
-    }
-    return false
-  }
-
+  // Alias is now validated centrally inside `mountNode` (it picks the
+  // form's alias as override, falling back to the dialog-level
+  // nodeAlias). Sections just pass through `props.mountNode` and let
+  // it surface any "alias required" toast.
   switch (props.nodeType) {
     case "check_in":
-      return <CheckInSection {...props} aliasRequired={aliasRequired} />
+      return <CheckInSection {...props} />
     case "lottery":
-      return <LotterySection {...props} aliasRequired={aliasRequired} />
+      return <LotterySection {...props} />
     case "banner":
-      return <BannerSection {...props} aliasRequired={aliasRequired} />
+      return <BannerSection {...props} />
     case "task_group":
-      return <TaskSection {...props} aliasRequired={aliasRequired} />
+      return <TaskSection {...props} />
     case "exchange":
-      return <ShopSection {...props} aliasRequired={aliasRequired} />
+      return <ShopSection {...props} />
     case "leaderboard":
-      return <LeaderboardSection {...props} aliasRequired={aliasRequired} />
+      return <LeaderboardSection {...props} />
     case "game_board":
     case "entity_blueprint":
-      return <EntitySection {...props} aliasRequired={aliasRequired} />
+      return <EntitySection {...props} />
     case "item_definition":
-      return <ItemSection {...props} aliasRequired={aliasRequired} />
+      return <ItemSection {...props} />
     case "currency_definition":
-      return <CurrencySection {...props} aliasRequired={aliasRequired} />
+      return <CurrencySection {...props} />
     case "assist_pool":
-      return <AssistPoolSection {...props} aliasRequired={aliasRequired} />
+      return <AssistPoolSection {...props} />
     case "custom":
-      return <CustomSection {...props} aliasRequired={aliasRequired} />
+      return <CustomSection {...props} />
     default:
       return null
   }
 }
 
-type SectionImplProps = SectionProps & { aliasRequired: () => boolean }
+type SectionImplProps = SectionProps
 
 function reportError(err: unknown) {
   if (err instanceof ApiError) toast.error(err.body.error)
@@ -296,14 +436,12 @@ function CheckInSection(props: SectionImplProps) {
   const create = useCreateCheckInConfig()
   const form = useCheckInForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const config = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(config.id)
+        await props.mountNode(config.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -314,6 +452,8 @@ function CheckInSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_check_in()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -322,14 +462,12 @@ function LotterySection(props: SectionImplProps) {
   const create = useCreateLotteryPool()
   const form = useLotteryPoolForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const pool = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(pool.id)
+        await props.mountNode(pool.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -340,6 +478,8 @@ function LotterySection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_lottery()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -348,14 +488,12 @@ function BannerSection(props: SectionImplProps) {
   const create = useCreateBannerGroup()
   const form = useBannerGroupForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const group = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(group.id)
+        await props.mountNode(group.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -366,6 +504,8 @@ function BannerSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_banner()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -379,14 +519,14 @@ function TaskSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_task_group()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
+      hideSubmitButton
+      id={props.formId}
+      onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
             activityId: props.activityId,
           })
-          await props.mountNode(def.id)
+          await props.mountNode(def.id, values.alias)
         } catch (err) {
           reportError(err)
         }
@@ -399,14 +539,12 @@ function ShopSection(props: SectionImplProps) {
   const create = useCreateShopProduct()
   const form = useShopProductForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const product = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(product.id)
+        await props.mountNode(product.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -417,6 +555,8 @@ function ShopSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_exchange()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -425,14 +565,12 @@ function LeaderboardSection(props: SectionImplProps) {
   const create = useCreateLeaderboardConfig()
   const form = useLeaderboardForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const cfg = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(cfg.id)
+        await props.mountNode(cfg.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -443,6 +581,8 @@ function LeaderboardSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_leaderboard()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -489,14 +629,14 @@ function EntitySection(props: SectionImplProps) {
           }}
           isPending={create.isPending || props.mountPending}
           submitLabel={m.activity_node_submit_entity_blueprint()}
-          onSubmit={async (values) => {
-            if (props.aliasRequired()) return
-            try {
+          hideSubmitButton
+          id={props.formId}
+          onSubmit={async (values) => {            try {
               const bp = await create.mutateAsync({
                 ...values,
                 activityId: props.activityId,
               })
-              await props.mountNode(bp.id)
+              await props.mountNode(bp.id, values.alias)
             } catch (err) {
               reportError(err)
             }
@@ -514,14 +654,14 @@ function ItemSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_item_definition()}
-      onSubmit={async (values) => {
-        if (props.aliasRequired()) return
-        try {
+      hideSubmitButton
+      id={props.formId}
+      onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
             activityId: props.activityId,
           })
-          await props.mountNode(def.id)
+          await props.mountNode(def.id, values.alias)
         } catch (err) {
           reportError(err)
         }
@@ -534,14 +674,12 @@ function CurrencySection(props: SectionImplProps) {
   const create = useCreateCurrency()
   const form = useCurrencyDefinitionForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const def = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(def.id)
+        await props.mountNode(def.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -552,6 +690,8 @@ function CurrencySection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_currency_definition()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -560,14 +700,12 @@ function AssistPoolSection(props: SectionImplProps) {
   const create = useCreateAssistPoolConfig()
   const form = useAssistPoolForm({
     defaultValues: { activityId: props.activityId, alias: props.nodeAlias },
-    onSubmit: async (values) => {
-      if (props.aliasRequired()) return
-      try {
+    onSubmit: async (values) => {      try {
         const cfg = await create.mutateAsync({
           ...values,
           activityId: props.activityId,
         })
-        await props.mountNode(cfg.id)
+        await props.mountNode(cfg.id, values.alias)
       } catch (err) {
         reportError(err)
       }
@@ -578,6 +716,8 @@ function AssistPoolSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_assist_pool()}
+      hideSubmitButton
+      id={props.formId}
     />
   )
 }
@@ -590,9 +730,7 @@ function CustomSection(props: SectionImplProps) {
       </p>
       <Button
         disabled={props.mountPending}
-        onClick={async () => {
-          if (props.aliasRequired()) return
-          try {
+        onClick={async () => {          try {
             await props.mountNode(null)
           } catch (err) {
             reportError(err)

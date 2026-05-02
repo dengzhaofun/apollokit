@@ -18,18 +18,23 @@ const CONFIGS_KEY = ["check-in-configs"] as const
 
 export const CHECK_IN_CONFIG_FILTER_DEFS: FilterDef[] = []
 
-/** Paginated check-in configs — URL-driven. */
+/**
+ * Paginated check-in configs — URL-driven. Default scope: permanent
+ * / non-activity-bound only. Activity detail pages pass an explicit
+ * `activityId` to scope to that activity.
+ */
 export function useCheckInConfigs(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<CheckInConfig>({
     route,
     queryKey: [
       ...CONFIGS_KEY,
-      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+      { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: CHECK_IN_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
@@ -40,7 +45,7 @@ export function useCheckInConfigs(
           q,
           adv,
           ...filters,
-          activityId,
+          activityId: effectiveActivityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),

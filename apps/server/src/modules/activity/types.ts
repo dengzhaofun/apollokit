@@ -5,8 +5,6 @@ import type {
   ActivityUserReward,
   ActivitySchedule,
   ActivityCleanupRule,
-  ActivityCurrency,
-  ActivityMilestoneTier,
   ActivityNodeUnlockRule,
   ActivityMembershipConfig,
   ActivityQueueFormat,
@@ -19,8 +17,6 @@ export type {
   ActivityUserReward,
   ActivitySchedule,
   ActivityCleanupRule,
-  ActivityCurrency,
-  ActivityMilestoneTier,
   ActivityNodeUnlockRule,
   ActivityMembershipConfig,
   ActivityQueueFormat,
@@ -58,7 +54,6 @@ export const ACTIVITY_STATES = [
   "scheduled",
   "teasing",
   "active",
-  "settling",
   "ended",
   "archived",
 ] as const;
@@ -101,7 +96,6 @@ export type ActivityTimeline = {
   msToVisible: number;
   msToStart: number;
   msToEnd: number;
-  msToRewardEnd: number;
   msToHidden: number;
 };
 

@@ -77,7 +77,6 @@ async function createActiveActivity(params: {
   const visibleAt = new Date(now.getTime() - 60_000);
   const startAt = new Date(now.getTime() - 30_000);
   const endAt = new Date(now.getTime() + 7 * 24 * 3600_000);
-  const rewardEndAt = new Date(now.getTime() + 14 * 24 * 3600_000);
   const hiddenAt = new Date(now.getTime() + 30 * 24 * 3600_000);
   const [row] = await db
     .insert(activityConfigs)
@@ -89,7 +88,6 @@ async function createActiveActivity(params: {
       visibleAt,
       startAt,
       endAt,
-      rewardEndAt,
       hiddenAt,
       status: params.status ?? "active",
     })
@@ -562,7 +560,6 @@ describe("battle-pass service", () => {
         visibleAt: new Date(past.getTime() - 5 * 3_600_000),
         startAt: new Date(past.getTime() - 4 * 3_600_000),
         endAt: new Date(past.getTime() - 3 * 3_600_000),
-        rewardEndAt: new Date(past.getTime() - 2 * 3_600_000),
         hiddenAt: new Date(past.getTime() - 3_600_000),
       })
       .where(eq(activityConfigs.id, actId));

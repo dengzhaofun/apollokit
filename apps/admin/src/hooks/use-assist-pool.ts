@@ -18,27 +18,24 @@ import type {
 const CONFIGS_KEY = ["assist-pool-configs"] as const
 const INSTANCES_KEY = ["assist-pool-instances"] as const
 
-export const ASSIST_POOL_CONFIG_FILTER_DEFS: FilterDef[] = [
-  {
-    id: "activityId",
-    label: "Activity",
-    type: "select",
-    options: [{ value: "null", label: "Permanent only" }],
-  },
-]
+export const ASSIST_POOL_CONFIG_FILTER_DEFS: FilterDef[] = []
 
-/** Paginated assist-pool configs — URL-driven. */
+/**
+ * Paginated assist-pool configs — URL-driven. Default scope: permanent
+ * / non-activity-bound only.
+ */
 export function useAssistPoolConfigs(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<AssistPoolConfig>({
     route,
     queryKey: [
       ...CONFIGS_KEY,
-      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+      { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: ASSIST_POOL_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
@@ -49,7 +46,7 @@ export function useAssistPoolConfigs(
           q,
           adv,
           ...filters,
-          activityId: activityId ?? (filters.activityId as string | undefined),
+          activityId: effectiveActivityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),

@@ -1722,14 +1722,13 @@ describe("task service", () => {
 
     async function seedActivity(opts: {
       alias: string;
-      phaseAt: "active" | "teasing" | "settling" | "ended";
+      phaseAt: "active" | "teasing" | "ended";
     }): Promise<string> {
       const { activityConfigs } = await import("../../schema/activity");
       const offsetMap = {
         active: 0,
         teasing: -1.5 * HOUR,
-        settling: +1.5 * HOUR,
-        ended: +2.5 * HOUR,
+        ended: +1.5 * HOUR,
       };
       const anchor = new Date(Date.now() - offsetMap[opts.phaseAt]);
       const [row] = await db
@@ -1743,7 +1742,6 @@ describe("task service", () => {
           visibleAt: new Date(anchor.getTime() - 2 * HOUR),
           startAt: new Date(anchor.getTime() - HOUR),
           endAt: new Date(anchor.getTime() + HOUR),
-          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
           hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
         })
         .returning({ id: activityConfigs.id });
@@ -1845,7 +1843,7 @@ describe("task service", () => {
       expect(tasks.find((t) => t.id === defB.id)?.currentValue ?? 0).toBe(0);
     });
 
-    test("claimReward: ended activity → throws activity.not_in_claimable_phase", async () => {
+    test("claimReward: ended activity (pre-archive grace window) → claim succeeds", async () => {
       const activityId = await seedActivity({
         alias: "gate-claim-ended",
         phaseAt: "ended",
@@ -1860,9 +1858,6 @@ describe("task service", () => {
         autoClaim: false,
         activityId,
       });
-      // Manually backfill a completed progress row so claimReward's
-      // claim-eligibility checks reach the activity gate before failing
-      // on its own grounds.
       const { taskUserProgress } = await import("../../schema/task");
       await db.insert(taskUserProgress).values({
         taskId: def.id,
@@ -1873,37 +1868,7 @@ describe("task service", () => {
         completedAt: new Date(),
         periodKey: "none",
       });
-      await expect(
-        svc.claimReward(orgId, "u-claim-ended", def.id),
-      ).rejects.toMatchObject({ code: "activity.not_in_claimable_phase" });
-    });
-
-    test("claimReward: settling activity → claim succeeds", async () => {
-      const activityId = await seedActivity({
-        alias: "gate-claim-settling",
-        phaseAt: "settling",
-      });
-      const def = await svc.createDefinition(orgId, {
-        name: "Claim settling",
-        period: "none",
-        countingMethod: "event_count",
-        eventName: "noop-claim-settling",
-        targetValue: 1,
-        rewards: [{ type: "item", id: "x", count: 1 }],
-        autoClaim: false,
-        activityId,
-      });
-      const { taskUserProgress } = await import("../../schema/task");
-      await db.insert(taskUserProgress).values({
-        taskId: def.id,
-        endUserId: "u-claim-settling",
-        organizationId: orgId,
-        currentValue: def.targetValue,
-        isCompleted: true,
-        completedAt: new Date(),
-        periodKey: "none",
-      });
-      const r = await svc.claimReward(orgId, "u-claim-settling", def.id);
+      const r = await svc.claimReward(orgId, "u-claim-ended", def.id);
       expect(r.taskId).toBe(def.id);
     });
 

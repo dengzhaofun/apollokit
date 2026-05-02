@@ -1552,8 +1552,8 @@ export function createTaskService(
 
     if (def.autoClaim) throw new TaskAutoClaimOnly();
 
-    // Activity-phase gate: claims allowed in {active, settling}, blocked
-    // in {teasing, ended, archived}. Player-initiated, so we throw a
+    // Activity-phase gate: claims allowed in {active, ended}, blocked
+    // in {teasing, archived}. Player-initiated, so we throw a
     // typed error (router maps to 409) instead of silently dropping.
     if (def.activityId) {
       await assertActivityClaimable(db, def.activityId, ts);
