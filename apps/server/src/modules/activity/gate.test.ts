@@ -1,7 +1,7 @@
 /**
  * Activity gate integration tests — real Neon dev branch, no mocks.
  *
- * The 5-time-point machine (`deriveState`) itself is unit-tested in
+ * The 4-time-point machine (`deriveState`) itself is unit-tested in
  * `time.test.ts`; here we cover only the DB-side behaviour:
  *   - `getActivityPhases` batch round-trip + missing-id semantics
  *   - `assertActivityWritable` / `assertActivityClaimable` against every
@@ -31,7 +31,6 @@ type SeedTimes = {
   visibleAt: Date;
   startAt: Date;
   endAt: Date;
-  rewardEndAt: Date;
   hiddenAt: Date;
 };
 
@@ -40,7 +39,6 @@ function timesAround(anchor: Date): SeedTimes {
     visibleAt: new Date(anchor.getTime() - 2 * HOUR),
     startAt: new Date(anchor.getTime() - 1 * HOUR),
     endAt: new Date(anchor.getTime() + 1 * HOUR),
-    rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
     hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
   };
 }
@@ -56,7 +54,6 @@ describe("activity/gate", () => {
       | "scheduled"
       | "teasing"
       | "active"
-      | "settling"
       | "ended"
       | "archived";
     times: SeedTimes;
@@ -72,7 +69,6 @@ describe("activity/gate", () => {
         visibleAt: opts.times.visibleAt,
         startAt: opts.times.startAt,
         endAt: opts.times.endAt,
-        rewardEndAt: opts.times.rewardEndAt,
         hiddenAt: opts.times.hiddenAt,
       })
       .returning({ id: activityConfigs.id });
@@ -126,8 +122,7 @@ describe("activity/gate", () => {
   test.each([
     ["scheduled", -10 * HOUR],
     ["teasing", -1.5 * HOUR],
-    ["settling", +1.5 * HOUR],
-    ["ended", +2.5 * HOUR],
+    ["ended", +1.5 * HOUR],
     ["archived", +25 * HOUR],
   ] as const)(
     "assertActivityWritable: throws for phase=%s",
@@ -162,28 +157,27 @@ describe("activity/gate", () => {
     );
   });
 
-  test("assertActivityClaimable: passes for active and settling", async () => {
+  test("assertActivityClaimable: passes for active and ended (pre-archive grace window)", async () => {
     const now = new Date();
     const activeId = await seedActivity({
       status: "active",
       times: timesAround(now),
     });
-    const settlingId = await seedActivity({
-      status: "settling",
+    const endedId = await seedActivity({
+      status: "ended",
       times: timesAround(new Date(now.getTime() - 1.5 * HOUR)),
     });
     await expect(
       assertActivityClaimable(db, activeId, now),
     ).resolves.toBeUndefined();
     await expect(
-      assertActivityClaimable(db, settlingId, now),
+      assertActivityClaimable(db, endedId, now),
     ).resolves.toBeUndefined();
   });
 
   test.each([
     ["scheduled", -10 * HOUR],
     ["teasing", -1.5 * HOUR],
-    ["ended", +2.5 * HOUR],
     ["archived", +25 * HOUR],
   ] as const)(
     "assertActivityClaimable: throws for phase=%s",
@@ -200,11 +194,11 @@ describe("activity/gate", () => {
     },
   );
 
-  test("cron lag: persisted status='active' but live derivation yields 'ended'", async () => {
-    const longAgo = new Date(Date.now() - 5 * HOUR); // anchor far in the past
+  test("cron lag: persisted status='active' but live derivation yields 'archived'", async () => {
+    const longAgo = new Date(Date.now() - 26 * HOUR); // anchor far enough that hiddenAt has passed
     const id = await seedActivity({
       status: "active", // stale snapshot
-      times: timesAround(longAgo), // rewardEndAt was 3h ago → 'ended'
+      times: timesAround(longAgo),
     });
     await expect(assertActivityWritable(db, id)).rejects.toBeInstanceOf(
       ActivityNotInWritablePhase,
@@ -222,7 +216,6 @@ describe("activity/gate", () => {
         visibleAt: new Date(startAt.getTime() - HOUR),
         startAt,
         endAt: new Date(startAt.getTime() + HOUR),
-        rewardEndAt: new Date(startAt.getTime() + 2 * HOUR),
         hiddenAt: new Date(startAt.getTime() + 24 * HOUR),
       },
     });
@@ -231,7 +224,7 @@ describe("activity/gate", () => {
     ).resolves.toBeUndefined();
   });
 
-  test("boundary: now === endAt → settling (writable rejects, claimable passes)", async () => {
+  test("boundary: now === endAt → ended (writable rejects, claimable passes)", async () => {
     const endAt = new Date();
     const id = await seedActivity({
       status: "active",
@@ -239,7 +232,6 @@ describe("activity/gate", () => {
         visibleAt: new Date(endAt.getTime() - 2 * HOUR),
         startAt: new Date(endAt.getTime() - HOUR),
         endAt,
-        rewardEndAt: new Date(endAt.getTime() + HOUR),
         hiddenAt: new Date(endAt.getTime() + 24 * HOUR),
       },
     });
@@ -259,7 +251,6 @@ describe("activity/gate", () => {
         visibleAt: start,
         startAt: start, // collapsed: no teasing window
         endAt: new Date(start.getTime() + HOUR),
-        rewardEndAt: new Date(start.getTime() + 2 * HOUR),
         hiddenAt: new Date(start.getTime() + 24 * HOUR),
       },
     });

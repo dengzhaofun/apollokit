@@ -72,9 +72,9 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { EventNamePicker } from "#/components/analytics/EventNamePicker"
 import {
   isValidJsonKey,
-  useTenantEventNames,
   useTenantEventTimeseries,
   type EventTimeseriesGroupBy,
   type TenantEventTimeseriesRow,
@@ -167,13 +167,7 @@ function ExploreInner() {
   const jsonPathFilterValid =
     filters.jsonPath === "" || isValidJsonKey(filters.jsonPath)
 
-  // 1) 事件名 combobox
-  const namesQuery = useTenantEventNames({
-    from: w.from,
-    to: w.to,
-  })
-
-  // 2) 主查询
+  // 1) 主查询
   const timeseriesQuery = useTenantEventTimeseries({
     event,
     from: w.from,
@@ -226,10 +220,12 @@ function ExploreInner() {
                 <label className="text-xs font-medium text-muted-foreground">
                   {m.analytics_explore_event_label()}
                 </label>
-                <EventNameCombobox
-                  options={namesQuery.data?.data ?? []}
+                <EventNamePicker
+                  listId="explore-event-names"
                   value={event}
                   onChange={setEvent}
+                  from={w.from}
+                  to={w.to}
                 />
               </div>
               {/* 时间窗口 */}
@@ -639,49 +635,6 @@ function cssKey(s: string): string {
 // ============================================================================
 // Subcomponents
 // ============================================================================
-
-/**
- * 事件名选择器 —— 用 native HTML datalist 实现自动补全。
- *
- * 选 datalist 而非自家 Combobox 组件:
- * - 输入即筛选,无需我们维护 filter / open state
- * - 跨平台键盘交互(arrow keys / enter)由浏览器原生处理
- * - 列表最多 500 项,性能 OK
- * - 视觉上和其他 input 完全一致
- *
- * 缺点:datalist 不支持每条选项里的"次数"显示。
- * 这里把 c 拼到选项 label 里:`task.completed (1,234)`,用户输入时
- * 也能匹配数字,可接受。
- */
-function EventNameCombobox({
-  options,
-  value,
-  onChange,
-}: {
-  options: Array<{ event: string; c: number }>
-  value: string
-  onChange: (v: string) => void
-}) {
-  const listId = "explore-event-names"
-  return (
-    <>
-      <Input
-        list={listId}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={m.analytics_explore_event_placeholder()}
-        className="h-8 font-mono text-xs"
-      />
-      <datalist id={listId}>
-        {options.map((opt) => (
-          <option key={opt.event} value={opt.event}>
-            {`${opt.event}  ·  ${Number(opt.c).toLocaleString()}`}
-          </option>
-        ))}
-      </datalist>
-    </>
-  )
-}
 
 function FilterInput({
   label,

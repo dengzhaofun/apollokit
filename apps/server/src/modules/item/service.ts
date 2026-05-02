@@ -683,6 +683,7 @@ export function createItemService(d: ItemDeps) {
       grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
       sourceId?: string;
+      context?: { activityId?: string; activityNodeId?: string };
     }): Promise<GrantResult> {
       const results: GrantResult["grants"] = [];
 
@@ -714,6 +715,8 @@ export function createItemService(d: ItemDeps) {
           delta: quantity,
           source: params.source,
           sourceId: params.sourceId ?? null,
+          activityId: params.context?.activityId ?? null,
+          activityNodeId: params.context?.activityNodeId ?? null,
           quantityBefore,
           quantityAfter,
         });
@@ -761,6 +764,7 @@ export function createItemService(d: ItemDeps) {
       deductions: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
       sourceId?: string;
+      context?: { activityId?: string; activityNodeId?: string };
     }): Promise<DeductResult> {
       const results: DeductResult["deductions"] = [];
 
@@ -792,6 +796,8 @@ export function createItemService(d: ItemDeps) {
           delta: -quantity,
           source: params.source,
           sourceId: params.sourceId ?? null,
+          activityId: params.context?.activityId ?? null,
+          activityNodeId: params.context?.activityNodeId ?? null,
           quantityBefore,
           quantityAfter,
         });

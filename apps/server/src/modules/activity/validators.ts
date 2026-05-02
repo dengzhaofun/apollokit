@@ -19,18 +19,6 @@ const RewardEntrySchema = z.object({
   count: z.number().int().positive(),
 });
 
-const MilestoneTierSchema = z.object({
-  alias: z.string().min(1).max(64).regex(AliasRegex),
-  points: z.number().int().nonnegative(),
-  rewards: z.array(RewardEntrySchema).min(1),
-});
-
-const CurrencySchema = z.object({
-  alias: z.string().min(1).max(32).regex(AliasRegex),
-  name: z.string().min(1).max(64),
-  icon: z.string().max(256).nullable().optional(),
-});
-
 const CleanupRuleSchema = z.object({
   mode: z.enum(CLEANUP_MODES),
   conversionMap: z
@@ -69,13 +57,9 @@ export const CreateActivitySchema = z
     visibleAt: z.string().datetime(),
     startAt: z.string().datetime(),
     endAt: z.string().datetime(),
-    rewardEndAt: z.string().datetime(),
     hiddenAt: z.string().datetime(),
     timezone: z.string().min(1).max(64).default("UTC").optional(),
-    currency: CurrencySchema.nullable().optional(),
-    milestoneTiers: z.array(MilestoneTierSchema).default([]).optional(),
     globalRewards: z.array(RewardEntrySchema).default([]).optional(),
-    kindMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
     cleanupRule: CleanupRuleSchema.default({ mode: "purge" }).optional(),
     joinRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
     visibility: z.enum(ACTIVITY_VISIBILITIES).default("public").optional(),
@@ -94,13 +78,9 @@ export const UpdateActivitySchema = z
     visibleAt: z.string().datetime().optional(),
     startAt: z.string().datetime().optional(),
     endAt: z.string().datetime().optional(),
-    rewardEndAt: z.string().datetime().optional(),
     hiddenAt: z.string().datetime().optional(),
     timezone: z.string().min(1).max(64).optional(),
-    currency: CurrencySchema.nullable().optional(),
-    milestoneTiers: z.array(MilestoneTierSchema).optional(),
     globalRewards: z.array(RewardEntrySchema).optional(),
-    kindMetadata: z.record(z.string(), z.unknown()).nullable().optional(),
     cleanupRule: CleanupRuleSchema.optional(),
     joinRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
     visibility: z.enum(ACTIVITY_VISIBILITIES).optional(),
@@ -143,7 +123,7 @@ export const CreateScheduleSchema = z
     triggerKind: z.enum(TRIGGER_KINDS),
     fireAt: z.string().datetime().nullable().optional(),
     offsetFrom: z
-      .enum(["visible_at", "start_at", "end_at", "reward_end_at", "hidden_at"])
+      .enum(["visible_at", "start_at", "end_at", "hidden_at"])
       .nullable()
       .optional(),
     offsetSeconds: z.number().int().nullable().optional(),
@@ -195,23 +175,9 @@ export const AddPointsBody = z
   })
   .openapi("ActivityAddPoints");
 
-export const ClaimMilestoneBody = z
-  .object({
-    endUserId: z.string().min(1).max(256),
-    milestoneAlias: z.string().min(1).max(64),
-  })
-  .openapi("ActivityClaimMilestone");
-
-export const ClaimMilestoneClientBody = z
-  .object({
-    milestoneAlias: z.string().min(1).max(64),
-  })
-  .openapi("ActivityClaimMilestoneClient");
-
 const DurationSpecSchema = z.object({
   teaseSeconds: z.number().int().nonnegative(),
   activeSeconds: z.number().int().positive(),
-  rewardSeconds: z.number().int().nonnegative(),
   hiddenSeconds: z.number().int().nonnegative(),
 });
 
@@ -234,7 +200,7 @@ const RecurrenceSchema = z.union([
 const NodeBlueprintSchema = z.object({
   alias: z.string().min(1).max(64).regex(/^[a-z0-9][a-z0-9\-_]*$/),
   nodeType: z.enum(NODE_TYPES),
-  refIdStrategy: z.enum(["fixed", "omit", "link_only"]),
+  refIdStrategy: z.enum(["reuse_shared", "virtual", "manual_link"]),
   fixedRefId: z.string().uuid().nullable().optional(),
   orderIndex: z.number().int().default(0).optional(),
   unlockRule: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -256,6 +222,41 @@ const ScheduleBlueprintSchema = z.object({
   enabled: z.boolean().default(true).optional(),
 });
 
+const CurrencyBlueprintSchema = z.object({
+  aliasPattern: z.string().min(1).max(128),
+  name: z.string().min(1).max(64),
+  description: z.string().max(2000).nullable().optional(),
+  icon: z.string().max(256).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+const ItemDefinitionBlueprintSchema = z.object({
+  aliasPattern: z.string().min(1).max(128),
+  name: z.string().min(1).max(64),
+  description: z.string().max(2000).nullable().optional(),
+  icon: z.string().max(256).nullable().optional(),
+  categoryAlias: z.string().max(64).nullable().optional(),
+  stackable: z.boolean().optional(),
+  stackLimit: z.number().int().positive().nullable().optional(),
+  holdLimit: z.number().int().positive().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+const EntityBlueprintBlueprintSchema = z.object({
+  aliasPattern: z.string().min(1).max(128),
+  schemaAlias: z.string().min(1).max(64),
+  name: z.string().min(1).max(64),
+  description: z.string().max(2000).nullable().optional(),
+  icon: z.string().max(256).nullable().optional(),
+  rarity: z.string().max(32).nullable().optional(),
+  tags: z.record(z.string(), z.string()).optional(),
+  assets: z.record(z.string(), z.string()).optional(),
+  baseStats: z.record(z.string(), z.number()).optional(),
+  statGrowth: z.record(z.string(), z.number()).optional(),
+  maxLevel: z.number().int().positive().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
 export const CreateActivityTemplateBody = z
   .object({
     alias: z.string().min(1).max(64).regex(/^[a-z0-9][a-z0-9\-_]*$/),
@@ -267,6 +268,18 @@ export const CreateActivityTemplateBody = z
     aliasPattern: z.string().min(1).max(128),
     nodesBlueprint: z.array(NodeBlueprintSchema).default([]).optional(),
     schedulesBlueprint: z.array(ScheduleBlueprintSchema).default([]).optional(),
+    currenciesBlueprint: z
+      .array(CurrencyBlueprintSchema)
+      .default([])
+      .optional(),
+    itemDefinitionsBlueprint: z
+      .array(ItemDefinitionBlueprintSchema)
+      .default([])
+      .optional(),
+    entityBlueprintsBlueprint: z
+      .array(EntityBlueprintBlueprintSchema)
+      .default([])
+      .optional(),
     autoPublish: z.boolean().default(false).optional(),
     enabled: z.boolean().default(true).optional(),
   })
@@ -293,14 +306,10 @@ export const ActivityConfigResponseSchema = z
     visibleAt: z.string(),
     startAt: z.string(),
     endAt: z.string(),
-    rewardEndAt: z.string(),
     hiddenAt: z.string(),
     timezone: z.string(),
     status: z.string(),
-    currency: CurrencySchema.nullable(),
-    milestoneTiers: z.array(MilestoneTierSchema),
     globalRewards: z.array(RewardEntrySchema),
-    kindMetadata: z.record(z.string(), z.unknown()).nullable(),
     cleanupRule: CleanupRuleSchema,
     joinRequirement: z.record(z.string(), z.unknown()).nullable(),
     visibility: z.enum(ACTIVITY_VISIBILITIES),

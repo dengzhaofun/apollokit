@@ -6,6 +6,7 @@ import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { useActivityForUser } from "#/hooks/use-activity"
 import { PageHeaderActions } from "#/components/PageHeader"
+import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute(
   "/_dashboard/activity/$alias/users/$endUserId/",
@@ -107,57 +108,6 @@ function ActivityUserDetailPage() {
             </div>
           </div>
 
-          {/* Milestones */}
-          {joined ? (
-            <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <h2 className="mb-3 text-sm font-semibold">里程碑进度</h2>
-              {activity.milestoneTiers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  本活动无里程碑配置
-                </p>
-              ) : (
-                <ul className="space-y-2 text-sm">
-                  {activity.milestoneTiers.map((tier) => {
-                    const done = progress!.milestonesAchieved.includes(
-                      tier.alias,
-                    )
-                    const reached = progress!.activityPoints >= tier.points
-                    return (
-                      <li
-                        key={tier.alias}
-                        className="flex items-center gap-3 rounded-lg border p-3"
-                      >
-                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                          {tier.alias}
-                        </code>
-                        <span className="text-muted-foreground">
-                          {tier.points.toLocaleString()} 分
-                        </span>
-                        {done ? (
-                          <Badge variant="default" className="ml-auto">
-                            已领取
-                          </Badge>
-                        ) : reached ? (
-                          <Badge variant="secondary" className="ml-auto">
-                            可领取
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="ml-auto">
-                            未达成（
-                            {(
-                              tier.points - progress!.activityPoints
-                            ).toLocaleString()}{" "}
-                            差距）
-                          </Badge>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-          ) : null}
-
           {/* Nodes */}
           <div className="rounded-xl border bg-card p-6 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold">节点解锁状态</h2>
@@ -192,7 +142,9 @@ function ActivityUserDetailPage() {
                           variant={unlocked ? "default" : "outline"}
                           className="ml-auto"
                         >
-                          {unlocked ? "已解锁" : "未解锁"}
+                          {unlocked
+                            ? m.activity_node_unlocked()
+                            : m.activity_node_locked()}
                         </Badge>
                       )}
                     </li>

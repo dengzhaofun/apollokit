@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CalendarRangeIcon,
   PartyPopperIcon,
+  Pencil,
   Rocket,
   Trash2,
   Undo2,
@@ -13,11 +14,13 @@ import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
 import { ActivityPhaseBadge } from "#/components/activity/ActivityPhaseBadge"
+import { RefIdPicker } from "#/components/activity/RefIdPicker"
 import {
   STATE_LABELS,
   STATE_VARIANT,
 } from "#/components/activity/ActivityTable"
 import { NodeCreatorDialog } from "#/components/activity/NodeCreatorDialog"
+import { NodeEditDialog } from "#/components/activity/NodeEditDialog"
 import {
   confirm,
   DetailHeader,
@@ -61,10 +64,11 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type {
   ActivityMemberStatus,
+  ActivityNode,
   CreateNodeInput,
   CreateScheduleInput,
 } from "#/lib/types/activity"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import {
@@ -75,9 +79,6 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import * as m from "#/paraglide/messages.js"
-import { getLocale } from "#/paraglide/runtime.js"
-
-const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/activity/$alias/")({
   component: ActivityDetailPage,
@@ -112,13 +113,10 @@ function ActivityDetailPage() {
     return (
       <PageShell>
         <ErrorState
-          title={t("活动加载失败", "Failed to load activity")}
-          description={t(
-            "可能是这个活动被删了,或者网络异常。返回列表重新进入试试。",
-            "The activity may have been removed, or the network is flaky. Try going back to the list.",
-          )}
+          title={m.activity_detail_load_failed_title()}
+          description={m.activity_detail_load_failed_desc()}
           onRetry={() => window.location.reload()}
-          retryLabel={t("重试", "Retry")}
+          retryLabel={m.common_retry()}
           error={error instanceof Error ? error : null}
         />
       </PageShell>
@@ -177,7 +175,7 @@ function ActivityDetailPage() {
     meta.push({
       icon: <CalendarRangeIcon />,
       label: format(new Date(activity.createdAt), "yyyy-MM-dd HH:mm"),
-      key: t("创建于", "Created"),
+      key: m.activity_detail_meta_created(),
     })
   }
 
@@ -220,7 +218,7 @@ function ActivityDetailPage() {
               disabled={deleteMutation.isPending}
               onClick={async () => {
                 const ok = await confirm({
-                  title: t("删除活动?", "Delete activity?"),
+                  title: m.activity_detail_delete_title(),
                   description: m.activity_detail_delete_confirm({ name: activity.name }),
                   confirmLabel: m.common_delete(),
                   danger: true,
@@ -263,6 +261,7 @@ function ActivityDetailPage() {
               <ActivityForm
                 defaultValues={activity}
                 disableAliasEdit
+                lockTimeEdit={activity.status !== "draft"}
                 isPending={updateMutation.isPending}
                 submitLabel={m.activity_detail_save_label()}
                 onSubmit={async (values) => {
@@ -308,6 +307,79 @@ function ActivityDetailPage() {
   )
 }
 
+/**
+ * Picks the next time anchor relevant to the current phase and renders
+ * a live "in 3d 4h" countdown. Refreshes every minute — the granularity
+ * runtime cron already ticks at, so finer updates would be misleading.
+ */
+function ActivityCountdownCard({
+  activity,
+}: {
+  activity: import("#/lib/types/activity").Activity
+}) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const status = activity.status
+  const v = new Date(activity.visibleAt).getTime()
+  const s = new Date(activity.startAt).getTime()
+  const e = new Date(activity.endAt).getTime()
+  const h = new Date(activity.hiddenAt).getTime()
+  const t = now.getTime()
+
+  let target: number | null = null
+  let labelKey: () => string = m.activity_countdown_to_visible
+  if (status === "draft") {
+    target = null
+  } else if (t < v) {
+    target = v
+    labelKey = m.activity_countdown_to_visible
+  } else if (t < s) {
+    target = s
+    labelKey = m.activity_countdown_to_active
+  } else if (t < e) {
+    target = e
+    labelKey = m.activity_countdown_to_end
+  } else if (t < h) {
+    target = h
+    labelKey = m.activity_countdown_to_archive
+  }
+
+  if (target === null) {
+    return (
+      <div className="rounded-xl border bg-card p-4 text-sm shadow-sm">
+        <span className="text-muted-foreground">
+          {m.activity_countdown_idle()}
+        </span>
+      </div>
+    )
+  }
+
+  const remainMs = Math.max(0, target - t)
+  const totalMin = Math.floor(remainMs / 60_000)
+  const days = Math.floor(totalMin / (60 * 24))
+  const hours = Math.floor((totalMin % (60 * 24)) / 60)
+  const mins = totalMin % 60
+
+  return (
+    <div className="rounded-xl border bg-gradient-to-br from-amber-50 to-card p-4 text-sm shadow-sm dark:from-amber-950/30">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          {labelKey()}
+        </span>
+        <span className="font-mono text-base">
+          {days > 0 ? `${days}d ` : ""}
+          {hours > 0 || days > 0 ? `${hours}h ` : ""}
+          {mins}m
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function OverviewPanel({
   activity,
 }: {
@@ -317,6 +389,8 @@ function OverviewPanel({
     format(new Date(iso), "yyyy-MM-dd HH:mm:ss")
   return (
     <div className="grid gap-4">
+      <ActivityCountdownCard activity={activity} />
+
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_timeline()}</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -331,10 +405,6 @@ function OverviewPanel({
           <div>
             <span className="text-muted-foreground">endAt: </span>
             {fmt(activity.endAt)}
-          </div>
-          <div>
-            <span className="text-muted-foreground">rewardEndAt: </span>
-            {fmt(activity.rewardEndAt)}
           </div>
           <div>
             <span className="text-muted-foreground">hiddenAt: </span>
@@ -352,12 +422,6 @@ function OverviewPanel({
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">{m.activity_overview_rewards()}</h2>
         <div className="space-y-3 text-sm">
-          <div>
-            <div className="text-muted-foreground">{m.activity_overview_milestones()}</div>
-            <pre className="mt-1 max-h-60 overflow-auto rounded-lg bg-muted p-3 text-xs">
-              {JSON.stringify(activity.milestoneTiers, null, 2)}
-            </pre>
-          </div>
           <div>
             <div className="text-muted-foreground">{m.activity_overview_global_rewards()}</div>
             <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-muted p-3 text-xs">
@@ -412,6 +476,7 @@ function NodesPanel({
     orderIndex: 0,
   })
   const [creatorOpen, setCreatorOpen] = useState(false)
+  const [editNode, setEditNode] = useState<ActivityNode | null>(null)
 
   return (
     <div className="flex flex-col gap-4">
@@ -420,6 +485,15 @@ function NodesPanel({
         activityId={activityId}
         open={creatorOpen}
         onOpenChange={setCreatorOpen}
+      />
+      <NodeEditDialog
+        key={editNode?.id ?? "none"}
+        activityKey={activityKey}
+        node={editNode}
+        open={!!editNode}
+        onOpenChange={(o) => {
+          if (!o) setEditNode(null)
+        }}
       />
 
       <div className="flex items-center justify-between gap-3">
@@ -480,12 +554,10 @@ function NodesPanel({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>{m.activity_nodes_field_ref_id()}</Label>
-            <Input
-              value={form.refId ?? ""}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, refId: e.target.value || null }))
-              }
-              placeholder="check_in_configs.id …"
+            <RefIdPicker
+              nodeType={form.nodeType}
+              value={form.refId ?? null}
+              onChange={(v) => setForm((s) => ({ ...s, refId: v }))}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -661,9 +733,26 @@ function NodesPanel({
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setEditNode(n)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent>
+                        {m.activity_nodes_edit_tooltip()}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={async () => {
                               const ok = await confirm({
-                                title: t("删除节点?", "Delete node?"),
+                                title: m.activity_nodes_delete_title(),
                                 description: m.activity_nodes_delete_confirm({ alias: n.alias }),
                                 confirmLabel: m.common_delete(),
                                 danger: true,
@@ -923,7 +1012,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                     size="sm"
                     onClick={async () => {
                       const ok = await confirm({
-                        title: t("删除排期?", "Delete schedule?"),
+                        title: m.activity_schedules_delete_title(),
                         description: m.activity_schedules_delete_confirm({ alias: s.alias }),
                         confirmLabel: m.common_delete(),
                         danger: true,
@@ -1014,33 +1103,6 @@ function AnalyticsPanel({ activityKey }: { activityKey: string }) {
         )}
       </div>
 
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">{m.activity_analytics_milestone_claims()}</h3>
-        {data.milestoneClaims.length === 0 ? (
-          <div className="text-muted-foreground">{m.activity_analytics_no_claims()}</div>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {data.milestoneClaims
-              .slice()
-              .sort((a, b) => b.count - a.count)
-              .map((mc) => (
-                <li
-                  key={mc.milestoneAlias}
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                >
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {mc.milestoneAlias}
-                  </code>
-                  <span className="ml-auto font-mono">
-                    {m.activity_analytics_claim_count({
-                      count: mc.count.toLocaleString(),
-                    })}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        )}
-      </div>
     </div>
   )
 }
@@ -1175,7 +1237,7 @@ function MembersPanel({
                           disabled={leaveMutation.isPending}
                           onClick={async () => {
                             const ok = await confirm({
-                              title: t("移除成员?", "Remove member?"),
+                              title: m.activity_members_remove_title(),
                               description: m.activity_members_leave_confirm({ endUserId: member.endUserId }),
                               confirmLabel: m.activity_members_leave(),
                               danger: true,

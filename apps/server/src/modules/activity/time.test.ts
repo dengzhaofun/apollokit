@@ -11,7 +11,6 @@ function cfg(overrides: Partial<{
   visibleAt: Date;
   startAt: Date;
   endAt: Date;
-  rewardEndAt: Date;
   hiddenAt: Date;
 }> = {}) {
   const base = new Date(Date.UTC(2026, 3, 17, 10));
@@ -20,15 +19,13 @@ function cfg(overrides: Partial<{
     visibleAt: base,
     startAt: new Date(base.getTime() + 3_600_000),
     endAt: new Date(base.getTime() + 2 * 3_600_000),
-    rewardEndAt: new Date(base.getTime() + 3 * 3_600_000),
     hiddenAt: new Date(base.getTime() + 4 * 3_600_000),
     ...overrides,
   } as {
-    status: "draft" | "scheduled" | "teasing" | "active" | "settling" | "ended" | "archived";
+    status: "draft" | "scheduled" | "teasing" | "active" | "ended" | "archived";
     visibleAt: Date;
     startAt: Date;
     endAt: Date;
-    rewardEndAt: Date;
     hiddenAt: Date;
   };
 }
@@ -57,14 +54,8 @@ describe("activity/time.deriveState", () => {
     expect(deriveState(c, new Date(c.startAt.getTime() + 1000))).toBe("active");
   });
 
-  test("between endAt and rewardEndAt → settling", () => {
-    expect(deriveState(c, new Date(c.endAt.getTime() + 1000))).toBe("settling");
-  });
-
-  test("between rewardEndAt and hiddenAt → ended", () => {
-    expect(deriveState(c, new Date(c.rewardEndAt.getTime() + 1000))).toBe(
-      "ended",
-    );
+  test("between endAt and hiddenAt → ended", () => {
+    expect(deriveState(c, new Date(c.endAt.getTime() + 1000))).toBe("ended");
   });
 
   test("at/after hiddenAt → archived", () => {
@@ -94,11 +85,11 @@ describe("activity/time.validateTimeOrder", () => {
     expect(validateTimeOrder(c)).toMatch(/startAt/);
   });
 
-  test("rejects rewardEndAt > hiddenAt", () => {
+  test("rejects endAt > hiddenAt", () => {
     const base = cfg();
     const c = {
       ...base,
-      rewardEndAt: new Date(base.hiddenAt.getTime() + 1),
+      endAt: new Date(base.hiddenAt.getTime() + 1),
     };
     expect(validateTimeOrder(c)).toMatch(/hiddenAt/);
   });
@@ -109,7 +100,6 @@ describe("activity/time.computeNextFireAt", () => {
     visibleAt: new Date(Date.UTC(2026, 3, 17, 10)),
     startAt: new Date(Date.UTC(2026, 3, 17, 11)),
     endAt: new Date(Date.UTC(2026, 3, 17, 12)),
-    rewardEndAt: new Date(Date.UTC(2026, 3, 17, 13)),
     hiddenAt: new Date(Date.UTC(2026, 3, 17, 14)),
   };
 

@@ -55,6 +55,20 @@ export function filterByType(
 
 // ─── Service interfaces (avoids circular imports) ───────────────
 
+/**
+ * Cross-cutting context for grants/deductions that happen inside an
+ * activity scope. Optional — non-activity contexts (shop purchase,
+ * direct admin grant, …) pass nothing and behavior is unchanged.
+ *
+ * When set, the underlying ledger / grant_logs row will record these
+ * columns so audit queries like "what did activity X pay out in
+ * permanent gold?" become a single WHERE clause.
+ */
+export type RewardContext = {
+  activityId?: string;
+  activityNodeId?: string;
+};
+
 export type RewardItemSvc = {
   grantItems: (params: {
     organizationId: string;
@@ -62,6 +76,7 @@ export type RewardItemSvc = {
     grants: Array<{ definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
+    context?: RewardContext;
   }) => Promise<unknown>;
   deductItems: (params: {
     organizationId: string;
@@ -69,6 +84,7 @@ export type RewardItemSvc = {
     deductions: Array<{ definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
+    context?: RewardContext;
   }) => Promise<unknown>;
 };
 
@@ -79,6 +95,7 @@ export type RewardEntitySvc = {
     blueprintId: string,
     source: string,
     sourceId?: string,
+    context?: RewardContext,
   ) => Promise<unknown>;
 };
 
@@ -89,6 +106,7 @@ export type RewardCurrencySvc = {
     grants: Array<{ currencyId: string; amount: number }>;
     source: string;
     sourceId?: string;
+    context?: RewardContext;
   }) => Promise<unknown>;
   deduct: (params: {
     organizationId: string;
@@ -96,6 +114,7 @@ export type RewardCurrencySvc = {
     deductions: Array<{ currencyId: string; amount: number }>;
     source: string;
     sourceId?: string;
+    context?: RewardContext;
   }) => Promise<unknown>;
 };
 
@@ -128,6 +147,7 @@ export async function grantRewards(
   entries: RewardEntry[],
   source: string,
   sourceId?: string,
+  context?: RewardContext,
 ): Promise<void> {
   // Batch items into one grantItems call
   const items = filterByType(entries, "item");
@@ -138,6 +158,7 @@ export async function grantRewards(
       grants: items.map((e) => ({ definitionId: e.id, quantity: e.count })),
       source,
       sourceId,
+      context,
     });
   }
 
@@ -150,6 +171,7 @@ export async function grantRewards(
       grants: currencies.map((e) => ({ currencyId: e.id, amount: e.count })),
       source,
       sourceId,
+      context,
     });
   }
 
@@ -164,6 +186,7 @@ export async function grantRewards(
           entry.id,
           source,
           sourceId,
+          context,
         );
       }
     }
@@ -184,6 +207,7 @@ export async function deductCosts(
   entries: RewardEntry[],
   source: string,
   sourceId?: string,
+  context?: RewardContext,
 ): Promise<void> {
   const items = filterByType(entries, "item");
   if (items.length > 0) {
@@ -196,6 +220,7 @@ export async function deductCosts(
       })),
       source,
       sourceId,
+      context,
     });
   }
 
@@ -210,6 +235,7 @@ export async function deductCosts(
       })),
       source,
       sourceId,
+      context,
     });
   }
 }

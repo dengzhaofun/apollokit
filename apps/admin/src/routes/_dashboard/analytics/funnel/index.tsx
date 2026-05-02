@@ -64,11 +64,11 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
-import {
-  useTenantEventFunnel,
-  useTenantEventNames,
-} from "#/lib/tinybird"
+import { EventNameDatalist } from "#/components/analytics/EventNamePicker"
+import { useTenantEventFunnel } from "#/lib/tinybird"
 import * as m from "#/paraglide/messages.js"
+
+const FUNNEL_LIST_ID = "funnel-step-options"
 
 export const Route = createFileRoute("/_dashboard/analytics/funnel/")({
   component: FunnelPage,
@@ -131,8 +131,6 @@ function FunnelInner() {
     steps: string[]
     windowSeconds: number
   } | null>(null)
-
-  const namesQuery = useTenantEventNames({ from: w.from, to: w.to })
 
   const funnelQuery = useTenantEventFunnel({
     steps: submitted?.steps ?? [""],
@@ -248,6 +246,12 @@ function FunnelInner() {
 
             {/* 步骤编辑 */}
             <div className="space-y-2">
+              {/* 所有 step 行共享一个 datalist —— 只渲染一次,避免重复请求 + 重复 DOM。 */}
+              <EventNameDatalist
+                listId={FUNNEL_LIST_ID}
+                from={w.from}
+                to={w.to}
+              />
               {steps.map((step, idx) => (
                 <StepRow
                   key={idx}
@@ -257,7 +261,7 @@ function FunnelInner() {
                   onChange={(v) => handleSetStep(idx, v)}
                   onMove={(dir) => handleMove(idx, dir)}
                   onRemove={() => handleRemove(idx)}
-                  options={namesQuery.data?.data ?? []}
+                  listId={FUNNEL_LIST_ID}
                 />
               ))}
               {steps.length < 5 ? (
@@ -440,7 +444,7 @@ function StepRow({
   onChange,
   onMove,
   onRemove,
-  options,
+  listId,
 }: {
   index: number
   total: number
@@ -448,9 +452,8 @@ function StepRow({
   onChange: (v: string) => void
   onMove: (dir: -1 | 1) => void
   onRemove: () => void
-  options: Array<{ event: string; c: number }>
+  listId: string
 }) {
-  const listId = `funnel-step-options`
   return (
     <div className="flex items-center gap-2">
       <span className="w-8 text-xs text-muted-foreground tabular-nums">
@@ -493,16 +496,6 @@ function StepRow({
       >
         <Trash2 className="size-3.5 text-destructive" />
       </Button>
-      {/* datalist 在多个 step 间共享一个 id,所有 input 都能用 */}
-      {index === 0 ? (
-        <datalist id={listId}>
-          {options.map((opt) => (
-            <option key={opt.event} value={opt.event}>
-              {`${opt.event}  ·  ${Number(opt.c).toLocaleString()}`}
-            </option>
-          ))}
-        </datalist>
-      ) : null}
     </div>
   )
 }

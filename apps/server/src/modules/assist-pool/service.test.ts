@@ -385,7 +385,6 @@ describe("assist-pool service", () => {
           visibleAt: new Date(anchor.getTime() - 2 * HOUR),
           startAt: new Date(anchor.getTime() - HOUR),
           endAt: new Date(anchor.getTime() + HOUR),
-          rewardEndAt: new Date(anchor.getTime() + 2 * HOUR),
           hiddenAt: new Date(anchor.getTime() + 24 * HOUR),
         })
         .returning({ id: activityConfigs.id });

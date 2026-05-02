@@ -14,6 +14,10 @@ interface BlueprintFormProps {
   onSubmit: (values: CreateBlueprintInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  /** Hide the form's own submit button when an external footer owns it. */
+  hideSubmitButton?: boolean
+  /** DOM id for the rendered `<form>` so external buttons can target it. */
+  id?: string
 }
 
 export function BlueprintForm({
@@ -22,6 +26,8 @@ export function BlueprintForm({
   onSubmit,
   isPending,
   submitLabel,
+  hideSubmitButton,
+  id,
 }: BlueprintFormProps) {
   const form = useForm({
     defaultValues: {
@@ -58,6 +64,7 @@ export function BlueprintForm({
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         form.handleSubmit()
@@ -277,6 +284,7 @@ export function BlueprintForm({
       </div>
 
       {/* Submit */}
+      {hideSubmitButton ? null : (
       <form.Subscribe selector={(s) => s.canSubmit}>
         {(canSubmit) => (
           <Button type="submit" disabled={!canSubmit || isPending}>
@@ -284,6 +292,7 @@ export function BlueprintForm({
           </Button>
         )}
       </form.Subscribe>
+      )}
     </form>
   )
 }

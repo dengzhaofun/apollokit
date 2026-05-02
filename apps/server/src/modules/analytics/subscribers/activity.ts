@@ -37,20 +37,6 @@ export function registerActivitySubscribers(
     });
   });
 
-  events.on("activity.milestone.claimed", (p) => {
-    write({
-      orgId: p.organizationId,
-      endUserId: p.endUserId,
-      event: "activity.milestone.claimed",
-      source: "activity",
-      amount: 1,
-      eventData: {
-        activityId: p.activityId,
-        milestoneAlias: p.milestoneAlias,
-      },
-    });
-  });
-
   events.on("activity.joined", (p) => {
     write({
       orgId: p.organizationId,

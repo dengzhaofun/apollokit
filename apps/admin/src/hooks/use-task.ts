@@ -172,19 +172,25 @@ export const TASK_DEFINITION_FILTER_DEFS: FilterDef[] = [
  * URL — it's NOT part of the URL contract; per-tab URL filters need
  * follow-up routing rework.
  */
+/**
+ * URL-driven task definitions list. Default scope: permanent /
+ * non-activity-bound only — activity-scoped tasks are managed inside
+ * the activity's detail page.
+ */
 export function useTaskDefinitions(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
   extraQuery: { categoryId?: string; activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { categoryId, activityId, includeActivity } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<TaskDefinition>({
     route,
     queryKey: [
       ...DEFINITIONS_KEY,
       {
         categoryId: categoryId ?? null,
-        activityId: activityId ?? null,
+        activityId: effectiveActivityId,
         includeActivity: !!includeActivity,
       },
     ],
@@ -199,7 +205,7 @@ export function useTaskDefinitions(
           ...filters,
           // extraQuery overrides whatever the URL set
           categoryId: categoryId ?? (filters.categoryId as string | undefined),
-          activityId,
+          activityId: effectiveActivityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),

@@ -13,6 +13,12 @@ import {
   SelectValue,
 } from "#/components/ui/select"
 import { Textarea } from "#/components/ui/textarea"
+import {
+  ActivityResourceBlueprintsEditor,
+  type CurrencyBlueprintRow,
+  type EntityBlueprintRow,
+  type ItemBlueprintRow,
+} from "#/components/activity/ActivityResourceBlueprintsEditor"
 import { useCreateActivityTemplate } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import type {
@@ -41,7 +47,6 @@ function CreateActivityTemplatePage() {
   // duration
   const [teaseHours, setTeaseHours] = useState(24)
   const [activeDays, setActiveDays] = useState(7)
-  const [rewardHours, setRewardHours] = useState(48)
   const [hiddenHours, setHiddenHours] = useState(168)
 
   // recurrence
@@ -61,17 +66,6 @@ function CreateActivityTemplatePage() {
         description: m.activity_template_create_default_description(),
         kind: "generic",
         timezone: "Asia/Shanghai",
-        currency: {
-          alias: "challenge_point",
-          name: m.activity_template_create_default_currency_name(),
-        },
-        milestoneTiers: [
-          {
-            alias: "m1",
-            points: 100,
-            rewards: [{ type: "item", id: "gold-uuid", count: 1000 }],
-          },
-        ],
         globalRewards: [{ type: "item", id: "trophy-uuid", count: 1 }],
         visibility: "public",
         cleanupRule: { mode: "purge" },
@@ -87,6 +81,18 @@ function CreateActivityTemplatePage() {
   const [schedulesBlueprintJson, setSchedulesBlueprintJson] = useState(
     JSON.stringify([], null, 2),
   )
+  // Per-cycle resource blueprints — currencies / item_definitions /
+  // entity_blueprints rows are spawned fresh per cycle by the server's
+  // instantiateTemplate path.
+  const [currenciesBlueprint, setCurrenciesBlueprint] = useState<
+    CurrencyBlueprintRow[]
+  >([])
+  const [itemDefinitionsBlueprint, setItemDefinitionsBlueprint] = useState<
+    ItemBlueprintRow[]
+  >([])
+  const [entityBlueprintsBlueprint, setEntityBlueprintsBlueprint] = useState<
+    EntityBlueprintRow[]
+  >([])
   const [autoPublish, setAutoPublish] = useState(true)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -132,13 +138,15 @@ function CreateActivityTemplatePage() {
       durationSpec: {
         teaseSeconds: teaseHours * 3600,
         activeSeconds: activeDays * 86400,
-        rewardSeconds: rewardHours * 3600,
         hiddenSeconds: hiddenHours * 3600,
       },
       recurrence,
       aliasPattern,
       nodesBlueprint,
       schedulesBlueprint,
+      currenciesBlueprint,
+      itemDefinitionsBlueprint,
+      entityBlueprintsBlueprint,
       autoPublish,
     }
 
@@ -220,15 +228,6 @@ function CreateActivityTemplatePage() {
                   min={1}
                   value={activeDays}
                   onChange={(e) => setActiveDays(Number(e.target.value) || 1)}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>{m.activity_template_create_field_reward_hours()}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={rewardHours}
-                  onChange={(e) => setRewardHours(Number(e.target.value) || 0)}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -347,14 +346,14 @@ function CreateActivityTemplatePage() {
               onChange={(e) => setNodesBlueprintJson(e.target.value)}
               rows={8}
               className="font-mono text-xs"
-              placeholder='[{"alias":"daily_checkin","nodeType":"check_in","refIdStrategy":"fixed","fixedRefId":"<uuid>","orderIndex":0}]'
+              placeholder='[{"alias":"daily_checkin","nodeType":"check_in","refIdStrategy":"reuse_shared","fixedRefId":"<uuid>","orderIndex":0}]'
             />
             <p className="text-xs text-muted-foreground">
               {m.activity_template_create_nodes_hint_intro()}<code className="mx-1 rounded bg-muted px-1">refIdStrategy</code>:
               {" "}
-              <code className="rounded bg-muted px-1">fixed</code>{m.activity_template_create_nodes_hint_fixed()}
-              <code className="rounded bg-muted px-1">omit</code>{m.activity_template_create_nodes_hint_omit()}
-              <code className="rounded bg-muted px-1">link_only</code>{m.activity_template_create_nodes_hint_link_only()}
+              <code className="rounded bg-muted px-1">reuse_shared</code>{m.activity_template_create_nodes_hint_fixed()}
+              <code className="rounded bg-muted px-1">virtual</code>{m.activity_template_create_nodes_hint_omit()}
+              <code className="rounded bg-muted px-1">manual_link</code>{m.activity_template_create_nodes_hint_link_only()}
             </p>
           </div>
 
@@ -371,6 +370,17 @@ function CreateActivityTemplatePage() {
               <code className="mx-1 rounded bg-muted px-1">fireAtOffsetSeconds</code>{m.activity_template_create_schedules_hint()}
             </p>
           </div>
+
+          <ActivityResourceBlueprintsEditor
+            currencies={currenciesBlueprint}
+            itemDefinitions={itemDefinitionsBlueprint}
+            entityBlueprints={entityBlueprintsBlueprint}
+            onChange={(next) => {
+              setCurrenciesBlueprint(next.currencies)
+              setItemDefinitionsBlueprint(next.itemDefinitions)
+              setEntityBlueprintsBlueprint(next.entityBlueprints)
+            }}
+          />
 
           <div className="flex items-center gap-3 rounded-md border p-3">
             <input

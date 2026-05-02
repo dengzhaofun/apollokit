@@ -184,7 +184,6 @@ describe("leaderboard service", () => {
       visibleAt: new Date(now - 2 * HOUR),
       startAt: new Date(now - HOUR),
       endAt: new Date(now + HOUR),
-      rewardEndAt: new Date(now + 2 * HOUR),
       hiddenAt: new Date(now + 24 * HOUR),
     };
     const [actA] = await db
@@ -331,7 +330,6 @@ describe("leaderboard service", () => {
         visibleAt: new Date(teaseAnchor.getTime() - 2 * HOUR),
         startAt: new Date(teaseAnchor.getTime() - HOUR),
         endAt: new Date(teaseAnchor.getTime() + HOUR),
-        rewardEndAt: new Date(teaseAnchor.getTime() + 2 * HOUR),
         hiddenAt: new Date(teaseAnchor.getTime() + 24 * HOUR),
       })
       .returning({ id: activityConfigs.id });

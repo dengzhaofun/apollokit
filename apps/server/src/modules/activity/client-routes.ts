@@ -21,7 +21,6 @@ import { requireClientUser } from "../../middleware/require-client-user";
 import { activityService } from "./index";
 import {
   ActivityConfigResponseSchema,
-  ClaimMilestoneClientBody,
   } from "./validators";
 
 const TAG = "Activity (Client)";
@@ -45,7 +44,7 @@ activityClientRouter.openapi(
     path: "/list",
     tags: [TAG],
     summary:
-      "List activities currently visible to the caller (teasing / active / settling / ended).",
+      "List activities currently visible to the caller (teasing / active / ended).",
     request: { headers: authHeaders },
     responses: {
       200: {
@@ -97,14 +96,10 @@ activityClientRouter.openapi(
           visibleAt: r.visibleAt.toISOString(),
           startAt: r.startAt.toISOString(),
           endAt: r.endAt.toISOString(),
-          rewardEndAt: r.rewardEndAt.toISOString(),
           hiddenAt: r.hiddenAt.toISOString(),
           timezone: r.timezone,
           status: r.status,
-          currency: r.currency,
-          milestoneTiers: r.milestoneTiers,
           globalRewards: r.globalRewards,
-          kindMetadata: r.kindMetadata as Record<string, unknown> | null,
           cleanupRule: r.cleanupRule,
           joinRequirement: r.joinRequirement as Record<string, unknown> | null,
           visibility: r.visibility as "public" | "hidden" | "targeted",
@@ -185,44 +180,3 @@ activityClientRouter.openapi(
   },
 );
 
-// ─── Claim milestone ──────────────────────────────────────────
-
-activityClientRouter.openapi(
-  createClientRoute({
-    method: "post",
-    path: "/{alias}/claim-milestone",
-    tags: [TAG],
-    summary: "Claim an activity milestone reward.",
-    request: {
-      headers: authHeaders,
-      params: AliasParam,
-      body: {
-        content: {
-          "application/json": { schema: ClaimMilestoneClientBody },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: "OK",
-        content: {
-          "application/json": { schema: envelopeOf(z.record(z.string(), z.unknown())) },
-        },
-      },
-      ...commonErrorResponses,
-    },
-  }),
-  async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
-    const endUserId = getEndUserId(c);
-    const { milestoneAlias } = c.req.valid("json");
-    const { alias } = c.req.valid("param");
-    const result = await activityService.claimMilestone({
-      organizationId: orgId,
-      activityIdOrAlias: alias,
-      endUserId,
-      milestoneAlias,
-    });
-    return c.json(ok(result), 200);
-  },
-);

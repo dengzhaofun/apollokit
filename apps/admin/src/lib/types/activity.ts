@@ -13,7 +13,6 @@ export type ActivityState =
   | "scheduled"
   | "teasing"
   | "active"
-  | "settling"
   | "ended"
   | "archived"
 
@@ -41,18 +40,6 @@ export type ActionType =
 
 import type { RewardEntry } from "./rewards"
 export type { RewardEntry }
-
-export interface ActivityCurrency {
-  alias: string
-  name: string
-  icon?: string | null
-}
-
-export interface ActivityMilestoneTier {
-  alias: string
-  points: number
-  rewards: RewardEntry[]
-}
 
 export interface ActivityCleanupRule {
   mode: "purge" | "convert" | "keep"
@@ -84,14 +71,10 @@ export interface Activity {
   visibleAt: string
   startAt: string
   endAt: string
-  rewardEndAt: string
   hiddenAt: string
   timezone: string
   status: ActivityState
-  currency: ActivityCurrency | null
-  milestoneTiers: ActivityMilestoneTier[]
   globalRewards: RewardEntry[]
-  kindMetadata: Record<string, unknown> | null
   cleanupRule: ActivityCleanupRule
   joinRequirement: Record<string, unknown> | null
   visibility: ActivityVisibility
@@ -147,13 +130,9 @@ export interface CreateActivityInput {
   visibleAt: string
   startAt: string
   endAt: string
-  rewardEndAt: string
   hiddenAt: string
   timezone?: string
-  currency?: ActivityCurrency | null
-  milestoneTiers?: ActivityMilestoneTier[]
   globalRewards?: RewardEntry[]
-  kindMetadata?: Record<string, unknown> | null
   cleanupRule?: ActivityCleanupRule
   joinRequirement?: Record<string, unknown> | null
   visibility?: ActivityVisibility
@@ -241,7 +220,6 @@ export interface ActivityViewForUser {
 export type ActivityTemplateDurationSpec = {
   teaseSeconds: number
   activeSeconds: number
-  rewardSeconds: number
   hiddenSeconds: number
 }
 
@@ -263,7 +241,7 @@ export type ActivityTemplateRecurrence =
 export interface ActivityNodeBlueprint {
   alias: string
   nodeType: NodeType
-  refIdStrategy: "fixed" | "omit" | "link_only"
+  refIdStrategy: "reuse_shared" | "virtual" | "manual_link"
   fixedRefId?: string | null
   orderIndex?: number
   unlockRule?: Record<string, unknown> | null
@@ -304,6 +282,41 @@ export interface ActivityTemplate {
   updatedAt: string
 }
 
+export interface ActivityCurrencyBlueprint {
+  aliasPattern: string
+  name: string
+  description?: string | null
+  icon?: string | null
+  metadata?: Record<string, unknown> | null
+}
+
+export interface ActivityItemDefinitionBlueprint {
+  aliasPattern: string
+  name: string
+  description?: string | null
+  icon?: string | null
+  categoryAlias?: string | null
+  stackable?: boolean
+  stackLimit?: number | null
+  holdLimit?: number | null
+  metadata?: Record<string, unknown> | null
+}
+
+export interface ActivityEntityBlueprintBlueprint {
+  aliasPattern: string
+  schemaAlias: string
+  name: string
+  description?: string | null
+  icon?: string | null
+  rarity?: string | null
+  tags?: Record<string, string>
+  assets?: Record<string, string>
+  baseStats?: Record<string, number>
+  statGrowth?: Record<string, number>
+  maxLevel?: number | null
+  metadata?: Record<string, unknown> | null
+}
+
 export interface CreateActivityTemplateInput {
   alias: string
   name: string
@@ -314,6 +327,9 @@ export interface CreateActivityTemplateInput {
   aliasPattern: string
   nodesBlueprint?: ActivityNodeBlueprint[]
   schedulesBlueprint?: ActivityScheduleBlueprint[]
+  currenciesBlueprint?: ActivityCurrencyBlueprint[]
+  itemDefinitionsBlueprint?: ActivityItemDefinitionBlueprint[]
+  entityBlueprintsBlueprint?: ActivityEntityBlueprintBlueprint[]
   autoPublish?: boolean
   enabled?: boolean
 }

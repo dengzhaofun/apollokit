@@ -22,7 +22,6 @@ import { ApiError } from "#/lib/api-client"
 import { confirm } from "#/components/patterns"
 import { PageHeaderActions } from "#/components/PageHeader"
 import * as m from "#/paraglide/messages.js"
-import { getLocale } from "#/paraglide/runtime.js"
 
 export const Route = createFileRoute("/_dashboard/activity/templates/")({
   component: ActivityTemplatesPage,
@@ -155,7 +154,7 @@ function ActivityTemplatesPage() {
                           size="sm"
                           onClick={async () => {
                             const ok = await confirm({
-                              title: getLocale() === "zh" ? "删除模板?" : "Delete template?",
+                              title: m.activity_template_delete_title(),
                               description: m.activity_template_delete_confirm({ alias: t.alias }),
                               confirmLabel: m.common_delete(),
                               danger: true,

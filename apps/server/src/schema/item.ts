@@ -208,6 +208,14 @@ export const itemGrantLogs = pgTable(
     delta: integer("delta").notNull(),
     source: text("source").notNull(),
     sourceId: text("source_id"),
+    /**
+     * Cross-cutting activity context for grants/deductions that happen
+     * inside an activity scope. Soft links — no FK — so the log row
+     * survives even after the activity is purged. NULL means the grant
+     * is not associated with any activity (e.g. shop purchase).
+     */
+    activityId: uuid("activity_id"),
+    activityNodeId: uuid("activity_node_id"),
     quantityBefore: integer("quantity_before"),
     quantityAfter: integer("quantity_after"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -218,5 +226,6 @@ export const itemGrantLogs = pgTable(
       table.endUserId,
     ),
     index("item_grant_logs_source_idx").on(table.source, table.sourceId),
+    index("item_grant_logs_activity_idx").on(table.activityId),
   ],
 );
