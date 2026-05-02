@@ -119,17 +119,14 @@ export function buildItemDefinitionFilterDefs(
         label: c.name,
       })),
     },
-    {
-      id: "activityId",
-      label: "Activity",
-      type: "select",
-      options: [
-        { value: "null", label: "Permanent only" },
-      ],
-    },
   ]
 }
 
+/**
+ * URL-driven item definitions list. Default scope: permanent /
+ * non-activity-bound only — activity-scoped items are managed inside
+ * the activity's detail page.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useItemDefinitions(route: any, filterDefs: FilterDef[]) {
   return useListSearch<ItemDefinition>({
@@ -138,7 +135,14 @@ export function useItemDefinitions(route: any, filterDefs: FilterDef[]) {
     filterDefs,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ItemDefinition>>(
-        `/api/item/definitions?${qs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/item/definitions?${qs({
+          cursor,
+          limit,
+          q,
+          adv,
+          activityId: "null",
+          ...filters,
+        })}`,
       ),
   })
 }

@@ -32,18 +32,25 @@ const POOLS_KEY = ["lottery-pools"] as const
 
 export const LOTTERY_POOL_FILTER_DEFS: FilterDef[] = []
 
-/** Paginated pools — URL-driven. */
+/**
+ * Paginated pools — URL-driven.
+ *
+ * Default scope: only permanent / non-activity-bound pools. Activity-
+ * scoped pools are managed inside the activity's detail page; pass an
+ * explicit `activityId` to scope to that activity.
+ */
 export function useLotteryPools(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   route: any,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
+  const effectiveActivityId = activityId ?? "null"
   return useListSearch<LotteryPool>({
     route,
     queryKey: [
       ...POOLS_KEY,
-      { activityId: activityId ?? null, includeActivity: !!includeActivity },
+      { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: LOTTERY_POOL_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
@@ -54,7 +61,7 @@ export function useLotteryPools(
           q,
           adv,
           ...filters,
-          activityId,
+          activityId: effectiveActivityId,
           includeActivity: includeActivity ? "true" : undefined,
         })}`,
       ),
