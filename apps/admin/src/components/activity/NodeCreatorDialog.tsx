@@ -278,11 +278,34 @@ export function NodeCreatorDialog({
           >
             {m.common_cancel()}
           </Button>
+          {nodeType === "custom" ? (
+            <Button
+              type="button"
+              disabled={createNode.isPending}
+              onClick={() => mountNode(null)}
+            >
+              {m.activity_node_submit_custom()}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              form={NODE_CREATOR_FORM_ID}
+              disabled={createNode.isPending}
+            >
+              {m.activity_node_create_submit()}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
+
+/**
+ * Single form id every section's body form should set on its `<form>`,
+ * so the dialog footer's submit button can target it via `form={...}`.
+ */
+const NODE_CREATOR_FORM_ID = "node-creator-form"
 
 interface SectionProps {
   nodeType: NodeType
@@ -362,6 +385,8 @@ function CheckInSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_check_in()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -386,6 +411,8 @@ function LotterySection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_lottery()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -410,6 +437,8 @@ function BannerSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_banner()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -423,6 +452,8 @@ function TaskSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_task_group()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
       onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
@@ -457,6 +488,8 @@ function ShopSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_exchange()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -481,6 +514,8 @@ function LeaderboardSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_leaderboard()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -527,6 +562,8 @@ function EntitySection(props: SectionImplProps) {
           }}
           isPending={create.isPending || props.mountPending}
           submitLabel={m.activity_node_submit_entity_blueprint()}
+          hideSubmitButton
+          id={NODE_CREATOR_FORM_ID}
           onSubmit={async (values) => {            try {
               const bp = await create.mutateAsync({
                 ...values,
@@ -550,6 +587,8 @@ function ItemSection(props: SectionImplProps) {
       defaultValues={{ activityId: props.activityId, alias: props.nodeAlias }}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_item_definition()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
       onSubmit={async (values) => {        try {
           const def = await create.mutateAsync({
             ...values,
@@ -584,6 +623,8 @@ function CurrencySection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_currency_definition()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }
@@ -608,6 +649,8 @@ function AssistPoolSection(props: SectionImplProps) {
       form={form}
       isPending={create.isPending || props.mountPending}
       submitLabel={m.activity_node_submit_assist_pool()}
+      hideSubmitButton
+      id={NODE_CREATOR_FORM_ID}
     />
   )
 }

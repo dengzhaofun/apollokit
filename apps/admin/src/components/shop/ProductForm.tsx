@@ -30,14 +30,25 @@ interface ProductFormProps {
   form: ProductFormApi
   isPending?: boolean
   submitLabel?: string
+  /** Hide the form's own submit button when an external footer owns it. */
+  hideSubmitButton?: boolean
+  /** DOM id for the rendered `<form>` so external buttons can target it. */
+  id?: string
 }
 
-export function ProductForm({ form, isPending, submitLabel }: ProductFormProps) {
+export function ProductForm({
+  form,
+  isPending,
+  submitLabel,
+  hideSubmitButton,
+  id,
+}: ProductFormProps) {
   const { data: categories } = useShopCategories()
   const { data: tags } = useAllShopTags()
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -481,9 +492,11 @@ export function ProductForm({ form, isPending, submitLabel }: ProductFormProps) 
         }
       </form.Subscribe>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? m.common_saving() : (submitLabel ?? m.common_create())}
-      </Button>
+      {hideSubmitButton ? null : (
+        <Button type="submit" disabled={isPending}>
+          {isPending ? m.common_saving() : (submitLabel ?? m.common_create())}
+        </Button>
+      )}
     </form>
   )
 }

@@ -26,15 +26,22 @@ interface Props {
   form: LeaderboardFormApi
   isPending?: boolean
   submitLabel?: string
+  /** Hide the form's own submit button when an external footer owns it. */
+  hideSubmitButton?: boolean
+  /** DOM id for the rendered `<form>` so external buttons can target it. */
+  id?: string
 }
 
 export function LeaderboardConfigForm({
   form,
   isPending,
   submitLabel,
+  hideSubmitButton,
+  id,
 }: Props) {
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         form.handleSubmit()
@@ -243,11 +250,15 @@ export function LeaderboardConfigForm({
         </form.Field>
       </div>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? m.leaderboard_submitting() : (submitLabel ?? m.common_create())}
-        </Button>
-      </div>
+      {hideSubmitButton ? null : (
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isPending}>
+            {isPending
+              ? m.leaderboard_submitting()
+              : (submitLabel ?? m.common_create())}
+          </Button>
+        </div>
+      )}
     </form>
   )
 }

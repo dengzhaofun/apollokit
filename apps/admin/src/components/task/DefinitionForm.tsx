@@ -36,6 +36,15 @@ interface DefinitionFormProps {
   onSubmit: (values: CreateDefinitionInput) => void | Promise<void>
   isPending?: boolean
   submitLabel?: string
+  /**
+   * Hide the form's own submit button. Used when the form is embedded
+   * in a dialog whose footer owns the submit action — the parent
+   * triggers `<form>` submission via `form="<id>"` on its button.
+   */
+  hideSubmitButton?: boolean
+  /** DOM id for the rendered `<form>` element so external submit
+   * buttons can target it via `form="<id>"`. */
+  id?: string
 }
 
 export function DefinitionForm({
@@ -44,6 +53,8 @@ export function DefinitionForm({
   onSubmit,
   isPending,
   submitLabel = m.common_create(),
+  hideSubmitButton,
+  id,
 }: DefinitionFormProps) {
   const form = useForm({
     defaultValues: {
@@ -124,6 +135,7 @@ export function DefinitionForm({
 
   return (
     <form
+      id={id}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -530,9 +542,11 @@ export function DefinitionForm({
         }}
       </form.Field>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? m.common_saving() : submitLabel}
-      </Button>
+      {hideSubmitButton ? null : (
+        <Button type="submit" disabled={isPending}>
+          {isPending ? m.common_saving() : submitLabel}
+        </Button>
+      )}
     </form>
   )
 }

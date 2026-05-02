@@ -1691,6 +1691,7 @@
   "activity_nodes_select_custom": "custom — Custom",
   "activity_nodes_field_ref_id": "refId (optional)",
   "activity_node_alias_unified_hint": "Alias is read from the body form below — fill it once. The same value is used as both the resource alias and the activity node alias.",
+  "activity_node_create_submit": "Create & Mount",
   "activity_nodes_field_ref_id_manual_placeholder": "Enter UUID manually",
   "activity_nodes_field_ref_id_loading": "Loading…",
   "activity_nodes_field_ref_id_pick": "Pick existing resource",
