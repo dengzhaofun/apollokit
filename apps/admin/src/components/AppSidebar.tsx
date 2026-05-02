@@ -31,6 +31,7 @@ import {
   Bell,
   Mail,
   Map as MapIcon,
+  MapPin,
   MessagesSquare,
   Search,
   Package,
@@ -114,6 +115,7 @@ type NavRoute =
   | "/analytics/funnel"
   | "/audit-logs"
   | "/check-in"
+  | "/offline-check-in"
   | "/item"
   | "/item/definitions"
   | "/item/categories"
@@ -278,6 +280,7 @@ function getNavGroups(): NavGroup[] {
       icon: Megaphone,
       items: [
         { title: m.nav_checkin, to: "/check-in", icon: CalendarCheck },
+        { title: m.nav_offline_checkin, to: "/offline-check-in", icon: MapPin },
         { title: m.nav_banner, to: "/banner", icon: GalleryHorizontal },
         { title: m.nav_announcement, to: "/announcement", icon: Megaphone },
         { title: m.nav_activity, to: "/activity", icon: PartyPopper },

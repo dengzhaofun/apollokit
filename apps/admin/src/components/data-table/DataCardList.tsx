@@ -34,7 +34,7 @@ import {
 import { Skeleton } from "#/components/ui/skeleton"
 import * as m from "#/paraglide/messages.js"
 
-interface Props<T> {
+interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: Table<any>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,13 +45,13 @@ interface Props<T> {
   skeletonCount?: number
 }
 
-export function DataCardList<T>({
+export function DataCardList({
   table,
   rows,
   isLoading,
   empty,
   skeletonCount = 4,
-}: Props<T>) {
+}: Props) {
   if (isLoading) {
     return (
       <div className="divide-y">
