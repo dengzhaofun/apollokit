@@ -194,7 +194,15 @@ export function NodeCreatorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
+      {/*
+        Layout — DialogContent is a flex column capped at 85vh:
+          DialogHeader (shrink-0) + scrollable middle (flex-1 overflow-y-auto)
+          + DialogFooter (shrink-0).
+        This keeps header + footer always visible no matter how tall the
+        body form is — operators don't have to scroll to the bottom of a
+        long form just to find the "Create & Mount" button.
+      */}
+      <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{m.activity_node_create_title()}</DialogTitle>
           <DialogDescription>
@@ -202,72 +210,74 @@ export function NodeCreatorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div
-          className={
-            formOwnsAlias
-              ? "grid grid-cols-2 gap-3 py-2"
-              : "grid grid-cols-3 gap-3 py-2"
-          }
-        >
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_type()}</Label>
-            <Select
-              value={nodeType}
-              onValueChange={(v) => setNodeType(v as NodeType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {groups.map((g) => (
-                  <SelectGroup key={g.label}>
-                    <SelectLabel>{g.label}</SelectLabel>
-                    {g.types.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {formOwnsAlias ? null : (
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div
+            className={
+              formOwnsAlias
+                ? "grid grid-cols-2 gap-3 py-2"
+                : "grid grid-cols-3 gap-3 py-2"
+            }
+          >
             <div className="flex flex-col gap-1.5">
-              <Label>{m.activity_node_field_alias()}</Label>
-              <Input
-                value={nodeAlias}
-                onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
-                placeholder="custom_node"
-              />
-              <p className="text-xs text-muted-foreground">
-                {m.activity_node_field_alias_help()}
-              </p>
+              <Label>{m.activity_node_field_type()}</Label>
+              <Select
+                value={nodeType}
+                onValueChange={(v) => setNodeType(v as NodeType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups.map((g) => (
+                    <SelectGroup key={g.label}>
+                      <SelectLabel>{g.label}</SelectLabel>
+                      {g.types.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-          <div className="flex flex-col gap-1.5">
-            <Label>{m.activity_node_field_order()}</Label>
-            <Input
-              type="number"
-              value={orderIndex}
-              onChange={(e) => setOrderIndex(Number(e.target.value) || 0)}
+            {formOwnsAlias ? null : (
+              <div className="flex flex-col gap-1.5">
+                <Label>{m.activity_node_field_alias()}</Label>
+                <Input
+                  value={nodeAlias}
+                  onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
+                  placeholder="custom_node"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {m.activity_node_field_alias_help()}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label>{m.activity_node_field_order()}</Label>
+              <Input
+                type="number"
+                value={orderIndex}
+                onChange={(e) => setOrderIndex(Number(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          {formOwnsAlias ? (
+            <p className="-mt-1 text-xs text-muted-foreground">
+              {m.activity_node_alias_unified_hint()}
+            </p>
+          ) : null}
+
+          <div className="mt-4 rounded-lg border p-4">
+            <NodeFormSection
+              nodeType={nodeType}
+              activityId={activityId}
+              nodeAlias={nodeAlias}
+              mountNode={mountNode}
+              mountPending={createNode.isPending}
             />
           </div>
-        </div>
-        {formOwnsAlias ? (
-          <p className="-mt-1 text-xs text-muted-foreground">
-            {m.activity_node_alias_unified_hint()}
-          </p>
-        ) : null}
-
-        <div className="rounded-lg border p-4">
-          <NodeFormSection
-            nodeType={nodeType}
-            activityId={activityId}
-            nodeAlias={nodeAlias}
-            mountNode={mountNode}
-            mountPending={createNode.isPending}
-          />
         </div>
 
         <DialogFooter>
