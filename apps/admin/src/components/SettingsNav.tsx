@@ -3,6 +3,7 @@ import {
   Building2,
   FolderKanban,
   KeyRound,
+  ShieldCheck,
   UserCircle,
   Webhook,
   type LucideIcon,
@@ -17,6 +18,7 @@ type SettingsNavItem = {
     | "/settings/account"
     | "/settings/organization"
     | "/settings/project"
+    | "/settings/project/roles"
     | "/settings/api-keys"
     | "/settings/webhooks"
   icon: LucideIcon
@@ -70,6 +72,11 @@ function getSections(): SettingsNavSection[] {
           title: m.nav_project_settings,
           to: "/settings/project",
           icon: FolderKanban,
+        },
+        {
+          title: () => "Roles",
+          to: "/settings/project/roles",
+          icon: ShieldCheck,
         },
         {
           title: m.nav_api_keys,
