@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import {
   ArrowLeft,
@@ -181,7 +182,7 @@ function LotteryPoolDetailPage() {
                 try {
                   await deletePool.mutateAsync(pool.id)
                   toast.success(t("已删除", "Pool deleted"))
-                  navigate({ to: "/lottery" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/lottery" })
                 } catch (err) {
                   toast.error(
                     err instanceof ApiError

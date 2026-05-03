@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -64,7 +65,7 @@ function RankConfigDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(data.id)
                       toast.success(m.rank_config_deleted())
-                      navigate({ to: "/rank" })
+                      navigate({ to: "/o/$orgSlug/p/$projectSlug/rank" })
                     } catch (err) {
                       if (err instanceof ApiError)
                         toast.error(err.body.error)

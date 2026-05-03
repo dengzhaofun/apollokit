@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
@@ -108,10 +109,10 @@ function CdkeyListPage() {
   const modal = search.modal
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   const list = useCdkeyBatches(Route)
@@ -174,7 +175,7 @@ function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
         toast.success(m.cdkey_batch_created())
         onClose()
         void navigate({
-          to: "/cdkey/$batchId",
+          to: "/o/$orgSlug/p/$projectSlug/cdkey/$batchId",
           params: { batchId: created.id },
         })
       } catch (err) {

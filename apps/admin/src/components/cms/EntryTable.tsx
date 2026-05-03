@@ -2,8 +2,7 @@
  * Entry list — paginated table over /api/v1/cms/types/{typeAlias}/entries.
  * Status / group / tag filters are passed in by the parent route page.
  */
-
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { useMemo } from "react"
 

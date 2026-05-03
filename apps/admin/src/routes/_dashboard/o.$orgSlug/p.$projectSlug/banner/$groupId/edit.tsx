@@ -5,8 +5,9 @@ import { openEditModal } from "#/lib/modal-search"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/banner/$groupId/edit")({
   beforeLoad: ({ params }) => {
     throw redirect({
-      to: "/banner",
+      to: "/o/$orgSlug/p/$projectSlug/banner",
       search: openEditModal(params.groupId),
+      params,
     })
   },
 })

@@ -1,4 +1,5 @@
-import { Link, useLocation } from "@tanstack/react-router"
+import { useLocation } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { Fragment, type ReactNode } from "react"
 
 import {

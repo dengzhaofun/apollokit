@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -96,7 +97,7 @@ function LevelConfigDetailPage() {
               try {
                 await deleteConfigMutation.mutateAsync(config.id)
                 toast.success(m.level_config_deleted())
-                navigate({ to: "/level" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/level" })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.level_failed_delete())

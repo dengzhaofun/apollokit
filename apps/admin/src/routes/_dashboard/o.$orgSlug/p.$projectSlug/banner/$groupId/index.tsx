@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -65,11 +66,11 @@ function BannerGroupDetailPage() {
   const editingBannerId = bannerModal === "edit" ? search.id : undefined
 
   function closeBannerModal() {
-    void navigateLocal({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigateLocal({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreateBanner() {
     void navigateLocal({
-      search: (prev) => ({ ...prev, ...openCreateChildModal("banner") }),
+      search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateChildModal("banner") }),
     })
   }
 
@@ -104,7 +105,7 @@ function BannerGroupDetailPage() {
     try {
       await deleteGroupMutation.mutateAsync(groupId)
       toast.success(m.banner_group_deleted())
-      navigate({ to: "/banner" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/banner" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.banner_failed_delete_group())

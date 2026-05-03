@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { EntryForm } from "#/components/cms/EntryForm"
@@ -40,7 +41,7 @@ function CmsEntryCreatePage() {
                 )
                 toast.success(m.cms_entry_created())
                 navigate({
-                  to: "/cms/$typeAlias/$entryAlias",
+                  to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias/$entryAlias",
                   params: { typeAlias, entryAlias: row.alias },
                 })
               } catch (err) {

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { useForm } from "@tanstack/react-form"
 import { Folder, Plus, ShoppingCartIcon, Tag } from "lucide-react"
 import { useState } from "react"
@@ -62,10 +63,10 @@ function ShopProductsPage() {
   const navigate = useNavigate({ from: Route.fullPath })
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   const [productType, setProductType] = useState<string>(ALL)
@@ -195,7 +196,7 @@ function CreateShopProductMiniDialog({ onClose }: { onClose: () => void }) {
         toast.success("Product created")
         onClose()
         void navigate({
-          to: "/shop/$productId",
+          to: "/o/$orgSlug/p/$projectSlug/shop/$productId",
           params: { productId: row.id },
         })
       } catch (err) {

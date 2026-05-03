@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -184,7 +185,7 @@ function CurrencyDetailPage() {
                 try {
                   await deleteMutation.mutateAsync(currency.id)
                   toast.success(m.currency_deleted())
-                  navigate({ to: "/currency" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/currency" })
                 } catch (err) {
                   if (err instanceof ApiError) {
                     toast.error(err.body.error)

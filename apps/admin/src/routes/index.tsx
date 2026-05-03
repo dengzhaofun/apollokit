@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { useEffect, useState } from "react"
 
 import Landing from "#/components/landing/Landing"

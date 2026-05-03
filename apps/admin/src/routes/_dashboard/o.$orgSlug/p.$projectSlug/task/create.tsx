@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
@@ -27,7 +28,7 @@ function TaskCreatePage() {
               try {
                 const row = await createMutation.mutateAsync(values)
                 toast.success("Task created")
-                navigate({ to: "/task/$taskId", params: { taskId: row.id } })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/task/$taskId", params: { taskId: row.id } })
               } catch (err) {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)

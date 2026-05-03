@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -85,7 +86,7 @@ function StorageBoxConfigDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.storage_box_toast_delete_success())
-                    navigate({ to: "/storage-box" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

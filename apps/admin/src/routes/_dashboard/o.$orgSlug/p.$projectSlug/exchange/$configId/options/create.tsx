@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
@@ -32,7 +33,7 @@ function CreateOptionPage() {
                 })
                 toast.success(m.exchange_option_created())
                 navigate({
-                  to: "/exchange/$configId",
+                  to: "/o/$orgSlug/p/$projectSlug/exchange/$configId",
                   params: { configId },
                 })
               } catch (err) {

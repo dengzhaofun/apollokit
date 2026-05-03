@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -61,10 +62,10 @@ function SchemaDetailPage() {
   const deleteMutation = useDeleteEntitySchema()
 
   function closeModal() {
-    void navigateLocal({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigateLocal({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigateLocal({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigateLocal({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   if (isPending) {
@@ -124,7 +125,7 @@ function SchemaDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(schema.id)
                       toast.success(m.entity_schema_deleted())
-                      navigate({ to: "/entity/schemas" })
+                      navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/schemas" })
                     } catch (err) {
                       if (err instanceof ApiError) toast.error(err.body.error)
                     }
@@ -304,7 +305,7 @@ function CreateBlueprintMiniDialog({
         toast.success(m.entity_blueprint_created())
         onClose()
         void navigate({
-          to: "/entity/schemas/$schemaId/blueprints/$blueprintId",
+          to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId",
           params: { schemaId, blueprintId: row.id },
         })
       } catch (err) {

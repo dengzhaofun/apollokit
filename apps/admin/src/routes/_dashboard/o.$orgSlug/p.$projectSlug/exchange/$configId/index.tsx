@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -83,7 +84,7 @@ function ExchangeConfigDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.exchange_config_deleted())
-                    navigate({ to: "/exchange" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/exchange" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -46,7 +47,7 @@ function useColumns(): ColumnDef<MatchSquadConfig, unknown>[] {
         cell: (info) => (
           <Link
             to="/match-squad"
-            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
+            search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -90,10 +91,10 @@ function TeamPage() {
   const editingId = modal === "edit" ? search.id : undefined
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   const list = useMatchSquadConfigs(Route)

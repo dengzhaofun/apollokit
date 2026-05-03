@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Layers } from "lucide-react"
 import { toast } from "sonner"
 
@@ -53,7 +54,7 @@ function ShopProductEditPage() {
                 try {
                   await deleteMutation.mutateAsync(product.id)
                   toast.success(m.shop_product_deleted())
-                  navigate({ to: "/shop" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop" })
                 } catch (err) {
                   toast.error(
                     err instanceof ApiError

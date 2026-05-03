@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -90,7 +91,7 @@ function LeaderboardDetailPage() {
               try {
                 await deleteMutation.mutateAsync(config.id)
                 toast.success("已删除")
-                navigate({ to: "/leaderboard" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error("删除失败")

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -100,7 +101,7 @@ function BlueprintDetailPage() {
                       await deleteMutation.mutateAsync(bp.id)
                       toast.success(m.entity_blueprint_deleted())
                       navigate({
-                        to: "/entity/schemas/$schemaId",
+                        to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
                         params: { schemaId },
                       })
                     } catch (err) {

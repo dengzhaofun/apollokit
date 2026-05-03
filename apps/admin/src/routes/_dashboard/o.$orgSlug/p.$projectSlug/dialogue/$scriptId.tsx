@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -41,7 +42,7 @@ function DialogueDetailPage() {
     try {
       await deleteMutation.mutateAsync(scriptId)
       toast.success(m.dialogue_script_deleted())
-      navigate({ to: "/dialogue" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/dialogue" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.dialogue_failed_delete_script())

@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { StorageBoxConfigForm } from "#/components/storage-box/StorageBoxConfigForm"
@@ -25,7 +26,7 @@ function StorageBoxCreatePage() {
               try {
                 await createMutation.mutateAsync(values)
                 toast.success(m.storage_box_toast_create_success())
-                navigate({ to: "/storage-box" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" })
               } catch (err) {
                 toast.error(
                   err instanceof ApiError

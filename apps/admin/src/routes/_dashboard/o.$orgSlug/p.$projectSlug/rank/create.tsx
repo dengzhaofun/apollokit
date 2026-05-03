@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { TierConfigForm } from "#/components/rank/TierConfigForm"
@@ -26,7 +27,7 @@ function RankCreatePage() {
                 const row = await mutation.mutateAsync(values)
                 toast.success(m.rank_config_created())
                 navigate({
-                  to: "/rank/$configId",
+                  to: "/o/$orgSlug/p/$projectSlug/rank/$configId",
                   params: { configId: row.id },
                 })
               } catch (err) {

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Search } from "lucide-react"
 import { useState } from "react"
 
@@ -42,7 +43,7 @@ function ActivityUsersIndexPage() {
               const id = endUserId.trim()
               if (!id) return
               navigate({
-                to: "/activity/$alias/users/$endUserId",
+                to: "/o/$orgSlug/p/$projectSlug/activity/$alias/users/$endUserId",
                 params: { alias, endUserId: id },
               })
             }}

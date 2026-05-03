@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -87,7 +88,7 @@ function OptionDetailPage() {
                     await deleteMutation.mutateAsync(option.id)
                     toast.success(m.exchange_option_deleted())
                     navigate({
-                      to: "/exchange/$configId",
+                      to: "/o/$orgSlug/p/$projectSlug/exchange/$configId",
                       params: { configId },
                     })
                   } catch (err) {

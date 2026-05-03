@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -83,7 +84,7 @@ function LevelDetailPage() {
               try {
                 await deleteMutation.mutateAsync({ id: levelId, configId })
                 toast.success(m.level_level_deleted())
-                navigate({ to: "/level/$configId", params: { configId } })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/level/$configId", params: { configId } })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.level_failed_delete())

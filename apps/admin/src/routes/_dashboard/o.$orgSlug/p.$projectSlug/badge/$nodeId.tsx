@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -44,7 +45,7 @@ function BadgeDetailPage() {
     try {
       await deleteMutation.mutateAsync(nodeId)
       toast.success(m.badge_deleted())
-      navigate({ to: "/badge" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/badge" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.badge_failed_delete())

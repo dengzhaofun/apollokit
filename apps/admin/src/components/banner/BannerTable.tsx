@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import {
   ArrowDown,
   ArrowDownToLine,
@@ -308,7 +308,7 @@ function SortableBannerRow({
               <Link
                 to="/banner/$groupId"
                 params={{ groupId }}
-                search={(prev) => ({
+                search={(prev: Record<string, unknown>) => ({
                   ...prev,
                   ...openEditChildModal("banner", row.id),
                 })}

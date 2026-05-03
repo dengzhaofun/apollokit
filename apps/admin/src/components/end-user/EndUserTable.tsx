@@ -13,7 +13,7 @@
  * spec (`END_USER_FILTER_DEFS`) — no per-page state, no manual prop
  * forwarding.
  */
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Ban, CheckCircle2, Crown, LinkIcon } from "lucide-react"
 

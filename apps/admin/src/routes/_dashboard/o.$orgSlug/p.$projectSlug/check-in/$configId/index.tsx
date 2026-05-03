@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Play } from "lucide-react"
 import { toast } from "sonner"
-import { Link } from "@tanstack/react-router"
-
+import { Link } from "#/components/router-helpers"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -111,7 +111,7 @@ function CheckInDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.checkin_config_deleted())
-                    navigate({ to: "/check-in" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/check-in" })
                   } catch (err) {
                     if (err instanceof ApiError) {
                       toast.error(err.body.error)

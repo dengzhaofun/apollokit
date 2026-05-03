@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 
 import { Badge } from "#/components/ui/badge"

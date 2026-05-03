@@ -1,5 +1,6 @@
 import { OrgProjectSwitcher } from "#/components/auth/OrgProjectSwitcher"
-import { Link, useLocation, useNavigate } from "@tanstack/react-router"
+import { useLocation } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import {

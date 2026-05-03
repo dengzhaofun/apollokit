@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { CalendarCheckIcon, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -40,10 +41,10 @@ function CheckInListPage() {
   const modal = search.modal
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
@@ -107,7 +108,7 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
         toast.success("Check-in created")
         onClose()
         void navigate({
-          to: "/check-in/$configId",
+          to: "/o/$orgSlug/p/$projectSlug/check-in/$configId",
           params: { configId: row.id },
           hash: "rewards",
         })

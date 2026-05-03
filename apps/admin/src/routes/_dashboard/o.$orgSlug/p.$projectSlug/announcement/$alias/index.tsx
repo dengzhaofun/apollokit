@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ChevronLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -78,7 +79,7 @@ function AnnouncementDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(alias)
                       toast.success(m.announcement_deleted())
-                      navigate({ to: "/announcement" })
+                      navigate({ to: "/o/$orgSlug/p/$projectSlug/announcement" })
                     } catch (err) {
                       if (err instanceof ApiError) toast.error(err.body.error)
                       else toast.error(m.announcement_failed_delete())

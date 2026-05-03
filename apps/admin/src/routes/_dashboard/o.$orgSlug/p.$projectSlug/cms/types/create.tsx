@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { TypeForm } from "#/components/cms/TypeForm"
@@ -25,7 +26,7 @@ function CmsTypeCreatePage() {
               const row = await mutation.mutateAsync(values)
               toast.success(m.cms_type_created())
               navigate({
-                to: "/cms/$typeAlias",
+                to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
                 params: { typeAlias: row.alias },
               })
             } catch (err) {

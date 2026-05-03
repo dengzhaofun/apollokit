@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper } from "@tanstack/react-table"
 import { format } from "date-fns"
 

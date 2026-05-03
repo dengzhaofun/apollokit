@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -92,7 +93,7 @@ function TeamDetailPage() {
     try {
       await deleteMutation.mutateAsync(config.id)
       toast.success(m.team_config_deleted())
-      navigate({ to: "/match-squad" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/match-squad" })
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)

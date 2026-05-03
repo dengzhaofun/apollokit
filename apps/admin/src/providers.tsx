@@ -5,7 +5,8 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query"
-import { Link, useRouter } from "@tanstack/react-router"
+import { useRouter } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import type { ReactNode } from "react"
 import { toast, Toaster } from "sonner"
 

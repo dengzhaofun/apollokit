@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -66,7 +67,7 @@ function BadgeCreatePage() {
                     const row = await fromTemplateMutation.mutateAsync(values)
                     toast.success(m.badge_created())
                     navigate({
-                      to: "/badge/$nodeId",
+                      to: "/o/$orgSlug/p/$projectSlug/badge/$nodeId",
                       params: { nodeId: row.id },
                     })
                   } catch (err) {
@@ -86,7 +87,7 @@ function BadgeCreatePage() {
                     const row = await createMutation.mutateAsync(values)
                     toast.success(m.badge_created())
                     navigate({
-                      to: "/badge/$nodeId",
+                      to: "/o/$orgSlug/p/$projectSlug/badge/$nodeId",
                       params: { nodeId: row.id },
                     })
                   } catch (err) {

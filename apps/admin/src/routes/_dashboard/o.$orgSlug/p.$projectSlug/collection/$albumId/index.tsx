@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil, Plus, RefreshCw } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -121,7 +122,7 @@ function CollectionAlbumDetailPage() {
               try {
                 await deleteAlbumMutation.mutateAsync(album.id)
                 toast.success(m.collection_album_deleted())
-                navigate({ to: "/collection" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/collection" })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.collection_failed_delete())

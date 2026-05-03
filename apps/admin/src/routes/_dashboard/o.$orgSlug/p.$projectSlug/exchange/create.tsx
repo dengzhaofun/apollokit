@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
@@ -25,7 +26,7 @@ function ExchangeCreatePage() {
               try {
                 await createMutation.mutateAsync(values)
                 toast.success(m.exchange_config_created())
-                navigate({ to: "/exchange" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/exchange" })
               } catch (err) {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)

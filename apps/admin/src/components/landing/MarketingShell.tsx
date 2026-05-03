@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ArrowRight, Github } from "lucide-react"
 
 import { ConsentSettingsButton } from "#/components/consent/ConsentLayer"

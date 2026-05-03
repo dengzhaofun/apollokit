@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { LayersIcon, Plus } from "lucide-react"
 
 import { AlbumTable } from "#/components/collection/AlbumTable"

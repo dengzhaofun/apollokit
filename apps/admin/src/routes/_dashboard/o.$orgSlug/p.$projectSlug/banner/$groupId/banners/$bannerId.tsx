@@ -7,8 +7,8 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ params }) => {
     throw redirect({
-      to: "/banner/$groupId",
-      params: { groupId: params.groupId },
+      to: "/o/$orgSlug/p/$projectSlug/banner/$groupId",
+      params: { ...params, groupId: params.groupId },
       search: openEditChildModal("banner", params.bannerId),
     })
   },

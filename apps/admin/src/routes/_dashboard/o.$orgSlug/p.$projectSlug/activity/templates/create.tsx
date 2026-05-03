@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -153,7 +154,7 @@ function CreateActivityTemplatePage() {
     try {
       await mutation.mutateAsync(input)
       toast.success(m.activity_template_create_success())
-      navigate({ to: "/activity/templates" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/activity/templates" })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.activity_template_create_failed())

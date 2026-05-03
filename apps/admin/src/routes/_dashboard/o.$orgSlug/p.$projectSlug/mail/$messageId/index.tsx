@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { ArrowLeft, Ban, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -160,7 +161,7 @@ function MailDetailPage() {
                         try {
                           await deleteMutation.mutateAsync(detail.id)
                           toast.success(m.mail_deleted())
-                          navigate({ to: "/mail" })
+                          navigate({ to: "/o/$orgSlug/p/$projectSlug/mail" })
                         } catch (err) {
                           if (err instanceof ApiError) {
                             toast.error(err.body.error)

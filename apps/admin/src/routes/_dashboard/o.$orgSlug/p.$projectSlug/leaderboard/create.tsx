@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
@@ -18,7 +19,7 @@ function LeaderboardCreatePage() {
       try {
         await mutation.mutateAsync(values)
         toast.success("排行榜创建成功")
-        navigate({ to: "/leaderboard" })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" })
       } catch (err) {
         if (err instanceof ApiError) toast.error(err.body.error)
         else toast.error("创建失败")

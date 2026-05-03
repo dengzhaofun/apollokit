@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -91,7 +92,7 @@ function DefinitionDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(definition.id)
                     toast.success(m.item_definition_deleted())
-                    navigate({ to: "/item/definitions" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/definitions" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

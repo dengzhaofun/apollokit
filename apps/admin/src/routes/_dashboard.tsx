@@ -1,4 +1,5 @@
-import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
+import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { useEffect, useState } from "react"
 
 import { AppSidebar } from "../components/AppSidebar"

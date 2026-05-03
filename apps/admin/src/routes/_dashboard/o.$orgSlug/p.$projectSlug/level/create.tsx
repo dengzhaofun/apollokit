@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -44,7 +45,7 @@ function LevelCreatePage() {
       })
       toast.success(m.level_config_created())
       navigate({
-        to: "/level/$configId",
+        to: "/o/$orgSlug/p/$projectSlug/level/$configId",
         params: { configId: row.id },
       })
     } catch (err) {

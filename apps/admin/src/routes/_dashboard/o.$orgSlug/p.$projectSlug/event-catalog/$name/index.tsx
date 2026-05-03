@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 import { useEffect, useState } from "react"

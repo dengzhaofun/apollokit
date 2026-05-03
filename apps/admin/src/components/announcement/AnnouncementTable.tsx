@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 
@@ -65,7 +65,7 @@ const columns: ColumnDef<Announcement>[] = [
     cell: ({ row }) => (
       <Link
         to="/announcement"
-        search={(prev) => ({ ...prev, ...openEditModal(row.original.alias) })}
+        search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(row.original.alias) })}
         className="block"
       >
         <code className="rounded bg-muted px-1.5 py-0.5 text-xs">

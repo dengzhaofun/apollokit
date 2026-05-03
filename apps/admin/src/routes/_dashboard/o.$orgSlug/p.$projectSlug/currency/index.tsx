@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
@@ -42,10 +43,10 @@ function CurrencyListPage() {
   const editingId = modal === "edit" ? search.id : undefined
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   // Selector dropdown for the ledger filter — needs all currencies at once.

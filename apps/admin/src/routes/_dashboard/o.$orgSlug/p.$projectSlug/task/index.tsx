@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ListTodoIcon, Plus, Tags } from "lucide-react"
 import { useState } from "react"
 

@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -37,7 +37,7 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
           render={
             <Link
               to="/currency"
-              search={(prev) => ({ ...prev, ...openEditModal(def.id) })}
+              search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(def.id) })}
             >
               <Pencil className="size-4" />
               {m.common_edit()}
@@ -69,7 +69,7 @@ function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
         cell: (info) => (
           <Link
             to="/currency"
-            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
+            search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

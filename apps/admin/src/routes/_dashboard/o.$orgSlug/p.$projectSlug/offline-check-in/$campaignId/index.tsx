@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react"
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft, Pencil, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -202,7 +199,7 @@ function OfflineCheckInDetailPage() {
               size="sm"
               onClick={() =>
                 void navigate({
-                  search: (prev) => ({ ...prev, delete: true }),
+                  search: (prev: Record<string, unknown>) => ({ ...prev, delete: true }),
                 })
               }
             >
@@ -257,7 +254,7 @@ function OfflineCheckInDetailPage() {
         onOpenChange={(o) => {
           if (!o)
             void navigate({
-              search: (prev) => ({ ...prev, delete: undefined }),
+              search: (prev: Record<string, unknown>) => ({ ...prev, delete: undefined }),
             })
         }}
       >
@@ -271,7 +268,7 @@ function OfflineCheckInDetailPage() {
               variant="outline"
               onClick={() =>
                 void navigate({
-                  search: (prev) => ({ ...prev, delete: undefined }),
+                  search: (prev: Record<string, unknown>) => ({ ...prev, delete: undefined }),
                 })
               }
             >
@@ -285,7 +282,7 @@ function OfflineCheckInDetailPage() {
                   .mutateAsync(campaign.id)
                   .then(() => {
                     toast.success(m.offline_checkin_campaign_deleted())
-                    void navigate({ to: "/offline-check-in" })
+                    void navigate({ to: "/o/$orgSlug/p/$projectSlug/offline-check-in" })
                   })
                   .catch((err) => {
                     toast.error(

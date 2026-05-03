@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { HeadContent, Link, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
+import { Link } from '#/components/router-helpers'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { RootProvider } from 'fumadocs-ui/provider/tanstack'

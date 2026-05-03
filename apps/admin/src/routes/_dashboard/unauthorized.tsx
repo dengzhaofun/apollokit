@@ -16,7 +16,8 @@
  * "operator hit a billing URL" type cases — explicit feedback + an
  * obvious way back.
  */
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router"
+import { createFileRoute, useSearch } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ShieldOffIcon } from "lucide-react"
 import { z } from "zod"
 

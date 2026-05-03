@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
@@ -70,7 +71,7 @@ function TaskDetailPage() {
               try {
                 await deleteMutation.mutateAsync(taskId)
                 toast.success("Task deleted")
-                navigate({ to: "/task" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/task" })
               } catch (err) {
                 if (err instanceof ApiError) {
                   toast.error(err.body.error)

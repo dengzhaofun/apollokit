@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 
 import { SeasonForm } from "#/components/rank/SeasonForm"
@@ -48,7 +49,7 @@ function CreateSeasonPanel({ tierConfigs }: { tierConfigs: RankTierConfig[] }) {
         const row = await mutation.mutateAsync(values)
         toast.success(m.rank_season_created())
         navigate({
-          to: "/rank/seasons/$seasonId",
+          to: "/o/$orgSlug/p/$projectSlug/rank/seasons/$seasonId",
           params: { seasonId: row.id },
         })
       } catch (err) {

@@ -6,7 +6,8 @@
  * All dangerous actions prompt for confirmation via AlertDialog, matching
  * the rank module's pattern.
  */
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import {
   ArrowLeft,
   Ban,
@@ -410,7 +411,7 @@ function EndUserDetailPage() {
                           try {
                             await deleteMutation.mutateAsync(data.id)
                             toast.success(m.end_user_detail_toast_deleted())
-                            navigate({ to: "/end-user" })
+                            navigate({ to: "/o/$orgSlug/p/$projectSlug/end-user" })
                           } catch (err) {
                             toast.error(errorMessage(err))
                           }

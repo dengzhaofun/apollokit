@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { Medal as MedalIcon, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 

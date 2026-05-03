@@ -9,11 +9,8 @@ import {
   Trash2,
 } from "lucide-react"
 import { useState } from "react"
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -93,7 +90,7 @@ function ExperimentDetailPage() {
 
   function setTab(next: "config" | "analytics") {
     void navigate({
-      search: (prev) => ({
+      search: (prev: Record<string, unknown>) => ({
         ...prev,
         tab: next === "config" ? undefined : next,
       }),
@@ -427,7 +424,7 @@ function ActionsBar({
     if (!ok) return
     try {
       await del.mutateAsync(experiment.id)
-      void navigate({ to: "/experiment" })
+      void navigate({ to: "/o/$orgSlug/p/$projectSlug/experiment" })
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.body.message : m.experiment_failed_generic(),

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { Plus } from "lucide-react"
 
 import { PageHeaderActions } from "#/components/PageHeader"
@@ -56,7 +57,7 @@ function TriggersListPage() {
   return (
     <main className="flex-1 space-y-4 p-6">
       <PageHeaderActions>
-        <Button onClick={() => navigate({ to: "/triggers/new" })}>
+        <Button onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/new" })}>
           <Plus className="mr-1 h-4 w-4" />
           {m.triggers_new_rule()}
         </Button>

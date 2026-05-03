@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { GalleryHorizontalIcon, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -44,10 +45,10 @@ function BannerListPage() {
   const editingId = modal === "edit" ? search.id : undefined
 
   function closeModal() {
-    void navigate({ search: (prev) => ({ ...prev, ...closedModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
   }
   function openCreate() {
-    void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...openCreateModal }) })
   }
 
   const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
@@ -107,7 +108,7 @@ function CreateBannerGroupDialog({ onClose }: DialogShellProps) {
         toast.success(m.banner_group_created())
         onClose()
         void navigate({
-          to: "/banner/$groupId",
+          to: "/o/$orgSlug/p/$projectSlug/banner/$groupId",
           params: { groupId: row.id },
         })
       } catch (err) {

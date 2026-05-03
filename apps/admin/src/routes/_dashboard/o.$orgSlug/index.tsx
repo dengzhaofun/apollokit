@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ArrowRightIcon, FolderKanbanIcon, PlusIcon, UsersIcon } from "lucide-react"
 
 import { Button } from "#/components/ui/button"

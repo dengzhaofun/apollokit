@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { format } from "date-fns"
 import {
   ArrowLeft,
@@ -227,7 +228,7 @@ function ActivityDetailPage() {
                 try {
                   await deleteMutation.mutateAsync(activity.id)
                   toast.success(m.activity_detail_delete_success())
-                  navigate({ to: "/activity" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/activity" })
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
                   else toast.error(m.activity_detail_delete_failed())

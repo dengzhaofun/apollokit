@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -40,7 +41,7 @@ function SchemaCreatePage() {
                 const row = await createMutation.mutateAsync(values)
                 toast.success(m.entity_schema_created())
                 navigate({
-                  to: "/entity/schemas/$schemaId",
+                  to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
                   params: { schemaId: row.id },
                 })
               } catch (err) {

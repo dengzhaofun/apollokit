@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -41,7 +42,7 @@ function DialogueCreatePage() {
                 const row = await mutation.mutateAsync(values)
                 toast.success(m.dialogue_script_created())
                 navigate({
-                  to: "/dialogue/$scriptId",
+                  to: "/o/$orgSlug/p/$projectSlug/dialogue/$scriptId",
                   params: { scriptId: row.id },
                 })
               } catch (err) {

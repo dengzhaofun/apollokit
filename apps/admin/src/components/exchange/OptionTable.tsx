@@ -1,5 +1,5 @@
 import { useMoveExchangeOption } from "#/hooks/use-move"
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useMemo } from "react"

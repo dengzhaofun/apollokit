@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -66,7 +67,7 @@ function CmsTypeEditPage() {
                       try {
                         await del.mutateAsync(alias)
                         toast.success(m.cms_type_deleted())
-                        navigate({ to: "/cms" })
+                        navigate({ to: "/o/$orgSlug/p/$projectSlug/cms" })
                       } catch (err) {
                         if (err instanceof ApiError)
                           toast.error(err.body.error)

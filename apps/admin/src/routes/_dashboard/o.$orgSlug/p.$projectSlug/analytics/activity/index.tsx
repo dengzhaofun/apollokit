@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import {
   Activity,
   ChevronDown,
@@ -210,7 +211,7 @@ function ActivityInner() {
   }
   const handleOpenInExplore = (event: string, path: string) => {
     void navigate({
-      to: "/analytics/explore",
+      to: "/o/$orgSlug/p/$projectSlug/analytics/explore",
       search: { event, groupBy: "json", jsonPathGroup: path } as never,
     })
   }

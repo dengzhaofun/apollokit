@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Trash2, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -108,7 +109,7 @@ function GiftPackageDetailPage() {
     try {
       await deleteMutation.mutateAsync(pkg.id)
       toast.success(m.gift_package_deleted())
-      navigate({ to: "/friend-gift" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)

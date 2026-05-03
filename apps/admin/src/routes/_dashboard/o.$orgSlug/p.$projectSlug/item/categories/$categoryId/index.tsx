@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate, Link } from "#/components/router-helpers"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -82,7 +83,7 @@ function CategoryDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(category.id)
                     toast.success(m.item_category_deleted())
-                    navigate({ to: "/item/categories" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/categories" })
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

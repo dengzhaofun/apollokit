@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -66,7 +67,7 @@ function GiftPackageCreatePage() {
         isActive,
       })
       toast.success(m.gift_package_created())
-      navigate({ to: "/friend-gift" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)
@@ -183,7 +184,7 @@ function GiftPackageCreatePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate({ to: "/friend-gift" })}
+                onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })}
               >
                 {m.common_cancel()}
               </Button>

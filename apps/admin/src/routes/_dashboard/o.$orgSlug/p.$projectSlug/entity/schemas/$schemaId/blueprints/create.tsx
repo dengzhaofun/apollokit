@@ -7,8 +7,8 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ params }) => {
     throw redirect({
-      to: "/entity/schemas/$schemaId",
-      params: { schemaId: params.schemaId },
+      to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
+      params: { ...params, schemaId: params.schemaId },
       search: openCreateModal,
     })
   },

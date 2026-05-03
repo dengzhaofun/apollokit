@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { ArrowLeft } from "lucide-react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -40,7 +41,7 @@ function FormationConfigCreatePage() {
           allowDuplicateBlueprints: value.allowDuplicateBlueprints,
         })
         toast.success(m.entity_formation_created())
-        navigate({ to: "/entity/formations" })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/formations" })
       } catch (err) {
         if (err instanceof ApiError) {
           toast.error(err.body.error)

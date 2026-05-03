@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { Send, Trash2, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -125,7 +126,7 @@ function CmsEntryEditPage() {
                         await del.mutateAsync(entryAlias)
                         toast.success(m.cms_entry_deleted())
                         navigate({
-                          to: "/cms/$typeAlias",
+                          to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
                           params: { typeAlias },
                         })
                       } catch (err) {
