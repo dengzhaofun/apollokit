@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 
 import Landing from "#/components/landing/Landing"
 import { authClient } from "#/lib/auth-client"
+import { useTenantParams } from "#/hooks/use-tenant-params"
 import { seo } from "#/lib/seo"
 
 export const Route = createFileRoute("/")({
@@ -47,13 +48,16 @@ function SignedInBouncer() {
 function SignedInBouncerClient() {
   const navigate = useNavigate()
   const { data: session, isPending } = authClient.useSession()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   useEffect(() => {
     if (isPending) return
-    if (session) {
-      navigate({ to: "/dashboard", replace: true })
-    }
-  }, [isPending, session, navigate])
+    if (!session) return
+    // 等 tenant slug 解析完成才跳转,否则 wrapper 会把 /dashboard
+    // 拼成 /o//p//dashboard 导致 notFound。
+    if (!orgSlug || !projectSlug) return
+    navigate({ to: "/dashboard", replace: true })
+  }, [isPending, session, orgSlug, projectSlug, navigate])
 
   return null
 }

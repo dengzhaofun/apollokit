@@ -82,6 +82,20 @@ function isMovedFlatPath(p: unknown): p is string {
   return MOVED_TOP_SEGMENTS.has(seg)
 }
 
+/**
+ * 当 useTenantParams 还没拿到 slug 时(查询期间)直接透传 to,不做改写。
+ * 否则会拼出 `/o//p//dashboard` 这种空 slug 的脏 URL,触发 notFound。
+ *
+ * 真实场景:登录后 SignedInBouncer 即刻 navigate({ to: "/dashboard" }),
+ * 但 useTenantParams 内部 useQuery 第一次还在 fetching。让 to 原样
+ * 传到 TSRLink/TSRNavigate,后者会沿 fallback 到老 URL 也 not found —
+ * 这是迁移期里"用户极少撞上"的边缘:登录的 SignedInBouncer 已经在
+ * routes/index.tsx 里改成了 navigate 到带 slug 的嵌套 URL。
+ */
+function tenantReady(t: { orgSlug: string; projectSlug: string }) {
+  return t.orgSlug !== "" && t.projectSlug !== ""
+}
+
 interface NavigateOpts {
   to: string
   params?: Record<string, string> | ((prev: Record<string, unknown>) => Record<string, string>)
@@ -127,7 +141,7 @@ export const Link = forwardRef<HTMLAnchorElement, AnyProps & { children?: ReactN
   function Link(props, ref) {
     const tenant = useTenantParams()
     const { to, params, ...rest } = props as AnyProps
-    if (isMovedFlatPath(to)) {
+    if (isMovedFlatPath(to) && tenantReady(tenant)) {
       const built = buildNested(to as string, params, tenant)
       return (
         <TSRLink
@@ -165,7 +179,7 @@ export function useNavigate(_args?: AnyProps) {
   const tenant = useTenantParams()
   return useCallback(
     (opts: AnyProps) => {
-      if (isMovedFlatPath(opts.to)) {
+      if (isMovedFlatPath(opts.to) && tenantReady(tenant)) {
         const built = buildNested(
           opts.to as string,
           opts.params as NavigateOpts["params"],
@@ -192,7 +206,7 @@ export function Navigate(props: AnyProps): ReactElement {
   const { to, params, ...rest } = props as AnyProps
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const TSRNavigateAny = TSRNavigate as any
-  if (isMovedFlatPath(to)) {
+  if (isMovedFlatPath(to) && tenantReady(tenant)) {
     const built = buildNested(to as string, params, tenant)
     return (
       <TSRNavigateAny
