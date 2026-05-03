@@ -48,11 +48,18 @@ export type ListAuditLogsFilter = {
   adv?: string;
 } & Record<string, unknown>;
 
-/** Map raw row → public view（去掉 version；ts 序列化为 ISO）。 */
+/** Map raw row → public view（去掉 version；ts 序列化为 ISO）。
+ *
+ * `audit_logs.organization_id` 列为 nullable —— Better Auth `databaseHooks`
+ * 写入的 auth 事件(sign-up 时尚未加入 org / sign-out 时 active org 已清掉
+ * 等)允许 null。本模块的 list/get 服务始终按 `eq(orgId)` 过滤,**永远不会
+ * 返回 null org 的行**,所以这里非空断言安全。需要查 null-org 行的未来
+ * "系统级 auth 事件视图"会另开 endpoint,届时再放宽 View 类型。
+ */
 export function rowToView(row: AuditLogRow): AuditLogView {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    organizationId: row.organizationId!,
     ts: row.ts.toISOString(),
     actorType: row.actorType,
     actorId: row.actorId,
