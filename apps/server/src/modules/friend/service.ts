@@ -56,14 +56,14 @@ type FriendDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "friend.request_sent": {
-      organizationId: string;
+      tenantId: string;
       // `endUserId` = acting session user (the sender).
       endUserId: string;
       requestId: string;
       toUserId: string;
     };
     "friend.request_accepted": {
-      organizationId: string;
+      tenantId: string;
       // `endUserId` = acting session user (the accepter).
       endUserId: string;
       requestId: string;
@@ -83,7 +83,7 @@ export function createFriendService(d: FriendDeps) {
     const rows = await db
       .select()
       .from(friendSettings)
-      .where(eq(friendSettings.organizationId, orgId))
+      .where(eq(friendSettings.tenantId, orgId))
       .limit(1);
     return rows[0] ?? { maxFriends: 50, maxBlocked: 50, maxPendingRequests: 20 };
   }
@@ -94,7 +94,7 @@ export function createFriendService(d: FriendDeps) {
       .from(friendRelationships)
       .where(
         and(
-          eq(friendRelationships.organizationId, orgId),
+          eq(friendRelationships.tenantId, orgId),
           or(
             eq(friendRelationships.userA, endUserId),
             eq(friendRelationships.userB, endUserId),
@@ -110,7 +110,7 @@ export function createFriendService(d: FriendDeps) {
       .from(friendRequests)
       .where(
         and(
-          eq(friendRequests.organizationId, orgId),
+          eq(friendRequests.tenantId, orgId),
           eq(friendRequests.fromUserId, endUserId),
           eq(friendRequests.status, "pending"),
         ),
@@ -124,7 +124,7 @@ export function createFriendService(d: FriendDeps) {
       .from(friendBlocks)
       .where(
         and(
-          eq(friendBlocks.organizationId, orgId),
+          eq(friendBlocks.tenantId, orgId),
           eq(friendBlocks.blockerUserId, endUserId),
         ),
       );
@@ -137,7 +137,7 @@ export function createFriendService(d: FriendDeps) {
       .from(friendBlocks)
       .where(
         and(
-          eq(friendBlocks.organizationId, orgId),
+          eq(friendBlocks.tenantId, orgId),
           or(
             and(
               eq(friendBlocks.blockerUserId, userX),
@@ -161,7 +161,7 @@ export function createFriendService(d: FriendDeps) {
       .from(friendRelationships)
       .where(
         and(
-          eq(friendRelationships.organizationId, orgId),
+          eq(friendRelationships.tenantId, orgId),
           eq(friendRelationships.userA, a),
           eq(friendRelationships.userB, b),
         ),
@@ -175,7 +175,7 @@ export function createFriendService(d: FriendDeps) {
       const rows = await db
         .select()
         .from(friendSettings)
-        .where(eq(friendSettings.organizationId, orgId))
+        .where(eq(friendSettings.tenantId, orgId))
         .limit(1);
       return rows[0] ?? null;
     },
@@ -184,14 +184,14 @@ export function createFriendService(d: FriendDeps) {
       const [row] = await db
         .insert(friendSettings)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           maxFriends: input.maxFriends ?? 50,
           maxBlocked: input.maxBlocked ?? 50,
           maxPendingRequests: input.maxPendingRequests ?? 20,
           metadata: input.metadata ?? null,
         })
         .onConflictDoUpdate({
-          target: [friendSettings.organizationId],
+          target: [friendSettings.tenantId],
           set: {
             maxFriends: input.maxFriends ?? 50,
             maxBlocked: input.maxBlocked ?? 50,
@@ -236,7 +236,7 @@ export function createFriendService(d: FriendDeps) {
         const [row] = await db
           .insert(friendRequests)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             fromUserId,
             toUserId,
             message: message ?? null,
@@ -247,7 +247,7 @@ export function createFriendService(d: FriendDeps) {
 
         if (events) {
           await events.emit("friend.request_sent", {
-            organizationId: orgId,
+            tenantId: orgId,
             endUserId: fromUserId,
             requestId: row.id,
             toUserId,
@@ -271,7 +271,7 @@ export function createFriendService(d: FriendDeps) {
         .where(
           and(
             eq(friendRequests.id, requestId),
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
           ),
         )
         .limit(1);
@@ -315,7 +315,7 @@ export function createFriendService(d: FriendDeps) {
         await db
           .insert(friendRelationships)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             userA: a,
             userB: b,
           })
@@ -326,7 +326,7 @@ export function createFriendService(d: FriendDeps) {
 
       if (events) {
         await events.emit("friend.request_accepted", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           requestId,
           fromUserId: req.fromUserId,
@@ -343,7 +343,7 @@ export function createFriendService(d: FriendDeps) {
         .where(
           and(
             eq(friendRequests.id, requestId),
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
           ),
         )
         .limit(1);
@@ -379,7 +379,7 @@ export function createFriendService(d: FriendDeps) {
         .where(
           and(
             eq(friendRequests.id, requestId),
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
           ),
         )
         .limit(1);
@@ -415,7 +415,7 @@ export function createFriendService(d: FriendDeps) {
         .from(friendRequests)
         .where(
           and(
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
             eq(friendRequests.toUserId, endUserId),
             eq(friendRequests.status, "pending"),
           ),
@@ -429,7 +429,7 @@ export function createFriendService(d: FriendDeps) {
         .from(friendRequests)
         .where(
           and(
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
             eq(friendRequests.fromUserId, endUserId),
             eq(friendRequests.status, "pending"),
           ),
@@ -449,7 +449,7 @@ export function createFriendService(d: FriendDeps) {
         .from(friendRelationships)
         .where(
           and(
-            eq(friendRelationships.organizationId, orgId),
+            eq(friendRelationships.tenantId, orgId),
             or(
               eq(friendRelationships.userA, endUserId),
               eq(friendRelationships.userB, endUserId),
@@ -467,7 +467,7 @@ export function createFriendService(d: FriendDeps) {
         .where(
           and(
             eq(friendRelationships.id, relationshipId),
-            eq(friendRelationships.organizationId, orgId),
+            eq(friendRelationships.tenantId, orgId),
           ),
         )
         .returning({ id: friendRelationships.id });
@@ -478,13 +478,13 @@ export function createFriendService(d: FriendDeps) {
       // Find all friends of userX, then intersect with friends of userY.
       // Uses a single SQL query with a subquery approach.
       const result = await db.execute(sql`
-        SELECT r1.id, r1.organization_id, r1.user_a, r1.user_b, r1.metadata, r1.created_at
+        SELECT r1.id, r1.tenant_id, r1.user_a, r1.user_b, r1.metadata, r1.created_at
         FROM friend_relationships r1
-        WHERE r1.organization_id = ${orgId}
+        WHERE r1.tenant_id = ${orgId}
           AND (r1.user_a = ${userX} OR r1.user_b = ${userX})
           AND EXISTS (
             SELECT 1 FROM friend_relationships r2
-            WHERE r2.organization_id = ${orgId}
+            WHERE r2.tenant_id = ${orgId}
               AND (r2.user_a = ${userY} OR r2.user_b = ${userY})
               AND (
                 CASE WHEN r1.user_a = ${userX} THEN r1.user_b ELSE r1.user_a END
@@ -495,7 +495,7 @@ export function createFriendService(d: FriendDeps) {
       `);
       return result.rows as Array<{
         id: string;
-        organization_id: string;
+        tenant_id: string;
         user_a: string;
         user_b: string;
         metadata: unknown;
@@ -517,7 +517,7 @@ export function createFriendService(d: FriendDeps) {
         await db
           .insert(friendBlocks)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             blockerUserId,
             blockedUserId,
           })
@@ -532,7 +532,7 @@ export function createFriendService(d: FriendDeps) {
         .delete(friendRelationships)
         .where(
           and(
-            eq(friendRelationships.organizationId, orgId),
+            eq(friendRelationships.tenantId, orgId),
             eq(friendRelationships.userA, a),
             eq(friendRelationships.userB, b),
           ),
@@ -548,7 +548,7 @@ export function createFriendService(d: FriendDeps) {
         })
         .where(
           and(
-            eq(friendRequests.organizationId, orgId),
+            eq(friendRequests.tenantId, orgId),
             eq(friendRequests.status, "pending"),
             or(
               and(
@@ -569,7 +569,7 @@ export function createFriendService(d: FriendDeps) {
         .delete(friendBlocks)
         .where(
           and(
-            eq(friendBlocks.organizationId, orgId),
+            eq(friendBlocks.tenantId, orgId),
             eq(friendBlocks.blockerUserId, blockerUserId),
             eq(friendBlocks.blockedUserId, blockedUserId),
           ),
@@ -582,7 +582,7 @@ export function createFriendService(d: FriendDeps) {
         .from(friendBlocks)
         .where(
           and(
-            eq(friendBlocks.organizationId, orgId),
+            eq(friendBlocks.tenantId, orgId),
             eq(friendBlocks.blockerUserId, endUserId),
           ),
         )
@@ -616,7 +616,7 @@ export function createFriendService(d: FriendDeps) {
         .from(friendBlocks)
         .where(
           and(
-            eq(friendBlocks.organizationId, orgId),
+            eq(friendBlocks.tenantId, orgId),
             eq(friendBlocks.blockerUserId, blockerUserId),
             eq(friendBlocks.blockedUserId, blockedUserId),
           ),
@@ -635,7 +635,7 @@ export function createFriendService(d: FriendDeps) {
       const items = await db
         .select()
         .from(friendRelationships)
-        .where(eq(friendRelationships.organizationId, orgId))
+        .where(eq(friendRelationships.tenantId, orgId))
         .orderBy(friendRelationships.createdAt)
         .limit(limit)
         .offset(offset);
@@ -643,7 +643,7 @@ export function createFriendService(d: FriendDeps) {
       const [totalResult] = await db
         .select({ value: count() })
         .from(friendRelationships)
-        .where(eq(friendRelationships.organizationId, orgId));
+        .where(eq(friendRelationships.tenantId, orgId));
 
       return { items, total: totalResult?.value ?? 0 };
     },
@@ -654,7 +654,7 @@ export function createFriendService(d: FriendDeps) {
         .where(
           and(
             eq(friendRelationships.id, id),
-            eq(friendRelationships.organizationId, orgId),
+            eq(friendRelationships.tenantId, orgId),
           ),
         )
         .returning({ id: friendRelationships.id });

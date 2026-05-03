@@ -13,7 +13,7 @@ import {
 
 import { fractionalSortKey } from "./_fractional-sort";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 import { lotteryPools } from "./lottery";
 
 /**
@@ -29,9 +29,9 @@ export const itemCategories = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     icon: text("icon"),
@@ -45,9 +45,9 @@ export const itemCategories = pgTable(
       .notNull(),
   },
   (table) => [
-    index("item_categories_org_idx").on(table.organizationId),
-    uniqueIndex("item_categories_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("item_categories_tenant_idx").on(table.tenantId),
+    uniqueIndex("item_categories_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -74,9 +74,9 @@ export const itemDefinitions = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     categoryId: uuid("category_id").references(() => itemCategories.id, {
       onDelete: "set null",
     }),
@@ -109,10 +109,10 @@ export const itemDefinitions = pgTable(
       .notNull(),
   },
   (table) => [
-    index("item_definitions_org_idx").on(table.organizationId),
+    index("item_definitions_tenant_idx").on(table.tenantId),
     index("item_definitions_category_idx").on(table.categoryId),
-    uniqueIndex("item_definitions_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("item_definitions_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("item_definitions_activity_idx").on(table.activityId),
   ],
@@ -149,7 +149,7 @@ export const itemInventories = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     definitionId: uuid("definition_id")
       .notNull()
@@ -166,19 +166,19 @@ export const itemInventories = pgTable(
   },
   (table) => [
     index("item_inventories_user_def_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.endUserId,
       table.definitionId,
     ),
-    index("item_inventories_org_user_idx").on(
-      table.organizationId,
+    index("item_inventories_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Partial unique index: for unlimited-stack items (currencies), there
     // is exactly one row per (org, user, def). is_singleton = true marks
     // the currency row, enabling ON CONFLICT DO UPDATE upserts.
     uniqueIndex("item_inventories_singleton_uidx")
-      .on(table.organizationId, table.endUserId, table.definitionId)
+      .on(table.tenantId, table.endUserId, table.definitionId)
       .where(sql`${table.isSingleton} = true`),
   ],
 );
@@ -202,7 +202,7 @@ export const itemGrantLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     definitionId: uuid("definition_id").notNull(),
     delta: integer("delta").notNull(),
@@ -221,8 +221,8 @@ export const itemGrantLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("item_grant_logs_org_user_idx").on(
-      table.organizationId,
+    index("item_grant_logs_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("item_grant_logs_source_idx").on(table.source, table.sourceId),

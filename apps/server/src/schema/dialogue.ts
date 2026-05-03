@@ -14,7 +14,7 @@ import type {
   DialogueNode,
   DialogueTriggerCondition,
 } from "../modules/dialogue/types";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Dialogue scripts — one row per authored dialogue "scene".
@@ -38,9 +38,9 @@ export const dialogueScripts = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -69,9 +69,9 @@ export const dialogueScripts = pgTable(
       .notNull(),
   },
   (table) => [
-    index("dialogue_scripts_org_idx").on(table.organizationId),
-    uniqueIndex("dialogue_scripts_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("dialogue_scripts_tenant_idx").on(table.tenantId),
+    uniqueIndex("dialogue_scripts_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -97,7 +97,7 @@ export const dialogueProgress = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     scriptId: uuid("script_id")
       .notNull()
@@ -116,12 +116,12 @@ export const dialogueProgress = pgTable(
   },
   (table) => [
     uniqueIndex("dialogue_progress_org_user_script_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.endUserId,
       table.scriptId,
     ),
-    index("dialogue_progress_org_user_idx").on(
-      table.organizationId,
+    index("dialogue_progress_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],

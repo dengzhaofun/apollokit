@@ -98,7 +98,7 @@ import {
 declare module "../../lib/event-bus" {
   interface EventMap {
     "assist_pool.instance_created": {
-      organizationId: string;
+      tenantId: string;
       configId: string;
       instanceId: string;
       endUserId: string;
@@ -106,7 +106,7 @@ declare module "../../lib/event-bus" {
       expiresAt: string;
     };
     "assist_pool.contributed": {
-      organizationId: string;
+      tenantId: string;
       configId: string;
       instanceId: string;
       endUserId: string;
@@ -115,14 +115,14 @@ declare module "../../lib/event-bus" {
       remaining: number;
     };
     "assist_pool.completed": {
-      organizationId: string;
+      tenantId: string;
       configId: string;
       instanceId: string;
       endUserId: string;
       rewards: RewardEntry[];
     };
     "assist_pool.expired": {
-      organizationId: string;
+      tenantId: string;
       configId: string;
       instanceId: string;
       endUserId: string;
@@ -185,16 +185,16 @@ export function createAssistPoolService(
   const rng: Rng = opts.rng ?? Math.random;
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<AssistPoolConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(assistPoolConfigs.organizationId, organizationId),
+          eq(assistPoolConfigs.tenantId, tenantId),
           eq(assistPoolConfigs.id, key),
         )
       : and(
-          eq(assistPoolConfigs.organizationId, organizationId),
+          eq(assistPoolConfigs.tenantId, tenantId),
           eq(assistPoolConfigs.alias, key),
         );
     const rows = await db
@@ -208,7 +208,7 @@ export function createAssistPoolService(
   }
 
   async function loadInstance(
-    organizationId: string,
+    tenantId: string,
     instanceId: string,
   ): Promise<AssistPoolInstance> {
     const rows = await db
@@ -217,7 +217,7 @@ export function createAssistPoolService(
       .where(
         and(
           eq(assistPoolInstances.id, instanceId),
-          eq(assistPoolInstances.organizationId, organizationId),
+          eq(assistPoolInstances.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -270,7 +270,7 @@ export function createAssistPoolService(
     const [ledgerRow] = await db
       .insert(assistPoolRewardsLedger)
       .values({
-        organizationId: instance.organizationId,
+        tenantId: instance.tenantId,
         instanceId: instance.id,
         initiatorEndUserId: instance.initiatorEndUserId,
         rewards,
@@ -292,7 +292,7 @@ export function createAssistPoolService(
     if (rewards.length > 0 && opts.itemSvc && opts.currencySvc) {
       await grantRewards(
         { itemSvc: opts.itemSvc, currencySvc: opts.currencySvc },
-        instance.organizationId,
+        instance.tenantId,
         instance.initiatorEndUserId,
         rewards,
         "assist_pool_reward",
@@ -301,7 +301,7 @@ export function createAssistPoolService(
     }
 
     await events.emit("assist_pool.completed", {
-      organizationId: instance.organizationId,
+      tenantId: instance.tenantId,
       configId: instance.configId,
       instanceId: instance.id,
       endUserId: instance.initiatorEndUserId,
@@ -314,7 +314,7 @@ export function createAssistPoolService(
   return {
     // ─── Config CRUD ────────────────────────────────────────────
     async createConfig(
-      organizationId: string,
+      tenantId: string,
       input: CreateConfigInput,
     ): Promise<AssistPoolConfig> {
       const policy = input.contributionPolicy;
@@ -325,7 +325,7 @@ export function createAssistPoolService(
         const [row] = await db
           .insert(assistPoolConfigs)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias ?? null,
             name: input.name,
             description: input.description ?? null,
@@ -354,11 +354,11 @@ export function createAssistPoolService(
     },
 
     async updateConfig(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateConfigInput,
     ): Promise<AssistPoolConfig> {
-      const existing = await loadConfigByKey(organizationId, id);
+      const existing = await loadConfigByKey(tenantId, id);
 
       const updateValues: Partial<typeof assistPoolConfigs.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
@@ -388,7 +388,7 @@ export function createAssistPoolService(
           .where(
             and(
               eq(assistPoolConfigs.id, existing.id),
-              eq(assistPoolConfigs.organizationId, organizationId),
+              eq(assistPoolConfigs.tenantId, tenantId),
             ),
           )
           .returning();
@@ -402,13 +402,13 @@ export function createAssistPoolService(
       }
     },
 
-    async deleteConfig(organizationId: string, id: string): Promise<void> {
+    async deleteConfig(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(assistPoolConfigs)
         .where(
           and(
             eq(assistPoolConfigs.id, id),
-            eq(assistPoolConfigs.organizationId, organizationId),
+            eq(assistPoolConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: assistPoolConfigs.id });
@@ -416,7 +416,7 @@ export function createAssistPoolService(
     },
 
     async listConfigs(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
     ): Promise<Page<AssistPoolConfig>> {
       const limit = clampLimit(filter.limit);
@@ -429,7 +429,7 @@ export function createAssistPoolService(
       }
       delete filterInput.includeActivity;
       const where = and(
-        eq(assistPoolConfigs.organizationId, organizationId),
+        eq(assistPoolConfigs.tenantId, tenantId),
         assistPoolConfigFilters.where(filterInput),
         cursorWhere(
           filter.cursor,
@@ -447,21 +447,21 @@ export function createAssistPoolService(
     },
 
     async getConfig(
-      organizationId: string,
+      tenantId: string,
       key: string,
     ): Promise<AssistPoolConfig> {
-      return loadConfigByKey(organizationId, key);
+      return loadConfigByKey(tenantId, key);
     },
 
     // ─── Instance lifecycle ─────────────────────────────────────
     async initiateInstance(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       initiatorEndUserId: string;
       now?: Date;
     }): Promise<AssistPoolInstance> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       if (!config.isActive) {
@@ -501,7 +501,7 @@ export function createAssistPoolService(
       const [row] = await db
         .insert(assistPoolInstances)
         .values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           configId: config.id,
           initiatorEndUserId: params.initiatorEndUserId,
           status: "in_progress",
@@ -514,7 +514,7 @@ export function createAssistPoolService(
       if (!row) throw new Error("insert returned no row");
 
       await events.emit("assist_pool.instance_created", {
-        organizationId: row.organizationId,
+        tenantId: row.tenantId,
         configId: row.configId,
         instanceId: row.id,
         endUserId: row.initiatorEndUserId,
@@ -533,7 +533,7 @@ export function createAssistPoolService(
      * (retry once).
      */
     async contribute(params: {
-      organizationId: string;
+      tenantId: string;
       instanceId: string;
       assisterEndUserId: string;
       now?: Date;
@@ -542,7 +542,7 @@ export function createAssistPoolService(
 
       for (let attempt = 0; attempt <= CONTRIBUTE_MAX_RETRIES; attempt++) {
         const instance = await loadInstance(
-          params.organizationId,
+          params.tenantId,
           params.instanceId,
         );
 
@@ -656,7 +656,7 @@ export function createAssistPoolService(
         const [contribution] = await db
           .insert(assistPoolContributions)
           .values({
-            organizationId: updated.organizationId,
+            tenantId: updated.tenantId,
             instanceId: updated.id,
             assisterEndUserId: params.assisterEndUserId,
             amount,
@@ -666,7 +666,7 @@ export function createAssistPoolService(
         if (!contribution) throw new Error("contribution insert returned no row");
 
         await events.emit("assist_pool.contributed", {
-          organizationId: updated.organizationId,
+          tenantId: updated.tenantId,
           configId: updated.configId,
           instanceId: updated.id,
           endUserId: params.assisterEndUserId,
@@ -694,18 +694,18 @@ export function createAssistPoolService(
     },
 
     async getInstance(
-      organizationId: string,
+      tenantId: string,
       instanceId: string,
     ): Promise<AssistPoolInstance> {
-      return loadInstance(organizationId, instanceId);
+      return loadInstance(tenantId, instanceId);
     },
 
     async listContributions(
-      organizationId: string,
+      tenantId: string,
       instanceId: string,
     ): Promise<AssistPoolContribution[]> {
       // Load instance to verify org scope before exposing contributions.
-      await loadInstance(organizationId, instanceId);
+      await loadInstance(tenantId, instanceId);
       return db
         .select()
         .from(assistPoolContributions)
@@ -714,16 +714,16 @@ export function createAssistPoolService(
     },
 
     async listInstances(params: {
-      organizationId: string;
+      tenantId: string;
       configKey?: string;
       initiatorEndUserId?: string;
       status?: AssistPoolStatus;
       limit?: number;
     }): Promise<AssistPoolInstance[]> {
-      const conds = [eq(assistPoolInstances.organizationId, params.organizationId)];
+      const conds = [eq(assistPoolInstances.tenantId, params.tenantId)];
       if (params.configKey) {
         const cfg = await loadConfigByKey(
-          params.organizationId,
+          params.tenantId,
           params.configKey,
         );
         conds.push(eq(assistPoolInstances.configId, cfg.id));
@@ -749,7 +749,7 @@ export function createAssistPoolService(
      * already-completed instances return the current row unchanged.
      */
     async forceExpireInstance(
-      organizationId: string,
+      tenantId: string,
       instanceId: string,
       now?: Date,
     ): Promise<AssistPoolInstance> {
@@ -760,14 +760,14 @@ export function createAssistPoolService(
         .where(
           and(
             eq(assistPoolInstances.id, instanceId),
-            eq(assistPoolInstances.organizationId, organizationId),
+            eq(assistPoolInstances.tenantId, tenantId),
             eq(assistPoolInstances.status, "in_progress"),
           ),
         )
         .returning();
       if (row) {
         await events.emit("assist_pool.expired", {
-          organizationId: row.organizationId,
+          tenantId: row.tenantId,
           configId: row.configId,
           instanceId: row.id,
           endUserId: row.initiatorEndUserId,
@@ -776,7 +776,7 @@ export function createAssistPoolService(
         return row;
       }
       // No-op: already completed/expired — return the existing row.
-      return loadInstance(organizationId, instanceId);
+      return loadInstance(tenantId, instanceId);
     },
 
     /**
@@ -799,7 +799,7 @@ export function createAssistPoolService(
 
       for (const row of rows) {
         await events.emit("assist_pool.expired", {
-          organizationId: row.organizationId,
+          tenantId: row.tenantId,
           configId: row.configId,
           instanceId: row.id,
           endUserId: row.initiatorEndUserId,

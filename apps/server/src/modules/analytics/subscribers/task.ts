@@ -11,7 +11,7 @@ export function registerTaskSubscribers(
 
   events.on("task.completed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "task.completed",
       source: "task",
@@ -27,7 +27,7 @@ export function registerTaskSubscribers(
 
   events.on("task.claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "task.claimed",
       source: "task",
@@ -46,7 +46,7 @@ export function registerTaskSubscribers(
 
   events.on("task.tier.claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "task.tier.claimed",
       source: "task",

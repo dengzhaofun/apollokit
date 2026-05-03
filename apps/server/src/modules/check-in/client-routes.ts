@@ -10,7 +10,7 @@
  * - Perform a check-in
  * - Query the authenticated end user's check-in state
  *
- * No config CRUD is exposed. The organizationId is resolved from the
+ * No config CRUD is exposed. The tenantId is resolved from the
  * client credential (middleware), not from a session.
  */
 
@@ -32,7 +32,7 @@ const TAG = "Check-In (Client)";
 function serializeState(row: {
   configId: string;
   endUserId: string;
-  organizationId: string;
+  tenantId: string;
   totalDays: number;
   currentStreak: number;
   longestStreak: number;
@@ -47,7 +47,7 @@ function serializeState(row: {
   return {
     configId: row.configId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     totalDays: row.totalDays,
     currentStreak: row.currentStreak,
     longestStreak: row.longestStreak,
@@ -104,12 +104,12 @@ checkInClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("json");
 
     const result = await checkInService.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey,
       endUserId,
     });
@@ -146,12 +146,12 @@ checkInClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("query");
 
     const view = await checkInService.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey,
       endUserId,
     });

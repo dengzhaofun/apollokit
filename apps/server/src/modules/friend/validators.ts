@@ -99,7 +99,7 @@ export const MutualFriendsQuerySchema = z.object({
 export const FriendSettingsResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     maxFriends: z.number().int(),
     maxBlocked: z.number().int(),
     maxPendingRequests: z.number().int(),
@@ -112,7 +112,7 @@ export const FriendSettingsResponseSchema = z
 export const FriendRelationshipResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     userA: z.string(),
     userB: z.string(),
     metadata: z.record(z.string(), z.unknown()).nullable(),
@@ -123,7 +123,7 @@ export const FriendRelationshipResponseSchema = z
 export const FriendRequestResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     fromUserId: z.string(),
     toUserId: z.string(),
     status: z.string(),
@@ -138,7 +138,7 @@ export const FriendRequestResponseSchema = z
 
 export const FriendBlockResponseSchema = z
   .object({
-    organizationId: z.string(),
+    tenantId: z.string(),
     blockerUserId: z.string(),
     blockedUserId: z.string(),
     createdAt: z.string(),

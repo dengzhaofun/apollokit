@@ -116,7 +116,7 @@ export const UpdateConfigSchema = z
 export const ConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -161,7 +161,7 @@ export const StageResponseSchema = z
   .object({
     id: z.string(),
     configId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
@@ -220,7 +220,7 @@ export const LevelResponseSchema = z
     id: z.string(),
     configId: z.string(),
     stageId: z.string().nullable(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),

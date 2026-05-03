@@ -33,7 +33,7 @@ const TAG = "Character";
 function serializeCharacter(row: CharacterDefinition) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,

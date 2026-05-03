@@ -32,7 +32,7 @@ const TAG = "Friend Gift";
 
 function serializeSettings(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   dailySendLimit: number;
   dailyReceiveLimit: number;
   timezone: string;
@@ -42,7 +42,7 @@ function serializeSettings(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     dailySendLimit: row.dailySendLimit,
     dailyReceiveLimit: row.dailyReceiveLimit,
     timezone: row.timezone,
@@ -54,7 +54,7 @@ function serializeSettings(row: {
 
 function serializePackage(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -68,7 +68,7 @@ function serializePackage(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -84,7 +84,7 @@ function serializePackage(row: {
 
 function serializeSend(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   packageId: string | null;
   senderUserId: string;
   receiverUserId: string;
@@ -99,7 +99,7 @@ function serializeSend(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     packageId: row.packageId,
     senderUserId: row.senderUserId,
     receiverUserId: row.receiverUserId,

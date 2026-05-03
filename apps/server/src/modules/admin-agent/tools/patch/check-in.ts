@@ -57,7 +57,7 @@ export const patchCheckInConfigExecute = tool({
   execute: async ({ key, patch }, { experimental_context }) => {
     const { execCtx, deps } = experimental_context as AgentToolContext;
     const updated = await deps.checkIn.updateConfig(
-      execCtx.organizationId,
+      execCtx.tenantId,
       key,
       patch,
     );

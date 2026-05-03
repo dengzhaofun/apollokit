@@ -143,7 +143,7 @@ const AdminDialogueNodeSchema = NodeSchema.openapi("DialogueNode");
 export const DialogueScriptResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),

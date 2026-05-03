@@ -71,7 +71,7 @@ export type RewardContext = {
 
 export type RewardItemSvc = {
   grantItems: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ definitionId: string; quantity: number }>;
     source: string;
@@ -79,7 +79,7 @@ export type RewardItemSvc = {
     context?: RewardContext;
   }) => Promise<unknown>;
   deductItems: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     deductions: Array<{ definitionId: string; quantity: number }>;
     source: string;
@@ -90,7 +90,7 @@ export type RewardItemSvc = {
 
 export type RewardEntitySvc = {
   acquireEntity: (
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     blueprintId: string,
     source: string,
@@ -101,7 +101,7 @@ export type RewardEntitySvc = {
 
 export type RewardCurrencySvc = {
   grant: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ currencyId: string; amount: number }>;
     source: string;
@@ -109,7 +109,7 @@ export type RewardCurrencySvc = {
     context?: RewardContext;
   }) => Promise<unknown>;
   deduct: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     deductions: Array<{ currencyId: string; amount: number }>;
     source: string;
@@ -142,7 +142,7 @@ export type RewardServices = {
  */
 export async function grantRewards(
   services: RewardServices,
-  organizationId: string,
+  tenantId: string,
   endUserId: string,
   entries: RewardEntry[],
   source: string,
@@ -153,7 +153,7 @@ export async function grantRewards(
   const items = filterByType(entries, "item");
   if (items.length > 0) {
     await services.itemSvc.grantItems({
-      organizationId,
+      tenantId,
       endUserId,
       grants: items.map((e) => ({ definitionId: e.id, quantity: e.count })),
       source,
@@ -166,7 +166,7 @@ export async function grantRewards(
   const currencies = filterByType(entries, "currency");
   if (currencies.length > 0) {
     await services.currencySvc.grant({
-      organizationId,
+      tenantId,
       endUserId,
       grants: currencies.map((e) => ({ currencyId: e.id, amount: e.count })),
       source,
@@ -181,7 +181,7 @@ export async function grantRewards(
     for (const entry of entities) {
       for (let i = 0; i < entry.count; i++) {
         await services.entitySvc.acquireEntity(
-          organizationId,
+          tenantId,
           endUserId,
           entry.id,
           source,
@@ -202,7 +202,7 @@ export async function grantRewards(
  */
 export async function deductCosts(
   services: RewardServices,
-  organizationId: string,
+  tenantId: string,
   endUserId: string,
   entries: RewardEntry[],
   source: string,
@@ -212,7 +212,7 @@ export async function deductCosts(
   const items = filterByType(entries, "item");
   if (items.length > 0) {
     await services.itemSvc.deductItems({
-      organizationId,
+      tenantId,
       endUserId,
       deductions: items.map((e) => ({
         definitionId: e.id,
@@ -227,7 +227,7 @@ export async function deductCosts(
   const currencies = filterByType(entries, "currency");
   if (currencies.length > 0) {
     await services.currencySvc.deduct({
-      organizationId,
+      tenantId,
       endUserId,
       deductions: currencies.map((e) => ({
         currencyId: e.id,

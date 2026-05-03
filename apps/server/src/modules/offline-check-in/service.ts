@@ -121,7 +121,7 @@ type OfflineCheckInDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>
 declare module "../../lib/event-bus" {
   interface EventMap {
     "offline_check_in.attempted": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       campaignId: string;
       spotId: string;
@@ -135,7 +135,7 @@ declare module "../../lib/event-bus" {
       country: string | null;
     };
     "offline_check_in.completed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       campaignId: string;
       spotId: string;
@@ -144,7 +144,7 @@ declare module "../../lib/event-bus" {
       distanceM: number | null;
     };
     "offline_check_in.campaign_completed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       campaignId: string;
       totalCount: number;
@@ -223,16 +223,16 @@ export function createOfflineCheckInService(
   const { db, events } = d;
 
   async function loadCampaignByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<OfflineCheckInCampaign> {
     const where = looksLikeId(key)
       ? and(
-          eq(offlineCheckInCampaigns.organizationId, organizationId),
+          eq(offlineCheckInCampaigns.tenantId, tenantId),
           eq(offlineCheckInCampaigns.id, key),
         )
       : and(
-          eq(offlineCheckInCampaigns.organizationId, organizationId),
+          eq(offlineCheckInCampaigns.tenantId, tenantId),
           eq(offlineCheckInCampaigns.alias, key),
         );
     const rows = await db
@@ -268,7 +268,7 @@ export function createOfflineCheckInService(
     // ─── Campaign CRUD ────────────────────────────────────────
 
     async createCampaign(
-      organizationId: string,
+      tenantId: string,
       input: CreateCampaignInput,
     ): Promise<OfflineCheckInCampaign> {
       assertMode(input.mode);
@@ -276,7 +276,7 @@ export function createOfflineCheckInService(
         const [row] = await db
           .insert(offlineCheckInCampaigns)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -304,11 +304,11 @@ export function createOfflineCheckInService(
     },
 
     async updateCampaign(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateCampaignInput,
     ): Promise<OfflineCheckInCampaign> {
-      const existing = await loadCampaignByKey(organizationId, id);
+      const existing = await loadCampaignByKey(tenantId, id);
 
       const updateValues: Partial<typeof offlineCheckInCampaigns.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
@@ -349,7 +349,7 @@ export function createOfflineCheckInService(
           .where(
             and(
               eq(offlineCheckInCampaigns.id, existing.id),
-              eq(offlineCheckInCampaigns.organizationId, organizationId),
+              eq(offlineCheckInCampaigns.tenantId, tenantId),
             ),
           )
           .returning();
@@ -363,13 +363,13 @@ export function createOfflineCheckInService(
       }
     },
 
-    async deleteCampaign(organizationId: string, id: string): Promise<void> {
+    async deleteCampaign(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(offlineCheckInCampaigns)
         .where(
           and(
             eq(offlineCheckInCampaigns.id, id),
-            eq(offlineCheckInCampaigns.organizationId, organizationId),
+            eq(offlineCheckInCampaigns.tenantId, tenantId),
           ),
         )
         .returning({ id: offlineCheckInCampaigns.id });
@@ -377,19 +377,19 @@ export function createOfflineCheckInService(
     },
 
     async getCampaign(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<OfflineCheckInCampaign> {
-      return loadCampaignByKey(organizationId, idOrAlias);
+      return loadCampaignByKey(tenantId, idOrAlias);
     },
 
     async listCampaigns(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { status?: string } = {},
     ): Promise<Page<OfflineCheckInCampaign>> {
       const limit = clampLimit(filter.limit);
       const conds: SQL[] = [
-        eq(offlineCheckInCampaigns.organizationId, organizationId),
+        eq(offlineCheckInCampaigns.tenantId, tenantId),
       ];
       if (filter.status) {
         conds.push(eq(offlineCheckInCampaigns.status, filter.status));
@@ -423,11 +423,11 @@ export function createOfflineCheckInService(
     // ─── Spot CRUD ────────────────────────────────────────────
 
     async createSpot(
-      organizationId: string,
+      tenantId: string,
       campaignKey: string,
       input: CreateSpotInput,
     ): Promise<OfflineCheckInSpot> {
-      const campaign = await loadCampaignByKey(organizationId, campaignKey);
+      const campaign = await loadCampaignByKey(tenantId, campaignKey);
       if (!isValidLatLng(input.latitude, input.longitude)) {
         throw new OfflineInvalidInput("invalid latitude/longitude");
       }
@@ -444,7 +444,7 @@ export function createOfflineCheckInService(
           .insert(offlineCheckInSpots)
           .values({
             campaignId: campaign.id,
-            organizationId,
+            tenantId,
             alias: input.alias,
             name: input.name,
             description: input.description ?? null,
@@ -471,7 +471,7 @@ export function createOfflineCheckInService(
     },
 
     async updateSpot(
-      organizationId: string,
+      tenantId: string,
       spotId: string,
       patch: UpdateSpotInput,
     ): Promise<OfflineCheckInSpot> {
@@ -481,7 +481,7 @@ export function createOfflineCheckInService(
         .where(
           and(
             eq(offlineCheckInSpots.id, spotId),
-            eq(offlineCheckInSpots.organizationId, organizationId),
+            eq(offlineCheckInSpots.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -544,13 +544,13 @@ export function createOfflineCheckInService(
       }
     },
 
-    async deleteSpot(organizationId: string, spotId: string): Promise<void> {
+    async deleteSpot(tenantId: string, spotId: string): Promise<void> {
       const deleted = await db
         .delete(offlineCheckInSpots)
         .where(
           and(
             eq(offlineCheckInSpots.id, spotId),
-            eq(offlineCheckInSpots.organizationId, organizationId),
+            eq(offlineCheckInSpots.tenantId, tenantId),
           ),
         )
         .returning({ id: offlineCheckInSpots.id });
@@ -558,10 +558,10 @@ export function createOfflineCheckInService(
     },
 
     async listSpots(
-      organizationId: string,
+      tenantId: string,
       campaignKey: string,
     ): Promise<OfflineCheckInSpot[]> {
-      const campaign = await loadCampaignByKey(organizationId, campaignKey);
+      const campaign = await loadCampaignByKey(tenantId, campaignKey);
       return db
         .select()
         .from(offlineCheckInSpots)
@@ -578,7 +578,7 @@ export function createOfflineCheckInService(
      * images / printables out-of-band.
      */
     async mintQrTokens(
-      organizationId: string,
+      tenantId: string,
       spotId: string,
       count: number,
       ttlSeconds: number,
@@ -589,7 +589,7 @@ export function createOfflineCheckInService(
         .where(
           and(
             eq(offlineCheckInSpots.id, spotId),
-            eq(offlineCheckInSpots.organizationId, organizationId),
+            eq(offlineCheckInSpots.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -610,7 +610,7 @@ export function createOfflineCheckInService(
      * it into the H5.
      */
     async rotateManualCode(
-      organizationId: string,
+      tenantId: string,
       spotId: string,
       ttlSeconds = 60,
     ): Promise<{ code: string; rotatesAt: Date }> {
@@ -620,7 +620,7 @@ export function createOfflineCheckInService(
         .where(
           and(
             eq(offlineCheckInSpots.id, spotId),
-            eq(offlineCheckInSpots.organizationId, organizationId),
+            eq(offlineCheckInSpots.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -635,12 +635,12 @@ export function createOfflineCheckInService(
     // ─── Progress queries ─────────────────────────────────────
 
     async getProgress(params: {
-      organizationId: string;
+      tenantId: string;
       campaignKey: string;
       endUserId: string;
     }): Promise<OfflineCheckInUserProgressRow> {
       const campaign = await loadCampaignByKey(
-        params.organizationId,
+        params.tenantId,
         params.campaignKey,
       );
       const rows = await db
@@ -661,7 +661,7 @@ export function createOfflineCheckInService(
       return {
         campaignId: campaign.id,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         spotsCompleted: [],
         totalCount: 0,
         lastSpotId: null,
@@ -676,11 +676,11 @@ export function createOfflineCheckInService(
     },
 
     async listProgress(params: {
-      organizationId: string;
+      tenantId: string;
       campaignKey: string;
     } & PageParams): Promise<Page<OfflineCheckInUserProgressRow>> {
       const campaign = await loadCampaignByKey(
-        params.organizationId,
+        params.tenantId,
         params.campaignKey,
       );
       const limit = clampLimit(params.limit);
@@ -714,7 +714,7 @@ export function createOfflineCheckInService(
     // ─── Core: check-in ──────────────────────────────────────
 
     async checkIn(params: {
-      organizationId: string;
+      tenantId: string;
       campaignKey: string;
       endUserId: string;
       spotAlias: string;
@@ -731,7 +731,7 @@ export function createOfflineCheckInService(
       now?: Date;
     }): Promise<OfflineCheckInResult> {
       const campaign = await loadCampaignByKey(
-        params.organizationId,
+        params.tenantId,
         params.campaignKey,
       );
       if (campaign.status === "draft" || campaign.status === "ended") {
@@ -788,7 +788,7 @@ export function createOfflineCheckInService(
       await db.insert(offlineCheckInLogs).values({
         campaignId: campaign.id,
         spotId: spot.id,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         accepted: rejectReason === null,
         rejectReason,
@@ -809,7 +809,7 @@ export function createOfflineCheckInService(
         // Emit attempt event even on rejection (analytics needs the funnel).
         if (events) {
           await events.emit("offline_check_in.attempted", {
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             campaignId: campaign.id,
             spotId: spot.id,
@@ -840,7 +840,7 @@ export function createOfflineCheckInService(
         .values({
           campaignId: campaign.id,
           endUserId: params.endUserId,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           spotsCompleted: [marker],
           totalCount: 1,
           lastSpotId: spot.id,
@@ -898,7 +898,7 @@ export function createOfflineCheckInService(
             campaignId: campaign.id,
             endUserId: params.endUserId,
             rewardKey: `spot:${spot.alias}`,
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             rewardItems: spot.spotRewards,
           })
           .onConflictDoNothing()
@@ -906,7 +906,7 @@ export function createOfflineCheckInService(
         if (ledgerInserted.length > 0) {
           await grantRewards(
             rewardServices,
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             spot.spotRewards,
             "offline_check_in.spot",
@@ -940,7 +940,7 @@ export function createOfflineCheckInService(
               campaignId: campaign.id,
               endUserId: params.endUserId,
               rewardKey: "completion",
-              organizationId: params.organizationId,
+              tenantId: params.tenantId,
               rewardItems: campaign.completionRewards,
             })
             .onConflictDoNothing()
@@ -960,7 +960,7 @@ export function createOfflineCheckInService(
             if (campaign.completionRewards.length > 0) {
               await grantRewards(
                 rewardServices,
-                params.organizationId,
+                params.tenantId,
                 params.endUserId,
                 campaign.completionRewards,
                 "offline_check_in.completion",
@@ -970,7 +970,7 @@ export function createOfflineCheckInService(
             }
             if (events) {
               await events.emit("offline_check_in.campaign_completed", {
-                organizationId: params.organizationId,
+                tenantId: params.tenantId,
                 endUserId: params.endUserId,
                 campaignId: campaign.id,
                 totalCount: progress.totalCount,
@@ -983,7 +983,7 @@ export function createOfflineCheckInService(
       // Step 6 — analytics events (always emit on accepted attempt).
       if (events) {
         await events.emit("offline_check_in.attempted", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           campaignId: campaign.id,
           spotId: spot.id,
@@ -998,7 +998,7 @@ export function createOfflineCheckInService(
         });
         if (!alreadyDone) {
           await events.emit("offline_check_in.completed", {
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             campaignId: campaign.id,
             spotId: spot.id,

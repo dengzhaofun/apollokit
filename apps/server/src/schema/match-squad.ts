@@ -12,23 +12,28 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
- * Team configs — per-organization team configurations (multiple allowed).
+ * Match-squad configs — per-organization squad-mode configurations.
  *
- * Different game modes (2v2, 3v3, 5v5) need different team sizes, so
+ * Different game modes (2v2, 3v3, 5v5) need different squad sizes, so
  * this uses the multi-config pattern with alias-based publish gate.
+ *
+ * NOTE: this is the *game match-making squad* concept (short-lived
+ * player groups during a session), not a tenant project. Better Auth's
+ * `team` table — which means "project" in our admin UI — lives in
+ * schema/auth.ts.
  */
-export const teamConfigs = pgTable(
-  "team_configs",
+export const matchSquadConfigs = pgTable(
+  "match_squad_configs",
   {
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     maxMembers: integer("max_members").default(4).notNull(),
@@ -44,31 +49,32 @@ export const teamConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("team_configs_org_idx").on(table.organizationId),
-    uniqueIndex("team_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("match_squad_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("match_squad_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
 
 /**
- * Team instances — ephemeral teams created by end users.
+ * Match squads — ephemeral squads created by end users.
  *
- * Teams are short-lived (dissolve after game/session ends). `memberCount`
- * is a denormalized counter updated atomically via version-guarded writes.
+ * Squads are short-lived (dissolve after game/session ends).
+ * `memberCount` is a denormalized counter updated atomically via
+ * version-guarded writes.
  *
  * Status: 'open' (accepting joins) → 'closed' | 'in_game' → 'dissolved'.
  */
-export const teamTeams = pgTable(
-  "team_teams",
+export const matchSquads = pgTable(
+  "match_squads",
   {
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     configId: uuid("config_id")
       .notNull()
-      .references(() => teamConfigs.id, { onDelete: "cascade" }),
+      .references(() => matchSquadConfigs.id, { onDelete: "cascade" }),
     leaderUserId: text("leader_user_id").notNull(),
     status: text("status").default("open").notNull(),
     memberCount: integer("member_count").default(1).notNull(),
@@ -82,13 +88,13 @@ export const teamTeams = pgTable(
       .notNull(),
   },
   (table) => [
-    index("team_teams_org_config_status_idx").on(
-      table.organizationId,
+    index("match_squads_tenant_config_status_idx").on(
+      table.tenantId,
       table.configId,
       table.status,
     ),
-    index("team_teams_org_leader_idx").on(
-      table.organizationId,
+    index("match_squads_tenant_leader_idx").on(
+      table.tenantId,
       table.configId,
       table.leaderUserId,
     ),
@@ -96,48 +102,48 @@ export const teamTeams = pgTable(
 );
 
 /**
- * Team members — membership records. One-team-at-a-time per configId
- * is enforced at the service layer.
+ * Match-squad members — membership records. One-squad-at-a-time per
+ * configId is enforced at the service layer.
  */
-export const teamMembers = pgTable(
-  "team_members",
+export const matchSquadMembers = pgTable(
+  "match_squad_members",
   {
-    teamId: uuid("team_id")
+    squadId: uuid("squad_id")
       .notNull()
-      .references(() => teamTeams.id, { onDelete: "cascade" }),
+      .references(() => matchSquads.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     role: text("role").default("member").notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
   },
   (table) => [
     primaryKey({
-      columns: [table.teamId, table.endUserId],
-      name: "team_members_pk",
+      columns: [table.squadId, table.endUserId],
+      name: "match_squad_members_pk",
     }),
-    index("team_members_org_user_idx").on(
-      table.organizationId,
+    index("match_squad_members_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
 );
 
 /**
- * Team invitations — invitations to join a team.
+ * Match-squad invitations — invitations to join a squad.
  *
  * Short-lived (60s expiry typical). Partial unique index prevents
- * duplicate pending invitations to the same user for the same team.
+ * duplicate pending invitations to the same user for the same squad.
  */
-export const teamInvitations = pgTable(
-  "team_invitations",
+export const matchSquadInvitations = pgTable(
+  "match_squad_invitations",
   {
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
-    teamId: uuid("team_id")
+    tenantId: text("tenant_id").notNull(),
+    squadId: uuid("squad_id")
       .notNull()
-      .references(() => teamTeams.id, { onDelete: "cascade" }),
+      .references(() => matchSquads.id, { onDelete: "cascade" }),
     fromUserId: text("from_user_id").notNull(),
     toUserId: text("to_user_id").notNull(),
     status: text("status").default("pending").notNull(),
@@ -150,17 +156,17 @@ export const teamInvitations = pgTable(
       .notNull(),
   },
   (table) => [
-    index("team_invitations_team_status_idx").on(
-      table.teamId,
+    index("match_squad_invitations_squad_status_idx").on(
+      table.squadId,
       table.status,
     ),
-    index("team_invitations_org_to_status_idx").on(
-      table.organizationId,
+    index("match_squad_invitations_tenant_to_status_idx").on(
+      table.tenantId,
       table.toUserId,
       table.status,
     ),
-    uniqueIndex("team_invitations_pending_uidx")
-      .on(table.teamId, table.toUserId)
+    uniqueIndex("match_squad_invitations_pending_uidx")
+      .on(table.squadId, table.toUserId)
       .where(sql`${table.status} = 'pending'`),
   ],
 );

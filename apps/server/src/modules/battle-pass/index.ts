@@ -27,7 +27,7 @@ registerEvent({
   description:
     "End user earned battle-pass XP (typically from completing a bound task).",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "taskDefinitionId", type: "string", required: false },
@@ -45,7 +45,7 @@ registerEvent({
   description:
     "End user's battle-pass level increased (fired only on the transition, not every xp.earned).",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "oldLevel", type: "number", required: true },
@@ -60,7 +60,7 @@ registerEvent({
   description:
     "A paid tier has been activated for an end user (from payment callback, admin grant, etc.).",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "tierCode", type: "string", required: true },
@@ -75,7 +75,7 @@ registerEvent({
   owner: "battle-pass",
   description: "End user claimed the reward for a specific level+tier.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "level", type: "number", required: true },

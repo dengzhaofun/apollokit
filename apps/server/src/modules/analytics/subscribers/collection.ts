@@ -11,7 +11,7 @@ export function registerCollectionSubscribers(
 
   events.on("collection.entry_unlocked", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "collection.entry_unlocked",
       source: "collection",
@@ -29,7 +29,7 @@ export function registerCollectionSubscribers(
 
   events.on("collection.milestone_claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "collection.milestone_claimed",
       source: "collection",

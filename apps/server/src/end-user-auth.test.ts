@@ -32,7 +32,7 @@ async function createTenant(label: string): Promise<Tenant> {
   const cpk = `cpk_iauth_${crypto.randomUUID().slice(0, 8)}`;
   await db.insert(clientCredentials).values({
     id: crypto.randomUUID(),
-    organizationId: orgId,
+    tenantId: orgId,
     name: label,
     publishableKey: cpk,
     encryptedSecret: "dev-placeholder",
@@ -93,7 +93,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
     await dropTenant(a);
   });
 
-  test("sign-up stores scoped email and injects organizationId", async () => {
+  test("sign-up stores scoped email and injects tenantId", async () => {
     const res = await signUp(a, "alice@example.com", "pw12345678", "Alice");
     expect(res.status).toBe(200);
     const body = (await res.json()) as SignUpResponse;
@@ -105,7 +105,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
       .where(eq(euUser.id, body.user.id));
     expect(row).toBeTruthy();
     expect(row!.email).toBe(scopeEmail(a.orgId, "alice@example.com"));
-    expect(row!.organizationId).toBe(a.orgId);
+    expect(row!.tenantId).toBe(a.orgId);
 
     // Credential account is created with a non-null password hash
     const [acc] = await db
@@ -150,7 +150,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
       .select()
       .from(euSession)
       .where(eq(euSession.userId, body.user.id));
-    expect(sess!.organizationId).toBe(a.orgId);
+    expect(sess!.tenantId).toBe(a.orgId);
   });
 });
 
@@ -187,8 +187,8 @@ describe("end-user-auth — tenant isolation", () => {
       .select()
       .from(euUser)
       .where(eq(euUser.id, ub.user.id));
-    expect(rowA!.organizationId).toBe(a.orgId);
-    expect(rowB!.organizationId).toBe(b.orgId);
+    expect(rowA!.tenantId).toBe(a.orgId);
+    expect(rowB!.tenantId).toBe(b.orgId);
   });
 
   test("sign-in with orgA's cpk can't resolve orgB's user — wrong tenant email lookup", async () => {

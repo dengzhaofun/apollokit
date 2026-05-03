@@ -16,7 +16,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Task / Quest / Achievement module — unified event-driven task system.
@@ -45,7 +45,7 @@ import { organization } from "./auth";
  *
  * 4. Event processing: external services POST events to
  *    `/api/client/task/events`. The service queries matching definitions
- *    by `(organizationId, eventName)` and updates progress atomically,
+ *    by `(tenantId, eventName)` and updates progress atomically,
  *    one SQL per matching task.
  *
  * 5. Counting methods:
@@ -81,9 +81,9 @@ export const taskCategories = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -99,9 +99,9 @@ export const taskCategories = pgTable(
       .notNull(),
   },
   (table) => [
-    index("task_categories_org_idx").on(table.organizationId),
-    uniqueIndex("task_categories_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("task_categories_tenant_idx").on(table.tenantId),
+    uniqueIndex("task_categories_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -163,9 +163,9 @@ export const taskDefinitions = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     categoryId: uuid("category_id").references(() => taskCategories.id, {
       onDelete: "set null",
     }),
@@ -241,24 +241,24 @@ export const taskDefinitions = pgTable(
   },
   (table) => [
     // Hot path: event dispatch looks up definitions by (org, eventName)
-    index("task_definitions_org_event_idx").on(
-      table.organizationId,
+    index("task_definitions_tenant_event_idx").on(
+      table.tenantId,
       table.eventName,
     ),
     // Client list query ordered by category + sort
-    index("task_definitions_org_cat_sort_idx").on(
-      table.organizationId,
+    index("task_definitions_tenant_cat_sort_idx").on(
+      table.tenantId,
       table.categoryId,
       table.sortOrder,
     ),
     // Child lookup for parent tasks
-    index("task_definitions_org_parent_idx").on(
-      table.organizationId,
+    index("task_definitions_tenant_parent_idx").on(
+      table.tenantId,
       table.parentId,
     ),
     // Alias uniqueness per org (partial — NULL aliases don't conflict)
-    uniqueIndex("task_definitions_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("task_definitions_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     // Filter by activity (admin "show activity configs" toggle,
     // player-side activity node resolution)
@@ -266,8 +266,8 @@ export const taskDefinitions = pgTable(
     // Hot path for getTasksForUser: it filters by visibility + isActive
     // before joining progress and assignment maps. Partial index keeps
     // it small since most rows are `broadcast`.
-    index("task_definitions_org_visibility_idx").on(
-      table.organizationId,
+    index("task_definitions_tenant_visibility_idx").on(
+      table.tenantId,
       table.visibility,
       table.isActive,
     ),
@@ -300,7 +300,7 @@ export const taskUserProgress = pgTable(
       .notNull()
       .references(() => taskDefinitions.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     periodKey: text("period_key").notNull(),
     currentValue: integer("current_value").default(0).notNull(),
     isCompleted: boolean("is_completed").default(false).notNull(),
@@ -318,8 +318,8 @@ export const taskUserProgress = pgTable(
       name: "task_user_progress_pk",
     }),
     // "All my tasks" inbox query
-    index("task_user_progress_org_user_idx").on(
-      table.organizationId,
+    index("task_user_progress_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Parent accumulation: count completed children for a set of taskIds
@@ -351,7 +351,7 @@ export const taskUserMilestoneClaims = pgTable(
       .notNull()
       .references(() => taskDefinitions.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     periodKey: text("period_key").notNull(),
     tierAlias: text("tier_alias").notNull(),
     claimedAt: timestamp("claimed_at").defaultNow().notNull(),
@@ -362,8 +362,8 @@ export const taskUserMilestoneClaims = pgTable(
       name: "task_user_milestone_claims_pk",
     }),
     // "All my tier claims" inbox lookup
-    index("task_user_milestone_claims_org_user_idx").on(
-      table.organizationId,
+    index("task_user_milestone_claims_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Batched "what has this user claimed across these tasks this period"
@@ -440,9 +440,9 @@ export const taskUserAssignments = pgTable(
       .notNull()
       .references(() => taskDefinitions.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     assignedAt: timestamp("assigned_at").defaultNow().notNull(),
     /** NULL = never expires. Otherwise the assignment auto-deactivates past this instant. */
     expiresAt: timestamp("expires_at"),
@@ -467,8 +467,8 @@ export const taskUserAssignments = pgTable(
     // Hot path for getTasksForUser: batch-fetch active assignments
     // for a (org, endUser) pair against a set of assigned-visibility
     // task ids.
-    index("task_user_assignments_org_user_idx").on(
-      table.organizationId,
+    index("task_user_assignments_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Admin "who has this task been assigned to" list

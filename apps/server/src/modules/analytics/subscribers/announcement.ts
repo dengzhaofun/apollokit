@@ -11,7 +11,7 @@ export function registerAnnouncementSubscribers(
 
   events.on("announcement.created", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "announcement.created",
       source: "announcement",
       eventData: {
@@ -24,7 +24,7 @@ export function registerAnnouncementSubscribers(
 
   events.on("announcement.updated", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "announcement.updated",
       source: "announcement",
       eventData: {
@@ -36,7 +36,7 @@ export function registerAnnouncementSubscribers(
 
   events.on("announcement.deleted", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "announcement.deleted",
       source: "announcement",
       eventData: {
@@ -48,7 +48,7 @@ export function registerAnnouncementSubscribers(
 
   events.on("announcement.impression", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "announcement.impression",
       source: "announcement",
@@ -63,7 +63,7 @@ export function registerAnnouncementSubscribers(
 
   events.on("announcement.click", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "announcement.click",
       source: "announcement",

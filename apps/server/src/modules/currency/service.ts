@@ -9,7 +9,7 @@
  * Key design decisions:
  *
  * 1. `currency_wallets` has a unique index on
- *    `(organizationId, endUserId, currencyId)`. Grants use
+ *    `(tenantId, endUserId, currencyId)`. Grants use
  *    `INSERT ... ON CONFLICT DO UPDATE` so a single atomic SQL
  *    statement handles both "new wallet" and "existing wallet" cases.
  *
@@ -69,16 +69,16 @@ export function createCurrencyService(d: CurrencyDeps) {
   // ─── Definition helpers ─────────────────────────────────────────
 
   async function loadByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CurrencyDefinition> {
     const where = looksLikeId(key)
       ? and(
-          eq(currencies.organizationId, organizationId),
+          eq(currencies.tenantId, tenantId),
           eq(currencies.id, key),
         )
       : and(
-          eq(currencies.organizationId, organizationId),
+          eq(currencies.tenantId, tenantId),
           eq(currencies.alias, key),
         );
     const rows = await db.select().from(currencies).where(where).limit(1);
@@ -87,7 +87,7 @@ export function createCurrencyService(d: CurrencyDeps) {
   }
 
   async function readBalance(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     currencyId: string,
   ): Promise<number> {
@@ -96,7 +96,7 @@ export function createCurrencyService(d: CurrencyDeps) {
       .from(currencyWallets)
       .where(
         and(
-          eq(currencyWallets.organizationId, organizationId),
+          eq(currencyWallets.tenantId, tenantId),
           eq(currencyWallets.endUserId, endUserId),
           eq(currencyWallets.currencyId, currencyId),
         ),
@@ -109,19 +109,19 @@ export function createCurrencyService(d: CurrencyDeps) {
     // ─── Definition CRUD ──────────────────────────────────────────
 
     async createDefinition(
-      organizationId: string,
+      tenantId: string,
       input: CreateCurrencyInput,
     ): Promise<CurrencyDefinition> {
       const sortOrder = await appendKey(db, {
         table: currencies,
         sortColumn: currencies.sortOrder,
-        scopeWhere: eq(currencies.organizationId, organizationId),
+        scopeWhere: eq(currencies.tenantId, tenantId),
       });
       try {
         const [row] = await db
           .insert(currencies)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -144,11 +144,11 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async updateDefinition(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateCurrencyInput,
     ): Promise<CurrencyDefinition> {
-      const existing = await loadByKey(organizationId, id);
+      const existing = await loadByKey(tenantId, id);
       const updateValues: Partial<typeof currencies.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
       if (patch.alias !== undefined) updateValues.alias = patch.alias;
@@ -171,7 +171,7 @@ export function createCurrencyService(d: CurrencyDeps) {
           .where(
             and(
               eq(currencies.id, existing.id),
-              eq(currencies.organizationId, organizationId),
+              eq(currencies.tenantId, tenantId),
             ),
           )
           .returning();
@@ -186,16 +186,16 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async moveDefinition(
-      organizationId: string,
+      tenantId: string,
       key: string,
       body: MoveBody,
     ): Promise<CurrencyDefinition> {
-      const existing = await loadByKey(organizationId, key);
+      const existing = await loadByKey(tenantId, key);
       return moveAndReturn<CurrencyDefinition>(db, {
         table: currencies,
         sortColumn: currencies.sortOrder,
         idColumn: currencies.id,
-        partitionWhere: eq(currencies.organizationId, organizationId)!,
+        partitionWhere: eq(currencies.tenantId, tenantId)!,
         id: existing.id,
         body,
         notFound: (sid) => new CurrencyNotFound(sid),
@@ -203,7 +203,7 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async deleteDefinition(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const deleted = await db
@@ -211,7 +211,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         .where(
           and(
             eq(currencies.id, id),
-            eq(currencies.organizationId, organizationId),
+            eq(currencies.tenantId, tenantId),
           ),
         )
         .returning({ id: currencies.id });
@@ -219,7 +219,7 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async listDefinitions(
-      organizationId: string,
+      tenantId: string,
       opts: PageParams & { activityId?: string | null; isActive?: boolean } = {},
     ): Promise<Page<CurrencyDefinition>> {
       const limit = clampLimit(opts.limit);
@@ -235,7 +235,7 @@ export function createCurrencyService(d: CurrencyDeps) {
               : opts.activityId,
       } as Record<string, unknown>;
       const where = and(
-        eq(currencies.organizationId, organizationId),
+        eq(currencies.tenantId, tenantId),
         currencyDefinitionFilters.where(filterInput),
         cursorWhere(opts.cursor, currencies.createdAt, currencies.id),
       );
@@ -249,24 +249,24 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async getDefinition(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<CurrencyDefinition> {
-      return loadByKey(organizationId, idOrAlias);
+      return loadByKey(tenantId, idOrAlias);
     },
 
     // ─── Wallet & balance ────────────────────────────────────────
 
     async getBalance(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       currencyId: string,
     ): Promise<number> {
-      return readBalance(organizationId, endUserId, currencyId);
+      return readBalance(tenantId, endUserId, currencyId);
     },
 
     async getWallets(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
     ): Promise<WalletView[]> {
       const rows = await db
@@ -281,7 +281,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         .innerJoin(currencies, eq(currencies.id, currencyWallets.currencyId))
         .where(
           and(
-            eq(currencyWallets.organizationId, organizationId),
+            eq(currencyWallets.tenantId, tenantId),
             eq(currencyWallets.endUserId, endUserId),
           ),
         )
@@ -299,7 +299,7 @@ export function createCurrencyService(d: CurrencyDeps) {
     // ─── Grant / Deduct ──────────────────────────────────────────
 
     async grant(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       grants: Array<{ currencyId: string; amount: number }>;
       source: string;
@@ -313,10 +313,10 @@ export function createCurrencyService(d: CurrencyDeps) {
           throw new CurrencyInvalidInput("grant amount must be positive");
         }
         // Existence check (throws if the currency id is unknown in this org).
-        const def = await loadByKey(params.organizationId, g.currencyId);
+        const def = await loadByKey(params.tenantId, g.currencyId);
 
         const before = await readBalance(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           def.id,
         );
@@ -326,7 +326,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         await db
           .insert(currencyWallets)
           .values({
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             currencyId: def.id,
             balance: g.amount,
@@ -334,7 +334,7 @@ export function createCurrencyService(d: CurrencyDeps) {
           })
           .onConflictDoUpdate({
             target: [
-              currencyWallets.organizationId,
+              currencyWallets.tenantId,
               currencyWallets.endUserId,
               currencyWallets.currencyId,
             ],
@@ -348,7 +348,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         const after = before + g.amount;
 
         await db.insert(currencyLedger).values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           currencyId: def.id,
           delta: g.amount,
@@ -372,7 +372,7 @@ export function createCurrencyService(d: CurrencyDeps) {
     },
 
     async deduct(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       deductions: Array<{ currencyId: string; amount: number }>;
       source: string;
@@ -385,10 +385,10 @@ export function createCurrencyService(d: CurrencyDeps) {
         if (d.amount <= 0) {
           throw new CurrencyInvalidInput("deduct amount must be positive");
         }
-        const def = await loadByKey(params.organizationId, d.currencyId);
+        const def = await loadByKey(params.tenantId, d.currencyId);
 
         const before = await readBalance(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           def.id,
         );
@@ -405,7 +405,7 @@ export function createCurrencyService(d: CurrencyDeps) {
           })
           .where(
             and(
-              eq(currencyWallets.organizationId, params.organizationId),
+              eq(currencyWallets.tenantId, params.tenantId),
               eq(currencyWallets.endUserId, params.endUserId),
               eq(currencyWallets.currencyId, def.id),
               gte(currencyWallets.balance, d.amount),
@@ -420,7 +420,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         const after = updated[0]!.balance;
 
         await db.insert(currencyLedger).values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           currencyId: def.id,
           delta: -d.amount,
@@ -446,11 +446,11 @@ export function createCurrencyService(d: CurrencyDeps) {
     // ─── Ledger query ────────────────────────────────────────────
 
     async listLedger(
-      organizationId: string,
+      tenantId: string,
       filter: LedgerQuery = {},
     ): Promise<LedgerPage> {
       const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
-      const conditions = [eq(currencyLedger.organizationId, organizationId)];
+      const conditions = [eq(currencyLedger.tenantId, tenantId)];
       if (filter.endUserId)
         conditions.push(eq(currencyLedger.endUserId, filter.endUserId));
       if (filter.currencyId)
@@ -484,7 +484,7 @@ export function createCurrencyService(d: CurrencyDeps) {
     // ─── Convenience: batch existence check for other modules ────
 
     async assertAllExist(
-      organizationId: string,
+      tenantId: string,
       currencyIds: string[],
     ): Promise<void> {
       if (currencyIds.length === 0) return;
@@ -494,7 +494,7 @@ export function createCurrencyService(d: CurrencyDeps) {
         .from(currencies)
         .where(
           and(
-            eq(currencies.organizationId, organizationId),
+            eq(currencies.tenantId, tenantId),
             inArray(currencies.id, unique),
           ),
         );

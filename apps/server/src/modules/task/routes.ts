@@ -47,7 +47,7 @@ const TAG_ASSIGN = "Task Assignments";
 
 function serializeCategory(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -61,7 +61,7 @@ function serializeCategory(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -77,7 +77,7 @@ function serializeCategory(row: {
 
 function serializeDefinition(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   categoryId: string | null;
   parentId: string | null;
   alias: string | null;
@@ -109,7 +109,7 @@ function serializeDefinition(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     categoryId: row.categoryId,
     parentId: row.parentId,
     alias: row.alias,
@@ -478,7 +478,7 @@ function serializeAssignment(row: TaskUserAssignment) {
   return {
     taskId: row.taskId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     assignedAt: row.assignedAt.toISOString(),
     expiresAt: row.expiresAt?.toISOString() ?? null,
     revokedAt: row.revokedAt?.toISOString() ?? null,

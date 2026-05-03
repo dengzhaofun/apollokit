@@ -19,7 +19,7 @@ export function registerMailSubscribers(
 
   events.on("mail.claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "mail.claimed",
       source: "mail",

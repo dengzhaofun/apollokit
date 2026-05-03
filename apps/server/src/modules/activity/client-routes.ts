@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -61,7 +61,7 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const now = new Date();
     // Client view fetches a single high-cap page — players don't paginate
     // the activity list, the server is expected to return the visible set
@@ -80,7 +80,7 @@ activityClientRouter.openapi(
     return c.json(ok({
         items: visible.map((r) => ({
           id: r.id,
-          organizationId: r.organizationId,
+          tenantId: r.tenantId,
           alias: r.alias,
           name: r.name,
           description: r.description,
@@ -133,11 +133,11 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     const view = await activityService.getActivityForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: alias,
       endUserId,
     });
@@ -168,11 +168,11 @@ activityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     const row = await activityService.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: alias,
       endUserId,
     });

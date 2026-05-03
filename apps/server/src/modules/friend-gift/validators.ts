@@ -150,7 +150,7 @@ export const EndUserQuerySchema = z.object({
 export const SettingsResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     dailySendLimit: z.number().int(),
     dailyReceiveLimit: z.number().int(),
     timezone: z.string(),
@@ -163,7 +163,7 @@ export const SettingsResponseSchema = z
 export const PackageResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -180,7 +180,7 @@ export const PackageResponseSchema = z
 export const GiftSendResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     packageId: z.string().nullable(),
     senderUserId: z.string(),
     receiverUserId: z.string(),

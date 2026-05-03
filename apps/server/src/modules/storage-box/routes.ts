@@ -43,7 +43,7 @@ const TAG_TXN = "Storage Box Transactions";
 function serializeConfig(row: StorageBoxConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -67,7 +67,7 @@ function serializeConfig(row: StorageBoxConfig) {
 function serializeDepositView(row: StorageBoxDepositView) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     endUserId: row.endUserId,
     boxConfigId: row.boxConfigId,
     currencyDefinitionId: row.currencyDefinitionId,
@@ -295,7 +295,7 @@ storageBoxRouter.openapi(
     const input = c.req.valid("json");
     const now = new Date();
     const result = await storageBoxService.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input,
       now,
     });
@@ -331,7 +331,7 @@ storageBoxRouter.openapi(
     const input = c.req.valid("json");
     const now = new Date();
     const result = await storageBoxService.withdraw({
-      organizationId: orgId,
+      tenantId: orgId,
       input,
       now,
     });
@@ -369,7 +369,7 @@ storageBoxRouter.openapi(
     const orgId = getOrgId(c);
     const { endUserId } = c.req.valid("param");
     const rows = await storageBoxService.listDepositsForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
     });
     return c.json(ok({ items: rows.map(serializeDepositView) }), 200);

@@ -135,7 +135,7 @@ export function createWebhooksService(
   }
 
   async function loadEndpoint(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<WebhooksEndpoint> {
     let rows: WebhooksEndpoint[];
@@ -146,7 +146,7 @@ export function createWebhooksService(
         .where(
           and(
             eq(webhooksEndpoints.id, id),
-            eq(webhooksEndpoints.organizationId, organizationId),
+            eq(webhooksEndpoints.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -161,13 +161,13 @@ export function createWebhooksService(
 
   return {
     async createEndpoint(
-      organizationId: string,
+      tenantId: string,
       input: CreateEndpointInput,
     ): Promise<{ endpoint: WebhooksEndpointView; secret: string }> {
       const [countRow] = await db
         .select({ count: sql<number>`cast(count(*) as int)` })
         .from(webhooksEndpoints)
-        .where(eq(webhooksEndpoints.organizationId, organizationId));
+        .where(eq(webhooksEndpoints.tenantId, tenantId));
       const current = countRow?.count ?? 0;
       if (current >= maxEndpointsPerOrg) {
         throw new WebhookLimitExceeded(maxEndpointsPerOrg);
@@ -179,7 +179,7 @@ export function createWebhooksService(
       const [row] = await db
         .insert(webhooksEndpoints)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           url: input.url,
           description: input.description ?? null,
@@ -193,11 +193,11 @@ export function createWebhooksService(
     },
 
     async listEndpoints(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<WebhooksEndpointView>> {
       const limit = clampLimit(params.limit);
-      const conds: SQL[] = [eq(webhooksEndpoints.organizationId, organizationId)];
+      const conds: SQL[] = [eq(webhooksEndpoints.tenantId, tenantId)];
       const seek = cursorWhere(params.cursor, webhooksEndpoints.createdAt, webhooksEndpoints.id);
       if (seek) conds.push(seek);
       if (params.q) {
@@ -214,20 +214,20 @@ export function createWebhooksService(
     },
 
     async getEndpoint(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<WebhooksEndpointView> {
-      const row = await loadEndpoint(organizationId, id);
+      const row = await loadEndpoint(tenantId, id);
       return toView(row);
     },
 
     async updateEndpoint(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateEndpointInput,
     ): Promise<WebhooksEndpointView> {
       // Load first so we error cleanly on unknown id before the UPDATE.
-      await loadEndpoint(organizationId, id);
+      await loadEndpoint(tenantId, id);
 
       const update: Partial<typeof webhooksEndpoints.$inferInsert> = {};
       if (patch.name !== undefined) update.name = patch.name;
@@ -248,7 +248,7 @@ export function createWebhooksService(
       }
 
       if (Object.keys(update).length === 0) {
-        return this.getEndpoint(organizationId, id);
+        return this.getEndpoint(tenantId, id);
       }
 
       const [row] = await db
@@ -257,7 +257,7 @@ export function createWebhooksService(
         .where(
           and(
             eq(webhooksEndpoints.id, id),
-            eq(webhooksEndpoints.organizationId, organizationId),
+            eq(webhooksEndpoints.tenantId, tenantId),
           ),
         )
         .returning();
@@ -266,10 +266,10 @@ export function createWebhooksService(
     },
 
     async rotateSecret(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<{ endpoint: WebhooksEndpointView; secret: string }> {
-      await loadEndpoint(organizationId, id);
+      await loadEndpoint(tenantId, id);
       const secret = generateSigningSecret();
       const ciphertext = await encrypt(secret, appSecret);
       const [row] = await db
@@ -281,7 +281,7 @@ export function createWebhooksService(
         .where(
           and(
             eq(webhooksEndpoints.id, id),
-            eq(webhooksEndpoints.organizationId, organizationId),
+            eq(webhooksEndpoints.tenantId, tenantId),
           ),
         )
         .returning();
@@ -289,14 +289,14 @@ export function createWebhooksService(
       return { endpoint: toView(row), secret };
     },
 
-    async deleteEndpoint(organizationId: string, id: string): Promise<void> {
+    async deleteEndpoint(tenantId: string, id: string): Promise<void> {
       try {
         const deleted = await db
           .delete(webhooksEndpoints)
           .where(
             and(
               eq(webhooksEndpoints.id, id),
-              eq(webhooksEndpoints.organizationId, organizationId),
+              eq(webhooksEndpoints.tenantId, tenantId),
             ),
           )
           .returning({ id: webhooksEndpoints.id });
@@ -325,7 +325,7 @@ export function createWebhooksService(
         .from(webhooksEndpoints)
         .where(
           and(
-            eq(webhooksEndpoints.organizationId, input.organizationId),
+            eq(webhooksEndpoints.tenantId, input.tenantId),
             eq(webhooksEndpoints.status, "active"),
           ),
         );
@@ -337,7 +337,7 @@ export function createWebhooksService(
       const eventId = input.eventId ?? crypto.randomUUID();
       const nowDate = now();
       const values = matched.map((e) => ({
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         endpointId: e.id,
         eventId,
         eventType: input.eventType,
@@ -399,14 +399,14 @@ export function createWebhooksService(
     },
 
     async listDeliveries(
-      organizationId: string,
+      tenantId: string,
       endpointId: string,
       filter: PageParams & { status?: WebhooksDelivery["status"] } = {},
     ): Promise<Page<WebhooksDelivery>> {
-      await loadEndpoint(organizationId, endpointId);
+      await loadEndpoint(tenantId, endpointId);
       const limit = clampLimit(filter.limit);
       const where = and(
-        eq(webhooksDeliveries.organizationId, organizationId),
+        eq(webhooksDeliveries.tenantId, tenantId),
         eq(webhooksDeliveries.endpointId, endpointId),
         webhookDeliveryFilters.where(filter as Record<string, unknown>),
         cursorWhere(
@@ -425,7 +425,7 @@ export function createWebhooksService(
     },
 
     async getDelivery(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<WebhooksDelivery> {
       let rows: WebhooksDelivery[];
@@ -436,7 +436,7 @@ export function createWebhooksService(
           .where(
             and(
               eq(webhooksDeliveries.id, id),
-              eq(webhooksDeliveries.organizationId, organizationId),
+              eq(webhooksDeliveries.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -455,14 +455,14 @@ export function createWebhooksService(
      * "replay" button.
      */
     async replayDelivery(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<WebhooksDelivery> {
-      const original = await this.getDelivery(organizationId, id);
+      const original = await this.getDelivery(tenantId, id);
       const [row] = await db
         .insert(webhooksDeliveries)
         .values({
-          organizationId,
+          tenantId,
           endpointId: original.endpointId,
           eventId: original.eventId,
           eventType: original.eventType,
@@ -610,7 +610,7 @@ async function attemptDelivery(args: AttemptArgs): Promise<boolean> {
     id: delivery.eventId,
     type: delivery.eventType,
     created_at: delivery.createdAt.toISOString(),
-    organization_id: delivery.organizationId,
+    tenant_id: delivery.tenantId,
     data: delivery.payload,
   });
   const signature = await signDelivery({

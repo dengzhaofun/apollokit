@@ -49,7 +49,7 @@ const TAG = "Activity";
 function serializeActivity(row: ActivityConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -512,7 +512,7 @@ activityRouter.openapi(
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await activityService.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       endUserId: body.endUserId,
     });
@@ -550,7 +550,7 @@ activityRouter.openapi(
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const row = await activityService.leaveActivity({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       endUserId: body.endUserId,
     });
@@ -585,7 +585,7 @@ activityRouter.openapi(
     const { key } = c.req.valid("param");
     const { status, cursor, limit } = c.req.valid("query");
     const result = await activityService.listMembers({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       status: status ?? "all",
       cursor: cursor ?? null,
@@ -629,7 +629,7 @@ activityRouter.openapi(
     const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const result = await activityService.redeemQueueNumber({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       endUserId,
     });
@@ -673,7 +673,7 @@ activityRouter.openapi(
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await activityService.addPoints({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       endUserId: body.endUserId,
       delta: body.delta,
@@ -713,7 +713,7 @@ activityRouter.openapi(
     const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const view = await activityService.getActivityForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
       endUserId,
     });
@@ -793,7 +793,7 @@ activityRouter.openapi(
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const result = await activityService.getActivityAnalytics({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: key,
     });
     return c.json(ok(result), 200);
@@ -904,7 +904,7 @@ activityRouter.openapi(
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
     const result = await activityService.instantiateTemplate({
-      organizationId: orgId,
+      tenantId: orgId,
       templateId: id,
     });
     return c.json(ok(result), 200);

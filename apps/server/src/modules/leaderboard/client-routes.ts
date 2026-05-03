@@ -16,7 +16,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers,
  *                             verifies HMAC, populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and
  * endUserId from getEndUserId(c). No inline verifyRequest calls; no auth
  * fields in body or query.
  */
@@ -98,11 +98,11 @@ leaderboardClientRouter.openapi(
   }),
   async (c) => {
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { cycleKey, scopeKey, limit } = c.req.valid("query");
     const { alias } = c.req.valid("param");
     const result = await leaderboardService.getTop({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: alias,
       cycleKey,
       scopeKey,
@@ -134,11 +134,11 @@ leaderboardClientRouter.openapi(
   }),
   async (c) => {
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { cycleKey, scopeKey, window } = c.req.valid("query");
     const { alias } = c.req.valid("param");
     const result = await leaderboardService.getNeighbors({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: alias,
       endUserId,
       cycleKey,
@@ -167,17 +167,17 @@ leaderboardClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { alias } = c.req.valid("param");
     const rows = await leaderboardService.listSnapshots({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: alias,
     });
     return c.json(ok({
         items: rows.map((r) => ({
           id: r.id,
           configId: r.configId,
-          organizationId: r.organizationId,
+          tenantId: r.tenantId,
           cycleKey: r.cycleKey,
           scopeKey: r.scopeKey,
           rankings: r.rankings,

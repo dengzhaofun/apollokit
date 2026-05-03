@@ -107,8 +107,8 @@ describe("rank admin routes — auth & validation", () => {
         tierConfigAlias: "x",
         externalMatchId: "m1",
         participants: [
-          { endUserId: "a", teamId: "A", placement: 1, win: true },
-          { endUserId: "b", teamId: "B", placement: 2, win: false },
+          { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });
@@ -250,8 +250,8 @@ describe("rank admin routes — /settle end-to-end", () => {
         externalMatchId: "route-m1",
         gameMode: "1v1",
         participants: [
-          { endUserId: "route-a", teamId: "A", placement: 1, win: true },
-          { endUserId: "route-b", teamId: "B", placement: 2, win: false },
+          { endUserId: "route-a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "route-b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });
@@ -275,8 +275,8 @@ describe("rank admin routes — /settle end-to-end", () => {
         tierConfigAlias: "settle_cfg",
         externalMatchId: "route-m1",
         participants: [
-          { endUserId: "route-a", teamId: "A", placement: 1, win: true },
-          { endUserId: "route-b", teamId: "B", placement: 2, win: false },
+          { endUserId: "route-a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "route-b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });

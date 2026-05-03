@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -36,7 +36,7 @@ const TAG = "Friend (Client)";
 
 function serializeRequest(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   fromUserId: string;
   toUserId: string;
   status: string;
@@ -49,7 +49,7 @@ function serializeRequest(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     fromUserId: row.fromUserId,
     toUserId: row.toUserId,
     status: row.status,
@@ -64,7 +64,7 @@ function serializeRequest(row: {
 
 function serializeRelationship(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   userA: string;
   userB: string;
   metadata: unknown;
@@ -72,7 +72,7 @@ function serializeRelationship(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     userA: row.userA,
     userB: row.userB,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,
@@ -81,13 +81,13 @@ function serializeRelationship(row: {
 }
 
 function serializeBlock(row: {
-  organizationId: string;
+  tenantId: string;
   blockerUserId: string;
   blockedUserId: string;
   createdAt: Date;
 }) {
   return {
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     blockerUserId: row.blockerUserId,
     blockedUserId: row.blockedUserId,
     createdAt: row.createdAt.toISOString(),
@@ -126,7 +126,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { toUserId, message } = c.req.valid("json");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const row = await friendService.sendRequest(orgId, endUserId, toUserId, message);
     return c.json(ok(serializeRequest(row)), 201);
   },
@@ -150,7 +150,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const rows = await friendService.listIncomingRequests(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeRequest) }), 200);
   },
@@ -174,7 +174,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const rows = await friendService.listOutgoingRequests(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeRequest) }), 200);
   },
@@ -203,7 +203,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { id } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const row = await friendService.acceptRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
   },
@@ -232,7 +232,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { id } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const row = await friendService.rejectRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
   },
@@ -261,7 +261,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { id } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const row = await friendService.cancelRequest(orgId, id, endUserId);
     return c.json(ok(serializeRequest(row)), 200);
   },
@@ -294,7 +294,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { limit, offset } = c.req.valid("query");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const rows = await friendService.listFriends(orgId, endUserId, { limit, offset });
     return c.json(ok({ items: rows.map(serializeRelationship), total: rows.length }), 200);
   },
@@ -320,7 +320,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const { id } = c.req.valid("param");
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     await friendService.removeFriend(orgId, id);
     return c.json(ok(null), 200);
   },
@@ -349,12 +349,12 @@ friendClientRouter.openapi(
   async (c) => {
     const { withUserId } = c.req.valid("query");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const rows = await friendService.getMutualFriends(orgId, endUserId, withUserId);
     // Raw SQL returns snake_case — map to camelCase
     const items = rows.map((r) => ({
       id: r.id,
-      organizationId: r.organization_id,
+      tenantId: r.tenant_id,
       userA: r.user_a,
       userB: r.user_b,
       metadata: (r.metadata ?? null) as Record<string, unknown> | null,
@@ -389,7 +389,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { blockedUserId } = c.req.valid("json");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     await friendService.blockUser(orgId, endUserId, blockedUserId);
     return c.json(ok(null), 200);
   },
@@ -416,7 +416,7 @@ friendClientRouter.openapi(
   async (c) => {
     const { blockedUserId } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     await friendService.unblockUser(orgId, endUserId, blockedUserId);
     return c.json(ok(null), 200);
   },
@@ -440,7 +440,7 @@ friendClientRouter.openapi(
   }),
   async (c) => {
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const rows = await friendService.listBlocks(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeBlock) }), 200);
   },

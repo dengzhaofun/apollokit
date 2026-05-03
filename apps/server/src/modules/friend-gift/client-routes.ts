@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId
  * (the caller / sender) from getEndUserId(c). Receiver fields (receiverUserId) stay
  * in the request body/query.
  */
@@ -36,7 +36,7 @@ import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-h
 
 function serializePackage(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -50,7 +50,7 @@ function serializePackage(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -66,7 +66,7 @@ function serializePackage(row: {
 
 function serializeSend(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   packageId: string | null;
   senderUserId: string;
   receiverUserId: string;
@@ -81,7 +81,7 @@ function serializeSend(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     packageId: row.packageId,
     senderUserId: row.senderUserId,
     receiverUserId: row.receiverUserId,
@@ -120,7 +120,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     // Client view: fetch up to the server cap; the client app doesn't paginate.
     const page = await friendGiftService.listPackages(orgId, {
       activeOnly: true,
@@ -152,7 +152,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { packageId, receiverUserId, message } = c.req.valid("json");
     const send = await friendGiftService.sendGift(orgId, endUserId, {
@@ -183,7 +183,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const rows = await friendGiftService.listInbox(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
@@ -209,7 +209,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const rows = await friendGiftService.listSent(orgId, endUserId);
     return c.json(ok({ items: rows.map(serializeSend), nextCursor: null }), 200);
@@ -239,7 +239,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const claimed = await friendGiftService.claimGift(orgId, id, endUserId);
@@ -268,7 +268,7 @@ friendGiftClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const status = await friendGiftService.getDailyStatus(orgId, endUserId);
     return c.json(ok(status), 200);

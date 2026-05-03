@@ -104,7 +104,7 @@ describe("assist-pool service", () => {
       perAssisterLimit: 10,
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "exact",
       initiatorEndUserId: "u-init-exact",
     });
@@ -112,7 +112,7 @@ describe("assist-pool service", () => {
     expect(instance.remaining).toBe(100);
 
     let res = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-helper-1",
     });
@@ -121,17 +121,17 @@ describe("assist-pool service", () => {
     expect(res.contribution.amount).toBe(25);
 
     res = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-helper-2",
     });
     res = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-helper-3",
     });
     res = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-helper-4",
     });
@@ -151,12 +151,12 @@ describe("assist-pool service", () => {
       perAssisterLimit: 5,
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "one-shot",
       initiatorEndUserId: "u-one",
     });
     const first = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-one-helper",
     });
@@ -164,7 +164,7 @@ describe("assist-pool service", () => {
 
     await expect(
       svc.contribute({
-        organizationId: orgId,
+        tenantId: orgId,
         instanceId: instance.id,
         assisterEndUserId: "u-one-helper-2",
       }),
@@ -180,18 +180,18 @@ describe("assist-pool service", () => {
       perAssisterLimit: 1,
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "single-help",
       initiatorEndUserId: "u-solo",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-helper",
     });
     await expect(
       svc.contribute({
-        organizationId: orgId,
+        tenantId: orgId,
         instanceId: instance.id,
         assisterEndUserId: "u-helper",
       }),
@@ -206,13 +206,13 @@ describe("assist-pool service", () => {
       contributionPolicy: { kind: "fixed", amount: 10 },
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "no-self",
       initiatorEndUserId: "u-self",
     });
     await expect(
       svc.contribute({
-        organizationId: orgId,
+        tenantId: orgId,
         instanceId: instance.id,
         assisterEndUserId: "u-self",
       }),
@@ -226,12 +226,12 @@ describe("assist-pool service", () => {
       initiatorCanAssist: true,
     });
     const inst2 = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "allow-self",
       initiatorEndUserId: "u-self-ok",
     });
     const res = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: inst2.id,
       assisterEndUserId: "u-self-ok",
     });
@@ -247,7 +247,7 @@ describe("assist-pool service", () => {
       expiresInSeconds: 1,
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "short-lived",
       initiatorEndUserId: "u-shortlived",
     });
@@ -256,7 +256,7 @@ describe("assist-pool service", () => {
     await svc.forceExpireInstance(orgId, instance.id);
     await expect(
       svc.contribute({
-        organizationId: orgId,
+        tenantId: orgId,
         instanceId: instance.id,
         assisterEndUserId: "u-latecomer",
       }),
@@ -273,14 +273,14 @@ describe("assist-pool service", () => {
       perAssisterLimit: 5,
     });
     const instance = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "accum",
       initiatorEndUserId: "u-accum",
     });
     expect(instance.remaining).toBe(0);
 
     const a = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-a1",
     });
@@ -288,14 +288,14 @@ describe("assist-pool service", () => {
     expect(a.completed).toBe(false);
 
     const b = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-a2",
     });
     expect(b.instance.remaining).toBe(20);
 
     const c = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId: instance.id,
       assisterEndUserId: "u-a3",
     });
@@ -312,13 +312,13 @@ describe("assist-pool service", () => {
       maxInstancesPerInitiator: 1,
     });
     await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "one-open",
       initiatorEndUserId: "u-caplimit",
     });
     await expect(
       svc.initiateInstance({
-        organizationId: orgId,
+        tenantId: orgId,
         configKey: "one-open",
         initiatorEndUserId: "u-caplimit",
       }),
@@ -335,7 +335,7 @@ describe("assist-pool service", () => {
     });
     // Create an instance then rewind expiresAt to the past via force-expire.
     const inst = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "overdue",
       initiatorEndUserId: "u-od",
     });
@@ -349,7 +349,7 @@ describe("assist-pool service", () => {
       expiresInSeconds: 1,
     });
     const tiny = await svc.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "tiny-ttl",
       initiatorEndUserId: "u-tiny",
     });
@@ -377,7 +377,7 @@ describe("assist-pool service", () => {
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           alias: opts.alias,
           name: `gate-${opts.alias}`,
           kind: "generic",
@@ -405,7 +405,7 @@ describe("assist-pool service", () => {
       });
       await expect(
         svc.initiateInstance({
-          organizationId: orgId,
+          tenantId: orgId,
           configKey: "ap-bound-teasing",
           initiatorEndUserId: "u-ap-gate-teasing",
         }),
@@ -426,13 +426,13 @@ describe("assist-pool service", () => {
         activityId,
       });
       const inst = await svc.initiateInstance({
-        organizationId: orgId,
+        tenantId: orgId,
         configKey: "ap-bound-active",
         initiatorEndUserId: "u-ap-gate-active",
       });
       expect(inst.status).toBe("in_progress");
       const r = await svc.contribute({
-        organizationId: orgId,
+        tenantId: orgId,
         instanceId: inst.id,
         assisterEndUserId: "u-ap-gate-helper",
       });

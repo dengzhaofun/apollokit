@@ -26,11 +26,11 @@ registerEvent({
     "Carries the per-user MMR / rankScore delta; task-bridge reads this " +
     "to count 'wins per user' style goals.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "matchId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
-    { path: "teamId", type: "string", required: true },
+    { path: "matchTeamId", type: "string", required: true },
     { path: "win", type: "boolean", required: true },
     { path: "rankScoreBefore", type: "number", required: true },
     { path: "rankScoreAfter", type: "number", required: true },
@@ -49,7 +49,7 @@ registerEvent({
     "A participant crossed into a higher tier during settlement. Fired " +
     "after `rank.match_settled` for the same user.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "matchId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
@@ -65,7 +65,7 @@ registerEvent({
     "A participant dropped into a lower tier during settlement (all " +
     "protection shields have been consumed).",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "matchId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
@@ -83,7 +83,7 @@ registerEvent({
     "to task-bridge.",
   forwardToTask: false,
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "seasonId", type: "string", required: true },
     { path: "playerCount", type: "number", required: true },
     { path: "finalizedAt", type: "string", required: true },

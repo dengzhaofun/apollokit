@@ -14,7 +14,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { LinkAction } from "../modules/link/types";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Banner groups — "a carousel slot" — one group per placement in the app
@@ -32,9 +32,9 @@ export const bannerGroups = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -59,9 +59,9 @@ export const bannerGroups = pgTable(
       .notNull(),
   },
   (table) => [
-    index("banner_groups_org_idx").on(table.organizationId),
-    uniqueIndex("banner_groups_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("banner_groups_tenant_idx").on(table.tenantId),
+    uniqueIndex("banner_groups_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("banner_groups_activity_idx").on(table.activityId),
   ],
@@ -92,9 +92,9 @@ export const banners = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     groupId: uuid("group_id")
       .notNull()
       .references(() => bannerGroups.id, { onDelete: "cascade" }),
@@ -123,13 +123,13 @@ export const banners = pgTable(
       .notNull(),
   },
   (table) => [
-    index("banners_org_group_sort_idx").on(
-      table.organizationId,
+    index("banners_tenant_group_sort_idx").on(
+      table.tenantId,
       table.groupId,
       table.sortOrder,
     ),
-    index("banners_org_visible_window_idx").on(
-      table.organizationId,
+    index("banners_tenant_visible_window_idx").on(
+      table.tenantId,
       table.groupId,
       table.isActive,
       table.visibleFrom,

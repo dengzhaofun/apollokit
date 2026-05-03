@@ -53,12 +53,12 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { poolId, idempotencyKey } = c.req.valid("json");
 
     const result = await lotteryService.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey: poolId,
       idempotencyKey,
@@ -88,12 +88,12 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { poolId, count, idempotencyKey } = c.req.valid("json");
 
     const result = await lotteryService.multiPull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey: poolId,
       count,
@@ -122,11 +122,11 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { poolKey } = c.req.valid("param");
     const state = await lotteryService.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
     });
@@ -151,11 +151,11 @@ lotteryClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { poolKey } = c.req.valid("param");
     const rows = await lotteryService.getPullHistory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
     });

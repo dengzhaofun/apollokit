@@ -91,9 +91,9 @@ import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
 import {
-  teamRouter,
-  teamClientRouter,
-} from "./modules/team";
+  matchSquadRouter,
+  matchSquadClientRouter,
+} from "./modules/match-squad";
 // level / leaderboard / activity MUST be imported BEFORE task — the task
 // barrel installs an event forwarder that walks the registry at import
 // time, so every event these modules publish must already be registered.
@@ -310,7 +310,7 @@ app.route("/api/shop", shopRouter);
 app.route("/api/storage-box", storageBoxRouter);
 app.route("/api/media-library", mediaLibraryRouter);
 app.route("/api/task", taskRouter);
-app.route("/api/team", teamRouter);
+app.route("/api/match-squad", matchSquadRouter);
 app.route("/api/level", levelRouter);
 app.route("/api/leaderboard", leaderboardRouter);
 app.route("/api/activity", activityRouter);
@@ -344,7 +344,7 @@ app.route("/api/client/lottery", lotteryClientRouter);
 app.route("/api/client/mail", mailClientRouter);
 app.route("/api/client/shop", shopClientRouter);
 app.route("/api/client/task", taskClientRouter);
-app.route("/api/client/team", teamClientRouter);
+app.route("/api/client/match-squad", matchSquadClientRouter);
 app.route("/api/client/level", levelClientRouter);
 app.route("/api/client/leaderboard", leaderboardClientRouter);
 app.route("/api/client/rank", rankClientRouter);

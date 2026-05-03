@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * 外部事件 catalog —— 实际定位是"**task 消费的外部事件目录**"。
@@ -29,7 +29,7 @@ import { organization } from "./auth";
  * TODO(任务后续): 考虑重命名为 `task_event_catalog` / `task_events`,
  * 让表名更精确反映"唯一职责是 task 触发"。当前保留名字避免 import 大规模改动。
  *
- * 每个 (organizationId, eventName) 一行。内部事件不写这张表 —— 内部事件走
+ * 每个 (tenantId, eventName) 一行。内部事件不写这张表 —— 内部事件走
  * `src/lib/event-registry.ts` 的 runtime registry。
  */
 
@@ -60,9 +60,9 @@ export const eventCatalogEntries = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     eventName: text("event_name").notNull(),
     /**
      * 'inferred' | 'canonical'. inferred 下字段会被后续事件的推断 merge；
@@ -84,11 +84,11 @@ export const eventCatalogEntries = pgTable(
   },
   (table) => [
     uniqueIndex("event_catalog_org_name_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.eventName,
     ),
-    index("event_catalog_org_last_seen_idx").on(
-      table.organizationId,
+    index("event_catalog_tenant_last_seen_idx").on(
+      table.tenantId,
       table.lastSeenAt,
     ),
   ],

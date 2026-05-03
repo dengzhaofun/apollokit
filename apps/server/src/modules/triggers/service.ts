@@ -110,10 +110,10 @@ export function createTriggerService(
      * 列出 org 下的所有规则（admin UI 用）。
      */
     async listRules(
-      organizationId: string,
+      tenantId: string,
       filters?: { status?: TriggerRuleStatus; triggerEvent?: string },
     ): Promise<TriggerRuleRow[]> {
-      const where = [eq(triggerRules.organizationId, organizationId)];
+      const where = [eq(triggerRules.tenantId, tenantId)];
       if (filters?.status) where.push(eq(triggerRules.status, filters.status));
       if (filters?.triggerEvent)
         where.push(eq(triggerRules.triggerEvent, filters.triggerEvent));
@@ -125,7 +125,7 @@ export function createTriggerService(
     },
 
     async getRule(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<TriggerRuleRow> {
       const [row] = await db
@@ -133,7 +133,7 @@ export function createTriggerService(
         .from(triggerRules)
         .where(
           and(
-            eq(triggerRules.organizationId, organizationId),
+            eq(triggerRules.tenantId, tenantId),
             eq(triggerRules.id, id),
           ),
         )
@@ -143,7 +143,7 @@ export function createTriggerService(
     },
 
     async createRule(
-      organizationId: string,
+      tenantId: string,
       input: CreateRuleInput,
     ): Promise<TriggerRuleRow> {
       validateActions(input.actions);
@@ -152,7 +152,7 @@ export function createTriggerService(
       const [row] = await db
         .insert(triggerRules)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           description: input.description ?? null,
           status: input.status ?? "active",
@@ -170,7 +170,7 @@ export function createTriggerService(
     },
 
     async updateRule(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateRuleInput,
     ): Promise<TriggerRuleRow> {
@@ -200,7 +200,7 @@ export function createTriggerService(
         })
         .where(
           and(
-            eq(triggerRules.organizationId, organizationId),
+            eq(triggerRules.tenantId, tenantId),
             eq(triggerRules.id, id),
             eq(triggerRules.version, input.version),
           ),
@@ -214,7 +214,7 @@ export function createTriggerService(
           .from(triggerRules)
           .where(
             and(
-              eq(triggerRules.organizationId, organizationId),
+              eq(triggerRules.tenantId, tenantId),
               eq(triggerRules.id, id),
             ),
           )
@@ -229,13 +229,13 @@ export function createTriggerService(
      * 软删 —— 改 status='archived'。彻底删除（含 executions 级联）由后台
      * 90d 清理 cron 干（M3.5）。
      */
-    async archiveRule(organizationId: string, id: string): Promise<void> {
+    async archiveRule(tenantId: string, id: string): Promise<void> {
       const [row] = await db
         .update(triggerRules)
         .set({ status: "archived" })
         .where(
           and(
-            eq(triggerRules.organizationId, organizationId),
+            eq(triggerRules.tenantId, tenantId),
             eq(triggerRules.id, id),
           ),
         )
@@ -258,7 +258,7 @@ export function createTriggerService(
         .from(triggerRules)
         .where(
           and(
-            eq(triggerRules.organizationId, orgId),
+            eq(triggerRules.tenantId, orgId),
             eq(triggerRules.triggerEvent, eventName),
             eq(triggerRules.status, "active"),
           ),
@@ -377,7 +377,7 @@ async function runOneRule(args: {
   if (!dryRun) {
     try {
       await db.insert(triggerExecutions).values({
-        organizationId: orgId,
+        tenantId: orgId,
         ruleId: rule.id,
         ruleVersion: rule.version,
         eventName,

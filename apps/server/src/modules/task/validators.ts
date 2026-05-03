@@ -491,7 +491,7 @@ export const ClaimTierBodySchema = z
 export const CategoryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -512,7 +512,7 @@ export const CategoryListResponseSchema = pageOf(CategoryResponseSchema).openapi
 export const DefinitionResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     categoryId: z.string().nullable(),
     parentId: z.string().nullable(),
     alias: z.string().nullable(),
@@ -715,7 +715,7 @@ export const AssignmentResponseSchema = z
   .object({
     taskId: z.string(),
     endUserId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     assignedAt: z.string(),
     expiresAt: z.string().nullable(),
     revokedAt: z.string().nullable(),

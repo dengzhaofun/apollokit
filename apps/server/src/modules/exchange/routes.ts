@@ -36,7 +36,7 @@ const TAG_EXEC = "Exchange Execution";
 
 function serializeConfig(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -47,7 +47,7 @@ function serializeConfig(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -61,7 +61,7 @@ function serializeConfig(row: {
 function serializeOption(row: {
   id: string;
   configId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   costItems: RewardEntry[];
@@ -78,7 +78,7 @@ function serializeOption(row: {
   return {
     id: row.id,
     configId: row.configId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     costItems: row.costItems,
@@ -387,7 +387,7 @@ exchangeRouter.openapi(
     const { optionId } = c.req.valid("param");
     const { endUserId, idempotencyKey } = c.req.valid("json");
     const result = await exchangeService.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       optionId,
       idempotencyKey,
@@ -416,7 +416,7 @@ exchangeRouter.openapi(
     const optionId = c.req.param("optionId")!;
     const endUserId = c.req.param("endUserId")!;
     const state = await exchangeService.getUserOptionState({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       optionId,
     });

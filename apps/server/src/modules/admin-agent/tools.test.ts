@@ -7,7 +7,7 @@ import {
 } from "./tools";
 import type { AdminSurface, ChatExecutionContext } from "./types";
 
-const FAKE_CTX: ChatExecutionContext = { organizationId: "org-test" };
+const FAKE_CTX: ChatExecutionContext = { tenantId: "org-test" };
 
 const BASE_TOOL_NAMES = [
   "askClarification",

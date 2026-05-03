@@ -9,7 +9,7 @@ export type ClientCredentialPublic = Omit<
 
 export type VerifyResult = {
   valid: boolean;
-  organizationId: string;
+  tenantId: string;
   credentialId: string;
   devMode: boolean;
 };

@@ -37,7 +37,7 @@ export function createNavigationService(d: NavigationDeps) {
   const { db } = d
 
   async function list(
-    organizationId: string,
+    tenantId: string,
     userId: string,
   ): Promise<NavigationFavorite[]> {
     return db
@@ -45,7 +45,7 @@ export function createNavigationService(d: NavigationDeps) {
       .from(navigationFavorites)
       .where(
         and(
-          eq(navigationFavorites.organizationId, organizationId),
+          eq(navigationFavorites.tenantId, tenantId),
           eq(navigationFavorites.userId, userId),
         ),
       )
@@ -53,7 +53,7 @@ export function createNavigationService(d: NavigationDeps) {
   }
 
   async function add(
-    organizationId: string,
+    tenantId: string,
     userId: string,
     routePath: string,
   ): Promise<NavigationFavorite> {
@@ -68,7 +68,7 @@ export function createNavigationService(d: NavigationDeps) {
       .from(navigationFavorites)
       .where(
         and(
-          eq(navigationFavorites.organizationId, organizationId),
+          eq(navigationFavorites.tenantId, tenantId),
           eq(navigationFavorites.userId, userId),
         ),
       )
@@ -83,21 +83,21 @@ export function createNavigationService(d: NavigationDeps) {
       table: navigationFavorites,
       sortColumn: navigationFavorites.sortOrder,
       scopeWhere: and(
-        eq(navigationFavorites.organizationId, organizationId),
+        eq(navigationFavorites.tenantId, tenantId),
         eq(navigationFavorites.userId, userId),
       )!,
     })
     const rows = await db
       .insert(navigationFavorites)
       .values({
-        organizationId,
+        tenantId,
         userId,
         routePath,
         sortOrder,
       })
       .onConflictDoUpdate({
         target: [
-          navigationFavorites.organizationId,
+          navigationFavorites.tenantId,
           navigationFavorites.userId,
           navigationFavorites.routePath,
         ],
@@ -111,7 +111,7 @@ export function createNavigationService(d: NavigationDeps) {
   }
 
   async function remove(
-    organizationId: string,
+    tenantId: string,
     userId: string,
     routePath: string,
   ): Promise<void> {
@@ -119,7 +119,7 @@ export function createNavigationService(d: NavigationDeps) {
       .delete(navigationFavorites)
       .where(
         and(
-          eq(navigationFavorites.organizationId, organizationId),
+          eq(navigationFavorites.tenantId, tenantId),
           eq(navigationFavorites.userId, userId),
           eq(navigationFavorites.routePath, routePath),
         ),

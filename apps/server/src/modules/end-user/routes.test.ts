@@ -13,12 +13,14 @@ import app from "../../index";
 import { endUserService } from "./index";
 import { organization, user } from "../../schema";
 import { expectOk } from "../../testing/envelope";
+import { getDefaultTeamId } from "../../testing/fixtures";
 
 const ORIGIN = "http://localhost:8787";
 
 type SignedInFixture = {
   cookie: string;
   orgId: string;
+  tenantId: string;
   adminUserId: string;
   email: string;
 };
@@ -70,7 +72,7 @@ async function signUpAndOrg(): Promise<SignedInFixture> {
   const userRows = await db.select().from(user).where(eq(user.email, email));
   const adminUserId = userRows[0]!.id;
 
-  return { cookie, orgId, adminUserId, email };
+  const tenantId = await getDefaultTeamId(orgId); return { cookie, orgId, tenantId, adminUserId, email };
 }
 
 describe("end-user admin routes", () => {
@@ -80,7 +82,7 @@ describe("end-user admin routes", () => {
   beforeAll(async () => {
     fx = await signUpAndOrg();
     // Seed an end-user via the service so we have something to CRUD
-    const r = await endUserService.syncUser(fx.orgId, {
+    const r = await endUserService.syncUser(fx.tenantId, {
       externalId: "u_route_seed",
       email: "seed@example.com",
       name: "Seed Player",
@@ -222,7 +224,7 @@ describe("end-user admin routes", () => {
   });
 
   test("DELETE /:id → 200 with null data, subsequent GET → 404", async () => {
-    const created = await endUserService.syncUser(fx.orgId, {
+    const created = await endUserService.syncUser(fx.tenantId, {
       externalId: "u_delete_me",
       email: "delete-me@example.com",
       name: "Delete Me",

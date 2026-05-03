@@ -8,7 +8,7 @@
  *
  * Alphabet is 32 characters so each byte's lower 5 bits maps cleanly.
  * Default length is 16 usable characters → 32^16 ≈ 10^24 space.
- * Uniqueness is still enforced by the (organization_id, code) unique index;
+ * Uniqueness is still enforced by the (tenant_id, code) unique index;
  * collisions just retry.
  */
 

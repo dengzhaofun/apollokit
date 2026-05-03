@@ -227,7 +227,7 @@ export const CheckInBodySchema = z
 export const CheckInConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -246,7 +246,7 @@ export const CheckInUserStateSchema = z
   .object({
     configId: z.string(),
     endUserId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     totalDays: z.number().int(),
     currentStreak: z.number().int(),
     longestStreak: z.number().int(),
@@ -330,7 +330,7 @@ export const CheckInRewardResponseSchema = z
   .object({
     id: z.string(),
     configId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     dayNumber: z.number().int(),
     rewardItems: z.array(RewardItemSchema),
     metadata: z.record(z.string(), z.unknown()).nullable(),

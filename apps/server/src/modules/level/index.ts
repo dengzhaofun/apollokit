@@ -25,7 +25,7 @@ registerEvent({
   description:
     "Fired when a user clears a level. Useful for 通关 N 个关卡 类型任务。",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "configId", type: "string", required: true },
     { path: "levelId", type: "string", required: true },

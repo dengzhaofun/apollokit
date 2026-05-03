@@ -42,7 +42,7 @@ function serializeParticipant(row: RankMatchParticipant) {
     id: row.id,
     matchId: row.matchId,
     endUserId: row.endUserId,
-    teamId: row.teamId,
+    matchTeamId: row.matchTeamId,
     placement: row.placement,
     win: row.win,
     mmrBefore: row.mmrBefore,
@@ -93,11 +93,11 @@ rankClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { seasonId, tierConfigAlias } = c.req.valid("query");
     const view = await rankService.getPlayerState({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       tierConfigAlias,
       endUserId,
@@ -134,7 +134,7 @@ rankClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { seasonId, tierConfigAlias, limit, cursor } = c.req.valid("query");
     // If only tierConfigAlias is provided, resolve the active season first.
@@ -142,13 +142,13 @@ rankClientRouter.openapi(
       seasonId ??
       (
         await rankService.getPlayerState({
-          organizationId: orgId,
+          tenantId: orgId,
           tierConfigAlias,
           endUserId,
         }).catch(() => null)
       )?.seasonId;
     const { items, nextCursor } = await rankService.getPlayerHistory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       seasonId: effectiveSeasonId,
       limit,
@@ -213,7 +213,7 @@ rankClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const {
       seasonId,
@@ -226,7 +226,7 @@ rankClientRouter.openapi(
     if (tierId) {
       // Tier-internal board via PG.
       const items = await rankService.getTierLeaderboard({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId,
         tierConfigAlias,
         tierId,
@@ -237,7 +237,7 @@ rankClientRouter.openapi(
 
     // Global season board, delegate to leaderboard.
     const top = await rankService.getGlobalLeaderboard({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       tierConfigAlias,
       limit,

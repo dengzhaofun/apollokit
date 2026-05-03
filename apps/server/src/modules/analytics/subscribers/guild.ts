@@ -11,7 +11,7 @@ export function registerGuildSubscribers(
 
   events.on("guild.created", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "guild.created",
       source: "guild",
@@ -26,7 +26,7 @@ export function registerGuildSubscribers(
 
   events.on("guild.joined", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "guild.joined",
       source: "guild",
@@ -41,7 +41,7 @@ export function registerGuildSubscribers(
 
   events.on("guild.left", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "guild.left",
       source: "guild",
@@ -54,7 +54,7 @@ export function registerGuildSubscribers(
 
   events.on("guild.contributed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "guild.contributed",
       source: "guild",

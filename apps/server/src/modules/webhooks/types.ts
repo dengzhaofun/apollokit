@@ -29,7 +29,7 @@ export type WebhooksDelivery = typeof webhooksDeliveries.$inferSelect;
 export type WebhooksEndpointView = Omit<WebhooksEndpoint, "secretCiphertext">;
 
 export type DispatchInput = {
-  organizationId: string;
+  tenantId: string;
   /**
    * Caller-supplied event id. Must be unique per event so receivers can
    * deduplicate across retries. If omitted, service mints a UUID.

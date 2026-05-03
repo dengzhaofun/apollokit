@@ -15,7 +15,7 @@
  *
  *   INSERT INTO rank_matches (..., settled_at)
  *   VALUES (...)
- *   ON CONFLICT (organization_id, external_match_id) DO NOTHING
+ *   ON CONFLICT (tenant_id, external_match_id) DO NOTHING
  *   RETURNING id, (xmax = 0) AS inserted;
  *
  * An empty RETURNING = another caller already settled this (externalMatchId);
@@ -136,11 +136,11 @@ import {
 declare module "../../lib/event-bus" {
   interface EventMap {
     "rank.match_settled": {
-      organizationId: string;
+      tenantId: string;
       seasonId: string;
       matchId: string;
       endUserId: string;
-      teamId: string;
+      matchTeamId: string;
       win: boolean;
       rankScoreBefore: number;
       rankScoreAfter: number;
@@ -151,7 +151,7 @@ declare module "../../lib/event-bus" {
       settledAt: Date;
     };
     "rank.tier_promoted": {
-      organizationId: string;
+      tenantId: string;
       seasonId: string;
       matchId: string;
       endUserId: string;
@@ -159,7 +159,7 @@ declare module "../../lib/event-bus" {
       toTierId: string;
     };
     "rank.tier_demoted": {
-      organizationId: string;
+      tenantId: string;
       seasonId: string;
       matchId: string;
       endUserId: string;
@@ -167,7 +167,7 @@ declare module "../../lib/event-bus" {
       toTierId: string;
     };
     "rank.season_finalized": {
-      organizationId: string;
+      tenantId: string;
       seasonId: string;
       playerCount: number;
       finalizedAt: Date;
@@ -195,7 +195,7 @@ function protectionRulesOf(tier: RankTier): TierProtectionRules {
 
 export type LeaderboardLike = {
   createConfig: (
-    organizationId: string,
+    tenantId: string,
     input: {
       alias: string;
       name: string;
@@ -211,12 +211,12 @@ export type LeaderboardLike = {
     },
   ) => Promise<{ id: string; alias: string }>;
   updateConfig: (
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
     patch: { status?: "draft" | "active" | "paused" | "archived" },
   ) => Promise<{ id: string; alias: string; status: string }>;
   contribute: (input: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     metricKey: string;
     value: number;
@@ -226,7 +226,7 @@ export type LeaderboardLike = {
     now?: Date;
   }) => Promise<{ applied: number }>;
   getTop: (params: {
-    organizationId: string;
+    tenantId: string;
     configKey: string;
     cycleKey?: string;
     scopeKey?: string;
@@ -261,16 +261,16 @@ export function createRankService(
   // ─── Tier config CRUD ───────────────────────────────────────
 
   async function loadTierConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<RankTierConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(rankTierConfigs.organizationId, organizationId),
+          eq(rankTierConfigs.tenantId, tenantId),
           eq(rankTierConfigs.id, key),
         )
       : and(
-          eq(rankTierConfigs.organizationId, organizationId),
+          eq(rankTierConfigs.tenantId, tenantId),
           eq(rankTierConfigs.alias, key),
         );
     const [row] = await db.select().from(rankTierConfigs).where(where).limit(1);
@@ -287,7 +287,7 @@ export function createRankService(
   }
 
   async function createTierConfig(
-    organizationId: string,
+    tenantId: string,
     input: CreateTierConfigInput,
   ): Promise<{ config: RankTierConfig; tiers: RankTier[] }> {
     let configRow: RankTierConfig;
@@ -295,7 +295,7 @@ export function createRankService(
       const [row] = await db
         .insert(rankTierConfigs)
         .values({
-          organizationId,
+          tenantId,
           alias: input.alias,
           name: input.name,
           description: input.description ?? null,
@@ -342,11 +342,11 @@ export function createRankService(
   }
 
   async function updateTierConfig(
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
     patch: UpdateTierConfigInput,
   ): Promise<{ config: RankTierConfig; tiers: RankTier[] }> {
-    const existing = await loadTierConfigByKey(organizationId, idOrAlias);
+    const existing = await loadTierConfigByKey(tenantId, idOrAlias);
     const values: Partial<typeof rankTierConfigs.$inferInsert> = {};
     if (patch.alias !== undefined) values.alias = patch.alias;
     if (patch.name !== undefined) values.name = patch.name;
@@ -370,7 +370,7 @@ export function createRankService(
           .where(
             and(
               eq(rankTierConfigs.id, existing.id),
-              eq(rankTierConfigs.organizationId, organizationId),
+              eq(rankTierConfigs.tenantId, tenantId),
             ),
           );
       } catch (err) {
@@ -416,7 +416,7 @@ export function createRankService(
   }
 
   async function deleteTierConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -424,7 +424,7 @@ export function createRankService(
       .where(
         and(
           eq(rankTierConfigs.id, id),
-          eq(rankTierConfigs.organizationId, organizationId),
+          eq(rankTierConfigs.tenantId, tenantId),
         ),
       )
       .returning({ id: rankTierConfigs.id });
@@ -432,11 +432,11 @@ export function createRankService(
   }
 
   async function listTierConfigs(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<{ config: RankTierConfig; tiers: RankTier[] }>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(rankTierConfigs.organizationId, organizationId)];
+    const conds: SQL[] = [eq(rankTierConfigs.tenantId, tenantId)];
     const seek = cursorWhere(params.cursor, rankTierConfigs.createdAt, rankTierConfigs.id);
     if (seek) conds.push(seek);
     if (params.q) {
@@ -462,10 +462,10 @@ export function createRankService(
   }
 
   async function getTierConfig(
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
   ): Promise<{ config: RankTierConfig; tiers: RankTier[] }> {
-    const config = await loadTierConfigByKey(organizationId, idOrAlias);
+    const config = await loadTierConfigByKey(tenantId, idOrAlias);
     const tiers = await loadTiersOrdered(config.id);
     return { config, tiers };
   }
@@ -473,7 +473,7 @@ export function createRankService(
   // ─── Season CRUD ────────────────────────────────────────────
 
   async function loadSeasonById(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
   ): Promise<RankSeason> {
     const [row] = await db
@@ -482,7 +482,7 @@ export function createRankService(
       .where(
         and(
           eq(rankSeasons.id, seasonId),
-          eq(rankSeasons.organizationId, organizationId),
+          eq(rankSeasons.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -491,10 +491,10 @@ export function createRankService(
   }
 
   async function loadActiveSeasonByTierConfigAlias(
-    organizationId: string,
+    tenantId: string,
     tierConfigAlias: string,
   ): Promise<RankSeason> {
-    const cfg = await loadTierConfigByKey(organizationId, tierConfigAlias);
+    const cfg = await loadTierConfigByKey(tenantId, tierConfigAlias);
     const [row] = await db
       .select()
       .from(rankSeasons)
@@ -510,7 +510,7 @@ export function createRankService(
   }
 
   async function createSeason(
-    organizationId: string,
+    tenantId: string,
     input: CreateSeasonInput,
   ): Promise<RankSeason> {
     // Validate tier config exists and belongs to this org.
@@ -520,7 +520,7 @@ export function createRankService(
       .where(
         and(
           eq(rankTierConfigs.id, input.tierConfigId),
-          eq(rankTierConfigs.organizationId, organizationId),
+          eq(rankTierConfigs.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -529,7 +529,7 @@ export function createRankService(
     const [row] = await db
       .insert(rankSeasons)
       .values({
-        organizationId,
+        tenantId,
         tierConfigId: input.tierConfigId,
         alias: input.alias,
         name: input.name,
@@ -552,7 +552,7 @@ export function createRankService(
     const lb = leaderboardGetter();
     if (lb) {
       try {
-        await lb.createConfig(organizationId, {
+        await lb.createConfig(tenantId, {
           alias: `rank_${cfg.alias}_${row.alias}_global`,
           name: `${cfg.name} ${row.name} Global`,
           metricKey: "rank_score",
@@ -574,11 +574,11 @@ export function createRankService(
   }
 
   async function updateSeason(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
     patch: UpdateSeasonInput,
   ): Promise<RankSeason> {
-    await loadSeasonById(organizationId, seasonId);
+    await loadSeasonById(tenantId, seasonId);
     const values: Partial<typeof rankSeasons.$inferInsert> = {};
     if (patch.alias !== undefined) values.alias = patch.alias;
     if (patch.name !== undefined) values.name = patch.name;
@@ -595,7 +595,7 @@ export function createRankService(
       values.metadata = (patch.metadata ?? null) as Record<string, unknown> | null;
 
     if (Object.keys(values).length === 0) {
-      return loadSeasonById(organizationId, seasonId);
+      return loadSeasonById(tenantId, seasonId);
     }
 
     const [row] = await db
@@ -604,7 +604,7 @@ export function createRankService(
       .where(
         and(
           eq(rankSeasons.id, seasonId),
-          eq(rankSeasons.organizationId, organizationId),
+          eq(rankSeasons.tenantId, tenantId),
         ),
       )
       .returning();
@@ -613,12 +613,12 @@ export function createRankService(
   }
 
   async function listSeasons(
-    organizationId: string,
+    tenantId: string,
     filter: PageParams & { tierConfigId?: string; status?: SeasonStatus } = {},
   ): Promise<Page<RankSeason>> {
     const limit = clampLimit(filter.limit);
     const where = and(
-      eq(rankSeasons.organizationId, organizationId),
+      eq(rankSeasons.tenantId, tenantId),
       rankSeasonFilters.where(filter as Record<string, unknown>),
       cursorWhere(filter.cursor, rankSeasons.createdAt, rankSeasons.id),
     );
@@ -638,10 +638,10 @@ export function createRankService(
    * lives in a single SQL statement, no transaction needed.
    */
   async function activateSeason(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
   ): Promise<RankSeason> {
-    const season = await loadSeasonById(organizationId, seasonId);
+    const season = await loadSeasonById(tenantId, seasonId);
     if (season.status === "active") return season;
     if (season.status === "finished") {
       throw new RankSeasonNotActive(seasonId, season.status);
@@ -670,10 +670,10 @@ export function createRankService(
   }
 
   async function finalizeSeason(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
   ): Promise<{ snapshotCount: number; playerCount: number }> {
-    const season = await loadSeasonById(organizationId, seasonId);
+    const season = await loadSeasonById(tenantId, seasonId);
     if (season.status !== "active") {
       // idempotent: already-finished returns 0
       if (season.status === "finished") {
@@ -702,13 +702,13 @@ export function createRankService(
     // makes it idempotent across retries after partial failure.
     const snapshotRows = await db.execute(sql`
       INSERT INTO rank_season_snapshots (
-        id, organization_id, season_id, end_user_id,
+        id, tenant_id, season_id, end_user_id,
         final_tier_id, final_subtier, final_stars,
         final_rank_score, final_mmr, final_global_rank, settled_at
       )
       SELECT
         gen_random_uuid(),
-        ps.organization_id, ps.season_id, ps.end_user_id,
+        ps.tenant_id, ps.season_id, ps.end_user_id,
         ps.tier_id, ps.subtier, ps.stars,
         ps.rank_score, ps.mmr,
         row_number() OVER (ORDER BY ps.rank_score DESC, ps.mmr DESC, ps.updated_at ASC),
@@ -726,10 +726,10 @@ export function createRankService(
     // Archive the leaderboard config for this season.
     const lb = leaderboardGetter();
     if (lb) {
-      const cfg = await loadTierConfigByKey(organizationId, season.tierConfigId);
+      const cfg = await loadTierConfigByKey(tenantId, season.tierConfigId);
       try {
         await lb.updateConfig(
-          organizationId,
+          tenantId,
           `rank_${cfg.alias}_${season.alias}_global`,
           { status: "archived" },
         );
@@ -740,7 +740,7 @@ export function createRankService(
 
     const finalizedAt = new Date();
     await events.emit("rank.season_finalized", {
-      organizationId,
+      tenantId,
       seasonId,
       playerCount: snapshotCount,
       finalizedAt,
@@ -783,15 +783,15 @@ export function createRankService(
   }
 
   async function getPlayerState(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId?: string;
     tierConfigAlias?: string;
     endUserId: string;
   }): Promise<PlayerRankView> {
     const season = params.seasonId
-      ? await loadSeasonById(params.organizationId, params.seasonId)
+      ? await loadSeasonById(params.tenantId, params.seasonId)
       : await loadActiveSeasonByTierConfigAlias(
-          params.organizationId,
+          params.tenantId,
           params.tierConfigAlias ??
             (() => {
               throw new RankInvalidInput(
@@ -821,7 +821,7 @@ export function createRankService(
   }
 
   async function listPlayerStates(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId: string;
     tierId?: string;
     endUserId?: string;
@@ -829,7 +829,7 @@ export function createRankService(
   }): Promise<PlayerRankView[]> {
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 500);
     const conds = [
-      eq(rankPlayerStates.organizationId, params.organizationId),
+      eq(rankPlayerStates.tenantId, params.tenantId),
       eq(rankPlayerStates.seasonId, params.seasonId),
     ];
     if (params.tierId) conds.push(eq(rankPlayerStates.tierId, params.tierId));
@@ -860,7 +860,7 @@ export function createRankService(
   }
 
   async function getPlayerHistory(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     seasonId?: string;
     limit?: number;
@@ -868,7 +868,7 @@ export function createRankService(
   }): Promise<{ items: RankMatchParticipant[]; nextCursor: string | null }> {
     const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
     const conds = [
-      eq(rankMatchParticipants.organizationId, params.organizationId),
+      eq(rankMatchParticipants.tenantId, params.tenantId),
       eq(rankMatchParticipants.endUserId, params.endUserId),
     ];
     if (params.seasonId)
@@ -889,11 +889,11 @@ export function createRankService(
   }
 
   async function adjustPlayer(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     input: AdjustPlayerInput,
   ): Promise<PlayerRankView> {
-    const season = await loadSeasonById(organizationId, input.seasonId);
+    const season = await loadSeasonById(tenantId, input.seasonId);
     const [state] = await db
       .select()
       .from(rankPlayerStates)
@@ -947,12 +947,12 @@ export function createRankService(
 
   // ─── Settle match (the big one) ─────────────────────────────
 
-  async function settleMatch(input: SettleMatchInput & { organizationId: string; reportedBy?: string }): Promise<{
+  async function settleMatch(input: SettleMatchInput & { tenantId: string; reportedBy?: string }): Promise<{
     matchId: string;
     alreadySettled: boolean;
     participants: ParticipantDelta[];
   }> {
-    const teamIds = new Set(input.participants.map((p) => p.teamId));
+    const teamIds = new Set(input.participants.map((p) => p.matchTeamId));
     if (input.participants.length < 2) {
       throw new RankInvalidParticipants("at least 2 participants required");
     }
@@ -962,9 +962,9 @@ export function createRankService(
 
     // 1. Resolve season.
     const season = input.seasonId
-      ? await loadSeasonById(input.organizationId, input.seasonId)
+      ? await loadSeasonById(input.tenantId, input.seasonId)
       : await loadActiveSeasonByTierConfigAlias(
-          input.organizationId,
+          input.tenantId,
           input.tierConfigAlias ??
             (() => {
               throw new RankInvalidInput(
@@ -986,7 +986,7 @@ export function createRankService(
     const insertRows = await db
       .insert(rankMatches)
       .values({
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         seasonId: season.id,
         externalMatchId: input.externalMatchId,
         gameMode: input.gameMode ?? null,
@@ -999,7 +999,7 @@ export function createRankService(
         metadata: Object.keys(metadata).length > 0 ? metadata : null,
       })
       .onConflictDoNothing({
-        target: [rankMatches.organizationId, rankMatches.externalMatchId],
+        target: [rankMatches.tenantId, rankMatches.externalMatchId],
       })
       .returning({ id: rankMatches.id });
 
@@ -1010,7 +1010,7 @@ export function createRankService(
         .from(rankMatches)
         .where(
           and(
-            eq(rankMatches.organizationId, input.organizationId),
+            eq(rankMatches.tenantId, input.tenantId),
             eq(rankMatches.externalMatchId, input.externalMatchId),
           ),
         )
@@ -1034,7 +1034,7 @@ export function createRankService(
 
     // 3. Preload tier config + tiers + current player_states.
     const tierConfig = await loadTierConfigByKey(
-      input.organizationId,
+      input.tenantId,
       season.tierConfigId,
     );
     const tiers = await loadTiersOrdered(tierConfig.id);
@@ -1063,7 +1063,7 @@ export function createRankService(
       // Synthetic default (not yet in DB; upsert will create).
       return {
         id: "", // placeholder; not written to DB directly
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         seasonId: season.id,
         endUserId: p.endUserId,
         tierId: defaultTier.id,
@@ -1090,7 +1090,7 @@ export function createRankService(
       const state = ensuredStates.find((s) => s.endUserId === p.endUserId)!;
       return {
         endUserId: p.endUserId,
-        teamId: p.teamId,
+        matchTeamId: p.matchTeamId,
         placement: p.placement,
         win: p.win,
         performanceScore: p.performanceScore ?? null,
@@ -1135,7 +1135,7 @@ export function createRankService(
 
       deltas.push({
         endUserId: p.endUserId,
-        teamId: p.teamId,
+        matchTeamId: p.matchTeamId,
         win: p.win,
         mmrBefore: state.mmr,
         mmrAfter: progression.mmr,
@@ -1155,10 +1155,10 @@ export function createRankService(
 
       participantInserts.push({
         matchId,
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         seasonId: season.id,
         endUserId: p.endUserId,
-        teamId: p.teamId,
+        matchTeamId: p.matchTeamId,
         placement: p.placement,
         win: p.win,
         performanceScore: p.performanceScore ?? null,
@@ -1179,7 +1179,7 @@ export function createRankService(
       });
 
       stateUpserts.push({
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         seasonId: season.id,
         endUserId: p.endUserId,
         tierId: progression.tierId,
@@ -1240,7 +1240,7 @@ export function createRankService(
         const tier = delta.tierAfterId ? tierById.get(delta.tierAfterId) : null;
         try {
           await lb.contribute({
-            organizationId: input.organizationId,
+            tenantId: input.tenantId,
             endUserId: delta.endUserId,
             metricKey: "rank_score",
             value: delta.rankScoreAfter,
@@ -1268,11 +1268,11 @@ export function createRankService(
     // 9. Emit events (one match_settled per participant + promote/demote).
     for (const delta of deltas) {
       await events.emit("rank.match_settled", {
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         seasonId: season.id,
         matchId,
         endUserId: delta.endUserId,
-        teamId: delta.teamId,
+        matchTeamId: delta.matchTeamId,
         win: delta.win,
         rankScoreBefore: delta.rankScoreBefore,
         rankScoreAfter: delta.rankScoreAfter,
@@ -1284,7 +1284,7 @@ export function createRankService(
       });
       if (delta.promoted) {
         await events.emit("rank.tier_promoted", {
-          organizationId: input.organizationId,
+          tenantId: input.tenantId,
           seasonId: season.id,
           matchId,
           endUserId: delta.endUserId,
@@ -1294,7 +1294,7 @@ export function createRankService(
       }
       if (delta.demoted) {
         await events.emit("rank.tier_demoted", {
-          organizationId: input.organizationId,
+          tenantId: input.tenantId,
           seasonId: season.id,
           matchId,
           endUserId: delta.endUserId,
@@ -1310,7 +1310,7 @@ export function createRankService(
   // ─── Leaderboard read facades ───────────────────────────────
 
   async function getGlobalLeaderboard(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId?: string;
     tierConfigAlias?: string;
     limit?: number;
@@ -1325,9 +1325,9 @@ export function createRankService(
     self?: { rank: number | null; score: number | null };
   }> {
     const season = params.seasonId
-      ? await loadSeasonById(params.organizationId, params.seasonId)
+      ? await loadSeasonById(params.tenantId, params.seasonId)
       : await loadActiveSeasonByTierConfigAlias(
-          params.organizationId,
+          params.tenantId,
           params.tierConfigAlias ??
             (() => {
               throw new RankInvalidInput(
@@ -1336,7 +1336,7 @@ export function createRankService(
             })(),
         );
     const cfg = await loadTierConfigByKey(
-      params.organizationId,
+      params.tenantId,
       season.tierConfigId,
     );
     const lb = leaderboardGetter();
@@ -1357,7 +1357,7 @@ export function createRankService(
       };
     }
     return lb.getTop({
-      organizationId: params.organizationId,
+      tenantId: params.tenantId,
       configKey: `rank_${cfg.alias}_${season.alias}_global`,
       limit: params.limit,
       endUserId: params.endUserId,
@@ -1365,16 +1365,16 @@ export function createRankService(
   }
 
   async function getTierLeaderboard(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId?: string;
     tierConfigAlias?: string;
     tierId: string;
     limit?: number;
   }): Promise<PlayerRankView[]> {
     const season = params.seasonId
-      ? await loadSeasonById(params.organizationId, params.seasonId)
+      ? await loadSeasonById(params.tenantId, params.seasonId)
       : await loadActiveSeasonByTierConfigAlias(
-          params.organizationId,
+          params.tenantId,
           params.tierConfigAlias ??
             (() => {
               throw new RankInvalidInput(
@@ -1383,7 +1383,7 @@ export function createRankService(
             })(),
         );
     return listPlayerStates({
-      organizationId: params.organizationId,
+      tenantId: params.tenantId,
       seasonId: season.id,
       tierId: params.tierId,
       limit: params.limit,
@@ -1403,8 +1403,8 @@ export function createRankService(
     createSeason,
     updateSeason,
     listSeasons,
-    getSeason: (organizationId: string, seasonId: string) =>
-      loadSeasonById(organizationId, seasonId),
+    getSeason: (tenantId: string, seasonId: string) =>
+      loadSeasonById(tenantId, seasonId),
     activateSeason,
     finalizeSeason,
     // Player
@@ -1415,7 +1415,7 @@ export function createRankService(
     // Match
     settleMatch,
     getMatch: async (
-      organizationId: string,
+      tenantId: string,
       matchId: string,
     ): Promise<{
       match: RankMatch;
@@ -1427,7 +1427,7 @@ export function createRankService(
         .where(
           and(
             eq(rankMatches.id, matchId),
-            eq(rankMatches.organizationId, organizationId),
+            eq(rankMatches.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -1439,14 +1439,14 @@ export function createRankService(
       return { match, participants };
     },
     listSeasonMatches: async (params: {
-      organizationId: string;
+      tenantId: string;
       seasonId: string;
       limit?: number;
       cursor?: string;
     }): Promise<{ items: RankMatch[]; nextCursor: string | null }> => {
       const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
       const conds = [
-        eq(rankMatches.organizationId, params.organizationId),
+        eq(rankMatches.tenantId, params.tenantId),
         eq(rankMatches.seasonId, params.seasonId),
       ];
       if (params.cursor) conds.push(lt(rankMatches.id, params.cursor));
@@ -1465,10 +1465,10 @@ export function createRankService(
     getTierLeaderboard,
     // Season snapshot (debug / admin readback)
     listSnapshots: async (
-      organizationId: string,
+      tenantId: string,
       seasonId: string,
     ): Promise<RankSeasonSnapshot[]> => {
-      await loadSeasonById(organizationId, seasonId);
+      await loadSeasonById(tenantId, seasonId);
       return db
         .select()
         .from(rankSeasonSnapshots)
@@ -1481,7 +1481,7 @@ export function createRankService(
 function toParticipantDelta(row: RankMatchParticipant): ParticipantDelta {
   return {
     endUserId: row.endUserId,
-    teamId: row.teamId,
+    matchTeamId: row.matchTeamId,
     win: row.win,
     mmrBefore: row.mmrBefore,
     mmrAfter: row.mmrAfter,

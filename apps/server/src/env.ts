@@ -39,7 +39,7 @@ export type AuthMethod = "session" | "admin-api-key" | "client-credential";
  */
 export type ClientCredentialContext = {
   id: string;
-  organizationId: string;
+  tenantId: string;
   publishableKey: string;
   enabled: boolean;
   expiresAt: Date | null;

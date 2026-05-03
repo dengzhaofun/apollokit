@@ -8,15 +8,17 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../../db";
 import app from "../../index";
-import { member, organization, user } from "../../schema";
+import { member, organization, teamMember, user } from "../../schema";
 import { auditLogs } from "../../schema/audit-log";
 import { expectOk } from "../../testing/envelope";
+import { getDefaultTeamId } from "../../testing/fixtures";
 
 const ORIGIN = "http://localhost:8787";
 
 type SignedInFixture = {
   cookie: string;
   orgId: string;
+  tenantId: string;
   adminUserId: string;
   email: string;
 };
@@ -68,7 +70,8 @@ async function signUpAndOrg(label: string): Promise<SignedInFixture> {
   const userRows = await db.select().from(user).where(eq(user.email, email));
   const adminUserId = userRows[0]!.id;
 
-  return { cookie, orgId, adminUserId, email };
+  const tenantId = await getDefaultTeamId(orgId);
+  return { cookie, orgId, tenantId, adminUserId, email };
 }
 
 describe("audit-log admin routes — owner happy path", () => {
@@ -82,7 +85,7 @@ describe("audit-log admin routes — owner happy path", () => {
     const [row] = await db
       .insert(auditLogs)
       .values({
-        organizationId: fx.orgId,
+        tenantId: fx.tenantId,
         actorType: "user",
         actorId: fx.adminUserId,
         actorLabel: fx.email,
@@ -177,13 +180,18 @@ describe("audit-log admin routes — member 403", () => {
 
   beforeAll(async () => {
     fx = await signUpAndOrg("member");
-    // Demote this user to `member` role inside their own org so the
-    // sensitive-read gate triggers. They created the org so default
-    // role is `owner`; flip it directly.
+    // Demote this user to `member` role on both org-level (member.role)
+    // and team-level (teamMember.role) so the sensitive-read gate
+    // triggers. They created the org so defaults are orgOwner / owner;
+    // flip both directly.
     await db
       .update(member)
-      .set({ role: "member" })
+      .set({ role: "orgViewer" })
       .where(eq(member.userId, fx.adminUserId));
+    await db
+      .update(teamMember)
+      .set({ role: "member" })
+      .where(eq(teamMember.userId, fx.adminUserId));
   });
 
   afterAll(async () => {

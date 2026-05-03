@@ -11,7 +11,7 @@ export function registerExchangeSubscribers(
 
   events.on("exchange.executed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "exchange.executed",
       source: "exchange",

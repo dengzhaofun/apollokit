@@ -29,7 +29,7 @@ async function seedDefinition(orgId: string): Promise<string> {
   const [row] = await db
     .insert(itemDefinitions)
     .values({
-      organizationId: orgId,
+      tenantId: orgId,
       alias: `gold-${crypto.randomUUID().slice(0, 6)}`,
       name: "gold",
     })
@@ -192,7 +192,7 @@ describe("dialogue service — start/advance/reset", () => {
       .from(itemGrantLogs)
       .where(
         and(
-          eq(itemGrantLogs.organizationId, orgId),
+          eq(itemGrantLogs.tenantId, orgId),
           eq(itemGrantLogs.endUserId, endUserId),
           eq(itemGrantLogs.source, "dialogue_enter"),
           eq(itemGrantLogs.sourceId, `${script.id}:${endUserId}:greet`),

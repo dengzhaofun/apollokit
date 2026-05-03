@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Lottery pools — top-level lottery/gacha activity configurations.
@@ -38,9 +38,9 @@ export const lotteryPools = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -65,9 +65,9 @@ export const lotteryPools = pgTable(
       .notNull(),
   },
   (table) => [
-    index("lottery_pools_org_idx").on(table.organizationId),
-    uniqueIndex("lottery_pools_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("lottery_pools_tenant_idx").on(table.tenantId),
+    uniqueIndex("lottery_pools_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("lottery_pools_activity_idx").on(table.activityId),
   ],
@@ -93,7 +93,7 @@ export const lotteryTiers = pgTable(
     poolId: uuid("pool_id")
       .notNull()
       .references(() => lotteryPools.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     alias: text("alias"),
     baseWeight: integer("base_weight").notNull(),
@@ -110,7 +110,7 @@ export const lotteryTiers = pgTable(
   },
   (table) => [
     index("lottery_tiers_pool_idx").on(table.poolId),
-    index("lottery_tiers_org_idx").on(table.organizationId),
+    index("lottery_tiers_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -145,7 +145,7 @@ export const lotteryPrizes = pgTable(
     poolId: uuid("pool_id")
       .notNull()
       .references(() => lotteryPools.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
@@ -167,7 +167,7 @@ export const lotteryPrizes = pgTable(
   (table) => [
     index("lottery_prizes_tier_idx").on(table.tierId),
     index("lottery_prizes_pool_idx").on(table.poolId),
-    index("lottery_prizes_org_idx").on(table.organizationId),
+    index("lottery_prizes_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -194,7 +194,7 @@ export const lotteryPityRules = pgTable(
     poolId: uuid("pool_id")
       .notNull()
       .references(() => lotteryPools.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     guaranteeTierId: uuid("guarantee_tier_id")
       .notNull()
       .references(() => lotteryTiers.id, { onDelete: "cascade" }),
@@ -235,7 +235,7 @@ export const lotteryUserStates = pgTable(
       .notNull()
       .references(() => lotteryPools.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     totalPullCount: integer("total_pull_count").default(0).notNull(),
     pityCounters: jsonb("pity_counters")
       .$type<Record<string, number>>()
@@ -253,8 +253,8 @@ export const lotteryUserStates = pgTable(
       columns: [table.poolId, table.endUserId],
       name: "lottery_user_states_pk",
     }),
-    index("lottery_user_states_org_user_idx").on(
-      table.organizationId,
+    index("lottery_user_states_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -280,7 +280,7 @@ export const lotteryPullLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     poolId: uuid("pool_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     batchId: text("batch_id").notNull(),
@@ -299,8 +299,8 @@ export const lotteryPullLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("lottery_pull_logs_org_user_idx").on(
-      table.organizationId,
+    index("lottery_pull_logs_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("lottery_pull_logs_pool_user_idx").on(

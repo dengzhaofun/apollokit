@@ -106,7 +106,7 @@ export const IdParamSchema = z.object({
 export const MailMessageResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     title: z.string(),
     content: z.string(),
     rewards: z.array(ItemEntrySchema),

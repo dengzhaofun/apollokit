@@ -34,7 +34,7 @@ const TAG = "Assist Pool (Client)";
 function serializeInstance(row: AssistPoolInstance) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     configId: row.configId,
     initiatorEndUserId: row.initiatorEndUserId,
     status: row.status as "in_progress" | "completed" | "expired",
@@ -54,7 +54,7 @@ function serializeInstance(row: AssistPoolInstance) {
 function serializeContribution(row: AssistPoolContribution) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     instanceId: row.instanceId,
     assisterEndUserId: row.assisterEndUserId,
     amount: row.amount,
@@ -97,12 +97,12 @@ assistPoolClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("json");
 
     const row = await assistPoolService.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey,
       initiatorEndUserId: endUserId,
     });
@@ -129,12 +129,12 @@ assistPoolClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configKey } = c.req.valid("query");
 
     const rows = await assistPoolService.listInstances({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey,
       initiatorEndUserId: endUserId,
     });
@@ -162,7 +162,7 @@ assistPoolClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { instanceId } = c.req.valid("param");
     const row = await assistPoolService.getInstance(orgId, instanceId);
     return c.json(ok(serializeInstance(row)), 200);
@@ -189,11 +189,11 @@ assistPoolClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const res = await assistPoolService.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId,
       assisterEndUserId: endUserId,
     });

@@ -39,7 +39,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
     const [cred] = await db
       .select({
         id: clientCredentials.id,
-        organizationId: clientCredentials.organizationId,
+        tenantId: clientCredentials.tenantId,
         publishableKey: clientCredentials.publishableKey,
         enabled: clientCredentials.enabled,
         expiresAt: clientCredentials.expiresAt,
@@ -60,7 +60,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
 
     // Place org context for downstream handlers
     c.set("session", {
-      activeOrganizationId: cred.organizationId,
+      activeTeamId: cred.tenantId,
     } as NonNullable<typeof c.var.session>);
     c.set("user", null);
     c.set("authMethod", "client-credential");

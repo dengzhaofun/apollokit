@@ -39,10 +39,10 @@ describe("badge service", () => {
     // Clean non-FK rows — badge_signals / badge_dismissals aren't cascade-linked.
     await db
       .delete(badgeSignals)
-      .where(eq(badgeSignals.organizationId, orgId));
+      .where(eq(badgeSignals.tenantId, orgId));
     await db
       .delete(badgeDismissals)
-      .where(eq(badgeDismissals.organizationId, orgId));
+      .where(eq(badgeDismissals.tenantId, orgId));
     await deleteTestOrg(orgId);
   });
 
@@ -325,7 +325,7 @@ describe("badge service", () => {
       .set({ dismissedAt: earlier })
       .where(
         and(
-          eq(badgeDismissals.organizationId, orgId),
+          eq(badgeDismissals.tenantId, orgId),
           eq(badgeDismissals.endUserId, endUserId),
           eq(badgeDismissals.nodeKey, key),
         ),
@@ -370,7 +370,7 @@ describe("badge service", () => {
       .set({ periodKey: "1970-01-01" })
       .where(
         and(
-          eq(badgeDismissals.organizationId, orgId),
+          eq(badgeDismissals.tenantId, orgId),
           eq(badgeDismissals.endUserId, endUserId),
           eq(badgeDismissals.nodeKey, key),
         ),
@@ -429,7 +429,7 @@ describe("badge service", () => {
       .from(badgeDismissals)
       .where(
         and(
-          eq(badgeDismissals.organizationId, orgId),
+          eq(badgeDismissals.tenantId, orgId),
           eq(badgeDismissals.endUserId, endUserId),
           inArray(badgeDismissals.nodeKey, [sessionKey, manualKey]),
         ),

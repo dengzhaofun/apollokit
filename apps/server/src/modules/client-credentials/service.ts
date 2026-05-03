@@ -50,7 +50,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
       const [row] = await db
         .insert(clientCredentials)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           name: input.name,
           publishableKey: pair.publishableKey,
           encryptedSecret,
@@ -69,7 +69,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
       return db
         .select({
           id: clientCredentials.id,
-          organizationId: clientCredentials.organizationId,
+          tenantId: clientCredentials.tenantId,
           name: clientCredentials.name,
           publishableKey: clientCredentials.publishableKey,
           devMode: clientCredentials.devMode,
@@ -80,7 +80,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
           updatedAt: clientCredentials.updatedAt,
         })
         .from(clientCredentials)
-        .where(eq(clientCredentials.organizationId, orgId));
+        .where(eq(clientCredentials.tenantId, orgId));
     },
 
     async get(orgId: string, id: string) {
@@ -89,7 +89,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         [row] = await db
           .select({
             id: clientCredentials.id,
-            organizationId: clientCredentials.organizationId,
+            tenantId: clientCredentials.tenantId,
             name: clientCredentials.name,
             publishableKey: clientCredentials.publishableKey,
             devMode: clientCredentials.devMode,
@@ -103,7 +103,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
           .where(
             and(
               eq(clientCredentials.id, id),
-              eq(clientCredentials.organizationId, orgId),
+              eq(clientCredentials.tenantId, orgId),
             ),
           );
       } catch (err) {
@@ -122,7 +122,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         .where(
           and(
             eq(clientCredentials.id, id),
-            eq(clientCredentials.organizationId, orgId),
+            eq(clientCredentials.tenantId, orgId),
           ),
         )
         .returning();
@@ -136,7 +136,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         .where(
           and(
             eq(clientCredentials.id, id),
-            eq(clientCredentials.organizationId, orgId),
+            eq(clientCredentials.tenantId, orgId),
           ),
         )
         .returning({ id: clientCredentials.id });
@@ -156,7 +156,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         .where(
           and(
             eq(clientCredentials.id, id),
-            eq(clientCredentials.organizationId, orgId),
+            eq(clientCredentials.tenantId, orgId),
           ),
         )
         .returning();
@@ -176,7 +176,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         .where(
           and(
             eq(clientCredentials.id, id),
-            eq(clientCredentials.organizationId, orgId),
+            eq(clientCredentials.tenantId, orgId),
           ),
         )
         .returning();
@@ -211,7 +211,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
       if (cred.devMode) {
         return {
           valid: true,
-          organizationId: cred.organizationId,
+          tenantId: cred.tenantId,
           credentialId: cred.id,
           devMode: true,
         };
@@ -230,7 +230,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
 
       return {
         valid: true,
-        organizationId: cred.organizationId,
+        tenantId: cred.tenantId,
         credentialId: cred.id,
         devMode: false,
       };

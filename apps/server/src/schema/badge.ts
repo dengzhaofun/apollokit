@@ -58,7 +58,7 @@ import {
 
 import { fractionalSortKey } from "./_fractional-sort";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 // ─── DisplayType / aggregation / dismissMode enums ────────────────
 //
@@ -129,9 +129,9 @@ export const badgeNodes = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     // Globally-unique UI key in dot notation, e.g. "home.mail.inbox".
     key: text("key").notNull(),
     parentKey: text("parent_key"),
@@ -160,17 +160,17 @@ export const badgeNodes = pgTable(
   (table) => [
     // Live nodes only — unique on (org, key) among non-deleted rows.
     uniqueIndex("badge_nodes_org_key_uidx")
-      .on(table.organizationId, table.key)
+      .on(table.tenantId, table.key)
       .where(sql`${table.deletedAt} IS NULL`),
     // Tree walk: list children of a parent under an org.
-    index("badge_nodes_org_parent_idx").on(
-      table.organizationId,
+    index("badge_nodes_tenant_parent_idx").on(
+      table.tenantId,
       table.parentKey,
     ),
     // Prefix lookup: when a signal with key X arrives we may want to
     // invalidate/inspect all nodes whose signalKeyPrefix X starts with.
-    index("badge_nodes_org_prefix_idx").on(
-      table.organizationId,
+    index("badge_nodes_tenant_prefix_idx").on(
+      table.tenantId,
       table.signalKeyPrefix,
     ),
   ],
@@ -204,7 +204,7 @@ export const badgeNodes = pgTable(
 export const badgeSignals = pgTable(
   "badge_signals",
   {
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     signalKey: text("signal_key").notNull(),
     count: integer("count").default(0).notNull(),
@@ -221,18 +221,18 @@ export const badgeSignals = pgTable(
   },
   (table) => [
     primaryKey({
-      columns: [table.organizationId, table.endUserId, table.signalKey],
+      columns: [table.tenantId, table.endUserId, table.signalKey],
       name: "badge_signals_pk",
     }),
     // Per-user signal scan. B-tree PK already supports prefix scanning on
     // `signalKey LIKE 'prefix%'` filtered by (orgId, endUserId).
-    index("badge_signals_org_user_idx").on(
-      table.organizationId,
+    index("badge_signals_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Cleanup job: find count=0 rows older than N days.
     index("badge_signals_cleanup_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.count,
       table.updatedAt,
     ),
@@ -261,7 +261,7 @@ export const badgeSignals = pgTable(
 export const badgeDismissals = pgTable(
   "badge_dismissals",
   {
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     nodeKey: text("node_key").notNull(),
     dismissedVersion: text("dismissed_version"),
@@ -280,12 +280,12 @@ export const badgeDismissals = pgTable(
   },
   (table) => [
     primaryKey({
-      columns: [table.organizationId, table.endUserId, table.nodeKey],
+      columns: [table.tenantId, table.endUserId, table.nodeKey],
       name: "badge_dismissals_pk",
     }),
     // Per-user scan when serving /tree.
-    index("badge_dismissals_org_user_idx").on(
-      table.organizationId,
+    index("badge_dismissals_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -308,9 +308,9 @@ export const badgeDismissals = pgTable(
 export const badgeSignalRegistry = pgTable(
   "badge_signal_registry",
   {
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     keyPattern: text("key_pattern").notNull(),
     isDynamic: boolean("is_dynamic").default(false).notNull(),
     label: text("label").notNull(),
@@ -324,7 +324,7 @@ export const badgeSignalRegistry = pgTable(
   },
   (table) => [
     primaryKey({
-      columns: [table.organizationId, table.keyPattern],
+      columns: [table.tenantId, table.keyPattern],
       name: "badge_signal_registry_pk",
     }),
   ],

@@ -47,7 +47,7 @@ describe("exchange service", () => {
     expect(cfg.name).toBe("Shop");
     expect(cfg.alias).toBe("shop-get");
     expect(cfg.isActive).toBe(true);
-    expect(cfg.organizationId).toBe(orgId);
+    expect(cfg.tenantId).toBe(orgId);
 
     const fetched = await svc.getConfig(orgId, "shop-get");
     expect(fetched.id).toBe(cfg.id);
@@ -59,7 +59,7 @@ describe("exchange service", () => {
     const page = await svc.listConfigs(orgId);
     expect(page.items.length).toBeGreaterThanOrEqual(2);
     for (const row of page.items) {
-      expect(row.organizationId).toBe(orgId);
+      expect(row.tenantId).toBe(orgId);
     }
   });
 
@@ -160,7 +160,7 @@ describe("exchange service", () => {
 
     // Seed 1000 gold
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-exchange",
       grants: [{ definitionId: goldDef.id, quantity: 1000 }],
       source: "test",
@@ -177,7 +177,7 @@ describe("exchange service", () => {
     });
 
     const result = await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-exchange",
       optionId: opt.id,
     });
@@ -186,14 +186,14 @@ describe("exchange service", () => {
 
     // Verify balances
     const goldBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-exchange",
       definitionId: goldDef.id,
     });
     expect(goldBal).toBe(900);
 
     const gemBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-exchange",
       definitionId: gemDef.id,
     });
@@ -216,7 +216,7 @@ describe("exchange service", () => {
 
     // Grant only 10 gold — not enough for exchange costing 100
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-insuf",
       grants: [{ definitionId: goldDef.id, quantity: 10 }],
       source: "test",
@@ -234,7 +234,7 @@ describe("exchange service", () => {
 
     await expect(
       svc.execute({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-insuf",
         optionId: opt.id,
       }),
@@ -256,7 +256,7 @@ describe("exchange service", () => {
     });
 
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-limit",
       grants: [{ definitionId: goldDef.id, quantity: 1000 }],
       source: "test",
@@ -275,12 +275,12 @@ describe("exchange service", () => {
 
     // First two should succeed
     await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-limit",
       optionId: opt.id,
     });
     await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-limit",
       optionId: opt.id,
     });
@@ -288,7 +288,7 @@ describe("exchange service", () => {
     // Third should fail
     await expect(
       svc.execute({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-limit",
         optionId: opt.id,
       }),
@@ -296,7 +296,7 @@ describe("exchange service", () => {
 
     // Verify the state
     const state = await svc.getUserOptionState({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-limit",
       optionId: opt.id,
     });
@@ -319,13 +319,13 @@ describe("exchange service", () => {
 
     // Grant gold to both users
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-global-a",
       grants: [{ definitionId: goldDef.id, quantity: 500 }],
       source: "test",
     });
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-global-b",
       grants: [{ definitionId: goldDef.id, quantity: 500 }],
       source: "test",
@@ -344,7 +344,7 @@ describe("exchange service", () => {
 
     // User A succeeds
     await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-global-a",
       optionId: opt.id,
     });
@@ -352,7 +352,7 @@ describe("exchange service", () => {
     // User B hits global limit
     await expect(
       svc.execute({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-global-b",
         optionId: opt.id,
       }),
@@ -374,7 +374,7 @@ describe("exchange service", () => {
     });
 
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       grants: [{ definitionId: goldDef.id, quantity: 1000 }],
       source: "test",
@@ -393,7 +393,7 @@ describe("exchange service", () => {
     const idemKey = crypto.randomUUID();
 
     const r1 = await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       optionId: opt.id,
       idempotencyKey: idemKey,
@@ -402,7 +402,7 @@ describe("exchange service", () => {
 
     // Second call with same key — should return without double-deducting
     const r2 = await svc.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       optionId: opt.id,
       idempotencyKey: idemKey,
@@ -412,7 +412,7 @@ describe("exchange service", () => {
 
     // Verify gold was only deducted once (1000 - 100 = 900)
     const goldBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       definitionId: goldDef.id,
     });
@@ -434,7 +434,7 @@ describe("exchange service", () => {
     });
 
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-inactive",
       grants: [{ definitionId: goldDef.id, quantity: 500 }],
       source: "test",
@@ -455,7 +455,7 @@ describe("exchange service", () => {
 
     await expect(
       svc.execute({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-inactive",
         optionId: opt.id,
       }),

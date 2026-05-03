@@ -90,7 +90,7 @@ export const AliasParamSchema = z.object({
 export const AnnouncementResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     kind: KindSchema,
     title: z.string(),

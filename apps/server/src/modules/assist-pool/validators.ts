@@ -235,7 +235,7 @@ export const ListConfigsQuerySchema = assistPoolConfigFilters.querySchema.openap
 export const AssistPoolConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -259,7 +259,7 @@ export const AssistPoolConfigResponseSchema = z
 export const AssistPoolInstanceResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     configId: z.string(),
     initiatorEndUserId: z.string(),
     status: z.enum(ASSIST_POOL_STATUSES),
@@ -279,7 +279,7 @@ export const AssistPoolInstanceResponseSchema = z
 export const AssistPoolContributionResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     instanceId: z.string(),
     assisterEndUserId: z.string(),
     amount: z.number().int(),

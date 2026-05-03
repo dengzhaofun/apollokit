@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Exchange configs — top-level exchange activities.
@@ -31,9 +31,9 @@ export const exchangeConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -46,9 +46,9 @@ export const exchangeConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("exchange_configs_org_idx").on(table.organizationId),
-    uniqueIndex("exchange_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("exchange_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("exchange_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -77,7 +77,7 @@ export const exchangeOptions = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => exchangeConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     costItems: jsonb("cost_items").$type<RewardEntry[]>().notNull(),
@@ -96,7 +96,7 @@ export const exchangeOptions = pgTable(
   },
   (table) => [
     index("exchange_options_config_idx").on(table.configId),
-    index("exchange_options_org_idx").on(table.organizationId),
+    index("exchange_options_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -113,7 +113,7 @@ export const exchangeUserStates = pgTable(
       .notNull()
       .references(() => exchangeOptions.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     count: integer("count").default(0).notNull(),
     version: integer("version").default(1).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

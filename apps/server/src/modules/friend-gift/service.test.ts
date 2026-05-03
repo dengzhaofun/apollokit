@@ -30,14 +30,14 @@ describe("friend-gift service", () => {
 
   // Mock item service — records calls for assertion
   const grantedItems: Array<{
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }> = [];
   const deductedItems: Array<{
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     deductions: Array<{ definitionId: string; quantity: number }>;
     source: string;
@@ -78,7 +78,7 @@ describe("friend-gift service", () => {
       timezone: "Asia/Shanghai",
     });
 
-    expect(settings.organizationId).toBe(orgId);
+    expect(settings.tenantId).toBe(orgId);
     expect(settings.dailySendLimit).toBe(3);
     expect(settings.dailyReceiveLimit).toBe(5);
     expect(settings.timezone).toBe("Asia/Shanghai");
@@ -115,7 +115,7 @@ describe("friend-gift service", () => {
       isActive: true,
     });
 
-    expect(pkg.organizationId).toBe(orgId);
+    expect(pkg.tenantId).toBe(orgId);
     expect(pkg.name).toBe("Flower Bouquet");
     expect(pkg.alias).toBe("flower-bouquet");
     expect(pkg.giftItems).toEqual([
@@ -221,7 +221,7 @@ describe("friend-gift service", () => {
     // Verify deductItems was called
     expect(deductedItems.length).toBe(beforeDeductCount + 1);
     const lastDeduct = deductedItems[deductedItems.length - 1]!;
-    expect(lastDeduct.organizationId).toBe(orgId);
+    expect(lastDeduct.tenantId).toBe(orgId);
     expect(lastDeduct.endUserId).toBe(sender);
     expect(lastDeduct.source).toBe("friend_gift_send");
 
@@ -266,7 +266,7 @@ describe("friend-gift service", () => {
     // Verify grantItems was called
     expect(grantedItems.length).toBe(beforeGrantCount + 1);
     const lastGrant = grantedItems[grantedItems.length - 1]!;
-    expect(lastGrant.organizationId).toBe(orgId);
+    expect(lastGrant.tenantId).toBe(orgId);
     expect(lastGrant.endUserId).toBe(receiver);
     expect(lastGrant.source).toBe("friend_gift_claim");
     expect(lastGrant.sourceId).toBe(sentGiftId);
@@ -363,7 +363,7 @@ describe("friend-gift service", () => {
     const sends = await svc.listSends(orgId);
     expect(sends.items.length).toBeGreaterThanOrEqual(1);
     // All belong to our org
-    expect(sends.items.every((s) => s.organizationId === orgId)).toBe(true);
+    expect(sends.items.every((s) => s.tenantId === orgId)).toBe(true);
   });
 
   test("listSends respects pagination", async () => {
@@ -374,7 +374,7 @@ describe("friend-gift service", () => {
   test("getSend returns a specific send", async () => {
     const send = await svc.getSend(orgId, sentGiftId);
     expect(send.id).toBe(sentGiftId);
-    expect(send.organizationId).toBe(orgId);
+    expect(send.tenantId).toBe(orgId);
   });
 
   test("getSend throws for non-existent id", async () => {

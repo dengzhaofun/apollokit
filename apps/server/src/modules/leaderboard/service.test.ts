@@ -93,7 +93,7 @@ describe("leaderboard service", () => {
     });
 
     const result = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "user-A",
       metricKey: "pvp_fanout",
       value: 42,
@@ -114,21 +114,21 @@ describe("leaderboard service", () => {
     });
 
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u1",
       metricKey: "max_metric",
       value: 100,
       source: "m1",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u1",
       metricKey: "max_metric",
       value: 30,
       source: "m1",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u1",
       metricKey: "max_metric",
       value: 200,
@@ -136,7 +136,7 @@ describe("leaderboard service", () => {
     });
 
     const top = await svc.getTop({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: cfg.alias,
       limit: 5,
     });
@@ -153,21 +153,21 @@ describe("leaderboard service", () => {
       aggregation: "latest",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u1",
       metricKey: "latest_metric",
       value: 500,
       source: "m",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u1",
       metricKey: "latest_metric",
       value: 10,
       source: "m",
     });
     const top = await svc.getTop({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: cfg.alias,
     });
     expect(top.rankings[0]?.score).toBe(10);
@@ -189,7 +189,7 @@ describe("leaderboard service", () => {
     const [actA] = await db
       .insert(activityConfigs)
       .values({
-        organizationId: orgId,
+        tenantId: orgId,
         alias: `lb-act-A-${crypto.randomUUID()}`,
         name: "lb act A",
         kind: "generic",
@@ -200,7 +200,7 @@ describe("leaderboard service", () => {
     const [actB] = await db
       .insert(activityConfigs)
       .values({
-        organizationId: orgId,
+        tenantId: orgId,
         alias: `lb-act-B-${crypto.randomUUID()}`,
         name: "lb act B",
         kind: "generic",
@@ -227,7 +227,7 @@ describe("leaderboard service", () => {
 
     // No activity context → only the unbound config matches.
     const r1 = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "x",
       metricKey: "act_metric",
       value: 5,
@@ -236,7 +236,7 @@ describe("leaderboard service", () => {
 
     // With matching activity → both configs match.
     const r2 = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "x",
       metricKey: "act_metric",
       value: 5,
@@ -246,7 +246,7 @@ describe("leaderboard service", () => {
 
     // With non-matching activity → only the unbound one.
     const r3 = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "x",
       metricKey: "act_metric",
       value: 5,
@@ -264,7 +264,7 @@ describe("leaderboard service", () => {
     });
     // Stubbed Redis has no data, so neighbors fall back to empty.
     const r = await svc.getNeighbors({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: cfg.alias,
       endUserId: "unknown",
     });
@@ -281,7 +281,7 @@ describe("leaderboard service", () => {
       aggregation: "sum",
     });
     await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u",
       metricKey: "settle_metric",
       value: 10,
@@ -294,7 +294,7 @@ describe("leaderboard service", () => {
       scopeKey: orgId,
     });
     const snaps = await svc.listSnapshots({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: cfg.alias,
     });
     const before = snaps.length;
@@ -306,7 +306,7 @@ describe("leaderboard service", () => {
       scopeKey: orgId,
     });
     const after = await svc.listSnapshots({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: cfg.alias,
     });
     expect(after.length).toBe(before);
@@ -322,7 +322,7 @@ describe("leaderboard service", () => {
     const [teasing] = await db
       .insert(activityConfigs)
       .values({
-        organizationId: orgId,
+        tenantId: orgId,
         alias: `lb-gate-teasing-${crypto.randomUUID()}`,
         name: "teasing",
         kind: "generic",
@@ -353,7 +353,7 @@ describe("leaderboard service", () => {
     // Bound config silently skipped (activity not yet writable); unbound
     // applies → applied = 1, not 2.
     const r = await svc.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-gate-skip",
       metricKey: "lb_gate_metric",
       value: 7,

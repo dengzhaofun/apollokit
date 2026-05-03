@@ -61,7 +61,7 @@ describe("activity/gate", () => {
     const [row] = await db
       .insert(activityConfigs)
       .values({
-        organizationId: orgId,
+        tenantId: orgId,
         alias: nextAlias(),
         name: "gate-test",
         kind: "generic",

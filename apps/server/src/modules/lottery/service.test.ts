@@ -51,7 +51,7 @@ describe("lottery service", () => {
     const page = await svc.listPools(orgId);
     expect(page.items.length).toBeGreaterThanOrEqual(2);
     for (const row of page.items) {
-      expect(row.organizationId).toBe(orgId);
+      expect(row.tenantId).toBe(orgId);
     }
   });
 
@@ -238,7 +238,7 @@ describe("lottery service", () => {
 
     // Seed coins
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-flat-pull",
       grants: [{ definitionId: coinDef.id, quantity: 1000 }],
       source: "test",
@@ -257,7 +257,7 @@ describe("lottery service", () => {
     });
 
     const result = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-flat-pull",
       poolKey: pool.id,
     });
@@ -272,7 +272,7 @@ describe("lottery service", () => {
 
     // Verify cost deducted
     const coinBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-flat-pull",
       definitionId: coinDef.id,
     });
@@ -280,7 +280,7 @@ describe("lottery service", () => {
 
     // Verify reward granted
     const gemBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-flat-pull",
       definitionId: gemDef.id,
     });
@@ -330,7 +330,7 @@ describe("lottery service", () => {
     // Pull 4 times — these may or may not be SSR
     for (let i = 0; i < 4; i++) {
       await svc.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-pity",
         poolKey: pool.id,
       });
@@ -338,7 +338,7 @@ describe("lottery service", () => {
 
     // Check user state
     const stateAfter4 = await svc.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-pity",
       poolKey: pool.id,
     });
@@ -349,7 +349,7 @@ describe("lottery service", () => {
     // But some pulls may have already been SSR, resetting the counter.
     // Let's just verify the system doesn't crash and returns valid results.
     const result5 = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-pity",
       poolKey: pool.id,
     });
@@ -373,7 +373,7 @@ describe("lottery service", () => {
 
     // Seed coins (need 100 * 10 = 1000 for 10-pull)
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-multi",
       grants: [{ definitionId: coinDef.id, quantity: 2000 }],
       source: "test",
@@ -392,7 +392,7 @@ describe("lottery service", () => {
     });
 
     const result = await svc.multiPull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-multi",
       poolKey: pool.id,
       count: 10,
@@ -410,7 +410,7 @@ describe("lottery service", () => {
 
     // Verify coin balance: 2000 - 1000 = 1000
     const coinBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-multi",
       definitionId: coinDef.id,
     });
@@ -418,7 +418,7 @@ describe("lottery service", () => {
 
     // Verify gem balance: 5 * 10 = 50
     const gemBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-multi",
       definitionId: gemDef.id,
     });
@@ -448,14 +448,14 @@ describe("lottery service", () => {
     const idemKey = crypto.randomUUID();
 
     const r1 = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp-lot",
       poolKey: pool.id,
       idempotencyKey: idemKey,
     });
 
     const r2 = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp-lot",
       poolKey: pool.id,
       idempotencyKey: idemKey,
@@ -466,7 +466,7 @@ describe("lottery service", () => {
 
     // Gem should only be granted once
     const gemBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp-lot",
       definitionId: gemDef.id,
     });
@@ -490,7 +490,7 @@ describe("lottery service", () => {
 
     await expect(
       svc.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-inactive",
         poolKey: pool.id,
       }),
@@ -533,7 +533,7 @@ describe("lottery service", () => {
 
     // First pull should likely get the "Rare" (weight 999 vs 1)
     const r1 = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-stock-1",
       poolKey: pool.id,
     });
@@ -543,7 +543,7 @@ describe("lottery service", () => {
     // and further pulls should still succeed (falling back to Common)
     for (let i = 0; i < 5; i++) {
       const r = await svc.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: `u-stock-${i + 2}`,
         poolKey: pool.id,
       });
@@ -572,18 +572,18 @@ describe("lottery service", () => {
     });
 
     await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-history",
       poolKey: pool.id,
     });
     await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-history",
       poolKey: pool.id,
     });
 
     const history = await svc.getPullHistory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-history",
       poolKey: pool.id,
     });
@@ -615,12 +615,12 @@ describe("lottery service", () => {
 
     // First two pulls succeed
     await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-glimit-1",
       poolKey: pool.id,
     });
     await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-glimit-2",
       poolKey: pool.id,
     });
@@ -628,7 +628,7 @@ describe("lottery service", () => {
     // Third pull blocked
     await expect(
       svc.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-glimit-3",
         poolKey: pool.id,
       }),
@@ -650,7 +650,7 @@ describe("lottery service", () => {
     });
 
     const result = await svc.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-thankyou",
       poolKey: pool.id,
     });
@@ -673,7 +673,7 @@ describe("lottery service", () => {
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           alias: opts.alias,
           name: `gate-${opts.alias}`,
           kind: "generic",
@@ -704,7 +704,7 @@ describe("lottery service", () => {
       });
       await expect(
         svc.pull({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "u-gate-lottery-teasing",
           poolKey: pool.id,
         }),
@@ -727,7 +727,7 @@ describe("lottery service", () => {
         weight: 1,
       });
       const r = await svc.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gate-lottery-active",
         poolKey: pool.id,
       });

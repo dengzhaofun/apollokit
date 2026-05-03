@@ -54,7 +54,7 @@ export const IdParamSchema = z.object({
 export const CharacterResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),

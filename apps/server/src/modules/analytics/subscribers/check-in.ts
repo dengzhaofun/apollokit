@@ -11,7 +11,7 @@ export function registerCheckInSubscribers(
 
   events.on("check_in.completed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "check_in.completed",
       source: "check-in",

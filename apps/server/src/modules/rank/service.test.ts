@@ -87,15 +87,15 @@ function match(
   externalId: string,
   aWin: boolean,
   tierConfigAlias: string,
-): SettleMatchInput & { organizationId: string } {
+): SettleMatchInput & { tenantId: string } {
   return {
-    organizationId: "", // filled by caller
+    tenantId: "", // filled by caller
     tierConfigAlias,
     externalMatchId: externalId,
     gameMode: "1v1",
     participants: [
-      { endUserId: "player-A", teamId: "A", placement: aWin ? 1 : 2, win: aWin },
-      { endUserId: "player-B", teamId: "B", placement: aWin ? 2 : 1, win: !aWin },
+      { endUserId: "player-A", matchTeamId: "A", placement: aWin ? 1 : 2, win: aWin },
+      { endUserId: "player-B", matchTeamId: "B", placement: aWin ? 2 : 1, win: !aWin },
     ],
   };
 }
@@ -278,7 +278,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("first match: A wins over B — MMR delta is symmetric", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const m = match("ext-1", true, "classic");
-    m.organizationId = orgId;
+    m.tenantId = orgId;
     const result = await svcWithLog.settleMatch(m);
     expect(result.alreadySettled).toBe(false);
     expect(result.participants).toHaveLength(2);
@@ -295,7 +295,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("second match (same externalMatchId): alreadySettled=true", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const m = match("ext-1", true, "classic");
-    m.organizationId = orgId;
+    m.tenantId = orgId;
     const result = await svcWithLog.settleMatch(m);
     expect(result.alreadySettled).toBe(true);
     expect(result.participants).toHaveLength(2);
@@ -304,7 +304,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("second match (new externalMatchId, B wins): cumulative state correct", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const m = match("ext-2", false, "classic");
-    m.organizationId = orgId;
+    m.tenantId = orgId;
     const result = await svcWithLog.settleMatch(m);
     const a = result.participants.find((p) => p.endUserId === "player-A")!;
     const b = result.participants.find((p) => p.endUserId === "player-B")!;
@@ -323,11 +323,11 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("third match (A wins again): player_state counters accumulate correctly", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const m = match("ext-3", true, "classic");
-    m.organizationId = orgId;
+    m.tenantId = orgId;
     await svcWithLog.settleMatch(m);
 
     const a = await svcWithLog.getPlayerState({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       endUserId: "player-A",
     });
@@ -336,7 +336,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
     expect(a.losses).toBe(1);
 
     const b = await svcWithLog.getPlayerState({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       endUserId: "player-B",
     });
@@ -354,7 +354,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("getPlayerHistory lists user's participant rows desc by id", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const hist = await svcWithLog.getPlayerHistory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "player-A",
       seasonId,
     });
@@ -365,7 +365,7 @@ describe("rank service — settleMatch 3-game sequence", () => {
   test("getGlobalLeaderboard falls back to PG when no leaderboard wired", async () => {
     const svcWithLog = createRankService({ db, events: testEvents });
     const top = await svcWithLog.getGlobalLeaderboard({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
     });
     expect(top.rankings.length).toBe(2);
@@ -405,12 +405,12 @@ describe("rank service — settleMatch rejection paths", () => {
     });
     await expect(
       svc.settleMatch({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         externalMatchId: "reject-1",
         participants: [
-          { endUserId: "a", teamId: "A", placement: 1, win: true },
-          { endUserId: "b", teamId: "B", placement: 2, win: false },
+          { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     ).rejects.toMatchObject({ code: "rank.season_not_active" });
@@ -419,13 +419,13 @@ describe("rank service — settleMatch rejection paths", () => {
   test("settleMatch without tierConfigAlias or seasonId is rejected", async () => {
     await expect(
       svc.settleMatch({
-        organizationId: orgId,
+        tenantId: orgId,
         externalMatchId: "reject-2",
         participants: [
-          { endUserId: "a", teamId: "A", placement: 1, win: true },
-          { endUserId: "b", teamId: "B", placement: 2, win: false },
+          { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
         ],
-      } as SettleMatchInput & { organizationId: string }),
+      } as SettleMatchInput & { tenantId: string }),
     ).rejects.toMatchObject({ code: "rank.invalid_input" });
   });
 
@@ -442,12 +442,12 @@ describe("rank service — settleMatch rejection paths", () => {
     await svc.activateSeason(orgId, s.id);
     await expect(
       svc.settleMatch({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         externalMatchId: "reject-3",
         participants: [
-          { endUserId: "a", teamId: "A", placement: 1, win: true },
-          { endUserId: "b", teamId: "A", placement: 2, win: false },
+          { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "b", matchTeamId: "A", placement: 2, win: false },
         ],
       }),
     ).rejects.toMatchObject({ code: "rank.invalid_participants" });
@@ -467,12 +467,12 @@ describe("rank service — adjustPlayer", () => {
     ({ seasonId } = await setupActiveSeason(svc, orgId, "adj-cfg", "adj-s1"));
     // Seed a match so a player_state row exists.
     await svc.settleMatch({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       externalMatchId: "adj-m1",
       participants: [
-        { endUserId: "audit-user", teamId: "A", placement: 1, win: true },
-        { endUserId: "other", teamId: "B", placement: 2, win: false },
+        { endUserId: "audit-user", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "other", matchTeamId: "B", placement: 2, win: false },
       ],
     });
   });
@@ -483,7 +483,7 @@ describe("rank service — adjustPlayer", () => {
 
   test("adjustPlayer mutates rankScore", async () => {
     const before = await svc.getPlayerState({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       endUserId: "audit-user",
     });
@@ -518,12 +518,12 @@ describe("rank service — finalizeSeason writes snapshots", () => {
     orgId = await createTestOrg("rank-svc-finalize");
     ({ seasonId } = await setupActiveSeason(svc, orgId, "fin-cfg", "fin-s1"));
     await svc.settleMatch({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       externalMatchId: "fin-m1",
       participants: [
-        { endUserId: "finA", teamId: "A", placement: 1, win: true },
-        { endUserId: "finB", teamId: "B", placement: 2, win: false },
+        { endUserId: "finA", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "finB", matchTeamId: "B", placement: 2, win: false },
       ],
     });
   });

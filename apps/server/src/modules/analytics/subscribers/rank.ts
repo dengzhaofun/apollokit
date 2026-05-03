@@ -11,7 +11,7 @@ export function registerRankSubscribers(
 
   events.on("rank.match_settled", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "rank.match_settled",
       source: "rank",
@@ -22,7 +22,7 @@ export function registerRankSubscribers(
       eventData: {
         seasonId: p.seasonId,
         matchId: p.matchId,
-        teamId: p.teamId,
+        matchTeamId: p.matchTeamId,
         win: p.win,
         rankScoreBefore: p.rankScoreBefore,
         rankScoreAfter: p.rankScoreAfter,
@@ -37,7 +37,7 @@ export function registerRankSubscribers(
 
   events.on("rank.tier_promoted", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "rank.tier_promoted",
       source: "rank",
@@ -52,7 +52,7 @@ export function registerRankSubscribers(
 
   events.on("rank.tier_demoted", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "rank.tier_demoted",
       source: "rank",
@@ -67,7 +67,7 @@ export function registerRankSubscribers(
 
   events.on("rank.season_finalized", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "rank.season_finalized",
       source: "rank",
       amount: p.playerCount,

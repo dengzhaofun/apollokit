@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no endUserId path segment for the caller.
  */
 
@@ -57,7 +57,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { schemaId, blueprintId } = c.req.valid("query");
     const rows = await entityService.listInstances(orgId, endUserId, {
@@ -81,7 +81,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const result = await entityService.getInstance(orgId, endUserId, instanceId);
@@ -117,7 +117,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { blueprintId, source, sourceId } = c.req.valid("json");
     const inst = await entityService.acquireEntity(
@@ -147,7 +147,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     await entityService.discardEntity(orgId, endUserId, instanceId);
@@ -180,7 +180,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { locked } = c.req.valid("json");
@@ -219,7 +219,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { amount } = c.req.valid("json");
@@ -253,7 +253,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { targetLevel } = c.req.valid("json");
@@ -280,7 +280,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const inst = await entityService.rankUp(orgId, endUserId, instanceId);
@@ -313,7 +313,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { feedInstanceIds } = c.req.valid("json");
@@ -356,7 +356,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex, equippedInstanceId } = c.req.valid("json");
@@ -401,7 +401,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { slotKey, slotIndex } = c.req.valid("json");
@@ -435,7 +435,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { instanceId } = c.req.valid("param");
     const { skinId } = c.req.valid("json");
@@ -471,7 +471,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configId } = c.req.valid("param");
     const rows = await entityService.listFormations(orgId, endUserId, configId);
@@ -517,7 +517,7 @@ entityClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configId, formationIndex } = c.req.valid("param");
     const { name, slots } = c.req.valid("json");

@@ -56,8 +56,8 @@ mentionsRouter.get("/types", (c) => {
  * iteration goal is correctness, not ranking).
  */
 mentionsRouter.get("/search", async (c) => {
-  const organizationId = c.var.session?.activeOrganizationId;
-  if (!organizationId) {
+  const tenantId = c.var.session?.activeTeamId;
+  if (!tenantId) {
     return c.json({ error: "no_active_organization" }, 400);
   }
 
@@ -84,7 +84,7 @@ mentionsRouter.get("/search", async (c) => {
   // demoted to "no results" so one bad module can't break the whole
   // popover — log so we can find it later.
   const settled = await Promise.allSettled(
-    descriptors.map((d) => d.search(organizationId, q, limit)),
+    descriptors.map((d) => d.search(tenantId, q, limit)),
   );
   const results = settled.flatMap((r, i) => {
     if (r.status === "fulfilled") return r.value;

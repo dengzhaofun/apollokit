@@ -30,12 +30,12 @@ import {
 } from "./validators";
 
 type CapturedMail = {
-  organizationId: string;
+  tenantId: string;
   input: Record<string, unknown>;
 };
 
 type CapturedGrant = {
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   source: string;
 };
@@ -48,7 +48,7 @@ describe("task service", () => {
   const stubItemSvc: RewardItemSvc = {
     grantItems: async (params) => {
       grantLog.push({
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         source: params.source,
       });
@@ -58,10 +58,10 @@ describe("task service", () => {
 
   const stubMail = {
     createMessage: async (
-      organizationId: string,
+      tenantId: string,
       input: Record<string, unknown>,
     ) => {
-      captured.push({ organizationId, input });
+      captured.push({ tenantId, input });
       return { id: `mail-${captured.length}` };
     },
   } as unknown as MailService;
@@ -509,7 +509,7 @@ describe("task service", () => {
 
       expect(captured.length).toBe(before + 1);
       const mail = captured[captured.length - 1]!;
-      expect(mail.organizationId).toBe(orgId);
+      expect(mail.tenantId).toBe(orgId);
       expect(mail.input.originSource).toBe("task.complete");
     });
 
@@ -800,7 +800,7 @@ describe("task service", () => {
       const [broken] = await db
         .insert(taskDefinitions)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           name: "Broken filter task",
           period: "none",
           timezone: "UTC",
@@ -1734,7 +1734,7 @@ describe("task service", () => {
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           alias: opts.alias,
           name: `gate-${opts.alias}`,
           kind: "generic",
@@ -1862,7 +1862,7 @@ describe("task service", () => {
       await db.insert(taskUserProgress).values({
         taskId: def.id,
         endUserId: "u-claim-ended",
-        organizationId: orgId,
+        tenantId: orgId,
         currentValue: def.targetValue,
         isCompleted: true,
         completedAt: new Date(),

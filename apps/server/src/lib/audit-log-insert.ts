@@ -27,7 +27,7 @@ export async function insertAuditRow(row: AuditLogInsert): Promise<void> {
     console.error("audit-log: insert failed", {
       action: row.action,
       resourceType: row.resourceType,
-      organizationId: row.organizationId,
+      tenantId: row.tenantId,
       err,
     });
   }

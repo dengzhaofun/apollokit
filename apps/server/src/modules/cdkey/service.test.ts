@@ -126,7 +126,7 @@ describe("cdkey service", () => {
     });
 
     const r1 = await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "alice",
       code: "UNIRED",
       idempotencyKey: "k-uni-1",
@@ -136,7 +136,7 @@ describe("cdkey service", () => {
 
     // Same idempotencyKey → already_redeemed cached
     const r1dup = await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "alice",
       code: "UNIRED",
       idempotencyKey: "k-uni-1",
@@ -157,14 +157,14 @@ describe("cdkey service", () => {
     });
 
     await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "bob",
       code: "USERLIM",
       idempotencyKey: "bob-1",
     });
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "bob",
         code: "USERLIM",
         idempotencyKey: "bob-2",
@@ -188,20 +188,20 @@ describe("cdkey service", () => {
     });
 
     await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-tot-1",
       code: "TOTLIM",
       idempotencyKey: "tot-1",
     });
     await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-tot-2",
       code: "TOTLIM",
       idempotencyKey: "tot-2",
     });
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-tot-3",
         code: "TOTLIM",
         idempotencyKey: "tot-3",
@@ -223,7 +223,7 @@ describe("cdkey service", () => {
     const firstCode = items[0]!.code;
 
     const r = await svc.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "charlie",
       code: firstCode,
       idempotencyKey: "ch-1",
@@ -232,7 +232,7 @@ describe("cdkey service", () => {
 
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "dave",
         code: firstCode,
         idempotencyKey: "dv-1",
@@ -256,7 +256,7 @@ describe("cdkey service", () => {
 
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "eve",
         code: items[0]!.code,
         idempotencyKey: "eve-rev",
@@ -269,7 +269,7 @@ describe("cdkey service", () => {
   test("invalid code throws", async () => {
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "x",
         code: "DOES-NOT-EXIST-XYZ",
         idempotencyKey: "no-code-1",
@@ -288,7 +288,7 @@ describe("cdkey service", () => {
     await svc.updateBatch(orgId, batch.id, { isActive: false });
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "y",
         code: "INACCODE",
         idempotencyKey: "inac-1",
@@ -309,7 +309,7 @@ describe("cdkey service", () => {
     expect(batch.endsAt).not.toBeNull();
     await expect(
       svc.redeem({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "z",
         code: "EXPCODE",
         idempotencyKey: "exp-1",

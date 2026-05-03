@@ -53,7 +53,7 @@ const TAG = "Offline Check-In";
 function serializeCampaign(row: OfflineCheckInCampaign) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -77,7 +77,7 @@ function serializeSpot(row: OfflineCheckInSpot) {
   return {
     id: row.id,
     campaignId: row.campaignId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -100,7 +100,7 @@ function serializeProgress(row: OfflineCheckInUserProgressRow) {
   return {
     campaignId: row.campaignId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     spotsCompleted: row.spotsCompleted,
     totalCount: row.totalCount,
     lastSpotId: row.lastSpotId,
@@ -449,7 +449,7 @@ offlineCheckInRouter.openapi(
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const page = await offlineCheckInService.listProgress({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: key,
       cursor: q.cursor,
       limit: q.limit,
@@ -488,7 +488,7 @@ offlineCheckInRouter.openapi(
     const { key } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await offlineCheckInService.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: key,
       endUserId: body.endUserId,
       spotAlias: body.spotAlias,

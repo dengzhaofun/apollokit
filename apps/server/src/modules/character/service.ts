@@ -43,7 +43,7 @@ export function createCharacterService(d: CharacterDeps) {
   const { db } = d;
 
   async function loadById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<CharacterDefinition> {
     const rows = await db
@@ -52,7 +52,7 @@ export function createCharacterService(d: CharacterDeps) {
       .where(
         and(
           eq(characterDefinitions.id, id),
-          eq(characterDefinitions.organizationId, organizationId),
+          eq(characterDefinitions.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -62,14 +62,14 @@ export function createCharacterService(d: CharacterDeps) {
 
   return {
     async createCharacter(
-      organizationId: string,
+      tenantId: string,
       input: CreateCharacterInput,
     ): Promise<CharacterDefinition> {
       try {
         const [row] = await db
           .insert(characterDefinitions)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias ?? null,
             name: input.name,
             description: input.description ?? null,
@@ -91,12 +91,12 @@ export function createCharacterService(d: CharacterDeps) {
     },
 
     async updateCharacter(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateCharacterInput,
     ): Promise<CharacterDefinition> {
       // Ensure the row exists + belongs to this org before we touch it.
-      await loadById(organizationId, id);
+      await loadById(tenantId, id);
 
       const patch: Record<string, unknown> = {};
       if (input.alias !== undefined) patch.alias = input.alias;
@@ -109,7 +109,7 @@ export function createCharacterService(d: CharacterDeps) {
       if (input.metadata !== undefined) patch.metadata = input.metadata;
 
       if (Object.keys(patch).length === 0) {
-        return loadById(organizationId, id);
+        return loadById(tenantId, id);
       }
 
       try {
@@ -119,7 +119,7 @@ export function createCharacterService(d: CharacterDeps) {
           .where(
             and(
               eq(characterDefinitions.id, id),
-              eq(characterDefinitions.organizationId, organizationId),
+              eq(characterDefinitions.tenantId, tenantId),
             ),
           )
           .returning();
@@ -134,7 +134,7 @@ export function createCharacterService(d: CharacterDeps) {
     },
 
     async deleteCharacter(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const deleted = await db
@@ -142,7 +142,7 @@ export function createCharacterService(d: CharacterDeps) {
         .where(
           and(
             eq(characterDefinitions.id, id),
-            eq(characterDefinitions.organizationId, organizationId),
+            eq(characterDefinitions.tenantId, tenantId),
           ),
         )
         .returning({ id: characterDefinitions.id });
@@ -150,11 +150,11 @@ export function createCharacterService(d: CharacterDeps) {
     },
 
     async listCharacters(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<CharacterDefinition>> {
       const limit = clampLimit(params.limit);
-      const conds: SQL[] = [eq(characterDefinitions.organizationId, organizationId)];
+      const conds: SQL[] = [eq(characterDefinitions.tenantId, tenantId)];
       const seek = cursorWhere(
         params.cursor,
         characterDefinitions.createdAt,
@@ -176,10 +176,10 @@ export function createCharacterService(d: CharacterDeps) {
     },
 
     async getCharacter(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<CharacterDefinition> {
-      return loadById(organizationId, id);
+      return loadById(tenantId, id);
     },
 
     /**
@@ -192,7 +192,7 @@ export function createCharacterService(d: CharacterDeps) {
      * references in a single query per /start or /advance.
      */
     async loadCharactersByIds(
-      organizationId: string,
+      tenantId: string,
       ids: string[],
     ): Promise<Map<string, CharacterSpeakerView>> {
       if (ids.length === 0) return new Map();
@@ -206,7 +206,7 @@ export function createCharacterService(d: CharacterDeps) {
         .from(characterDefinitions)
         .where(
           and(
-            eq(characterDefinitions.organizationId, organizationId),
+            eq(characterDefinitions.tenantId, tenantId),
             inArray(characterDefinitions.id, ids),
           ),
         );
@@ -219,7 +219,7 @@ export function createCharacterService(d: CharacterDeps) {
      * to their own error code (dialogue → DialogueUnknownCharacter).
      */
     async assertCharactersExist(
-      organizationId: string,
+      tenantId: string,
       ids: string[],
     ): Promise<void> {
       if (ids.length === 0) return;
@@ -228,7 +228,7 @@ export function createCharacterService(d: CharacterDeps) {
         .from(characterDefinitions)
         .where(
           and(
-            eq(characterDefinitions.organizationId, organizationId),
+            eq(characterDefinitions.tenantId, tenantId),
             inArray(characterDefinitions.id, ids),
           ),
         );

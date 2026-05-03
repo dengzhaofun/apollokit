@@ -72,13 +72,13 @@ describe("activity service", () => {
     await svc.publish(orgId, a.alias, now);
 
     const r1 = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "user-1",
       now,
     });
     const r2 = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "user-1",
       now,
@@ -87,7 +87,7 @@ describe("activity service", () => {
 
     // A second user gets a distinct row.
     const r3 = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "user-2",
       now,
@@ -104,14 +104,14 @@ describe("activity service", () => {
     });
     await svc.publish(orgId, a.alias, now);
     await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       now,
     });
 
     const r1 = await svc.addPoints({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       delta: 60,
@@ -121,7 +121,7 @@ describe("activity service", () => {
     expect(r1.balance).toBe(60);
 
     const r2 = await svc.addPoints({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       delta: 60,
@@ -131,7 +131,7 @@ describe("activity service", () => {
     expect(r2.balance).toBe(120);
 
     const r3 = await svc.addPoints({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       delta: 300,
@@ -168,7 +168,7 @@ describe("activity service", () => {
     });
 
     const view = await svc.getActivityForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "__viewer__",
       now,
@@ -185,7 +185,7 @@ describe("activity service", () => {
     // Flip node.enabled on the virtual node; effective must drop.
     await svc.updateNode(orgId, virtualNode.id, { enabled: false });
     const view2 = await svc.getActivityForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "__viewer__",
       now,
@@ -210,7 +210,7 @@ describe("activity service", () => {
 
     // First join → queue number allocated, 4 digits numeric
     const r1 = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "q-u1",
       now,
@@ -220,7 +220,7 @@ describe("activity service", () => {
 
     // Second join for same user → same number (idempotent)
     const r1b = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "q-u1",
       now,
@@ -229,7 +229,7 @@ describe("activity service", () => {
 
     // Different user → different number
     const r2 = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "q-u2",
       now,
@@ -239,7 +239,7 @@ describe("activity service", () => {
 
     // Redeem q-u1's queue number — first call succeeds
     const redeemed = await svc.redeemQueueNumber({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "q-u1",
     });
@@ -249,7 +249,7 @@ describe("activity service", () => {
     // Redeem again → ActivityQueueAlreadyRedeemed
     await expect(
       svc.redeemQueueNumber({
-        organizationId: orgId,
+        tenantId: orgId,
         activityIdOrAlias: a.alias,
         endUserId: "q-u1",
       }),
@@ -257,7 +257,7 @@ describe("activity service", () => {
 
     // q-u1 leaves — status 'left', queue_number + used_at preserved
     const left = await svc.leaveActivity({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "q-u1",
     });
@@ -268,7 +268,7 @@ describe("activity service", () => {
 
     // listMembers with status filter picks up the 'left' row
     const onlyLeft = await svc.listMembers({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       status: "left",
     });
@@ -277,7 +277,7 @@ describe("activity service", () => {
 
     // listMembers 'all' returns both
     const all = await svc.listMembers({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
     });
     expect(all.items.length).toBe(2);
@@ -293,7 +293,7 @@ describe("activity service", () => {
     await svc.publish(orgId, a.alias, now);
 
     const r = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       now,
@@ -302,7 +302,7 @@ describe("activity service", () => {
 
     await expect(
       svc.redeemQueueNumber({
-        organizationId: orgId,
+        tenantId: orgId,
         activityIdOrAlias: a.alias,
         endUserId: "u",
       }),
@@ -319,7 +319,7 @@ describe("activity service", () => {
     });
     await svc.publish(orgId, a.alias, now);
     await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       now,
@@ -327,7 +327,7 @@ describe("activity service", () => {
 
     await expect(
       svc.leaveActivity({
-        organizationId: orgId,
+        tenantId: orgId,
         activityIdOrAlias: a.alias,
         endUserId: "u",
       }),
@@ -348,7 +348,7 @@ describe("activity service", () => {
     await svc.publish(orgId, a.alias, now);
 
     const r = await svc.join({
-      organizationId: orgId,
+      tenantId: orgId,
       activityIdOrAlias: a.alias,
       endUserId: "u",
       now,

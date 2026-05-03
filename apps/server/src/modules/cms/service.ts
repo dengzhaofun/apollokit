@@ -69,19 +69,19 @@ type CmsDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "cms.entry.published": {
-      organizationId: string;
+      tenantId: string;
       typeAlias: string;
       entryAlias: string;
       entryId: string;
     };
     "cms.entry.unpublished": {
-      organizationId: string;
+      tenantId: string;
       typeAlias: string;
       entryAlias: string;
       entryId: string;
     };
     "cms.entry.updated": {
-      organizationId: string;
+      tenantId: string;
       typeAlias: string;
       entryAlias: string;
       entryId: string;
@@ -96,16 +96,16 @@ export function createCmsService(d: CmsDeps) {
   // ─── Type loader ──────────────────────────────────────────────
 
   async function loadTypeByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CmsType> {
     const where = looksLikeId(key)
       ? and(
-          eq(cmsTypes.organizationId, organizationId),
+          eq(cmsTypes.tenantId, tenantId),
           eq(cmsTypes.id, key),
         )
       : and(
-          eq(cmsTypes.organizationId, organizationId),
+          eq(cmsTypes.tenantId, tenantId),
           eq(cmsTypes.alias, key),
         );
 
@@ -116,7 +116,7 @@ export function createCmsService(d: CmsDeps) {
   }
 
   async function loadTypeByAlias(
-    organizationId: string,
+    tenantId: string,
     alias: string,
   ): Promise<CmsType> {
     const rows = await db
@@ -124,7 +124,7 @@ export function createCmsService(d: CmsDeps) {
       .from(cmsTypes)
       .where(
         and(
-          eq(cmsTypes.organizationId, organizationId),
+          eq(cmsTypes.tenantId, tenantId),
           eq(cmsTypes.alias, alias),
         ),
       )
@@ -135,12 +135,12 @@ export function createCmsService(d: CmsDeps) {
   }
 
   async function loadEntryByKey(
-    organizationId: string,
+    tenantId: string,
     typeAlias: string,
     key: string,
   ): Promise<CmsEntry> {
     const baseWhere = and(
-      eq(cmsEntries.organizationId, organizationId),
+      eq(cmsEntries.tenantId, tenantId),
       eq(cmsEntries.typeAlias, typeAlias),
     );
     const where = looksLikeId(key)
@@ -157,7 +157,7 @@ export function createCmsService(d: CmsDeps) {
 
   return {
     async createType(
-      organizationId: string,
+      tenantId: string,
       input: CreateCmsTypeInput,
       actor?: { userId?: string },
     ): Promise<CmsType> {
@@ -167,7 +167,7 @@ export function createCmsService(d: CmsDeps) {
         const [row] = await db
           .insert(cmsTypes)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias,
             name: input.name,
             description: input.description ?? null,
@@ -191,12 +191,12 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async updateType(
-      organizationId: string,
+      tenantId: string,
       key: string,
       patch: UpdateCmsTypeInput,
       actor?: { userId?: string },
     ): Promise<CmsType> {
-      const existing = await loadTypeByKey(organizationId, key);
+      const existing = await loadTypeByKey(tenantId, key);
 
       const updateValues: Partial<typeof cmsTypes.$inferInsert> = {};
       let nextSchemaVersion = existing.schemaVersion;
@@ -242,7 +242,7 @@ export function createCmsService(d: CmsDeps) {
         .where(
           and(
             eq(cmsTypes.id, existing.id),
-            eq(cmsTypes.organizationId, organizationId),
+            eq(cmsTypes.tenantId, tenantId),
           ),
         )
         .returning();
@@ -250,31 +250,31 @@ export function createCmsService(d: CmsDeps) {
       return row;
     },
 
-    async deleteType(organizationId: string, key: string): Promise<void> {
-      const existing = await loadTypeByKey(organizationId, key);
+    async deleteType(tenantId: string, key: string): Promise<void> {
+      const existing = await loadTypeByKey(tenantId, key);
       const deleted = await db
         .delete(cmsTypes)
         .where(
           and(
             eq(cmsTypes.id, existing.id),
-            eq(cmsTypes.organizationId, organizationId),
+            eq(cmsTypes.tenantId, tenantId),
           ),
         )
         .returning({ id: cmsTypes.id });
       if (deleted.length === 0) throw new CmsTypeNotFound(key);
     },
 
-    async getType(organizationId: string, key: string): Promise<CmsType> {
-      return loadTypeByKey(organizationId, key);
+    async getType(tenantId: string, key: string): Promise<CmsType> {
+      return loadTypeByKey(tenantId, key);
     },
 
     async listTypes(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { status?: "active" | "archived" } = {},
     ): Promise<Page<CmsType>> {
       const limit = clampLimit(filter.limit);
       const where = and(
-        eq(cmsTypes.organizationId, organizationId),
+        eq(cmsTypes.tenantId, tenantId),
         cmsTypeFilters.where(filter as Record<string, unknown>),
         cursorWhere(filter.cursor, cmsTypes.createdAt, cmsTypes.id),
       );
@@ -290,12 +290,12 @@ export function createCmsService(d: CmsDeps) {
     // ─── Entry CRUD ─────────────────────────────────────────────
 
     async createEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       input: CreateCmsEntryInput,
       actor?: { userId?: string },
     ): Promise<CmsEntry> {
-      const type = await loadTypeByAlias(organizationId, typeAlias);
+      const type = await loadTypeByAlias(tenantId, typeAlias);
       assertGroupAllowed(type, input.groupKey ?? null);
 
       const dataValidator = buildZodFromSchemaDef(type.schema as CmsSchemaDef);
@@ -311,7 +311,7 @@ export function createCmsService(d: CmsDeps) {
         const [row] = await db
           .insert(cmsEntries)
           .values({
-            organizationId,
+            tenantId,
             typeId: type.id,
             typeAlias: type.alias,
             alias: input.alias,
@@ -337,14 +337,14 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async updateEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryKey: string,
       patch: UpdateCmsEntryInput,
       actor?: { userId?: string },
     ): Promise<CmsEntry> {
       const existing = await loadEntryByKey(
-        organizationId,
+        tenantId,
         typeAlias,
         entryKey,
       );
@@ -352,7 +352,7 @@ export function createCmsService(d: CmsDeps) {
         throw new CmsEntryVersionConflict(existing.id);
       }
 
-      const type = await loadTypeByAlias(organizationId, typeAlias);
+      const type = await loadTypeByAlias(tenantId, typeAlias);
 
       const updateValues: Partial<typeof cmsEntries.$inferInsert> = {};
 
@@ -400,7 +400,7 @@ export function createCmsService(d: CmsDeps) {
           .where(
             and(
               eq(cmsEntries.id, existing.id),
-              eq(cmsEntries.organizationId, organizationId),
+              eq(cmsEntries.tenantId, tenantId),
               eq(cmsEntries.version, existing.version),
             ),
           )
@@ -425,7 +425,7 @@ export function createCmsService(d: CmsDeps) {
           existing.status !== "published"
         ) {
           await events.emit("cms.entry.published", {
-            organizationId,
+            tenantId,
             typeAlias: row.typeAlias,
             entryAlias: row.alias,
             entryId: row.id,
@@ -436,14 +436,14 @@ export function createCmsService(d: CmsDeps) {
           patch.status !== "published"
         ) {
           await events.emit("cms.entry.unpublished", {
-            organizationId,
+            tenantId,
             typeAlias: row.typeAlias,
             entryAlias: row.alias,
             entryId: row.id,
           });
         }
         await events.emit("cms.entry.updated", {
-          organizationId,
+          tenantId,
           typeAlias: row.typeAlias,
           entryAlias: row.alias,
           entryId: row.id,
@@ -455,12 +455,12 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async deleteEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryKey: string,
     ): Promise<void> {
       const existing = await loadEntryByKey(
-        organizationId,
+        tenantId,
         typeAlias,
         entryKey,
       );
@@ -469,7 +469,7 @@ export function createCmsService(d: CmsDeps) {
         .where(
           and(
             eq(cmsEntries.id, existing.id),
-            eq(cmsEntries.organizationId, organizationId),
+            eq(cmsEntries.tenantId, tenantId),
           ),
         )
         .returning({ id: cmsEntries.id });
@@ -477,19 +477,19 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async publishEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryKey: string,
       actor?: { userId?: string },
     ): Promise<CmsEntry> {
       const existing = await loadEntryByKey(
-        organizationId,
+        tenantId,
         typeAlias,
         entryKey,
       );
       if (existing.status === "published") return existing;
       return this.updateEntry(
-        organizationId,
+        tenantId,
         typeAlias,
         existing.id,
         { status: "published", version: existing.version },
@@ -498,19 +498,19 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async unpublishEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryKey: string,
       actor?: { userId?: string },
     ): Promise<CmsEntry> {
       const existing = await loadEntryByKey(
-        organizationId,
+        tenantId,
         typeAlias,
         entryKey,
       );
       if (existing.status !== "published") return existing;
       return this.updateEntry(
-        organizationId,
+        tenantId,
         typeAlias,
         existing.id,
         { status: "draft", version: existing.version },
@@ -519,15 +519,15 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async getEntry(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryKey: string,
     ): Promise<CmsEntry> {
-      return loadEntryByKey(organizationId, typeAlias, entryKey);
+      return loadEntryByKey(tenantId, typeAlias, entryKey);
     },
 
     async listEntries(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       filter: PageParams & {
         status?: CmsEntryStatus;
@@ -537,11 +537,11 @@ export function createCmsService(d: CmsDeps) {
     ): Promise<Page<CmsEntry>> {
       // Confirm the type exists; surfaces a clean 404 if the caller
       // typo'd the alias.
-      await loadTypeByAlias(organizationId, typeAlias);
+      await loadTypeByAlias(tenantId, typeAlias);
 
       const limit = clampLimit(filter.limit);
       const where = and(
-        eq(cmsEntries.organizationId, organizationId),
+        eq(cmsEntries.tenantId, tenantId),
         eq(cmsEntries.typeAlias, typeAlias),
         cmsEntryFilters.where(filter as Record<string, unknown>),
         cursorWhere(filter.cursor, cmsEntries.createdAt, cmsEntries.id),
@@ -558,7 +558,7 @@ export function createCmsService(d: CmsDeps) {
     // ─── Client-route reads (status === "published") ────────────
 
     async clientGetByAlias(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       entryAlias: string,
     ): Promise<CmsEntry | null> {
@@ -567,7 +567,7 @@ export function createCmsService(d: CmsDeps) {
         .from(cmsEntries)
         .where(
           and(
-            eq(cmsEntries.organizationId, organizationId),
+            eq(cmsEntries.tenantId, tenantId),
             eq(cmsEntries.typeAlias, typeAlias),
             eq(cmsEntries.alias, entryAlias),
             eq(cmsEntries.status, "published"),
@@ -578,7 +578,7 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async clientListByGroup(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       groupKey: string,
       pagination?: { limit?: number; offset?: number },
@@ -590,7 +590,7 @@ export function createCmsService(d: CmsDeps) {
         .from(cmsEntries)
         .where(
           and(
-            eq(cmsEntries.organizationId, organizationId),
+            eq(cmsEntries.tenantId, tenantId),
             eq(cmsEntries.typeAlias, typeAlias),
             eq(cmsEntries.groupKey, groupKey),
             eq(cmsEntries.status, "published"),
@@ -602,7 +602,7 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async clientListByTag(
-      organizationId: string,
+      tenantId: string,
       tag: string,
       pagination?: { limit?: number; offset?: number },
     ): Promise<CmsEntry[]> {
@@ -613,7 +613,7 @@ export function createCmsService(d: CmsDeps) {
         .from(cmsEntries)
         .where(
           and(
-            eq(cmsEntries.organizationId, organizationId),
+            eq(cmsEntries.tenantId, tenantId),
             sql`${cmsEntries.tags} @> ARRAY[${tag}]::text[]`,
             eq(cmsEntries.status, "published"),
           ),
@@ -624,12 +624,12 @@ export function createCmsService(d: CmsDeps) {
     },
 
     async clientListType(
-      organizationId: string,
+      tenantId: string,
       typeAlias: string,
       filter?: { groupKey?: string; tag?: string; limit?: number; offset?: number },
     ): Promise<CmsEntry[]> {
       const conds = [
-        eq(cmsEntries.organizationId, organizationId),
+        eq(cmsEntries.tenantId, tenantId),
         eq(cmsEntries.typeAlias, typeAlias),
         eq(cmsEntries.status, "published"),
       ];

@@ -43,7 +43,7 @@ const TAG = "Banner (Admin)";
 function serializeGroup(row: BannerGroup) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -59,7 +59,7 @@ function serializeGroup(row: BannerGroup) {
 function serializeBanner(row: Banner) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     groupId: row.groupId,
     title: row.title,
     imageUrlMobile: row.imageUrlMobile,

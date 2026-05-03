@@ -114,16 +114,16 @@ export function createStorageBoxService(
   const { db, analytics } = d;
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<StorageBoxConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(storageBoxConfigs.organizationId, organizationId),
+          eq(storageBoxConfigs.tenantId, tenantId),
           eq(storageBoxConfigs.id, key),
         )
       : and(
-          eq(storageBoxConfigs.organizationId, organizationId),
+          eq(storageBoxConfigs.tenantId, tenantId),
           eq(storageBoxConfigs.alias, key),
         );
     const rows = await db
@@ -136,7 +136,7 @@ export function createStorageBoxService(
   }
 
   async function validateAcceptedCurrencies(
-    organizationId: string,
+    tenantId: string,
     ids: string[],
   ): Promise<void> {
     if (ids.length === 0) {
@@ -150,7 +150,7 @@ export function createStorageBoxService(
       .from(currencies)
       .where(
         and(
-          eq(currencies.organizationId, organizationId),
+          eq(currencies.tenantId, tenantId),
           inArray(currencies.id, uniqueIds),
         ),
       );
@@ -193,18 +193,18 @@ export function createStorageBoxService(
     // ─── Config CRUD ──────────────────────────────────────────────
 
     async createConfig(
-      organizationId: string,
+      tenantId: string,
       input: CreateConfigInput,
     ): Promise<StorageBoxConfig> {
       validateFixedConfigInput(input.type, input.lockupDays ?? null);
-      await validateAcceptedCurrencies(organizationId, input.acceptedCurrencyIds);
+      await validateAcceptedCurrencies(tenantId, input.acceptedCurrencyIds);
 
       try {
-        const __sortKey = await appendKey(db, { table: storageBoxConfigs, sortColumn: storageBoxConfigs.sortOrder, scopeWhere: eq(storageBoxConfigs.organizationId, organizationId)! });
+        const __sortKey = await appendKey(db, { table: storageBoxConfigs, sortColumn: storageBoxConfigs.sortOrder, scopeWhere: eq(storageBoxConfigs.tenantId, tenantId)! });
         const [row] = await db
           .insert(storageBoxConfigs)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -233,11 +233,11 @@ export function createStorageBoxService(
     },
 
     async updateConfig(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateConfigInput,
     ): Promise<StorageBoxConfig> {
-      const existing = await loadConfigByKey(organizationId, id);
+      const existing = await loadConfigByKey(tenantId, id);
 
       const nextType = patch.type ?? existing.type;
       const nextLockup =
@@ -249,7 +249,7 @@ export function createStorageBoxService(
 
       if (patch.acceptedCurrencyIds !== undefined) {
         await validateAcceptedCurrencies(
-          organizationId,
+          tenantId,
           patch.acceptedCurrencyIds,
         );
       }
@@ -287,7 +287,7 @@ export function createStorageBoxService(
           .where(
             and(
               eq(storageBoxConfigs.id, existing.id),
-              eq(storageBoxConfigs.organizationId, organizationId),
+              eq(storageBoxConfigs.tenantId, tenantId),
             ),
           )
           .returning();
@@ -302,29 +302,29 @@ export function createStorageBoxService(
     },
 
     async moveConfig(
-      organizationId: string,
+      tenantId: string,
       key: string,
       body: MoveBody,
     ): Promise<StorageBoxConfig> {
-      const existing = await loadConfigByKey(organizationId, key);
+      const existing = await loadConfigByKey(tenantId, key);
       return moveAndReturn<StorageBoxConfig>(db, {
         table: storageBoxConfigs,
         sortColumn: storageBoxConfigs.sortOrder,
         idColumn: storageBoxConfigs.id,
-        partitionWhere: eq(storageBoxConfigs.organizationId, organizationId)!,
+        partitionWhere: eq(storageBoxConfigs.tenantId, tenantId)!,
         id: existing.id,
         body,
         notFound: (sid) => new StorageBoxConfigNotFound(sid),
       });
     },
 
-    async deleteConfig(organizationId: string, id: string): Promise<void> {
+    async deleteConfig(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(storageBoxConfigs)
         .where(
           and(
             eq(storageBoxConfigs.id, id),
-            eq(storageBoxConfigs.organizationId, organizationId),
+            eq(storageBoxConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: storageBoxConfigs.id });
@@ -332,11 +332,11 @@ export function createStorageBoxService(
     },
 
     async listConfigs(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<StorageBoxConfig>> {
       const limit = clampLimit(params.limit);
-      const conds: SQL[] = [eq(storageBoxConfigs.organizationId, organizationId)];
+      const conds: SQL[] = [eq(storageBoxConfigs.tenantId, tenantId)];
       const seek = cursorWhere(params.cursor, storageBoxConfigs.createdAt, storageBoxConfigs.id);
       if (seek) conds.push(seek);
       if (params.q) {
@@ -354,22 +354,22 @@ export function createStorageBoxService(
     },
 
     async getConfig(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<StorageBoxConfig> {
-      return loadConfigByKey(organizationId, idOrAlias);
+      return loadConfigByKey(tenantId, idOrAlias);
     },
 
     // ─── Deposit / Withdraw ────────────────────────────────────────
 
     async deposit(params: {
-      organizationId: string;
+      tenantId: string;
       input: DepositInput;
       now?: Date;
     }): Promise<DepositResult> {
       const now = params.now ?? new Date();
-      const { organizationId, input } = params;
-      const config = await loadConfigByKey(organizationId, input.boxConfigId);
+      const { tenantId, input } = params;
+      const config = await loadConfigByKey(tenantId, input.boxConfigId);
       if (!config.isActive) throw new StorageBoxConfigInactive(config.id);
       if (!config.acceptedCurrencyIds.includes(input.currencyDefinitionId)) {
         throw new StorageBoxCurrencyNotAccepted(
@@ -384,7 +384,7 @@ export function createStorageBoxService(
       const idempotencyKey =
         input.idempotencyKey ?? `storage-box-deposit:${crypto.randomUUID()}`;
       await currencySvc.deduct({
-        organizationId,
+        tenantId,
         endUserId: input.endUserId,
         deductions: [
           { currencyId: input.currencyDefinitionId, amount: input.amount },
@@ -405,7 +405,7 @@ export function createStorageBoxService(
           .from(storageBoxDeposits)
           .where(
             and(
-              eq(storageBoxDeposits.organizationId, organizationId),
+              eq(storageBoxDeposits.tenantId, tenantId),
               eq(storageBoxDeposits.endUserId, input.endUserId),
               eq(storageBoxDeposits.boxConfigId, config.id),
               eq(
@@ -451,7 +451,7 @@ export function createStorageBoxService(
             const [row] = await db
               .insert(storageBoxDeposits)
               .values({
-                organizationId,
+                tenantId,
                 endUserId: input.endUserId,
                 boxConfigId: config.id,
                 currencyDefinitionId: input.currencyDefinitionId,
@@ -482,7 +482,7 @@ export function createStorageBoxService(
         const [row] = await db
           .insert(storageBoxDeposits)
           .values({
-            organizationId,
+            tenantId,
             endUserId: input.endUserId,
             boxConfigId: config.id,
             currencyDefinitionId: input.currencyDefinitionId,
@@ -502,7 +502,7 @@ export function createStorageBoxService(
 
       // Step 3: audit log.
       await db.insert(storageBoxLogs).values({
-        organizationId,
+        tenantId,
         endUserId: input.endUserId,
         depositId: deposit.id,
         boxConfigId: config.id,
@@ -518,7 +518,7 @@ export function createStorageBoxService(
       if (analytics) {
         void analytics.writer.logEvent({
           ts: new Date(),
-          orgId: organizationId,
+          orgId: tenantId,
           endUserId: input.endUserId,
           traceId: getTraceId(),
           event: "storage_box.deposited",
@@ -537,12 +537,12 @@ export function createStorageBoxService(
     },
 
     async withdraw(params: {
-      organizationId: string;
+      tenantId: string;
       input: WithdrawInput;
       now?: Date;
     }): Promise<WithdrawResult> {
       const now = params.now ?? new Date();
-      const { organizationId, input } = params;
+      const { tenantId, input } = params;
 
       // Locate the target deposit row.
       let deposit: StorageBoxDeposit;
@@ -552,7 +552,7 @@ export function createStorageBoxService(
           .from(storageBoxDeposits)
           .where(
             and(
-              eq(storageBoxDeposits.organizationId, organizationId),
+              eq(storageBoxDeposits.tenantId, tenantId),
               eq(storageBoxDeposits.id, input.depositId),
               eq(storageBoxDeposits.endUserId, input.endUserId),
             ),
@@ -571,7 +571,7 @@ export function createStorageBoxService(
           .from(storageBoxDeposits)
           .where(
             and(
-              eq(storageBoxDeposits.organizationId, organizationId),
+              eq(storageBoxDeposits.tenantId, tenantId),
               eq(storageBoxDeposits.endUserId, input.endUserId),
               eq(storageBoxDeposits.boxConfigId, input.boxConfigId),
               eq(
@@ -595,7 +595,7 @@ export function createStorageBoxService(
         throw new StorageBoxDepositNotFound(deposit.id);
       }
 
-      const config = await loadConfigByKey(organizationId, deposit.boxConfigId);
+      const config = await loadConfigByKey(tenantId, deposit.boxConfigId);
 
       // Compute interest up to `now` and decide payout.
       const newInterest = projectInterest(
@@ -674,7 +674,7 @@ export function createStorageBoxService(
           input.idempotencyKey ??
           `storage-box-withdraw:${deposit.id}:${now.getTime()}`;
         await currencySvc.grant({
-          organizationId,
+          tenantId,
           endUserId: input.endUserId,
           grants: [
             {
@@ -689,7 +689,7 @@ export function createStorageBoxService(
 
       // Step 3: audit log.
       await db.insert(storageBoxLogs).values({
-        organizationId,
+        tenantId,
         endUserId: input.endUserId,
         depositId: deposit.id,
         boxConfigId: config.id,
@@ -704,7 +704,7 @@ export function createStorageBoxService(
       if (analytics) {
         void analytics.writer.logEvent({
           ts: new Date(),
-          orgId: organizationId,
+          orgId: tenantId,
           endUserId: input.endUserId,
           traceId: getTraceId(),
           event: "storage_box.withdrawn",
@@ -729,7 +729,7 @@ export function createStorageBoxService(
     },
 
     async listDepositsForUser(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       now?: Date;
     }): Promise<StorageBoxDepositView[]> {
@@ -747,7 +747,7 @@ export function createStorageBoxService(
         )
         .where(
           and(
-            eq(storageBoxDeposits.organizationId, params.organizationId),
+            eq(storageBoxDeposits.tenantId, params.tenantId),
             eq(storageBoxDeposits.endUserId, params.endUserId),
             eq(storageBoxDeposits.status, "active"),
           ),
@@ -758,7 +758,7 @@ export function createStorageBoxService(
     },
 
     async getDeposit(params: {
-      organizationId: string;
+      tenantId: string;
       id: string;
       now?: Date;
     }): Promise<StorageBoxDepositView> {
@@ -776,7 +776,7 @@ export function createStorageBoxService(
         )
         .where(
           and(
-            eq(storageBoxDeposits.organizationId, params.organizationId),
+            eq(storageBoxDeposits.tenantId, params.tenantId),
             eq(storageBoxDeposits.id, params.id),
           ),
         )

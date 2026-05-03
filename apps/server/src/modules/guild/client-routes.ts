@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -54,7 +54,7 @@ import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-h
 
 function serializeGuild(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -74,7 +74,7 @@ function serializeGuild(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     icon: row.icon,
@@ -97,7 +97,7 @@ function serializeGuild(row: {
 function serializeMember(row: {
   guildId: string;
   endUserId: string;
-  organizationId: string;
+  tenantId: string;
   role: string;
   contribution: number;
   joinedAt: Date;
@@ -107,7 +107,7 @@ function serializeMember(row: {
   return {
     guildId: row.guildId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     role: row.role as "leader" | "officer" | "member",
     contribution: row.contribution,
     joinedAt: row.joinedAt.toISOString(),
@@ -118,7 +118,7 @@ function serializeMember(row: {
 
 function serializeJoinRequest(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   guildId: string;
   endUserId: string;
   type: string;
@@ -132,7 +132,7 @@ function serializeJoinRequest(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     guildId: row.guildId,
     endUserId: row.endUserId,
     type: row.type as "application" | "invitation",
@@ -148,7 +148,7 @@ function serializeJoinRequest(row: {
 
 function serializeContributionLog(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   guildId: string;
   endUserId: string;
   delta: number;
@@ -159,7 +159,7 @@ function serializeContributionLog(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     guildId: row.guildId,
     endUserId: row.endUserId,
     delta: row.delta,
@@ -220,7 +220,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const body = c.req.valid("json");
     const { guild, member } = await guildService.createGuild(orgId, endUserId, {
@@ -254,7 +254,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const q = c.req.valid("query");
     const page = await guildService.listGuilds(orgId, {
       search: q.search,
@@ -289,7 +289,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { id } = c.req.valid("param");
     const row = await guildService.getGuild(orgId, id);
     return c.json(ok(serializeGuild(row)), 200);
@@ -315,7 +315,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const result = await guildService.getMyGuild(orgId, endUserId);
     if (!result) {
@@ -348,7 +348,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { message } = c.req.valid("json");
@@ -377,7 +377,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     await guildService.leaveGuild(orgId, id, endUserId);
@@ -405,7 +405,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     // Verify the user is the leader before allowing disband
@@ -439,7 +439,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { id } = c.req.valid("param");
     const { status, limit, offset } = c.req.valid("query");
     const rows = await guildService.listJoinRequests(orgId, id, { status, limit, offset });
@@ -467,7 +467,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptJoinRequest(orgId, id, endUserId);
@@ -495,7 +495,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const req = await guildService.rejectJoinRequest(orgId, id, endUserId);
@@ -526,7 +526,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { targetUserId } = c.req.valid("json");
@@ -555,7 +555,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { request } = await guildService.acceptInvitation(orgId, id, endUserId);
@@ -583,7 +583,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const req = await guildService.rejectInvitation(orgId, id, endUserId);
@@ -611,7 +611,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     const member = await guildService.promoteMember(orgId, id, endUserId, userId);
@@ -639,7 +639,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     const member = await guildService.demoteMember(orgId, id, endUserId, userId);
@@ -667,7 +667,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
     await guildService.kickMember(orgId, id, endUserId, userId);
@@ -698,7 +698,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { newLeaderUserId } = c.req.valid("json");
@@ -730,7 +730,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
@@ -778,7 +778,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const { delta, source, sourceId } = c.req.valid("json");
@@ -808,7 +808,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { id } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await guildService.listContributions(orgId, id, { limit, offset });
@@ -836,7 +836,7 @@ guildClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { id } = c.req.valid("param");
     const rows = await guildService.listMembers(orgId, id);
     return c.json(ok({ items: rows.map(serializeMember) }), 200);

@@ -11,7 +11,7 @@ export function registerInviteSubscribers(
 
   events.on("invite.bound", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       // `endUserId` on the record represents the actor whose session
       // performed the write. For invite.bound that is the invitee
       // (`endUserId === inviteeEndUserId`), matching the convention that
@@ -30,7 +30,7 @@ export function registerInviteSubscribers(
 
   events.on("invite.qualified", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "invite.qualified",
       source: "invite",

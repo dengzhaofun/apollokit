@@ -18,7 +18,7 @@ registerEvent({
   owner: "announcement",
   description: "Fired when an admin publishes a new announcement.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "announcementId", type: "string", required: true },
     { path: "alias", type: "string", required: true },
     { path: "kind", type: "string", required: true },
@@ -31,7 +31,7 @@ registerEvent({
   owner: "announcement",
   description: "Fired when an announcement is edited.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "announcementId", type: "string", required: true },
     { path: "alias", type: "string", required: true },
   ],
@@ -43,7 +43,7 @@ registerEvent({
   owner: "announcement",
   description: "Fired when an announcement is deleted.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "announcementId", type: "string", required: true },
     { path: "alias", type: "string", required: true },
   ],
@@ -56,7 +56,7 @@ registerEvent({
   description:
     "Fired when the game client reports that an end user saw an announcement.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "announcementId", type: "string", required: true },
     { path: "alias", type: "string", required: true },
@@ -71,7 +71,7 @@ registerEvent({
   description:
     "Fired when the game client reports that an end user clicked an announcement's CTA.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "announcementId", type: "string", required: true },
     { path: "alias", type: "string", required: true },

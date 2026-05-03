@@ -47,7 +47,7 @@ function makeCtx() {
 const baseEnvelope: EventEnvelope = {
   name: "task.completed",
   orgId: "org-x",
-  payload: { organizationId: "org-x", endUserId: "u-1", taskId: "t-1" },
+  payload: { tenantId: "org-x", endUserId: "u-1", taskId: "t-1" },
   capabilities: ["analytics", "webhook"],
   traceId: "trace-abc",
   emittedAt: 1735000000000,
@@ -70,7 +70,7 @@ describe("handleEnvelope", () => {
     );
 
     expect(dispatch).toHaveBeenCalledWith({
-      organizationId: "org-x",
+      tenantId: "org-x",
       eventType: "task.completed",
       payload: baseEnvelope.payload,
     });

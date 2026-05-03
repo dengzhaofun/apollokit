@@ -36,7 +36,7 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     const r = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "none-nt",
       endUserId: "u-none-nt",
     });
@@ -62,12 +62,12 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     const a = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "idem",
       endUserId: "u-idem",
     });
     const b = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "idem",
       endUserId: "u-idem",
     });
@@ -91,7 +91,7 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     const a = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "instant",
       endUserId: "u-instant",
     });
@@ -100,7 +100,7 @@ describe("check-in service", () => {
     expect(a.remaining).toBe(0);
 
     const b = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "instant",
       endUserId: "u-instant",
     });
@@ -119,7 +119,7 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     const r = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "weekly",
       endUserId: "u-weekly",
     });
@@ -178,7 +178,7 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "to-delete",
       endUserId: "u-del",
     });
@@ -191,7 +191,7 @@ describe("check-in service", () => {
     // config key should surface config-not-found, not a stale state.
     await expect(
       svc.getUserState({
-        organizationId: orgId,
+        tenantId: orgId,
         configKey: cfg.id,
         endUserId: "u-del",
       }),
@@ -214,7 +214,7 @@ describe("check-in service", () => {
     const day5 = new Date("2026-04-14T02:00:00Z"); // skip day 4
 
     const r1 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "streak",
       endUserId: userId,
       now: day1,
@@ -222,7 +222,7 @@ describe("check-in service", () => {
     expect(r1.state.currentStreak).toBe(1);
 
     const r2 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "streak",
       endUserId: userId,
       now: day2,
@@ -231,7 +231,7 @@ describe("check-in service", () => {
     expect(r2.state.totalDays).toBe(2);
 
     const r3 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "streak",
       endUserId: userId,
       now: day3,
@@ -240,7 +240,7 @@ describe("check-in service", () => {
     expect(r3.state.longestStreak).toBe(3);
 
     const r5 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "streak",
       endUserId: userId,
       now: day5,
@@ -260,7 +260,7 @@ describe("check-in service", () => {
       timezone: "Asia/Shanghai",
     });
     const view = await svc.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "empty",
       endUserId: "nobody",
     });
@@ -290,7 +290,7 @@ describe("check-in service", () => {
     // belong to the current test org.
     expect(page.items.length).toBeGreaterThan(0);
     for (const row of page.items) {
-      expect(row.organizationId).toBe(orgId);
+      expect(row.tenantId).toBe(orgId);
     }
   });
 
@@ -400,7 +400,7 @@ describe("check-in service — activity-bound writable gate", () => {
     const [row] = await db
       .insert(activityConfigs)
       .values({
-        organizationId: orgId,
+        tenantId: orgId,
         alias: opts.alias,
         name: `gate-${opts.alias}`,
         kind: "generic",
@@ -425,7 +425,7 @@ describe("check-in service — activity-bound writable gate", () => {
     });
     expect(cfg.activityId).toBe(activityId);
     const r = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "ci-active",
       endUserId: "u-gate-active",
     });
@@ -449,14 +449,14 @@ describe("check-in service — activity-bound writable gate", () => {
       });
       await expect(
         svc.checkIn({
-          organizationId: orgId,
+          tenantId: orgId,
           configKey: `ci-${phase}`,
           endUserId: `u-${phase}`,
         }),
       ).rejects.toMatchObject({ code: "activity.not_in_writable_phase" });
 
       const view = await svc.getUserState({
-        organizationId: orgId,
+        tenantId: orgId,
         configKey: `ci-${phase}`,
         endUserId: `u-${phase}`,
       });
@@ -472,7 +472,7 @@ describe("check-in service — activity-bound writable gate", () => {
       timezone: "UTC",
     });
     const r = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: "ci-standalone",
       endUserId: "u-standalone",
     });

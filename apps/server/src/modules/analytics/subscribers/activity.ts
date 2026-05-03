@@ -11,7 +11,7 @@ export function registerActivitySubscribers(
 
   events.on("activity.state.changed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "activity.state.changed",
       source: "activity",
       eventData: {
@@ -24,7 +24,7 @@ export function registerActivitySubscribers(
 
   events.on("activity.schedule.fired", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       event: "activity.schedule.fired",
       source: "activity",
       eventData: {
@@ -39,7 +39,7 @@ export function registerActivitySubscribers(
 
   events.on("activity.joined", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "activity.joined",
       source: "activity",

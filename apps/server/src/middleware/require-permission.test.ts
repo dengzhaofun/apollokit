@@ -23,7 +23,8 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../db";
 import app from "../index";
-import { member, organization, user } from "../schema";
+import { member, organization, teamMember, user } from "../schema";
+import { getDefaultTeamId } from "../testing/fixtures";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -98,6 +99,18 @@ describe("requirePermission — four-role matrix", () => {
       id: subjectMemberRowId,
       organizationId: orgId,
       userId: subjectUserId,
+      role: "orgViewer", // org-level role for the company
+      createdAt: new Date(),
+    });
+
+    // Add subject as teamMember on the auto-created default project.
+    // require-permission middleware reads teamMember.role for business
+    // resource gating.
+    const tid = await getDefaultTeamId(orgId);
+    await db.insert(teamMember).values({
+      id: `test-teamMember-${crypto.randomUUID()}`,
+      teamId: tid,
+      userId: subjectUserId,
       role: "viewer", // initial; setSubjectRole flips it per test
       createdAt: new Date(),
     });
@@ -118,6 +131,41 @@ describe("requirePermission — four-role matrix", () => {
         `set-active failed ${setActive.status}: ${await setActive.text()}`,
       );
     }
+    // set-active may issue a fresh Set-Cookie with the updated session
+    // payload (now containing activeOrganizationId + activeTeamId
+    // populated by session.update.before hook). The cookieCache embeds
+    // session data in the cookie, so we MUST swap to the new cookie or
+    // subsequent requests would still see the old (no activeTeamId)
+    // payload.
+    const newCookie1 = setActive.headers.get("set-cookie");
+    if (newCookie1) {
+      subjectCookie = newCookie1.split(";")[0]!;
+    }
+
+    // Explicitly pin activeTeamId via set-active-team so business
+    // permission checks (which read teamMember.role for activeTeamId)
+    // have a deterministic team context.
+    const setActiveTeam = await app.request(
+      "/api/auth/organization/set-active-team",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: ORIGIN,
+          cookie: subjectCookie,
+        },
+        body: JSON.stringify({ teamId: tid }),
+      },
+    );
+    if (setActiveTeam.status !== 200) {
+      throw new Error(
+        `set-active-team failed ${setActiveTeam.status}: ${await setActiveTeam.text()}`,
+      );
+    }
+    const newCookie2 = setActiveTeam.headers.get("set-cookie");
+    if (newCookie2) {
+      subjectCookie = newCookie2.split(";")[0]!;
+    }
   });
 
   afterAll(async () => {
@@ -128,13 +176,14 @@ describe("requirePermission — four-role matrix", () => {
   });
 
   async function setSubjectRole(role: string) {
+    const tid = await getDefaultTeamId(orgId);
     await db
-      .update(member)
+      .update(teamMember)
       .set({ role })
       .where(
         and(
-          eq(member.userId, subjectUserId),
-          eq(member.organizationId, orgId),
+          eq(teamMember.userId, subjectUserId),
+          eq(teamMember.teamId, tid),
         ),
       );
   }

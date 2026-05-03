@@ -28,7 +28,7 @@ export function registerOfflineCheckInSubscribers(
 
   events.on("offline_check_in.attempted", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "offline_check_in.attempted",
       source: "offline-check-in",
@@ -52,7 +52,7 @@ export function registerOfflineCheckInSubscribers(
 
   events.on("offline_check_in.completed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "offline_check_in.completed",
       source: "offline-check-in",
@@ -69,7 +69,7 @@ export function registerOfflineCheckInSubscribers(
 
   events.on("offline_check_in.campaign_completed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "offline_check_in.campaign_completed",
       source: "offline-check-in",

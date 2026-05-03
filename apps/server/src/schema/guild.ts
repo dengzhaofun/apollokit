@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Guild settings — per-organization configuration for the guild system.
@@ -26,9 +26,9 @@ export const guildSettings = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     maxMembers: integer("max_members").default(50).notNull(),
     maxOfficers: integer("max_officers").default(5).notNull(),
     createCost: jsonb("create_cost").$type<{ definitionId: string; quantity: number }[]>().default([]).notNull(),
@@ -42,7 +42,7 @@ export const guildSettings = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("guild_settings_org_uidx").on(table.organizationId),
+    uniqueIndex("guild_settings_org_uidx").on(table.tenantId),
   ],
 );
 
@@ -59,7 +59,7 @@ export const guildGuilds = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
@@ -81,13 +81,13 @@ export const guildGuilds = pgTable(
       .notNull(),
   },
   (table) => [
-    index("guild_guilds_org_idx").on(table.organizationId),
-    index("guild_guilds_org_leader_idx").on(
-      table.organizationId,
+    index("guild_guilds_tenant_idx").on(table.tenantId),
+    index("guild_guilds_tenant_leader_idx").on(
+      table.tenantId,
       table.leaderUserId,
     ),
-    index("guild_guilds_org_name_idx").on(
-      table.organizationId,
+    index("guild_guilds_tenant_name_idx").on(
+      table.tenantId,
       table.name,
     ),
   ],
@@ -107,7 +107,7 @@ export const guildMembers = pgTable(
       .notNull()
       .references(() => guildGuilds.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     role: text("role").default("member").notNull(),
     contribution: integer("contribution").default(0).notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
@@ -122,8 +122,8 @@ export const guildMembers = pgTable(
       columns: [table.guildId, table.endUserId],
       name: "guild_members_pk",
     }),
-    index("guild_members_org_user_idx").on(
-      table.organizationId,
+    index("guild_members_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -142,7 +142,7 @@ export const guildJoinRequests = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     guildId: uuid("guild_id")
       .notNull()
       .references(() => guildGuilds.id, { onDelete: "cascade" }),
@@ -164,8 +164,8 @@ export const guildJoinRequests = pgTable(
       table.guildId,
       table.status,
     ),
-    index("guild_join_requests_org_user_status_idx").on(
-      table.organizationId,
+    index("guild_join_requests_tenant_user_status_idx").on(
+      table.tenantId,
       table.endUserId,
       table.status,
     ),
@@ -186,7 +186,7 @@ export const guildContributionLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     guildId: uuid("guild_id")
       .notNull()
       .references(() => guildGuilds.id, { onDelete: "cascade" }),

@@ -101,7 +101,7 @@ describe("offline-check-in service", () => {
     await svc.updateCampaign(orgId, campaign.id, { status: "active" });
 
     const result = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u1",
       spotAlias: "main-stage",
@@ -145,7 +145,7 @@ describe("offline-check-in service", () => {
     });
     await expect(
       svc.checkIn({
-        organizationId: orgId,
+        tenantId: orgId,
         campaignKey: campaign.id,
         endUserId: "u-far",
         spotAlias: "spot-x",
@@ -178,7 +178,7 @@ describe("offline-check-in service", () => {
 
     const baseline = granted.length;
     const a = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u3",
       spotAlias: "alpha",
@@ -186,7 +186,7 @@ describe("offline-check-in service", () => {
       lng: SHANGHAI_LNG,
     });
     const b = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u3",
       spotAlias: "alpha",
@@ -230,7 +230,7 @@ describe("offline-check-in service", () => {
     const token = minted.tokens[0]!;
 
     const ok = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u-qr-1",
       spotAlias: "qr-spot",
@@ -245,7 +245,7 @@ describe("offline-check-in service", () => {
     // user should fail outright because nonce has been consumed.
     await expect(
       svc.checkIn({
-        organizationId: orgId,
+        tenantId: orgId,
         campaignKey: campaign.id,
         endUserId: "u-qr-2",
         spotAlias: "qr-spot",
@@ -282,7 +282,7 @@ describe("offline-check-in service", () => {
     const day2 = new Date("2026-05-03T03:00:00Z");
 
     const r1 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u5",
       spotAlias: "gate",
@@ -295,7 +295,7 @@ describe("offline-check-in service", () => {
     expect(r1.justCompleted).toBe(false);
 
     const r1b = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u5",
       spotAlias: "gate",
@@ -308,7 +308,7 @@ describe("offline-check-in service", () => {
     expect(r1b.progress.dailyCount).toBe(1);
 
     const r2 = await svc.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: campaign.id,
       endUserId: "u5",
       spotAlias: "gate",

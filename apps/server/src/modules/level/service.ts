@@ -176,7 +176,7 @@ type LevelDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "level.cleared": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       configId: string;
       levelId: string;
@@ -185,7 +185,7 @@ declare module "../../lib/event-bus" {
       firstClear: boolean;
     };
     "level.rewards_claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       levelId: string;
       // "clear" = first-pass completion rewards; "star" = star-tier rewards.
@@ -206,16 +206,16 @@ export function createLevelService(
   // ─── Load helpers ─────────────────────────────────────────────
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<LevelConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(levelConfigs.organizationId, organizationId),
+          eq(levelConfigs.tenantId, tenantId),
           eq(levelConfigs.id, key),
         )
       : and(
-          eq(levelConfigs.organizationId, organizationId),
+          eq(levelConfigs.tenantId, tenantId),
           eq(levelConfigs.alias, key),
         );
     const rows = await db.select().from(levelConfigs).where(where).limit(1);
@@ -225,7 +225,7 @@ export function createLevelService(
   }
 
   async function loadConfigById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<LevelConfig> {
     const rows = await db
@@ -233,7 +233,7 @@ export function createLevelService(
       .from(levelConfigs)
       .where(
         and(
-          eq(levelConfigs.organizationId, organizationId),
+          eq(levelConfigs.tenantId, tenantId),
           eq(levelConfigs.id, id),
         ),
       )
@@ -244,7 +244,7 @@ export function createLevelService(
   }
 
   async function loadStageById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<LevelStage> {
     const rows = await db
@@ -252,7 +252,7 @@ export function createLevelService(
       .from(levelStages)
       .where(
         and(
-          eq(levelStages.organizationId, organizationId),
+          eq(levelStages.tenantId, tenantId),
           eq(levelStages.id, id),
         ),
       )
@@ -263,7 +263,7 @@ export function createLevelService(
   }
 
   async function loadLevelById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<Level> {
     const rows = await db
@@ -271,7 +271,7 @@ export function createLevelService(
       .from(levels)
       .where(
         and(
-          eq(levels.organizationId, organizationId),
+          eq(levels.tenantId, tenantId),
           eq(levels.id, id),
         ),
       )
@@ -284,7 +284,7 @@ export function createLevelService(
   // ─── Config CRUD ──────────────────────────────────────────────
 
   async function createConfig(
-    organizationId: string,
+    tenantId: string,
     input: {
       name: string;
       alias?: string | null;
@@ -298,11 +298,11 @@ export function createLevelService(
     },
   ): Promise<LevelConfig> {
     try {
-      const __sortKey = await appendKey(db, { table: levelConfigs, sortColumn: levelConfigs.sortOrder, scopeWhere: eq(levelConfigs.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: levelConfigs, sortColumn: levelConfigs.sortOrder, scopeWhere: eq(levelConfigs.tenantId, tenantId)! });
       const [row] = await db
         .insert(levelConfigs)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           description: input.description ?? null,
@@ -325,7 +325,7 @@ export function createLevelService(
   }
 
   async function updateConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: {
       name?: string;
@@ -350,7 +350,7 @@ export function createLevelService(
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
-      return loadConfigById(organizationId, id);
+      return loadConfigById(tenantId, id);
     }
 
     try {
@@ -360,7 +360,7 @@ export function createLevelService(
         .where(
           and(
             eq(levelConfigs.id, id),
-            eq(levelConfigs.organizationId, organizationId),
+            eq(levelConfigs.tenantId, tenantId),
           ),
         )
         .returning();
@@ -375,16 +375,16 @@ export function createLevelService(
   }
 
   async function moveConfig(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<LevelConfig> {
-    const existing = await loadConfigByKey(organizationId, key);
+    const existing = await loadConfigByKey(tenantId, key);
     return moveAndReturn<LevelConfig>(db, {
       table: levelConfigs,
       sortColumn: levelConfigs.sortOrder,
       idColumn: levelConfigs.id,
-      partitionWhere: eq(levelConfigs.organizationId, organizationId)!,
+      partitionWhere: eq(levelConfigs.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new LevelConfigNotFound(sid),
@@ -392,7 +392,7 @@ export function createLevelService(
   }
 
   async function deleteConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -400,7 +400,7 @@ export function createLevelService(
       .where(
         and(
           eq(levelConfigs.id, id),
-          eq(levelConfigs.organizationId, organizationId),
+          eq(levelConfigs.tenantId, tenantId),
         ),
       )
       .returning({ id: levelConfigs.id });
@@ -408,11 +408,11 @@ export function createLevelService(
   }
 
   async function listConfigs(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<LevelConfig>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(levelConfigs.organizationId, organizationId)];
+    const conds: SQL[] = [eq(levelConfigs.tenantId, tenantId)];
     const seek = cursorWhere(params.cursor, levelConfigs.createdAt, levelConfigs.id);
     if (seek) conds.push(seek);
     if (params.q) {
@@ -430,23 +430,23 @@ export function createLevelService(
   }
 
   async function getConfig(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<LevelConfig> {
-    return loadConfigByKey(organizationId, key);
+    return loadConfigByKey(tenantId, key);
   }
 
   async function getConfigById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<LevelConfig> {
-    return loadConfigById(organizationId, id);
+    return loadConfigById(tenantId, id);
   }
 
   // ─── Stage CRUD ───────────────────────────────────────────────
 
   async function createStage(
-    organizationId: string,
+    tenantId: string,
     configId: string,
     input: {
       name: string;
@@ -458,14 +458,14 @@ export function createLevelService(
     },
   ): Promise<LevelStage> {
     // Verify config exists and belongs to this org
-    await loadConfigById(organizationId, configId);
+    await loadConfigById(tenantId, configId);
 
-    const __sortKey = await appendKey(db, { table: levelStages, sortColumn: levelStages.sortOrder, scopeWhere: eq(levelStages.organizationId, organizationId)! });
+    const __sortKey = await appendKey(db, { table: levelStages, sortColumn: levelStages.sortOrder, scopeWhere: eq(levelStages.tenantId, tenantId)! });
     const [row] = await db
       .insert(levelStages)
       .values({
         configId,
-        organizationId,
+        tenantId,
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
@@ -479,7 +479,7 @@ export function createLevelService(
   }
 
   async function updateStage(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: {
       name?: string;
@@ -498,7 +498,7 @@ export function createLevelService(
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
-      return loadStageById(organizationId, id);
+      return loadStageById(tenantId, id);
     }
 
     const [row] = await db
@@ -507,7 +507,7 @@ export function createLevelService(
       .where(
         and(
           eq(levelStages.id, id),
-          eq(levelStages.organizationId, organizationId),
+          eq(levelStages.tenantId, tenantId),
         ),
       )
       .returning();
@@ -516,17 +516,17 @@ export function createLevelService(
   }
 
   async function moveStage(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<LevelStage> {
-    const existing = await loadStageById(organizationId, id);
+    const existing = await loadStageById(tenantId, id);
     return moveAndReturn<LevelStage>(db, {
       table: levelStages,
       sortColumn: levelStages.sortOrder,
       idColumn: levelStages.id,
       partitionWhere: and(
-        eq(levelStages.organizationId, organizationId),
+        eq(levelStages.tenantId, tenantId),
         eq(levelStages.configId, existing.configId),
       )!,
       id: existing.id,
@@ -536,7 +536,7 @@ export function createLevelService(
   }
 
   async function deleteStage(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -544,7 +544,7 @@ export function createLevelService(
       .where(
         and(
           eq(levelStages.id, id),
-          eq(levelStages.organizationId, organizationId),
+          eq(levelStages.tenantId, tenantId),
         ),
       )
       .returning({ id: levelStages.id });
@@ -552,7 +552,7 @@ export function createLevelService(
   }
 
   async function listStages(
-    organizationId: string,
+    tenantId: string,
     configId: string,
   ): Promise<LevelStage[]> {
     return db
@@ -561,7 +561,7 @@ export function createLevelService(
       .where(
         and(
           eq(levelStages.configId, configId),
-          eq(levelStages.organizationId, organizationId),
+          eq(levelStages.tenantId, tenantId),
         ),
       )
       .orderBy(asc(levelStages.sortOrder), desc(levelStages.createdAt));
@@ -570,7 +570,7 @@ export function createLevelService(
   // ─── Level CRUD ───────────────────────────────────────────────
 
   async function createLevel(
-    organizationId: string,
+    tenantId: string,
     configId: string,
     input: {
       name: string;
@@ -589,16 +589,16 @@ export function createLevelService(
     },
   ): Promise<Level> {
     // Verify config exists and belongs to this org
-    await loadConfigById(organizationId, configId);
+    await loadConfigById(tenantId, configId);
 
     try {
-      const __sortKey = await appendKey(db, { table: levels, sortColumn: levels.sortOrder, scopeWhere: eq(levels.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: levels, sortColumn: levels.sortOrder, scopeWhere: eq(levels.tenantId, tenantId)! });
       const [row] = await db
         .insert(levels)
         .values({
           configId,
           stageId: input.stageId ?? null,
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           description: input.description ?? null,
@@ -624,7 +624,7 @@ export function createLevelService(
   }
 
   async function updateLevel(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: {
       name?: string;
@@ -658,7 +658,7 @@ export function createLevelService(
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
-      return loadLevelById(organizationId, id);
+      return loadLevelById(tenantId, id);
     }
 
     try {
@@ -668,7 +668,7 @@ export function createLevelService(
         .where(
           and(
             eq(levels.id, id),
-            eq(levels.organizationId, organizationId),
+            eq(levels.tenantId, tenantId),
           ),
         )
         .returning();
@@ -683,17 +683,17 @@ export function createLevelService(
   }
 
   async function moveLevel(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<Level> {
-    const existing = await loadLevelById(organizationId, id);
+    const existing = await loadLevelById(tenantId, id);
     return moveAndReturn<Level>(db, {
       table: levels,
       sortColumn: levels.sortOrder,
       idColumn: levels.id,
       partitionWhere: and(
-        eq(levels.organizationId, organizationId),
+        eq(levels.tenantId, tenantId),
         eq(levels.configId, existing.configId),
       )!,
       id: existing.id,
@@ -703,7 +703,7 @@ export function createLevelService(
   }
 
   async function deleteLevel(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -711,7 +711,7 @@ export function createLevelService(
       .where(
         and(
           eq(levels.id, id),
-          eq(levels.organizationId, organizationId),
+          eq(levels.tenantId, tenantId),
         ),
       )
       .returning({ id: levels.id });
@@ -719,13 +719,13 @@ export function createLevelService(
   }
 
   async function listLevels(
-    organizationId: string,
+    tenantId: string,
     configId: string,
     stageId?: string,
   ): Promise<Level[]> {
     const conditions = [
       eq(levels.configId, configId),
-      eq(levels.organizationId, organizationId),
+      eq(levels.tenantId, tenantId),
     ];
     if (stageId !== undefined) {
       conditions.push(eq(levels.stageId, stageId));
@@ -744,7 +744,7 @@ export function createLevelService(
    * for all levels in a config.
    */
   async function buildProgressContext(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     configId: string,
   ) {
@@ -755,7 +755,7 @@ export function createLevelService(
         .where(
           and(
             eq(levels.configId, configId),
-            eq(levels.organizationId, organizationId),
+            eq(levels.tenantId, tenantId),
           ),
         ),
       db
@@ -765,7 +765,7 @@ export function createLevelService(
           and(
             eq(levelUserProgress.configId, configId),
             eq(levelUserProgress.endUserId, endUserId),
-            eq(levelUserProgress.organizationId, organizationId),
+            eq(levelUserProgress.tenantId, tenantId),
           ),
         ),
     ]);
@@ -811,11 +811,11 @@ export function createLevelService(
   // ─── Client: getConfigOverview ────────────────────────────────
 
   async function getConfigOverview(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     configKey: string,
   ) {
-    const config = await loadConfigByKey(organizationId, configKey);
+    const config = await loadConfigByKey(tenantId, configKey);
 
     const [allStages, ctx] = await Promise.all([
       config.hasStages
@@ -825,12 +825,12 @@ export function createLevelService(
             .where(
               and(
                 eq(levelStages.configId, config.id),
-                eq(levelStages.organizationId, organizationId),
+                eq(levelStages.tenantId, tenantId),
               ),
             )
             .orderBy(asc(levelStages.sortOrder), desc(levelStages.createdAt))
         : Promise.resolve([] as LevelStage[]),
-      buildProgressContext(organizationId, endUserId, config.id),
+      buildProgressContext(tenantId, endUserId, config.id),
     ]);
 
     const {
@@ -925,11 +925,11 @@ export function createLevelService(
   // ─── Client: getLevelDetail ───────────────────────────────────
 
   async function getLevelDetail(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     levelId: string,
   ) {
-    const level = await loadLevelById(organizationId, levelId);
+    const level = await loadLevelById(tenantId, levelId);
 
     // Fetch user progress (if any)
     const [progress] = await db
@@ -939,14 +939,14 @@ export function createLevelService(
         and(
           eq(levelUserProgress.levelId, levelId),
           eq(levelUserProgress.endUserId, endUserId),
-          eq(levelUserProgress.organizationId, organizationId),
+          eq(levelUserProgress.tenantId, tenantId),
         ),
       )
       .limit(1);
 
     // Build progress context to evaluate unlock
     const ctx = await buildProgressContext(
-      organizationId,
+      tenantId,
       endUserId,
       level.configId,
     );
@@ -972,12 +972,12 @@ export function createLevelService(
   // ─── Client: reportClear ──────────────────────────────────────
 
   async function reportClear(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     levelId: string,
     input: { stars: number; score?: number | null },
   ) {
-    const level = await loadLevelById(organizationId, levelId);
+    const level = await loadLevelById(tenantId, levelId);
 
     // Validate stars
     if (input.stars < 0 || input.stars > level.maxStars) {
@@ -988,7 +988,7 @@ export function createLevelService(
 
     // Verify level is unlocked
     const ctx = await buildProgressContext(
-      organizationId,
+      tenantId,
       endUserId,
       level.configId,
     );
@@ -1009,10 +1009,10 @@ export function createLevelService(
       LevelUserProgress & { inserted: boolean }
     >(sql`
       INSERT INTO level_user_progress (
-        level_id, end_user_id, organization_id, config_id,
+        level_id, end_user_id, tenant_id, config_id,
         status, stars, attempts, best_score, cleared_at, created_at, updated_at
       ) VALUES (
-        ${levelId}, ${endUserId}, ${organizationId}, ${level.configId},
+        ${levelId}, ${endUserId}, ${tenantId}, ${level.configId},
         'cleared', ${input.stars}, 1,
         ${input.score ?? null},
         ${now}, ${now}, ${now}
@@ -1075,7 +1075,7 @@ export function createLevelService(
     // without touching this service.
     if (events) {
       await events.emit("level.cleared", {
-        organizationId,
+        tenantId,
         endUserId,
         configId: level.configId,
         levelId,
@@ -1097,12 +1097,12 @@ export function createLevelService(
   // ─── Client: claimRewards ─────────────────────────────────────
 
   async function claimRewards(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     levelId: string,
     input: { type: "clear" } | { type: "star"; starTier: number },
   ) {
-    const level = await loadLevelById(organizationId, levelId);
+    const level = await loadLevelById(tenantId, levelId);
 
     // Fetch user progress
     const [progress] = await db
@@ -1112,7 +1112,7 @@ export function createLevelService(
         and(
           eq(levelUserProgress.levelId, levelId),
           eq(levelUserProgress.endUserId, endUserId),
-          eq(levelUserProgress.organizationId, organizationId),
+          eq(levelUserProgress.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -1146,7 +1146,7 @@ export function createLevelService(
       if (clearRewards.length > 0) {
         await grantRewards(
           rewardServices,
-          organizationId,
+          tenantId,
           endUserId,
           clearRewards,
           "level.clear",
@@ -1156,7 +1156,7 @@ export function createLevelService(
 
       if (events) {
         await events.emit("level.rewards_claimed", {
-          organizationId,
+          tenantId,
           endUserId,
           levelId,
           type: "clear",
@@ -1219,7 +1219,7 @@ export function createLevelService(
     if (grantedRewards.length > 0) {
       await grantRewards(
         rewardServices,
-        organizationId,
+        tenantId,
         endUserId,
         grantedRewards,
         "level.star",
@@ -1229,7 +1229,7 @@ export function createLevelService(
 
     if (events) {
       await events.emit("level.rewards_claimed", {
-        organizationId,
+        tenantId,
         endUserId,
         levelId,
         type: "star",

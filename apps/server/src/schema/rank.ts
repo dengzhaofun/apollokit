@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * 天梯 / 段位基座（rank）schema。
@@ -29,7 +29,7 @@ import { organization } from "./auth";
  * 通过 `(seasonId, endUserId)` 唯一索引走 `INSERT ... ON CONFLICT DO
  * UPDATE`，兼容"新玩家首次结算 → 默认初始化 + 更新"。
  *
- * 结算：`rank_matches.(organizationId, externalMatchId)` 唯一索引是
+ * 结算：`rank_matches.(tenantId, externalMatchId)` 唯一索引是
  * **幂等门**，`settleMatch` 流程的第一步 `INSERT ... ON CONFLICT DO
  * NOTHING RETURNING id` 拿到空即视作重复请求直接返回。
  */
@@ -49,9 +49,9 @@ export const rankTierConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -76,12 +76,12 @@ export const rankTierConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("rank_tier_configs_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("rank_tier_configs_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
-    index("rank_tier_configs_org_active_idx").on(
-      table.organizationId,
+    index("rank_tier_configs_tenant_active_idx").on(
+      table.tenantId,
       table.isActive,
     ),
   ],
@@ -158,9 +158,9 @@ export const rankSeasons = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     tierConfigId: uuid("tier_config_id")
       .notNull()
       .references(() => rankTierConfigs.id, { onDelete: "restrict" }),
@@ -182,20 +182,20 @@ export const rankSeasons = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("rank_seasons_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("rank_seasons_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
     index("rank_seasons_config_status_idx").on(
       table.tierConfigId,
       table.status,
     ),
-    index("rank_seasons_org_status_idx").on(
-      table.organizationId,
+    index("rank_seasons_tenant_status_idx").on(
+      table.tenantId,
       table.status,
     ),
     index("rank_seasons_window_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.startAt,
       table.endAt,
     ),
@@ -223,9 +223,9 @@ export const rankPlayerStates = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     seasonId: uuid("season_id")
       .notNull()
       .references(() => rankSeasons.id, { onDelete: "cascade" }),
@@ -260,8 +260,8 @@ export const rankPlayerStates = pgTable(
       table.seasonId,
       table.endUserId,
     ),
-    index("rank_player_states_org_season_idx").on(
-      table.organizationId,
+    index("rank_player_states_tenant_season_idx").on(
+      table.tenantId,
       table.seasonId,
     ),
     // PG 兜底榜（Redis 不可用时 / 段位内榜走这条）
@@ -279,7 +279,7 @@ export const rankPlayerStates = pgTable(
 
 // ── 一局比赛（幂等门）────────────────────────────────────────────
 /**
- * externalMatchId 是客户侧局号，`(organizationId, externalMatchId)`
+ * externalMatchId 是客户侧局号，`(tenantId, externalMatchId)`
  * 唯一索引是 `settleMatch` 的幂等门：
  *
  *   INSERT INTO rank_matches (...) VALUES (...)
@@ -297,9 +297,9 @@ export const rankMatches = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     seasonId: uuid("season_id")
       .notNull()
       .references(() => rankSeasons.id, { onDelete: "cascade" }),
@@ -313,7 +313,7 @@ export const rankMatches = pgTable(
   },
   (table) => [
     uniqueIndex("rank_matches_org_external_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.externalMatchId,
     ),
     index("rank_matches_season_settled_idx").on(
@@ -338,10 +338,10 @@ export const rankMatchParticipants = pgTable(
     matchId: uuid("match_id")
       .notNull()
       .references(() => rankMatches.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     seasonId: uuid("season_id").notNull(),
     endUserId: text("end_user_id").notNull(),
-    teamId: text("team_id").notNull(),
+    matchTeamId: text("match_team_id").notNull(),
     placement: smallint("placement"),
     win: boolean("win").notNull(),
     performanceScore: doublePrecision("performance_score"),
@@ -366,7 +366,7 @@ export const rankMatchParticipants = pgTable(
       table.endUserId,
     ),
     index("rank_match_participants_user_recent_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.seasonId,
       table.endUserId,
       table.id,
@@ -392,7 +392,7 @@ export const rankSeasonSnapshots = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     seasonId: uuid("season_id")
       .notNull()
       .references(() => rankSeasons.id, { onDelete: "cascade" }),

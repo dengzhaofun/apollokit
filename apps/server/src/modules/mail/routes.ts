@@ -31,7 +31,7 @@ const TAG = "Mail (Admin)";
 function serializeMessage(row: MailMessage) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     title: row.title,
     content: row.content,
     rewards: row.rewards as RewardEntry[],

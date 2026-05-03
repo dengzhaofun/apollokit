@@ -8,7 +8,7 @@
  *   The player logged in via `/api/client/auth/sign-in/email` and we
  *   recognize a session cookie / bearer token from the end-user Better
  *   Auth instance. We pull `c.var.endUserId` from `session.userId`.
- *   The session row also carries `organizationId` (populated in
+ *   The session row also carries `tenantId` (populated in
  *   `session.create.before` of the end-user-auth instance); we require
  *   it to match the cpk_-derived org id, otherwise an attacker with
  *   a leaked cross-tenant session cookie could forge access.
@@ -22,7 +22,7 @@
  *   `POST /api/users/sync` or hasn't synced at all.
  *
  * Downstream business handlers see a single contract: `c.var.endUserId`
- * is a non-empty string, `c.var.clientCredential.organizationId` is the
+ * is a non-empty string, `c.var.clientCredential.tenantId` is the
  * tenant. They don't need to care which channel resolved it.
  *
  * Must be mounted AFTER `requireClientCredential` — depends on
@@ -60,12 +60,12 @@ export const requireClientUser = createMiddleware<HonoEnv>(async (c, next) => {
     headers: c.req.raw.headers,
   });
   if (session?.user) {
-    const sessionOrgId = (session.session as { organizationId?: string })
-      .organizationId;
+    const sessionOrgId = (session.session as { tenantId?: string })
+      .tenantId;
     if (!sessionOrgId) {
       throw new UnauthorizedError("session missing project binding");
     }
-    if (sessionOrgId !== cred.organizationId) {
+    if (sessionOrgId !== cred.tenantId) {
       throw new TenantMismatchError();
     }
     // Soft-ban enforcement on every request. `setDisabled` deletes

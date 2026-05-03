@@ -163,7 +163,7 @@ export const CmsTypeAliasParamSchema = z.object({
 export const CmsTypeResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -297,7 +297,7 @@ export const ListEntriesQuerySchema = z.object({
 export const CmsEntryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     typeId: z.string(),
     typeAlias: z.string(),
     alias: z.string(),

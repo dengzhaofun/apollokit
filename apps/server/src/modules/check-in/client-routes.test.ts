@@ -18,6 +18,7 @@ import { db } from "../../db";
 import { computeHmac } from "../../lib/crypto";
 import app from "../../index";
 import { organization, user } from "../../schema";
+import { getDefaultTeamId } from "../../testing/fixtures";
 import { createClientCredentialService } from "../client-credentials/service";
 
 const ORIGIN = "http://localhost:8787";
@@ -25,6 +26,7 @@ const APP_SECRET = process.env.BETTER_AUTH_SECRET ?? "test-secret";
 
 type Fixture = {
   orgId: string;
+  tenantId: string;
   cookie: string;
   adminUserId: string;
   publishableKey: string;
@@ -75,12 +77,14 @@ async function setupFixture(): Promise<Fixture> {
   });
   if (cfgRes.status !== 201) throw new Error(`config create failed: ${await cfgRes.text()}`);
 
+  const tenantId = await getDefaultTeamId(orgId);
   // Create a client credential directly via service (avoids testing CRUD routes here)
   const credSvc = createClientCredentialService({ db, appSecret: APP_SECRET });
-  const cred = await credSvc.create(orgId, { name: `client-test-${stamp}` });
+  const cred = await credSvc.create(tenantId, { name: `client-test-${stamp}` });
 
   return {
     orgId,
+    tenantId,
     cookie,
     adminUserId,
     publishableKey: cred.publishableKey,
@@ -258,9 +262,9 @@ describe("client check-in routes", () => {
 
   test("devMode=true allows check-in without HMAC", async () => {
     const credSvc = createClientCredentialService({ db, appSecret: APP_SECRET });
-    const creds = await credSvc.list(fx.orgId);
+    const creds = await credSvc.list(fx.tenantId);
     const cred = creds.find((c) => c.publishableKey === fx.publishableKey)!;
-    await credSvc.updateDevMode(fx.orgId, cred.id, true);
+    await credSvc.updateDevMode(fx.tenantId, cred.id, true);
 
     const res = await app.request("/api/client/check-in/check-ins", {
       method: "POST",
@@ -273,7 +277,7 @@ describe("client check-in routes", () => {
     });
     expect(res.status).toBe(200);
 
-    await credSvc.updateDevMode(fx.orgId, cred.id, false);
+    await credSvc.updateDevMode(fx.tenantId, cred.id, false);
   });
 
   // -------------------------------------------------------------------

@@ -108,7 +108,7 @@ export type PlayerRankView = {
 /** settleMatch 返回每位玩家的 delta 汇总 */
 export type ParticipantDelta = {
   endUserId: string;
-  teamId: string;
+  matchTeamId: string;
   win: boolean;
   mmrBefore: number;
   mmrAfter: number;

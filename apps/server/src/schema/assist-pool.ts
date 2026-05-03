@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Contribution policy — controls how much a single assist call deducts
@@ -69,9 +69,9 @@ export const assistPoolConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -101,9 +101,9 @@ export const assistPoolConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("assist_pool_configs_org_idx").on(table.organizationId),
-    uniqueIndex("assist_pool_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("assist_pool_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("assist_pool_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("assist_pool_configs_activity_idx").on(table.activityId),
   ],
@@ -125,7 +125,7 @@ export const assistPoolInstances = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     configId: uuid("config_id")
       .notNull()
       .references(() => assistPoolConfigs.id, { onDelete: "cascade" }),
@@ -148,7 +148,7 @@ export const assistPoolInstances = pgTable(
   (table) => [
     index("assist_pool_instances_config_idx").on(table.configId),
     index("assist_pool_instances_initiator_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.initiatorEndUserId,
     ),
     index("assist_pool_instances_due_idx")
@@ -172,7 +172,7 @@ export const assistPoolContributions = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     instanceId: uuid("instance_id")
       .notNull()
       .references(() => assistPoolInstances.id, { onDelete: "cascade" }),
@@ -209,7 +209,7 @@ export const assistPoolRewardsLedger = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     instanceId: uuid("instance_id")
       .notNull()
       .references(() => assistPoolInstances.id, { onDelete: "cascade" }),
@@ -221,8 +221,8 @@ export const assistPoolRewardsLedger = pgTable(
     uniqueIndex("assist_pool_rewards_ledger_instance_uidx").on(
       table.instanceId,
     ),
-    index("assist_pool_rewards_ledger_org_initiator_idx").on(
-      table.organizationId,
+    index("assist_pool_rewards_ledger_tenant_initiator_idx").on(
+      table.tenantId,
       table.initiatorEndUserId,
     ),
   ],

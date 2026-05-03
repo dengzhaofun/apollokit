@@ -126,7 +126,7 @@ type ShopDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "shop.purchased": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       purchaseId: string;
       productId: string;
@@ -136,7 +136,7 @@ declare module "../../lib/event-bus" {
       rewardItems: RewardEntry[];
     };
     "shop.stage_claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       claimId: string;
       stageId: string;
@@ -163,16 +163,16 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── Helpers ─────────────────────────────────────────────────────
 
   async function loadCategoryByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ShopCategory> {
     const where = looksLikeId(key)
       ? and(
-          eq(shopCategories.organizationId, organizationId),
+          eq(shopCategories.tenantId, tenantId),
           eq(shopCategories.id, key),
         )
       : and(
-          eq(shopCategories.organizationId, organizationId),
+          eq(shopCategories.tenantId, tenantId),
           eq(shopCategories.alias, key),
         );
     const rows = await db.select().from(shopCategories).where(where).limit(1);
@@ -181,13 +181,13 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function loadTagByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ShopTag> {
     const where = looksLikeId(key)
-      ? and(eq(shopTags.organizationId, organizationId), eq(shopTags.id, key))
+      ? and(eq(shopTags.tenantId, tenantId), eq(shopTags.id, key))
       : and(
-          eq(shopTags.organizationId, organizationId),
+          eq(shopTags.tenantId, tenantId),
           eq(shopTags.alias, key),
         );
     const rows = await db.select().from(shopTags).where(where).limit(1);
@@ -196,16 +196,16 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function loadProductByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ShopProduct> {
     const where = looksLikeId(key)
       ? and(
-          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.tenantId, tenantId),
           eq(shopProducts.id, key),
         )
       : and(
-          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.tenantId, tenantId),
           eq(shopProducts.alias, key),
         );
     const rows = await db.select().from(shopProducts).where(where).limit(1);
@@ -260,7 +260,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── Category CRUD ───────────────────────────────────────────────
 
   async function createCategory(
-    organizationId: string,
+    tenantId: string,
     input: CreateCategoryInput,
   ): Promise<ShopCategory> {
     let level = 0;
@@ -274,11 +274,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         );
     }
     try {
-      const __sortKey = await appendKey(db, { table: shopCategories, sortColumn: shopCategories.sortOrder, scopeWhere: eq(shopCategories.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: shopCategories, sortColumn: shopCategories.sortOrder, scopeWhere: eq(shopCategories.tenantId, tenantId)! });
       const [row] = await db
         .insert(shopCategories)
         .values({
-          organizationId,
+          tenantId,
           parentId: input.parentId ?? null,
           alias: input.alias ?? null,
           name: input.name,
@@ -301,11 +301,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function updateCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateCategoryInput,
   ): Promise<ShopCategory> {
-    const existing = await loadCategoryByKey(organizationId, id);
+    const existing = await loadCategoryByKey(tenantId, id);
 
     let level = existing.level;
     if (patch.parentId !== undefined) {
@@ -346,7 +346,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(shopCategories.id, existing.id),
-            eq(shopCategories.organizationId, organizationId),
+            eq(shopCategories.tenantId, tenantId),
           ),
         )
         .returning();
@@ -360,16 +360,16 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function moveCategory(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<ShopCategory> {
-    const existing = await loadCategoryByKey(organizationId, key);
+    const existing = await loadCategoryByKey(tenantId, key);
     return moveAndReturn<ShopCategory>(db, {
       table: shopCategories,
       sortColumn: shopCategories.sortOrder,
       idColumn: shopCategories.id,
-      partitionWhere: eq(shopCategories.organizationId, organizationId)!,
+      partitionWhere: eq(shopCategories.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new ShopCategoryNotFound(sid),
@@ -377,7 +377,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function deleteCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -385,7 +385,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(shopCategories.id, id),
-          eq(shopCategories.organizationId, organizationId),
+          eq(shopCategories.tenantId, tenantId),
         ),
       )
       .returning({ id: shopCategories.id });
@@ -393,19 +393,19 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function listCategories(
-    organizationId: string,
+    tenantId: string,
   ): Promise<ShopCategory[]> {
     return db
       .select()
       .from(shopCategories)
-      .where(eq(shopCategories.organizationId, organizationId))
+      .where(eq(shopCategories.tenantId, tenantId))
       .orderBy(asc(shopCategories.level), asc(shopCategories.sortOrder));
   }
 
   async function listCategoryTree(
-    organizationId: string,
+    tenantId: string,
   ): Promise<ShopCategoryTreeNode[]> {
-    const flat = await listCategories(organizationId);
+    const flat = await listCategories(tenantId);
     const byId = new Map<string, ShopCategoryTreeNode>();
     for (const c of flat) byId.set(c.id, { ...c, children: [] });
     const roots: ShopCategoryTreeNode[] = [];
@@ -421,24 +421,24 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function getCategory(
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
   ): Promise<ShopCategory> {
-    return loadCategoryByKey(organizationId, idOrAlias);
+    return loadCategoryByKey(tenantId, idOrAlias);
   }
 
   // ─── Tag CRUD ────────────────────────────────────────────────────
 
   async function createTag(
-    organizationId: string,
+    tenantId: string,
     input: CreateTagInput,
   ): Promise<ShopTag> {
     try {
-      const __sortKey = await appendKey(db, { table: shopTags, sortColumn: shopTags.sortOrder, scopeWhere: eq(shopTags.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: shopTags, sortColumn: shopTags.sortOrder, scopeWhere: eq(shopTags.tenantId, tenantId)! });
       const [row] = await db
         .insert(shopTags)
         .values({
-          organizationId,
+          tenantId,
           alias: input.alias ?? null,
           name: input.name,
           color: input.color ?? null,
@@ -458,11 +458,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function updateTag(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateTagInput,
   ): Promise<ShopTag> {
-    const existing = await loadTagByKey(organizationId, id);
+    const existing = await loadTagByKey(tenantId, id);
     const values: Partial<typeof shopTags.$inferInsert> = {};
     if (patch.alias !== undefined) values.alias = patch.alias;
     if (patch.name !== undefined) values.name = patch.name;
@@ -478,7 +478,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(shopTags.id, existing.id),
-            eq(shopTags.organizationId, organizationId),
+            eq(shopTags.tenantId, tenantId),
           ),
         )
         .returning();
@@ -492,16 +492,16 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function moveTag(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<ShopTag> {
-    const existing = await loadTagByKey(organizationId, key);
+    const existing = await loadTagByKey(tenantId, key);
     return moveAndReturn<ShopTag>(db, {
       table: shopTags,
       sortColumn: shopTags.sortOrder,
       idColumn: shopTags.id,
-      partitionWhere: eq(shopTags.organizationId, organizationId)!,
+      partitionWhere: eq(shopTags.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new ShopTagNotFound(sid),
@@ -509,13 +509,13 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function deleteTag(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
       .delete(shopTags)
       .where(
-        and(eq(shopTags.id, id), eq(shopTags.organizationId, organizationId)),
+        and(eq(shopTags.id, id), eq(shopTags.tenantId, tenantId)),
       )
       .returning({ id: shopTags.id });
     if (deleted.length === 0) throw new ShopTagNotFound(id);
@@ -526,21 +526,21 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
    * dropdowns and (until UI is ready) the TagTable. Limit is implied
    * by the tenant's tag count (typically < 50).
    */
-  async function listAllTags(organizationId: string): Promise<ShopTag[]> {
+  async function listAllTags(tenantId: string): Promise<ShopTag[]> {
     return db
       .select()
       .from(shopTags)
-      .where(eq(shopTags.organizationId, organizationId))
+      .where(eq(shopTags.tenantId, tenantId))
       .orderBy(asc(shopTags.sortOrder), asc(shopTags.createdAt));
   }
 
   /** Paginated tags list — for the admin TagTable. */
   async function listTags(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<ShopTag>> {
     const limit = clampLimit(params.limit);
-    const conditions: SQL[] = [eq(shopTags.organizationId, organizationId)];
+    const conditions: SQL[] = [eq(shopTags.tenantId, tenantId)];
     const seek = cursorWhere(params.cursor, shopTags.createdAt, shopTags.id);
     if (seek) conditions.push(seek);
     if (params.q) {
@@ -558,10 +558,10 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function getTag(
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
   ): Promise<ShopTag> {
-    return loadTagByKey(organizationId, idOrAlias);
+    return loadTagByKey(tenantId, idOrAlias);
   }
 
   // ─── Product CRUD ────────────────────────────────────────────────
@@ -603,7 +603,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function createProduct(
-    organizationId: string,
+    tenantId: string,
     input: CreateProductInput,
   ): Promise<ShopProduct & { tags: ShopTag[] }> {
     if (input.categoryId) {
@@ -612,11 +612,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     }
 
     try {
-      const __sortKey = await appendKey(db, { table: shopProducts, sortColumn: shopProducts.sortOrder, scopeWhere: eq(shopProducts.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: shopProducts, sortColumn: shopProducts.sortOrder, scopeWhere: eq(shopProducts.tenantId, tenantId)! });
       const [row] = await db
         .insert(shopProducts)
         .values({
-          organizationId,
+          tenantId,
           categoryId: input.categoryId ?? null,
           alias: input.alias ?? null,
           name: input.name,
@@ -657,11 +657,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function updateProduct(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateProductInput,
   ): Promise<ShopProduct & { tags: ShopTag[] }> {
-    const existing = await loadProductByKey(organizationId, id);
+    const existing = await loadProductByKey(tenantId, id);
 
     if (patch.categoryId !== undefined && patch.categoryId !== null) {
       const cat = await loadCategoryLevel(patch.categoryId);
@@ -708,7 +708,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(shopProducts.id, existing.id),
-              eq(shopProducts.organizationId, organizationId),
+              eq(shopProducts.tenantId, tenantId),
             ),
           )
           .returning();
@@ -729,20 +729,20 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function moveProduct(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<ShopProduct> {
-    const existing = await loadProductByKey(organizationId, key);
+    const existing = await loadProductByKey(tenantId, key);
     // Scope by categoryId so products reorder within their category. Products
     // without a category share an "uncategorized" partition.
     const partitionWhere = existing.categoryId
       ? and(
-          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.tenantId, tenantId),
           eq(shopProducts.categoryId, existing.categoryId),
         )!
       : and(
-          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.tenantId, tenantId),
           isNull(shopProducts.categoryId),
         )!;
     return moveAndReturn<ShopProduct>(db, {
@@ -757,7 +757,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function deleteProduct(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -765,7 +765,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(shopProducts.id, id),
-          eq(shopProducts.organizationId, organizationId),
+          eq(shopProducts.tenantId, tenantId),
         ),
       )
       .returning({ id: shopProducts.id });
@@ -773,7 +773,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function moveGrowthStage(
-    organizationId: string,
+    tenantId: string,
     stageId: string,
     body: MoveBody,
   ): Promise<ShopGrowthStage> {
@@ -783,7 +783,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(shopGrowthStages.id, stageId),
-          eq(shopGrowthStages.organizationId, organizationId),
+          eq(shopGrowthStages.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -794,7 +794,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       sortColumn: shopGrowthStages.sortOrder,
       idColumn: shopGrowthStages.id,
       partitionWhere: and(
-        eq(shopGrowthStages.organizationId, organizationId),
+        eq(shopGrowthStages.tenantId, tenantId),
         eq(shopGrowthStages.productId, stage.productId),
       )!,
       id: stage.id,
@@ -804,16 +804,16 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function getProduct(
-    organizationId: string,
+    tenantId: string,
     idOrAlias: string,
   ): Promise<ShopProduct & { tags: ShopTag[] }> {
-    const row = await loadProductByKey(organizationId, idOrAlias);
+    const row = await loadProductByKey(tenantId, idOrAlias);
     const tagsMap = await loadProductTags([row.id]);
     return { ...row, tags: tagsMap.get(row.id) ?? [] };
   }
 
   async function listProducts(
-    organizationId: string,
+    tenantId: string,
     query: ListProductsQuery & PageParams = {},
   ): Promise<Page<ShopProduct & { tags: ShopTag[] }>> {
     // Resolve categoryIds if includeDescendantCategories=true
@@ -821,7 +821,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     if (query.categoryId) {
       if (query.includeDescendantCategories === "true") {
         // Walk the tree in-memory (table is small and fully tenant-scoped).
-        const all = await listCategories(organizationId);
+        const all = await listCategories(tenantId);
         const children = new Map<string | null, string[]>();
         for (const c of all) {
           const list = children.get(c.parentId) ?? [];
@@ -841,7 +841,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       }
     }
 
-    const conds = [eq(shopProducts.organizationId, organizationId)];
+    const conds = [eq(shopProducts.tenantId, tenantId)];
     if (categoryIds && categoryIds.length > 0)
       conds.push(inArray(shopProducts.categoryId, categoryIds));
     if (query.productType)
@@ -912,10 +912,10 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── Growth stages ───────────────────────────────────────────────
 
   async function listStages(
-    organizationId: string,
+    tenantId: string,
     productId: string,
   ): Promise<ShopGrowthStage[]> {
-    const product = await loadProductByKey(organizationId, productId);
+    const product = await loadProductByKey(tenantId, productId);
     return db
       .select()
       .from(shopGrowthStages)
@@ -924,21 +924,21 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function createStage(
-    organizationId: string,
+    tenantId: string,
     productId: string,
     input: CreateGrowthStageInput,
   ): Promise<ShopGrowthStage> {
-    const product = await loadProductByKey(organizationId, productId);
+    const product = await loadProductByKey(tenantId, productId);
     if (product.productType !== "growth_pack")
       throw new ShopInvalidInput(
         "growth stages only apply to productType='growth_pack'",
       );
-    const __sortKey = await appendKey(db, { table: shopGrowthStages, sortColumn: shopGrowthStages.sortOrder, scopeWhere: eq(shopGrowthStages.organizationId, organizationId)! });
+    const __sortKey = await appendKey(db, { table: shopGrowthStages, sortColumn: shopGrowthStages.sortOrder, scopeWhere: eq(shopGrowthStages.tenantId, tenantId)! });
     const [row] = await db
       .insert(shopGrowthStages)
       .values({
         productId: product.id,
-        organizationId,
+        tenantId,
         stageIndex: input.stageIndex,
         name: input.name,
         description: input.description ?? null,
@@ -954,12 +954,12 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function updateStage(
-    organizationId: string,
+    tenantId: string,
     stageId: string,
     patch: UpdateGrowthStageInput,
   ): Promise<ShopGrowthStage> {
     const existing = await loadStageById(stageId);
-    if (existing.organizationId !== organizationId)
+    if (existing.tenantId !== tenantId)
       throw new ShopGrowthStageNotFound(stageId);
     const values: Partial<typeof shopGrowthStages.$inferInsert> = {};
     if (patch.stageIndex !== undefined) values.stageIndex = patch.stageIndex;
@@ -981,7 +981,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function deleteStage(
-    organizationId: string,
+    tenantId: string,
     stageId: string,
   ): Promise<void> {
     const deleted = await db
@@ -989,7 +989,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(shopGrowthStages.id, stageId),
-          eq(shopGrowthStages.organizationId, organizationId),
+          eq(shopGrowthStages.tenantId, tenantId),
         ),
       )
       .returning({ id: shopGrowthStages.id });
@@ -998,11 +998,11 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
   /** Replace all stages of a product with the given list (atomic swap). */
   async function upsertStages(
-    organizationId: string,
+    tenantId: string,
     productId: string,
     input: UpsertStagesInput,
   ): Promise<ShopGrowthStage[]> {
-    const product = await loadProductByKey(organizationId, productId);
+    const product = await loadProductByKey(tenantId, productId);
     if (product.productType !== "growth_pack")
       throw new ShopInvalidInput(
         "growth stages only apply to productType='growth_pack'",
@@ -1019,7 +1019,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .values(
         input.stages.map((s, i) => ({
           productId: product.id,
-          organizationId,
+          tenantId,
           stageIndex: s.stageIndex,
           name: s.name,
           description: s.description ?? null,
@@ -1051,7 +1051,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     state: ShopUserPurchaseState | null,
     endUserId: string,
     now: Date,
-    organizationId: string,
+    tenantId: string,
   ): Promise<EligibilityDecision> {
     // 1. user limit
     if (
@@ -1121,7 +1121,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
             .from(itemGrantLogs)
             .where(
               and(
-                eq(itemGrantLogs.organizationId, organizationId),
+                eq(itemGrantLogs.tenantId, tenantId),
                 eq(itemGrantLogs.endUserId, endUserId),
               ),
             );
@@ -1170,9 +1170,9 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       }
     }
 
-    // (organizationId is captured to keep the signature uniform — callers
+    // (tenantId is captured to keep the signature uniform — callers
     // pass it through in case we add more checks that need it.)
-    void organizationId;
+    void tenantId;
 
     return { kind: "ok", availableUntil, resetsAt };
   }
@@ -1180,7 +1180,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── Purchase ────────────────────────────────────────────────────
 
   async function purchase(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     productKey: string;
     idempotencyKey?: string;
@@ -1203,7 +1203,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .limit(1);
     if (existingLog.length > 0) {
       const product = await loadProductByKey(
-        params.organizationId,
+        params.tenantId,
         params.productKey,
       );
       return {
@@ -1221,7 +1221,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
     // 2. Load product and prior user state.
     const product = await loadProductByKey(
-      params.organizationId,
+      params.tenantId,
       params.productKey,
     );
     if (!product.isActive) throw new ShopProductInactive(product.id);
@@ -1250,7 +1250,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       state,
       params.endUserId,
       now,
-      params.organizationId,
+      params.tenantId,
     );
     if (decision.kind === "error") throw decision.error;
 
@@ -1305,7 +1305,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .values({
         productId: product.id,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         totalCount: 1,
         cycleCount: isCyclic ? 1 : 0,
         cycleResetAt: nextReset,
@@ -1390,7 +1390,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     try {
       for (const cost of product.costItems) {
         await itemSvc.deductItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           deductions: [cost],
           source: "shop.purchase",
@@ -1401,7 +1401,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     } catch (err) {
       for (const d of deducted) {
         await itemSvc.grantItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           grants: [d],
           source: "shop.purchase.rollback",
@@ -1425,7 +1425,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         : [];
     for (const reward of rewardItemEntries) {
       await itemSvc.grantItems({
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         grants: [reward],
         source: "shop.purchase",
@@ -1438,7 +1438,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
     if (events) {
       await events.emit("shop.purchased", {
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         purchaseId,
         productId: product.id,
@@ -1492,7 +1492,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── Claim growth stage ──────────────────────────────────────────
 
   async function claimGrowthStage(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     stageId: string;
     idempotencyKey?: string;
@@ -1502,7 +1502,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
     // 1. Load stage + product; check entitlement.
     const stage = await loadStageById(params.stageId);
-    if (stage.organizationId !== params.organizationId)
+    if (stage.tenantId !== params.tenantId)
       throw new ShopGrowthStageNotFound(params.stageId);
 
     const [stateRow] = await db
@@ -1519,7 +1519,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       throw new ShopNotEntitled(stage.productId);
 
     // 2. Validate trigger.
-    await validateTrigger(params.organizationId, params.endUserId, stage);
+    await validateTrigger(params.tenantId, params.endUserId, stage);
 
     // 3. Idempotent claim record. ON CONFLICT DO NOTHING; 0 rows = already claimed.
     const inserted = await db
@@ -1527,7 +1527,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
       .values({
         stageId: stage.id,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         productId: stage.productId,
       })
       .onConflictDoNothing()
@@ -1538,7 +1538,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
     // 4. Grant stage rewards.
     for (const reward of stage.rewardItems) {
       await itemSvc.grantItems({
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         grants: [reward],
         source: "shop.claim",
@@ -1548,7 +1548,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
 
     if (events) {
       await events.emit("shop.stage_claimed", {
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         claimId,
         stageId: stage.id,
@@ -1568,7 +1568,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function validateTrigger(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     stage: ShopGrowthStage,
   ): Promise<void> {
@@ -1600,7 +1600,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           .from(itemGrantLogs)
           .where(
             and(
-              eq(itemGrantLogs.organizationId, organizationId),
+              eq(itemGrantLogs.tenantId, tenantId),
               eq(itemGrantLogs.endUserId, endUserId),
               eq(itemGrantLogs.source, "shop.purchase"),
             ),
@@ -1631,7 +1631,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
           .from(itemGrantLogs)
           .where(
             and(
-              eq(itemGrantLogs.organizationId, organizationId),
+              eq(itemGrantLogs.tenantId, tenantId),
               eq(itemGrantLogs.endUserId, endUserId),
               eq(itemGrantLogs.definitionId, itemDefinitionId),
             ),
@@ -1656,7 +1656,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   // ─── User-facing list ────────────────────────────────────────────
 
   async function getUserPurchaseState(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     productId: string;
   }): Promise<ShopUserPurchaseState | null> {
@@ -1667,7 +1667,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         and(
           eq(shopUserPurchaseStates.productId, params.productId),
           eq(shopUserPurchaseStates.endUserId, params.endUserId),
-          eq(shopUserPurchaseStates.organizationId, params.organizationId),
+          eq(shopUserPurchaseStates.tenantId, params.tenantId),
         ),
       )
       .limit(1);
@@ -1675,14 +1675,14 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
   }
 
   async function listUserProducts(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     now?: Date;
     query?: ListUserProductsQuery;
   }): Promise<UserProductView[]> {
     const now = params.now ?? new Date();
     const products = (
-      await listProducts(params.organizationId, {
+      await listProducts(params.tenantId, {
         ...(params.query?.categoryId ? { categoryId: params.query.categoryId } : {}),
         ...(params.query?.tagId ? { tagId: params.query.tagId } : {}),
         ...(params.query?.productType ? { productType: params.query.productType } : {}),
@@ -1703,7 +1703,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         .from(shopUserPurchaseStates)
         .where(
           and(
-            eq(shopUserPurchaseStates.organizationId, params.organizationId),
+            eq(shopUserPurchaseStates.tenantId, params.tenantId),
             eq(shopUserPurchaseStates.endUserId, params.endUserId),
             inArray(shopUserPurchaseStates.productId, productIds),
           ),
@@ -1719,7 +1719,7 @@ export function createShopService(d: ShopDeps, itemSvc: ItemService) {
         state,
         params.endUserId,
         now,
-        params.organizationId,
+        params.tenantId,
       );
 
       let status: UserProductView["eligibility"]["status"];

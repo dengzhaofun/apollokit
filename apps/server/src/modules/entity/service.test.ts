@@ -611,7 +611,7 @@ describe("entity service — Phase 2-5", () => {
   test("levelUp — from 1 to 2 (consumes gold)", async () => {
     // Grant gold first
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "player-1",
       grants: [{ definitionId: goldDefId, quantity: 1000 }],
       source: "test",
@@ -787,7 +787,7 @@ describe("entity service — Phase 2-5", () => {
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           alias: opts.alias,
           name: `gate-${opts.alias}`,
           kind: "generic",

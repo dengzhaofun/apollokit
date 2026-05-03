@@ -168,7 +168,7 @@ describe("shop service", () => {
 
   test("regular product purchase deducts cost and grants reward", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-happy",
       grants: [{ definitionId: goldId, quantity: 1000 }],
       source: "test",
@@ -184,7 +184,7 @@ describe("shop service", () => {
     });
 
     const result = await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-happy",
       productKey: prod.id,
     });
@@ -192,14 +192,14 @@ describe("shop service", () => {
     expect(result.productId).toBe(prod.id);
 
     const goldBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-happy",
       definitionId: goldId,
     });
     expect(goldBal).toBe(900);
 
     const gemBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-happy",
       definitionId: gemId,
     });
@@ -224,7 +224,7 @@ describe("shop service", () => {
 
     await expect(
       svc.purchase({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-abs",
         productKey: prod.id,
         now: new Date("2029-01-01T00:00:00Z"),
@@ -233,7 +233,7 @@ describe("shop service", () => {
 
     await expect(
       svc.purchase({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-abs",
         productKey: prod.id,
         now: new Date("2031-01-01T00:00:00Z"),
@@ -245,7 +245,7 @@ describe("shop service", () => {
 
   test("cyclic daily — refresh resets cycleCount and lifts the limit", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-cyc",
       grants: [{ definitionId: goldId, quantity: 1000 }],
       source: "test",
@@ -264,7 +264,7 @@ describe("shop service", () => {
 
     const day1 = new Date("2026-04-14T10:00:00Z");
     await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-cyc",
       productKey: prod.id,
       now: day1,
@@ -273,7 +273,7 @@ describe("shop service", () => {
     // Same day: should hit the cycle limit
     await expect(
       svc.purchase({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-cyc",
         productKey: prod.id,
         now: new Date("2026-04-14T23:59:00Z"),
@@ -283,7 +283,7 @@ describe("shop service", () => {
     // Next day: limit refreshes
     const day2 = new Date("2026-04-15T10:00:00Z");
     const r2 = await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-cyc",
       productKey: prod.id,
       now: day2,
@@ -295,7 +295,7 @@ describe("shop service", () => {
 
   test("userLimit — third purchase blocked", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-userlim",
       grants: [{ definitionId: goldId, quantity: 1000 }],
       source: "test",
@@ -311,18 +311,18 @@ describe("shop service", () => {
     });
 
     await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-userlim",
       productKey: prod.id,
     });
     await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-userlim",
       productKey: prod.id,
     });
     await expect(
       svc.purchase({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-userlim",
         productKey: prod.id,
       }),
@@ -333,13 +333,13 @@ describe("shop service", () => {
 
   test("globalLimit — second user blocked once pool is exhausted", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-glob-a",
       grants: [{ definitionId: goldId, quantity: 100 }],
       source: "test",
     });
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-glob-b",
       grants: [{ definitionId: goldId, quantity: 100 }],
       source: "test",
@@ -356,13 +356,13 @@ describe("shop service", () => {
     });
 
     await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-glob-a",
       productKey: prod.id,
     });
     await expect(
       svc.purchase({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-glob-b",
         productKey: prod.id,
       }),
@@ -373,7 +373,7 @@ describe("shop service", () => {
 
   test("idempotency key — second call returns same purchaseId, no double-deduct", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       grants: [{ definitionId: goldId, quantity: 500 }],
       source: "test",
@@ -388,13 +388,13 @@ describe("shop service", () => {
     });
     const key = crypto.randomUUID();
     const r1 = await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       productKey: prod.id,
       idempotencyKey: key,
     });
     const r2 = await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       productKey: prod.id,
       idempotencyKey: key,
@@ -402,7 +402,7 @@ describe("shop service", () => {
     expect(r2.purchaseId).toBe(r1.purchaseId);
 
     const goldBal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-idemp",
       definitionId: goldId,
     });
@@ -413,7 +413,7 @@ describe("shop service", () => {
 
   test("growth_pack — purchase grants nothing; claimStage requires entitlement and respects threshold", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       grants: [{ definitionId: goldId, quantity: 5000 }],
       source: "test",
@@ -439,20 +439,20 @@ describe("shop service", () => {
     // Cannot claim before purchasing (no entitlement)
     await expect(
       svc.claimGrowthStage({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-grow",
         stageId: stage.id,
       }),
     ).rejects.toMatchObject({ code: "shop.not_entitled" });
 
     const beforeGem = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       definitionId: gemId,
     });
 
     const purchaseRes = await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       productKey: prod.id,
     });
@@ -460,7 +460,7 @@ describe("shop service", () => {
 
     // Purchase did NOT grant any gem
     const midGem = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       definitionId: gemId,
     });
@@ -468,7 +468,7 @@ describe("shop service", () => {
 
     // Now claim — accumulated_cost on this product is 1000 ≥ threshold 500
     const claim = await svc.claimGrowthStage({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       stageId: stage.id,
     });
@@ -476,7 +476,7 @@ describe("shop service", () => {
     expect(claim.stageId).toBe(stage.id);
 
     const afterGem = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow",
       definitionId: gemId,
     });
@@ -485,7 +485,7 @@ describe("shop service", () => {
     // Second claim of the same stage by the same user is rejected
     await expect(
       svc.claimGrowthStage({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-grow",
         stageId: stage.id,
       }),
@@ -494,7 +494,7 @@ describe("shop service", () => {
 
   test("growth_pack — manual trigger always claimable once entitled", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow-manual",
       grants: [{ definitionId: goldId, quantity: 1000 }],
       source: "test",
@@ -516,23 +516,23 @@ describe("shop service", () => {
     });
 
     await svc.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow-manual",
       productKey: prod.id,
     });
 
     const before = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow-manual",
       definitionId: gemId,
     });
     await svc.claimGrowthStage({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow-manual",
       stageId: stage.id,
     });
     const after = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-grow-manual",
       definitionId: gemId,
     });
@@ -543,7 +543,7 @@ describe("shop service", () => {
 
   test("listUserProducts — returns eligibility status per product", async () => {
     await itemSvc.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-list",
       grants: [{ definitionId: goldId, quantity: 50 }],
       source: "test",
@@ -571,7 +571,7 @@ describe("shop service", () => {
     });
 
     const views = await svc.listUserProducts({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-list",
       query: {},
     });
@@ -597,7 +597,7 @@ describe("shop service", () => {
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           alias: opts.alias,
           name: `gate-${opts.alias}`,
           kind: "generic",
@@ -623,7 +623,7 @@ describe("shop service", () => {
         stackable: true,
       });
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gate-shop-ended",
         grants: [{ definitionId: goldDef.id, quantity: 1000 }],
         source: "test",
@@ -645,7 +645,7 @@ describe("shop service", () => {
 
       await expect(
         svc.purchase({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "u-gate-shop-ended",
           productKey: prod.id,
         }),
@@ -653,7 +653,7 @@ describe("shop service", () => {
 
       // No deduction occurred.
       const goldBal = await itemSvc.getBalance({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gate-shop-ended",
         definitionId: goldDef.id,
       });

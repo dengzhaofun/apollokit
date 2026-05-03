@@ -7,7 +7,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -56,9 +56,9 @@ exchangeClientRouter.openapi(
     const endUserId = getEndUserId(c);
     const { optionId, idempotencyKey } = c.req.valid("json");
 
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const result = await exchangeService.execute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       optionId,
       idempotencyKey,

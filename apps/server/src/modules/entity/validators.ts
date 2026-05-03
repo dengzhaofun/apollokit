@@ -305,7 +305,7 @@ export const FormationConfigIdParamSchema = z.object({
 export const SchemaResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -331,7 +331,7 @@ export const SchemaListResponseSchema = pageOf(SchemaResponseSchema).openapi(
 export const BlueprintResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     schemaId: z.string().uuid(),
     alias: z.string().nullable(),
     name: z.string(),
@@ -363,7 +363,7 @@ export const BlueprintListResponseSchema = pageOf(BlueprintResponseSchema).opena
 export const SkinResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     blueprintId: z.string().uuid(),
     alias: z.string().nullable(),
     name: z.string(),
@@ -384,7 +384,7 @@ export const SkinListResponseSchema = z.array(SkinResponseSchema);
 export const FormationConfigResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     maxFormations: z.number(),

@@ -11,6 +11,7 @@ import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
 import { expectOk } from "../../testing/envelope";
+import { getDefaultTeamId } from "../../testing/fixtures";
 import { eventCatalogService } from "./index";
 
 const ORIGIN = "http://localhost:8787";
@@ -18,6 +19,7 @@ const ORIGIN = "http://localhost:8787";
 type SignedInFixture = {
   cookie: string;
   orgId: string;
+  tenantId: string;
   adminUserId: string;
   email: string;
 };
@@ -75,7 +77,7 @@ async function signUpAndOrg(): Promise<SignedInFixture> {
   const userRows = await db.select().from(user).where(eq(user.email, email));
   const adminUserId = userRows[0]!.id;
 
-  return { cookie, orgId, adminUserId, email };
+  const tenantId = await getDefaultTeamId(orgId); return { cookie, orgId, tenantId, adminUserId, email };
 }
 
 describe("event-catalog routes", () => {
@@ -148,7 +150,7 @@ describe("event-catalog routes", () => {
   test("PATCH /api/event-catalog/:name upgrades external to canonical", async () => {
     // Seed an external entry via the service directly.
     const uniqueName = `route_upgrade_${Date.now()}`;
-    await eventCatalogService.recordExternalEvent(fx.orgId, uniqueName, {
+    await eventCatalogService.recordExternalEvent(fx.tenantId, uniqueName, {
       ts: 1,
     });
     const res = await app.request(`/api/event-catalog/${uniqueName}`, {

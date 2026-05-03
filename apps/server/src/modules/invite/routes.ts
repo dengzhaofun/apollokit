@@ -2,7 +2,7 @@
  * Admin-facing routes for the invite module.
  *
  * Mounted at /api/invite in src/index.ts. Session cookie required;
- * organizationId is read from session.activeOrganizationId.
+ * tenantId is read from session.activeTeamId.
  */
 
 import { z } from "@hono/zod-openapi";
@@ -28,7 +28,7 @@ import {
 const TAG = "Invite (Admin)";
 
 function serializeSettings(row: {
-  organizationId: string;
+  tenantId: string;
   enabled: boolean;
   codeLength: number;
   allowSelfInvite: boolean;
@@ -37,7 +37,7 @@ function serializeSettings(row: {
   updatedAt: Date;
 }) {
   return {
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     enabled: row.enabled,
     codeLength: row.codeLength,
     allowSelfInvite: row.allowSelfInvite,
@@ -49,7 +49,7 @@ function serializeSettings(row: {
 
 function serializeRelationship(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   inviterEndUserId: string;
   inviteeEndUserId: string;
   inviterCodeSnapshot: string;
@@ -60,7 +60,7 @@ function serializeRelationship(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     inviterEndUserId: row.inviterEndUserId,
     inviteeEndUserId: row.inviteeEndUserId,
     inviterCodeSnapshot: row.inviterCodeSnapshot,

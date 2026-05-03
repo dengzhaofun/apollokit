@@ -6,7 +6,7 @@
  * `requirePermissionByMethod`: every project member should be able to manage
  * their own favorites regardless of role.
  *
- * Favorites are keyed by `(activeOrganizationId, c.var.user.id)`. Admin
+ * Favorites are keyed by `(activeTeamId, c.var.user.id)`. Admin
  * API keys (which have `c.var.user === null`) are explicitly rejected
  * via `NavigationApiKeyNotSupported` — they're service identities and
  * shouldn't impersonate a person's personal preferences.
@@ -36,7 +36,7 @@ const TAG = "Navigation"
 function serialize(row: NavigationFavorite) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     userId: row.userId,
     routePath: row.routePath,
     sortOrder: row.sortOrder,

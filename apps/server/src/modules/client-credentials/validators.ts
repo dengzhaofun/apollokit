@@ -33,7 +33,7 @@ export const UpdateDevModeSchema = z
 export const CredentialResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     publishableKey: z.string(),
     devMode: z.boolean(),

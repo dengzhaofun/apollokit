@@ -6,7 +6,7 @@
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId
  * from getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
@@ -47,7 +47,7 @@ const TAG = "Level (Client)";
 
 function serializeConfig(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -62,7 +62,7 @@ function serializeConfig(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -207,7 +207,7 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     // Client view: fetch up to the server cap; client doesn't paginate.
     const { items: configs } = await levelService.listConfigs(orgId, { limit: 200 });
@@ -257,7 +257,7 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const overview = await levelService.getConfigOverview(
@@ -334,7 +334,7 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const detail = await levelService.getLevelDetail(orgId, endUserId, id);
@@ -402,7 +402,7 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { stars, score } = c.req.valid("json");
     const { id } = c.req.valid("param");
@@ -448,7 +448,7 @@ levelClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { type, starTier } = c.req.valid("json");
     const { id } = c.req.valid("param");

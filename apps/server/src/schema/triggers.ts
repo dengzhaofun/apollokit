@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Trigger 引擎 —— 让运营人员在 admin 里画「事件 → 条件 → 动作」规则，
@@ -46,9 +46,9 @@ export const triggerRules = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
     /** 'active' | 'disabled' | 'archived'（archived = 软删，列表默认隐藏） */
@@ -75,13 +75,13 @@ export const triggerRules = pgTable(
   },
   (table) => [
     // 同 org 内规则名唯一（friendly identifier in admin UI）。
-    uniqueIndex("trigger_rules_org_name_idx").on(
-      table.organizationId,
+    uniqueIndex("trigger_rules_tenant_name_idx").on(
+      table.tenantId,
       table.name,
     ),
     // queue consumer 主查询：(orgId, triggerEvent) 列出所有 active 规则。
-    index("trigger_rules_org_event_status_idx").on(
-      table.organizationId,
+    index("trigger_rules_tenant_event_status_idx").on(
+      table.tenantId,
       table.triggerEvent,
       table.status,
     ),
@@ -113,9 +113,9 @@ export const triggerExecutions = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     ruleId: uuid("rule_id")
       .notNull()
       .references(() => triggerRules.id, { onDelete: "cascade" }),
@@ -138,14 +138,14 @@ export const triggerExecutions = pgTable(
   },
   (table) => [
     // admin "this rule's history" 查询。
-    index("trigger_executions_org_rule_started_idx").on(
-      table.organizationId,
+    index("trigger_executions_tenant_rule_started_idx").on(
+      table.tenantId,
       table.ruleId,
       table.startedAt,
     ),
     // admin "show recent failures" 查询。
-    index("trigger_executions_org_status_started_idx").on(
-      table.organizationId,
+    index("trigger_executions_tenant_status_started_idx").on(
+      table.tenantId,
       table.status,
       table.startedAt,
     ),

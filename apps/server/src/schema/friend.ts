@@ -11,13 +11,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Friend settings — per-organization configuration for the friend system.
  *
  * Each organization has at most one row. Settings control friend limits,
- * block limits, and pending request caps. The unique index on organizationId
+ * block limits, and pending request caps. The unique index on tenantId
  * enforces the one-row-per-org invariant.
  */
 export const friendSettings = pgTable(
@@ -26,9 +26,9 @@ export const friendSettings = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     maxFriends: integer("max_friends").default(50).notNull(),
     maxBlocked: integer("max_blocked").default(50).notNull(),
     maxPendingRequests: integer("max_pending_requests").default(20).notNull(),
@@ -40,7 +40,7 @@ export const friendSettings = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("friend_settings_org_uidx").on(table.organizationId),
+    uniqueIndex("friend_settings_org_uidx").on(table.tenantId),
   ],
 );
 
@@ -58,7 +58,7 @@ export const friendRelationships = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     userA: text("user_a").notNull(),
     userB: text("user_b").notNull(),
     metadata: jsonb("metadata"),
@@ -66,16 +66,16 @@ export const friendRelationships = pgTable(
   },
   (table) => [
     uniqueIndex("friend_relationships_org_pair_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.userA,
       table.userB,
     ),
-    index("friend_relationships_org_user_a_idx").on(
-      table.organizationId,
+    index("friend_relationships_tenant_user_a_idx").on(
+      table.tenantId,
       table.userA,
     ),
-    index("friend_relationships_org_user_b_idx").on(
-      table.organizationId,
+    index("friend_relationships_tenant_user_b_idx").on(
+      table.tenantId,
       table.userB,
     ),
   ],
@@ -94,7 +94,7 @@ export const friendRequests = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     fromUserId: text("from_user_id").notNull(),
     toUserId: text("to_user_id").notNull(),
     status: text("status").default("pending").notNull(),
@@ -109,18 +109,18 @@ export const friendRequests = pgTable(
       .notNull(),
   },
   (table) => [
-    index("friend_requests_org_to_status_idx").on(
-      table.organizationId,
+    index("friend_requests_tenant_to_status_idx").on(
+      table.tenantId,
       table.toUserId,
       table.status,
     ),
-    index("friend_requests_org_from_status_idx").on(
-      table.organizationId,
+    index("friend_requests_tenant_from_status_idx").on(
+      table.tenantId,
       table.fromUserId,
       table.status,
     ),
     uniqueIndex("friend_requests_pending_pair_uidx")
-      .on(table.organizationId, table.fromUserId, table.toUserId)
+      .on(table.tenantId, table.fromUserId, table.toUserId)
       .where(sql`${table.status} = 'pending'`),
   ],
 );
@@ -135,22 +135,22 @@ export const friendRequests = pgTable(
 export const friendBlocks = pgTable(
   "friend_blocks",
   {
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     blockerUserId: text("blocker_user_id").notNull(),
     blockedUserId: text("blocked_user_id").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     primaryKey({
-      columns: [table.organizationId, table.blockerUserId, table.blockedUserId],
+      columns: [table.tenantId, table.blockerUserId, table.blockedUserId],
       name: "friend_blocks_pk",
     }),
-    index("friend_blocks_org_blocker_idx").on(
-      table.organizationId,
+    index("friend_blocks_tenant_blocker_idx").on(
+      table.tenantId,
       table.blockerUserId,
     ),
-    index("friend_blocks_org_blocked_idx").on(
-      table.organizationId,
+    index("friend_blocks_tenant_blocked_idx").on(
+      table.tenantId,
       table.blockedUserId,
     ),
   ],

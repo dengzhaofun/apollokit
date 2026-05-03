@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Announcements — per-tenant operational broadcasts rendered by the game
@@ -36,9 +36,9 @@ export const announcements = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     // 'modal' | 'feed' | 'ticker' — Zod-enforced at the validator layer.
     kind: text("kind").notNull(),
@@ -71,12 +71,12 @@ export const announcements = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("announcements_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("announcements_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
-    index("announcements_org_visible_idx").on(
-      table.organizationId,
+    index("announcements_tenant_visible_idx").on(
+      table.tenantId,
       table.isActive,
       table.visibleFrom,
       table.visibleUntil,

@@ -2,7 +2,7 @@
  * 把内部 event-bus 上 registry 里标 forwardToTask=true 的事件，
  * 自动转调 taskService.processEvent。
  *
- * 约束：事件 payload 必须含 `organizationId` 和 `endUserId` string 字段。
+ * 约束：事件 payload 必须含 `tenantId` 和 `endUserId` string 字段。
  * 不含的事件 registry 会被标 forwardToTask=false（见 activity.state.changed
  * / activity.schedule.fired），自动跳过。
  *
@@ -31,12 +31,12 @@ export function installTaskEventForwarder(
         if (!payload || typeof payload !== "object") return;
         const p = payload as Record<string, unknown>;
         const orgId =
-          typeof p.organizationId === "string" ? p.organizationId : null;
+          typeof p.tenantId === "string" ? p.tenantId : null;
         const endUserId =
           typeof p.endUserId === "string" ? p.endUserId : null;
         if (!orgId || !endUserId) {
           logger.warn(
-            `task-forwarder: skipping ${desc.name} (missing organizationId / endUserId)`,
+            `task-forwarder: skipping ${desc.name} (missing tenantId / endUserId)`,
           );
           return;
         }

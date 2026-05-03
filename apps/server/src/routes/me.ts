@@ -27,7 +27,7 @@ import type { HonoEnv } from "../env";
 import { createAdminRouter, createAdminRoute } from "../lib/openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../lib/response";
 import { requireAdminOrApiKey } from "../middleware/require-admin-or-api-key";
-import { member } from "../schema";
+import { teamMember } from "../schema";
 import { z } from "@hono/zod-openapi";
 
 const TAG = "Me";
@@ -53,20 +53,22 @@ const CapabilityBagSchema = z
   .openapi("CapabilityBag");
 
 /**
- * Resolve the active member's role string for the current request.
- * Mirrors `getMemberRole` in `require-permission.ts` — we duplicate
+ * Resolve the active team member's role string for the current request.
+ * Mirrors `getTeamMemberRole` in `require-permission.ts` — we duplicate
  * the tiny query rather than depend on the middleware in handlers.
+ *
+ * In the dual-tenant model, capabilities are scoped to the active
+ * project (Better Auth team), so we look at `teamMember.role` not
+ * `member.role`.
  */
 async function getActiveRole(
   userId: string,
-  organizationId: string,
+  teamId: string,
 ): Promise<string | null> {
   const [row] = await db
-    .select({ role: member.role })
-    .from(member)
-    .where(
-      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
-    )
+    .select({ role: teamMember.role })
+    .from(teamMember)
+    .where(and(eq(teamMember.userId, userId), eq(teamMember.teamId, teamId)))
     .limit(1);
   return row?.role ?? null;
 }
@@ -145,8 +147,8 @@ meRouter.openapi(
     }
 
     const userId = c.var.user!.id;
-    const orgId = c.var.session!.activeOrganizationId!;
-    const roleString = await getActiveRole(userId, orgId);
+    const tenantId = c.var.session!.activeTeamId!;
+    const roleString = await getActiveRole(userId, tenantId);
     return c.json(
       ok({
         role: roleString,

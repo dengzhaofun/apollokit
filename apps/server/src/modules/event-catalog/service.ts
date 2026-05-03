@@ -55,7 +55,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
    * 根据 TTL 判断是否需要真的写 DB。写入失败不抛（log 即可），避免打断主流程。
    */
   async function recordExternalEvent(
-    organizationId: string,
+    tenantId: string,
     eventName: string,
     eventData: Record<string, unknown>,
     now?: Date,
@@ -64,7 +64,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
     // 不应被 task 的外部入口"污染"到 DB 表里。
     if (getInternalEvent(eventName)) return;
 
-    const key = `${organizationId}:${eventName}`;
+    const key = `${tenantId}:${eventName}`;
     const ts = now ?? new Date();
     const last = lastRecordedAt.get(key);
     if (last && ts.getTime() - last < RECORD_TTL_MS) return;
@@ -78,7 +78,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
         .from(eventCatalogEntries)
         .where(
           and(
-            eq(eventCatalogEntries.organizationId, organizationId),
+            eq(eventCatalogEntries.tenantId, tenantId),
             eq(eventCatalogEntries.eventName, eventName),
           ),
         )
@@ -89,7 +89,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
         await db
           .insert(eventCatalogEntries)
           .values({
-            organizationId,
+            tenantId,
             eventName,
             status: "inferred",
             fields: inferred,
@@ -119,7 +119,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
     } catch (err) {
       // 记录但不抛 —— catalog 记录失败不应阻塞 task 进度更新。
       logger.error("event-catalog: recordExternalEvent failed", {
-        organizationId,
+        tenantId,
         eventName,
         err,
       });
@@ -136,7 +136,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
    *   - "analytics":    仅返回进了 Tinybird 的事件(几乎是全量)
    */
   async function listAll(
-    organizationId: string,
+    tenantId: string,
     opts: { capability?: EventCapability } = {},
   ): Promise<CatalogEventView[]> {
     const { capability } = opts;
@@ -147,7 +147,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
     const externalRows = await db
       .select()
       .from(eventCatalogEntries)
-      .where(eq(eventCatalogEntries.organizationId, organizationId))
+      .where(eq(eventCatalogEntries.tenantId, tenantId))
       .orderBy(desc(eventCatalogEntries.lastSeenAt));
 
     const external = externalRows
@@ -163,7 +163,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
   }
 
   async function getOne(
-    organizationId: string,
+    tenantId: string,
     eventName: string,
   ): Promise<CatalogEventView> {
     // 查找顺序:internal registry → platform 静态 → external DB
@@ -178,7 +178,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
       .from(eventCatalogEntries)
       .where(
         and(
-          eq(eventCatalogEntries.organizationId, organizationId),
+          eq(eventCatalogEntries.tenantId, tenantId),
           eq(eventCatalogEntries.eventName, eventName),
         ),
       )
@@ -195,7 +195,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
    * 外部事件的 capability 不可编辑(永远是 "task-trigger",见 externalToView)。
    */
   async function updateExternal(
-    organizationId: string,
+    tenantId: string,
     eventName: string,
     patch: {
       description?: string | null;
@@ -224,7 +224,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
       .set(values)
       .where(
         and(
-          eq(eventCatalogEntries.organizationId, organizationId),
+          eq(eventCatalogEntries.tenantId, tenantId),
           eq(eventCatalogEntries.eventName, eventName),
         ),
       )
@@ -245,7 +245,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
    * 让调用方给出自己的语义化错误。
    */
   async function hasCapability(
-    organizationId: string,
+    tenantId: string,
     eventName: string,
     capability: EventCapability,
   ): Promise<boolean> {
@@ -261,7 +261,7 @@ export function createEventCatalogService(d: EventCatalogDeps) {
       .from(eventCatalogEntries)
       .where(
         and(
-          eq(eventCatalogEntries.organizationId, organizationId),
+          eq(eventCatalogEntries.tenantId, tenantId),
           eq(eventCatalogEntries.eventName, eventName),
         ),
       )

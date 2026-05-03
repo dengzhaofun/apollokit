@@ -122,8 +122,8 @@ export type ChatRequestBody = {
 /**
  * Per-request context the route handler captures from the Hono session
  * and threads into the service. Query tools' `execute` closures need
- * `organizationId` to scope DB reads to the correct tenant.
+ * `tenantId` to scope DB reads to the correct tenant.
  */
 export type ChatExecutionContext = {
-  organizationId: string;
+  tenantId: string;
 };

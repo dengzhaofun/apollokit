@@ -38,7 +38,7 @@ const TAG = "Offline Check-In (Client)";
 function serializeCampaign(row: OfflineCheckInCampaign) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -62,7 +62,7 @@ function serializeSpot(row: OfflineCheckInSpot) {
   return {
     id: row.id,
     campaignId: row.campaignId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -85,7 +85,7 @@ function serializeProgress(row: OfflineCheckInUserProgressRow) {
   return {
     campaignId: row.campaignId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     spotsCompleted: row.spotsCompleted,
     totalCount: row.totalCount,
     lastSpotId: row.lastSpotId,
@@ -161,7 +161,7 @@ offlineCheckInClientRouter.openapi(
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const progress = await offlineCheckInService.getProgress({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: key,
       endUserId,
     });
@@ -198,7 +198,7 @@ offlineCheckInClientRouter.openapi(
     const ip = c.req.header("cf-connecting-ip") ?? null;
     const userAgent = c.req.header("user-agent") ?? null;
     const result = await offlineCheckInService.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       campaignKey: key,
       endUserId,
       spotAlias: body.spotAlias,

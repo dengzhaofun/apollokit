@@ -48,7 +48,7 @@ const TAG = "CMS";
 function serializeType(row: CmsType) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -65,7 +65,7 @@ function serializeType(row: CmsType) {
 function serializeEntry(row: CmsEntry) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     typeId: row.typeId,
     typeAlias: row.typeAlias,
     alias: row.alias,

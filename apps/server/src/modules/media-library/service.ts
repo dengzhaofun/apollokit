@@ -59,21 +59,21 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-function generateObjectKey(organizationId: string, filename: string): string {
+function generateObjectKey(tenantId: string, filename: string): string {
   const now = new Date();
   const y = now.getUTCFullYear();
   const m = pad2(now.getUTCMonth() + 1);
   const d = pad2(now.getUTCDate());
   const id = crypto.randomUUID();
   const ext = pickExtension(filename);
-  return `${organizationId}/${y}/${m}/${d}/${id}${ext ? `.${ext}` : ""}`;
+  return `${tenantId}/${y}/${m}/${d}/${id}${ext ? `.${ext}` : ""}`;
 }
 
 export function createMediaLibraryService(d: MediaLibraryDeps) {
   const { db, storage } = d;
 
   async function loadFolder(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<MediaFolder> {
     const rows = await db
@@ -82,7 +82,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       .where(
         and(
           eq(mediaFolders.id, id),
-          eq(mediaFolders.organizationId, organizationId),
+          eq(mediaFolders.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -91,7 +91,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
   }
 
   async function loadAsset(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<MediaAsset> {
     const rows = await db
@@ -100,7 +100,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       .where(
         and(
           eq(mediaAssets.id, id),
-          eq(mediaAssets.organizationId, organizationId),
+          eq(mediaAssets.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -115,14 +115,14 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
    * but defensive is cheap).
    */
   async function buildBreadcrumb(
-    organizationId: string,
+    tenantId: string,
     folderId: string | null,
   ): Promise<BreadcrumbEntry[]> {
     if (!folderId) return [];
     const chain: BreadcrumbEntry[] = [];
     let currentId: string | null = folderId;
     for (let i = 0; i < 32 && currentId; i++) {
-      const row: MediaFolder = await loadFolder(organizationId, currentId);
+      const row: MediaFolder = await loadFolder(tenantId, currentId);
       chain.unshift({ id: row.id, name: row.name });
       currentId = row.parentId;
     }
@@ -130,7 +130,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
   }
 
   async function ensureDefaultFolder(
-    organizationId: string,
+    tenantId: string,
     createdBy: string | null,
   ): Promise<MediaFolder> {
     // Fast path: look up the existing default.
@@ -139,7 +139,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       .from(mediaFolders)
       .where(
         and(
-          eq(mediaFolders.organizationId, organizationId),
+          eq(mediaFolders.tenantId, tenantId),
           eq(mediaFolders.isDefault, true),
         ),
       )
@@ -153,7 +153,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       const [row] = await db
         .insert(mediaFolders)
         .values({
-          organizationId,
+          tenantId,
           parentId: null,
           name: DEFAULT_FOLDER_NAME,
           isDefault: true,
@@ -170,7 +170,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
           .from(mediaFolders)
           .where(
             and(
-              eq(mediaFolders.organizationId, organizationId),
+              eq(mediaFolders.tenantId, tenantId),
               eq(mediaFolders.isDefault, true),
             ),
           )
@@ -187,17 +187,17 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
    * CTE so we don't roundtrip once per level.
    */
   async function descendantFolderIds(
-    organizationId: string,
+    tenantId: string,
     rootId: string,
   ): Promise<Set<string>> {
     const rows = await db.execute<{ id: string }>(sql`
       WITH RECURSIVE descendants AS (
         SELECT id FROM ${mediaFolders}
-          WHERE id = ${rootId} AND organization_id = ${organizationId}
+          WHERE id = ${rootId} AND tenant_id = ${tenantId}
         UNION ALL
         SELECT f.id FROM ${mediaFolders} f
           INNER JOIN descendants d ON f.parent_id = d.id
-          WHERE f.organization_id = ${organizationId}
+          WHERE f.tenant_id = ${tenantId}
       )
       SELECT id FROM descendants
     `);
@@ -217,16 +217,16 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
     ensureDefaultFolder,
 
     async listFolders(
-      organizationId: string,
+      tenantId: string,
       parentId: string | null,
     ): Promise<{ items: MediaFolder[]; breadcrumb: BreadcrumbEntry[] }> {
       const whereClause = parentId
         ? and(
-            eq(mediaFolders.organizationId, organizationId),
+            eq(mediaFolders.tenantId, tenantId),
             eq(mediaFolders.parentId, parentId),
           )
         : and(
-            eq(mediaFolders.organizationId, organizationId),
+            eq(mediaFolders.tenantId, tenantId),
             isNull(mediaFolders.parentId),
           );
       const items = await db
@@ -234,30 +234,30 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .from(mediaFolders)
         .where(whereClause)
         .orderBy(desc(mediaFolders.isDefault), asc(mediaFolders.name));
-      const breadcrumb = await buildBreadcrumb(organizationId, parentId);
+      const breadcrumb = await buildBreadcrumb(tenantId, parentId);
       return { items, breadcrumb };
     },
 
     async getFolder(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<MediaFolder> {
-      return loadFolder(organizationId, id);
+      return loadFolder(tenantId, id);
     },
 
     async createFolder(
-      organizationId: string,
+      tenantId: string,
       input: CreateFolderInput,
       createdBy: string | null,
     ): Promise<MediaFolder> {
       if (input.parentId) {
-        await loadFolder(organizationId, input.parentId);
+        await loadFolder(tenantId, input.parentId);
       }
       try {
         const [row] = await db
           .insert(mediaFolders)
           .values({
-            organizationId,
+            tenantId,
             parentId: input.parentId ?? null,
             name: input.name,
             isDefault: false,
@@ -275,19 +275,19 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
     },
 
     async updateFolder(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateFolderInput,
     ): Promise<MediaFolder> {
-      const existing = await loadFolder(organizationId, id);
+      const existing = await loadFolder(tenantId, id);
 
       const patch: Record<string, unknown> = {};
       if (input.name !== undefined) patch.name = input.name;
       if (input.parentId !== undefined) {
         if (input.parentId === id) throw new FolderCycleDetected();
         if (input.parentId) {
-          await loadFolder(organizationId, input.parentId);
-          const descendants = await descendantFolderIds(organizationId, id);
+          await loadFolder(tenantId, input.parentId);
+          const descendants = await descendantFolderIds(tenantId, id);
           if (descendants.has(input.parentId)) {
             throw new FolderCycleDetected();
           }
@@ -303,7 +303,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
           .where(
             and(
               eq(mediaFolders.id, id),
-              eq(mediaFolders.organizationId, organizationId),
+              eq(mediaFolders.tenantId, tenantId),
             ),
           )
           .returning();
@@ -317,8 +317,8 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       }
     },
 
-    async deleteFolder(organizationId: string, id: string): Promise<void> {
-      const folder = await loadFolder(organizationId, id);
+    async deleteFolder(tenantId: string, id: string): Promise<void> {
+      const folder = await loadFolder(tenantId, id);
       if (folder.isDefault) throw new CannotDeleteDefaultFolder();
 
       // Must be empty — no child folders and no assets.
@@ -327,7 +327,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .from(mediaFolders)
         .where(
           and(
-            eq(mediaFolders.organizationId, organizationId),
+            eq(mediaFolders.tenantId, tenantId),
             eq(mediaFolders.parentId, id),
           ),
         );
@@ -338,7 +338,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .from(mediaAssets)
         .where(
           and(
-            eq(mediaAssets.organizationId, organizationId),
+            eq(mediaAssets.tenantId, tenantId),
             eq(mediaAssets.folderId, id),
           ),
         );
@@ -349,7 +349,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .where(
           and(
             eq(mediaFolders.id, id),
-            eq(mediaFolders.organizationId, organizationId),
+            eq(mediaFolders.tenantId, tenantId),
           ),
         )
         .returning({ id: mediaFolders.id });
@@ -359,19 +359,19 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
     // ─── Assets ──────────────────────────────────────────────────
 
     async listAssets(
-      organizationId: string,
+      tenantId: string,
       folderId: string | null,
       opts: { limit?: number; cursor?: string } = {},
     ): Promise<{ items: MediaAsset[]; nextCursor: string | null }> {
       const effectiveFolderId =
-        folderId ?? (await ensureDefaultFolder(organizationId, null)).id;
+        folderId ?? (await ensureDefaultFolder(tenantId, null)).id;
       // Verify the folder exists in this org; prevents cross-tenant
       // probing via a guessed folder id.
-      await loadFolder(organizationId, effectiveFolderId);
+      await loadFolder(tenantId, effectiveFolderId);
 
       const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
       const conds = [
-        eq(mediaAssets.organizationId, organizationId),
+        eq(mediaAssets.tenantId, tenantId),
         eq(mediaAssets.folderId, effectiveFolderId),
       ];
       if (opts.cursor) {
@@ -396,8 +396,8 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       return { items: rows, nextCursor };
     },
 
-    async getAsset(organizationId: string, id: string): Promise<MediaAsset> {
-      return loadAsset(organizationId, id);
+    async getAsset(tenantId: string, id: string): Promise<MediaAsset> {
+      return loadAsset(tenantId, id);
     },
 
     /**
@@ -406,14 +406,14 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
      * FormData upload route.
      */
     async uploadAsset(input: {
-      organizationId: string;
+      tenantId: string;
       folderId: string | null;
       filename: string;
       mimeType: string;
       body: Uint8Array;
       uploadedBy: string | null;
     }): Promise<MediaAsset> {
-      const { organizationId, filename, mimeType, body, uploadedBy } = input;
+      const { tenantId, filename, mimeType, body, uploadedBy } = input;
       if (
         !ALLOWED_MIME_TYPES.includes(
           mimeType as (typeof ALLOWED_MIME_TYPES)[number],
@@ -426,10 +426,10 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       }
 
       const folder = input.folderId
-        ? await loadFolder(organizationId, input.folderId)
-        : await ensureDefaultFolder(organizationId, uploadedBy);
+        ? await loadFolder(tenantId, input.folderId)
+        : await ensureDefaultFolder(tenantId, uploadedBy);
 
-      const objectKey = generateObjectKey(organizationId, filename);
+      const objectKey = generateObjectKey(tenantId, filename);
       // Storage write first — if DB insert then fails we orphan one
       // object in the bucket. That's acceptable (trivial to GC) and
       // strictly better than the opposite ordering, which would risk
@@ -439,7 +439,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       const [row] = await db
         .insert(mediaAssets)
         .values({
-          organizationId,
+          tenantId,
           folderId: folder.id,
           objectKey,
           filename,
@@ -467,7 +467,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
      * a server endpoint to call.
      */
     async presignUpload(input: {
-      organizationId: string;
+      tenantId: string;
       uploadedBy: string | null;
       request: PresignUploadInput;
     }): Promise<{
@@ -477,7 +477,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       publicUrl: string;
       expiresIn: number;
     }> {
-      const { organizationId, uploadedBy, request } = input;
+      const { tenantId, uploadedBy, request } = input;
       if (
         !ALLOWED_MIME_TYPES.includes(
           request.mimeType as (typeof ALLOWED_MIME_TYPES)[number],
@@ -490,10 +490,10 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       }
 
       const folder = request.folderId
-        ? await loadFolder(organizationId, request.folderId)
-        : await ensureDefaultFolder(organizationId, uploadedBy);
+        ? await loadFolder(tenantId, request.folderId)
+        : await ensureDefaultFolder(tenantId, uploadedBy);
 
-      const objectKey = generateObjectKey(organizationId, request.filename);
+      const objectKey = generateObjectKey(tenantId, request.filename);
       const expiresIn = 15 * 60;
       const uploadUrl = await storage.getPresignedPutUrl(objectKey, {
         contentType: request.mimeType,
@@ -504,7 +504,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       const [row] = await db
         .insert(mediaAssets)
         .values({
-          organizationId,
+          tenantId,
           folderId: folder.id,
           objectKey,
           filename: request.filename,
@@ -523,10 +523,10 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
      * Idempotent — callers can retry safely.
      */
     async confirmUpload(
-      organizationId: string,
+      tenantId: string,
       input: ConfirmUploadInput,
     ): Promise<MediaAsset> {
-      const asset = await loadAsset(organizationId, input.assetId);
+      const asset = await loadAsset(tenantId, input.assetId);
       const patch: Record<string, unknown> = {};
       if (input.size !== undefined) patch.size = input.size;
       if (input.width !== undefined) patch.width = input.width;
@@ -539,7 +539,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .where(
           and(
             eq(mediaAssets.id, input.assetId),
-            eq(mediaAssets.organizationId, organizationId),
+            eq(mediaAssets.tenantId, tenantId),
           ),
         )
         .returning();
@@ -547,8 +547,8 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
       return row;
     },
 
-    async deleteAsset(organizationId: string, id: string): Promise<void> {
-      const asset = await loadAsset(organizationId, id);
+    async deleteAsset(tenantId: string, id: string): Promise<void> {
+      const asset = await loadAsset(tenantId, id);
       // Delete DB row first so a second request can't hand out a URL
       // that points at a deleted object. Storage delete is best-effort;
       // if it fails the row is already gone so GC can mop up later.
@@ -557,7 +557,7 @@ export function createMediaLibraryService(d: MediaLibraryDeps) {
         .where(
           and(
             eq(mediaAssets.id, id),
-            eq(mediaAssets.organizationId, organizationId),
+            eq(mediaAssets.tenantId, tenantId),
           ),
         );
       try {

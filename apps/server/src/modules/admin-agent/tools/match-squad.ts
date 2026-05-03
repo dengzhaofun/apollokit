@@ -1,6 +1,6 @@
 import { tool } from "ai";
 
-import { CreateConfigSchema } from "../../team/validators";
+import { CreateConfigSchema } from "../../match-squad/validators";
 
 /**
  * Team module has both `CreateConfigSchema` (the team-system config the

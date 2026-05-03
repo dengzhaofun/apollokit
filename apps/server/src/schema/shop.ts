@@ -16,7 +16,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Shop categories — hierarchical product grouping.
@@ -36,9 +36,9 @@ export const shopCategories = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     parentId: uuid("parent_id").references((): AnyPgColumn => shopCategories.id, {
       onDelete: "set null",
     }),
@@ -58,10 +58,10 @@ export const shopCategories = pgTable(
       .notNull(),
   },
   (table) => [
-    index("shop_categories_org_idx").on(table.organizationId),
+    index("shop_categories_tenant_idx").on(table.tenantId),
     index("shop_categories_parent_idx").on(table.parentId),
-    uniqueIndex("shop_categories_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("shop_categories_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -80,9 +80,9 @@ export const shopTags = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     color: text("color"),
@@ -97,9 +97,9 @@ export const shopTags = pgTable(
       .notNull(),
   },
   (table) => [
-    index("shop_tags_org_idx").on(table.organizationId),
-    uniqueIndex("shop_tags_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("shop_tags_tenant_idx").on(table.tenantId),
+    uniqueIndex("shop_tags_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -135,9 +135,9 @@ export const shopProducts = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     categoryId: uuid("category_id").references(() => shopCategories.id, {
       onDelete: "set null",
     }),
@@ -182,30 +182,30 @@ export const shopProducts = pgTable(
       .notNull(),
   },
   (table) => [
-    index("shop_products_org_idx").on(table.organizationId),
-    index("shop_products_org_category_idx").on(
-      table.organizationId,
+    index("shop_products_tenant_idx").on(table.tenantId),
+    index("shop_products_tenant_category_idx").on(
+      table.tenantId,
       table.categoryId,
     ),
-    index("shop_products_org_type_idx").on(
-      table.organizationId,
+    index("shop_products_tenant_type_idx").on(
+      table.tenantId,
       table.productType,
     ),
-    index("shop_products_org_window_active_idx").on(
-      table.organizationId,
+    index("shop_products_tenant_window_active_idx").on(
+      table.tenantId,
       table.timeWindowType,
       table.isActive,
     ),
     index("shop_products_absolute_window_idx")
       .on(
-        table.organizationId,
+        table.tenantId,
         table.isActive,
         table.availableFrom,
         table.availableTo,
       )
       .where(sql`${table.timeWindowType} = 'absolute'`),
-    uniqueIndex("shop_products_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("shop_products_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("shop_products_activity_idx").on(table.activityId),
   ],
@@ -268,7 +268,7 @@ export const shopGrowthStages = pgTable(
     productId: uuid("product_id")
       .notNull()
       .references(() => shopProducts.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     stageIndex: integer("stage_index").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -285,7 +285,7 @@ export const shopGrowthStages = pgTable(
   },
   (table) => [
     index("shop_growth_stages_product_idx").on(table.productId),
-    index("shop_growth_stages_org_idx").on(table.organizationId),
+    index("shop_growth_stages_tenant_idx").on(table.tenantId),
     uniqueIndex("shop_growth_stages_product_index_uidx").on(
       table.productId,
       table.stageIndex,
@@ -319,7 +319,7 @@ export const shopUserPurchaseStates = pgTable(
       .notNull()
       .references(() => shopProducts.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     totalCount: integer("total_count").default(0).notNull(),
     cycleCount: integer("cycle_count").default(0).notNull(),
     cycleResetAt: timestamp("cycle_reset_at"),
@@ -336,8 +336,8 @@ export const shopUserPurchaseStates = pgTable(
       columns: [table.productId, table.endUserId],
       name: "shop_user_purchase_states_pk",
     }),
-    index("shop_user_purchase_states_org_user_idx").on(
-      table.organizationId,
+    index("shop_user_purchase_states_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -359,7 +359,7 @@ export const shopGrowthStageClaims = pgTable(
       .notNull()
       .references(() => shopGrowthStages.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     productId: uuid("product_id").notNull(),
     claimedAt: timestamp("claimed_at").defaultNow().notNull(),
     version: integer("version").default(1).notNull(),
@@ -369,8 +369,8 @@ export const shopGrowthStageClaims = pgTable(
       columns: [table.stageId, table.endUserId],
       name: "shop_growth_stage_claims_pk",
     }),
-    index("shop_growth_stage_claims_org_user_product_idx").on(
-      table.organizationId,
+    index("shop_growth_stage_claims_tenant_user_product_idx").on(
+      table.tenantId,
       table.endUserId,
       table.productId,
     ),

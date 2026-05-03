@@ -18,7 +18,7 @@ registerEvent({
   description:
     "用户发起一个助力池实例(砍价 / 助力)。endUserId = 发起人。",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "configId", type: "string", required: true },
     { path: "instanceId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
@@ -33,7 +33,7 @@ registerEvent({
   description:
     "一次助力贡献写入成功。endUserId = 助力者(贡献者),initiatorEndUserId 是被助力者。",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "configId", type: "string", required: true },
     { path: "instanceId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
@@ -49,7 +49,7 @@ registerEvent({
   description:
     "助力池达成目标,奖励已发放(去重 ledger 保证只发一次)。endUserId = 发起人。",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "configId", type: "string", required: true },
     { path: "instanceId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
@@ -63,7 +63,7 @@ registerEvent({
   description:
     "助力池实例过期(cron 扫过期 或 admin 强制过期)。不发奖。",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "configId", type: "string", required: true },
     { path: "instanceId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },

@@ -93,7 +93,7 @@ type BattlePassDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "battlepass.xp.earned": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       seasonId: string;
       taskDefinitionId: string | null;
@@ -103,14 +103,14 @@ declare module "../../lib/event-bus" {
       currentXp: number;
     };
     "battlepass.level.up": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       seasonId: string;
       oldLevel: number;
       newLevel: number;
     };
     "battlepass.tier.granted": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       seasonId: string;
       tierCode: string;
@@ -118,7 +118,7 @@ declare module "../../lib/event-bus" {
       externalOrderId: string | null;
     };
     "battlepass.level.claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       seasonId: string;
       level: number;
@@ -137,7 +137,7 @@ export function createBattlePassService(
   // ─── Internal helpers ─────────────────────────────────────────
 
   async function loadConfigById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<BattlePassConfig> {
     const [row] = await db
@@ -145,7 +145,7 @@ export function createBattlePassService(
       .from(battlePassConfigs)
       .where(
         and(
-          eq(battlePassConfigs.organizationId, organizationId),
+          eq(battlePassConfigs.tenantId, tenantId),
           eq(battlePassConfigs.id, id),
         ),
       )
@@ -205,7 +205,7 @@ export function createBattlePassService(
 
   /** 确保 user_progress 行存在（幂等的 INSERT ON CONFLICT DO NOTHING）。 */
   async function ensureUserProgressRow(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId: string;
     endUserId: string;
     now: Date;
@@ -215,7 +215,7 @@ export function createBattlePassService(
       .values({
         seasonId: params.seasonId,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         currentXp: 0,
         currentLevel: 0,
         ownedTiers: ["free"],
@@ -232,7 +232,7 @@ export function createBattlePassService(
   }
 
   async function loadUserProgress(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
     endUserId: string,
   ) {
@@ -241,7 +241,7 @@ export function createBattlePassService(
       .from(battlePassUserProgress)
       .where(
         and(
-          eq(battlePassUserProgress.organizationId, organizationId),
+          eq(battlePassUserProgress.tenantId, tenantId),
           eq(battlePassUserProgress.seasonId, seasonId),
           eq(battlePassUserProgress.endUserId, endUserId),
         ),
@@ -253,7 +253,7 @@ export function createBattlePassService(
   // ─── Public API: config CRUD ──────────────────────────────────
 
   async function createConfig(
-    organizationId: string,
+    tenantId: string,
     input: CreateConfigInput,
   ): Promise<BattlePassConfig> {
     // 1) 验证 activity 存在且 kind='season_pass'
@@ -262,7 +262,7 @@ export function createBattlePassService(
       .from(activityConfigs)
       .where(
         and(
-          eq(activityConfigs.organizationId, organizationId),
+          eq(activityConfigs.tenantId, tenantId),
           eq(activityConfigs.id, input.activityId),
         ),
       )
@@ -279,7 +279,7 @@ export function createBattlePassService(
       const [row] = await db
         .insert(battlePassConfigs)
         .values({
-          organizationId,
+          tenantId,
           activityId: input.activityId,
           code: input.code,
           name: input.name,
@@ -316,11 +316,11 @@ export function createBattlePassService(
   }
 
   async function updateConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
     input: UpdateConfigInput,
   ): Promise<BattlePassConfig> {
-    const existing = await loadConfigById(organizationId, id);
+    const existing = await loadConfigById(tenantId, id);
 
     const patch: Partial<typeof battlePassConfigs.$inferInsert> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -345,7 +345,7 @@ export function createBattlePassService(
       .set(patch)
       .where(
         and(
-          eq(battlePassConfigs.organizationId, organizationId),
+          eq(battlePassConfigs.tenantId, tenantId),
           eq(battlePassConfigs.id, id),
         ),
       )
@@ -355,14 +355,14 @@ export function createBattlePassService(
   }
 
   async function deleteConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const [deleted] = await db
       .delete(battlePassConfigs)
       .where(
         and(
-          eq(battlePassConfigs.organizationId, organizationId),
+          eq(battlePassConfigs.tenantId, tenantId),
           eq(battlePassConfigs.id, id),
         ),
       )
@@ -371,19 +371,19 @@ export function createBattlePassService(
   }
 
   async function getConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<BattlePassConfig> {
-    return await loadConfigById(organizationId, id);
+    return await loadConfigById(tenantId, id);
   }
 
   async function listConfigs(
-    organizationId: string,
+    tenantId: string,
   ): Promise<BattlePassConfig[]> {
     return await db
       .select()
       .from(battlePassConfigs)
-      .where(eq(battlePassConfigs.organizationId, organizationId))
+      .where(eq(battlePassConfigs.tenantId, tenantId))
       .orderBy(asc(battlePassConfigs.createdAt));
   }
 
@@ -391,17 +391,17 @@ export function createBattlePassService(
 
   /** Replace 模式：删除当前绑定 + 批量插入新绑定。两步幂等。 */
   async function bindTasks(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
     input: BindTasksInput,
   ): Promise<void> {
-    const config = await loadConfigById(organizationId, seasonId);
+    const config = await loadConfigById(tenantId, seasonId);
 
     await db
       .delete(battlePassSeasonTasks)
       .where(
         and(
-          eq(battlePassSeasonTasks.organizationId, organizationId),
+          eq(battlePassSeasonTasks.tenantId, tenantId),
           eq(battlePassSeasonTasks.seasonId, config.id),
         ),
       );
@@ -412,7 +412,7 @@ export function createBattlePassService(
     await db.insert(battlePassSeasonTasks).values(
       input.bindings.map((b, i) => ({
         seasonId: config.id,
-        organizationId,
+        tenantId,
         taskDefinitionId: b.taskDefinitionId,
         xpReward: b.xpReward,
         category: b.category,
@@ -423,16 +423,16 @@ export function createBattlePassService(
   }
 
   async function listSeasonTasks(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
   ): Promise<Array<typeof battlePassSeasonTasks.$inferSelect>> {
-    await loadConfigById(organizationId, seasonId);
+    await loadConfigById(tenantId, seasonId);
     return await db
       .select()
       .from(battlePassSeasonTasks)
       .where(
         and(
-          eq(battlePassSeasonTasks.organizationId, organizationId),
+          eq(battlePassSeasonTasks.tenantId, tenantId),
           eq(battlePassSeasonTasks.seasonId, seasonId),
         ),
       )
@@ -449,7 +449,7 @@ export function createBattlePassService(
    * 纪行、跨赛季扣款等），全部处理。
    */
   async function grantXpForTask(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     taskDefinitionId: string;
     now?: Date;
@@ -477,8 +477,8 @@ export function createBattlePassService(
       .where(
         and(
           eq(
-            battlePassSeasonTasks.organizationId,
-            params.organizationId,
+            battlePassSeasonTasks.tenantId,
+            params.tenantId,
           ),
           eq(
             battlePassSeasonTasks.taskDefinitionId,
@@ -505,7 +505,7 @@ export function createBattlePassService(
 
     for (const binding of rows) {
       const oldProgress = await loadUserProgress(
-        params.organizationId,
+        params.tenantId,
         binding.seasonId,
         params.endUserId,
       );
@@ -517,7 +517,7 @@ export function createBattlePassService(
         .values({
           seasonId: binding.seasonId,
           endUserId: params.endUserId,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           currentXp: binding.xpReward,
           currentLevel: 0,
           ownedTiers: ["free"],
@@ -573,7 +573,7 @@ export function createBattlePassService(
 
       if (events) {
         void events.emit("battlepass.xp.earned", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           seasonId: binding.seasonId,
           taskDefinitionId: params.taskDefinitionId,
@@ -584,7 +584,7 @@ export function createBattlePassService(
         });
         if (newLevel > oldLevel) {
           void events.emit("battlepass.level.up", {
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             seasonId: binding.seasonId,
             oldLevel,
@@ -604,7 +604,7 @@ export function createBattlePassService(
    * 同一 (season, endUser, tier) UNIQUE 拦重，返回 `idempotent:true`。
    */
   async function grantTier(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId: string;
     endUserId: string;
     tierCode: string;
@@ -613,11 +613,11 @@ export function createBattlePassService(
     now?: Date;
   }): Promise<BattlePassGrantTierOutcome> {
     const now = params.now ?? new Date();
-    const config = await loadConfigById(params.organizationId, params.seasonId);
+    const config = await loadConfigById(params.tenantId, params.seasonId);
     assertTierExists(config, params.tierCode);
 
     await ensureUserProgressRow({
-      organizationId: params.organizationId,
+      tenantId: params.tenantId,
       seasonId: params.seasonId,
       endUserId: params.endUserId,
       now,
@@ -628,7 +628,7 @@ export function createBattlePassService(
       .values({
         seasonId: params.seasonId,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         tierCode: params.tierCode,
         source: params.source,
         externalOrderId: params.externalOrderId ?? null,
@@ -666,14 +666,14 @@ export function createBattlePassService(
     }
 
     const progress = await loadUserProgress(
-      params.organizationId,
+      params.tenantId,
       params.seasonId,
       params.endUserId,
     );
 
     if (events && !idempotent) {
       void events.emit("battlepass.tier.granted", {
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         seasonId: params.seasonId,
         tierCode: params.tierCode,
@@ -691,7 +691,7 @@ export function createBattlePassService(
   // ─── Public API: claim ───────────────────────────────────────
 
   async function claimLevel(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId: string;
     endUserId: string;
     level: number;
@@ -699,18 +699,18 @@ export function createBattlePassService(
     now?: Date;
   }): Promise<BattlePassClaimOutcome> {
     const now = params.now ?? new Date();
-    const config = await loadConfigById(params.organizationId, params.seasonId);
+    const config = await loadConfigById(params.tenantId, params.seasonId);
     assertTierExists(config, params.tierCode);
 
     await assertRewardWindowOpen(
-      params.organizationId,
+      params.tenantId,
       config.activityId,
       config.id,
       now,
     );
 
     const progress = await loadUserProgress(
-      params.organizationId,
+      params.tenantId,
       params.seasonId,
       params.endUserId,
     );
@@ -736,7 +736,7 @@ export function createBattlePassService(
       .values({
         seasonId: params.seasonId,
         endUserId: params.endUserId,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         level: params.level,
         tierCode: params.tierCode,
         rewardEntries,
@@ -765,7 +765,7 @@ export function createBattlePassService(
     const rewardSvcs = rewardServicesGetter();
     await grantRewards(
       rewardSvcs,
-      params.organizationId,
+      params.tenantId,
       params.endUserId,
       rewardEntries,
       `battle_pass.level_claim`,
@@ -774,7 +774,7 @@ export function createBattlePassService(
 
     if (events) {
       void events.emit("battlepass.level.claimed", {
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         seasonId: params.seasonId,
         level: params.level,
@@ -791,13 +791,13 @@ export function createBattlePassService(
   }
 
   async function listClaimable(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
     endUserId: string,
   ): Promise<BattlePassClaimableEntry[]> {
-    const config = await loadConfigById(organizationId, seasonId);
+    const config = await loadConfigById(tenantId, seasonId);
     const progress = await loadUserProgress(
-      organizationId,
+      tenantId,
       seasonId,
       endUserId,
     );
@@ -815,7 +815,7 @@ export function createBattlePassService(
       .from(battlePassClaims)
       .where(
         and(
-          eq(battlePassClaims.organizationId, organizationId),
+          eq(battlePassClaims.tenantId, tenantId),
           eq(battlePassClaims.seasonId, seasonId),
           eq(battlePassClaims.endUserId, endUserId),
         ),
@@ -838,13 +838,13 @@ export function createBattlePassService(
   }
 
   async function claimAll(params: {
-    organizationId: string;
+    tenantId: string;
     seasonId: string;
     endUserId: string;
     now?: Date;
   }): Promise<BattlePassClaimOutcome[]> {
     const claimable = await listClaimable(
-      params.organizationId,
+      params.tenantId,
       params.seasonId,
       params.endUserId,
     );
@@ -855,7 +855,7 @@ export function createBattlePassService(
     for (const item of claimable) {
       outcomes.push(
         await claimLevel({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           seasonId: params.seasonId,
           endUserId: params.endUserId,
           level: item.level,
@@ -870,14 +870,14 @@ export function createBattlePassService(
   // ─── Public API: aggregate view ──────────────────────────────
 
   async function getAggregateView(
-    organizationId: string,
+    tenantId: string,
     seasonId: string,
     endUserId: string,
   ): Promise<BattlePassAggregateView> {
-    const config = await loadConfigById(organizationId, seasonId);
+    const config = await loadConfigById(tenantId, seasonId);
 
     // progress
-    const progress = await loadUserProgress(organizationId, seasonId, endUserId);
+    const progress = await loadUserProgress(tenantId, seasonId, endUserId);
     const currentXp = progress?.currentXp ?? 0;
     const currentLevel = progress?.currentLevel ?? 0;
     const ownedTiers = progress?.ownedTiers ?? ["free"];
@@ -888,14 +888,14 @@ export function createBattlePassService(
       .from(battlePassSeasonTasks)
       .where(
         and(
-          eq(battlePassSeasonTasks.organizationId, organizationId),
+          eq(battlePassSeasonTasks.tenantId, tenantId),
           eq(battlePassSeasonTasks.seasonId, seasonId),
         ),
       )
       .orderBy(asc(battlePassSeasonTasks.sortOrder));
 
     // claimable
-    const claimable = await listClaimable(organizationId, seasonId, endUserId);
+    const claimable = await listClaimable(tenantId, seasonId, endUserId);
 
     return {
       season: {
@@ -934,7 +934,7 @@ export function createBattlePassService(
    * 最早 startAt 的那个。
    */
   async function getCurrentSeason(
-    organizationId: string,
+    tenantId: string,
   ): Promise<BattlePassConfig | null> {
     const rows = await db
       .select({ config: battlePassConfigs })
@@ -945,7 +945,7 @@ export function createBattlePassService(
       )
       .where(
         and(
-          eq(battlePassConfigs.organizationId, organizationId),
+          eq(battlePassConfigs.tenantId, tenantId),
           inArray(activityConfigs.status, ["active", "ended"]),
         ),
       )

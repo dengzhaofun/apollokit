@@ -97,7 +97,7 @@ export async function handleEnvelope(
 ): Promise<void> {
   if (envelope.capabilities.includes("webhook")) {
     const { queued } = await d.webhooks.dispatch({
-      organizationId: envelope.orgId,
+      tenantId: envelope.orgId,
       eventType: envelope.name,
       payload: envelope.payload,
     });

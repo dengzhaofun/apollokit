@@ -132,13 +132,13 @@ import type {
 declare module "../../lib/event-bus" {
   interface EventMap {
     "activity.state.changed": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       previousState: ActivityState;
       newState: ActivityState;
     };
     "activity.schedule.fired": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       scheduleAlias: string;
       actionType: string;
@@ -146,7 +146,7 @@ declare module "../../lib/event-bus" {
       actionConfig: Record<string, unknown>;
     };
     "activity.joined": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       activityAlias: string | null;
       endUserId: string;
@@ -156,14 +156,14 @@ declare module "../../lib/event-bus" {
       firstTime: boolean;
     };
     "activity.created": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       alias: string;
       kind: ActivityKind;
       templateId: string | null;
     };
     "activity.updated": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       alias: string;
       // List of patch keys that actually mutated the row. Empty array
@@ -171,12 +171,12 @@ declare module "../../lib/event-bus" {
       changedFields: string[];
     };
     "activity.deleted": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       alias: string;
     };
     "activity.published": {
-      organizationId: string;
+      tenantId: string;
       activityId: string;
       alias: string;
       // The state derived right after publish — usually "scheduled" /
@@ -190,7 +190,7 @@ type ActivityDeps = Pick<AppDeps, "db" | "redis" | "events">;
 
 type MailLike = {
   sendUnicast: (
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     input: {
       title: string;
@@ -203,7 +203,7 @@ type MailLike = {
     },
   ) => Promise<unknown>;
   createMessage: (
-    organizationId: string,
+    tenantId: string,
     input: {
       title: string;
       content: string;
@@ -225,16 +225,16 @@ export function createActivityService(
   const { db, events } = d;
 
   async function loadByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ActivityConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(activityConfigs.organizationId, organizationId),
+          eq(activityConfigs.tenantId, tenantId),
           eq(activityConfigs.id, key),
         )
       : and(
-          eq(activityConfigs.organizationId, organizationId),
+          eq(activityConfigs.tenantId, tenantId),
           eq(activityConfigs.alias, key),
         );
     const rows = await db
@@ -261,7 +261,7 @@ export function createActivityService(
     // ─── CRUD ────────────────────────────────────────────────────
 
     async createActivity(
-      organizationId: string,
+      tenantId: string,
       input: CreateActivityInput,
     ): Promise<ActivityConfig> {
       const t = {
@@ -276,7 +276,7 @@ export function createActivityService(
         const [row] = await db
           .insert(activityConfigs)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias,
             name: input.name,
             description: input.description ?? null,
@@ -303,7 +303,7 @@ export function createActivityService(
           .returning();
         if (!row) throw new Error("insert returned no row");
         await events.emit("activity.created", {
-          organizationId,
+          tenantId,
           activityId: row.id,
           alias: row.alias,
           kind: row.kind as ActivityKind,
@@ -318,11 +318,11 @@ export function createActivityService(
     },
 
     async updateActivity(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
       patch: UpdateActivityInput,
     ): Promise<ActivityConfig> {
-      const existing = await loadByKey(organizationId, idOrAlias);
+      const existing = await loadByKey(tenantId, idOrAlias);
       const values: Partial<typeof activityConfigs.$inferInsert> = {};
       if (patch.name !== undefined) values.name = patch.name;
       if (patch.description !== undefined)
@@ -367,13 +367,13 @@ export function createActivityService(
         .where(
           and(
             eq(activityConfigs.id, existing.id),
-            eq(activityConfigs.organizationId, organizationId),
+            eq(activityConfigs.tenantId, tenantId),
           ),
         )
         .returning();
       if (!row) throw new ActivityNotFound(idOrAlias);
       await events.emit("activity.updated", {
-        organizationId,
+        tenantId,
         activityId: row.id,
         alias: row.alias,
         changedFields: Object.keys(values),
@@ -382,7 +382,7 @@ export function createActivityService(
     },
 
     async deleteActivity(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const [deleted] = await db
@@ -390,31 +390,31 @@ export function createActivityService(
         .where(
           and(
             eq(activityConfigs.id, id),
-            eq(activityConfigs.organizationId, organizationId),
+            eq(activityConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: activityConfigs.id, alias: activityConfigs.alias });
       if (!deleted) throw new ActivityNotFound(id);
       await events.emit("activity.deleted", {
-        organizationId,
+        tenantId,
         activityId: deleted.id,
         alias: deleted.alias,
       });
     },
 
     async getActivity(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<ActivityConfig> {
-      return loadByKey(organizationId, idOrAlias);
+      return loadByKey(tenantId, idOrAlias);
     },
 
     async listActivities(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { status?: ActivityState; kind?: ActivityKind } = {},
     ): Promise<Page<ActivityConfig>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(activityConfigs.organizationId, organizationId)];
+      const conds: SQL[] = [eq(activityConfigs.tenantId, tenantId)];
       if (filter.status) conds.push(eq(activityConfigs.status, filter.status));
       if (filter.kind) conds.push(eq(activityConfigs.kind, filter.kind));
       const seek = cursorWhere(filter.cursor, activityConfigs.createdAt, activityConfigs.id);
@@ -440,11 +440,11 @@ export function createActivityService(
      * The persisted status is whatever `deriveState` says right now.
      */
     async publish(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
       now: Date = new Date(),
     ): Promise<ActivityConfig> {
-      const existing = await loadByKey(organizationId, idOrAlias);
+      const existing = await loadByKey(tenantId, idOrAlias);
       if (existing.status !== "draft") {
         throw new ActivityWrongState("publish", existing.status);
       }
@@ -459,7 +459,7 @@ export function createActivityService(
         .returning();
       if (!row) throw new ActivityNotFound(idOrAlias);
       await events.emit("activity.state.changed", {
-        organizationId,
+        tenantId,
         activityId: row.id,
         previousState: "draft",
         newState: nextStatus,
@@ -468,7 +468,7 @@ export function createActivityService(
       // generic state.changed — webhook subscribers can listen to one or
       // the other to avoid double-firing.
       await events.emit("activity.published", {
-        organizationId,
+        tenantId,
         activityId: row.id,
         alias: row.alias,
         newState: nextStatus,
@@ -482,10 +482,10 @@ export function createActivityService(
      * publishing (would confuse players).
      */
     async unpublish(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<ActivityConfig> {
-      const existing = await loadByKey(organizationId, idOrAlias);
+      const existing = await loadByKey(tenantId, idOrAlias);
       if (!["scheduled", "teasing"].includes(existing.status)) {
         throw new ActivityWrongState("unpublish", existing.status);
       }
@@ -496,7 +496,7 @@ export function createActivityService(
         .returning();
       if (!row) throw new ActivityNotFound(idOrAlias);
       await events.emit("activity.state.changed", {
-        organizationId,
+        tenantId,
         activityId: row.id,
         previousState: existing.status as ActivityState,
         newState: "draft",
@@ -507,17 +507,17 @@ export function createActivityService(
     // ─── Nodes ──────────────────────────────────────────────────
 
     async createNode(
-      organizationId: string,
+      tenantId: string,
       activityIdOrAlias: string,
       input: CreateNodeInput,
     ): Promise<ActivityNode> {
-      const activity = await loadByKey(organizationId, activityIdOrAlias);
+      const activity = await loadByKey(tenantId, activityIdOrAlias);
       try {
         const [row] = await db
           .insert(activityNodes)
           .values({
             activityId: activity.id,
-            organizationId,
+            tenantId,
             alias: input.alias,
             nodeType: input.nodeType,
             refId: input.refId ?? null,
@@ -540,7 +540,7 @@ export function createActivityService(
     },
 
     async updateNode(
-      organizationId: string,
+      tenantId: string,
       nodeId: string,
       patch: UpdateNodeInput,
     ): Promise<ActivityNode> {
@@ -557,7 +557,7 @@ export function createActivityService(
           .where(
             and(
               eq(activityNodes.id, nodeId),
-              eq(activityNodes.organizationId, organizationId),
+              eq(activityNodes.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -570,7 +570,7 @@ export function createActivityService(
         .where(
           and(
             eq(activityNodes.id, nodeId),
-            eq(activityNodes.organizationId, organizationId),
+            eq(activityNodes.tenantId, tenantId),
           ),
         )
         .returning();
@@ -579,7 +579,7 @@ export function createActivityService(
     },
 
     async deleteNode(
-      organizationId: string,
+      tenantId: string,
       nodeId: string,
     ): Promise<void> {
       const deleted = await db
@@ -587,7 +587,7 @@ export function createActivityService(
         .where(
           and(
             eq(activityNodes.id, nodeId),
-            eq(activityNodes.organizationId, organizationId),
+            eq(activityNodes.tenantId, tenantId),
           ),
         )
         .returning({ id: activityNodes.id });
@@ -595,7 +595,7 @@ export function createActivityService(
     },
 
     async listNodes(
-      organizationId: string,
+      tenantId: string,
       activityIdOrAlias: string,
       now: Date = new Date(),
     ): Promise<{
@@ -607,7 +607,7 @@ export function createActivityService(
         timeline: ActivityTimeline;
       };
     }> {
-      const activity = await loadByKey(organizationId, activityIdOrAlias);
+      const activity = await loadByKey(tenantId, activityIdOrAlias);
       const items = await db
         .select()
         .from(activityNodes)
@@ -629,11 +629,11 @@ export function createActivityService(
     // ─── Schedules ──────────────────────────────────────────────
 
     async createSchedule(
-      organizationId: string,
+      tenantId: string,
       activityIdOrAlias: string,
       input: CreateScheduleInput,
     ) {
-      const activity = await loadByKey(organizationId, activityIdOrAlias);
+      const activity = await loadByKey(tenantId, activityIdOrAlias);
       const nextFireAt = computeNextFireAt(
         {
           triggerKind: input.triggerKind,
@@ -649,7 +649,7 @@ export function createActivityService(
           .insert(activitySchedules)
           .values({
             activityId: activity.id,
-            organizationId,
+            tenantId,
             alias: input.alias,
             triggerKind: input.triggerKind,
             cronExpr: input.cronExpr ?? null,
@@ -678,7 +678,7 @@ export function createActivityService(
     },
 
     async deleteSchedule(
-      organizationId: string,
+      tenantId: string,
       scheduleId: string,
     ): Promise<void> {
       const deleted = await db
@@ -686,7 +686,7 @@ export function createActivityService(
         .where(
           and(
             eq(activitySchedules.id, scheduleId),
-            eq(activitySchedules.organizationId, organizationId),
+            eq(activitySchedules.tenantId, tenantId),
           ),
         )
         .returning({ id: activitySchedules.id });
@@ -696,10 +696,10 @@ export function createActivityService(
     },
 
     async listSchedules(
-      organizationId: string,
+      tenantId: string,
       activityIdOrAlias: string,
     ) {
-      const activity = await loadByKey(organizationId, activityIdOrAlias);
+      const activity = await loadByKey(tenantId, activityIdOrAlias);
       return db
         .select()
         .from(activitySchedules)
@@ -714,13 +714,13 @@ export function createActivityService(
      * (activity_id, end_user_id) guarantees one row per player.
      */
     async join(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       endUserId: string;
       now?: Date;
     }): Promise<ActivityMemberRow> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const now = params.now ?? new Date();
@@ -732,7 +732,7 @@ export function createActivityService(
         .insert(activityMembers)
         .values({
           activityId: activity.id,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           joinedAt: now,
           lastActiveAt: now,
@@ -766,7 +766,7 @@ export function createActivityService(
 
       if (events) {
         await events.emit("activity.joined", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           activityId: activity.id,
           activityAlias: activity.alias,
           endUserId: params.endUserId,
@@ -787,13 +787,13 @@ export function createActivityService(
      * milestones-achieved must all stay queryable post-leave.
      */
     async leaveActivity(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       endUserId: string;
       now?: Date;
     }): Promise<ActivityMemberRow> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const membership = activity.membership as ActivityMembershipConfig | null;
@@ -823,13 +823,13 @@ export function createActivityService(
      * timestamp.
      */
     async redeemQueueNumber(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       endUserId: string;
       now?: Date;
     }): Promise<{ endUserId: string; queueNumber: string; usedAt: Date }> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const membership = activity.membership as ActivityMembershipConfig | null;
@@ -889,7 +889,7 @@ export function createActivityService(
      * `joinedAt|id` composite; `limit` is capped at 200.
      */
     async listMembers(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       status?: ActivityMemberStatus | "all";
       cursor?: string | null;
@@ -899,7 +899,7 @@ export function createActivityService(
       nextCursor: string | null;
     }> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
@@ -947,7 +947,7 @@ export function createActivityService(
      * subscribe to `metricKey="activity:<alias>:points"`) auto-update.
      */
     async addPoints(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       endUserId: string;
       delta: number;
@@ -956,7 +956,7 @@ export function createActivityService(
       now?: Date;
     }): Promise<{ balance: number }> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const now = params.now ?? new Date();
@@ -975,7 +975,7 @@ export function createActivityService(
         .insert(activityMembers)
         .values({
           activityId: activity.id,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           joinedAt: now,
           lastActiveAt: now,
@@ -999,7 +999,7 @@ export function createActivityService(
       // reconstructs the true balance.
       await db.insert(activityPointLogs).values({
         activityId: activity.id,
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         delta: params.delta,
         balanceAfter: balance,
@@ -1017,13 +1017,13 @@ export function createActivityService(
      * per node until each module's `getStatusForActivityNode` lands).
      */
     async getActivityForUser(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
       endUserId: string;
       now?: Date;
     }): Promise<ActivityViewForUser> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
       const now = params.now ?? new Date();
@@ -1116,7 +1116,7 @@ export function createActivityService(
      *   pointsBuckets — histogram for UI rendering
      */
     async getActivityAnalytics(params: {
-      organizationId: string;
+      tenantId: string;
       activityIdOrAlias: string;
     }): Promise<{
       participants: number;
@@ -1128,7 +1128,7 @@ export function createActivityService(
       pointsBuckets: Array<{ bucket: string; count: number }>;
     }> {
       const activity = await loadByKey(
-        params.organizationId,
+        params.tenantId,
         params.activityIdOrAlias,
       );
 
@@ -1211,7 +1211,7 @@ export function createActivityService(
     // ─── Templates ──────────────────────────────────────────────
 
     async createTemplate(
-      organizationId: string,
+      tenantId: string,
       input: {
         alias: string;
         name: string;
@@ -1236,7 +1236,7 @@ export function createActivityService(
         const [row] = await db
           .insert(activityTemplates)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias,
             name: input.name,
             description: input.description ?? null,
@@ -1263,16 +1263,16 @@ export function createActivityService(
       }
     },
 
-    async listTemplates(organizationId: string) {
+    async listTemplates(tenantId: string) {
       return db
         .select()
         .from(activityTemplates)
-        .where(eq(activityTemplates.organizationId, organizationId))
+        .where(eq(activityTemplates.tenantId, tenantId))
         .orderBy(desc(activityTemplates.createdAt));
     },
 
     async deleteTemplate(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const deleted = await db
@@ -1280,7 +1280,7 @@ export function createActivityService(
         .where(
           and(
             eq(activityTemplates.id, id),
-            eq(activityTemplates.organizationId, organizationId),
+            eq(activityTemplates.tenantId, tenantId),
           ),
         )
         .returning({ id: activityTemplates.id });
@@ -1298,7 +1298,7 @@ export function createActivityService(
      * `(org, alias)` index rejects dupes.
      */
     async instantiateTemplate(params: {
-      organizationId: string;
+      tenantId: string;
       templateId: string;
       now?: Date;
     }): Promise<{ activityAlias: string; activityId: string }> {
@@ -1309,7 +1309,7 @@ export function createActivityService(
         .where(
           and(
             eq(activityTemplates.id, params.templateId),
-            eq(activityTemplates.organizationId, params.organizationId),
+            eq(activityTemplates.tenantId, params.tenantId),
           ),
         )
         .limit(1);
@@ -1338,7 +1338,7 @@ export function createActivityService(
       const [row] = await db
         .insert(activityConfigs)
         .values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           alias: newAlias,
           name: (payload.name as string) ?? tpl.name,
           description: (payload.description as string | null) ?? null,
@@ -1397,11 +1397,11 @@ export function createActivityService(
         const sortOrder = await appendKey(db, {
           table: currencies,
           sortColumn: currencies.sortOrder,
-          scopeWhere: eq(currencies.organizationId, params.organizationId),
+          scopeWhere: eq(currencies.tenantId, params.tenantId),
         });
         try {
           await db.insert(currencies).values({
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             alias,
             name: bp.name,
             description: bp.description ?? null,
@@ -1429,7 +1429,7 @@ export function createActivityService(
             .from(itemCategories)
             .where(
               and(
-                eq(itemCategories.organizationId, params.organizationId),
+                eq(itemCategories.tenantId, params.tenantId),
                 eq(itemCategories.alias, bp.categoryAlias),
               ),
             )
@@ -1447,7 +1447,7 @@ export function createActivityService(
         const holdLimit = stackable ? (bp.holdLimit ?? null) : null;
         try {
           await db.insert(itemDefinitions).values({
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             categoryId,
             alias,
             name: bp.name,
@@ -1476,7 +1476,7 @@ export function createActivityService(
           .from(entitySchemas)
           .where(
             and(
-              eq(entitySchemas.organizationId, params.organizationId),
+              eq(entitySchemas.tenantId, params.tenantId),
               eq(entitySchemas.alias, bp.schemaAlias),
             ),
           )
@@ -1489,13 +1489,13 @@ export function createActivityService(
           table: entityBlueprints,
           sortColumn: entityBlueprints.sortOrder,
           scopeWhere: and(
-            eq(entityBlueprints.organizationId, params.organizationId),
+            eq(entityBlueprints.tenantId, params.tenantId),
             eq(entityBlueprints.schemaId, sch[0].id),
           ),
         });
         try {
           await db.insert(entityBlueprints).values({
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             schemaId: sch[0].id,
             alias,
             name: bp.name,
@@ -1527,7 +1527,7 @@ export function createActivityService(
         await db.insert(activityNodes).values(
           nodesBlueprint.map((bp) => ({
             activityId: row.id,
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             alias: bp.alias,
             nodeType: bp.nodeType,
             refId: bp.refIdStrategy === "reuse_shared" ? (bp.fixedRefId ?? null) : null,
@@ -1568,7 +1568,7 @@ export function createActivityService(
           );
           await db.insert(activitySchedules).values({
             activityId: row.id,
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             alias: bp.alias,
             triggerKind: bp.triggerKind,
             cronExpr: bp.cronExpr ?? null,
@@ -1601,7 +1601,7 @@ export function createActivityService(
           .set({ status: derived })
           .where(eq(activityConfigs.id, row.id));
         await events.emit("activity.state.changed", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           activityId: row.id,
           previousState: "draft",
           newState: derived,
@@ -1649,7 +1649,7 @@ export function createActivityService(
       for (const tpl of due) {
         try {
           await this.instantiateTemplate({
-            organizationId: tpl.organizationId,
+            tenantId: tpl.tenantId,
             templateId: tpl.id,
             now,
           });
@@ -1716,7 +1716,7 @@ export function createActivityService(
           if (!row) continue; // someone else raced us
           advanced++;
           await events.emit("activity.state.changed", {
-            organizationId: act.organizationId,
+            tenantId: act.tenantId,
             activityId: act.id,
             previousState: act.status as ActivityState,
             newState: desired,
@@ -1774,7 +1774,7 @@ export function createActivityService(
             // Recurring: atomically advance `nextFireAt` to the next
             // match past `now`. If we can't compute one, disable to
             // avoid a tight loop on a broken expression.
-            const activity = await loadByKey(s.organizationId, s.activityId);
+            const activity = await loadByKey(s.tenantId, s.activityId);
             const nextAt = computeNextFireAt(
               {
                 triggerKind: "cron",
@@ -1969,7 +1969,7 @@ async function fireSchedule(params: {
   schedule: {
     id: string;
     activityId: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     actionType: string;
     actionConfig: Record<string, unknown>;
@@ -1982,7 +1982,7 @@ async function fireSchedule(params: {
   switch (schedule.actionType) {
     case "emit_bus_event": {
       await events.emit("activity.schedule.fired", {
-        organizationId: schedule.organizationId,
+        tenantId: schedule.tenantId,
         activityId: schedule.activityId,
         scheduleAlias: schedule.alias,
         actionType: schedule.actionType,
@@ -2005,12 +2005,12 @@ async function fireSchedule(params: {
         try {
           await db.insert(activityUserRewards).values({
             activityId: schedule.activityId,
-            organizationId: schedule.organizationId,
+            tenantId: schedule.tenantId,
             endUserId: p.endUserId,
             rewardKey,
             rewards,
           });
-          await mail.sendUnicast(schedule.organizationId, p.endUserId, {
+          await mail.sendUnicast(schedule.tenantId, p.endUserId, {
             title: `Activity reward`,
             content: `Reward triggered by schedule "${schedule.alias}".`,
             rewards,
@@ -2035,7 +2035,7 @@ async function fireSchedule(params: {
       const title = (cfg.title as string) ?? "Activity notice";
       const content = (cfg.content as string) ?? "";
       const rewards = (cfg.rewards ?? []) as RewardEntry[];
-      await mail.createMessage(schedule.organizationId, {
+      await mail.createMessage(schedule.tenantId, {
         title,
         content,
         rewards,

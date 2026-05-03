@@ -40,7 +40,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /** 三种调用方：admin 用户会话、admin API key、系统/cron。 */
 export type AuditActorType = "user" | "admin-api-key" | "system";
@@ -59,12 +59,12 @@ export const auditLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    // 业务模块 mutation 永远落在某个 org 下;Better Auth 自身的 auth 事件
-    // (sign-up / sign-in / password change / account link 等) 由 auth.ts 的
-    // databaseHooks 直接写本表 —— sign-up 那一刻用户尚未加入任何 org,所以
-    // 列必须 nullable。业务模块 middleware 已自行检查 activeOrganizationId
-    // 不为空才写,不会出现"业务行 org_id=NULL"的情况。
-    organizationId: text("organization_id").references(() => organization.id, {
+    // 业务模块 mutation 永远落在某个 team(=tenant=project) 下;Better Auth
+    // 自身的 auth 事件 (sign-up / sign-in / password change / account link
+    // 等) 由 auth.ts 的 databaseHooks 直接写本表 —— sign-up 那一刻用户尚
+    // 未加入任何 team,所以列必须 nullable。业务模块 middleware 已自行检查
+    // activeTeamId 不为空才写,不会出现"业务行 tenant_id=NULL"的情况。
+    tenantId: text("tenant_id").references(() => team.id, {
       onDelete: "cascade",
     }),
     /** 操作发生的时刻（服务端时钟）。索引列。 */
@@ -112,24 +112,24 @@ export const auditLogs = pgTable(
   },
   (table) => [
     // 默认列表 —— 按 ts DESC 翻页（cursor pagination 也走这个索引）
-    index("audit_logs_org_ts_idx").on(table.organizationId, table.ts.desc()),
+    index("audit_logs_tenant_ts_idx").on(table.tenantId, table.ts.desc()),
     // 资源时间线
-    index("audit_logs_org_resource_idx").on(
-      table.organizationId,
+    index("audit_logs_tenant_resource_idx").on(
+      table.tenantId,
       table.resourceType,
       table.resourceId,
       table.ts.desc(),
     ),
     // 个人时间线
-    index("audit_logs_org_actor_idx").on(
-      table.organizationId,
+    index("audit_logs_tenant_actor_idx").on(
+      table.tenantId,
       table.actorType,
       table.actorId,
       table.ts.desc(),
     ),
     // 按 action 筛
-    index("audit_logs_org_action_idx").on(
-      table.organizationId,
+    index("audit_logs_tenant_action_idx").on(
+      table.tenantId,
       table.action,
       table.ts.desc(),
     ),

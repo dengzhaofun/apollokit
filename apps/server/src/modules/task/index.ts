@@ -28,7 +28,7 @@ registerEvent({
   description:
     "Fired when a user's progress on a task first reaches its targetValue.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "taskId", type: "string", required: true },
     { path: "taskAlias", type: "string", required: false },
@@ -44,7 +44,7 @@ registerEvent({
   description:
     "Fired when a user manually claims a completed task's rewards.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "taskId", type: "string", required: true },
     { path: "taskAlias", type: "string", required: false },
@@ -63,7 +63,7 @@ registerEvent({
   description:
     "Fired when a user claims a staged-reward tier (阶段性奖励) of a task.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "taskId", type: "string", required: true },
     { path: "taskAlias", type: "string", required: false },

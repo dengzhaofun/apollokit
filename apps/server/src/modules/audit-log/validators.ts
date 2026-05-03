@@ -80,7 +80,7 @@ export const AuditLogIdParamSchema = z
 export const AuditLogViewSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     ts: z.string(),
     actorType: z.string(),
     actorId: z.string().nullable(),

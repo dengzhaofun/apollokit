@@ -10,7 +10,7 @@ import {
   openAPI,
   organization,
 } from "better-auth/plugins";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { ac, roles } from "./auth/ac";
 import { db } from "./db";
@@ -21,8 +21,9 @@ import {
   sendVerifyEmail,
 } from "./lib/mailer";
 import { normalizeEmail } from "./lib/normalize-email";
+import { provisionTeamDefaults } from "./lib/provision-team";
 import { getTraceId } from "./lib/request-context";
-import { member } from "./schema";
+import { member, team, teamMember } from "./schema";
 
 // Lazy via Proxy —— `betterAuth({...})` 编译 plugin chain(organization +
 // apiKey + drizzle adapter + databaseHooks)是 startup CPU 大头(参见 CF
@@ -157,15 +158,63 @@ function buildAdminAuth() {
     },
     plugins: [
       organization({
-        creatorRole: "owner",
-        // 4-role RBAC + statements live in `./auth/ac.ts`. Roles:
-        //   owner    full + billing + org delete/transfer
-        //   admin    business manage + member management, no billing
-        //   operator read+write business modules, no audit/billing
-        //   viewer   global read-only
-        //   member   alias of operator (backward-compat for old rows)
+        creatorRole: "orgOwner",
+        // Two layers of roles, single ac registry — see `./auth/ac.ts`:
+        //   org-level (member.role)     — orgOwner / orgAdmin / orgViewer
+        //   team-level (teamMember.role) — owner / admin / operator / viewer / member
         ac,
         roles,
+        teams: {
+          enabled: true,
+          // Soft cap on projects per organization. Adjust via plan limits later.
+          maximumTeams: 50,
+          // At least one project must remain — protects against UI mishaps
+          // that would leave a tenant with no working scope.
+          allowRemovingAllTeams: false,
+        },
+        // Lets tenants define custom roles at runtime (`auth.api.createRole`).
+        // Persists into Better Auth's `organizationRole` table; resolved
+        // automatically on `auth.api.hasPermission`.
+        //
+        // The team-level role column lives on `teamMember.role` — added
+        // manually in `schema/auth.ts` because Better Auth 1.6.x doesn't
+        // accept `additionalFields` on teamMember via plugin config.
+        dynamicAccessControl: {
+          enabled: true,
+        },
+        organizationHooks: {
+          // When teams.enabled, Better Auth auto-creates a default team
+          // named after the organization on org creation, AND adds the
+          // creator as a teamMember. We just need to provision business
+          // defaults for that team once it exists.
+          afterCreateOrganization: async ({ organization, user }) => {
+            // Find the team Better Auth just created and seed its role
+            // (Better Auth doesn't set teamMember.role itself for the
+            // creator — set it to "owner" so RBAC works on day one).
+            const [createdTeam] = await db
+              .select({ id: team.id })
+              .from(team)
+              .where(eq(team.organizationId, organization.id))
+              .orderBy(asc(team.createdAt))
+              .limit(1);
+            if (!createdTeam) return;
+            await db
+              .update(teamMember)
+              .set({ role: "owner" })
+              .where(
+                and(
+                  eq(teamMember.teamId, createdTeam.id),
+                  eq(teamMember.userId, user.id),
+                ),
+              );
+            await provisionTeamDefaults(createdTeam.id);
+          },
+          // For subsequent teams (admin creates a 2nd / 3rd project),
+          // afterCreateTeam fires too — provision defaults for those.
+          afterCreateTeam: async ({ team: createdTeam }) => {
+            await provisionTeamDefaults(createdTeam.id);
+          },
+        },
         // Better Auth calls this hook after it persists the invitation row.
         // We deliver the accept link via Cloudflare Email Service (or log
         // it to the console in dev — see `lib/mailer.ts`).
@@ -245,17 +294,18 @@ function buildAdminAuth() {
               session?: {
                 id?: string;
                 activeOrganizationId?: string | null;
+                activeTeamId?: string | null;
               };
             }
           | null
           | undefined;
         const userId = session?.user?.id ?? null;
-        const orgId = session?.session?.activeOrganizationId ?? null;
+        const tenantId = session?.session?.activeTeamId ?? null;
         const returned = ctx.context.returned;
         const requestHeaders = (ctx as { headers?: Headers }).headers;
 
         const baseRow = {
-          organizationId: orgId,
+          tenantId,
           actorType: "user" as const,
           actorId: userId,
           actorLabel: session?.user?.email ?? null,
@@ -380,10 +430,10 @@ function buildAdminAuth() {
             };
           },
           after: async (user, ctx) => {
-            // sign-up 落 audit_logs。这一刻用户尚未加入任何 org —— 列已设为
-            // nullable(见 schema/audit-log.ts),audit row organizationId=null。
+            // sign-up 落 audit_logs。这一刻用户尚未加入任何 project —— 列已
+            // 设为 nullable(见 schema/audit-log.ts),audit row tenantId=null。
             await insertAuditRow({
-              organizationId: null,
+              tenantId: null,
               actorType: "user",
               actorId: user.id,
               actorLabel: user.email,
@@ -416,28 +466,52 @@ function buildAdminAuth() {
       session: {
         create: {
           before: async (session) => {
-            // Auto-select the user's earliest organization as the active one
-            // on sign-in so the frontend doesn't have to call setActive.
-            const [first] = await db
+            // Auto-select the user's earliest organization + a team in that
+            // org on sign-in. Frontend never has to call setActive after
+            // login. If user has no orgs (fresh signup before onboarding),
+            // both fields are null.
+            const [firstOrg] = await db
               .select({ organizationId: member.organizationId })
               .from(member)
               .where(eq(member.userId, session.userId))
               .orderBy(asc(member.createdAt))
               .limit(1);
+
+            let activeTeamId: string | null = null;
+            if (firstOrg) {
+              const [firstTeam] = await db
+                .select({ teamId: teamMember.teamId })
+                .from(teamMember)
+                .innerJoin(team, eq(team.id, teamMember.teamId))
+                .where(
+                  and(
+                    eq(teamMember.userId, session.userId),
+                    eq(team.organizationId, firstOrg.organizationId),
+                  ),
+                )
+                .orderBy(asc(teamMember.createdAt))
+                .limit(1);
+              activeTeamId = firstTeam?.teamId ?? null;
+            }
+
             return {
               data: {
                 ...session,
-                activeOrganizationId: first?.organizationId ?? null,
+                activeOrganizationId: firstOrg?.organizationId ?? null,
+                activeTeamId,
               },
             };
           },
           after: async (session, ctx) => {
             // sign-in 落 audit_logs。session 已经被上面 before 写过了
-            // activeOrganizationId,这里直接读。
-            const orgId = (session as { activeOrganizationId?: string | null })
-              .activeOrganizationId;
+            // activeOrganizationId / activeTeamId,这里直接读 tenantId
+            // (=activeTeamId) 作为 audit 行的 scope。
+            const s = session as {
+              activeOrganizationId?: string | null;
+              activeTeamId?: string | null;
+            };
             await insertAuditRow({
-              organizationId: orgId ?? null,
+              tenantId: s.activeTeamId ?? null,
               actorType: "user",
               actorId: session.userId,
               actorLabel: null,
@@ -454,6 +528,41 @@ function buildAdminAuth() {
         // secondaryStorage(我们启用)+ 默认不写 DB 的组合下,deleteSession
         // 早返回不进 deleteWithHooks,databaseHooks 不会被调用。sign-out /
         // revoke-session 的审计走上面 `hooks.after` 的 endpoint 钩子。
+        update: {
+          before: async (session) => {
+            // 当 set-active(orgId) 被调用更新 activeOrganizationId 时,
+            // 自动为这条 session 选一个 active team。否则 require-auth
+            // (require activeTeamId) 会 400。Sign-up 创建空 session 时
+            // activeOrganizationId=null,这条分支不命中。
+            const s = session as {
+              userId?: string;
+              activeOrganizationId?: string | null;
+              activeTeamId?: string | null;
+            };
+            if (
+              typeof s.activeOrganizationId === "string" &&
+              !s.activeTeamId &&
+              typeof s.userId === "string"
+            ) {
+              const [tm] = await db
+                .select({ teamId: teamMember.teamId })
+                .from(teamMember)
+                .innerJoin(team, eq(team.id, teamMember.teamId))
+                .where(
+                  and(
+                    eq(teamMember.userId, s.userId),
+                    eq(team.organizationId, s.activeOrganizationId),
+                  ),
+                )
+                .orderBy(asc(teamMember.createdAt))
+                .limit(1);
+              if (tm) {
+                return { data: { ...session, activeTeamId: tm.teamId } };
+              }
+            }
+            return;
+          },
+        },
       },
       account: {
         create: {
@@ -464,7 +573,7 @@ function buildAdminAuth() {
             // 链接,有审计价值。
             if (account.providerId === "credential") return;
             await insertAuditRow({
-              organizationId: null,
+              tenantId: null,
               actorType: "user",
               actorId: account.userId,
               actorLabel: null,
@@ -492,7 +601,7 @@ function buildAdminAuth() {
               typeof (account as { password?: unknown }).password === "string";
             if (!hasPasswordChange) return;
             await insertAuditRow({
-              organizationId: null,
+              tenantId: null,
               actorType: "user",
               actorId: (account as { userId?: string }).userId ?? null,
               actorLabel: null,

@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Check-in configurations owned by an organization (tenant).
@@ -39,9 +39,9 @@ export const checkInConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -68,9 +68,9 @@ export const checkInConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("check_in_configs_organization_id_idx").on(table.organizationId),
-    uniqueIndex("check_in_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("check_in_configs_organization_id_idx").on(table.tenantId),
+    uniqueIndex("check_in_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("check_in_configs_activity_idx").on(table.activityId),
   ],
@@ -95,7 +95,7 @@ export const checkInUserStates = pgTable(
       .notNull()
       .references(() => checkInConfigs.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     totalDays: integer("total_days").default(0).notNull(),
     currentStreak: integer("current_streak").default(0).notNull(),
     longestStreak: integer("longest_streak").default(0).notNull(),
@@ -115,8 +115,8 @@ export const checkInUserStates = pgTable(
       columns: [table.configId, table.endUserId],
       name: "check_in_user_states_pk",
     }),
-    index("check_in_user_states_org_user_idx").on(
-      table.organizationId,
+    index("check_in_user_states_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("check_in_user_states_config_date_idx").on(
@@ -148,7 +148,7 @@ export const checkInRewards = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => checkInConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     dayNumber: integer("day_number").notNull(),
     rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     metadata: jsonb("metadata"),

@@ -21,7 +21,7 @@ export type UpsertInviteSettingsInput = z.infer<typeof UpsertInviteSettingsSchem
 
 export const InviteSettingsViewSchema = z
   .object({
-    organizationId: z.string(),
+    tenantId: z.string(),
     enabled: z.boolean(),
     codeLength: z.number().int(),
     allowSelfInvite: z.boolean(),
@@ -45,7 +45,7 @@ export const InviteCodeViewSchema = z
 export const InviteRelationshipViewSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     inviterEndUserId: z.string(),
     inviteeEndUserId: z.string(),
     inviterCodeSnapshot: z.string(),

@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * 邀请系统租户级配置。每个 org 至多一行；没有行时 service 层返回默认值。
@@ -20,9 +20,9 @@ import { organization } from "./auth";
 export const inviteSettings = pgTable(
   "invite_settings",
   {
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .primaryKey()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     enabled: boolean("enabled").default(true).notNull(),
     codeLength: integer("code_length").default(8).notNull(),
     allowSelfInvite: boolean("allow_self_invite").default(false).notNull(),
@@ -54,9 +54,9 @@ export const inviteCodes = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
     code: text("code").notNull(),
     rotatedAt: timestamp("rotated_at"),
@@ -69,12 +69,12 @@ export const inviteCodes = pgTable(
   (table) => [
     // 一人一码
     uniqueIndex("invite_codes_org_user_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.endUserId,
     ),
     // 码在租户内唯一（跨租户可重）
     uniqueIndex("invite_codes_org_code_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.code,
     ),
   ],
@@ -94,9 +94,9 @@ export const inviteRelationships = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     inviterEndUserId: text("inviter_end_user_id").notNull(),
     inviteeEndUserId: text("invitee_end_user_id").notNull(),
     inviterCodeSnapshot: text("inviter_code_snapshot").notNull(),
@@ -112,16 +112,16 @@ export const inviteRelationships = pgTable(
   },
   (table) => [
     uniqueIndex("invite_relationships_org_invitee_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.inviteeEndUserId,
     ),
-    index("invite_relationships_org_inviter_bound_idx").on(
-      table.organizationId,
+    index("invite_relationships_tenant_inviter_bound_idx").on(
+      table.tenantId,
       table.inviterEndUserId,
       table.boundAt.desc(),
     ),
-    index("invite_relationships_org_qualified_idx")
-      .on(table.organizationId, table.qualifiedAt)
+    index("invite_relationships_tenant_qualified_idx")
+      .on(table.tenantId, table.qualifiedAt)
       .where(sql`${table.qualifiedAt} IS NOT NULL`),
   ],
 );

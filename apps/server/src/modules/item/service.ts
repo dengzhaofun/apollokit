@@ -78,7 +78,7 @@ type ItemDeps = Pick<AppDeps, "db">;
  * must not roll back the user-facing grant.
  */
 export type GrantHook = (params: {
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
   source: string;
@@ -96,16 +96,16 @@ export function createItemService(d: ItemDeps) {
   // ─── Category helpers ───────────────────────────────────────────
 
   async function loadCategoryByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ItemCategory> {
     const where = looksLikeId(key)
       ? and(
-          eq(itemCategories.organizationId, organizationId),
+          eq(itemCategories.tenantId, tenantId),
           eq(itemCategories.id, key),
         )
       : and(
-          eq(itemCategories.organizationId, organizationId),
+          eq(itemCategories.tenantId, tenantId),
           eq(itemCategories.alias, key),
         );
     const rows = await db.select().from(itemCategories).where(where).limit(1);
@@ -116,16 +116,16 @@ export function createItemService(d: ItemDeps) {
   // ─── Definition helpers ─────────────────────────────────────────
 
   async function loadDefinitionByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ItemDefinition> {
     const where = looksLikeId(key)
       ? and(
-          eq(itemDefinitions.organizationId, organizationId),
+          eq(itemDefinitions.tenantId, tenantId),
           eq(itemDefinitions.id, key),
         )
       : and(
-          eq(itemDefinitions.organizationId, organizationId),
+          eq(itemDefinitions.tenantId, tenantId),
           eq(itemDefinitions.alias, key),
         );
     const rows = await db.select().from(itemDefinitions).where(where).limit(1);
@@ -137,7 +137,7 @@ export function createItemService(d: ItemDeps) {
 
   /** Sum total quantity across all stacks for a user + definition. */
   async function totalBalance(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     definitionId: string,
   ): Promise<number> {
@@ -146,7 +146,7 @@ export function createItemService(d: ItemDeps) {
       .from(itemInventories)
       .where(
         and(
-          eq(itemInventories.organizationId, organizationId),
+          eq(itemInventories.tenantId, tenantId),
           eq(itemInventories.endUserId, endUserId),
           eq(itemInventories.definitionId, definitionId),
         ),
@@ -161,13 +161,13 @@ export function createItemService(d: ItemDeps) {
    * - Non-stackable: insert individual rows (quantity=1 each)
    */
   async function grantSingleItem(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     def: ItemDefinition,
     quantity: number,
   ): Promise<{ quantityBefore: number; quantityAfter: number }> {
     const quantityBefore = await totalBalance(
-      organizationId,
+      tenantId,
       endUserId,
       def.id,
     );
@@ -181,7 +181,7 @@ export function createItemService(d: ItemDeps) {
       // Non-stackable: insert `quantity` individual rows
       for (let i = 0; i < quantity; i++) {
         await db.insert(itemInventories).values({
-          organizationId,
+          tenantId,
           endUserId,
           definitionId: def.id,
           quantity: 1,
@@ -193,7 +193,7 @@ export function createItemService(d: ItemDeps) {
       await db
         .insert(itemInventories)
         .values({
-          organizationId,
+          tenantId,
           endUserId,
           definitionId: def.id,
           quantity,
@@ -201,7 +201,7 @@ export function createItemService(d: ItemDeps) {
         })
         .onConflictDoUpdate({
           target: [
-            itemInventories.organizationId,
+            itemInventories.tenantId,
             itemInventories.endUserId,
             itemInventories.definitionId,
           ],
@@ -221,7 +221,7 @@ export function createItemService(d: ItemDeps) {
         .from(itemInventories)
         .where(
           and(
-            eq(itemInventories.organizationId, organizationId),
+            eq(itemInventories.tenantId, tenantId),
             eq(itemInventories.endUserId, endUserId),
             eq(itemInventories.definitionId, def.id),
             sql`${itemInventories.quantity} < ${def.stackLimit}`,
@@ -258,7 +258,7 @@ export function createItemService(d: ItemDeps) {
       while (remaining > 0) {
         const stackQty = Math.min(remaining, def.stackLimit);
         await db.insert(itemInventories).values({
-          organizationId,
+          tenantId,
           endUserId,
           definitionId: def.id,
           quantity: stackQty,
@@ -277,13 +277,13 @@ export function createItemService(d: ItemDeps) {
    * Removes empty stacks.
    */
   async function deductSingleItem(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     def: ItemDefinition,
     quantity: number,
   ): Promise<{ quantityBefore: number; quantityAfter: number }> {
     const quantityBefore = await totalBalance(
-      organizationId,
+      tenantId,
       endUserId,
       def.id,
     );
@@ -299,7 +299,7 @@ export function createItemService(d: ItemDeps) {
         .from(itemInventories)
         .where(
           and(
-            eq(itemInventories.organizationId, organizationId),
+            eq(itemInventories.tenantId, tenantId),
             eq(itemInventories.endUserId, endUserId),
             eq(itemInventories.definitionId, def.id),
           ),
@@ -322,7 +322,7 @@ export function createItemService(d: ItemDeps) {
         })
         .where(
           and(
-            eq(itemInventories.organizationId, organizationId),
+            eq(itemInventories.tenantId, tenantId),
             eq(itemInventories.endUserId, endUserId),
             eq(itemInventories.definitionId, def.id),
             eq(itemInventories.isSingleton, true),
@@ -343,7 +343,7 @@ export function createItemService(d: ItemDeps) {
         .from(itemInventories)
         .where(
           and(
-            eq(itemInventories.organizationId, organizationId),
+            eq(itemInventories.tenantId, tenantId),
             eq(itemInventories.endUserId, endUserId),
             eq(itemInventories.definitionId, def.id),
           ),
@@ -399,15 +399,15 @@ export function createItemService(d: ItemDeps) {
     // ─── Category CRUD ──────────────────────────────────────────
 
     async createCategory(
-      organizationId: string,
+      tenantId: string,
       input: CreateCategoryInput,
     ): Promise<ItemCategory> {
       try {
-        const __sortKey = await appendKey(db, { table: itemCategories, sortColumn: itemCategories.sortOrder, scopeWhere: eq(itemCategories.organizationId, organizationId)! });
+        const __sortKey = await appendKey(db, { table: itemCategories, sortColumn: itemCategories.sortOrder, scopeWhere: eq(itemCategories.tenantId, tenantId)! });
         const [row] = await db
           .insert(itemCategories)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             icon: input.icon ?? null,
@@ -427,11 +427,11 @@ export function createItemService(d: ItemDeps) {
     },
 
     async updateCategory(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateCategoryInput,
     ): Promise<ItemCategory> {
-      const existing = await loadCategoryByKey(organizationId, id);
+      const existing = await loadCategoryByKey(tenantId, id);
       const updateValues: Partial<typeof itemCategories.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
       if (patch.alias !== undefined) updateValues.alias = patch.alias;
@@ -448,7 +448,7 @@ export function createItemService(d: ItemDeps) {
           .where(
             and(
               eq(itemCategories.id, existing.id),
-              eq(itemCategories.organizationId, organizationId),
+              eq(itemCategories.tenantId, tenantId),
             ),
           )
           .returning();
@@ -463,29 +463,29 @@ export function createItemService(d: ItemDeps) {
     },
 
     async moveCategory(
-      organizationId: string,
+      tenantId: string,
       key: string,
       body: MoveBody,
     ): Promise<ItemCategory> {
-      const existing = await loadCategoryByKey(organizationId, key);
+      const existing = await loadCategoryByKey(tenantId, key);
       return moveAndReturn<ItemCategory>(db, {
         table: itemCategories,
         sortColumn: itemCategories.sortOrder,
         idColumn: itemCategories.id,
-        partitionWhere: eq(itemCategories.organizationId, organizationId)!,
+        partitionWhere: eq(itemCategories.tenantId, tenantId)!,
         id: existing.id,
         body,
         notFound: (sid) => new ItemCategoryNotFound(sid),
       });
     },
 
-    async deleteCategory(organizationId: string, id: string): Promise<void> {
+    async deleteCategory(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(itemCategories)
         .where(
           and(
             eq(itemCategories.id, id),
-            eq(itemCategories.organizationId, organizationId),
+            eq(itemCategories.tenantId, tenantId),
           ),
         )
         .returning({ id: itemCategories.id });
@@ -493,11 +493,11 @@ export function createItemService(d: ItemDeps) {
     },
 
     async listCategories(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<ItemCategory>> {
       const limit = clampLimit(params.limit);
-      const conditions: SQL[] = [eq(itemCategories.organizationId, organizationId)];
+      const conditions: SQL[] = [eq(itemCategories.tenantId, tenantId)];
       const seek = cursorWhere(
         params.cursor,
         itemCategories.createdAt,
@@ -519,16 +519,16 @@ export function createItemService(d: ItemDeps) {
     },
 
     async getCategory(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<ItemCategory> {
-      return loadCategoryByKey(organizationId, idOrAlias);
+      return loadCategoryByKey(tenantId, idOrAlias);
     },
 
     // ─── Definition CRUD ────────────────────────────────────────
 
     async createDefinition(
-      organizationId: string,
+      tenantId: string,
       input: CreateDefinitionInput,
     ): Promise<ItemDefinition> {
       if (!input.stackable && input.stackLimit != null) {
@@ -541,7 +541,7 @@ export function createItemService(d: ItemDeps) {
         const [row] = await db
           .insert(itemDefinitions)
           .values({
-            organizationId,
+            tenantId,
             categoryId: input.categoryId ?? null,
             name: input.name,
             alias: input.alias ?? null,
@@ -567,11 +567,11 @@ export function createItemService(d: ItemDeps) {
     },
 
     async updateDefinition(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateDefinitionInput,
     ): Promise<ItemDefinition> {
-      const existing = await loadDefinitionByKey(organizationId, id);
+      const existing = await loadDefinitionByKey(tenantId, id);
       const updateValues: Partial<typeof itemDefinitions.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
       if (patch.alias !== undefined) updateValues.alias = patch.alias;
@@ -598,7 +598,7 @@ export function createItemService(d: ItemDeps) {
           .where(
             and(
               eq(itemDefinitions.id, existing.id),
-              eq(itemDefinitions.organizationId, organizationId),
+              eq(itemDefinitions.tenantId, tenantId),
             ),
           )
           .returning();
@@ -612,13 +612,13 @@ export function createItemService(d: ItemDeps) {
       }
     },
 
-    async deleteDefinition(organizationId: string, id: string): Promise<void> {
+    async deleteDefinition(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(itemDefinitions)
         .where(
           and(
             eq(itemDefinitions.id, id),
-            eq(itemDefinitions.organizationId, organizationId),
+            eq(itemDefinitions.tenantId, tenantId),
           ),
         )
         .returning({ id: itemDefinitions.id });
@@ -626,7 +626,7 @@ export function createItemService(d: ItemDeps) {
     },
 
     async listDefinitions(
-      organizationId: string,
+      tenantId: string,
       opts: PageParams & { categoryId?: string; activityId?: string | null } = {},
     ): Promise<Page<ItemDefinition>> {
       const limit = clampLimit(opts.limit);
@@ -644,7 +644,7 @@ export function createItemService(d: ItemDeps) {
               : opts.activityId,
       } as Record<string, unknown>;
       const where = and(
-        eq(itemDefinitions.organizationId, organizationId),
+        eq(itemDefinitions.tenantId, tenantId),
         itemDefinitionFilters.where(filterInput),
         cursorWhere(
           opts.cursor,
@@ -662,10 +662,10 @@ export function createItemService(d: ItemDeps) {
     },
 
     async getDefinition(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<ItemDefinition> {
-      return loadDefinitionByKey(organizationId, idOrAlias);
+      return loadDefinitionByKey(tenantId, idOrAlias);
     },
 
     // ─── Inventory operations ───────────────────────────────────
@@ -678,7 +678,7 @@ export function createItemService(d: ItemDeps) {
      * is written for each definition.
      */
     async grantItems(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
@@ -696,12 +696,12 @@ export function createItemService(d: ItemDeps) {
           throw new ItemInvalidInput("grant quantity must be positive");
         }
         const def = await loadDefinitionByKey(
-          params.organizationId,
+          params.tenantId,
           definitionId,
         );
 
         const { quantityBefore, quantityAfter } = await grantSingleItem(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           def,
           quantity,
@@ -709,7 +709,7 @@ export function createItemService(d: ItemDeps) {
 
         // Write grant log
         await db.insert(itemGrantLogs).values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           definitionId: def.id,
           delta: quantity,
@@ -759,7 +759,7 @@ export function createItemService(d: ItemDeps) {
      * Throws ItemConcurrencyConflict if a concurrent modification is detected.
      */
     async deductItems(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       deductions: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
       source: string;
@@ -777,12 +777,12 @@ export function createItemService(d: ItemDeps) {
           throw new ItemInvalidInput("deduction quantity must be positive");
         }
         const def = await loadDefinitionByKey(
-          params.organizationId,
+          params.tenantId,
           definitionId,
         );
 
         const { quantityBefore, quantityAfter } = await deductSingleItem(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           def,
           quantity,
@@ -790,7 +790,7 @@ export function createItemService(d: ItemDeps) {
 
         // Write grant log (negative delta)
         await db.insert(itemGrantLogs).values({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           definitionId: def.id,
           delta: -quantity,
@@ -818,12 +818,12 @@ export function createItemService(d: ItemDeps) {
      * Groups stacks by definition for a clean view.
      */
     async getInventory(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       definitionId?: string;
     }): Promise<InventoryView[]> {
       const conditions = [
-        eq(itemInventories.organizationId, params.organizationId),
+        eq(itemInventories.tenantId, params.tenantId),
         eq(itemInventories.endUserId, params.endUserId),
       ];
       if (params.definitionId) {
@@ -878,12 +878,12 @@ export function createItemService(d: ItemDeps) {
      * Get total balance for a specific item type.
      */
     async getBalance(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       definitionId: string;
     }): Promise<number> {
       return totalBalance(
-        params.organizationId,
+        params.tenantId,
         params.endUserId,
         params.definitionId,
       );

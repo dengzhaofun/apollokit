@@ -59,7 +59,7 @@ bannerClientRouter.openapi(
   async (c) => {
     const { alias } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const group = await bannerService.getClientGroupByAlias(
       orgId,
       alias,

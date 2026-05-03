@@ -95,7 +95,7 @@ type CheckInDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "check_in.completed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       configId: string;
       cycleKey: string;
@@ -180,16 +180,16 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
   const { db, events } = d;
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CheckInConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(checkInConfigs.organizationId, organizationId),
+          eq(checkInConfigs.tenantId, tenantId),
           eq(checkInConfigs.id, key),
         )
       : and(
-          eq(checkInConfigs.organizationId, organizationId),
+          eq(checkInConfigs.tenantId, tenantId),
           eq(checkInConfigs.alias, key),
         );
 
@@ -201,7 +201,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
 
   return {
     async createConfig(
-      organizationId: string,
+      tenantId: string,
       input: CreateConfigInput,
     ): Promise<CheckInConfig> {
       assertResetMode(input.resetMode);
@@ -211,7 +211,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         const [row] = await db
           .insert(checkInConfigs)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -228,7 +228,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         if (!row) throw new Error("insert returned no row");
         return row;
       } catch (err) {
-        // Partial unique index on (organization_id, alias) where alias is not null.
+        // Partial unique index on (tenant_id, alias) where alias is not null.
         // Postgres raises SQLSTATE 23505 on conflict — we surface the friendlier
         // typed error instead of letting a 500 leak through.
         if (isUniqueViolation(err) && input.alias) {
@@ -239,14 +239,14 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async updateConfig(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateConfigInput,
     ): Promise<CheckInConfig> {
       // Load first so we can validate target against the existing resetMode
       // (which is immutable post-creation — changing reset semantics
       // mid-flight would corrupt cycle keys for every existing user).
-      const existing = await loadConfigByKey(organizationId, id);
+      const existing = await loadConfigByKey(tenantId, id);
       if (patch.target !== undefined) {
         validateTargetForMode(patch.target, existing.resetMode as ResetMode);
       }
@@ -276,7 +276,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
           .where(
             and(
               eq(checkInConfigs.id, existing.id),
-              eq(checkInConfigs.organizationId, organizationId),
+              eq(checkInConfigs.tenantId, tenantId),
             ),
           )
           .returning();
@@ -290,13 +290,13 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
       }
     },
 
-    async deleteConfig(organizationId: string, id: string): Promise<void> {
+    async deleteConfig(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(checkInConfigs)
         .where(
           and(
             eq(checkInConfigs.id, id),
-            eq(checkInConfigs.organizationId, organizationId),
+            eq(checkInConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: checkInConfigs.id });
@@ -311,11 +311,11 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
      * `{ activityId: "<uuid>" }` to list configs for a specific activity.
      */
     async listConfigs(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
     ): Promise<Page<CheckInConfig>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(checkInConfigs.organizationId, organizationId)];
+      const conds: SQL[] = [eq(checkInConfigs.tenantId, tenantId)];
       if (filter.activityId) {
         conds.push(eq(checkInConfigs.activityId, filter.activityId));
       } else if (!filter.includeActivity) {
@@ -338,18 +338,18 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async getConfig(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<CheckInConfig> {
-      return loadConfigByKey(organizationId, idOrAlias);
+      return loadConfigByKey(tenantId, idOrAlias);
     },
 
     async listUserStates(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
     } & PageParams): Promise<Page<CheckInUserState>> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       const limit = clampLimit(params.limit);
@@ -376,12 +376,12 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async getUserState(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       endUserId: string;
     }): Promise<CheckInUserStateView> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       const rows = await db
@@ -400,7 +400,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         ({
           configId: config.id,
           endUserId: params.endUserId,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           totalDays: 0,
           currentStreak: 0,
           longestStreak: 0,
@@ -423,13 +423,13 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async checkIn(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       endUserId: string;
       now?: Date;
     }): Promise<CheckInResult> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       if (!config.isActive) throw new CheckInConfigInactive(params.configKey);
@@ -530,7 +530,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         .values({
           configId: config.id,
           endUserId: params.endUserId,
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           totalDays: nextTotal,
           currentStreak: nextStreak,
           longestStreak: nextLongest,
@@ -616,7 +616,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
           const items = reward.rewardItems;
           if (items.length > 0) {
             await itemSvc.grantItems({
-              organizationId: params.organizationId,
+              tenantId: params.tenantId,
               endUserId: params.endUserId,
               grants: items,
               source: "check_in_reward",
@@ -629,7 +629,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
 
       if (events) {
         await events.emit("check_in.completed", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           configId: config.id,
           cycleKey: newCycleKey,
@@ -655,7 +655,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     // ─── Reward CRUD ──────────────────────────────────────────
 
     async createReward(
-      organizationId: string,
+      tenantId: string,
       configKey: string,
       input: {
         dayNumber: number;
@@ -663,13 +663,13 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         metadata?: Record<string, unknown> | null;
       },
     ) {
-      const config = await loadConfigByKey(organizationId, configKey);
+      const config = await loadConfigByKey(tenantId, configKey);
       validateDayNumberForConfig(config, input.dayNumber);
       const [row] = await db
         .insert(checkInRewards)
         .values({
           configId: config.id,
-          organizationId,
+          tenantId,
           dayNumber: input.dayNumber,
           rewardItems: input.rewardItems,
           metadata: input.metadata ?? null,
@@ -680,7 +680,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async updateReward(
-      organizationId: string,
+      tenantId: string,
       rewardId: string,
       patch: {
         dayNumber?: number;
@@ -706,7 +706,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
           .where(
             and(
               eq(checkInRewards.id, rewardId),
-              eq(checkInRewards.organizationId, organizationId),
+              eq(checkInRewards.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -726,7 +726,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
           .where(
             and(
               eq(checkInRewards.id, rewardId),
-              eq(checkInRewards.organizationId, organizationId),
+              eq(checkInRewards.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -740,7 +740,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         .where(
           and(
             eq(checkInRewards.id, rewardId),
-            eq(checkInRewards.organizationId, organizationId),
+            eq(checkInRewards.tenantId, tenantId),
           ),
         )
         .returning();
@@ -749,7 +749,7 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
     },
 
     async deleteReward(
-      organizationId: string,
+      tenantId: string,
       rewardId: string,
     ): Promise<void> {
       const deleted = await db
@@ -757,15 +757,15 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         .where(
           and(
             eq(checkInRewards.id, rewardId),
-            eq(checkInRewards.organizationId, organizationId),
+            eq(checkInRewards.tenantId, tenantId),
           ),
         )
         .returning({ id: checkInRewards.id });
       if (deleted.length === 0) throw new CheckInConfigNotFound(rewardId);
     },
 
-    async listRewards(organizationId: string, configKey: string) {
-      const config = await loadConfigByKey(organizationId, configKey);
+    async listRewards(tenantId: string, configKey: string) {
+      const config = await loadConfigByKey(tenantId, configKey);
       return db
         .select()
         .from(checkInRewards)

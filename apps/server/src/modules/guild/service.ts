@@ -74,14 +74,14 @@ type GuildDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "guild.created": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       guildId: string;
       guildName: string;
       joinMode: string;
     };
     "guild.joined": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       guildId: string;
       // "open" (applyToJoin auto-admits) or "request" (acceptJoinRequest path).
@@ -89,12 +89,12 @@ declare module "../../lib/event-bus" {
       approverUserId: string | null;
     };
     "guild.left": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       guildId: string;
     };
     "guild.contributed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       guildId: string;
       delta: number;
@@ -116,7 +116,7 @@ export function createGuildService(d: GuildDeps) {
       .where(
         and(
           eq(guildGuilds.id, guildId),
-          eq(guildGuilds.organizationId, orgId),
+          eq(guildGuilds.tenantId, orgId),
         ),
       )
       .limit(1);
@@ -161,7 +161,7 @@ export function createGuildService(d: GuildDeps) {
       .innerJoin(guildGuilds, eq(guildMembers.guildId, guildGuilds.id))
       .where(
         and(
-          eq(guildMembers.organizationId, orgId),
+          eq(guildMembers.tenantId, orgId),
           eq(guildMembers.endUserId, endUserId),
           eq(guildGuilds.isActive, true),
         ),
@@ -212,7 +212,7 @@ export function createGuildService(d: GuildDeps) {
 
     if (updated.length === 0) {
       // Re-read to distinguish limit vs concurrency
-      const fresh = await loadGuild(guild.organizationId, guild.id);
+      const fresh = await loadGuild(guild.tenantId, guild.id);
       if (fresh.memberCount >= fresh.maxMembers) {
         throw new GuildMemberLimitReached(guild.id);
       }
@@ -262,7 +262,7 @@ export function createGuildService(d: GuildDeps) {
       .values({
         guildId,
         endUserId,
-        organizationId: orgId,
+        tenantId: orgId,
         role,
       })
       .returning();
@@ -296,7 +296,7 @@ export function createGuildService(d: GuildDeps) {
     const rows = await db
       .select()
       .from(guildSettings)
-      .where(eq(guildSettings.organizationId, orgId))
+      .where(eq(guildSettings.tenantId, orgId))
       .limit(1);
     const row = rows[0];
     return {
@@ -351,7 +351,7 @@ export function createGuildService(d: GuildDeps) {
       const rows = await db
         .select()
         .from(guildSettings)
-        .where(eq(guildSettings.organizationId, orgId))
+        .where(eq(guildSettings.tenantId, orgId))
         .limit(1);
       const row = rows[0];
       if (!row) throw new GuildSettingsNotFound(orgId);
@@ -362,7 +362,7 @@ export function createGuildService(d: GuildDeps) {
       const [row] = await db
         .insert(guildSettings)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           maxMembers: input.maxMembers ?? 50,
           maxOfficers: input.maxOfficers ?? 5,
           createCost: input.createCost ?? [],
@@ -371,7 +371,7 @@ export function createGuildService(d: GuildDeps) {
           metadata: input.metadata ?? null,
         })
         .onConflictDoUpdate({
-          target: [guildSettings.organizationId],
+          target: [guildSettings.tenantId],
           set: {
             ...(input.maxMembers !== undefined ? { maxMembers: input.maxMembers } : {}),
             ...(input.maxOfficers !== undefined ? { maxOfficers: input.maxOfficers } : {}),
@@ -401,7 +401,7 @@ export function createGuildService(d: GuildDeps) {
       const [guild] = await db
         .insert(guildGuilds)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           name: input.name,
           description: input.description ?? null,
           icon: input.icon ?? null,
@@ -418,7 +418,7 @@ export function createGuildService(d: GuildDeps) {
 
       if (events) {
         await events.emit("guild.created", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           guildId: guild.id,
           guildName: guild.name,
@@ -426,7 +426,7 @@ export function createGuildService(d: GuildDeps) {
         });
         // A newly created guild has its creator implicitly joined as leader.
         await events.emit("guild.joined", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           guildId: guild.id,
           via: "open",
@@ -449,7 +449,7 @@ export function createGuildService(d: GuildDeps) {
       // `search` is the legacy alias; `q` is the new standard. Honor both.
       const searchTerm = opts.q ?? opts.search;
       const conditions: SQL[] = [
-        eq(guildGuilds.organizationId, orgId),
+        eq(guildGuilds.tenantId, orgId),
         eq(guildGuilds.isActive, true),
       ];
       if (searchTerm) {
@@ -489,7 +489,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildGuilds.id, existing.id),
-            eq(guildGuilds.organizationId, orgId),
+            eq(guildGuilds.tenantId, orgId),
           ),
         )
         .returning();
@@ -510,7 +510,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildGuilds.id, guild.id),
-            eq(guildGuilds.organizationId, orgId),
+            eq(guildGuilds.tenantId, orgId),
             eq(guildGuilds.version, guild.version),
           ),
         )
@@ -532,7 +532,7 @@ export function createGuildService(d: GuildDeps) {
         .innerJoin(guildGuilds, eq(guildMembers.guildId, guildGuilds.id))
         .where(
           and(
-            eq(guildMembers.organizationId, orgId),
+            eq(guildMembers.tenantId, orgId),
             eq(guildMembers.endUserId, endUserId),
             eq(guildGuilds.isActive, true),
           ),
@@ -566,7 +566,7 @@ export function createGuildService(d: GuildDeps) {
         const [req] = await db
           .insert(guildJoinRequests)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             guildId,
             endUserId,
             type: "application",
@@ -579,7 +579,7 @@ export function createGuildService(d: GuildDeps) {
 
         if (events) {
           await events.emit("guild.joined", {
-            organizationId: orgId,
+            tenantId: orgId,
             endUserId,
             guildId,
             via: "open",
@@ -599,7 +599,7 @@ export function createGuildService(d: GuildDeps) {
         const [req] = await db
           .insert(guildJoinRequests)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             guildId,
             endUserId,
             type: "application",
@@ -629,7 +629,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildJoinRequests.id, requestId),
-            eq(guildJoinRequests.organizationId, orgId),
+            eq(guildJoinRequests.tenantId, orgId),
             eq(guildJoinRequests.status, "pending"),
             eq(guildJoinRequests.type, "application"),
           ),
@@ -673,7 +673,7 @@ export function createGuildService(d: GuildDeps) {
 
       if (events) {
         await events.emit("guild.joined", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: req.endUserId,
           guildId: req.guildId,
           via: "request",
@@ -695,7 +695,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildJoinRequests.id, requestId),
-            eq(guildJoinRequests.organizationId, orgId),
+            eq(guildJoinRequests.tenantId, orgId),
             eq(guildJoinRequests.status, "pending"),
             eq(guildJoinRequests.type, "application"),
           ),
@@ -745,7 +745,7 @@ export function createGuildService(d: GuildDeps) {
         const [req] = await db
           .insert(guildJoinRequests)
           .values({
-            organizationId: orgId,
+            tenantId: orgId,
             guildId,
             endUserId: targetUserId,
             type: "invitation",
@@ -774,7 +774,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildJoinRequests.id, requestId),
-            eq(guildJoinRequests.organizationId, orgId),
+            eq(guildJoinRequests.tenantId, orgId),
             eq(guildJoinRequests.status, "pending"),
             eq(guildJoinRequests.type, "invitation"),
             eq(guildJoinRequests.endUserId, endUserId),
@@ -818,7 +818,7 @@ export function createGuildService(d: GuildDeps) {
         // approverUserId here (for invitations, the "approver" is the
         // invitee themselves).
         await events.emit("guild.joined", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           guildId: req.guildId,
           via: "request",
@@ -840,7 +840,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildJoinRequests.id, requestId),
-            eq(guildJoinRequests.organizationId, orgId),
+            eq(guildJoinRequests.tenantId, orgId),
             eq(guildJoinRequests.status, "pending"),
             eq(guildJoinRequests.type, "invitation"),
             eq(guildJoinRequests.endUserId, endUserId),
@@ -898,7 +898,7 @@ export function createGuildService(d: GuildDeps) {
 
       if (events) {
         await events.emit("guild.left", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           guildId,
         });
@@ -1047,7 +1047,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildGuilds.id, guild.id),
-            eq(guildGuilds.organizationId, orgId),
+            eq(guildGuilds.tenantId, orgId),
           ),
         );
     },
@@ -1088,7 +1088,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildGuilds.id, guildId),
-            eq(guildGuilds.organizationId, orgId),
+            eq(guildGuilds.tenantId, orgId),
           ),
         );
 
@@ -1096,7 +1096,7 @@ export function createGuildService(d: GuildDeps) {
       const [log] = await db
         .insert(guildContributionLogs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           guildId,
           endUserId,
           delta,
@@ -1112,7 +1112,7 @@ export function createGuildService(d: GuildDeps) {
 
       if (events) {
         await events.emit("guild.contributed", {
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           guildId,
           delta,
@@ -1143,7 +1143,7 @@ export function createGuildService(d: GuildDeps) {
         .where(
           and(
             eq(guildGuilds.id, guildId),
-            eq(guildGuilds.organizationId, orgId),
+            eq(guildGuilds.tenantId, orgId),
           ),
         );
 
@@ -1151,7 +1151,7 @@ export function createGuildService(d: GuildDeps) {
       const [log] = await db
         .insert(guildContributionLogs)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           guildId,
           endUserId: "__system__",
           delta: 0,

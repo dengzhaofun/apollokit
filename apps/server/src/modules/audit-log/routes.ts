@@ -50,7 +50,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const query = c.req.valid("query");
     const page = await auditLogService.list(orgId, query);
     return c.json(ok(page), 200);
@@ -77,7 +77,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const items = await auditLogService.listResourceTypes(orgId);
     return c.json(ok({ items }), 200);
   },
@@ -101,7 +101,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const { id } = c.req.valid("param");
     const view = await auditLogService.get(orgId, id);
     return c.json(ok(view), 200);

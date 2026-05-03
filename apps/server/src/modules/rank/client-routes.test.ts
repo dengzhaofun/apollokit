@@ -58,12 +58,12 @@ describe("rank client routes", () => {
     seasonId = season.id;
 
     await rankService.settleMatch({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId,
       externalMatchId: "client-m1",
       participants: [
-        { endUserId: "player-x", teamId: "A", placement: 1, win: true },
-        { endUserId: "player-y", teamId: "B", placement: 2, win: false },
+        { endUserId: "player-x", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "player-y", matchTeamId: "B", placement: 2, win: false },
       ],
     });
   });
@@ -176,8 +176,8 @@ describe("rank client routes", () => {
         tierConfigAlias: "client_cfg",
         externalMatchId: "cheat-attempt",
         participants: [
-          { endUserId: "player-x", teamId: "A", placement: 1, win: true },
-          { endUserId: "player-y", teamId: "B", placement: 2, win: false },
+          { endUserId: "player-x", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "player-y", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });

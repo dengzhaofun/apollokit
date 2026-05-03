@@ -23,7 +23,7 @@ import {
 function makeTier(overrides: Partial<LotteryTier> & { id: string }): LotteryTier {
   return {
     poolId: "pool-1",
-    organizationId: "org-1",
+    tenantId: "org-1",
     name: overrides.id,
     alias: null,
     baseWeight: 100,
@@ -42,7 +42,7 @@ function makePrize(overrides: Partial<LotteryPrize> & { id: string }): LotteryPr
   return {
     tierId: null,
     poolId: "pool-1",
-    organizationId: "org-1",
+    tenantId: "org-1",
     name: overrides.id,
     description: null,
     rewardItems: [],
@@ -66,7 +66,7 @@ function makeRule(
 ): LotteryPityRule {
   return {
     poolId: "pool-1",
-    organizationId: "org-1",
+    tenantId: "org-1",
     hardPityThreshold: 90,
     softPityStartAt: null,
     softPityWeightIncrement: null,

@@ -173,7 +173,7 @@ function findCycle(
 function serializeNode(row: BadgeNode) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     key: row.key,
     parentKey: row.parentKey,
     displayType: row.displayType,
@@ -206,7 +206,7 @@ function serializeSignalWrite(row: BadgeSignal) {
 
 function serializeRegistry(row: BadgeSignalRegistryEntry) {
   return {
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     keyPattern: row.keyPattern,
     isDynamic: row.isDynamic,
     label: row.label,
@@ -226,13 +226,13 @@ export function createBadgeService(d: BadgeDeps) {
 
   // ─── Node CRUD ────────────────────────────────────────────────
 
-  async function loadLiveNodes(organizationId: string): Promise<BadgeNode[]> {
+  async function loadLiveNodes(tenantId: string): Promise<BadgeNode[]> {
     return db
       .select()
       .from(badgeNodes)
       .where(
         and(
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           isNull(badgeNodes.deletedAt),
         ),
       )
@@ -240,7 +240,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function ensureNodeByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<BadgeNode> {
     const [row] = await db
@@ -248,7 +248,7 @@ export function createBadgeService(d: BadgeDeps) {
       .from(badgeNodes)
       .where(
         and(
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           eq(badgeNodes.key, key),
           isNull(badgeNodes.deletedAt),
         ),
@@ -259,7 +259,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function ensureNodeById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<BadgeNode> {
     const [row] = await db
@@ -268,7 +268,7 @@ export function createBadgeService(d: BadgeDeps) {
       .where(
         and(
           eq(badgeNodes.id, id),
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           isNull(badgeNodes.deletedAt),
         ),
       )
@@ -278,10 +278,10 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function assertNoCycleOnWrite(
-    organizationId: string,
+    tenantId: string,
     pending: { key: string; parentKey: string | null },
   ) {
-    const existing = await loadLiveNodes(organizationId);
+    const existing = await loadLiveNodes(tenantId);
     const projection = existing.map((n) => ({
       key: n.key,
       parentKey: n.parentKey,
@@ -294,7 +294,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function createNode(
-    organizationId: string,
+    tenantId: string,
     input: CreateNodeInput,
   ): Promise<BadgeNode> {
     validateSignalBinding({
@@ -306,7 +306,7 @@ export function createBadgeService(d: BadgeDeps) {
       input.dismissMode as BadgeDismissMode,
       input.dismissConfig ?? null,
     );
-    await assertNoCycleOnWrite(organizationId, {
+    await assertNoCycleOnWrite(tenantId, {
       key: input.key,
       parentKey: input.parentKey ?? null,
     });
@@ -315,7 +315,7 @@ export function createBadgeService(d: BadgeDeps) {
       table: badgeNodes,
       sortColumn: badgeNodes.sortOrder,
       scopeWhere: and(
-        eq(badgeNodes.organizationId, organizationId),
+        eq(badgeNodes.tenantId, tenantId),
         isNull(badgeNodes.deletedAt),
       )!,
     });
@@ -324,7 +324,7 @@ export function createBadgeService(d: BadgeDeps) {
       const [row] = await db
         .insert(badgeNodes)
         .values({
-          organizationId,
+          tenantId,
           key: input.key,
           parentKey: input.parentKey ?? null,
           displayType: input.displayType,
@@ -351,11 +351,11 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function updateNode(
-    organizationId: string,
+    tenantId: string,
     id: string,
     input: UpdateNodeInput,
   ): Promise<BadgeNode> {
-    const existing = await ensureNodeById(organizationId, id);
+    const existing = await ensureNodeById(tenantId, id);
 
     const next = {
       signalMatchMode: input.signalMatchMode ?? existing.signalMatchMode,
@@ -376,7 +376,7 @@ export function createBadgeService(d: BadgeDeps) {
     validateDismissConfig(nextDismissMode, nextDismissConfig);
 
     if (input.parentKey !== undefined) {
-      await assertNoCycleOnWrite(organizationId, {
+      await assertNoCycleOnWrite(tenantId, {
         key: existing.key,
         parentKey: input.parentKey ?? null,
       });
@@ -408,7 +408,7 @@ export function createBadgeService(d: BadgeDeps) {
       .where(
         and(
           eq(badgeNodes.id, id),
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           isNull(badgeNodes.deletedAt),
         ),
       )
@@ -418,17 +418,17 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function moveNode(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<BadgeNode> {
-    await ensureNodeById(organizationId, id);
+    await ensureNodeById(tenantId, id);
     return moveAndReturn<BadgeNode>(db, {
       table: badgeNodes,
       sortColumn: badgeNodes.sortOrder,
       idColumn: badgeNodes.id,
       partitionWhere: and(
-        eq(badgeNodes.organizationId, organizationId),
+        eq(badgeNodes.tenantId, tenantId),
         isNull(badgeNodes.deletedAt),
       )!,
       id,
@@ -443,11 +443,11 @@ export function createBadgeService(d: BadgeDeps) {
    * lets the customer later re-create a node at the same key.
    */
   async function deleteNode(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
-    const target = await ensureNodeById(organizationId, id);
-    const allNodes = await loadLiveNodes(organizationId);
+    const target = await ensureNodeById(tenantId, id);
+    const allNodes = await loadLiveNodes(tenantId);
 
     // Collect descendant keys
     const toDelete = new Set<string>([target.key]);
@@ -471,7 +471,7 @@ export function createBadgeService(d: BadgeDeps) {
       .set({ deletedAt: new Date() })
       .where(
         and(
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           inArray(badgeNodes.key, Array.from(toDelete)),
           isNull(badgeNodes.deletedAt),
         ),
@@ -481,7 +481,7 @@ export function createBadgeService(d: BadgeDeps) {
   // ─── Signal write ─────────────────────────────────────────────
 
   async function writeSignal(
-    organizationId: string,
+    tenantId: string,
     input: SignalInput,
     now: Date,
   ): Promise<BadgeSignal> {
@@ -526,7 +526,7 @@ export function createBadgeService(d: BadgeDeps) {
     const [row] = await db
       .insert(badgeSignals)
       .values({
-        organizationId,
+        tenantId,
         endUserId: input.endUserId,
         signalKey: input.signalKey,
         count,
@@ -538,7 +538,7 @@ export function createBadgeService(d: BadgeDeps) {
       })
       .onConflictDoUpdate({
         target: [
-          badgeSignals.organizationId,
+          badgeSignals.tenantId,
           badgeSignals.endUserId,
           badgeSignals.signalKey,
         ],
@@ -574,18 +574,18 @@ export function createBadgeService(d: BadgeDeps) {
    * Bumps the per-user cacheVersion so the next /tree read is fresh.
    */
   async function signal(
-    organizationId: string,
+    tenantId: string,
     input: SignalInput,
   ): Promise<BadgeSignal> {
     const now = new Date();
-    const row = await writeSignal(organizationId, input, now);
+    const row = await writeSignal(tenantId, input, now);
     // Best-effort cache bump. Errors don't affect the write.
-    void cache.bumpVersion(organizationId, input.endUserId);
+    void cache.bumpVersion(tenantId, input.endUserId);
     return row;
   }
 
   async function signalBatch(
-    organizationId: string,
+    tenantId: string,
     inputs: SignalInput[],
   ): Promise<BadgeSignal[]> {
     if (inputs.length === 0) return [];
@@ -594,15 +594,15 @@ export function createBadgeService(d: BadgeDeps) {
     // Serialized atomic UPSERTs — partial success is acceptable; callers
     // that need atomic batches can retry the failed ones.
     for (const input of inputs) {
-      results.push(await writeSignal(organizationId, input, now));
+      results.push(await writeSignal(tenantId, input, now));
     }
     // Bump once per (org, user) pair to minimize Redis writes.
     const bumped = new Set<string>();
     for (const input of inputs) {
-      const key = `${organizationId}:${input.endUserId}`;
+      const key = `${tenantId}:${input.endUserId}`;
       if (bumped.has(key)) continue;
       bumped.add(key);
-      void cache.bumpVersion(organizationId, input.endUserId);
+      void cache.bumpVersion(tenantId, input.endUserId);
     }
     return results;
   }
@@ -610,13 +610,13 @@ export function createBadgeService(d: BadgeDeps) {
   // ─── Tree read ────────────────────────────────────────────────
 
   async function loadSignalsForUser(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     exactKeys: string[],
     prefixes: string[],
   ): Promise<BadgeSignal[]> {
     const filters = [
-      eq(badgeSignals.organizationId, organizationId),
+      eq(badgeSignals.tenantId, tenantId),
       eq(badgeSignals.endUserId, endUserId),
     ];
     // We narrow by signalKey to avoid pulling unrelated signals.
@@ -633,7 +633,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function loadDismissalsForUser(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     nodeKeys: string[],
   ): Promise<BadgeDismissal[]> {
@@ -643,7 +643,7 @@ export function createBadgeService(d: BadgeDeps) {
       .from(badgeDismissals)
       .where(
         and(
-          eq(badgeDismissals.organizationId, organizationId),
+          eq(badgeDismissals.tenantId, tenantId),
           eq(badgeDismissals.endUserId, endUserId),
           inArray(badgeDismissals.nodeKey, nodeKeys),
         ),
@@ -651,7 +651,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function loadTreeFromDb(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     rootKey: string | null,
     opts: {
@@ -660,7 +660,7 @@ export function createBadgeService(d: BadgeDeps) {
       playerContext?: Record<string, unknown> | null;
     },
   ) {
-    const nodes = await loadLiveNodes(organizationId);
+    const nodes = await loadLiveNodes(tenantId);
 
     // Collect signalKeys / prefixes to query.
     const exactKeys: string[] = [];
@@ -674,8 +674,8 @@ export function createBadgeService(d: BadgeDeps) {
     const nodeKeys = nodes.map((n) => n.key);
 
     const [signalsRows, dismissalRows] = await Promise.all([
-      loadSignalsForUser(organizationId, endUserId, exactKeys, prefixes),
-      loadDismissalsForUser(organizationId, endUserId, nodeKeys),
+      loadSignalsForUser(tenantId, endUserId, exactKeys, prefixes),
+      loadDismissalsForUser(tenantId, endUserId, nodeKeys),
     ]);
 
     const assembled = assembleTree({
@@ -693,7 +693,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function getTree(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     rootKey: string | null,
     opts: {
@@ -710,7 +710,7 @@ export function createBadgeService(d: BadgeDeps) {
     // cache key doesn't embed).
     const canCache = !opts.playerContext;
     if (canCache) {
-      const cached = await cache.readTree(organizationId, endUserId, rootKey);
+      const cached = await cache.readTree(tenantId, endUserId, rootKey);
       if (cached) {
         return {
           rootKey,
@@ -721,7 +721,7 @@ export function createBadgeService(d: BadgeDeps) {
     }
 
     const { assembled } = await loadTreeFromDb(
-      organizationId,
+      tenantId,
       endUserId,
       rootKey,
       { explain: false, ...opts },
@@ -733,7 +733,7 @@ export function createBadgeService(d: BadgeDeps) {
     };
 
     if (canCache) {
-      void cache.writeTree(organizationId, endUserId, rootKey, {
+      void cache.writeTree(tenantId, endUserId, rootKey, {
         serverTimestamp: payload.serverTimestamp,
         nodes: payload.nodes,
       });
@@ -743,13 +743,13 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function preview(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     rootKey: string | null,
     explain: boolean,
   ) {
     const { signals, dismissals, assembled } = await loadTreeFromDb(
-      organizationId,
+      tenantId,
       endUserId,
       rootKey,
       { explain },
@@ -780,7 +780,7 @@ export function createBadgeService(d: BadgeDeps) {
   // ─── Dismiss ──────────────────────────────────────────────────
 
   async function dismiss(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     input: {
       nodeKey: string;
@@ -793,7 +793,7 @@ export function createBadgeService(d: BadgeDeps) {
     dismissedAt: string;
     dismissedVersion: string | null;
   }> {
-    const node = await ensureNodeByKey(organizationId, input.nodeKey);
+    const node = await ensureNodeByKey(tenantId, input.nodeKey);
     const mode = node.dismissMode as BadgeDismissMode;
     if (mode === "auto") {
       throw new BadgeDismissNotAllowed(input.nodeKey);
@@ -817,7 +817,7 @@ export function createBadgeService(d: BadgeDeps) {
     await db
       .insert(badgeDismissals)
       .values({
-        organizationId,
+        tenantId,
         endUserId,
         nodeKey: input.nodeKey,
         dismissedAt: now,
@@ -827,7 +827,7 @@ export function createBadgeService(d: BadgeDeps) {
       })
       .onConflictDoUpdate({
         target: [
-          badgeDismissals.organizationId,
+          badgeDismissals.tenantId,
           badgeDismissals.endUserId,
           badgeDismissals.nodeKey,
         ],
@@ -839,7 +839,7 @@ export function createBadgeService(d: BadgeDeps) {
         },
       });
 
-    void cache.bumpVersion(organizationId, endUserId);
+    void cache.bumpVersion(tenantId, endUserId);
 
     return {
       nodeKey: input.nodeKey,
@@ -854,7 +854,7 @@ export function createBadgeService(d: BadgeDeps) {
    * are untouched.
    */
   async function resetSession(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
   ): Promise<void> {
     // Narrow to nodeKeys whose node has dismissMode='session'. Cheaper
@@ -864,7 +864,7 @@ export function createBadgeService(d: BadgeDeps) {
       .from(badgeNodes)
       .where(
         and(
-          eq(badgeNodes.organizationId, organizationId),
+          eq(badgeNodes.tenantId, tenantId),
           eq(badgeNodes.dismissMode, "session"),
           isNull(badgeNodes.deletedAt),
         ),
@@ -875,12 +875,12 @@ export function createBadgeService(d: BadgeDeps) {
       .delete(badgeDismissals)
       .where(
         and(
-          eq(badgeDismissals.organizationId, organizationId),
+          eq(badgeDismissals.tenantId, tenantId),
           eq(badgeDismissals.endUserId, endUserId),
           inArray(badgeDismissals.nodeKey, keys),
         ),
       );
-    void cache.bumpVersion(organizationId, endUserId);
+    void cache.bumpVersion(tenantId, endUserId);
   }
 
   // ─── Templates ────────────────────────────────────────────────
@@ -899,7 +899,7 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function createFromTemplate(
-    organizationId: string,
+    tenantId: string,
     input: FromTemplateInput,
   ): Promise<BadgeNode> {
     const tpl = findBadgeTemplate(input.templateId);
@@ -919,7 +919,7 @@ export function createBadgeService(d: BadgeDeps) {
       }
     }
 
-    return createNode(organizationId, {
+    return createNode(tenantId, {
       key: input.key,
       parentKey: input.parentKey ?? null,
       displayType: tpl.defaults.displayType,
@@ -939,8 +939,8 @@ export function createBadgeService(d: BadgeDeps) {
 
   // ─── Validate tree ────────────────────────────────────────────
 
-  async function validateTree(organizationId: string) {
-    const nodes = await loadLiveNodes(organizationId);
+  async function validateTree(tenantId: string) {
+    const nodes = await loadLiveNodes(tenantId);
     const errors: {
       kind: "cycle" | "dangling_parent" | "invalid_binding";
       nodeKey: string;
@@ -991,7 +991,7 @@ export function createBadgeService(d: BadgeDeps) {
   // ─── Signal registry ──────────────────────────────────────────
 
   async function upsertSignalRegistry(
-    organizationId: string,
+    tenantId: string,
     input: {
       keyPattern: string;
       isDynamic?: boolean;
@@ -1003,7 +1003,7 @@ export function createBadgeService(d: BadgeDeps) {
     const [row] = await db
       .insert(badgeSignalRegistry)
       .values({
-        organizationId,
+        tenantId,
         keyPattern: input.keyPattern,
         isDynamic: input.isDynamic ?? false,
         label: input.label,
@@ -1013,7 +1013,7 @@ export function createBadgeService(d: BadgeDeps) {
       })
       .onConflictDoUpdate({
         target: [
-          badgeSignalRegistry.organizationId,
+          badgeSignalRegistry.tenantId,
           badgeSignalRegistry.keyPattern,
         ],
         set: {
@@ -1030,24 +1030,24 @@ export function createBadgeService(d: BadgeDeps) {
   }
 
   async function listSignalRegistry(
-    organizationId: string,
+    tenantId: string,
   ): Promise<BadgeSignalRegistryEntry[]> {
     return db
       .select()
       .from(badgeSignalRegistry)
-      .where(eq(badgeSignalRegistry.organizationId, organizationId))
+      .where(eq(badgeSignalRegistry.tenantId, tenantId))
       .orderBy(asc(badgeSignalRegistry.keyPattern));
   }
 
   async function deleteSignalRegistry(
-    organizationId: string,
+    tenantId: string,
     keyPattern: string,
   ): Promise<void> {
     await db
       .delete(badgeSignalRegistry)
       .where(
         and(
-          eq(badgeSignalRegistry.organizationId, organizationId),
+          eq(badgeSignalRegistry.tenantId, tenantId),
           eq(badgeSignalRegistry.keyPattern, keyPattern),
         ),
       );

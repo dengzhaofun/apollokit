@@ -17,7 +17,7 @@
  *
  *   INSERT INTO friend_gift_daily_states (org, user, date_key, send_count, version)
  *   VALUES (?, ?, ?, 1, 1)
- *   ON CONFLICT (organization_id, end_user_id, date_key)
+ *   ON CONFLICT (tenant_id, end_user_id, date_key)
  *   DO UPDATE SET send_count = send_count + 1, version = version + 1
  *   WHERE friend_gift_daily_states.send_count < ?
  *   RETURNING *
@@ -91,7 +91,7 @@ type FriendGiftDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "friend_gift.sent": {
-      organizationId: string;
+      tenantId: string;
       // `endUserId` = sender (the acting session user).
       endUserId: string;
       sendId: string;
@@ -99,7 +99,7 @@ declare module "../../lib/event-bus" {
       packageId: string;
     };
     "friend_gift.claimed": {
-      organizationId: string;
+      tenantId: string;
       // `endUserId` = claimer (receiver acting in-session).
       endUserId: string;
       sendId: string;
@@ -115,12 +115,12 @@ declare module "../../lib/event-bus" {
  */
 export type FriendServiceDep = {
   areFriends(
-    organizationId: string,
+    tenantId: string,
     userA: string,
     userB: string,
   ): Promise<boolean>;
   isBlocked(
-    organizationId: string,
+    tenantId: string,
     blockerUserId: string,
     blockedUserId: string,
   ): Promise<boolean>;
@@ -131,14 +131,14 @@ export type FriendServiceDep = {
  */
 export type ItemServiceDep = {
   grantItems(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }): Promise<unknown>;
   deductItems(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     deductions: Array<{ definitionId: string; quantity: number }>;
     source: string;
@@ -171,12 +171,12 @@ export function createFriendGiftService(
   // ─── Settings ──────────────────────────────────────────────────
 
   async function loadSettings(
-    organizationId: string,
+    tenantId: string,
   ): Promise<FriendGiftSettings> {
     const rows = await db
       .select()
       .from(friendGiftSettings)
-      .where(eq(friendGiftSettings.organizationId, organizationId))
+      .where(eq(friendGiftSettings.tenantId, tenantId))
       .limit(1);
     const row = rows[0];
     if (!row) throw new FriendGiftSettingsNotFound();
@@ -185,31 +185,31 @@ export function createFriendGiftService(
 
   return {
     async getSettings(
-      organizationId: string,
+      tenantId: string,
     ): Promise<FriendGiftSettings | null> {
       const rows = await db
         .select()
         .from(friendGiftSettings)
-        .where(eq(friendGiftSettings.organizationId, organizationId))
+        .where(eq(friendGiftSettings.tenantId, tenantId))
         .limit(1);
       return rows[0] ?? null;
     },
 
     async upsertSettings(
-      organizationId: string,
+      tenantId: string,
       input: UpsertSettingsInput,
     ): Promise<FriendGiftSettings> {
       const [row] = await db
         .insert(friendGiftSettings)
         .values({
-          organizationId,
+          tenantId,
           dailySendLimit: input.dailySendLimit ?? 5,
           dailyReceiveLimit: input.dailyReceiveLimit ?? 10,
           timezone: input.timezone ?? "UTC",
           metadata: input.metadata ?? null,
         })
         .onConflictDoUpdate({
-          target: [friendGiftSettings.organizationId],
+          target: [friendGiftSettings.tenantId],
           set: {
             dailySendLimit: input.dailySendLimit ?? 5,
             dailyReceiveLimit: input.dailyReceiveLimit ?? 10,
@@ -225,15 +225,15 @@ export function createFriendGiftService(
     // ─── Package CRUD ──────────────────────────────────────────────
 
     async createPackage(
-      organizationId: string,
+      tenantId: string,
       input: CreatePackageInput,
     ): Promise<FriendGiftPackage> {
       try {
-        const __sortKey = await appendKey(db, { table: friendGiftPackages, sortColumn: friendGiftPackages.sortOrder, scopeWhere: eq(friendGiftPackages.organizationId, organizationId)! });
+        const __sortKey = await appendKey(db, { table: friendGiftPackages, sortColumn: friendGiftPackages.sortOrder, scopeWhere: eq(friendGiftPackages.tenantId, tenantId)! });
         const [row] = await db
           .insert(friendGiftPackages)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias ?? null,
             name: input.name,
             description: input.description ?? null,
@@ -255,7 +255,7 @@ export function createFriendGiftService(
     },
 
     async getPackage(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<FriendGiftPackage> {
       const rows = await db
@@ -263,7 +263,7 @@ export function createFriendGiftService(
         .from(friendGiftPackages)
         .where(
           and(
-            eq(friendGiftPackages.organizationId, organizationId),
+            eq(friendGiftPackages.tenantId, tenantId),
             eq(friendGiftPackages.id, id),
           ),
         )
@@ -274,11 +274,11 @@ export function createFriendGiftService(
     },
 
     async listPackages(
-      organizationId: string,
+      tenantId: string,
       opts: PageParams & { activeOnly?: boolean } = {},
     ): Promise<Page<FriendGiftPackage>> {
       const limit = clampLimit(opts.limit);
-      const conditions: SQL[] = [eq(friendGiftPackages.organizationId, organizationId)];
+      const conditions: SQL[] = [eq(friendGiftPackages.tenantId, tenantId)];
       if (opts.activeOnly) {
         conditions.push(eq(friendGiftPackages.isActive, true));
       }
@@ -299,7 +299,7 @@ export function createFriendGiftService(
     },
 
     async updatePackage(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdatePackageInput,
     ): Promise<FriendGiftPackage> {
@@ -321,7 +321,7 @@ export function createFriendGiftService(
           .where(
             and(
               eq(friendGiftPackages.id, id),
-              eq(friendGiftPackages.organizationId, organizationId),
+              eq(friendGiftPackages.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -336,7 +336,7 @@ export function createFriendGiftService(
           .where(
             and(
               eq(friendGiftPackages.id, id),
-              eq(friendGiftPackages.organizationId, organizationId),
+              eq(friendGiftPackages.tenantId, tenantId),
             ),
           )
           .returning();
@@ -351,7 +351,7 @@ export function createFriendGiftService(
     },
 
     async movePackage(
-      organizationId: string,
+      tenantId: string,
       id: string,
       body: MoveBody,
     ): Promise<FriendGiftPackage> {
@@ -359,7 +359,7 @@ export function createFriendGiftService(
         table: friendGiftPackages,
         sortColumn: friendGiftPackages.sortOrder,
         idColumn: friendGiftPackages.id,
-        partitionWhere: eq(friendGiftPackages.organizationId, organizationId)!,
+        partitionWhere: eq(friendGiftPackages.tenantId, tenantId)!,
         id,
         body,
         notFound: (sid) => new FriendGiftPackageNotFound(sid),
@@ -367,7 +367,7 @@ export function createFriendGiftService(
     },
 
     async deletePackage(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const deleted = await db
@@ -375,7 +375,7 @@ export function createFriendGiftService(
         .where(
           and(
             eq(friendGiftPackages.id, id),
-            eq(friendGiftPackages.organizationId, organizationId),
+            eq(friendGiftPackages.tenantId, tenantId),
           ),
         )
         .returning({ id: friendGiftPackages.id });
@@ -385,13 +385,13 @@ export function createFriendGiftService(
     // ─── Send gift ───────────────────────────────────────────────
 
     async sendGift(
-      organizationId: string,
+      tenantId: string,
       senderUserId: string,
       input: SendGiftInput,
     ): Promise<FriendGiftSend> {
       // 1. Validate friendship
       const areFriends = await friendSvc.areFriends(
-        organizationId,
+        tenantId,
         senderUserId,
         input.receiverUserId,
       );
@@ -399,19 +399,19 @@ export function createFriendGiftService(
 
       // Check blocks in both directions
       const senderBlocked = await friendSvc.isBlocked(
-        organizationId,
+        tenantId,
         senderUserId,
         input.receiverUserId,
       );
       const receiverBlocked = await friendSvc.isBlocked(
-        organizationId,
+        tenantId,
         input.receiverUserId,
         senderUserId,
       );
       if (senderBlocked || receiverBlocked) throw new FriendGiftBlockedUser();
 
       // 2. Load settings and package
-      const settings = await loadSettings(organizationId);
+      const settings = await loadSettings(tenantId);
       const dateKey = computeDateKey(settings.timezone);
 
       const pkgRows = await db
@@ -420,7 +420,7 @@ export function createFriendGiftService(
         .where(
           and(
             eq(friendGiftPackages.id, input.packageId),
-            eq(friendGiftPackages.organizationId, organizationId),
+            eq(friendGiftPackages.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -430,9 +430,9 @@ export function createFriendGiftService(
 
       // 3. Atomic UPSERT: increment sender's daily send count
       const senderUpsert = await db.execute(sql`
-        INSERT INTO friend_gift_daily_states (organization_id, end_user_id, date_key, send_count, receive_count, version, created_at, updated_at)
-        VALUES (${organizationId}, ${senderUserId}, ${dateKey}, 1, 0, 1, NOW(), NOW())
-        ON CONFLICT (organization_id, end_user_id, date_key)
+        INSERT INTO friend_gift_daily_states (tenant_id, end_user_id, date_key, send_count, receive_count, version, created_at, updated_at)
+        VALUES (${tenantId}, ${senderUserId}, ${dateKey}, 1, 0, 1, NOW(), NOW())
+        ON CONFLICT (tenant_id, end_user_id, date_key)
         DO UPDATE SET
           send_count = friend_gift_daily_states.send_count + 1,
           version = friend_gift_daily_states.version + 1,
@@ -446,9 +446,9 @@ export function createFriendGiftService(
 
       // 4. Atomic UPSERT: increment receiver's daily receive count
       const receiverUpsert = await db.execute(sql`
-        INSERT INTO friend_gift_daily_states (organization_id, end_user_id, date_key, send_count, receive_count, version, created_at, updated_at)
-        VALUES (${organizationId}, ${input.receiverUserId}, ${dateKey}, 0, 1, 1, NOW(), NOW())
-        ON CONFLICT (organization_id, end_user_id, date_key)
+        INSERT INTO friend_gift_daily_states (tenant_id, end_user_id, date_key, send_count, receive_count, version, created_at, updated_at)
+        VALUES (${tenantId}, ${input.receiverUserId}, ${dateKey}, 0, 1, 1, NOW(), NOW())
+        ON CONFLICT (tenant_id, end_user_id, date_key)
         DO UPDATE SET
           receive_count = friend_gift_daily_states.receive_count + 1,
           version = friend_gift_daily_states.version + 1,
@@ -464,7 +464,7 @@ export function createFriendGiftService(
           SET send_count = friend_gift_daily_states.send_count - 1,
               version = friend_gift_daily_states.version + 1,
               updated_at = NOW()
-          WHERE organization_id = ${organizationId}
+          WHERE tenant_id = ${tenantId}
             AND end_user_id = ${senderUserId}
             AND date_key = ${dateKey}
             AND send_count > 0
@@ -475,7 +475,7 @@ export function createFriendGiftService(
       // 5. Deduct items from sender
       try {
         await itemSvc.deductItems({
-          organizationId,
+          tenantId,
           endUserId: senderUserId,
           deductions: pkg.giftItems,
           source: "friend_gift_send",
@@ -488,7 +488,7 @@ export function createFriendGiftService(
           SET send_count = friend_gift_daily_states.send_count - 1,
               version = friend_gift_daily_states.version + 1,
               updated_at = NOW()
-          WHERE organization_id = ${organizationId}
+          WHERE tenant_id = ${tenantId}
             AND end_user_id = ${senderUserId}
             AND date_key = ${dateKey}
             AND send_count > 0
@@ -498,7 +498,7 @@ export function createFriendGiftService(
           SET receive_count = friend_gift_daily_states.receive_count - 1,
               version = friend_gift_daily_states.version + 1,
               updated_at = NOW()
-          WHERE organization_id = ${organizationId}
+          WHERE tenant_id = ${tenantId}
             AND end_user_id = ${input.receiverUserId}
             AND date_key = ${dateKey}
             AND receive_count > 0
@@ -510,7 +510,7 @@ export function createFriendGiftService(
       const [send] = await db
         .insert(friendGiftSends)
         .values({
-          organizationId,
+          tenantId,
           packageId: pkg.id,
           senderUserId,
           receiverUserId: input.receiverUserId,
@@ -523,7 +523,7 @@ export function createFriendGiftService(
 
       if (events) {
         await events.emit("friend_gift.sent", {
-          organizationId,
+          tenantId,
           endUserId: senderUserId,
           sendId: send.id,
           receiverUserId: input.receiverUserId,
@@ -537,7 +537,7 @@ export function createFriendGiftService(
     // ─── Claim gift ──────────────────────────────────────────────
 
     async claimGift(
-      organizationId: string,
+      tenantId: string,
       giftId: string,
       endUserId: string,
     ): Promise<FriendGiftSend> {
@@ -552,7 +552,7 @@ export function createFriendGiftService(
         .where(
           and(
             eq(friendGiftSends.id, giftId),
-            eq(friendGiftSends.organizationId, organizationId),
+            eq(friendGiftSends.tenantId, tenantId),
             eq(friendGiftSends.receiverUserId, endUserId),
             eq(friendGiftSends.status, "pending"),
           ),
@@ -567,7 +567,7 @@ export function createFriendGiftService(
           .where(
             and(
               eq(friendGiftSends.id, giftId),
-              eq(friendGiftSends.organizationId, organizationId),
+              eq(friendGiftSends.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -581,7 +581,7 @@ export function createFriendGiftService(
 
       // Grant items to receiver
       await itemSvc.grantItems({
-        organizationId,
+        tenantId,
         endUserId,
         grants: claimed.giftItems,
         source: "friend_gift_claim",
@@ -590,7 +590,7 @@ export function createFriendGiftService(
 
       if (events) {
         await events.emit("friend_gift.claimed", {
-          organizationId,
+          tenantId,
           endUserId,
           sendId: claimed.id,
           senderUserId: claimed.senderUserId,
@@ -603,7 +603,7 @@ export function createFriendGiftService(
     // ─── Inbox / Sent queries ────────────────────────────────────
 
     async listInbox(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
     ): Promise<FriendGiftSend[]> {
       return db
@@ -611,7 +611,7 @@ export function createFriendGiftService(
         .from(friendGiftSends)
         .where(
           and(
-            eq(friendGiftSends.organizationId, organizationId),
+            eq(friendGiftSends.tenantId, tenantId),
             eq(friendGiftSends.receiverUserId, endUserId),
             eq(friendGiftSends.status, "pending"),
           ),
@@ -620,7 +620,7 @@ export function createFriendGiftService(
     },
 
     async listSent(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
     ): Promise<FriendGiftSend[]> {
       return db
@@ -628,7 +628,7 @@ export function createFriendGiftService(
         .from(friendGiftSends)
         .where(
           and(
-            eq(friendGiftSends.organizationId, organizationId),
+            eq(friendGiftSends.tenantId, tenantId),
             eq(friendGiftSends.senderUserId, endUserId),
           ),
         )
@@ -638,7 +638,7 @@ export function createFriendGiftService(
     // ─── Daily status ────────────────────────────────────────────
 
     async getDailyStatus(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
     ): Promise<{
       dateKey: string;
@@ -647,7 +647,7 @@ export function createFriendGiftService(
       dailySendLimit: number;
       dailyReceiveLimit: number;
     }> {
-      const settings = await loadSettings(organizationId);
+      const settings = await loadSettings(tenantId);
       const dateKey = computeDateKey(settings.timezone);
 
       const rows = await db
@@ -655,7 +655,7 @@ export function createFriendGiftService(
         .from(friendGiftDailyStates)
         .where(
           and(
-            eq(friendGiftDailyStates.organizationId, organizationId),
+            eq(friendGiftDailyStates.tenantId, tenantId),
             eq(friendGiftDailyStates.endUserId, endUserId),
             eq(friendGiftDailyStates.dateKey, dateKey),
           ),
@@ -675,11 +675,11 @@ export function createFriendGiftService(
     // ─── Admin: browse sends ─────────────────────────────────────
 
     async listSends(
-      organizationId: string,
+      tenantId: string,
       opts: PageParams = {},
     ): Promise<Page<FriendGiftSend>> {
       const limit = clampLimit(opts.limit);
-      const conds: SQL[] = [eq(friendGiftSends.organizationId, organizationId)];
+      const conds: SQL[] = [eq(friendGiftSends.tenantId, tenantId)];
       const seek = cursorWhere(opts.cursor, friendGiftSends.createdAt, friendGiftSends.id);
       if (seek) conds.push(seek);
       const rows = await db
@@ -692,7 +692,7 @@ export function createFriendGiftService(
     },
 
     async getSend(
-      organizationId: string,
+      tenantId: string,
       sendId: string,
     ): Promise<FriendGiftSend> {
       const rows = await db
@@ -701,7 +701,7 @@ export function createFriendGiftService(
         .where(
           and(
             eq(friendGiftSends.id, sendId),
-            eq(friendGiftSends.organizationId, organizationId),
+            eq(friendGiftSends.tenantId, tenantId),
           ),
         )
         .limit(1);

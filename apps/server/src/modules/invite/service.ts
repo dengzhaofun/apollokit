@@ -48,7 +48,7 @@ import type { UpsertInviteSettingsInput } from "./validators";
 declare module "../../lib/event-bus" {
   interface EventMap {
     "invite.bound": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       inviterEndUserId: string;
       inviteeEndUserId: string;
@@ -56,7 +56,7 @@ declare module "../../lib/event-bus" {
       boundAt: Date;
     };
     "invite.qualified": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       inviterEndUserId: string;
       inviteeEndUserId: string;
@@ -87,7 +87,7 @@ export function createInviteService(d: InviteDeps) {
     const rows = await db
       .select()
       .from(inviteSettings)
-      .where(eq(inviteSettings.organizationId, orgId))
+      .where(eq(inviteSettings.tenantId, orgId))
       .limit(1);
     const row = rows[0];
     if (!row) return DEFAULT_SETTINGS;
@@ -104,7 +104,7 @@ export function createInviteService(d: InviteDeps) {
       const rows = await db
         .select()
         .from(inviteSettings)
-        .where(eq(inviteSettings.organizationId, orgId))
+        .where(eq(inviteSettings.tenantId, orgId))
         .limit(1);
       return rows[0] ?? null;
     },
@@ -112,7 +112,7 @@ export function createInviteService(d: InviteDeps) {
     async upsertSettings(orgId: string, input: UpsertInviteSettingsInput) {
       // Build the insert values from input + defaults for first-insert.
       const insertValues = {
-        organizationId: orgId,
+        tenantId: orgId,
         enabled: input.enabled ?? true,
         codeLength: input.codeLength ?? 8,
         allowSelfInvite: input.allowSelfInvite ?? false,
@@ -138,7 +138,7 @@ export function createInviteService(d: InviteDeps) {
         const [row] = await db
           .select()
           .from(inviteSettings)
-          .where(eq(inviteSettings.organizationId, orgId))
+          .where(eq(inviteSettings.tenantId, orgId))
           .limit(1);
         if (!row) throw new Error("upsertSettings: row missing after insert-ignore");
         return row;
@@ -148,7 +148,7 @@ export function createInviteService(d: InviteDeps) {
         .insert(inviteSettings)
         .values(insertValues)
         .onConflictDoUpdate({
-          target: inviteSettings.organizationId,
+          target: inviteSettings.tenantId,
           set: setClause,
         })
         .returning();
@@ -172,7 +172,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteCodes)
         .where(
           and(
-            eq(inviteCodes.organizationId, orgId),
+            eq(inviteCodes.tenantId, orgId),
             eq(inviteCodes.endUserId, endUserId),
           ),
         )
@@ -192,7 +192,7 @@ export function createInviteService(d: InviteDeps) {
           const [row] = await db
             .insert(inviteCodes)
             .values({
-              organizationId: orgId,
+              tenantId: orgId,
               endUserId,
               code: candidate,
             })
@@ -232,7 +232,7 @@ export function createInviteService(d: InviteDeps) {
             .from(inviteCodes)
             .where(
               and(
-                eq(inviteCodes.organizationId, orgId),
+                eq(inviteCodes.tenantId, orgId),
                 eq(inviteCodes.endUserId, endUserId),
               ),
             )
@@ -255,7 +255,7 @@ export function createInviteService(d: InviteDeps) {
             .from(inviteCodes)
             .where(
               and(
-                eq(inviteCodes.organizationId, orgId),
+                eq(inviteCodes.tenantId, orgId),
                 eq(inviteCodes.endUserId, endUserId),
               ),
             )
@@ -284,13 +284,13 @@ export function createInviteService(d: InviteDeps) {
           const [row] = await db
             .insert(inviteCodes)
             .values({
-              organizationId: orgId,
+              tenantId: orgId,
               endUserId,
               code: candidate,
               rotatedAt: new Date(),
             })
             .onConflictDoUpdate({
-              target: [inviteCodes.organizationId, inviteCodes.endUserId],
+              target: [inviteCodes.tenantId, inviteCodes.endUserId],
               set: {
                 code: candidate,
                 rotatedAt: new Date(),
@@ -326,7 +326,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteCodes)
         .where(
           and(
-            eq(inviteCodes.organizationId, orgId),
+            eq(inviteCodes.tenantId, orgId),
             eq(inviteCodes.code, normalized),
           ),
         )
@@ -370,7 +370,7 @@ export function createInviteService(d: InviteDeps) {
       const inserted = await db
         .insert(inviteRelationships)
         .values({
-          organizationId: orgId,
+          tenantId: orgId,
           inviterEndUserId,
           inviteeEndUserId: input.inviteeEndUserId,
           inviterCodeSnapshot: normalized,
@@ -383,7 +383,7 @@ export function createInviteService(d: InviteDeps) {
         const row = inserted[0]!;
         if (events) {
           await events.emit("invite.bound", {
-            organizationId: orgId,
+            tenantId: orgId,
             endUserId: inviterEndUserId,
             inviterEndUserId,
             inviteeEndUserId: input.inviteeEndUserId,
@@ -400,7 +400,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
           ),
         )
@@ -442,7 +442,7 @@ export function createInviteService(d: InviteDeps) {
         .set({ qualifiedAt: now, qualifiedReason: reason })
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
             sql`${inviteRelationships.qualifiedAt} IS NULL`,
           ),
@@ -453,7 +453,7 @@ export function createInviteService(d: InviteDeps) {
         const row = updated[0]!;
         if (events) {
           await events.emit("invite.qualified", {
-            organizationId: orgId,
+            tenantId: orgId,
             endUserId: row.inviterEndUserId,
             inviterEndUserId: row.inviterEndUserId,
             inviteeEndUserId: row.inviteeEndUserId,
@@ -471,7 +471,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviteeEndUserId, input.inviteeEndUserId),
           ),
         )
@@ -493,7 +493,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviterEndUserId, endUserId),
           ),
         );
@@ -503,7 +503,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviterEndUserId, endUserId),
             sql`${inviteRelationships.qualifiedAt} IS NOT NULL`,
           ),
@@ -518,7 +518,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviteeEndUserId, endUserId),
           ),
         )
@@ -546,7 +546,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviterEndUserId, endUserId),
           ),
         )
@@ -559,7 +559,7 @@ export function createInviteService(d: InviteDeps) {
         .from(inviteRelationships)
         .where(
           and(
-            eq(inviteRelationships.organizationId, orgId),
+            eq(inviteRelationships.tenantId, orgId),
             eq(inviteRelationships.inviterEndUserId, endUserId),
           ),
         );
@@ -579,7 +579,7 @@ export function createInviteService(d: InviteDeps) {
       const limit = opts?.limit ?? 20;
       const offset = opts?.offset ?? 0;
 
-      const filters = [eq(inviteRelationships.organizationId, orgId)];
+      const filters = [eq(inviteRelationships.tenantId, orgId)];
       if (opts?.inviterEndUserId) {
         filters.push(
           eq(inviteRelationships.inviterEndUserId, opts.inviterEndUserId),
@@ -625,7 +625,7 @@ export function createInviteService(d: InviteDeps) {
           .where(
             and(
               eq(inviteRelationships.id, relationshipId),
-              eq(inviteRelationships.organizationId, orgId),
+              eq(inviteRelationships.tenantId, orgId),
             ),
           )
           .returning({ id: inviteRelationships.id });

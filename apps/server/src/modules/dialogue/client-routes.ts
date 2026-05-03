@@ -68,7 +68,7 @@ dialogueClientRouter.openapi(
   }),
   async (c) => {
     const { alias } = c.req.valid("param");
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const view = await dialogueService.start(orgId, endUserId, alias);
     return c.json(ok(serializeSession(view)), 200);
@@ -100,7 +100,7 @@ dialogueClientRouter.openapi(
   async (c) => {
     const { alias } = c.req.valid("param");
     const { optionId } = c.req.valid("json");
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const view = await dialogueService.advance(
       orgId,
@@ -133,7 +133,7 @@ dialogueClientRouter.openapi(
   }),
   async (c) => {
     const { alias } = c.req.valid("param");
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const view = await dialogueService.reset(orgId, endUserId, alias);
     return c.json(ok(serializeSession(view)), 200);

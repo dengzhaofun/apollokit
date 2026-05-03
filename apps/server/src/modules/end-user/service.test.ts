@@ -65,7 +65,7 @@ describe("end-user service — syncUser", () => {
       .where(eq(euUser.id, r.euUserId));
     expect(row?.email).toBe(scopeEmail(orgId, "alice@example.com"));
     expect(row?.externalId).toBe("u_alice");
-    expect(row?.organizationId).toBe(orgId);
+    expect(row?.tenantId).toBe(orgId);
 
     const accounts = await db
       .select()

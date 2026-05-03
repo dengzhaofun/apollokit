@@ -17,7 +17,7 @@ import { createAuditLogService } from "./service";
 /** Build a minimal valid row with sensible defaults; overrides win. */
 function row(orgId: string, overrides: Partial<AuditLogInsert> = {}): AuditLogInsert {
   return {
-    organizationId: orgId,
+    tenantId: orgId,
     actorType: "user",
     actorId: "u_test",
     actorLabel: "tester@example.com",
@@ -220,7 +220,7 @@ describe("audit-log service — empty org", () => {
   });
   afterAll(async () => {
     // Manually clean any rows seeded above (none expected, but be safe)
-    await db.delete(auditLogs).where(eq(auditLogs.organizationId, orgId));
+    await db.delete(auditLogs).where(eq(auditLogs.tenantId, orgId));
     await deleteTestOrg(orgId);
   });
 
