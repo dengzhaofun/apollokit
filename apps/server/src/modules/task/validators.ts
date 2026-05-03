@@ -62,7 +62,7 @@ export const taskDefinitionFilters = defineListFilter({
 })
   .search({
     columns: [taskDefinitions.name, taskDefinitions.alias],
-    // pg_trgm GIN index exists — see drizzle/0002_pg_trgm_search_indexes.sql.
+    // pg_trgm GIN index exists — see `src/schema/task.ts` (trgmIndex helpers).
     mode: "trgm",
   })
   .build();

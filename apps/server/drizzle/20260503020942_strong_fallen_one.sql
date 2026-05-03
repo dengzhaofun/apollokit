@@ -76,7 +76,7 @@ CREATE TABLE "member" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
-	"role" text DEFAULT 'member' NOT NULL,
+	"role" text DEFAULT 'operator' NOT NULL,
 	"created_at" timestamp NOT NULL
 );
 --> statement-breakpoint
@@ -111,7 +111,9 @@ CREATE TABLE "user" (
 	"image" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "user_email_unique" UNIQUE("email")
+	"normalized_email" text,
+	CONSTRAINT "user_email_unique" UNIQUE("email"),
+	CONSTRAINT "user_normalized_email_unique" UNIQUE("normalized_email")
 );
 --> statement-breakpoint
 CREATE TABLE "verification" (
@@ -149,8 +151,8 @@ CREATE TABLE "badge_nodes" (
 	"dismiss_mode" text DEFAULT 'auto' NOT NULL,
 	"dismiss_config" jsonb,
 	"visibility_rule" jsonb,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"is_enabled" boolean DEFAULT true NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"deleted_at" timestamp
@@ -208,7 +210,7 @@ CREATE TABLE "banners" (
 	"image_url_desktop" text NOT NULL,
 	"alt_text" text,
 	"link_action" jsonb NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"visible_from" timestamp,
 	"visible_until" timestamp,
 	"target_type" text DEFAULT 'broadcast' NOT NULL,
@@ -257,7 +259,7 @@ CREATE TABLE "battle_pass_season_tasks" (
 	"xp_reward" integer NOT NULL,
 	"category" text NOT NULL,
 	"week_index" integer,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -404,6 +406,140 @@ CREATE TABLE "check_in_user_states" (
 	CONSTRAINT "check_in_user_states_pk" PRIMARY KEY("config_id","end_user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "offline_check_in_campaigns" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"alias" text,
+	"name" text NOT NULL,
+	"description" text,
+	"banner_image" text,
+	"mode" text NOT NULL,
+	"completion_rule" jsonb NOT NULL,
+	"completion_rewards" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"start_at" timestamp,
+	"end_at" timestamp,
+	"timezone" text DEFAULT 'UTC' NOT NULL,
+	"status" text DEFAULT 'draft' NOT NULL,
+	"collection_album_id" uuid,
+	"activity_node_id" uuid,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "offline_check_in_grants" (
+	"campaign_id" uuid NOT NULL,
+	"end_user_id" text NOT NULL,
+	"reward_key" text NOT NULL,
+	"organization_id" text NOT NULL,
+	"reward_items" jsonb NOT NULL,
+	"granted_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "offline_check_in_grants_pk" PRIMARY KEY("campaign_id","end_user_id","reward_key")
+);
+--> statement-breakpoint
+CREATE TABLE "offline_check_in_logs" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"campaign_id" uuid NOT NULL,
+	"spot_id" uuid NOT NULL,
+	"organization_id" text NOT NULL,
+	"end_user_id" text NOT NULL,
+	"accepted" boolean NOT NULL,
+	"reject_reason" text,
+	"verified_via" jsonb NOT NULL,
+	"latitude" double precision,
+	"longitude" double precision,
+	"accuracy_m" double precision,
+	"distance_m" double precision,
+	"media_asset_id" uuid,
+	"device_fingerprint" text,
+	"ip" text,
+	"country" text,
+	"user_agent" text,
+	"nonce" text,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "offline_check_in_spots" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"campaign_id" uuid NOT NULL,
+	"organization_id" text NOT NULL,
+	"alias" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"cover_image" text,
+	"latitude" double precision NOT NULL,
+	"longitude" double precision NOT NULL,
+	"geofence_radius_m" integer DEFAULT 100 NOT NULL,
+	"verification" jsonb NOT NULL,
+	"spot_rewards" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"collection_entry_aliases" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "offline_check_in_user_progress" (
+	"campaign_id" uuid NOT NULL,
+	"end_user_id" text NOT NULL,
+	"organization_id" text NOT NULL,
+	"spots_completed" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"total_count" integer DEFAULT 0 NOT NULL,
+	"last_spot_id" uuid,
+	"last_check_in_at" timestamp,
+	"daily_count" integer DEFAULT 0 NOT NULL,
+	"daily_dates" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"completed_at" timestamp,
+	"version" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "offline_check_in_user_progress_pk" PRIMARY KEY("campaign_id","end_user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "experiment_assignments" (
+	"experiment_id" uuid NOT NULL,
+	"end_user_id" text NOT NULL,
+	"organization_id" text NOT NULL,
+	"variant_id" uuid NOT NULL,
+	"variant_key" text NOT NULL,
+	"assigned_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "experiment_assignments_pk" PRIMARY KEY("experiment_id","end_user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "experiment_variants" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"experiment_id" uuid NOT NULL,
+	"organization_id" text NOT NULL,
+	"variant_key" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"is_control" boolean DEFAULT false NOT NULL,
+	"config_json" jsonb,
+	"sort_order" text COLLATE "C" NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "experiment_experiments" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"key" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"status" text DEFAULT 'draft' NOT NULL,
+	"traffic_allocation" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"control_variant_key" text NOT NULL,
+	"targeting_rules" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"primary_metric" jsonb,
+	"metric_window_days" integer DEFAULT 7 NOT NULL,
+	"started_at" timestamp,
+	"ended_at" timestamp,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "client_credentials" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
@@ -414,6 +550,42 @@ CREATE TABLE "client_credentials" (
 	"enabled" boolean DEFAULT true NOT NULL,
 	"expires_at" timestamp,
 	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "cms_entries" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"type_id" uuid NOT NULL,
+	"type_alias" text NOT NULL,
+	"alias" text NOT NULL,
+	"group_key" text,
+	"tags" text[] DEFAULT '{}'::text[] NOT NULL,
+	"data" jsonb NOT NULL,
+	"status" text DEFAULT 'draft' NOT NULL,
+	"published_at" timestamp,
+	"schema_version" integer NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"created_by" text,
+	"updated_by" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "cms_types" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"alias" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"icon" text,
+	"schema" jsonb NOT NULL,
+	"schema_version" integer DEFAULT 1 NOT NULL,
+	"group_options" text[],
+	"status" text DEFAULT 'active' NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -479,7 +651,7 @@ CREATE TABLE "collection_albums" (
 	"cover_image" text,
 	"icon" text,
 	"scope" text DEFAULT 'custom' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -496,7 +668,7 @@ CREATE TABLE "collection_entries" (
 	"description" text,
 	"image" text,
 	"rarity" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"hidden_until_unlocked" boolean DEFAULT false NOT NULL,
 	"trigger_type" text DEFAULT 'item' NOT NULL,
 	"trigger_item_definition_id" uuid,
@@ -513,7 +685,7 @@ CREATE TABLE "collection_groups" (
 	"name" text NOT NULL,
 	"description" text,
 	"icon" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -530,7 +702,7 @@ CREATE TABLE "collection_milestones" (
 	"label" text,
 	"reward_items" jsonb NOT NULL,
 	"auto_claim" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -566,7 +738,7 @@ CREATE TABLE "currencies" (
 	"name" text NOT NULL,
 	"description" text,
 	"icon" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"activity_id" uuid,
 	"activity_node_id" uuid,
@@ -583,6 +755,8 @@ CREATE TABLE "currency_ledger" (
 	"delta" integer NOT NULL,
 	"source" text NOT NULL,
 	"source_id" text,
+	"activity_id" uuid,
+	"activity_node_id" uuid,
 	"balance_before" integer,
 	"balance_after" integer,
 	"created_at" timestamp DEFAULT now() NOT NULL
@@ -650,7 +824,7 @@ CREATE TABLE "exchange_options" (
 	"user_limit" integer,
 	"global_limit" integer,
 	"global_count" integer DEFAULT 0 NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -674,7 +848,7 @@ CREATE TABLE "item_categories" (
 	"alias" text,
 	"name" text NOT NULL,
 	"icon" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -709,6 +883,8 @@ CREATE TABLE "item_grant_logs" (
 	"delta" integer NOT NULL,
 	"source" text NOT NULL,
 	"source_id" text,
+	"activity_id" uuid,
+	"activity_node_id" uuid,
 	"quantity_before" integer,
 	"quantity_after" integer,
 	"created_at" timestamp DEFAULT now() NOT NULL
@@ -810,7 +986,7 @@ CREATE TABLE "lottery_prizes" (
 	"global_stock_used" integer DEFAULT 0 NOT NULL,
 	"fallback_prize_id" uuid,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -844,7 +1020,7 @@ CREATE TABLE "lottery_tiers" (
 	"base_weight" integer NOT NULL,
 	"color" text,
 	"icon" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -893,6 +1069,16 @@ CREATE TABLE "mail_user_states" (
 	CONSTRAINT "mail_user_states_pk" PRIMARY KEY("message_id","end_user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "navigation_favorites" (
+	"id" text PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"user_id" text NOT NULL,
+	"route_path" text NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "shop_categories" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
@@ -903,7 +1089,7 @@ CREATE TABLE "shop_categories" (
 	"cover_image" text,
 	"icon" text,
 	"level" integer DEFAULT 0 NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -930,7 +1116,7 @@ CREATE TABLE "shop_growth_stages" (
 	"trigger_type" text NOT NULL,
 	"trigger_config" jsonb,
 	"reward_items" jsonb NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -965,7 +1151,7 @@ CREATE TABLE "shop_products" (
 	"user_limit" integer,
 	"global_limit" integer,
 	"global_count" integer DEFAULT 0 NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"activity_id" uuid,
 	"activity_node_id" uuid,
@@ -981,7 +1167,7 @@ CREATE TABLE "shop_tags" (
 	"name" text NOT NULL,
 	"color" text,
 	"icon" text,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1187,7 +1373,7 @@ CREATE TABLE "friend_gift_packages" (
 	"icon" text,
 	"gift_items" jsonb NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -1240,7 +1426,7 @@ CREATE TABLE "entity_blueprint_skins" (
 	"assets" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"stat_bonuses" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"is_default" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1264,7 +1450,7 @@ CREATE TABLE "entity_blueprints" (
 	"rank_up_costs" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"synthesis_cost" jsonb,
 	"max_level" integer,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"activity_id" uuid,
 	"activity_node_id" uuid,
@@ -1315,6 +1501,7 @@ CREATE TABLE "entity_instances" (
 	"is_locked" boolean DEFAULT false NOT NULL,
 	"acquired_at" timestamp DEFAULT now() NOT NULL,
 	"activity_id" uuid,
+	"activity_node_id" uuid,
 	"version" integer DEFAULT 1 NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -1333,7 +1520,7 @@ CREATE TABLE "entity_schemas" (
 	"level_config" jsonb DEFAULT '{"enabled":false,"maxLevel":1}'::jsonb NOT NULL,
 	"rank_config" jsonb DEFAULT '{"enabled":false,"ranks":[]}'::jsonb NOT NULL,
 	"synthesis_config" jsonb DEFAULT '{"enabled":false,"sameBlueprint":true,"inputCount":2}'::jsonb NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1360,7 +1547,7 @@ CREATE TABLE "level_configs" (
 	"cover_image" text,
 	"icon" text,
 	"has_stages" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1375,7 +1562,7 @@ CREATE TABLE "level_stages" (
 	"description" text,
 	"icon" text,
 	"unlock_rule" jsonb,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -1413,7 +1600,7 @@ CREATE TABLE "levels" (
 	"unlock_rule" jsonb,
 	"clear_rewards" jsonb,
 	"star_rewards" jsonb,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1428,7 +1615,7 @@ CREATE TABLE "task_categories" (
 	"description" text,
 	"icon" text,
 	"scope" text DEFAULT 'task' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -1462,7 +1649,7 @@ CREATE TABLE "task_definitions" (
 	"is_hidden" boolean DEFAULT false NOT NULL,
 	"visibility" text DEFAULT 'broadcast' NOT NULL,
 	"default_assignment_ttl_seconds" integer,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"activity_id" uuid,
 	"activity_node_id" uuid,
 	"metadata" jsonb,
@@ -1582,14 +1769,10 @@ CREATE TABLE "activity_configs" (
 	"visible_at" timestamp NOT NULL,
 	"start_at" timestamp NOT NULL,
 	"end_at" timestamp NOT NULL,
-	"reward_end_at" timestamp NOT NULL,
 	"hidden_at" timestamp NOT NULL,
 	"timezone" text DEFAULT 'UTC' NOT NULL,
 	"status" text DEFAULT 'draft' NOT NULL,
-	"currency" jsonb,
-	"milestone_tiers" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"global_rewards" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"kind_metadata" jsonb,
 	"cleanup_rule" jsonb DEFAULT '{"mode":"purge"}'::jsonb NOT NULL,
 	"join_requirement" jsonb,
 	"membership" jsonb DEFAULT 'null'::jsonb,
@@ -1608,7 +1791,6 @@ CREATE TABLE "activity_members" (
 	"joined_at" timestamp DEFAULT now() NOT NULL,
 	"last_active_at" timestamp DEFAULT now() NOT NULL,
 	"activity_points" bigint DEFAULT 0 NOT NULL,
-	"milestones_achieved" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"node_state" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"status" text DEFAULT 'joined' NOT NULL,
 	"completed_at" timestamp,
@@ -1679,6 +1861,9 @@ CREATE TABLE "activity_templates" (
 	"alias_pattern" text NOT NULL,
 	"nodes_blueprint" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"schedules_blueprint" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"currencies_blueprint" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"item_definitions_blueprint" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"entity_blueprints_blueprint" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"auto_publish" boolean DEFAULT false NOT NULL,
 	"next_instance_at" timestamp,
 	"last_instantiated_alias" text,
@@ -1757,6 +1942,29 @@ CREATE TABLE "assist_pool_rewards_ledger" (
 	"granted_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "audit_logs" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text,
+	"ts" timestamp with time zone DEFAULT now() NOT NULL,
+	"actor_type" text NOT NULL,
+	"actor_id" text,
+	"actor_label" text,
+	"resource_type" text NOT NULL,
+	"resource_id" text,
+	"resource_label" text,
+	"action" text NOT NULL,
+	"method" text NOT NULL,
+	"path" text NOT NULL,
+	"status" integer NOT NULL,
+	"trace_id" text,
+	"ip" text,
+	"user_agent" text,
+	"before" jsonb,
+	"after" jsonb,
+	"metadata" jsonb,
+	"version" smallint DEFAULT 1 NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "storage_box_configs" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
@@ -1772,7 +1980,7 @@ CREATE TABLE "storage_box_configs" (
 	"min_deposit" integer,
 	"max_deposit" integer,
 	"allow_early_withdraw" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
+	"sort_order" text COLLATE "C" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -2010,6 +2218,48 @@ CREATE TABLE "webhooks_endpoints" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "trigger_executions" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"rule_id" uuid NOT NULL,
+	"rule_version" integer NOT NULL,
+	"event_name" text NOT NULL,
+	"end_user_id" text,
+	"trace_id" text,
+	"condition_result" text,
+	"action_results" jsonb,
+	"started_at" timestamp DEFAULT now() NOT NULL,
+	"finished_at" timestamp,
+	"status" text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "trigger_rules" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"status" text DEFAULT 'active' NOT NULL,
+	"trigger_event" text NOT NULL,
+	"condition" jsonb,
+	"actions" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"throttle" jsonb,
+	"graph" jsonb,
+	"version" integer DEFAULT 1 NOT NULL,
+	"created_by" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "feature_unlocks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"organization_id" text NOT NULL,
+	"end_user_id" text NOT NULL,
+	"feature_key" text NOT NULL,
+	"source" text,
+	"source_ref" text,
+	"unlocked_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "announcements" ADD CONSTRAINT "announcements_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -2034,7 +2284,22 @@ ALTER TABLE "character_definitions" ADD CONSTRAINT "character_definitions_organi
 ALTER TABLE "check_in_configs" ADD CONSTRAINT "check_in_configs_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "check_in_rewards" ADD CONSTRAINT "check_in_rewards_config_id_check_in_configs_id_fk" FOREIGN KEY ("config_id") REFERENCES "public"."check_in_configs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "check_in_user_states" ADD CONSTRAINT "check_in_user_states_config_id_check_in_configs_id_fk" FOREIGN KEY ("config_id") REFERENCES "public"."check_in_configs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_campaigns" ADD CONSTRAINT "offline_check_in_campaigns_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_campaigns" ADD CONSTRAINT "offline_check_in_campaigns_collection_album_id_collection_albums_id_fk" FOREIGN KEY ("collection_album_id") REFERENCES "public"."collection_albums"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_grants" ADD CONSTRAINT "offline_check_in_grants_campaign_id_offline_check_in_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."offline_check_in_campaigns"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_logs" ADD CONSTRAINT "offline_check_in_logs_campaign_id_offline_check_in_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."offline_check_in_campaigns"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_logs" ADD CONSTRAINT "offline_check_in_logs_spot_id_offline_check_in_spots_id_fk" FOREIGN KEY ("spot_id") REFERENCES "public"."offline_check_in_spots"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_logs" ADD CONSTRAINT "offline_check_in_logs_media_asset_id_media_assets_id_fk" FOREIGN KEY ("media_asset_id") REFERENCES "public"."media_assets"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_spots" ADD CONSTRAINT "offline_check_in_spots_campaign_id_offline_check_in_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."offline_check_in_campaigns"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "offline_check_in_user_progress" ADD CONSTRAINT "offline_check_in_user_progress_campaign_id_offline_check_in_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "public"."offline_check_in_campaigns"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "experiment_assignments" ADD CONSTRAINT "experiment_assignments_experiment_id_experiment_experiments_id_fk" FOREIGN KEY ("experiment_id") REFERENCES "public"."experiment_experiments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "experiment_assignments" ADD CONSTRAINT "experiment_assignments_variant_id_experiment_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."experiment_variants"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "experiment_variants" ADD CONSTRAINT "experiment_variants_experiment_id_experiment_experiments_id_fk" FOREIGN KEY ("experiment_id") REFERENCES "public"."experiment_experiments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "experiment_experiments" ADD CONSTRAINT "experiment_experiments_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "client_credentials" ADD CONSTRAINT "client_credentials_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cms_entries" ADD CONSTRAINT "cms_entries_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cms_entries" ADD CONSTRAINT "cms_entries_type_id_cms_types_id_fk" FOREIGN KEY ("type_id") REFERENCES "public"."cms_types"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cms_types" ADD CONSTRAINT "cms_types_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "eu_account" ADD CONSTRAINT "eu_account_user_id_eu_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."eu_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "eu_session" ADD CONSTRAINT "eu_session_user_id_eu_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."eu_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "eu_session" ADD CONSTRAINT "eu_session_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -2073,6 +2338,8 @@ ALTER TABLE "lottery_tiers" ADD CONSTRAINT "lottery_tiers_pool_id_lottery_pools_
 ALTER TABLE "lottery_user_states" ADD CONSTRAINT "lottery_user_states_pool_id_lottery_pools_id_fk" FOREIGN KEY ("pool_id") REFERENCES "public"."lottery_pools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mail_messages" ADD CONSTRAINT "mail_messages_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mail_user_states" ADD CONSTRAINT "mail_user_states_message_id_mail_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."mail_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "navigation_favorites" ADD CONSTRAINT "navigation_favorites_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "navigation_favorites" ADD CONSTRAINT "navigation_favorites_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shop_categories" ADD CONSTRAINT "shop_categories_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shop_categories" ADD CONSTRAINT "shop_categories_parent_id_shop_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."shop_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shop_growth_stage_claims" ADD CONSTRAINT "shop_growth_stage_claims_stage_id_shop_growth_stages_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."shop_growth_stages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -2130,6 +2397,7 @@ ALTER TABLE "assist_pool_configs" ADD CONSTRAINT "assist_pool_configs_organizati
 ALTER TABLE "assist_pool_contributions" ADD CONSTRAINT "assist_pool_contributions_instance_id_assist_pool_instances_id_fk" FOREIGN KEY ("instance_id") REFERENCES "public"."assist_pool_instances"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "assist_pool_instances" ADD CONSTRAINT "assist_pool_instances_config_id_assist_pool_configs_id_fk" FOREIGN KEY ("config_id") REFERENCES "public"."assist_pool_configs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "assist_pool_rewards_ledger" ADD CONSTRAINT "assist_pool_rewards_ledger_instance_id_assist_pool_instances_id_fk" FOREIGN KEY ("instance_id") REFERENCES "public"."assist_pool_instances"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "storage_box_configs" ADD CONSTRAINT "storage_box_configs_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "storage_box_deposits" ADD CONSTRAINT "storage_box_deposits_box_config_id_storage_box_configs_id_fk" FOREIGN KEY ("box_config_id") REFERENCES "public"."storage_box_configs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "storage_box_deposits" ADD CONSTRAINT "storage_box_deposits_currency_definition_id_currencies_id_fk" FOREIGN KEY ("currency_definition_id") REFERENCES "public"."currencies"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -2152,6 +2420,10 @@ ALTER TABLE "rank_tiers" ADD CONSTRAINT "rank_tiers_tier_config_id_rank_tier_con
 ALTER TABLE "webhooks_deliveries" ADD CONSTRAINT "webhooks_deliveries_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "webhooks_deliveries" ADD CONSTRAINT "webhooks_deliveries_endpoint_id_webhooks_endpoints_id_fk" FOREIGN KEY ("endpoint_id") REFERENCES "public"."webhooks_endpoints"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "webhooks_endpoints" ADD CONSTRAINT "webhooks_endpoints_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trigger_executions" ADD CONSTRAINT "trigger_executions_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trigger_executions" ADD CONSTRAINT "trigger_executions_rule_id_trigger_rules_id_fk" FOREIGN KEY ("rule_id") REFERENCES "public"."trigger_rules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trigger_rules" ADD CONSTRAINT "trigger_rules_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "feature_unlocks" ADD CONSTRAINT "feature_unlocks_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "announcements_org_alias_uidx" ON "announcements" USING btree ("organization_id","alias");--> statement-breakpoint
 CREATE INDEX "announcements_org_visible_idx" ON "announcements" USING btree ("organization_id","is_active","visible_from","visible_until");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
@@ -2209,8 +2481,33 @@ CREATE UNIQUE INDEX "check_in_rewards_config_day_uidx" ON "check_in_rewards" USI
 CREATE INDEX "check_in_rewards_config_idx" ON "check_in_rewards" USING btree ("config_id");--> statement-breakpoint
 CREATE INDEX "check_in_user_states_org_user_idx" ON "check_in_user_states" USING btree ("organization_id","end_user_id");--> statement-breakpoint
 CREATE INDEX "check_in_user_states_config_date_idx" ON "check_in_user_states" USING btree ("config_id","last_check_in_date");--> statement-breakpoint
+CREATE INDEX "offline_check_in_campaigns_org_status_start_idx" ON "offline_check_in_campaigns" USING btree ("organization_id","status","start_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "offline_check_in_campaigns_org_alias_uidx" ON "offline_check_in_campaigns" USING btree ("organization_id","alias") WHERE "offline_check_in_campaigns"."alias" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "offline_check_in_campaigns_album_idx" ON "offline_check_in_campaigns" USING btree ("collection_album_id");--> statement-breakpoint
+CREATE INDEX "offline_check_in_grants_org_user_idx" ON "offline_check_in_grants" USING btree ("organization_id","end_user_id");--> statement-breakpoint
+CREATE INDEX "offline_check_in_logs_campaign_user_created_idx" ON "offline_check_in_logs" USING btree ("campaign_id","end_user_id","created_at");--> statement-breakpoint
+CREATE INDEX "offline_check_in_logs_spot_created_idx" ON "offline_check_in_logs" USING btree ("spot_id","created_at");--> statement-breakpoint
+CREATE INDEX "offline_check_in_logs_org_created_idx" ON "offline_check_in_logs" USING btree ("organization_id","created_at");--> statement-breakpoint
+CREATE INDEX "offline_check_in_spots_campaign_sort_idx" ON "offline_check_in_spots" USING btree ("campaign_id","sort_order");--> statement-breakpoint
+CREATE INDEX "offline_check_in_spots_org_idx" ON "offline_check_in_spots" USING btree ("organization_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "offline_check_in_spots_campaign_alias_uidx" ON "offline_check_in_spots" USING btree ("campaign_id","alias");--> statement-breakpoint
+CREATE INDEX "offline_check_in_user_progress_org_user_idx" ON "offline_check_in_user_progress" USING btree ("organization_id","end_user_id");--> statement-breakpoint
+CREATE INDEX "offline_check_in_user_progress_campaign_completed_idx" ON "offline_check_in_user_progress" USING btree ("campaign_id","completed_at");--> statement-breakpoint
+CREATE INDEX "experiment_assignments_org_user_idx" ON "experiment_assignments" USING btree ("organization_id","end_user_id");--> statement-breakpoint
+CREATE INDEX "experiment_assignments_variant_idx" ON "experiment_assignments" USING btree ("variant_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "experiment_variants_experiment_key_uidx" ON "experiment_variants" USING btree ("experiment_id","variant_key");--> statement-breakpoint
+CREATE INDEX "experiment_variants_org_idx" ON "experiment_variants" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "experiment_variants_experiment_sort_idx" ON "experiment_variants" USING btree ("experiment_id","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "experiment_experiments_org_key_uidx" ON "experiment_experiments" USING btree ("organization_id","key");--> statement-breakpoint
+CREATE INDEX "experiment_experiments_org_status_started_idx" ON "experiment_experiments" USING btree ("organization_id","status","started_at");--> statement-breakpoint
 CREATE INDEX "client_credentials_organization_id_idx" ON "client_credentials" USING btree ("organization_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "client_credentials_publishable_key_uidx" ON "client_credentials" USING btree ("publishable_key");--> statement-breakpoint
+CREATE UNIQUE INDEX "cms_entries_org_type_alias_uidx" ON "cms_entries" USING btree ("organization_id","type_alias","alias");--> statement-breakpoint
+CREATE INDEX "cms_entries_org_type_group_status_idx" ON "cms_entries" USING btree ("organization_id","type_alias","group_key","status");--> statement-breakpoint
+CREATE INDEX "cms_entries_tags_gin" ON "cms_entries" USING gin ("tags");--> statement-breakpoint
+CREATE INDEX "cms_entries_org_type_updated_idx" ON "cms_entries" USING btree ("organization_id","type_id","updated_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "cms_types_org_alias_uidx" ON "cms_types" USING btree ("organization_id","alias");--> statement-breakpoint
+CREATE INDEX "cms_types_org_status_idx" ON "cms_types" USING btree ("organization_id","status");--> statement-breakpoint
 CREATE INDEX "eu_account_user_id_idx" ON "eu_account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "eu_session_user_id_idx" ON "eu_session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "eu_session_organization_id_idx" ON "eu_session" USING btree ("organization_id");--> statement-breakpoint
@@ -2234,6 +2531,7 @@ CREATE INDEX "currencies_activity_idx" ON "currencies" USING btree ("activity_id
 CREATE INDEX "currency_ledger_org_user_idx" ON "currency_ledger" USING btree ("organization_id","end_user_id");--> statement-breakpoint
 CREATE INDEX "currency_ledger_source_idx" ON "currency_ledger" USING btree ("source","source_id");--> statement-breakpoint
 CREATE INDEX "currency_ledger_currency_idx" ON "currency_ledger" USING btree ("currency_id");--> statement-breakpoint
+CREATE INDEX "currency_ledger_activity_idx" ON "currency_ledger" USING btree ("activity_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "currency_wallets_org_user_cur_uidx" ON "currency_wallets" USING btree ("organization_id","end_user_id","currency_id");--> statement-breakpoint
 CREATE INDEX "currency_wallets_org_user_idx" ON "currency_wallets" USING btree ("organization_id","end_user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "dialogue_progress_org_user_script_uidx" ON "dialogue_progress" USING btree ("organization_id","end_user_id","script_id");--> statement-breakpoint
@@ -2252,6 +2550,7 @@ CREATE UNIQUE INDEX "item_definitions_org_alias_uidx" ON "item_definitions" USIN
 CREATE INDEX "item_definitions_activity_idx" ON "item_definitions" USING btree ("activity_id");--> statement-breakpoint
 CREATE INDEX "item_grant_logs_org_user_idx" ON "item_grant_logs" USING btree ("organization_id","end_user_id");--> statement-breakpoint
 CREATE INDEX "item_grant_logs_source_idx" ON "item_grant_logs" USING btree ("source","source_id");--> statement-breakpoint
+CREATE INDEX "item_grant_logs_activity_idx" ON "item_grant_logs" USING btree ("activity_id");--> statement-breakpoint
 CREATE INDEX "item_inventories_user_def_idx" ON "item_inventories" USING btree ("organization_id","end_user_id","definition_id");--> statement-breakpoint
 CREATE INDEX "item_inventories_org_user_idx" ON "item_inventories" USING btree ("organization_id","end_user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "item_inventories_singleton_uidx" ON "item_inventories" USING btree ("organization_id","end_user_id","definition_id") WHERE "item_inventories"."is_singleton" = true;--> statement-breakpoint
@@ -2280,6 +2579,8 @@ CREATE INDEX "mail_messages_org_expires_idx" ON "mail_messages" USING btree ("or
 CREATE INDEX "mail_messages_multicast_gin_idx" ON "mail_messages" USING gin ("target_user_ids") WHERE "mail_messages"."target_type" = 'multicast';--> statement-breakpoint
 CREATE UNIQUE INDEX "mail_messages_origin_uidx" ON "mail_messages" USING btree ("organization_id","origin_source","origin_source_id") WHERE "mail_messages"."origin_source" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "mail_user_states_user_idx" ON "mail_user_states" USING btree ("organization_id","end_user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "navigation_favorites_unique" ON "navigation_favorites" USING btree ("organization_id","user_id","route_path");--> statement-breakpoint
+CREATE INDEX "navigation_favorites_lookup" ON "navigation_favorites" USING btree ("organization_id","user_id");--> statement-breakpoint
 CREATE INDEX "shop_categories_org_idx" ON "shop_categories" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "shop_categories_parent_idx" ON "shop_categories" USING btree ("parent_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "shop_categories_org_alias_uidx" ON "shop_categories" USING btree ("organization_id","alias") WHERE "shop_categories"."alias" IS NOT NULL;--> statement-breakpoint
@@ -2386,7 +2687,7 @@ CREATE UNIQUE INDEX "leaderboard_snapshots_uidx" ON "leaderboard_snapshots" USIN
 CREATE INDEX "leaderboard_snapshots_org_settled_idx" ON "leaderboard_snapshots" USING btree ("organization_id","settled_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "activity_configs_org_alias_uidx" ON "activity_configs" USING btree ("organization_id","alias");--> statement-breakpoint
 CREATE INDEX "activity_configs_org_status_start_idx" ON "activity_configs" USING btree ("organization_id","status","start_at");--> statement-breakpoint
-CREATE INDEX "activity_configs_status_lifecycle_idx" ON "activity_configs" USING btree ("status","visible_at","start_at","end_at","reward_end_at","hidden_at");--> statement-breakpoint
+CREATE INDEX "activity_configs_status_lifecycle_idx" ON "activity_configs" USING btree ("status","visible_at","start_at","end_at","hidden_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "activity_members_uidx" ON "activity_members" USING btree ("activity_id","end_user_id");--> statement-breakpoint
 CREATE INDEX "activity_members_activity_status_idx" ON "activity_members" USING btree ("activity_id","status");--> statement-breakpoint
 CREATE INDEX "activity_members_org_user_idx" ON "activity_members" USING btree ("organization_id","end_user_id");--> statement-breakpoint
@@ -2410,6 +2711,10 @@ CREATE INDEX "assist_pool_instances_initiator_idx" ON "assist_pool_instances" US
 CREATE INDEX "assist_pool_instances_due_idx" ON "assist_pool_instances" USING btree ("status","expires_at") WHERE status = 'in_progress';--> statement-breakpoint
 CREATE UNIQUE INDEX "assist_pool_rewards_ledger_instance_uidx" ON "assist_pool_rewards_ledger" USING btree ("instance_id");--> statement-breakpoint
 CREATE INDEX "assist_pool_rewards_ledger_org_initiator_idx" ON "assist_pool_rewards_ledger" USING btree ("organization_id","initiator_end_user_id");--> statement-breakpoint
+CREATE INDEX "audit_logs_org_ts_idx" ON "audit_logs" USING btree ("organization_id","ts" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "audit_logs_org_resource_idx" ON "audit_logs" USING btree ("organization_id","resource_type","resource_id","ts" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "audit_logs_org_actor_idx" ON "audit_logs" USING btree ("organization_id","actor_type","actor_id","ts" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "audit_logs_org_action_idx" ON "audit_logs" USING btree ("organization_id","action","ts" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "storage_box_configs_org_idx" ON "storage_box_configs" USING btree ("organization_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_box_configs_org_alias_uidx" ON "storage_box_configs" USING btree ("organization_id","alias") WHERE "storage_box_configs"."alias" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "storage_box_deposits_org_user_idx" ON "storage_box_deposits" USING btree ("organization_id","end_user_id");--> statement-breakpoint
@@ -2448,4 +2753,62 @@ CREATE INDEX "webhooks_deliveries_due_idx" ON "webhooks_deliveries" USING btree 
 CREATE INDEX "webhooks_deliveries_org_event_type_idx" ON "webhooks_deliveries" USING btree ("organization_id","event_type");--> statement-breakpoint
 CREATE INDEX "webhooks_deliveries_endpoint_created_idx" ON "webhooks_deliveries" USING btree ("endpoint_id","created_at");--> statement-breakpoint
 CREATE INDEX "webhooks_endpoints_org_idx" ON "webhooks_endpoints" USING btree ("organization_id");--> statement-breakpoint
-CREATE INDEX "webhooks_endpoints_org_status_idx" ON "webhooks_endpoints" USING btree ("organization_id","status");
+CREATE INDEX "webhooks_endpoints_org_status_idx" ON "webhooks_endpoints" USING btree ("organization_id","status");--> statement-breakpoint
+CREATE INDEX "trigger_executions_org_rule_started_idx" ON "trigger_executions" USING btree ("organization_id","rule_id","started_at");--> statement-breakpoint
+CREATE INDEX "trigger_executions_org_status_started_idx" ON "trigger_executions" USING btree ("organization_id","status","started_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "trigger_rules_org_name_idx" ON "trigger_rules" USING btree ("organization_id","name");--> statement-breakpoint
+CREATE INDEX "trigger_rules_org_event_status_idx" ON "trigger_rules" USING btree ("organization_id","trigger_event","status");--> statement-breakpoint
+CREATE UNIQUE INDEX "feature_unlocks_org_user_key_idx" ON "feature_unlocks" USING btree ("organization_id","end_user_id","feature_key");--> statement-breakpoint
+CREATE INDEX "feature_unlocks_org_user_idx" ON "feature_unlocks" USING btree ("organization_id","end_user_id");--> statement-breakpoint
+CREATE INDEX "feature_unlocks_org_key_idx" ON "feature_unlocks" USING btree ("organization_id","feature_key");--> statement-breakpoint
+
+-- pg_trgm extension + GIN trigram indexes for the search-heavy tables.
+-- (Hand-written SQL: Drizzle schema doesn't model trgm operator classes.)
+-- Powers `f.search({ mode: "trgm" })` in the list-filter DSL — without
+-- these indexes a leading-`%` ILIKE seq-scans the whole table; with them,
+-- ILIKE on a ≥3-char term hits the index. IF NOT EXISTS guards make the
+-- block safe to re-apply.
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "eu_user_name_trgm_idx"
+  ON "eu_user" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "eu_user_email_trgm_idx"
+  ON "eu_user" USING gin ("email" gin_trgm_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "activity_configs_name_trgm_idx"
+  ON "activity_configs" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "activity_configs_alias_trgm_idx"
+  ON "activity_configs" USING gin ("alias" gin_trgm_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "character_definitions_name_trgm_idx"
+  ON "character_definitions" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "character_definitions_alias_trgm_idx"
+  ON "character_definitions" USING gin ("alias" gin_trgm_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "item_definitions_name_trgm_idx"
+  ON "item_definitions" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "item_definitions_alias_trgm_idx"
+  ON "item_definitions" USING gin ("alias" gin_trgm_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "task_definitions_name_trgm_idx"
+  ON "task_definitions" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "task_definitions_alias_trgm_idx"
+  ON "task_definitions" USING gin ("alias" gin_trgm_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS "dialogue_scripts_name_trgm_idx"
+  ON "dialogue_scripts" USING gin ("name" gin_trgm_ops);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "dialogue_scripts_alias_trgm_idx"
+  ON "dialogue_scripts" USING gin ("alias" gin_trgm_ops);

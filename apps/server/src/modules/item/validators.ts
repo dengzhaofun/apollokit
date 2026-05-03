@@ -307,7 +307,7 @@ export const itemDefinitionFilters = defineListFilter({
 })
   .search({
     columns: [itemDefinitions.name, itemDefinitions.alias],
-    // pg_trgm GIN index exists — see drizzle/0002_pg_trgm_search_indexes.sql.
+    // pg_trgm GIN index exists — see `src/schema/item.ts` (trgmIndex helpers).
     mode: "trgm",
   })
   .build();

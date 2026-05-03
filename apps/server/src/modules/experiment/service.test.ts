@@ -7,9 +7,9 @@
  * via a stub bus so we can assert "emit exactly once per first-time
  * (experiment, endUser) pair".
  *
- * Pre-req: `drizzle/0010_last_human_fly.sql` must be applied to the
- * dev DB (`apollokit_dev` in `.dev.vars`). When running in CI, the
- * standard migrate flow takes care of this.
+ * Pre-req: the experiment schema (see `src/schema/experiment.ts`) must
+ * be applied to the dev DB (`apollokit_dev` in `.dev.vars`). When
+ * running in CI, the standard migrate flow takes care of this.
  */
 
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
