@@ -1,6 +1,6 @@
 {
-  "id": "12c453a6-55f6-4cd2-8b27-39b2a48465ab",
-  "prevId": "6930524a-6d11-4d66-b2e8-bde41c280430",
+  "id": "8d631060-621e-4c80-b5cc-a033d76b3fe2",
+  "prevId": "12c453a6-55f6-4cd2-8b27-39b2a48465ab",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -672,7 +672,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'member'"
+          "default": "'operator'"
         },
         "created_at": {
           "name": "created_at",

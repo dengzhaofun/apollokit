@@ -35,10 +35,9 @@
 
 import { createMiddleware } from "hono/factory";
 
-import { db } from "../db";
 import type { HonoEnv } from "../env";
 import { auditContext, type AuditDetail } from "../lib/audit-context";
-import { auditLogs } from "../schema/audit-log";
+import { insertAuditRow } from "../lib/audit-log-insert";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -138,16 +137,5 @@ export const auditLog = createMiddleware<HonoEnv>(async (c, next) => {
     return;
   }
 
-  ec.waitUntil(
-    db
-      .insert(auditLogs)
-      .values(row)
-      .then(
-        () => undefined,
-        (err) => {
-          // 写审计失败不抛 —— 业务请求已成功响应，不能因为审计抖动反作用。
-          console.error("audit-log: insert failed", { path, method, err });
-        },
-      ),
-  );
+  ec.waitUntil(insertAuditRow(row));
 });

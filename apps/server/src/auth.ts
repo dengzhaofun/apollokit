@@ -2,22 +2,26 @@ import { apiKey } from "@better-auth/api-key";
 import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware } from "better-auth/api";
 import {
   haveIBeenPwned,
   lastLoginMethod,
   oneTap,
+  openAPI,
   organization,
 } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
 
 import { ac, roles } from "./auth/ac";
 import { db } from "./db";
+import { insertAuditRow } from "./lib/audit-log-insert";
 import {
   sendInviteEmail,
   sendPasswordResetEmail,
   sendVerifyEmail,
 } from "./lib/mailer";
 import { normalizeEmail } from "./lib/normalize-email";
+import { getTraceId } from "./lib/request-context";
 import { member } from "./schema";
 
 // Lazy via Proxy —— `betterAuth({...})` 编译 plugin chain(organization +
@@ -200,7 +204,168 @@ function buildAdminAuth() {
       // src/lib/normalize-email.ts 自写的轻量版,保留 Gmail dot/plus 规则,
       // 不带 disposable-email 黑名单。auth.config.ts 里仍引 emailHarmony 用
       // 于 schema 生成(只在 Node CLI 跑,不进 worker bundle)。
+      //
+      // OpenAPI reference —— 暴露 `/api/auth/reference`(Scalar UI)和
+      // `/api/auth/open-api/generate-schema`(OpenAPI 3.0 JSON)。仅用于本地
+      // dev / staging 自查,prod 关掉 default reference UI(JSON 端点仍可
+      // 取,因为 Better Auth 自身/admin agent 可能消费它);如果要在 prod
+      // 也看 UI,可以另外在 `src/index.ts` 给 `/api/auth/reference` 套
+      // `requireAdminOrApiKey` 门禁,这里不强加。
+      //
+      // 不要把生成的 spec 合并到 SDK 管线 —— 我们的 SDK 是 hey-api 从
+      // openapi.json 生成,auth 路由有意不进 SDK(前端走 better-auth/client,
+      // server-to-server 走 ak_ apiKey)。两套 spec 平行存在即可。
+      openAPI({
+        disableDefaultReference: process.env.NODE_ENV === "production",
+      }),
     ],
+    hooks: {
+      // Endpoint 层钩子。监听两类路径:
+      //
+      //   1. `/sign-out` / `/revoke-session*` —— sign-out / 撤销其他会话。
+      //      Better Auth `internalAdapter.deleteSession` 在 secondaryStorage
+      //      模式 + `!storeSessionInDatabase` 时**早返回不走 deleteWithHooks**,
+      //      所以 `databaseHooks.session.delete.after` 永远不触发(我们的项目
+      //      正好命中这条 —— KV secondaryStorage on + 默认不写 DB)。endpoint
+      //      钩子是这条路径的唯一审计入口。
+      //
+      //   2. `/api-key/{create,update,delete}` —— `@better-auth/api-key` plugin
+      //      管理自己的表,databaseHooks 没暴露 apiKey 实体钩子,只能在 endpoint
+      //      层挂。
+      //
+      // ctx.path 已经是相对 basePath 的路径(/sign-out / /api-key/create 等),
+      // /api/auth 前缀由我们这里手动补全到 audit_logs.path 列。
+      after: createAuthMiddleware(async (ctx) => {
+        const path = ctx.path;
+        if (typeof path !== "string") return;
+
+        const session = ctx.context.session as
+          | {
+              user?: { id?: string; email?: string | null };
+              session?: {
+                id?: string;
+                activeOrganizationId?: string | null;
+              };
+            }
+          | null
+          | undefined;
+        const userId = session?.user?.id ?? null;
+        const orgId = session?.session?.activeOrganizationId ?? null;
+        const returned = ctx.context.returned;
+        const requestHeaders = (ctx as { headers?: Headers }).headers;
+
+        const baseRow = {
+          organizationId: orgId,
+          actorType: "user" as const,
+          actorId: userId,
+          actorLabel: session?.user?.email ?? null,
+          method: "POST",
+          status: 200,
+          ip: requestHeaders?.get("cf-connecting-ip") ?? null,
+          userAgent: requestHeaders?.get("user-agent") ?? null,
+          traceId: getTraceId() || null,
+        };
+
+        // ── sign-out / session 撤销 ───────────────────────────────────
+        if (path === "/sign-out") {
+          // returned: { success: true } 或 APIError
+          if ((returned as { success?: boolean } | null)?.success !== true) {
+            return;
+          }
+          // 注意:Better Auth `/sign-out` handler 不走 sessionMiddleware
+          // (它直接 ctx.getSignedCookie + internalAdapter.deleteSession),
+          // 所以 ctx.context.session 在 hooks.after 时为 null —— actor_id /
+          // org_id 这里都是 null。已删的 session 拿不到 userId,审计行
+          // 仍记 path / ip / ua 留痕。要补 actor_id 需要 hooks.before 阶段
+          // 解 cookie 查 internalAdapter.findSession,跨阶段传递走 ALS,留作
+          // follow-up。
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:session",
+            resourceId: null,
+            resourceLabel: null,
+            action: "auth:sign_out",
+            path: "/api/auth/sign-out",
+          });
+          return;
+        }
+
+        if (path === "/revoke-session" || path === "/revoke-other-sessions") {
+          if ((returned as { success?: boolean } | null)?.success !== true) {
+            return;
+          }
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:session",
+            resourceId: null,
+            resourceLabel: null,
+            action: "auth:session_revoked",
+            path: `/api/auth${path}`,
+          });
+          return;
+        }
+
+        // ── api-key plugin endpoints ─────────────────────────────────
+        if (path === "/api-key/create") {
+          // 失败路径(rateLimit / 校验失败)returned 是 APIError,不带 id;
+          // 只在拿到 id 时记一次 create 审计行。
+          if (
+            !returned ||
+            typeof returned !== "object" ||
+            !("id" in returned)
+          ) {
+            return;
+          }
+          const created = returned as {
+            id: string;
+            name?: string | null;
+            prefix?: string | null;
+          };
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:api_key",
+            resourceId: created.id,
+            resourceLabel: created.name ?? created.prefix ?? null,
+            action: "auth:api_key_create",
+            path: "/api/auth/api-key/create",
+          });
+          return;
+        }
+
+        if (path === "/api-key/delete") {
+          const body = (ctx.body ?? {}) as { keyId?: string };
+          const success =
+            (returned as { success?: boolean } | null)?.success === true;
+          if (!success || !body.keyId) return;
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:api_key",
+            resourceId: body.keyId,
+            resourceLabel: null,
+            action: "auth:api_key_delete",
+            path: "/api/auth/api-key/delete",
+          });
+          return;
+        }
+
+        if (path === "/api-key/update") {
+          const body = (ctx.body ?? {}) as { keyId?: string };
+          if (!returned || typeof returned !== "object" || !body.keyId) {
+            return;
+          }
+          const updated = returned as { name?: string | null };
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:api_key",
+            resourceId: body.keyId,
+            resourceLabel: updated.name ?? null,
+            action: "auth:api_key_update",
+            path: "/api/auth/api-key/update",
+          });
+          return;
+        }
+      }),
+    },
     databaseHooks: {
       user: {
         create: {
@@ -213,6 +378,22 @@ function buildAdminAuth() {
                 normalizedEmail: normalizeEmail(user.email),
               },
             };
+          },
+          after: async (user, ctx) => {
+            // sign-up 落 audit_logs。这一刻用户尚未加入任何 org —— 列已设为
+            // nullable(见 schema/audit-log.ts),audit row organizationId=null。
+            await insertAuditRow({
+              organizationId: null,
+              actorType: "user",
+              actorId: user.id,
+              actorLabel: user.email,
+              resourceType: "auth:user",
+              resourceId: user.id,
+              resourceLabel: user.email,
+              action: "auth:sign_up",
+              ...ctxRequestFields(ctx),
+              traceId: getTraceId() || null,
+            });
           },
         },
         update: {
@@ -250,10 +431,119 @@ function buildAdminAuth() {
               },
             };
           },
+          after: async (session, ctx) => {
+            // sign-in 落 audit_logs。session 已经被上面 before 写过了
+            // activeOrganizationId,这里直接读。
+            const orgId = (session as { activeOrganizationId?: string | null })
+              .activeOrganizationId;
+            await insertAuditRow({
+              organizationId: orgId ?? null,
+              actorType: "user",
+              actorId: session.userId,
+              actorLabel: null,
+              resourceType: "auth:session",
+              resourceId: session.id,
+              resourceLabel: null,
+              action: "auth:sign_in",
+              ...ctxRequestFields(ctx),
+              traceId: getTraceId() || null,
+            });
+          },
+        },
+        // 注意:**没有** session.delete.after —— Better Auth 在 KV
+        // secondaryStorage(我们启用)+ 默认不写 DB 的组合下,deleteSession
+        // 早返回不进 deleteWithHooks,databaseHooks 不会被调用。sign-out /
+        // revoke-session 的审计走上面 `hooks.after` 的 endpoint 钩子。
+      },
+      account: {
+        create: {
+          after: async (account, ctx) => {
+            // OAuth 链接 / credential account 初始化 都会触发。
+            // providerId === "credential" 是邮箱密码账号被设置(通常伴随
+            // sign-up,本身价值不大);其他 provider("google" 等)是社交账号
+            // 链接,有审计价值。
+            if (account.providerId === "credential") return;
+            await insertAuditRow({
+              organizationId: null,
+              actorType: "user",
+              actorId: account.userId,
+              actorLabel: null,
+              resourceType: "auth:account",
+              resourceId: account.id,
+              resourceLabel: account.providerId,
+              action: "auth:account_link",
+              ...ctxRequestFields(ctx),
+              traceId: getTraceId() || null,
+              metadata: { providerId: account.providerId },
+            });
+          },
+        },
+        update: {
+          after: async (account, ctx) => {
+            // Better Auth 把 account.update 用于:
+            //   - 密码变更(providerId === "credential" 且 password 字段变化)
+            //   - OAuth token 刷新(其他 providerId,accessToken/refreshToken 变化)
+            // 我们只关心密码变更,token 刷新太频繁不留痕。
+            //
+            // 注意 update hook 收到的是"将变更的字段",providerId 可能不在
+            // payload 里。两路兼容:有 password 变化就当密码变更记录。
+            const hasPasswordChange =
+              "password" in account &&
+              typeof (account as { password?: unknown }).password === "string";
+            if (!hasPasswordChange) return;
+            await insertAuditRow({
+              organizationId: null,
+              actorType: "user",
+              actorId: (account as { userId?: string }).userId ?? null,
+              actorLabel: null,
+              resourceType: "auth:account",
+              resourceId:
+                (account as { id?: string }).id ?? null,
+              resourceLabel: "credential",
+              action: "auth:password_change",
+              ...ctxRequestFields(ctx),
+              traceId: getTraceId() || null,
+            });
+          },
         },
       },
     },
   });
+}
+
+/**
+ * 从 Better Auth `databaseHooks.*.after` 的 `context` 参数里提取 method /
+ * path / status / ip / userAgent 五段,沉默处理 null context (e.g. CLI seed
+ * 走 InternalAdapter 直写,不带 endpoint context)。
+ *
+ * 返回的 status 是"hook 触发那一刻"的快照 —— Better Auth 在路由 handler
+ * 里 throw 之前完成数据库写,所以走到 after 通常意味着核心写已成功。我们
+ * 一律记 200,异常路径(写完 hook 但路由后续 throw)不在审计目标之列(那
+ * 种状态由 Tinybird `http_requests` 留痕)。
+ */
+function ctxRequestFields(ctx: unknown): {
+  method: string;
+  path: string;
+  status: number;
+  ip: string | null;
+  userAgent: string | null;
+} {
+  const c = ctx as
+    | {
+        path?: string;
+        method?: string;
+        request?: Request;
+        headers?: Headers;
+      }
+    | null;
+  const headers: Headers | undefined = c?.headers ?? c?.request?.headers;
+  return {
+    method: c?.method ?? c?.request?.method ?? "POST",
+    path: c?.path ? `/api/auth${c.path}` : "/api/auth/unknown",
+    status: 200,
+    ip: headers?.get("cf-connecting-ip") ?? null,
+    userAgent: headers?.get("user-agent") ?? null,
+  };
 }
 
 type AdminAuth = ReturnType<typeof buildAdminAuth>;
