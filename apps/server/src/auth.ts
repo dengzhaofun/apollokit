@@ -588,37 +588,56 @@ function buildAdminAuth() {
         // revoke-session 的审计走上面 `hooks.after` 的 endpoint 钩子。
         update: {
           before: async (session) => {
-            // 当 set-active(orgId) 被调用更新 activeOrganizationId 时,
-            // 自动为这条 session 选一个 active team。否则 require-auth
-            // (require activeTeamId) 会 400。Sign-up 创建空 session 时
-            // activeOrganizationId=null,这条分支不命中。
+            // 当 set-active(orgId) 切换 activeOrganizationId 时,联动选
+            // active team。两种情况:
+            //   1. 没 activeTeamId(刚 set-active 后第一次): 直接选第一个
+            //   2. 有 activeTeamId 但属于另一个组织(用户从 Org A 切到
+            //      Org B,team 仍指向 Org A): 重新选 Org B 下的 team
+            // 不重选 activeTeamId 还属于当前 org 的情况(避免每次 update
+            // 都打一次额外 SELECT)。
             const s = session as {
               userId?: string;
               activeOrganizationId?: string | null;
               activeTeamId?: string | null;
             };
             if (
-              typeof s.activeOrganizationId === "string" &&
-              !s.activeTeamId &&
-              typeof s.userId === "string"
+              typeof s.activeOrganizationId !== "string" ||
+              typeof s.userId !== "string"
             ) {
-              const [tm] = await db
-                .select({ teamId: teamMember.teamId })
-                .from(teamMember)
-                .innerJoin(team, eq(team.id, teamMember.teamId))
+              return;
+            }
+
+            // 如果当前 activeTeamId 已属于新 activeOrgId,啥都不做。
+            if (s.activeTeamId) {
+              const [stillInOrg] = await db
+                .select({ id: team.id })
+                .from(team)
                 .where(
                   and(
-                    eq(teamMember.userId, s.userId),
+                    eq(team.id, s.activeTeamId),
                     eq(team.organizationId, s.activeOrganizationId),
                   ),
                 )
-                .orderBy(asc(teamMember.createdAt))
                 .limit(1);
-              if (tm) {
-                return { data: { ...session, activeTeamId: tm.teamId } };
-              }
+              if (stillInOrg) return;
+              // 否则继续往下选 — activeTeamId 属于另一个 org,失效了。
             }
-            return;
+
+            const [tm] = await db
+              .select({ teamId: teamMember.teamId })
+              .from(teamMember)
+              .innerJoin(team, eq(team.id, teamMember.teamId))
+              .where(
+                and(
+                  eq(teamMember.userId, s.userId),
+                  eq(team.organizationId, s.activeOrganizationId),
+                ),
+              )
+              .orderBy(asc(teamMember.createdAt))
+              .limit(1);
+            return {
+              data: { ...session, activeTeamId: tm?.teamId ?? null },
+            };
           },
         },
       },

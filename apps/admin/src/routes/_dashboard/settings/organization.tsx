@@ -1,27 +1,33 @@
-import { OrganizationSettingsCards } from "@daveyplate/better-auth-ui"
+import {
+  OrganizationSettingsCards,
+  TeamsCard,
+} from "@daveyplate/better-auth-ui"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { RouteGuard } from "#/components/auth/RouteGuard"
+import { authClient } from "#/lib/auth-client"
 import { seo } from "#/lib/seo"
 
 /**
- * Organization (= organization / billing parent) settings.
+ * Organization-level settings — billing parent / cross-project hub.
  *
- * Renders the `@daveyplate/better-auth-ui` `OrganizationSettingsCards`
- * bundle — organization name/slug, logo, member list with role-update,
- * pending invitations, and the danger zone (delete organization).
+ * Two card stacks rendered together so org-admins find everything in
+ * one place:
  *
- * Under the dual-tenant model, this is the COMPANY-level settings
- * page. Project (Better Auth team) settings live separately at
- * `/settings/project` and use `TeamsCard` for cross-project listing.
+ *   1. `OrganizationSettingsCards` (daveyplate) — org name / URL slug /
+ *      logo, member list with role updates, pending invitations, and
+ *      the danger zone (delete organization).
+ *   2. `TeamsCard` (daveyplate) — list of every project (Better Auth
+ *      team) under this organization, with create / update / delete
+ *      dialogs. Project membership at the team level is managed inside
+ *      each project's own settings.
  *
- * The localization override (auth-localization-en.ts / -zh.ts mounted
- * in providers.tsx) maps Better Auth's internal `ORGANIZATION_*`
- * strings to "Organization / 组织".
+ * Per-project settings (rename / delete THIS project, members of THIS
+ * project, API keys, webhooks) live at `/settings/project*` instead.
  *
- * Role-aware UI is handled by daveyplate: a `member`-role user won't
- * see the Invite / Remove / Update-Role buttons. The server-side
- * `/api/auth/organization/*` endpoints stay as the authoritative gate.
+ * The localization override in providers.tsx maps Better Auth's
+ * `ORGANIZATION_*` strings to "Organization / 组织" and `TEAM_*` to
+ * "Project / 项目".
  */
 export const Route = createFileRoute("/_dashboard/settings/organization")({
   head: () => seo({ title: "Organization settings", noindex: true }),
@@ -29,9 +35,6 @@ export const Route = createFileRoute("/_dashboard/settings/organization")({
 })
 
 function OrganizationSettingsPage() {
-  // Org-level surface (member mgmt + delete) — operator/viewer roles must
-  // not see any of it. RouteGuard 403s with the unauthorized page when
-  // the user lacks org-level write capability.
   return (
     <RouteGuard
       resource="organization"
@@ -40,7 +43,18 @@ function OrganizationSettingsPage() {
     >
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <OrganizationSettingsCards />
+        <ActiveOrgTeamsCard />
       </div>
     </RouteGuard>
   )
+}
+
+function ActiveOrgTeamsCard() {
+  // daveyplate `TeamsCard` requires `organizationId`. Pull it from the
+  // live session — switching orgs from the sidebar re-renders this via
+  // useSession's subscription.
+  const { data: session } = authClient.useSession()
+  const orgId = session?.session.activeOrganizationId
+  if (!orgId) return null
+  return <TeamsCard organizationId={orgId} />
 }
