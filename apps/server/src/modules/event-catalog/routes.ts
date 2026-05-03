@@ -12,7 +12,7 @@ import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 
 import { eventCatalogService } from "./index";
 import {
@@ -28,7 +28,7 @@ const TAG = "Event Catalog";
 export const eventCatalogRouter = createAdminRouter();
 
 eventCatalogRouter.use("*", requireAdminOrApiKey);
-eventCatalogRouter.use("*", requireOrgManage);
+eventCatalogRouter.use("*", requirePermissionByMethod("eventCatalog"));
 
 eventCatalogRouter.openapi(
   createAdminRoute({

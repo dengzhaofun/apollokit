@@ -5,7 +5,8 @@ import { Copy, Plus, Trash2 } from "lucide-react"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
+import { RouteGuard } from "#/components/auth/RouteGuard"
 import {
   Table,
   TableBody,
@@ -53,26 +54,31 @@ export const Route = createFileRoute("/_dashboard/settings/api-keys")({
 })
 
 function ApiKeysPage() {
+  // API keys are admin+ only. Use the unauthorized page (rather than
+  // silent dashboard redirect) so an operator who pasted the URL
+  // gets explicit feedback they can ask an admin about.
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
-      <header>
-        <h1 className="text-xl font-semibold">{m.apikeys_title()}</h1>
-      </header>
-      <Tabs defaultValue="admin">
-        <TabsList>
-          <TabsTrigger value="admin">{m.apikeys_admin_keys()}</TabsTrigger>
-          <TabsTrigger value="client">{m.apikeys_client_credentials()}</TabsTrigger>
-        </TabsList>
+    <RouteGuard resource="apiKey" action="read" visibility="unauthorized-page">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        <header>
+          <h1 className="text-xl font-semibold">{m.apikeys_title()}</h1>
+        </header>
+        <Tabs defaultValue="admin">
+          <TabsList>
+            <TabsTrigger value="admin">{m.apikeys_admin_keys()}</TabsTrigger>
+            <TabsTrigger value="client">{m.apikeys_client_credentials()}</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="admin" className="mt-4">
-          <AdminKeysTab />
-        </TabsContent>
+          <TabsContent value="admin" className="mt-4">
+            <AdminKeysTab />
+          </TabsContent>
 
-        <TabsContent value="client" className="mt-4">
-          <ClientCredentialsTab />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="client" className="mt-4">
+            <ClientCredentialsTab />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </RouteGuard>
   )
 }
 
@@ -92,12 +98,12 @@ function AdminKeysTab() {
         <p className="text-sm text-muted-foreground">
           {m.apikeys_admin_keys_desc()}
         </p>
-        <WriteGate>
+        <Can resource="apiKey" action="write" mode="disable">
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="size-4" />
             {m.apikeys_create_admin_key()}
           </Button>
-        </WriteGate>
+        </Can>
       </div>
 
       {isPending ? (
@@ -345,12 +351,12 @@ function ClientCredentialsTab() {
         <p className="text-sm text-muted-foreground">
           {m.apikeys_client_credentials_desc()}
         </p>
-        <WriteGate>
+        <Can resource="apiKey" action="write" mode="disable">
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="size-4" />
             {m.apikeys_create_credential()}
           </Button>
-        </WriteGate>
+        </Can>
       </div>
 
       {isPending ? (

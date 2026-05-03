@@ -13,7 +13,7 @@ import { PageHeaderActions } from "#/components/PageHeader"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import {
   CDKEY_BATCH_FILTER_DEFS,
   useCdkeyBatches,
@@ -121,12 +121,12 @@ function CdkeyListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <WriteGate>
+          <Can resource="cdkey" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               {m.cdkey_new_batch()}
             </Button>
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

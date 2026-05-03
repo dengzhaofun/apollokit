@@ -3,7 +3,7 @@
  *
  * Mounted at `/api/cms`. Auth pattern matches every other admin module:
  * `requireAdminOrApiKey` (Better Auth session OR `ak_` API key) →
- * `requireOrgManage` (org-scoped role check). Handlers read the active
+ * `requirePermissionByMethod("cms")` (org-scoped role check). Handlers read the active
  * org from the session.
  *
  * `{typeKey}` and `{entryKey}` accept either a UUID or an alias — the
@@ -23,7 +23,7 @@ import {
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { cmsService } from "./index";
 import type { CmsEntry, CmsSchemaDef, CmsType } from "./types";
 import {
@@ -84,7 +84,7 @@ function serializeEntry(row: CmsEntry) {
 export const cmsRouter = createAdminRouter();
 
 cmsRouter.use("*", requireAdminOrApiKey);
-cmsRouter.use("*", requireOrgManage);
+cmsRouter.use("*", requirePermissionByMethod("cms"));
 
 // ─── Type routes ─────────────────────────────────────────────────
 

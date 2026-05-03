@@ -106,7 +106,14 @@ export const member = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    role: text("role").default("member").notNull(),
+    // Default flipped from "member" → "operator" alongside the
+    // four-role rollout (see auth/ac.ts). The `member` value is still
+    // accepted (registered as an alias of operator) so historical rows
+    // keep working until the data migration in this PR backfills them
+    // — but anything inserted from now on (Better Auth's invite-accept
+    // when `role` is omitted, raw inserts in tests / fixtures) lands
+    // on the canonical name.
+    role: text("role").default("operator").notNull(),
     createdAt: timestamp("created_at").notNull(),
   },
   (table) => [

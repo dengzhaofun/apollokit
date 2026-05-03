@@ -16,7 +16,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { battlePassService } from "./index";
 import type { BattlePassConfig } from "./types";
 import {
@@ -60,7 +60,7 @@ function serializeConfig(row: BattlePassConfig) {
 export const battlePassRouter = createAdminRouter();
 
 battlePassRouter.use("*", requireAdminOrApiKey);
-battlePassRouter.use("*", requireOrgManage);
+battlePassRouter.use("*", requirePermissionByMethod("battlePass"));
 
 // POST /configs
 battlePassRouter.openapi(

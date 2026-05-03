@@ -16,7 +16,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type {
   LeaderboardConfig,
   LeaderboardRewardTier,
@@ -68,7 +68,7 @@ function serializeConfig(row: LeaderboardConfig) {
 export const leaderboardRouter = createAdminRouter();
 
 leaderboardRouter.use("*", requireAdminOrApiKey);
-leaderboardRouter.use("*", requireOrgManage);
+leaderboardRouter.use("*", requirePermissionByMethod("leaderboard"));
 
 // POST /leaderboard/configs
 leaderboardRouter.openapi(

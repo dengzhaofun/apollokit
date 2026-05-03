@@ -14,7 +14,7 @@ import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { LinkAction } from "../link/types";
 import { bannerService } from "./index";
 import type {
@@ -81,7 +81,7 @@ function serializeBanner(row: Banner) {
 export const bannerRouter = createAdminRouter();
 
 bannerRouter.use("*", requireAdminOrApiKey);
-bannerRouter.use("*", requireOrgManage);
+bannerRouter.use("*", requirePermissionByMethod("banner"));
 
 // ─── Groups ────────────────────────────────────────────────────
 

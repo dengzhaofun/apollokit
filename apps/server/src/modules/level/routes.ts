@@ -19,7 +19,7 @@ import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { levelService } from "./index";
 import type { StarRewardTier } from "./types";
 import {
@@ -154,7 +154,7 @@ function serializeLevel(row: {
 export const levelRouter = createAdminRouter();
 
 levelRouter.use("*", requireAdminOrApiKey);
-levelRouter.use("*", requireOrgManage);
+levelRouter.use("*", requirePermissionByMethod("level"));
 
 // ─── Configs ────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@
  *
  * Covers per-user, per-org sidebar nav favorites. Authenticated via
  * the standard admin auth (`requireAdminOrApiKey`) — but NOT
- * `requireOrgManage`: every project member should be able to manage
+ * `requirePermissionByMethod`: every project member should be able to manage
  * their own favorites regardless of role.
  *
  * Favorites are keyed by `(activeOrganizationId, c.var.user.id)`. Admin

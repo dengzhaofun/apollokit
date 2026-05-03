@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import { PageHeaderActions } from "#/components/PageHeader"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -25,7 +25,7 @@ function CmsTypesPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <WriteGate>
+          <Can resource="cms" action="write" mode="disable">
             <Button
               render={
                 <Link to="/cms/types/create">
@@ -35,7 +35,7 @@ function CmsTypesPage() {
               }
               size="sm"
             />
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 
@@ -51,7 +51,7 @@ function CmsTypesPage() {
         ) : !types || types.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground">
             <p>{m.cms_type_list_empty()}</p>
-            <WriteGate>
+            <Can resource="cms" action="write" mode="disable">
               <Button
                 render={
                   <Link to="/cms/types/create">
@@ -61,7 +61,7 @@ function CmsTypesPage() {
                 }
                 size="sm" variant="outline"
               />
-            </WriteGate>
+            </Can>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">

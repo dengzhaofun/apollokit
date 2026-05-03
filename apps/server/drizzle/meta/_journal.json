@@ -85,6 +85,13 @@
       "when": 1777719365503,
       "tag": "0011_chief_justice",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1777801200007,
+      "tag": "0012_good_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }

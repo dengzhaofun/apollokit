@@ -14,7 +14,7 @@ import { useConfigForm } from "#/components/check-in/use-config-form"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { useCreateCheckInConfig } from "#/hooks/use-check-in"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
@@ -64,12 +64,12 @@ function CheckInListPage() {
         actions={
           <>
             <ActivityScopeFilter value={scope} onChange={setScope} />
-            <WriteGate>
+            <Can resource="checkIn" action="write" mode="disable">
               <Button size="sm" onClick={openCreate}>
                 <Plus />
                 {m.checkin_new_config()}
               </Button>
-            </WriteGate>
+            </Can>
           </>
         }
       />

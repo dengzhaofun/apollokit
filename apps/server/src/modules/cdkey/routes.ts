@@ -8,7 +8,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { cdkeyService } from "./index";
 import {
@@ -94,7 +94,7 @@ function serializeLog(row: CdkeyRedemptionLog) {
 export const cdkeyRouter = createAdminRouter();
 
 cdkeyRouter.use("*", requireAdminOrApiKey);
-cdkeyRouter.use("*", requireOrgManage);
+cdkeyRouter.use("*", requirePermissionByMethod("cdkey"));
 
 // ─── Batch CRUD ────────────────────────────────────────────────────
 

@@ -18,13 +18,13 @@ import { authLocalizationEn } from './lib/auth-localization-en'
 import * as m from "./paraglide/messages.js"
 
 /**
- * Surface the server-side role gate ("your member role cannot write
+ * Surface the server-side permission gate ("your role cannot write
  * here") as a toast so people hitting an ungated business page don't
  * see silent failure. The server returns
  *   { code: "forbidden", message, requestId }  at HTTP 403
- * for requireOrgManage denials; we only act on the `forbidden` code
- * to avoid hijacking 403s that other modules use for unrelated cases
- * (e.g. organization-scope mismatches).
+ * for `requirePermission` / `requirePermissionByMethod` denials; we
+ * only act on the `forbidden` code to avoid hijacking 403s that other
+ * modules use for unrelated cases (e.g. organization-scope mismatches).
  *
  * Works for both TanStack Query queries (the `useXxx` hooks) and
  * mutations (the form submissions). Duplicate-toast suppression comes
@@ -72,6 +72,18 @@ export function Providers({ children }: { children: ReactNode }) {
         // socialProviders.google is configured in apps/server/src/auth.ts.
         social={{
           providers: ["google"],
+        }}
+        // Expose the four-role matrix to daveyplate's invite dialog +
+        // member-list role dropdown. `customRoles` is APPENDED to its
+        // built-in owner/admin/member trio — and we keep `member` here
+        // as a backward-compat alias (the server-side `ac.ts` registers
+        // it as an alias of operator), so existing rows render with a
+        // sane label until the prod migration flips them.
+        organization={{
+          customRoles: [
+            { role: "operator", label: m.role_label_operator() },
+            { role: "viewer", label: m.role_label_viewer() },
+          ],
         }}
         // Mount account-scoped views under /settings/* so the UserButton
         // dropdown links to our own settings layout instead of the

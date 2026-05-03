@@ -18,7 +18,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { experimentService } from "./index";
 import type {
   Experiment,
@@ -109,7 +109,7 @@ function serializeAssignment(row: ExperimentAssignment) {
 export const experimentRouter = createAdminRouter();
 
 experimentRouter.use("*", requireAdminOrApiKey);
-experimentRouter.use("*", requireOrgManage);
+experimentRouter.use("*", requirePermissionByMethod("experiment"));
 
 // ─── Experiment CRUD ────────────────────────────────────────────
 

@@ -49,7 +49,7 @@ import {
   TableRow,
 } from "#/components/ui/table"
 import { Textarea } from "#/components/ui/textarea"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import {
   useCreateWebhookEndpoint,
   useDeleteWebhookEndpoint,
@@ -91,12 +91,12 @@ function WebhooksPage() {
             {m.webhooks_description()}
           </p>
         </div>
-        <WriteGate>
+        <Can resource="webhooks" action="write" mode="disable">
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="size-4" />
             {m.webhooks_create_endpoint()}
           </Button>
-        </WriteGate>
+        </Can>
       </div>
 
       {list.isLoading ? (
@@ -248,7 +248,7 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
             >
               <List className="size-4" />
             </Button>
-            <WriteGate>
+            <Can resource="webhooks" action="write" mode="disable">
               <Button
                 variant="ghost"
                 size="sm"
@@ -257,8 +257,8 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
               >
                 <Pencil className="size-4" />
               </Button>
-            </WriteGate>
-            <WriteGate>
+            </Can>
+            <Can resource="webhooks" action="write" mode="disable">
               <Button
                 variant="ghost"
                 size="sm"
@@ -267,8 +267,8 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
               >
                 <RotateCw className="size-4" />
               </Button>
-            </WriteGate>
-            <WriteGate>
+            </Can>
+            <Can resource="webhooks" action="write" mode="disable">
               <Button
                 variant="ghost"
                 size="sm"
@@ -278,7 +278,7 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
               >
                 <Trash2 className="size-4" />
               </Button>
-            </WriteGate>
+            </Can>
           </div>
         </TableCell>
       </TableRow>
@@ -778,7 +778,7 @@ function DeliveryRow({
         {new Date(delivery.createdAt).toLocaleString()}
       </TableCell>
       <TableCell>
-        <WriteGate>
+        <Can resource="webhooks" action="write" mode="disable">
           <Button
             variant="ghost"
             size="sm"
@@ -787,7 +787,7 @@ function DeliveryRow({
           >
             <RotateCw className="size-3" />
           </Button>
-        </WriteGate>
+        </Can>
       </TableCell>
     </TableRow>
   )

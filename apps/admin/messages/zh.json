@@ -293,7 +293,6 @@
   "accept_invitation_sign_in_first": "请先登录或注册,再接受邀请。",
   "accept_invitation_failed": "邀请接受失败,请检查链接或联系邀请人。",
   "accept_invitation_success": "邀请已接受,正在进入后台…",
-
   "mail_title": "邮件",
   "mail_new_message": "发送邮件",
   "mail_send": "发送",
@@ -309,23 +308,18 @@
   "mail_stat_reads": "已读数",
   "mail_stat_claims": "领取数",
   "mail_origin_source": "来源",
-
   "mail_col_title": "标题",
   "mail_col_target": "投递方式",
   "mail_col_recipients": "收件人数",
   "mail_col_require_read": "需先阅读",
   "mail_col_sent_at": "发送时间",
-
   "mail_status_active": "有效",
   "mail_status_expired": "已过期",
   "mail_status_revoked": "已撤回",
-
   "mail_target_broadcast": "全服广播",
   "mail_target_multicast": "组播",
   "mail_target_unicast": "单播",
-
   "mail_require_read_yes": "需先阅读",
-
   "mail_field_title": "标题",
   "mail_field_content": "正文",
   "mail_field_target_type": "投递方式",
@@ -340,10 +334,8 @@
   "mail_field_require_read_hint": "开启后，玩家必须先打开邮件才能领取奖励。",
   "mail_field_expires_at": "过期时间",
   "mail_field_expires_at_hint": "到期后邮件对玩家隐藏且不可领取。留空表示永不过期。",
-
   "mail_error_title_content_required": "标题和正文不能为空。",
   "mail_error_recipients_required": "组播至少需要一个收件人。",
-
   "mail_revoke": "撤回",
   "mail_revoked": "邮件已撤回",
   "mail_failed_revoke": "撤回失败",
@@ -353,7 +345,6 @@
   "mail_failed_delete": "删除失败",
   "mail_delete_confirm_title": "彻底删除此邮件？",
   "mail_delete_confirm_desc": "将同时删除消息本体及所有玩家对该邮件的已读/领取状态，且无法恢复。",
-
   "shop_title": "商城",
   "shop_products": "商品",
   "shop_categories": "分类",
@@ -398,7 +389,6 @@
   "shop_failed_load_categories": "加载分类失败：",
   "shop_failed_load_tags": "加载标签失败：",
   "shop_failed_load_stages": "加载阶段失败：",
-
   "shop_product_type": "商品类型",
   "shop_type_regular": "常规",
   "shop_type_growth_pack": "成长礼包",
@@ -419,7 +409,6 @@
   "shop_unlimited_hint": "留空表示无限制。",
   "shop_global_count": "全服已购",
   "shop_sort_order": "排序",
-
   "shop_time_window_type": "限时模式",
   "shop_time_window_none": "无",
   "shop_time_window_absolute": "绝对时间窗",
@@ -436,7 +425,6 @@
   "shop_cycle_weekly": "每周",
   "shop_cycle_monthly": "每月",
   "shop_refresh_limit": "周期内上限",
-
   "shop_stage_index": "阶段序号",
   "shop_trigger_type": "触发类型",
   "shop_trigger_accumulated_cost": "累计消耗",
@@ -445,12 +433,10 @@
   "shop_trigger_manual": "手动发放",
   "shop_trigger_config": "触发配置（JSON）",
   "shop_trigger_config_hint": "JSON 配置 —— 例如 itemDefinitionId + threshold 用于累计消耗触发。",
-
   "shop_filter_all": "全部",
   "shop_filter_category": "分类",
   "shop_filter_tag": "标签",
   "shop_filter_type": "类型",
-
   "shop_eligibility_status": "可购状态",
   "shop_status_available": "可购买",
   "shop_status_not_started": "未开始",
@@ -459,7 +445,6 @@
   "shop_status_global_limit_reached": "已售罄",
   "shop_status_cycle_limit_reached": "本周期已满",
   "shop_status_inactive": "未上架",
-
   "shop_delete_product_title": "删除该商品？",
   "shop_delete_product_desc": "将永久删除商品。购买记录会保留在物品日志中。",
   "shop_delete_category_title": "删除该分类？",
@@ -468,15 +453,12 @@
   "shop_delete_tag_desc": "将删除标签并解除与所有商品的关联。",
   "shop_delete_stage_title": "删除该阶段？",
   "shop_delete_stage_desc": "将删除阶段定义，已发放的领取记录会保留。",
-
   "shop_growth_only": "仅成长礼包可用。",
   "shop_back_to_products": "返回商品列表",
   "shop_back_to_categories": "返回分类列表",
   "shop_manage_stages": "管理成长阶段",
-
   "nav_banner": "轮播图",
   "nav_dialogue": "对话",
-
   "banner_title": "轮播位",
   "banner_new_group": "新建轮播位",
   "banner_edit_group": "编辑轮播位",
@@ -537,7 +519,6 @@
   "banner_col_link": "跳转",
   "banner_col_status": "状态",
   "banner_col_actions": "操作",
-
   "dialogue_title": "对话剧本",
   "dialogue_new_script": "新建剧本",
   "dialogue_edit_script": "编辑剧本",
@@ -593,7 +574,6 @@
   "dialogue_error_duplicate_node_id": "节点 ID 重复",
   "dialogue_error_duplicate_option_id": "同一节点内的选项 ID 重复",
   "dialogue_error_bad_next": "'next' 指向的节点不存在",
-
   "link_none": "不跳转",
   "link_external": "外部链接",
   "link_internal": "内部路由",
@@ -607,7 +587,6 @@
   "link_pending_badge": "模块待实现",
   "link_action": "跳转动作",
   "link_param_hint_uuid": "必须是 UUID",
-
   "nav_cdkey": "兑换码",
   "cdkey_title": "兑换码批次",
   "cdkey_new_batch": "新建批次",
@@ -772,14 +751,12 @@
   "collection_rescan_need_user": "请输入 endUserId",
   "collection_rescan_failed": "同步失败",
   "collection_saving": "保存中...",
-
   "nav_friend": "好友",
   "nav_invite": "邀请系统",
   "nav_guild": "公会",
   "nav_team": "组队",
   "nav_gift": "赠礼",
   "nav_task": "任务",
-
   "friend_title": "好友系统",
   "friend_settings": "好友设置",
   "friend_settings_updated": "好友设置已更新",
@@ -790,7 +767,6 @@
   "friend_no_settings": "尚未配置好友设置。",
   "friend_no_relationships": "暂无好友关系。",
   "friend_relationship_deleted": "已解除好友关系",
-
   "invite_title": "邀请系统",
   "invite_settings": "邀请设置",
   "invite_settings_edit": "编辑设置",
@@ -818,7 +794,6 @@
   "invite_save": "保存",
   "invite_cancel": "取消",
   "invite_delete_confirm": "撤销",
-
   "guild_title": "公会系统",
   "guild_settings": "公会设置",
   "guild_settings_updated": "公会设置已更新",
@@ -829,7 +804,6 @@
   "guild_no_settings": "尚未配置公会设置。",
   "guild_no_guilds": "暂无公会。",
   "guild_disbanded": "公会已解散",
-
   "team_title": "组队配置",
   "team_new_config": "新建配置",
   "team_config_created": "组队配置已创建",
@@ -839,7 +813,6 @@
   "team_max_members": "队伍人数上限",
   "team_auto_dissolve": "队长离开时自动解散",
   "team_quick_match": "快速匹配",
-
   "gift_title": "好友赠礼",
   "gift_settings": "赠礼设置",
   "gift_settings_updated": "赠礼设置已更新",
@@ -854,7 +827,6 @@
   "gift_no_settings": "尚未配置赠礼设置。",
   "gift_no_packages": "暂无礼包模板。",
   "gift_items_count": "物品数",
-
   "nav_entity": "实体",
   "entity_title": "实体系统",
   "entity_schemas": "实体类型",
@@ -927,7 +899,6 @@
   "entity_add_tag": "添加标签",
   "entity_add_slot": "添加槽位",
   "entity_add_rank": "添加阶位",
-
   "nav_level": "关卡",
   "level_title": "关卡配置",
   "level_new_config": "新建配置",
@@ -1296,7 +1267,6 @@
   "event_catalog_save_canonical": "保存并锁定字段",
   "event_catalog_save_success": "已保存 — 事件已升级为 canonical。",
   "event_catalog_save_failed": "保存失败。",
-
   "nav_announcement": "公告",
   "announcement_title": "公告",
   "announcement_new": "新建公告",
@@ -2069,7 +2039,6 @@
   "rank_match_col_settled": "结算时间",
   "rank_no_matches": "当前赛季暂无对局。",
   "rank_loading": "加载中…",
-
   "nav_end_user": "终端玩家",
   "end_user_title": "终端玩家",
   "end_user_subtitle": "你游戏的玩家 —— 可托管注册或从你自己的账号体系同步而来。",
@@ -2247,7 +2216,6 @@
   "badge_inspector_no_dismissals": "此玩家无消除记录。",
   "badge_inspector_dismissal_stale": "已过期 — 红点会重亮",
   "badge_inspector_dismissal_active": "仍生效 — 红点被压住",
-
   "nav_settings": "设置",
   "user_menu_theme": "主题",
   "user_menu_theme_light": "浅色",
@@ -2261,9 +2229,7 @@
   "settings_account": "账号",
   "settings_title": "设置",
   "settings_account_description": "管理你的个人资料、邮箱、密码与登录会话。",
-
   "nav_cms": "内容中心",
-
   "cms_type_new": "新建类型",
   "cms_type_list_empty": "还没有内容类型。先创建一个，用来定义内容字段。",
   "cms_type_no_description": "无描述。",
@@ -2282,17 +2248,14 @@
   "cms_type_failed_update": "保存类型失败。",
   "cms_type_delete_confirm_title": "确定删除该内容类型？",
   "cms_type_delete_confirm_desc": "该类型下所有条目也会一并删除，且无法恢复。",
-
   "cms_section_basic": "基础信息",
   "cms_section_schema": "字段定义",
   "cms_section_schema_hint": "定义此类型条目应包含哪些字段。",
   "cms_section_meta": "元信息",
   "cms_section_data": "内容",
-
   "cms_schema_empty_hint": "还没有字段，先添加一个开始。",
   "cms_schema_add_field": "添加字段",
   "cms_schema_evolution_warning": "Schema 处于「只增不改」模式：可以新增字段，但禁止删除字段、修改字段类型、或把可选字段改为必填。需要破坏性变更请复制成新类型。",
-
   "cms_field_name": "字段名",
   "cms_field_label": "显示名",
   "cms_field_type": "类型",
@@ -2313,7 +2276,6 @@
   "cms_field_enum_options": "选项",
   "cms_field_enum_add": "添加选项",
   "cms_field_image_alt_placeholder": "替代文字（可选）",
-
   "cms_entry_new": "新建条目",
   "cms_entry_edit_type": "编辑 schema",
   "cms_entry_list_empty": "当前筛选下没有条目。",
@@ -2337,16 +2299,13 @@
   "cms_entry_delete_confirm_title": "确定删除该条目？",
   "cms_entry_delete_confirm_desc": "该操作无法恢复。",
   "cms_entry_schema_drift": "该条目保存于 schema v{entryVersion}，当前 schema 已升级到 v{typeVersion}。重新保存可升级。",
-
   "cms_filter_all_statuses": "全部状态",
   "cms_filter_all_groups": "全部分组",
   "cms_filter_group_placeholder": "按分组筛选",
   "cms_filter_tag_placeholder": "按标签筛选",
   "cms_filter_alias_placeholder": "搜索 alias",
-
   "cms_submit_create_type": "创建类型",
   "cms_submit_create_entry": "创建条目",
-
   "activity_phase_draft": "草稿",
   "activity_phase_scheduled": "未公开",
   "activity_phase_teasing": "预热中",
@@ -2572,7 +2531,6 @@
   "experiment_error_not_running": "实验未在运行，无法分配",
   "experiment_error_invalid_transition": "不能从 {from} 转到 {to}",
   "experiment_error_variant_in_use": "此 variant 已有 {count} 位用户分配，请先归档整个实验",
-
   "experiment_targeting_section": "Targeting（谁能进入实验）",
   "experiment_targeting_section_hint": "设定哪些用户进入分流。不满足条件的用户既不分组也不算曝光。",
   "experiment_targeting_match_all_label": "所有用户",
@@ -2598,7 +2556,6 @@
   "experiment_targeting_preview_result": "约 {rate}% 用户命中此规则",
   "experiment_targeting_preview_no_rule": "未配置规则 — 所有用户都会进入分流",
   "experiment_targeting_preview_empty_hint": "未配置 Targeting 规则。所有用户都会被分流。",
-
   "experiment_decision_panel_title": "结果分析",
   "experiment_decision_panel_subtitle": "结合 control 与 variant 的样本量算转化率、置信区间、p-value 给出建议。",
   "experiment_decision_panel_pick_metric_first": "请先在上方选定一个转化事件作为指标",
@@ -2615,7 +2572,6 @@
   "experiment_decision_call_neutral": "样本不足",
   "experiment_decision_small_sample_short": "样本不足",
   "experiment_decision_small_sample_note": "总样本不足 {threshold}，p-value 暂不展示 — 小样本下显著性判断不可靠。",
-
   "experiment_metric_event_label": "转化事件",
   "experiment_metric_denominator_label": "分母",
   "experiment_metric_denominator_users": "曝光用户",
@@ -2624,11 +2580,9 @@
   "experiment_metric_denominator_events_hint": "人均事件数：事件总数 ÷ 曝光用户。适合「人均行为次数」指标",
   "experiment_metric_window_label": "窗口（天）",
   "experiment_metric_saved": "指标已保存",
-
   "experiment_srm_title": "检测到分桶失衡 (SRM)",
   "experiment_srm_body": "实际分桶比例严重偏离设定的 traffic_allocation (χ²={chi}, p={p})。这通常是分桶 / SDK 上报基础设施 bug，**此实验所有结论暂不可信**。",
   "experiment_srm_action": "建议立即排查：检查最近的部署、SDK 版本、有无中间网络层 redirect 后丢失曝光。",
-
   "experiment_about_stats_link": "什么是统计显著性？",
   "experiment_about_stats_title": "实验统计基础",
   "experiment_about_stats_subtitle": "三个最常用的统计概念，用大白话讲一遍",
@@ -2644,5 +2598,9 @@
   "about_stats_srm_action": "出现 SRM 时，**所有转化对比数据都不可信** — 应停止分析、排查基础设施，修复后用新数据重启实验。",
   "about_stats_sample_heading": "样本量与统计 power",
   "about_stats_sample_lead": "实验需要的样本量取决于你想检测的最小提升。要检测 +1pp 的提升通常要数万样本；+5pp 几千样本就够。流量小的实验跑一周往往得不到可信结论 — 要么放更多流量、要么等更久、要么承认这次实验测不出来。",
-  "about_stats_footer_disclaimer": "本指南面向运营 / PM 实操，不替代统计教科书。涉及高级方法（序贯检验、CUPED、贝叶斯）请咨询数据团队。"
+  "about_stats_footer_disclaimer": "本指南面向运营 / PM 实操，不替代统计教科书。涉及高级方法（序贯检验、CUPED、贝叶斯）请咨询数据团队。",
+  "role_label_owner": "所有者",
+  "role_label_admin": "管理员",
+  "role_label_operator": "运营",
+  "role_label_viewer": "只读"
 }

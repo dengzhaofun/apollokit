@@ -9,7 +9,7 @@ import { useAnnouncementForm } from "#/components/announcement/use-announcement-
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import {
   useAnnouncement,
   useCreateAnnouncement,
@@ -56,12 +56,12 @@ function AnnouncementListPage() {
           "Search, filter, and pagination are server-driven; all state lives in the URL.",
         )}
         actions={
-          <WriteGate>
+          <Can resource="announcement" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus />
               {m.announcement_new()}
             </Button>
-          </WriteGate>
+          </Can>
         }
       />
 

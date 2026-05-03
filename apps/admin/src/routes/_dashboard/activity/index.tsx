@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { ActivityTable } from "#/components/activity/ActivityTable"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { useActivityTickRun } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
@@ -35,7 +35,7 @@ function ActivityListPage() {
               }
               variant="outline" size="sm"
             />
-            <WriteGate>
+            <Can resource="activity" action="write" mode="disable">
               <Button
                 variant="outline"
                 size="sm"
@@ -59,8 +59,8 @@ function ActivityListPage() {
                 <RotateCw />
                 {m.activity_action_tick()}
               </Button>
-            </WriteGate>
-            <WriteGate>
+            </Can>
+            <Can resource="activity" action="write" mode="disable">
               <Button
                 render={
                   <Link to="/activity/create">
@@ -70,7 +70,7 @@ function ActivityListPage() {
                 }
                 size="sm"
               />
-            </WriteGate>
+            </Can>
           </>
         }
       />

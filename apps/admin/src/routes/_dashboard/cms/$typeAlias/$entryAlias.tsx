@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { EntryForm } from "#/components/cms/EntryForm"
 import { PageHeaderActions } from "#/components/PageHeader"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -63,7 +63,7 @@ function CmsEntryEditPage() {
             </Badge>
           ) : null}
           {entry ? (
-            <WriteGate>
+            <Can resource="cms" action="write" mode="disable">
               {entry.status === "published" ? (
                 <Button
                   variant="outline"
@@ -96,9 +96,9 @@ function CmsEntryEditPage() {
                   {m.cms_entry_publish()}
                 </Button>
               )}
-            </WriteGate>
+            </Can>
           ) : null}
-          <WriteGate>
+          <Can resource="cms" action="write" mode="disable">
             <AlertDialog>
               <AlertDialogTrigger
                 render={
@@ -139,7 +139,7 @@ function CmsEntryEditPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

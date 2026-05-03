@@ -11,7 +11,7 @@ import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { announcementService } from "./index";
 import type {
   Announcement,
@@ -54,7 +54,7 @@ function serialize(row: Announcement) {
 export const announcementRouter = createAdminRouter();
 
 announcementRouter.use("*", requireAdminOrApiKey);
-announcementRouter.use("*", requireOrgManage);
+announcementRouter.use("*", requirePermissionByMethod("announcement"));
 
 announcementRouter.openapi(
   createAdminRoute({

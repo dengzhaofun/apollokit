@@ -14,7 +14,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "#/components/ui/tabs"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { useCreateExperiment } from "#/hooks/use-experiment"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
@@ -91,12 +91,12 @@ function ExperimentListPage() {
         title={m.experiment_title()}
         description={m.experiment_description()}
         actions={
-          <WriteGate>
+          <Can resource="experiment" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus />
               {m.experiment_new()}
             </Button>
-          </WriteGate>
+          </Can>
         }
       />
       <PageBody>

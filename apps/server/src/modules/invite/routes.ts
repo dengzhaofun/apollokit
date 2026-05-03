@@ -11,7 +11,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAuth } from "../../middleware/require-auth";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { inviteService } from "./index";
 import {
   AdminListRelationshipsQuerySchema,
@@ -96,7 +96,7 @@ function serializeSummary(s: {
 export const inviteRouter = createAdminRouter();
 
 inviteRouter.use("*", requireAuth);
-inviteRouter.use("*", requireOrgManage);
+inviteRouter.use("*", requirePermissionByMethod("invite"));
 
 /* ── GET /settings ────────────────────────────────────────── */
 

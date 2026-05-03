@@ -12,7 +12,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { shopService } from "./index";
 import type {
@@ -212,7 +212,7 @@ function serializeUserProduct(row: UserProductView) {
 export const shopRouter = createAdminRouter();
 
 shopRouter.use("*", requireAdminOrApiKey);
-shopRouter.use("*", requireOrgManage);
+shopRouter.use("*", requirePermissionByMethod("shop"));
 
 // ─── Categories ──────────────────────────────────────────────────
 

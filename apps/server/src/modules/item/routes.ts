@@ -11,7 +11,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { itemService } from "./index";
 import {
   BalanceResponseSchema,
@@ -106,7 +106,7 @@ function serializeDefinition(row: {
 export const itemRouter = createAdminRouter();
 
 itemRouter.use("*", requireAdminOrApiKey);
-itemRouter.use("*", requireOrgManage);
+itemRouter.use("*", requirePermissionByMethod("item"));
 
 // ─── Category routes ──────────────────────────────────────────────
 
