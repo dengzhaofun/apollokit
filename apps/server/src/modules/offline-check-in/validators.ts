@@ -287,7 +287,7 @@ const VerifiedKindSchema = z.enum(["gps", "qr", "manual_code", "photo"]);
 export const CampaignResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -311,7 +311,7 @@ export const SpotResponseSchema = z
   .object({
     id: z.string(),
     campaignId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -334,7 +334,7 @@ export const ProgressResponseSchema = z
   .object({
     campaignId: z.string(),
     endUserId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     spotsCompleted: z.array(z.string()),
     totalCount: z.number().int(),
     lastSpotId: z.string().nullable(),

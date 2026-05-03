@@ -25,7 +25,7 @@ import type { LevelService } from "./service";
 // ─── Mock reward services ────────────────────────────────────────
 
 type GrantCall = {
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   grants: Array<{ definitionId: string; quantity: number }>;
   source: string;
@@ -70,7 +70,7 @@ describe("level service", () => {
       });
       expect(c.name).toBe("Main Story");
       expect(c.alias).toBe("lv-main-story");
-      expect(c.organizationId).toBe(orgId);
+      expect(c.tenantId).toBe(orgId);
       expect(c.id).toBeTruthy();
     });
 
@@ -542,7 +542,7 @@ describe("level service", () => {
       // Verify the mock was called
       expect(grantCalls.length).toBeGreaterThanOrEqual(1);
       const call = grantCalls[grantCalls.length - 1]!;
-      expect(call.organizationId).toBe(orgId);
+      expect(call.tenantId).toBe(orgId);
       expect(call.endUserId).toBe(endUserId);
     });
 

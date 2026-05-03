@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Mail messages — one row per mail send (broadcast / multicast / unicast).
@@ -64,9 +64,9 @@ export const mailMessages = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     content: text("content").notNull(),
     rewards: jsonb("rewards").$type<RewardEntry[]>().notNull(),
@@ -90,12 +90,12 @@ export const mailMessages = pgTable(
       .notNull(),
   },
   (table) => [
-    index("mail_messages_org_sent_idx").on(
-      table.organizationId,
+    index("mail_messages_tenant_sent_idx").on(
+      table.tenantId,
       table.sentAt,
     ),
-    index("mail_messages_org_expires_idx").on(
-      table.organizationId,
+    index("mail_messages_tenant_expires_idx").on(
+      table.tenantId,
       table.expiresAt,
     ),
     // GIN on jsonb targetUserIds — accelerates `@>` containment lookups
@@ -107,7 +107,7 @@ export const mailMessages = pgTable(
     // Programmatic-send idempotency — partial unique. admin manual sends
     // have NULL origin_source and bypass this constraint.
     uniqueIndex("mail_messages_origin_uidx")
-      .on(table.organizationId, table.originSource, table.originSourceId)
+      .on(table.tenantId, table.originSource, table.originSourceId)
       .where(sql`${table.originSource} IS NOT NULL`),
   ],
 );
@@ -134,7 +134,7 @@ export const mailUserStates = pgTable(
       .notNull()
       .references(() => mailMessages.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     readAt: timestamp("read_at"),
     claimedAt: timestamp("claimed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -149,7 +149,7 @@ export const mailUserStates = pgTable(
       name: "mail_user_states_pk",
     }),
     index("mail_user_states_user_idx").on(
-      table.organizationId,
+      table.tenantId,
       table.endUserId,
     ),
   ],

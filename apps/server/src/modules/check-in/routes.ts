@@ -52,7 +52,7 @@ const TAG = "Check-In";
  */
 function serializeConfig(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -67,7 +67,7 @@ function serializeConfig(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -85,7 +85,7 @@ function serializeConfig(row: {
 function serializeState(row: {
   configId: string;
   endUserId: string;
-  organizationId: string;
+  tenantId: string;
   totalDays: number;
   currentStreak: number;
   longestStreak: number;
@@ -100,7 +100,7 @@ function serializeState(row: {
   return {
     configId: row.configId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     totalDays: row.totalDays,
     currentStreak: row.currentStreak,
     longestStreak: row.longestStreak,
@@ -307,7 +307,7 @@ checkInRouter.openapi(
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const page = await checkInService.listUserStates({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
       cursor: q.cursor,
       limit: q.limit,
@@ -346,7 +346,7 @@ checkInRouter.openapi(
     const { key } = c.req.valid("param");
     const { endUserId } = c.req.valid("json");
     const result = await checkInService.checkIn({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
       endUserId,
     });
@@ -384,7 +384,7 @@ checkInRouter.openapi(
     const orgId = getOrgId(c);
     const { key, endUserId } = c.req.valid("param");
     const view = await checkInService.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
       endUserId,
     });
@@ -404,7 +404,7 @@ const TAG_REWARD = "Check-In Rewards";
 function serializeReward(row: {
   id: string;
   configId: string;
-  organizationId: string;
+  tenantId: string;
   dayNumber: number;
   rewardItems: RewardEntry[];
   metadata: unknown;
@@ -414,7 +414,7 @@ function serializeReward(row: {
   return {
     id: row.id,
     configId: row.configId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     dayNumber: row.dayNumber,
     rewardItems: row.rewardItems,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,

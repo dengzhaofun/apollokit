@@ -174,7 +174,7 @@ export const WalletsQuerySchema = z.object({
 export const CurrencyDefinitionResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -243,7 +243,7 @@ export const DeductResultSchema = z
 export const LedgerEntryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     endUserId: z.string(),
     currencyId: z.string(),
     delta: z.number().int(),

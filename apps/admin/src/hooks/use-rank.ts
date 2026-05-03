@@ -34,7 +34,7 @@ export function useRankTierConfigs() {
   return useQuery({
     queryKey: TIER_CONFIGS_KEY,
     queryFn: () =>
-      api.get<RankTierConfigListResponse>("/api/rank/tier-configs"),
+      api.get<RankTierConfigListResponse>("/api/v1/rank/tier-configs"),
     select: (data) => data.items,
   })
 }
@@ -44,7 +44,7 @@ export function useRankTierConfig(key: string | undefined) {
     queryKey: [...TIER_CONFIGS_KEY, key ?? ""],
     queryFn: () =>
       api.get<RankTierConfig>(
-        `/api/rank/tier-configs/${encodeURIComponent(key ?? "")}`,
+        `/api/v1/rank/tier-configs/${encodeURIComponent(key ?? "")}`,
       ),
     enabled: !!key,
   })
@@ -54,7 +54,7 @@ export function useCreateRankTierConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateRankTierConfigInput) =>
-      api.post<RankTierConfig>("/api/rank/tier-configs", input),
+      api.post<RankTierConfig>("/api/v1/rank/tier-configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: TIER_CONFIGS_KEY }),
   })
 }
@@ -70,7 +70,7 @@ export function useUpdateRankTierConfig() {
       input: UpdateRankTierConfigInput
     }) =>
       api.patch<RankTierConfig>(
-        `/api/rank/tier-configs/${encodeURIComponent(key)}`,
+        `/api/v1/rank/tier-configs/${encodeURIComponent(key)}`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -84,7 +84,7 @@ export function useDeleteRankTierConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/rank/tier-configs/${encodeURIComponent(id)}`),
+      api.delete(`/api/v1/rank/tier-configs/${encodeURIComponent(id)}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: TIER_CONFIGS_KEY }),
   })
 }
@@ -119,7 +119,7 @@ export function useRankSeasons(route: any) {
     filterDefs: RANK_SEASON_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<RankSeason>>(
-        `/api/rank/seasons?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/rank/seasons?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -127,7 +127,7 @@ export function useRankSeasons(route: any) {
 export function useRankSeason(id: string | undefined) {
   return useQuery({
     queryKey: [...SEASONS_KEY, id ?? ""],
-    queryFn: () => api.get<RankSeason>(`/api/rank/seasons/${id}`),
+    queryFn: () => api.get<RankSeason>(`/api/v1/rank/seasons/${id}`),
     enabled: !!id,
   })
 }
@@ -136,7 +136,7 @@ export function useCreateRankSeason() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateRankSeasonInput) =>
-      api.post<RankSeason>("/api/rank/seasons", input),
+      api.post<RankSeason>("/api/v1/rank/seasons", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: SEASONS_KEY }),
   })
 }
@@ -145,7 +145,7 @@ export function useUpdateRankSeason() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateRankSeasonInput }) =>
-      api.patch<RankSeason>(`/api/rank/seasons/${id}`, input),
+      api.patch<RankSeason>(`/api/v1/rank/seasons/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: SEASONS_KEY })
       qc.invalidateQueries({ queryKey: [...SEASONS_KEY, vars.id] })
@@ -157,7 +157,7 @@ export function useActivateRankSeason() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.post<RankSeason>(`/api/rank/seasons/${id}/activate`),
+      api.post<RankSeason>(`/api/v1/rank/seasons/${id}/activate`),
     onSuccess: (_row, id) => {
       qc.invalidateQueries({ queryKey: SEASONS_KEY })
       qc.invalidateQueries({ queryKey: [...SEASONS_KEY, id] })
@@ -169,7 +169,7 @@ export function useFinalizeRankSeason() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.post<RankFinalizeResult>(`/api/rank/seasons/${id}/finalize`),
+      api.post<RankFinalizeResult>(`/api/v1/rank/seasons/${id}/finalize`),
     onSuccess: (_result, id) => {
       qc.invalidateQueries({ queryKey: SEASONS_KEY })
       qc.invalidateQueries({ queryKey: [...SEASONS_KEY, id] })
@@ -199,7 +199,7 @@ export function useRankSeasonPlayers(
     ],
     queryFn: () =>
       api.get<RankPlayerListResponse>(
-        `/api/rank/seasons/${seasonId}/players${qs ? `?${qs}` : ""}`,
+        `/api/v1/rank/seasons/${seasonId}/players${qs ? `?${qs}` : ""}`,
       ),
     select: (data) => data.items,
     enabled: !!seasonId,
@@ -219,7 +219,7 @@ export function useAdjustRankPlayer() {
       input: AdjustRankPlayerInput
     }) =>
       api.patch<RankPlayerView>(
-        `/api/rank/seasons/${seasonId}/players/${encodeURIComponent(endUserId)}`,
+        `/api/v1/rank/seasons/${seasonId}/players/${encodeURIComponent(endUserId)}`,
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: PLAYERS_KEY }),
@@ -245,7 +245,7 @@ export function useRankSeasonMatches(
     ],
     queryFn: () =>
       api.get<RankMatchListResponse>(
-        `/api/rank/seasons/${seasonId}/matches${qs ? `?${qs}` : ""}`,
+        `/api/v1/rank/seasons/${seasonId}/matches${qs ? `?${qs}` : ""}`,
       ),
     enabled: !!seasonId,
   })
@@ -254,7 +254,7 @@ export function useRankSeasonMatches(
 export function useRankMatch(id: string | undefined) {
   return useQuery({
     queryKey: [...MATCHES_KEY, "detail", id ?? ""],
-    queryFn: () => api.get<RankMatchDetail>(`/api/rank/matches/${id}`),
+    queryFn: () => api.get<RankMatchDetail>(`/api/v1/rank/matches/${id}`),
     enabled: !!id,
   })
 }

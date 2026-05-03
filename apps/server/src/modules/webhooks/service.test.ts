@@ -180,7 +180,7 @@ describe("webhooks service — dispatch + delivery", () => {
     });
 
     const result = await svc.dispatch({
-      organizationId: orgId,
+      tenantId: orgId,
       eventType: "check_in.completed",
       payload: { foo: 1 },
     });
@@ -210,7 +210,7 @@ describe("webhooks service — dispatch + delivery", () => {
     });
 
     await svc.dispatch({
-      organizationId: orgId,
+      tenantId: orgId,
       eventType: "check_in.completed",
       payload: { userId: "u1" },
     });
@@ -233,7 +233,7 @@ describe("webhooks service — dispatch + delivery", () => {
     const parsed = JSON.parse(receivedBody);
     expect(parsed).toMatchObject({
       type: "check_in.completed",
-      organization_id: orgId,
+      tenant_id: orgId,
       data: { userId: "u1" },
     });
     expect(typeof parsed.id).toBe("string");
@@ -252,7 +252,7 @@ describe("webhooks service — dispatch + delivery", () => {
       url: "https://example.test/503",
     });
     await svc.dispatch({
-      organizationId: orgId,
+      tenantId: orgId,
       eventType: "foo.bar",
       payload: {},
     });
@@ -287,7 +287,7 @@ describe("webhooks service — dispatch + delivery", () => {
       url: "https://example.test/dead",
     });
     await svc.dispatch({
-      organizationId: orgId,
+      tenantId: orgId,
       eventType: "foo.bar",
       payload: {},
     });
@@ -312,7 +312,7 @@ describe("webhooks service — dispatch + delivery", () => {
       url: "https://example.test/ok2",
     });
     await svc.dispatch({
-      organizationId: orgId,
+      tenantId: orgId,
       eventId: "00000000-0000-4000-8000-000000000abc",
       eventType: "x.y",
       payload: { v: 1 },

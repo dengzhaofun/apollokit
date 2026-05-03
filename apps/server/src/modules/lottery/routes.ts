@@ -55,7 +55,7 @@ const TAG_PULL = "Lottery Pull";
 
 function serializePool(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -71,7 +71,7 @@ function serializePool(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -90,7 +90,7 @@ function serializePool(row: {
 function serializeTier(row: {
   id: string;
   poolId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   alias: string | null;
   baseWeight: number;
@@ -105,7 +105,7 @@ function serializeTier(row: {
   return {
     id: row.id,
     poolId: row.poolId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     alias: row.alias,
     baseWeight: row.baseWeight,
@@ -123,7 +123,7 @@ function serializePrize(row: {
   id: string;
   tierId: string | null;
   poolId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   rewardItems: RewardEntry[];
@@ -143,7 +143,7 @@ function serializePrize(row: {
     id: row.id,
     tierId: row.tierId,
     poolId: row.poolId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     rewardItems: row.rewardItems,
@@ -164,7 +164,7 @@ function serializePrize(row: {
 function serializePityRule(row: {
   id: string;
   poolId: string;
-  organizationId: string;
+  tenantId: string;
   guaranteeTierId: string;
   hardPityThreshold: number;
   softPityStartAt: number | null;
@@ -177,7 +177,7 @@ function serializePityRule(row: {
   return {
     id: row.id,
     poolId: row.poolId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     guaranteeTierId: row.guaranteeTierId,
     hardPityThreshold: row.hardPityThreshold,
     softPityStartAt: row.softPityStartAt,
@@ -831,7 +831,7 @@ lotteryRouter.openapi(
     const { poolKey } = c.req.valid("param");
     const { endUserId, idempotencyKey } = c.req.valid("json");
     const result = await lotteryService.pull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
       idempotencyKey,
@@ -863,7 +863,7 @@ lotteryRouter.openapi(
     const { poolKey } = c.req.valid("param");
     const { endUserId, count, idempotencyKey } = c.req.valid("json");
     const result = await lotteryService.multiPull({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
       count,
@@ -899,7 +899,7 @@ lotteryRouter.openapi(
     const { poolKey } = c.req.valid("param");
     const { endUserId } = c.req.valid("param");
     const state = await lotteryService.getUserState({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
     });
@@ -929,7 +929,7 @@ lotteryRouter.openapi(
     const { poolKey } = c.req.valid("param");
     const { endUserId } = c.req.valid("param");
     const rows = await lotteryService.getPullHistory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       poolKey,
     });

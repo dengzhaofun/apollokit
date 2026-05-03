@@ -6,7 +6,7 @@ export type TriggerType = "item" | "event"
 
 export interface CollectionAlbum {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -23,7 +23,7 @@ export interface CollectionAlbum {
 export interface CollectionGroup {
   id: string
   albumId: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   icon: string | null
@@ -37,7 +37,7 @@ export interface CollectionEntry {
   id: string
   albumId: string
   groupId: string | null
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -55,7 +55,7 @@ export interface CollectionEntry {
 
 export interface CollectionMilestone {
   id: string
-  organizationId: string
+  tenantId: string
   albumId: string
   scope: string
   groupId: string | null

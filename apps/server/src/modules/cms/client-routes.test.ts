@@ -1,5 +1,5 @@
 /**
- * Tests for the CMS client routes (`/api/client/cms/*`).
+ * Tests for the CMS client routes (`/api/v1/client/cms/*`).
  *
  * Verifies:
  *   - `requireClientCredential` (cpk_) is enforced — no key → 401
@@ -84,12 +84,12 @@ describe("cms client routes", () => {
   });
 
   test("missing x-api-key → 401", async () => {
-    const res = await app.request("/api/client/cms/by-alias/faq/shipping");
+    const res = await app.request("/api/v1/client/cms/by-alias/faq/shipping");
     expect(res.status).toBe(401);
   });
 
   test("by-alias returns published entry with sanitized shape", async () => {
-    const res = await app.request("/api/client/cms/by-alias/faq/shipping", {
+    const res = await app.request("/api/v1/client/cms/by-alias/faq/shipping", {
       headers: { "x-api-key": cpk },
     });
     expect(res.status).toBe(200);
@@ -126,7 +126,7 @@ describe("cms client routes", () => {
   });
 
   test("by-alias for draft entry → 404 (cms.entry_not_found)", async () => {
-    const res = await app.request("/api/client/cms/by-alias/faq/returns", {
+    const res = await app.request("/api/v1/client/cms/by-alias/faq/returns", {
       headers: { "x-api-key": cpk },
     });
     expect(res.status).toBe(404);
@@ -135,7 +135,7 @@ describe("cms client routes", () => {
   });
 
   test("group endpoint returns only published entries in that group", async () => {
-    const res = await app.request("/api/client/cms/group/faq/support", {
+    const res = await app.request("/api/v1/client/cms/group/faq/support", {
       headers: { "x-api-key": cpk },
     });
     expect(res.status).toBe(200);
@@ -147,7 +147,7 @@ describe("cms client routes", () => {
   });
 
   test("tag endpoint scopes across types but only published", async () => {
-    const res = await app.request("/api/client/cms/tag/help", {
+    const res = await app.request("/api/v1/client/cms/tag/help", {
       headers: { "x-api-key": cpk },
     });
     expect(res.status).toBe(200);
@@ -159,7 +159,7 @@ describe("cms client routes", () => {
   });
 
   test("list endpoint returns all published of a type", async () => {
-    const res = await app.request("/api/client/cms/list/faq", {
+    const res = await app.request("/api/v1/client/cms/list/faq", {
       headers: { "x-api-key": cpk },
     });
     expect(res.status).toBe(200);
@@ -172,7 +172,7 @@ describe("cms client routes", () => {
 
   test("list endpoint accepts groupKey and tag query filters", async () => {
     const res = await app.request(
-      "/api/client/cms/list/faq?groupKey=billing",
+      "/api/v1/client/cms/list/faq?groupKey=billing",
       { headers: { "x-api-key": cpk } },
     );
     expect(res.status).toBe(200);

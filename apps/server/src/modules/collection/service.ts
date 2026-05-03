@@ -133,14 +133,14 @@ type CollectionDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "collection.entry_unlocked": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       albumId: string;
       entryIds: string[];
       source: string;
     };
     "collection.milestone_claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       albumId: string;
       milestoneId: string;
@@ -150,7 +150,7 @@ declare module "../../lib/event-bus" {
 
 export type ItemSvc = {
   grantItems: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
@@ -180,16 +180,16 @@ export function createCollectionService(
   // ─── Load helpers ─────────────────────────────────────────────
 
   async function loadAlbumByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CollectionAlbum> {
     const where = looksLikeId(key)
       ? and(
-          eq(collectionAlbums.organizationId, organizationId),
+          eq(collectionAlbums.tenantId, tenantId),
           eq(collectionAlbums.id, key),
         )
       : and(
-          eq(collectionAlbums.organizationId, organizationId),
+          eq(collectionAlbums.tenantId, tenantId),
           eq(collectionAlbums.alias, key),
         );
     const rows = await db.select().from(collectionAlbums).where(where).limit(1);
@@ -199,7 +199,7 @@ export function createCollectionService(
   }
 
   async function loadGroupById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<CollectionGroup> {
     const rows = await db
@@ -207,7 +207,7 @@ export function createCollectionService(
       .from(collectionGroups)
       .where(
         and(
-          eq(collectionGroups.organizationId, organizationId),
+          eq(collectionGroups.tenantId, tenantId),
           eq(collectionGroups.id, id),
         ),
       )
@@ -218,7 +218,7 @@ export function createCollectionService(
   }
 
   async function loadEntryById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<CollectionEntry> {
     const rows = await db
@@ -226,7 +226,7 @@ export function createCollectionService(
       .from(collectionEntries)
       .where(
         and(
-          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.tenantId, tenantId),
           eq(collectionEntries.id, id),
         ),
       )
@@ -237,7 +237,7 @@ export function createCollectionService(
   }
 
   async function loadMilestoneById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<CollectionMilestone> {
     const rows = await db
@@ -245,7 +245,7 @@ export function createCollectionService(
       .from(collectionMilestones)
       .where(
         and(
-          eq(collectionMilestones.organizationId, organizationId),
+          eq(collectionMilestones.tenantId, tenantId),
           eq(collectionMilestones.id, id),
         ),
       )
@@ -258,15 +258,15 @@ export function createCollectionService(
   // ─── Album CRUD ───────────────────────────────────────────────
 
   async function createAlbum(
-    organizationId: string,
+    tenantId: string,
     input: CreateAlbumInput,
   ): Promise<CollectionAlbum> {
     try {
-      const __sortKey = await appendKey(db, { table: collectionAlbums, sortColumn: collectionAlbums.sortOrder, scopeWhere: eq(collectionAlbums.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: collectionAlbums, sortColumn: collectionAlbums.sortOrder, scopeWhere: eq(collectionAlbums.tenantId, tenantId)! });
       const [row] = await db
         .insert(collectionAlbums)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           description: input.description ?? null,
@@ -289,11 +289,11 @@ export function createCollectionService(
   }
 
   async function updateAlbum(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateAlbumInput,
   ): Promise<CollectionAlbum> {
-    const existing = await loadAlbumByKey(organizationId, id);
+    const existing = await loadAlbumByKey(tenantId, id);
     const values: Partial<typeof collectionAlbums.$inferInsert> = {};
     if (patch.name !== undefined) values.name = patch.name;
     if (patch.alias !== undefined) values.alias = patch.alias;
@@ -313,7 +313,7 @@ export function createCollectionService(
         .where(
           and(
             eq(collectionAlbums.id, existing.id),
-            eq(collectionAlbums.organizationId, organizationId),
+            eq(collectionAlbums.tenantId, tenantId),
           ),
         )
         .returning();
@@ -328,16 +328,16 @@ export function createCollectionService(
   }
 
   async function moveAlbum(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<CollectionAlbum> {
-    const existing = await loadAlbumByKey(organizationId, key);
+    const existing = await loadAlbumByKey(tenantId, key);
     return moveAndReturn<CollectionAlbum>(db, {
       table: collectionAlbums,
       sortColumn: collectionAlbums.sortOrder,
       idColumn: collectionAlbums.id,
-      partitionWhere: eq(collectionAlbums.organizationId, organizationId)!,
+      partitionWhere: eq(collectionAlbums.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new CollectionAlbumNotFound(sid),
@@ -345,7 +345,7 @@ export function createCollectionService(
   }
 
   async function deleteAlbum(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -353,7 +353,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionAlbums.id, id),
-          eq(collectionAlbums.organizationId, organizationId),
+          eq(collectionAlbums.tenantId, tenantId),
         ),
       )
       .returning({ id: collectionAlbums.id });
@@ -361,11 +361,11 @@ export function createCollectionService(
   }
 
   async function listAlbums(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<CollectionAlbum>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(collectionAlbums.organizationId, organizationId)];
+    const conds: SQL[] = [eq(collectionAlbums.tenantId, tenantId)];
     const seek = cursorWhere(params.cursor, collectionAlbums.createdAt, collectionAlbums.id);
     if (seek) conds.push(seek);
     if (params.q) {
@@ -383,26 +383,26 @@ export function createCollectionService(
   }
 
   async function getAlbum(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CollectionAlbum> {
-    return loadAlbumByKey(organizationId, key);
+    return loadAlbumByKey(tenantId, key);
   }
 
   // ─── Group CRUD ───────────────────────────────────────────────
 
   async function createGroup(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
     input: CreateGroupInput,
   ): Promise<CollectionGroup> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
-    const __sortKey = await appendKey(db, { table: collectionGroups, sortColumn: collectionGroups.sortOrder, scopeWhere: eq(collectionGroups.organizationId, organizationId)! });
+    const album = await loadAlbumByKey(tenantId, albumKey);
+    const __sortKey = await appendKey(db, { table: collectionGroups, sortColumn: collectionGroups.sortOrder, scopeWhere: eq(collectionGroups.tenantId, tenantId)! });
     const [row] = await db
       .insert(collectionGroups)
       .values({
         albumId: album.id,
-        organizationId,
+        tenantId,
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
@@ -415,7 +415,7 @@ export function createCollectionService(
   }
 
   async function updateGroup(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateGroupInput,
   ): Promise<CollectionGroup> {
@@ -426,7 +426,7 @@ export function createCollectionService(
     if (patch.metadata !== undefined) values.metadata = patch.metadata;
 
     if (Object.keys(values).length === 0) {
-      return loadGroupById(organizationId, id);
+      return loadGroupById(tenantId, id);
     }
 
     const [row] = await db
@@ -435,7 +435,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionGroups.id, id),
-          eq(collectionGroups.organizationId, organizationId),
+          eq(collectionGroups.tenantId, tenantId),
         ),
       )
       .returning();
@@ -444,17 +444,17 @@ export function createCollectionService(
   }
 
   async function moveGroup(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<CollectionGroup> {
-    const existing = await loadGroupById(organizationId, id);
+    const existing = await loadGroupById(tenantId, id);
     return moveAndReturn<CollectionGroup>(db, {
       table: collectionGroups,
       sortColumn: collectionGroups.sortOrder,
       idColumn: collectionGroups.id,
       partitionWhere: and(
-        eq(collectionGroups.organizationId, organizationId),
+        eq(collectionGroups.tenantId, tenantId),
         eq(collectionGroups.albumId, existing.albumId),
       )!,
       id: existing.id,
@@ -464,7 +464,7 @@ export function createCollectionService(
   }
 
   async function deleteGroup(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -472,7 +472,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionGroups.id, id),
-          eq(collectionGroups.organizationId, organizationId),
+          eq(collectionGroups.tenantId, tenantId),
         ),
       )
       .returning({ id: collectionGroups.id });
@@ -480,10 +480,10 @@ export function createCollectionService(
   }
 
   async function listGroups(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
   ): Promise<CollectionGroup[]> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
     return db
       .select()
       .from(collectionGroups)
@@ -494,11 +494,11 @@ export function createCollectionService(
   // ─── Entry CRUD ───────────────────────────────────────────────
 
   async function assertGroupInAlbum(
-    organizationId: string,
+    tenantId: string,
     albumId: string,
     groupId: string,
   ): Promise<void> {
-    const g = await loadGroupById(organizationId, groupId);
+    const g = await loadGroupById(tenantId, groupId);
     if (g.albumId !== albumId) {
       throw new CollectionInvalidInput(
         `group ${groupId} does not belong to album ${albumId}`,
@@ -507,7 +507,7 @@ export function createCollectionService(
   }
 
   async function assertItemDefinitionInOrg(
-    organizationId: string,
+    tenantId: string,
     defId: string,
   ): Promise<void> {
     const rows = await db
@@ -516,7 +516,7 @@ export function createCollectionService(
       .where(
         and(
           eq(itemDefinitions.id, defId),
-          eq(itemDefinitions.organizationId, organizationId),
+          eq(itemDefinitions.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -528,29 +528,29 @@ export function createCollectionService(
   }
 
   async function createEntry(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
     input: CreateEntryInput,
   ): Promise<CollectionEntry> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
     if (input.groupId) {
-      await assertGroupInAlbum(organizationId, album.id, input.groupId);
+      await assertGroupInAlbum(tenantId, album.id, input.groupId);
     }
     if (input.triggerItemDefinitionId) {
       await assertItemDefinitionInOrg(
-        organizationId,
+        tenantId,
         input.triggerItemDefinitionId,
       );
     }
 
     try {
-      const __sortKey = await appendKey(db, { table: collectionEntries, sortColumn: collectionEntries.sortOrder, scopeWhere: eq(collectionEntries.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: collectionEntries, sortColumn: collectionEntries.sortOrder, scopeWhere: eq(collectionEntries.tenantId, tenantId)! });
       const [row] = await db
         .insert(collectionEntries)
         .values({
           albumId: album.id,
           groupId: input.groupId ?? null,
-          organizationId,
+          tenantId,
           alias: input.alias ?? null,
           name: input.name,
           description: input.description ?? null,
@@ -575,7 +575,7 @@ export function createCollectionService(
   }
 
   async function bulkCreateEntries(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
     inputs: CreateEntryInput[],
   ): Promise<CollectionEntry[]> {
@@ -583,23 +583,23 @@ export function createCollectionService(
     // conflict reporting. 500-entry cap is enforced in the zod schema.
     const result: CollectionEntry[] = [];
     for (const input of inputs) {
-      result.push(await createEntry(organizationId, albumKey, input));
+      result.push(await createEntry(tenantId, albumKey, input));
     }
     return result;
   }
 
   async function updateEntry(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateEntryInput,
   ): Promise<CollectionEntry> {
-    const existing = await loadEntryById(organizationId, id);
+    const existing = await loadEntryById(tenantId, id);
     if (patch.groupId !== undefined && patch.groupId !== null) {
-      await assertGroupInAlbum(organizationId, existing.albumId, patch.groupId);
+      await assertGroupInAlbum(tenantId, existing.albumId, patch.groupId);
     }
     if (patch.triggerItemDefinitionId) {
       await assertItemDefinitionInOrg(
-        organizationId,
+        tenantId,
         patch.triggerItemDefinitionId,
       );
     }
@@ -629,7 +629,7 @@ export function createCollectionService(
         .where(
           and(
             eq(collectionEntries.id, existing.id),
-            eq(collectionEntries.organizationId, organizationId),
+            eq(collectionEntries.tenantId, tenantId),
           ),
         )
         .returning();
@@ -644,21 +644,21 @@ export function createCollectionService(
   }
 
   async function moveEntry(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<CollectionEntry> {
-    const existing = await loadEntryById(organizationId, id);
+    const existing = await loadEntryById(tenantId, id);
     // Scope by (albumId, groupId) — entries can sit directly under an album
     // (groupId = null) or in a specific group, both are independent partitions.
     const partitionWhere = existing.groupId
       ? and(
-          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.tenantId, tenantId),
           eq(collectionEntries.albumId, existing.albumId),
           eq(collectionEntries.groupId, existing.groupId),
         )!
       : and(
-          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.tenantId, tenantId),
           eq(collectionEntries.albumId, existing.albumId),
           isNull(collectionEntries.groupId),
         )!;
@@ -674,7 +674,7 @@ export function createCollectionService(
   }
 
   async function deleteEntry(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -682,7 +682,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionEntries.id, id),
-          eq(collectionEntries.organizationId, organizationId),
+          eq(collectionEntries.tenantId, tenantId),
         ),
       )
       .returning({ id: collectionEntries.id });
@@ -690,11 +690,11 @@ export function createCollectionService(
   }
 
   async function listEntries(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
     filter?: { groupId?: string | null },
   ): Promise<CollectionEntry[]> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
     const where = [eq(collectionEntries.albumId, album.id)];
     if (filter?.groupId === null) {
       where.push(isNull(collectionEntries.groupId));
@@ -711,24 +711,24 @@ export function createCollectionService(
   // ─── Milestone CRUD ───────────────────────────────────────────
 
   async function createMilestone(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
     input: CreateMilestoneInput,
   ): Promise<CollectionMilestone> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
 
     // Scope-level FK consistency (zod already checked which field must be
     // present/absent; we additionally verify the referenced row is in the
     // same album + org).
     if (input.scope === "entry") {
-      const entry = await loadEntryById(organizationId, input.entryId!);
+      const entry = await loadEntryById(tenantId, input.entryId!);
       if (entry.albumId !== album.id) {
         throw new CollectionInvalidInput(
           "milestone entry must belong to the album",
         );
       }
     } else if (input.scope === "group") {
-      const group = await loadGroupById(organizationId, input.groupId!);
+      const group = await loadGroupById(tenantId, input.groupId!);
       if (group.albumId !== album.id) {
         throw new CollectionInvalidInput(
           "milestone group must belong to the album",
@@ -742,11 +742,11 @@ export function createCollectionService(
     const threshold =
       input.scope === "entry" ? 1 : Math.max(1, input.threshold ?? 1);
 
-    const __sortKey = await appendKey(db, { table: collectionMilestones, sortColumn: collectionMilestones.sortOrder, scopeWhere: eq(collectionMilestones.organizationId, organizationId)! });
+    const __sortKey = await appendKey(db, { table: collectionMilestones, sortColumn: collectionMilestones.sortOrder, scopeWhere: eq(collectionMilestones.tenantId, tenantId)! });
     const [row] = await db
       .insert(collectionMilestones)
       .values({
-        organizationId,
+        tenantId,
         albumId: album.id,
         scope: input.scope,
         groupId: input.scope === "group" ? input.groupId! : null,
@@ -764,11 +764,11 @@ export function createCollectionService(
   }
 
   async function updateMilestone(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateMilestoneInput,
   ): Promise<CollectionMilestone> {
-    const existing = await loadMilestoneById(organizationId, id);
+    const existing = await loadMilestoneById(tenantId, id);
     const values: Partial<typeof collectionMilestones.$inferInsert> = {};
     if (patch.threshold !== undefined) {
       // 'entry' scope is forever threshold=1 regardless of what the caller
@@ -789,7 +789,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionMilestones.id, existing.id),
-          eq(collectionMilestones.organizationId, organizationId),
+          eq(collectionMilestones.tenantId, tenantId),
         ),
       )
       .returning();
@@ -798,11 +798,11 @@ export function createCollectionService(
   }
 
   async function moveMilestone(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<CollectionMilestone> {
-    const existing = await loadMilestoneById(organizationId, id);
+    const existing = await loadMilestoneById(tenantId, id);
     // Milestones partition by their attachment scope:
     //   scope='album' → (albumId only, groupId/entryId NULL)
     //   scope='group' → (albumId, groupId)
@@ -810,27 +810,27 @@ export function createCollectionService(
     let partitionWhere: SQL;
     if (existing.scope === "album") {
       partitionWhere = and(
-        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.tenantId, tenantId),
         eq(collectionMilestones.albumId, existing.albumId),
         eq(collectionMilestones.scope, "album"),
       )!;
     } else if (existing.scope === "group" && existing.groupId) {
       partitionWhere = and(
-        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.tenantId, tenantId),
         eq(collectionMilestones.albumId, existing.albumId),
         eq(collectionMilestones.groupId, existing.groupId),
         eq(collectionMilestones.scope, "group"),
       )!;
     } else if (existing.scope === "entry" && existing.entryId) {
       partitionWhere = and(
-        eq(collectionMilestones.organizationId, organizationId),
+        eq(collectionMilestones.tenantId, tenantId),
         eq(collectionMilestones.albumId, existing.albumId),
         eq(collectionMilestones.entryId, existing.entryId),
         eq(collectionMilestones.scope, "entry"),
       )!;
     } else {
       // Fallback: org-wide scope (shouldn't happen if scope FK invariants hold)
-      partitionWhere = eq(collectionMilestones.organizationId, organizationId)!;
+      partitionWhere = eq(collectionMilestones.tenantId, tenantId)!;
     }
     return moveAndReturn<CollectionMilestone>(db, {
       table: collectionMilestones,
@@ -844,7 +844,7 @@ export function createCollectionService(
   }
 
   async function deleteMilestone(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
     const deleted = await db
@@ -852,7 +852,7 @@ export function createCollectionService(
       .where(
         and(
           eq(collectionMilestones.id, id),
-          eq(collectionMilestones.organizationId, organizationId),
+          eq(collectionMilestones.tenantId, tenantId),
         ),
       )
       .returning({ id: collectionMilestones.id });
@@ -860,10 +860,10 @@ export function createCollectionService(
   }
 
   async function listMilestones(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
   ): Promise<CollectionMilestone[]> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
     return db
       .select()
       .from(collectionMilestones)
@@ -878,7 +878,7 @@ export function createCollectionService(
   // ─── User progress reads ──────────────────────────────────────
 
   async function listUnlockedEntryIds(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     albumId: string,
   ): Promise<Map<string, CollectionUserEntry>> {
@@ -887,7 +887,7 @@ export function createCollectionService(
       .from(collectionUserEntries)
       .where(
         and(
-          eq(collectionUserEntries.organizationId, organizationId),
+          eq(collectionUserEntries.tenantId, tenantId),
           eq(collectionUserEntries.endUserId, endUserId),
           eq(collectionUserEntries.albumId, albumId),
         ),
@@ -896,7 +896,7 @@ export function createCollectionService(
   }
 
   async function listClaimedMilestones(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     albumId: string,
   ): Promise<Map<string, CollectionUserMilestone>> {
@@ -905,7 +905,7 @@ export function createCollectionService(
       .from(collectionUserMilestones)
       .where(
         and(
-          eq(collectionUserMilestones.organizationId, organizationId),
+          eq(collectionUserMilestones.tenantId, tenantId),
           eq(collectionUserMilestones.endUserId, endUserId),
           eq(collectionUserMilestones.albumId, albumId),
         ),
@@ -920,7 +920,7 @@ export function createCollectionService(
    * Non-stackables contribute multiple rows; stackables one singleton row.
    */
   async function currentInventoryQuantity(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     definitionId: string,
   ): Promise<number> {
@@ -933,7 +933,7 @@ export function createCollectionService(
       .from(itemInventories)
       .where(
         and(
-          eq(itemInventories.organizationId, organizationId),
+          eq(itemInventories.tenantId, tenantId),
           eq(itemInventories.endUserId, endUserId),
           eq(itemInventories.definitionId, definitionId),
         ),
@@ -947,7 +947,7 @@ export function createCollectionService(
    * on this call). On-conflict losers are silently skipped.
    */
   async function insertUnlocks(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     entries: CollectionEntry[],
     source: string | null,
@@ -961,7 +961,7 @@ export function createCollectionService(
         entries.map((e) => ({
           entryId: e.id,
           endUserId,
-          organizationId,
+          tenantId,
           albumId: e.albumId,
           unlockedAt: now,
           source,
@@ -986,7 +986,7 @@ export function createCollectionService(
    * On conflict, returns { inserted: false, already: row }.
    */
   async function reserveMilestoneClaim(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     milestone: CollectionMilestone,
     deliveryMode: DeliveryMode,
@@ -997,7 +997,7 @@ export function createCollectionService(
       .values({
         milestoneId: milestone.id,
         endUserId,
-        organizationId,
+        tenantId,
         albumId: milestone.albumId,
         claimedAt: now,
         deliveryMode,
@@ -1018,7 +1018,7 @@ export function createCollectionService(
    * threshold.
    */
   async function countUnlockedForMilestone(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     milestone: CollectionMilestone,
   ): Promise<number> {
@@ -1028,7 +1028,7 @@ export function createCollectionService(
         .from(collectionUserEntries)
         .where(
           and(
-            eq(collectionUserEntries.organizationId, organizationId),
+            eq(collectionUserEntries.tenantId, tenantId),
             eq(collectionUserEntries.endUserId, endUserId),
             eq(collectionUserEntries.entryId, milestone.entryId!),
           ),
@@ -1046,7 +1046,7 @@ export function createCollectionService(
         )
         .where(
           and(
-            eq(collectionUserEntries.organizationId, organizationId),
+            eq(collectionUserEntries.tenantId, tenantId),
             eq(collectionUserEntries.endUserId, endUserId),
             eq(collectionEntries.groupId, milestone.groupId!),
           ),
@@ -1059,7 +1059,7 @@ export function createCollectionService(
       .from(collectionUserEntries)
       .where(
         and(
-          eq(collectionUserEntries.organizationId, organizationId),
+          eq(collectionUserEntries.tenantId, tenantId),
           eq(collectionUserEntries.endUserId, endUserId),
           eq(collectionUserEntries.albumId, milestone.albumId),
         ),
@@ -1075,7 +1075,7 @@ export function createCollectionService(
    *   - album-scope milestones for the album
    */
   async function loadAffectedMilestones(
-    organizationId: string,
+    tenantId: string,
     albumId: string,
     unlockedEntries: CollectionEntry[],
   ): Promise<CollectionMilestone[]> {
@@ -1094,7 +1094,7 @@ export function createCollectionService(
       .from(collectionMilestones)
       .where(
         and(
-          eq(collectionMilestones.organizationId, organizationId),
+          eq(collectionMilestones.tenantId, tenantId),
           eq(collectionMilestones.albumId, albumId),
         ),
       );
@@ -1119,7 +1119,7 @@ export function createCollectionService(
    *   - Non-recursive: short-circuits on `collection.*` sources
    */
   async function onItemGranted(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: GrantHookEntry[];
     source: string;
@@ -1143,7 +1143,7 @@ export function createCollectionService(
         .from(collectionEntries)
         .where(
           and(
-            eq(collectionEntries.organizationId, params.organizationId),
+            eq(collectionEntries.tenantId, params.tenantId),
             eq(collectionEntries.triggerType, "item"),
             inArray(collectionEntries.triggerItemDefinitionId, defIds),
           ),
@@ -1163,7 +1163,7 @@ export function createCollectionService(
         let owned = qtyCache.get(e.triggerItemDefinitionId);
         if (owned === undefined) {
           owned = await currentInventoryQuantity(
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             e.triggerItemDefinitionId,
           );
@@ -1186,7 +1186,7 @@ export function createCollectionService(
       const now = new Date();
       for (const [albumId, entries] of byAlbum) {
         const newlyUnlocked = await insertUnlocks(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           entries,
           params.source,
@@ -1196,7 +1196,7 @@ export function createCollectionService(
 
         if (events) {
           await events.emit("collection.entry_unlocked", {
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             albumId,
             entryIds: newlyUnlocked.map((e) => e.id),
@@ -1205,7 +1205,7 @@ export function createCollectionService(
         }
 
         const affected = await loadAffectedMilestones(
-          params.organizationId,
+          params.tenantId,
           albumId,
           newlyUnlocked,
         );
@@ -1214,14 +1214,14 @@ export function createCollectionService(
 
         for (const m of autoMilestones) {
           const count = await countUnlockedForMilestone(
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             m,
           );
           if (count < m.threshold) continue;
 
           const { inserted } = await reserveMilestoneClaim(
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             m,
             "mail",
@@ -1235,7 +1235,7 @@ export function createCollectionService(
           // outer try/catch below — it must not break the main grant.
           const mailSvc = mailSvcGetter();
           if (!mailSvc) continue;
-          await mailSvc.sendUnicast(params.organizationId, params.endUserId, {
+          await mailSvc.sendUnicast(params.tenantId, params.endUserId, {
             title: `图鉴奖励：${m.label ?? m.scope}`,
             content:
               m.label ??
@@ -1267,11 +1267,11 @@ export function createCollectionService(
    * can follow up with an Admin rescan + manual mail if needed.
    */
   async function syncFromInventory(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     albumKey: string;
   }): Promise<CollectionEntry[]> {
-    const album = await loadAlbumByKey(params.organizationId, params.albumKey);
+    const album = await loadAlbumByKey(params.tenantId, params.albumKey);
 
     // Load entries in this album that are item-trigger and have a def set.
     const entries = await db
@@ -1303,7 +1303,7 @@ export function createCollectionService(
       .from(itemInventories)
       .where(
         and(
-          eq(itemInventories.organizationId, params.organizationId),
+          eq(itemInventories.tenantId, params.tenantId),
           eq(itemInventories.endUserId, params.endUserId),
           inArray(itemInventories.definitionId, defIds),
         ),
@@ -1319,7 +1319,7 @@ export function createCollectionService(
     if (eligible.length === 0) return [];
 
     return insertUnlocks(
-      params.organizationId,
+      params.tenantId,
       params.endUserId,
       eligible,
       "collection.sync",
@@ -1338,7 +1338,7 @@ export function createCollectionService(
    *      the hook to no-op on recursion.
    */
   async function claimMilestone(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     milestoneId: string;
   }): Promise<{
@@ -1346,13 +1346,13 @@ export function createCollectionService(
     claimedAt: Date;
   }> {
     const m = await loadMilestoneById(
-      params.organizationId,
+      params.tenantId,
       params.milestoneId,
     );
     if (m.autoClaim) throw new CollectionMilestoneAutoOnly();
 
     const count = await countUnlockedForMilestone(
-      params.organizationId,
+      params.tenantId,
       params.endUserId,
       m,
     );
@@ -1360,7 +1360,7 @@ export function createCollectionService(
 
     const now = new Date();
     const { inserted } = await reserveMilestoneClaim(
-      params.organizationId,
+      params.tenantId,
       params.endUserId,
       m,
       "manual",
@@ -1370,7 +1370,7 @@ export function createCollectionService(
 
     const items = m.rewardItems;
     await itemSvc.grantItems({
-      organizationId: params.organizationId,
+      tenantId: params.tenantId,
       endUserId: params.endUserId,
       grants: items,
       source: MILESTONE_SOURCE,
@@ -1379,7 +1379,7 @@ export function createCollectionService(
 
     if (events) {
       await events.emit("collection.milestone_claimed", {
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         endUserId: params.endUserId,
         albumId: m.albumId,
         milestoneId: m.id,
@@ -1392,7 +1392,7 @@ export function createCollectionService(
   // ─── Stats ────────────────────────────────────────────────────
 
   async function getStats(
-    organizationId: string,
+    tenantId: string,
     albumKey: string,
   ): Promise<{
     albumId: string;
@@ -1405,7 +1405,7 @@ export function createCollectionService(
       claimedCount: number;
     }>;
   }> {
-    const album = await loadAlbumByKey(organizationId, albumKey);
+    const album = await loadAlbumByKey(tenantId, albumKey);
 
     // Distinct unlocker count for the album.
     const [usersRow] = await db
@@ -1471,11 +1471,11 @@ export function createCollectionService(
    * `hiddenUntilUnlocked` is true and the entry is locked for this user.
    */
   async function getAlbumDetailForUser(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     albumKey: string;
   }) {
-    const album = await loadAlbumByKey(params.organizationId, params.albumKey);
+    const album = await loadAlbumByKey(params.tenantId, params.albumKey);
 
     const [groups, entries, milestones, unlockedMap, claimedMap] =
       await Promise.all([
@@ -1505,12 +1505,12 @@ export function createCollectionService(
             collectionMilestones.sortOrder,
           ),
         listUnlockedEntryIds(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           album.id,
         ),
         listClaimedMilestones(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           album.id,
         ),
@@ -1593,21 +1593,21 @@ export function createCollectionService(
   }
 
   async function listAlbumsForUser(params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
   }) {
     // Client view: fetch up to the server cap; client doesn't paginate.
-    const { items: albums } = await listAlbums(params.organizationId, { limit: 200 });
+    const { items: albums } = await listAlbums(params.tenantId, { limit: 200 });
     const result = [];
     for (const album of albums) {
       const [unlockedMap, claimedMap, entryCountRow] = await Promise.all([
         listUnlockedEntryIds(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           album.id,
         ),
         listClaimedMilestones(
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           album.id,
         ),

@@ -25,7 +25,7 @@ function tier(partial: Partial<RankTier> & Pick<RankTier, "id" | "order">): Rank
 function state(partial: Partial<RankPlayerState>): RankPlayerState {
   return {
     id: partial.id ?? "st",
-    organizationId: partial.organizationId ?? "org",
+    tenantId: partial.tenantId ?? "org",
     seasonId: partial.seasonId ?? "s1",
     endUserId: partial.endUserId ?? "u",
     tierId: partial.tierId ?? null,

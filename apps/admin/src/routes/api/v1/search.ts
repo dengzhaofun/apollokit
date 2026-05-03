@@ -1,5 +1,5 @@
 /**
- * `/api/search` — fumadocs 默认 Orama 搜索端点。
+ * `/api/v1/search` — fumadocs 默认 Orama 搜索端点。
  *
  * createFromSource 自动根据 loader 的 i18n 配置构建双语索引
  * (zh / en 各一份,按 request 的 ?locale= 分发)。
@@ -21,7 +21,7 @@ const searchAPI = createFromSource(source, {
   },
 })
 
-export const Route = createFileRoute('/api/search')({
+export const Route = createFileRoute('/api/v1/search')({
   server: {
     handlers: {
       GET: async ({ request }) => searchAPI.GET(request),

@@ -39,6 +39,7 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     activeOrganizationId: text("active_organization_id"),
+    activeTeamId: text("active_team_id"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -96,6 +97,67 @@ export const organization = pgTable(
   (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
 );
 
+export const organizationRole = pgTable(
+  "organization_role",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    permission: text("permission").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").$onUpdate(
+      () => /* @__PURE__ */ new Date(),
+    ),
+  },
+  (table) => [
+    index("organizationRole_organizationId_idx").on(table.organizationId),
+    index("organizationRole_role_idx").on(table.role),
+  ],
+);
+
+export const team = pgTable(
+  "team",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").$onUpdate(
+      () => /* @__PURE__ */ new Date(),
+    ),
+  },
+  (table) => [index("team_organizationId_idx").on(table.organizationId)],
+);
+
+export const teamMember = pgTable(
+  "team_member",
+  {
+    id: text("id").primaryKey(),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => team.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // ⚠ Manual addition (preserve across auth:generate overwrites):
+    // team-level role string (e.g. "owner" / "admin" / "operator" /
+    // "viewer" / "member" / dynamic custom role name). Resolved via
+    // ac/roles in `../auth/ac.ts`. Default "member" = operator alias.
+    // Better Auth's CLI generator does not honor `additionalFields`
+    // on teamMember in 1.6.x, so we add the column here by hand.
+    role: text("role").default("member").notNull(),
+    createdAt: timestamp("created_at"),
+  },
+  (table) => [
+    index("teamMember_teamId_idx").on(table.teamId),
+    index("teamMember_userId_idx").on(table.userId),
+  ],
+);
+
 export const member = pgTable(
   "member",
   {
@@ -106,14 +168,7 @@ export const member = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    // Default flipped from "member" → "operator" alongside the
-    // four-role rollout (see auth/ac.ts). The `member` value is still
-    // accepted (registered as an alias of operator) so historical rows
-    // keep working until the data migration in this PR backfills them
-    // — but anything inserted from now on (Better Auth's invite-accept
-    // when `role` is omitted, raw inserts in tests / fixtures) lands
-    // on the canonical name.
-    role: text("role").default("operator").notNull(),
+    role: text("role").default("member").notNull(),
     createdAt: timestamp("created_at").notNull(),
   },
   (table) => [
@@ -131,6 +186,7 @@ export const invitation = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
     role: text("role"),
+    teamId: text("team_id"),
     status: text("status").default("pending").notNull(),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -180,6 +236,7 @@ export const apikey = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  teamMembers: many(teamMember),
   members: many(member),
   invitations: many(invitation),
 }));
@@ -199,8 +256,39 @@ export const accountRelations = relations(account, ({ one }) => ({
 }));
 
 export const organizationRelations = relations(organization, ({ many }) => ({
+  organizationRoles: many(organizationRole),
+  teams: many(team),
   members: many(member),
   invitations: many(invitation),
+}));
+
+export const organizationRoleRelations = relations(
+  organizationRole,
+  ({ one }) => ({
+    organization: one(organization, {
+      fields: [organizationRole.organizationId],
+      references: [organization.id],
+    }),
+  }),
+);
+
+export const teamRelations = relations(team, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [team.organizationId],
+    references: [organization.id],
+  }),
+  teamMembers: many(teamMember),
+}));
+
+export const teamMemberRelations = relations(teamMember, ({ one }) => ({
+  team: one(team, {
+    fields: [teamMember.teamId],
+    references: [team.id],
+  }),
+  user: one(user, {
+    fields: [teamMember.userId],
+    references: [user.id],
+  }),
 }));
 
 export const memberRelations = relations(member, ({ one }) => ({

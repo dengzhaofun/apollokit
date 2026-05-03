@@ -62,7 +62,7 @@ export function useActivities(route: any) {
     filterDefs: ACTIVITY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Activity>>(
-        `/api/activity?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/activity?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -73,7 +73,7 @@ export function useAllActivities() {
     queryKey: [...KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<Activity>>(`/api/activity?${buildQs({ limit: 200 })}`)
+        .get<Page<Activity>>(`/api/v1/activity?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -81,7 +81,7 @@ export function useAllActivities() {
 export function useActivity(key: string) {
   return useQuery({
     queryKey: [...KEY, key],
-    queryFn: () => api.get<Activity>(`/api/activity/${key}`),
+    queryFn: () => api.get<Activity>(`/api/v1/activity/${key}`),
     enabled: !!key,
   })
 }
@@ -90,7 +90,7 @@ export function useCreateActivity() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateActivityInput) =>
-      api.post<Activity>("/api/activity", input),
+      api.post<Activity>("/api/v1/activity", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
@@ -99,7 +99,7 @@ export function useUpdateActivity() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...patch }: UpdateActivityInput & { id: string }) =>
-      api.patch<Activity>(`/api/activity/${id}`, patch),
+      api.patch<Activity>(`/api/v1/activity/${id}`, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
@@ -107,7 +107,7 @@ export function useUpdateActivity() {
 export function useDeleteActivity() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/activity/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/activity/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
@@ -121,7 +121,7 @@ export function useActivityLifecycle() {
     }: {
       key: string
       action: "publish" | "unpublish" | "archive"
-    }) => api.post<Activity>(`/api/activity/${key}/publish`, { action }),
+    }) => api.post<Activity>(`/api/v1/activity/${key}/publish`, { action }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
@@ -160,7 +160,7 @@ export function useActivityNodes(key: string) {
   return useQuery({
     queryKey: ["activity-nodes", key],
     queryFn: () =>
-      api.get<ActivityNodeListResponse>(`/api/activity/${key}/nodes`),
+      api.get<ActivityNodeListResponse>(`/api/v1/activity/${key}/nodes`),
     enabled: !!key,
   })
 }
@@ -169,7 +169,7 @@ export function useCreateActivityNode(activityKey: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateNodeInput) =>
-      api.post<ActivityNode>(`/api/activity/${activityKey}/nodes`, input),
+      api.post<ActivityNode>(`/api/v1/activity/${activityKey}/nodes`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
   })
@@ -189,7 +189,7 @@ export function useUpdateActivityNode(activityKey: string) {
       refId?: string | null
       unlockRule?: Record<string, unknown> | null
     }) =>
-      api.patch<ActivityNode>(`/api/activity/nodes/${id}`, patch),
+      api.patch<ActivityNode>(`/api/v1/activity/nodes/${id}`, patch),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
   })
@@ -199,7 +199,7 @@ export function useDeleteActivityNode(activityKey: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (nodeId: string) =>
-      api.delete(`/api/activity/nodes/${nodeId}`),
+      api.delete(`/api/v1/activity/nodes/${nodeId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-nodes", activityKey] }),
   })
@@ -212,7 +212,7 @@ export function useActivitySchedules(key: string) {
     queryKey: ["activity-schedules", key],
     queryFn: () =>
       api.get<{ items: ActivitySchedule[] }>(
-        `/api/activity/${key}/schedules`,
+        `/api/v1/activity/${key}/schedules`,
       ),
     select: (data) => data.items,
     enabled: !!key,
@@ -224,7 +224,7 @@ export function useCreateActivitySchedule(activityKey: string) {
   return useMutation({
     mutationFn: (input: CreateScheduleInput) =>
       api.post<ActivitySchedule>(
-        `/api/activity/${activityKey}/schedules`,
+        `/api/v1/activity/${activityKey}/schedules`,
         input,
       ),
     onSuccess: () =>
@@ -235,7 +235,7 @@ export function useCreateActivitySchedule(activityKey: string) {
 export function useDeleteActivitySchedule(activityKey: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/activity/schedules/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/activity/schedules/${id}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-schedules", activityKey] }),
   })
@@ -248,7 +248,7 @@ export function useActivityForUser(activityKey: string, endUserId: string) {
     queryKey: ["activity-view", activityKey, endUserId],
     queryFn: () =>
       api.get<ActivityViewForUser>(
-        `/api/activity/${activityKey}/view/${encodeURIComponent(endUserId)}`,
+        `/api/v1/activity/${activityKey}/view/${encodeURIComponent(endUserId)}`,
       ),
     enabled: !!activityKey && !!endUserId,
   })
@@ -262,7 +262,7 @@ export function useActivityTemplates() {
   return useQuery({
     queryKey: TEMPLATES_KEY,
     queryFn: () =>
-      api.get<{ items: ActivityTemplate[] }>("/api/activity/templates"),
+      api.get<{ items: ActivityTemplate[] }>("/api/v1/activity/templates"),
     select: (d) => d.items,
   })
 }
@@ -271,7 +271,7 @@ export function useCreateActivityTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateActivityTemplateInput) =>
-      api.post<ActivityTemplate>("/api/activity/templates", input),
+      api.post<ActivityTemplate>("/api/v1/activity/templates", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: TEMPLATES_KEY }),
   })
 }
@@ -279,7 +279,7 @@ export function useCreateActivityTemplate() {
 export function useDeleteActivityTemplate() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/activity/templates/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/activity/templates/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: TEMPLATES_KEY }),
   })
 }
@@ -289,7 +289,7 @@ export function useInstantiateActivityTemplate() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<{ activityAlias: string; activityId: string }>(
-        `/api/activity/templates/${id}/instantiate`,
+        `/api/v1/activity/templates/${id}/instantiate`,
       ),
     onSuccess: () => qc.invalidateQueries(),
   })
@@ -311,7 +311,7 @@ export function useActivityAnalytics(key: string) {
   return useQuery({
     queryKey: ["activity-analytics", key],
     queryFn: () =>
-      api.get<ActivityAnalytics>(`/api/activity/${key}/analytics`),
+      api.get<ActivityAnalytics>(`/api/v1/activity/${key}/analytics`),
     enabled: !!key,
   })
 }
@@ -338,7 +338,7 @@ export function useActivityMembers(
       params.set("limit", String(limit))
       const qs = params.toString()
       return api.get<MembersPage>(
-        `/api/activity/${key}/members${qs ? `?${qs}` : ""}`,
+        `/api/v1/activity/${key}/members${qs ? `?${qs}` : ""}`,
       )
     },
     enabled: !!key,
@@ -349,7 +349,7 @@ export function useLeaveActivity(activityKey: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (endUserId: string) =>
-      api.post<unknown>(`/api/activity/${activityKey}/leave`, { endUserId }),
+      api.post<unknown>(`/api/v1/activity/${activityKey}/leave`, { endUserId }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-members", activityKey] }),
   })
@@ -360,7 +360,7 @@ export function useRedeemQueueNumber(activityKey: string) {
   return useMutation({
     mutationFn: (endUserId: string) =>
       api.post<{ endUserId: string; queueNumber: string; usedAt: string }>(
-        `/api/activity/${activityKey}/members/${encodeURIComponent(endUserId)}/redeem-queue`,
+        `/api/v1/activity/${activityKey}/members/${encodeURIComponent(endUserId)}/redeem-queue`,
       ),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["activity-members", activityKey] }),
@@ -377,7 +377,7 @@ export function useActivityTickRun() {
         advanced: number
         scheduleFired: number
         errors: number
-      }>("/api/activity/tick/run"),
+      }>("/api/v1/activity/tick/run"),
     onSuccess: () => qc.invalidateQueries(),
   })
 }

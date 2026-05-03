@@ -11,7 +11,7 @@ export function registerLevelSubscribers(
 
   events.on("level.cleared", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "level.cleared",
       source: "level",
@@ -27,7 +27,7 @@ export function registerLevelSubscribers(
 
   events.on("level.rewards_claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "level.rewards_claimed",
       source: "level",

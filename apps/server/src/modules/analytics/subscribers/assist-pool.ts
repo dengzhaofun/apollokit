@@ -11,7 +11,7 @@ export function registerAssistPoolSubscribers(
 
   events.on("assist_pool.instance_created", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       // `endUserId` is the pool owner — the one who "initiated" it.
       endUserId: p.endUserId,
       event: "assist_pool.instance_created",
@@ -27,7 +27,7 @@ export function registerAssistPoolSubscribers(
 
   events.on("assist_pool.contributed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       // Session actor = the contributor (initiator), not the pool owner.
       // Keeps per-user contribution timeseries queryable.
       endUserId: p.initiatorEndUserId,
@@ -45,7 +45,7 @@ export function registerAssistPoolSubscribers(
 
   events.on("assist_pool.completed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "assist_pool.completed",
       source: "assist-pool",
@@ -59,7 +59,7 @@ export function registerAssistPoolSubscribers(
 
   events.on("assist_pool.expired", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "assist_pool.expired",
       // `outcome` stays "ok" — expiry is a normal lifecycle terminal

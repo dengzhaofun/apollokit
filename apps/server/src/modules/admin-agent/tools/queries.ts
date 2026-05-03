@@ -6,7 +6,7 @@
  * have an `execute` that the AI SDK runs server-side. We dispatch to
  * each module's service singleton for the actual DB read.
  *
- * **organizationId** is closed over from the per-request execution
+ * **tenantId** is closed over from the per-request execution
  * context (passed in by `service.streamChat`); we don't trust the
  * model to provide it.
  *
@@ -104,7 +104,7 @@ const MODULE_ENUM_DESCRIPTION =
   QUERYABLE_MODULES.map((m) => MODULE_LABELS[m] ?? m).join(", ");
 
 export function createQueryTools(execCtx: ChatExecutionContext) {
-  const orgId = execCtx.organizationId;
+  const orgId = execCtx.tenantId;
 
   return {
     queryModule: tool({
@@ -188,7 +188,7 @@ export function createQueryTools(execCtx: ChatExecutionContext) {
         try {
           return {
             analytics: await activityService.getActivityAnalytics({
-              organizationId: orgId,
+              tenantId: orgId,
               activityIdOrAlias: key,
             }),
           };

@@ -12,7 +12,7 @@
  *   - POST /messages/:id/read  — idempotent read mark
  *   - POST /messages/:id/claim — atomic reward claim
  *
- * The organizationId is resolved from the client credential (via
+ * The tenantId is resolved from the client credential (via
  * middleware), not from a session.
  */
 
@@ -80,7 +80,7 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { since, limit } = c.req.valid("query");
     const { items } = await mailService.listInbox(orgId, endUserId, {
@@ -110,7 +110,7 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const row = await mailService.getInboxMessage(orgId, endUserId, id);
@@ -139,7 +139,7 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const state = await mailService.markRead(orgId, endUserId, id);
@@ -166,7 +166,7 @@ mailClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const result = await mailService.claim(orgId, endUserId, id);

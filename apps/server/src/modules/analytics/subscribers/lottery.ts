@@ -11,7 +11,7 @@ export function registerLotterySubscribers(
 
   events.on("lottery.pulled", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "lottery.pulled",
       source: "lottery",

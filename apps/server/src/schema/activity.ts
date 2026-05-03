@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Per-activity membership & optional queue-number config, embedded in
@@ -85,9 +85,9 @@ export const activityConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -122,12 +122,12 @@ export const activityConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("activity_configs_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("activity_configs_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
-    index("activity_configs_org_status_start_idx").on(
-      table.organizationId,
+    index("activity_configs_tenant_status_start_idx").on(
+      table.tenantId,
       table.status,
       table.startAt,
     ),
@@ -158,7 +158,7 @@ export const activityNodes = pgTable(
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activityConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias").notNull(),
     nodeType: text("node_type").notNull(),
     refId: uuid("ref_id"),
@@ -224,7 +224,7 @@ export const activityMembers = pgTable(
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activityConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
     lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
@@ -256,8 +256,8 @@ export const activityMembers = pgTable(
       table.activityId,
       table.status,
     ),
-    index("activity_members_org_user_idx").on(
-      table.organizationId,
+    index("activity_members_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     // Activity-scoped unique queue number. Partial index avoids
@@ -288,7 +288,7 @@ export const activityUserRewards = pgTable(
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activityConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     rewardKey: text("reward_key").notNull(),
     rewards: jsonb("rewards").$type<RewardEntry[]>().notNull(),
@@ -300,8 +300,8 @@ export const activityUserRewards = pgTable(
       table.endUserId,
       table.rewardKey,
     ),
-    index("activity_user_rewards_org_user_idx").on(
-      table.organizationId,
+    index("activity_user_rewards_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -322,7 +322,7 @@ export const activityPointLogs = pgTable(
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activityConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     delta: bigint("delta", { mode: "number" }).notNull(),
     balanceAfter: bigint("balance_after", { mode: "number" }).notNull(),
@@ -372,7 +372,7 @@ export const activitySchedules = pgTable(
     activityId: uuid("activity_id")
       .notNull()
       .references(() => activityConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias").notNull(),
     triggerKind: text("trigger_kind").notNull(),
     cronExpr: text("cron_expr"),
@@ -551,9 +551,9 @@ export const activityTemplates = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -606,8 +606,8 @@ export const activityTemplates = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("activity_templates_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("activity_templates_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
     index("activity_templates_due_idx")

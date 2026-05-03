@@ -285,13 +285,20 @@ function CreateAdminKeyDialog({
 }) {
   const [name, setName] = useState("")
   const create = useCreateAdminKey()
+  const { data: session } = authClient.useSession()
 
   const handleCreate = async () => {
+    const tenantId = session?.session.activeTeamId
+    if (!tenantId) return
     const org = await authClient.organization.getFullOrganization()
     if (!org.data?.id) return
     const result = await create.mutateAsync({
       name,
       organizationId: org.data.id,
+      // Project (Better Auth team) scope is the only way these keys
+      // work — middleware rejects unscoped/legacy keys. Stamp the
+      // active project id into metadata at creation time.
+      tenantId,
     })
     setName("")
     if (result?.key) {

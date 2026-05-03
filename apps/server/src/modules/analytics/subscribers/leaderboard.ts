@@ -11,7 +11,7 @@ export function registerLeaderboardSubscribers(
 
   events.on("leaderboard.contributed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "leaderboard.contributed",
       source: "leaderboard",

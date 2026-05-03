@@ -19,7 +19,7 @@ type DoStreamResult = Awaited<
   ReturnType<NonNullable<MockLanguageModelV3["doStream"]>>
 >;
 
-const EXEC_CTX: ChatExecutionContext = { organizationId: "org-test" };
+const EXEC_CTX: ChatExecutionContext = { tenantId: "org-test" };
 
 /**
  * Wrap a `MockLanguageModelV3` in the same `AIProvider` interface the
@@ -165,7 +165,7 @@ describe("createAdminAgentService", () => {
   test("form-fill mention path: snapshot in prompt + propose-only patch tool", async () => {
     // Register a fake check-in mention descriptor that maps to the
     // "check-in" patch-tool module. Avoid the real db-backed descriptor —
-    // a fake organizationId would return null. This isolates the chat
+    // a fake tenantId would return null. This isolates the chat
     // wiring from the DB layer.
     const fakeDescriptor: MentionDescriptor = {
       type: "check-in",
@@ -175,7 +175,7 @@ describe("createAdminAgentService", () => {
         return [];
       },
       async fetch(orgId, id) {
-        return { id, organizationId: orgId, name: "七日签到" };
+        return { id, tenantId: orgId, name: "七日签到" };
       },
       toResult(item) {
         const it = item as { id: string; name: string };

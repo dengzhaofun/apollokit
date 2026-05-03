@@ -1,13 +1,13 @@
 /**
  * C-end client routes for the collection module.
  *
- * Mounted at /api/client/collection. Auth pattern:
+ * Mounted at /api/v1/client/collection. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Exposed surface:
@@ -43,7 +43,7 @@ import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-h
 
 function serializeAlbum(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -58,7 +58,7 @@ function serializeAlbum(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -76,7 +76,7 @@ function serializeAlbum(row: {
 function serializeGroup(row: {
   id: string;
   albumId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -88,7 +88,7 @@ function serializeGroup(row: {
   return {
     id: row.id,
     albumId: row.albumId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     icon: row.icon,
@@ -126,10 +126,10 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const rows = await collectionService.listAlbumsForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
     });
 
@@ -165,11 +165,11 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const detail = await collectionService.getAlbumDetailForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       albumKey: key,
     });
@@ -206,11 +206,11 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const entries = await collectionService.syncFromInventory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       albumKey: key,
     });
@@ -240,11 +240,11 @@ collectionClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
     const result = await collectionService.claimMilestone({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       milestoneId: id,
     });

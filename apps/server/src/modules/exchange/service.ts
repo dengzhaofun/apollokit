@@ -70,7 +70,7 @@ type ExchangeDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "exchange.executed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       exchangeId: string;
       optionId: string;
@@ -99,14 +99,14 @@ export function createExchangeService(
    */
   async function deductOne(
     entry: RewardEntry,
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     source: string,
     sourceId: string,
   ): Promise<void> {
     if (entry.type === "currency") {
       await currencySvc.deduct({
-        organizationId,
+        tenantId,
         endUserId,
         deductions: [{ currencyId: entry.id, amount: entry.count }],
         source,
@@ -114,7 +114,7 @@ export function createExchangeService(
       });
     } else if (entry.type === "item") {
       await itemSvc.deductItems({
-        organizationId,
+        tenantId,
         endUserId,
         deductions: [{ definitionId: entry.id, quantity: entry.count }],
         source,
@@ -130,14 +130,14 @@ export function createExchangeService(
   /** Grant one RewardEntry, routed by type. */
   async function grantOne(
     entry: RewardEntry,
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     source: string,
     sourceId: string,
   ): Promise<void> {
     if (entry.type === "currency") {
       await currencySvc.grant({
-        organizationId,
+        tenantId,
         endUserId,
         grants: [{ currencyId: entry.id, amount: entry.count }],
         source,
@@ -145,7 +145,7 @@ export function createExchangeService(
       });
     } else if (entry.type === "item") {
       await itemSvc.grantItems({
-        organizationId,
+        tenantId,
         endUserId,
         grants: [{ definitionId: entry.id, quantity: entry.count }],
         source,
@@ -162,16 +162,16 @@ export function createExchangeService(
   }
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<ExchangeConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(exchangeConfigs.organizationId, organizationId),
+          eq(exchangeConfigs.tenantId, tenantId),
           eq(exchangeConfigs.id, key),
         )
       : and(
-          eq(exchangeConfigs.organizationId, organizationId),
+          eq(exchangeConfigs.tenantId, tenantId),
           eq(exchangeConfigs.alias, key),
         );
     const rows = await db.select().from(exchangeConfigs).where(where).limit(1);
@@ -195,14 +195,14 @@ export function createExchangeService(
     // ─── Config CRUD ──────────────────────────────────────────
 
     async createConfig(
-      organizationId: string,
+      tenantId: string,
       input: CreateConfigInput,
     ): Promise<ExchangeConfig> {
       try {
         const [row] = await db
           .insert(exchangeConfigs)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -221,11 +221,11 @@ export function createExchangeService(
     },
 
     async updateConfig(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdateConfigInput,
     ): Promise<ExchangeConfig> {
-      const existing = await loadConfigByKey(organizationId, id);
+      const existing = await loadConfigByKey(tenantId, id);
       const updateValues: Partial<typeof exchangeConfigs.$inferInsert> = {};
       if (patch.name !== undefined) updateValues.name = patch.name;
       if (patch.alias !== undefined) updateValues.alias = patch.alias;
@@ -243,7 +243,7 @@ export function createExchangeService(
           .where(
             and(
               eq(exchangeConfigs.id, existing.id),
-              eq(exchangeConfigs.organizationId, organizationId),
+              eq(exchangeConfigs.tenantId, tenantId),
             ),
           )
           .returning();
@@ -257,13 +257,13 @@ export function createExchangeService(
       }
     },
 
-    async deleteConfig(organizationId: string, id: string): Promise<void> {
+    async deleteConfig(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(exchangeConfigs)
         .where(
           and(
             eq(exchangeConfigs.id, id),
-            eq(exchangeConfigs.organizationId, organizationId),
+            eq(exchangeConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: exchangeConfigs.id });
@@ -271,11 +271,11 @@ export function createExchangeService(
     },
 
     async listConfigs(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<ExchangeConfig>> {
       const limit = clampLimit(params.limit);
-      const conditions: SQL[] = [eq(exchangeConfigs.organizationId, organizationId)];
+      const conditions: SQL[] = [eq(exchangeConfigs.tenantId, tenantId)];
       const seek = cursorWhere(params.cursor, exchangeConfigs.createdAt, exchangeConfigs.id);
       if (seek) conditions.push(seek);
       if (params.q) {
@@ -293,26 +293,26 @@ export function createExchangeService(
     },
 
     async getConfig(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<ExchangeConfig> {
-      return loadConfigByKey(organizationId, idOrAlias);
+      return loadConfigByKey(tenantId, idOrAlias);
     },
 
     // ─── Option CRUD ──────────────────────────────────────────
 
     async createOption(
-      organizationId: string,
+      tenantId: string,
       configKey: string,
       input: CreateOptionInput,
     ): Promise<ExchangeOption> {
-      const config = await loadConfigByKey(organizationId, configKey);
-      const __sortKey = await appendKey(db, { table: exchangeOptions, sortColumn: exchangeOptions.sortOrder, scopeWhere: eq(exchangeOptions.organizationId, organizationId)! });
+      const config = await loadConfigByKey(tenantId, configKey);
+      const __sortKey = await appendKey(db, { table: exchangeOptions, sortColumn: exchangeOptions.sortOrder, scopeWhere: eq(exchangeOptions.tenantId, tenantId)! });
       const [row] = await db
         .insert(exchangeOptions)
         .values({
           configId: config.id,
-          organizationId,
+          tenantId,
           name: input.name,
           description: input.description ?? null,
           costItems: input.costItems,
@@ -329,12 +329,12 @@ export function createExchangeService(
     },
 
     async updateOption(
-      organizationId: string,
+      tenantId: string,
       optionId: string,
       patch: UpdateOptionInput,
     ): Promise<ExchangeOption> {
       const existing = await loadOptionById(optionId);
-      if (existing.organizationId !== organizationId) {
+      if (existing.tenantId !== tenantId) {
         throw new ExchangeOptionNotFound(optionId);
       }
 
@@ -363,12 +363,12 @@ export function createExchangeService(
     },
 
     async moveOption(
-      organizationId: string,
+      tenantId: string,
       optionId: string,
       body: MoveBody,
     ): Promise<ExchangeOption> {
       const existing = await loadOptionById(optionId);
-      if (existing.organizationId !== organizationId) {
+      if (existing.tenantId !== tenantId) {
         throw new ExchangeOptionNotFound(optionId);
       }
       // Scope by configId so reordering is per-exchange-config.
@@ -377,7 +377,7 @@ export function createExchangeService(
         sortColumn: exchangeOptions.sortOrder,
         idColumn: exchangeOptions.id,
         partitionWhere: and(
-          eq(exchangeOptions.organizationId, organizationId),
+          eq(exchangeOptions.tenantId, tenantId),
           eq(exchangeOptions.configId, existing.configId),
         )!,
         id: optionId,
@@ -387,7 +387,7 @@ export function createExchangeService(
     },
 
     async deleteOption(
-      organizationId: string,
+      tenantId: string,
       optionId: string,
     ): Promise<void> {
       const deleted = await db
@@ -395,7 +395,7 @@ export function createExchangeService(
         .where(
           and(
             eq(exchangeOptions.id, optionId),
-            eq(exchangeOptions.organizationId, organizationId),
+            eq(exchangeOptions.tenantId, tenantId),
           ),
         )
         .returning({ id: exchangeOptions.id });
@@ -403,11 +403,11 @@ export function createExchangeService(
     },
 
     async listOptions(
-      organizationId: string,
+      tenantId: string,
       configKey: string,
       params: PageParams = {},
     ): Promise<Page<ExchangeOption>> {
-      const config = await loadConfigByKey(organizationId, configKey);
+      const config = await loadConfigByKey(tenantId, configKey);
       const limit = clampLimit(params.limit);
       const conditions: SQL[] = [eq(exchangeOptions.configId, config.id)];
       const seek = cursorWhere(params.cursor, exchangeOptions.createdAt, exchangeOptions.id);
@@ -431,7 +431,7 @@ export function createExchangeService(
     // ─── Exchange execution ───────────────────────────────────
 
     async execute(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       optionId: string;
       idempotencyKey?: string;
@@ -464,7 +464,7 @@ export function createExchangeService(
 
       // 2. Load and validate option + parent config
       const option = await loadOptionById(params.optionId);
-      if (option.organizationId !== params.organizationId) {
+      if (option.tenantId !== params.tenantId) {
         throw new ExchangeOptionNotFound(params.optionId);
       }
       if (!option.isActive) {
@@ -472,7 +472,7 @@ export function createExchangeService(
       }
 
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         option.configId,
       );
       if (!config.isActive) {
@@ -489,7 +489,7 @@ export function createExchangeService(
           .values({
             optionId: option.id,
             endUserId: params.endUserId,
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             count: 1,
           })
           .onConflictDoUpdate({
@@ -548,7 +548,7 @@ export function createExchangeService(
         for (const cost of costItems) {
           await deductOne(
             cost,
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             "exchange",
             exchangeId,
@@ -560,7 +560,7 @@ export function createExchangeService(
         for (const deducted of deductedEntries) {
           await grantOne(
             deducted,
-            params.organizationId,
+            params.tenantId,
             params.endUserId,
             "exchange_rollback",
             exchangeId,
@@ -600,7 +600,7 @@ export function createExchangeService(
       for (const reward of rewardItems) {
         await grantOne(
           reward,
-          params.organizationId,
+          params.tenantId,
           params.endUserId,
           "exchange",
           exchangeId,
@@ -609,7 +609,7 @@ export function createExchangeService(
 
       if (events) {
         await events.emit("exchange.executed", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           exchangeId,
           optionId: option.id,
@@ -630,7 +630,7 @@ export function createExchangeService(
     },
 
     async getUserOptionState(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       optionId: string;
     }): Promise<{ optionId: string; endUserId: string; count: number }> {

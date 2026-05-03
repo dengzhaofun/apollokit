@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the CMS module.
  *
- * Mounted at `/api/cms`. Auth pattern matches every other admin module:
+ * Mounted at `/api/v1/cms`. Auth pattern matches every other admin module:
  * `requireAdminOrApiKey` (Better Auth session OR `ak_` API key) →
  * `requirePermissionByMethod("cms")` (org-scoped role check). Handlers read the active
  * org from the session.
@@ -48,7 +48,7 @@ const TAG = "CMS";
 function serializeType(row: CmsType) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -65,7 +65,7 @@ function serializeType(row: CmsType) {
 function serializeEntry(row: CmsEntry) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     typeId: row.typeId,
     typeAlias: row.typeAlias,
     alias: row.alias,

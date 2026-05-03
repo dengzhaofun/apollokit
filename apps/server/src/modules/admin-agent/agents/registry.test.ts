@@ -4,7 +4,7 @@ import { createAgentForRequest } from "./registry";
 import { isAdminAgentName } from "./types";
 import type { ChatExecutionContext } from "../types";
 
-const EXEC_CTX: ChatExecutionContext = { organizationId: "org-test" };
+const EXEC_CTX: ChatExecutionContext = { tenantId: "org-test" };
 
 describe("isAdminAgentName", () => {
   test("accepts known agent names", () => {

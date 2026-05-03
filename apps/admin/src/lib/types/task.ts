@@ -25,7 +25,7 @@ export interface TaskRewardTier {
 
 export interface TaskCategory {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -40,7 +40,7 @@ export interface TaskCategory {
 
 export interface TaskDefinition {
   id: string
-  organizationId: string
+  tenantId: string
   categoryId: string | null
   parentId: string | null
   alias: string | null
@@ -130,7 +130,7 @@ export interface DefinitionListResponse {
 export interface TaskAssignment {
   taskId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   assignedAt: string
   expiresAt: string | null
   revokedAt: string | null

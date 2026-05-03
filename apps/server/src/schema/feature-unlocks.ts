@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Feature unlocks —— 记录"玩家解锁了哪个功能/入口"。
@@ -27,9 +27,9 @@ export const featureUnlocks = pgTable(
     id: uuid("id")
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
     /** 解锁的 feature 标识 —— 由租户业务定义,server 不约束格式。 */
     featureKey: text("feature_key").notNull(),
@@ -42,14 +42,14 @@ export const featureUnlocks = pgTable(
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("feature_unlocks_org_user_key_idx").on(
-      t.organizationId,
+    uniqueIndex("feature_unlocks_tenant_user_key_idx").on(
+      t.tenantId,
       t.endUserId,
       t.featureKey,
     ),
     // 列表查询「某用户解锁了哪些 feature」
-    index("feature_unlocks_org_user_idx").on(t.organizationId, t.endUserId),
+    index("feature_unlocks_tenant_user_idx").on(t.tenantId, t.endUserId),
     // 列表查询「全 org 谁解锁了 feature X」
-    index("feature_unlocks_org_key_idx").on(t.organizationId, t.featureKey),
+    index("feature_unlocks_tenant_key_idx").on(t.tenantId, t.featureKey),
   ],
 );

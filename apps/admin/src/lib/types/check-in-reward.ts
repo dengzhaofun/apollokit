@@ -3,7 +3,7 @@ import type { RewardEntry } from "./rewards"
 export interface CheckInReward {
   id: string
   configId: string
-  organizationId: string
+  tenantId: string
   dayNumber: number
   rewardItems: RewardEntry[]
   metadata: Record<string, unknown> | null

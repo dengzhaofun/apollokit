@@ -107,7 +107,7 @@ export type TriggerGraph = {
 
 export type TriggerRule = {
   id: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   status: TriggerRuleStatus
@@ -164,7 +164,7 @@ export type DryRunResponse = {
 
 export type TriggerExecution = {
   id: string
-  organizationId: string
+  tenantId: string
   ruleId: string
   ruleVersion: number
   eventName: string

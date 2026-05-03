@@ -25,7 +25,11 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ""
 
 export const authClient = createAuthClient({
   plugins: [
-    organizationClient(),
+    organizationClient({
+      teams: {
+        enabled: true,
+      },
+    }),
     apiKeyClient(),
     lastLoginMethodClient(),
     oneTapClient({

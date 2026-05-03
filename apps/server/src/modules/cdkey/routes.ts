@@ -43,7 +43,7 @@ const TAG_LOGS = "CDKey Logs";
 function serializeBatch(row: CdkeyBatch) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -64,7 +64,7 @@ function serializeBatch(row: CdkeyBatch) {
 function serializeCode(row: CdkeyCode) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     batchId: row.batchId,
     code: row.code,
     status: row.status,
@@ -77,7 +77,7 @@ function serializeCode(row: CdkeyCode) {
 function serializeLog(row: CdkeyRedemptionLog) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     endUserId: row.endUserId,
     batchId: row.batchId,
     codeId: row.codeId,
@@ -395,7 +395,7 @@ cdkeyRouter.openapi(
     const orgId = getOrgId(c);
     const { code, endUserId, idempotencyKey } = c.req.valid("json");
     const result = await cdkeyService.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       code,
       idempotencyKey,

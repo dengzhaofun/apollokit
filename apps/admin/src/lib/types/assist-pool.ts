@@ -19,7 +19,7 @@ export type AssistContributionPolicy =
 
 export type AssistPoolConfig = {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -41,7 +41,7 @@ export type AssistPoolConfig = {
 
 export type AssistPoolInstance = {
   id: string
-  organizationId: string
+  tenantId: string
   configId: string
   initiatorEndUserId: string
   status: AssistPoolStatus

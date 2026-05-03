@@ -32,7 +32,7 @@ export const patchCharacterConfigExecute = tool({
   execute: async ({ key, patch }, { experimental_context }) => {
     const { execCtx, deps } = experimental_context as AgentToolContext;
     const updated = await deps.character.updateCharacter(
-      execCtx.organizationId,
+      execCtx.tenantId,
       key,
       patch,
     );

@@ -308,7 +308,7 @@ export const ClientMilestoneIdParamSchema = z.object({
 export const AlbumResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -331,7 +331,7 @@ export const GroupResponseSchema = z
   .object({
     id: z.string(),
     albumId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
@@ -353,7 +353,7 @@ export const EntryResponseSchema = z
     id: z.string(),
     albumId: z.string(),
     groupId: z.string().nullable(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -379,7 +379,7 @@ export const EntryListResponseSchema = z
 export const MilestoneResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     albumId: z.string(),
     scope: z.string(),
     groupId: z.string().nullable(),

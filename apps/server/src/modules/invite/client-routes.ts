@@ -1,13 +1,13 @@
 /**
  * C-end client routes for the invite module.
  *
- * Mounted at /api/client/invite. Auth pattern:
+ * Mounted at /api/v1/client/invite. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -35,7 +35,7 @@ import { clientAuthHeaders as authHeaders } from "../../middleware/client-auth-h
 
 function serializeRelationship(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   inviterEndUserId: string;
   inviteeEndUserId: string;
   inviterCodeSnapshot: string;
@@ -46,7 +46,7 @@ function serializeRelationship(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     inviterEndUserId: row.inviterEndUserId,
     inviteeEndUserId: row.inviteeEndUserId,
     inviterCodeSnapshot: row.inviterCodeSnapshot,
@@ -103,7 +103,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const result = await inviteService.getOrCreateMyCode(orgId, endUserId);
     return c.json(ok({
@@ -132,7 +132,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const result = await inviteService.resetCode(orgId, endUserId);
     return c.json(ok({
@@ -161,7 +161,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const summary = await inviteService.getSummary(orgId, endUserId);
     return c.json(ok(serializeSummary(summary)), 200);
@@ -188,7 +188,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { limit, offset } = c.req.valid("query");
     const { items, total } = await inviteService.listMyInvitees(orgId, endUserId, {
@@ -230,7 +230,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const body = c.req.valid("json");
     const { relationship, alreadyBound } = await inviteService.bind(orgId, {
       code: body.code,
@@ -271,7 +271,7 @@ inviteClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const body = c.req.valid("json");
     const { relationship, alreadyQualified } = await inviteService.qualify(orgId, {
       inviteeEndUserId: getEndUserId(c),

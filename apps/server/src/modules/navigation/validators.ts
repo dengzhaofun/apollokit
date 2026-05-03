@@ -41,7 +41,7 @@ export const RoutePathQuerySchema = z.object({
 export const FavoriteResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     userId: z.string(),
     routePath: z.string(),
     sortOrder: FractionalKeySchema,

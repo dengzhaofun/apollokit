@@ -145,7 +145,7 @@ declare module "../../lib/event-bus" {
      * conversion by attribute later (e.g. "lift among country=JP").
      */
     "experiment.exposure": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       experimentId: string;
       experimentKey: string;
@@ -289,16 +289,16 @@ export function createExperimentService(d: ExperimentDeps) {
   // ─── Internal helpers ──────────────────────────────────────────
 
   async function loadByKey(
-    organizationId: string,
+    tenantId: string,
     keyOrId: string,
   ): Promise<Experiment> {
     const where = looksLikeId(keyOrId)
       ? and(
-          eq(experiments.organizationId, organizationId),
+          eq(experiments.tenantId, tenantId),
           eq(experiments.id, keyOrId),
         )
       : and(
-          eq(experiments.organizationId, organizationId),
+          eq(experiments.tenantId, tenantId),
           eq(experiments.key, keyOrId),
         );
     const rows = await db.select().from(experiments).where(where).limit(1);
@@ -318,7 +318,7 @@ export function createExperimentService(d: ExperimentDeps) {
   }
 
   async function loadVariantById(
-    organizationId: string,
+    tenantId: string,
     variantId: string,
   ): Promise<ExperimentVariant> {
     const rows = await db
@@ -327,7 +327,7 @@ export function createExperimentService(d: ExperimentDeps) {
       .where(
         and(
           eq(experimentVariants.id, variantId),
-          eq(experimentVariants.organizationId, organizationId),
+          eq(experimentVariants.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -385,14 +385,14 @@ export function createExperimentService(d: ExperimentDeps) {
     // ─── Experiment CRUD ──────────────────────────────────────
 
     async createExperiment(
-      organizationId: string,
+      tenantId: string,
       input: CreateExperimentInput,
     ): Promise<Experiment> {
       try {
         const [row] = await db
           .insert(experiments)
           .values({
-            organizationId,
+            tenantId,
             key: input.key,
             name: input.name,
             description: input.description ?? null,
@@ -416,10 +416,10 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async getExperiment(
-      organizationId: string,
+      tenantId: string,
       keyOrId: string,
     ): Promise<Experiment & { variantsCount: number; assignedUsers: number }> {
-      const row = await loadByKey(organizationId, keyOrId);
+      const row = await loadByKey(tenantId, keyOrId);
       const [vMap, aMap] = await Promise.all([
         countVariantsByExperiment([row.id]),
         countAssignmentsByExperiment([row.id]),
@@ -432,13 +432,13 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async listExperiments(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { status?: ExperimentStatus } = {},
     ): Promise<
       Page<Experiment & { variantsCount: number; assignedUsers: number }>
     > {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(experiments.organizationId, organizationId)];
+      const conds: SQL[] = [eq(experiments.tenantId, tenantId)];
       if (filter.status) {
         conds.push(eq(experiments.status, filter.status));
       }
@@ -477,11 +477,11 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async updateExperiment(
-      organizationId: string,
+      tenantId: string,
       idOrKey: string,
       patch: UpdateExperimentInput,
     ): Promise<Experiment> {
-      const existing = await loadByKey(organizationId, idOrKey);
+      const existing = await loadByKey(tenantId, idOrKey);
       const status = existing.status as ExperimentStatus;
 
       // Locked-while-running fields.
@@ -538,7 +538,7 @@ export function createExperimentService(d: ExperimentDeps) {
         .where(
           and(
             eq(experiments.id, existing.id),
-            eq(experiments.organizationId, organizationId),
+            eq(experiments.tenantId, tenantId),
           ),
         )
         .returning();
@@ -547,10 +547,10 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async deleteExperiment(
-      organizationId: string,
+      tenantId: string,
       idOrKey: string,
     ): Promise<void> {
-      const existing = await loadByKey(organizationId, idOrKey);
+      const existing = await loadByKey(tenantId, idOrKey);
       // Guard: only draft / archived experiments can be deleted. Running /
       // paused experiments must be archived first — admin UI should not
       // expose the button, but enforce server-side too.
@@ -562,7 +562,7 @@ export function createExperimentService(d: ExperimentDeps) {
         .where(
           and(
             eq(experiments.id, existing.id),
-            eq(experiments.organizationId, organizationId),
+            eq(experiments.tenantId, tenantId),
           ),
         )
         .returning({ id: experiments.id });
@@ -570,14 +570,14 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async transitionStatus(
-      organizationId: string,
+      tenantId: string,
       idOrKey: string,
       to: ExperimentStatus,
     ): Promise<Experiment> {
       if (!(EXPERIMENT_STATUSES as readonly string[]).includes(to)) {
         throw new ExperimentInvalidInputError(`invalid status: ${to}`);
       }
-      const existing = await loadByKey(organizationId, idOrKey);
+      const existing = await loadByKey(tenantId, idOrKey);
       const from = existing.status as ExperimentStatus;
       assertTransition(from, to);
 
@@ -622,7 +622,7 @@ export function createExperimentService(d: ExperimentDeps) {
         .where(
           and(
             eq(experiments.id, existing.id),
-            eq(experiments.organizationId, organizationId),
+            eq(experiments.tenantId, tenantId),
           ),
         )
         .returning();
@@ -633,10 +633,10 @@ export function createExperimentService(d: ExperimentDeps) {
     // ─── Variants ─────────────────────────────────────────────
 
     async listVariants(
-      organizationId: string,
+      tenantId: string,
       experimentKey: string,
     ): Promise<Array<ExperimentVariant & { assignedUsers: number }>> {
-      const exp = await loadByKey(organizationId, experimentKey);
+      const exp = await loadByKey(tenantId, experimentKey);
       const rows = await loadVariants(exp.id);
       const ids = rows.map((v) => v.id);
       const aMap = await countAssignmentsByVariant(ids);
@@ -644,11 +644,11 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async createVariant(
-      organizationId: string,
+      tenantId: string,
       experimentKey: string,
       input: CreateVariantInput,
     ): Promise<ExperimentVariant> {
-      const exp = await loadByKey(organizationId, experimentKey);
+      const exp = await loadByKey(tenantId, experimentKey);
       // Variants can only be added when not running. Pause first to
       // tweak the variant set; restart to apply.
       if (exp.status === "running") {
@@ -664,7 +664,7 @@ export function createExperimentService(d: ExperimentDeps) {
           .insert(experimentVariants)
           .values({
             experimentId: exp.id,
-            organizationId,
+            tenantId,
             variantKey: input.variantKey,
             name: input.name,
             description: input.description ?? null,
@@ -684,17 +684,17 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async updateVariant(
-      organizationId: string,
+      tenantId: string,
       variantId: string,
       patch: UpdateVariantInput,
     ): Promise<ExperimentVariant> {
-      const existing = await loadVariantById(organizationId, variantId);
+      const existing = await loadVariantById(tenantId, variantId);
 
       // Renaming the variant_key while running is fine ONLY if it's not
       // currently referenced by traffic_allocation. Simpler v1 rule: lock
       // variantKey edits while running.
       if (patch.variantKey !== undefined && patch.variantKey !== existing.variantKey) {
-        const exp = await loadByKey(organizationId, existing.experimentId);
+        const exp = await loadByKey(tenantId, existing.experimentId);
         if (exp.status === "running") {
           throw new ExperimentLockedError("variantKey");
         }
@@ -742,11 +742,11 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async deleteVariant(
-      organizationId: string,
+      tenantId: string,
       variantId: string,
     ): Promise<void> {
-      const existing = await loadVariantById(organizationId, variantId);
-      const exp = await loadByKey(organizationId, existing.experimentId);
+      const existing = await loadVariantById(tenantId, variantId);
+      const exp = await loadByKey(tenantId, existing.experimentId);
       if (exp.status === "running") {
         throw new ExperimentLockedError("variants");
       }
@@ -772,11 +772,11 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async moveVariant(
-      organizationId: string,
+      tenantId: string,
       variantId: string,
       body: VariantMoveInput,
     ): Promise<ExperimentVariant> {
-      const existing = await loadVariantById(organizationId, variantId);
+      const existing = await loadVariantById(tenantId, variantId);
       // Normalize MoveInput → MoveBody (the validator allows three keys
       // but the helper expects one of them present).
       const moveBody = body.before
@@ -812,11 +812,11 @@ export function createExperimentService(d: ExperimentDeps) {
     // ─── Assignments (debug / admin) ──────────────────────────
 
     async listAssignments(
-      organizationId: string,
+      tenantId: string,
       experimentKey: string,
       params: PageParams = {},
     ): Promise<Page<typeof experimentAssignments.$inferSelect>> {
-      const exp = await loadByKey(organizationId, experimentKey);
+      const exp = await loadByKey(tenantId, experimentKey);
       const limit = clampLimit(params.limit);
       const conds: SQL[] = [eq(experimentAssignments.experimentId, exp.id)];
       // Cursor uses (assignedAt, endUserId) — there's no `id` column,
@@ -852,7 +852,7 @@ export function createExperimentService(d: ExperimentDeps) {
     // ─── Core: evaluate ──────────────────────────────────────
 
     async evaluate(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       keys: string[],
       attributes?: TargetingAttributes,
@@ -874,7 +874,7 @@ export function createExperimentService(d: ExperimentDeps) {
         .from(experiments)
         .where(
           and(
-            eq(experiments.organizationId, organizationId),
+            eq(experiments.tenantId, tenantId),
             inArray(experiments.key, keys),
           ),
         );
@@ -1002,7 +1002,7 @@ export function createExperimentService(d: ExperimentDeps) {
           .values({
             experimentId: exp.id,
             endUserId,
-            organizationId,
+            tenantId,
             variantId: chosenVariant.id,
             variantKey: chosenVariant.variantKey,
           })
@@ -1049,7 +1049,7 @@ export function createExperimentService(d: ExperimentDeps) {
 
         if (upserted.inserted && events) {
           await events.emit("experiment.exposure", {
-            organizationId,
+            tenantId,
             endUserId,
             experimentId: exp.id,
             experimentKey: exp.key,
@@ -1066,7 +1066,7 @@ export function createExperimentService(d: ExperimentDeps) {
     // ─── Bucketing preview (admin-only) ──────────────────────
 
     async previewBucketing(
-      organizationId: string,
+      tenantId: string,
       experimentKey: string,
       params: PreviewBucketingInput,
     ): Promise<{
@@ -1074,7 +1074,7 @@ export function createExperimentService(d: ExperimentDeps) {
       distribution: BucketingDistribution;
       targetingHitRate: number | null;
     }> {
-      const exp = await loadByKey(organizationId, experimentKey);
+      const exp = await loadByKey(tenantId, experimentKey);
       if (exp.status === "draft" && exp.trafficAllocation.length === 0) {
         throw new ExperimentNotRunningError(experimentKey);
       }
@@ -1164,12 +1164,12 @@ export function createExperimentService(d: ExperimentDeps) {
     },
 
     async setPrimaryMetric(
-      organizationId: string,
+      tenantId: string,
       idOrKey: string,
       primaryMetric: ExperimentPrimaryMetric | null,
       metricWindowDays?: number,
     ): Promise<Experiment> {
-      const existing = await loadByKey(organizationId, idOrKey);
+      const existing = await loadByKey(tenantId, idOrKey);
       const updateValues: Partial<typeof experiments.$inferInsert> = {
         primaryMetric,
       };
@@ -1182,7 +1182,7 @@ export function createExperimentService(d: ExperimentDeps) {
         .where(
           and(
             eq(experiments.id, existing.id),
-            eq(experiments.organizationId, organizationId),
+            eq(experiments.tenantId, tenantId),
           ),
         )
         .returning();

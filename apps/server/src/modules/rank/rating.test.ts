@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 
 import { createEloStrategy, type RatingInput } from "./rating";
 
-function makeInput(overrides: Partial<RatingInput> & Pick<RatingInput, "endUserId" | "teamId" | "placement" | "win">): RatingInput {
+function makeInput(overrides: Partial<RatingInput> & Pick<RatingInput, "endUserId" | "matchTeamId" | "placement" | "win">): RatingInput {
   return {
     mmrBefore: 1000,
     mmrDeviation: 350,
@@ -22,8 +22,8 @@ describe("elo: two-player 1v1", () => {
   test("equal ratings: winner +K/2, loser -K/2", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "A", teamId: "a", placement: 1, win: true }),
-        makeInput({ endUserId: "B", teamId: "b", placement: 2, win: false }),
+        makeInput({ endUserId: "A", matchTeamId: "a", placement: 1, win: true }),
+        makeInput({ endUserId: "B", matchTeamId: "b", placement: 2, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -39,8 +39,8 @@ describe("elo: two-player 1v1", () => {
   test("huge rating gap: upset gives big delta, expected win gives tiny delta", () => {
     const outUpset = createEloStrategy().compute({
       participants: [
-        makeInput({ endUserId: "Low", teamId: "l", placement: 1, win: true, mmrBefore: 800 }),
-        makeInput({ endUserId: "High", teamId: "h", placement: 2, win: false, mmrBefore: 1600 }),
+        makeInput({ endUserId: "Low", matchTeamId: "l", placement: 1, win: true, mmrBefore: 800 }),
+        makeInput({ endUserId: "High", matchTeamId: "h", placement: 2, win: false, mmrBefore: 1600 }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -50,8 +50,8 @@ describe("elo: two-player 1v1", () => {
 
     const outExpected = createEloStrategy().compute({
       participants: [
-        makeInput({ endUserId: "HighWin", teamId: "h", placement: 1, win: true, mmrBefore: 1600 }),
-        makeInput({ endUserId: "LowLose", teamId: "l", placement: 2, win: false, mmrBefore: 800 }),
+        makeInput({ endUserId: "HighWin", matchTeamId: "h", placement: 1, win: true, mmrBefore: 1600 }),
+        makeInput({ endUserId: "LowLose", matchTeamId: "l", placement: 2, win: false, mmrBefore: 800 }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -64,8 +64,8 @@ describe("elo: two-player 1v1", () => {
   test("draw (both win=false): each side gets 0 delta when ratings equal", () => {
     const out = createEloStrategy().compute({
       participants: [
-        makeInput({ endUserId: "A", teamId: "a", placement: 1, win: false }),
-        makeInput({ endUserId: "B", teamId: "b", placement: 1, win: false }),
+        makeInput({ endUserId: "A", matchTeamId: "a", placement: 1, win: false }),
+        makeInput({ endUserId: "B", matchTeamId: "b", placement: 1, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -83,12 +83,12 @@ describe("elo: team 3v3", () => {
   test("average-team-elo: all winners get same delta when teammates equal", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "A1", teamId: "A", placement: 1, win: true }),
-        makeInput({ endUserId: "A2", teamId: "A", placement: 1, win: true }),
-        makeInput({ endUserId: "A3", teamId: "A", placement: 1, win: true }),
-        makeInput({ endUserId: "B1", teamId: "B", placement: 2, win: false }),
-        makeInput({ endUserId: "B2", teamId: "B", placement: 2, win: false }),
-        makeInput({ endUserId: "B3", teamId: "B", placement: 2, win: false }),
+        makeInput({ endUserId: "A1", matchTeamId: "A", placement: 1, win: true }),
+        makeInput({ endUserId: "A2", matchTeamId: "A", placement: 1, win: true }),
+        makeInput({ endUserId: "A3", matchTeamId: "A", placement: 1, win: true }),
+        makeInput({ endUserId: "B1", matchTeamId: "B", placement: 2, win: false }),
+        makeInput({ endUserId: "B2", matchTeamId: "B", placement: 2, win: false }),
+        makeInput({ endUserId: "B3", matchTeamId: "B", placement: 2, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -108,10 +108,10 @@ describe("elo: team 3v3", () => {
   test("zero-sum: total delta across all players is 0 (equal ratings)", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "A1", teamId: "A", placement: 1, win: true }),
-        makeInput({ endUserId: "A2", teamId: "A", placement: 1, win: true }),
-        makeInput({ endUserId: "B1", teamId: "B", placement: 2, win: false }),
-        makeInput({ endUserId: "B2", teamId: "B", placement: 2, win: false }),
+        makeInput({ endUserId: "A1", matchTeamId: "A", placement: 1, win: true }),
+        makeInput({ endUserId: "A2", matchTeamId: "A", placement: 1, win: true }),
+        makeInput({ endUserId: "B1", matchTeamId: "B", placement: 2, win: false }),
+        makeInput({ endUserId: "B2", matchTeamId: "B", placement: 2, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -127,10 +127,10 @@ describe("elo: multi-team FFA", () => {
   test("4-team FFA: top team gets most, bottom gets least", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "1st", teamId: "T1", placement: 1, win: true }),
-        makeInput({ endUserId: "2nd", teamId: "T2", placement: 2, win: false }),
-        makeInput({ endUserId: "3rd", teamId: "T3", placement: 3, win: false }),
-        makeInput({ endUserId: "4th", teamId: "T4", placement: 4, win: false }),
+        makeInput({ endUserId: "1st", matchTeamId: "T1", placement: 1, win: true }),
+        makeInput({ endUserId: "2nd", matchTeamId: "T2", placement: 2, win: false }),
+        makeInput({ endUserId: "3rd", matchTeamId: "T3", placement: 3, win: false }),
+        makeInput({ endUserId: "4th", matchTeamId: "T4", placement: 4, win: false }),
       ],
       teamCount: 4,
       params: { strategy: "elo", baseK: 32 },
@@ -145,10 +145,10 @@ describe("elo: multi-team FFA", () => {
   test("sum of deltas ≈ 0 (balanced ratings)", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "1st", teamId: "T1", placement: 1, win: true }),
-        makeInput({ endUserId: "2nd", teamId: "T2", placement: 2, win: false }),
-        makeInput({ endUserId: "3rd", teamId: "T3", placement: 3, win: false }),
-        makeInput({ endUserId: "4th", teamId: "T4", placement: 4, win: false }),
+        makeInput({ endUserId: "1st", matchTeamId: "T1", placement: 1, win: true }),
+        makeInput({ endUserId: "2nd", matchTeamId: "T2", placement: 2, win: false }),
+        makeInput({ endUserId: "3rd", matchTeamId: "T3", placement: 3, win: false }),
+        makeInput({ endUserId: "4th", matchTeamId: "T4", placement: 4, win: false }),
       ],
       teamCount: 4,
       params: { strategy: "elo", baseK: 32 },
@@ -163,8 +163,8 @@ describe("elo: performance score modulates delta", () => {
     const elo = createEloStrategy();
     const baseline = elo.compute({
       participants: [
-        makeInput({ endUserId: "A", teamId: "a", placement: 1, win: true }),
-        makeInput({ endUserId: "B", teamId: "b", placement: 2, win: false }),
+        makeInput({ endUserId: "A", matchTeamId: "a", placement: 1, win: true }),
+        makeInput({ endUserId: "B", matchTeamId: "b", placement: 2, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },
@@ -174,14 +174,14 @@ describe("elo: performance score modulates delta", () => {
       participants: [
         makeInput({
           endUserId: "A",
-          teamId: "a",
+          matchTeamId: "a",
           placement: 1,
           win: true,
           performanceScore: 1,
         }),
         makeInput({
           endUserId: "B",
-          teamId: "b",
+          matchTeamId: "b",
           placement: 2,
           win: false,
           performanceScore: 0,
@@ -205,7 +205,7 @@ describe("elo: defensive behavior", () => {
   test("single participant / single team: returns mmr unchanged", () => {
     const out = elo.compute({
       participants: [
-        makeInput({ endUserId: "Solo", teamId: "a", placement: 1, win: true }),
+        makeInput({ endUserId: "Solo", matchTeamId: "a", placement: 1, win: true }),
       ],
       teamCount: 1,
       params: { strategy: "elo", baseK: 32 },
@@ -219,13 +219,13 @@ describe("elo: defensive behavior", () => {
       participants: [
         makeInput({
           endUserId: "A",
-          teamId: "a",
+          matchTeamId: "a",
           placement: 1,
           win: true,
           mmrDeviation: 180,
           mmrVolatility: 0.04,
         }),
-        makeInput({ endUserId: "B", teamId: "b", placement: 2, win: false }),
+        makeInput({ endUserId: "B", matchTeamId: "b", placement: 2, win: false }),
       ],
       teamCount: 2,
       params: { strategy: "elo", baseK: 32 },

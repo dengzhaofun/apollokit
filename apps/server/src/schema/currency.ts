@@ -13,7 +13,7 @@ import {
 
 import { fractionalSortKey } from "./_fractional-sort";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Currency definitions — the org-scoped catalog of spendable currencies.
@@ -36,9 +36,9 @@ export const currencies = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -55,9 +55,9 @@ export const currencies = pgTable(
       .notNull(),
   },
   (table) => [
-    index("currencies_org_idx").on(table.organizationId),
-    uniqueIndex("currencies_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("currencies_tenant_idx").on(table.tenantId),
+    uniqueIndex("currencies_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("currencies_activity_idx").on(table.activityId),
   ],
@@ -66,7 +66,7 @@ export const currencies = pgTable(
 /**
  * Currency wallets — per-user balance rows.
  *
- * Exactly one row per `(organizationId, endUserId, currencyId)`. The unique
+ * Exactly one row per `(tenantId, endUserId, currencyId)`. The unique
  * index below is what enables `INSERT ... ON CONFLICT DO UPDATE` for atomic
  * grants in a single statement.
  *
@@ -84,7 +84,7 @@ export const currencyWallets = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     currencyId: uuid("currency_id")
       .notNull()
@@ -99,12 +99,12 @@ export const currencyWallets = pgTable(
   },
   (table) => [
     uniqueIndex("currency_wallets_org_user_cur_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.endUserId,
       table.currencyId,
     ),
-    index("currency_wallets_org_user_idx").on(
-      table.organizationId,
+    index("currency_wallets_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -129,7 +129,7 @@ export const currencyLedger = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     currencyId: uuid("currency_id").notNull(),
     delta: integer("delta").notNull(),
@@ -148,8 +148,8 @@ export const currencyLedger = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("currency_ledger_org_user_idx").on(
-      table.organizationId,
+    index("currency_ledger_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("currency_ledger_source_idx").on(table.source, table.sourceId),

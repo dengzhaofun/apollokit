@@ -41,7 +41,7 @@ const TAG = "Webhooks";
 function serializeEndpoint(row: WebhooksEndpointView | WebhooksEndpoint) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     url: row.url,
     description: row.description,
@@ -60,7 +60,7 @@ function serializeEndpoint(row: WebhooksEndpointView | WebhooksEndpoint) {
 function serializeDelivery(row: WebhooksDelivery) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     endpointId: row.endpointId,
     eventId: row.eventId,
     eventType: row.eventType,

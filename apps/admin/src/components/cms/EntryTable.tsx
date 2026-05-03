@@ -1,5 +1,5 @@
 /**
- * Entry list — paginated table over /api/cms/types/{typeAlias}/entries.
+ * Entry list — paginated table over /api/v1/cms/types/{typeAlias}/entries.
  * Status / group / tag filters are passed in by the parent route page.
  */
 

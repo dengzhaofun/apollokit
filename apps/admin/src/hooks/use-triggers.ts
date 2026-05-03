@@ -22,7 +22,7 @@ export function useTriggerRules() {
     queryKey: RULES_KEY,
     queryFn: () =>
       api
-        .get<TriggerRuleListResponse>("/api/triggers/rules")
+        .get<TriggerRuleListResponse>("/api/v1/triggers/rules")
         .then((r) => r.items),
   })
 }
@@ -31,7 +31,7 @@ export function useTriggerRules() {
 export function useTriggerRule(id: string | undefined) {
   return useQuery({
     queryKey: id ? ruleKey(id) : ["triggers", "rules", "_disabled"],
-    queryFn: () => api.get<TriggerRule>(`/api/triggers/rules/${id}`),
+    queryFn: () => api.get<TriggerRule>(`/api/v1/triggers/rules/${id}`),
     enabled: Boolean(id),
   })
 }
@@ -40,7 +40,7 @@ export function useCreateTriggerRule() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateTriggerRuleInput) =>
-      api.post<TriggerRule>("/api/triggers/rules", input),
+      api.post<TriggerRule>("/api/v1/triggers/rules", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: RULES_KEY }),
   })
 }
@@ -52,7 +52,7 @@ export function useUpdateTriggerRule() {
       id,
       ...patch
     }: UpdateTriggerRuleInput & { id: string }) =>
-      api.patch<TriggerRule>(`/api/triggers/rules/${id}`, patch),
+      api.patch<TriggerRule>(`/api/v1/triggers/rules/${id}`, patch),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: RULES_KEY })
       qc.invalidateQueries({ queryKey: ruleKey(vars.id) })
@@ -63,7 +63,7 @@ export function useUpdateTriggerRule() {
 export function useArchiveTriggerRule() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/triggers/rules/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/triggers/rules/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: RULES_KEY }),
   })
 }
@@ -77,7 +77,7 @@ export function useDryRunTriggerRule() {
       id: string
       payload: Record<string, unknown>
     }) =>
-      api.post<DryRunResponse>(`/api/triggers/rules/${id}/dry-run`, {
+      api.post<DryRunResponse>(`/api/v1/triggers/rules/${id}/dry-run`, {
         payload,
       }),
   })
@@ -98,7 +98,7 @@ export function useTriggerExecutions(filter?: {
     queryFn: () =>
       api
         .get<TriggerExecutionListResponse>(
-          `/api/triggers/executions${queryString ? `?${queryString}` : ""}`,
+          `/api/v1/triggers/executions${queryString ? `?${queryString}` : ""}`,
         )
         .then((r) => r.items as TriggerExecution[]),
   })

@@ -79,15 +79,15 @@ async function signUpAndOrg(label: string): Promise<SignedInFixture> {
 }
 
 describe("rank admin routes — auth & validation", () => {
-  test("GET /api/rank/tier-configs returns 401 without auth", async () => {
-    const res = await app.request("/api/rank/tier-configs");
+  test("GET /api/v1/rank/tier-configs returns 401 without auth", async () => {
+    const res = await app.request("/api/v1/rank/tier-configs");
     expect(res.status).toBe(401);
   });
 
-  test("POST /api/rank/tier-configs returns 400 on bad body", async () => {
+  test("POST /api/v1/rank/tier-configs returns 400 on bad body", async () => {
     const fx = await signUpAndOrg("bad-body");
     try {
-      const res = await app.request("/api/rank/tier-configs", {
+      const res = await app.request("/api/v1/rank/tier-configs", {
         method: "POST",
         headers: { cookie: fx.cookie, "content-type": "application/json" },
         body: JSON.stringify({ alias: "", name: "" }), // missing ratingParams + tiers
@@ -99,16 +99,16 @@ describe("rank admin routes — auth & validation", () => {
     }
   });
 
-  test("POST /api/rank/settle returns 401 without auth", async () => {
-    const res = await app.request("/api/rank/settle", {
+  test("POST /api/v1/rank/settle returns 401 without auth", async () => {
+    const res = await app.request("/api/v1/rank/settle", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         tierConfigAlias: "x",
         externalMatchId: "m1",
         participants: [
-          { endUserId: "a", teamId: "A", placement: 1, win: true },
-          { endUserId: "b", teamId: "B", placement: 2, win: false },
+          { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });
@@ -129,7 +129,7 @@ describe("rank admin routes — tier config CRUD happy path", () => {
   });
 
   test("POST /tier-configs + GET list + GET by alias", async () => {
-    const createRes = await app.request("/api/rank/tier-configs", {
+    const createRes = await app.request("/api/v1/rank/tier-configs", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -167,14 +167,14 @@ describe("rank admin routes — tier config CRUD happy path", () => {
     expect(created.alias).toBe("route_cfg");
     expect(created.tiers).toHaveLength(2);
 
-    const listRes = await app.request("/api/rank/tier-configs", {
+    const listRes = await app.request("/api/v1/rank/tier-configs", {
       headers: { cookie: fx.cookie },
     });
     expect(listRes.status).toBe(200);
     const list = await expectOk<{ items: Array<{ alias: string }> }>(listRes);
     expect(list.items.some((i) => i.alias === "route_cfg")).toBe(true);
 
-    const getRes = await app.request("/api/rank/tier-configs/route_cfg", {
+    const getRes = await app.request("/api/v1/rank/tier-configs/route_cfg", {
       headers: { cookie: fx.cookie },
     });
     expect(getRes.status).toBe(200);
@@ -188,7 +188,7 @@ describe("rank admin routes — /settle end-to-end", () => {
   beforeAll(async () => {
     fx = await signUpAndOrg("settle");
     // Seed a tier config + active season.
-    const cfg = await app.request("/api/rank/tier-configs", {
+    const cfg = await app.request("/api/v1/rank/tier-configs", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -211,7 +211,7 @@ describe("rank admin routes — /settle end-to-end", () => {
     expect(cfg.status).toBe(201);
     const cfgBody = await expectOk<{ id: string }>(cfg);
 
-    const season = await app.request("/api/rank/seasons", {
+    const season = await app.request("/api/v1/rank/seasons", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -227,7 +227,7 @@ describe("rank admin routes — /settle end-to-end", () => {
     seasonId = seasonBody.id;
 
     const activate = await app.request(
-      `/api/rank/seasons/${seasonId}/activate`,
+      `/api/v1/rank/seasons/${seasonId}/activate`,
       {
         method: "POST",
         headers: { cookie: fx.cookie },
@@ -242,7 +242,7 @@ describe("rank admin routes — /settle end-to-end", () => {
   });
 
   test("POST /settle against active season is 200 + produces deltas", async () => {
-    const res = await app.request("/api/rank/settle", {
+    const res = await app.request("/api/v1/rank/settle", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -250,8 +250,8 @@ describe("rank admin routes — /settle end-to-end", () => {
         externalMatchId: "route-m1",
         gameMode: "1v1",
         participants: [
-          { endUserId: "route-a", teamId: "A", placement: 1, win: true },
-          { endUserId: "route-b", teamId: "B", placement: 2, win: false },
+          { endUserId: "route-a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "route-b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });
@@ -268,15 +268,15 @@ describe("rank admin routes — /settle end-to-end", () => {
   });
 
   test("POST /settle duplicate externalMatchId returns alreadySettled=true", async () => {
-    const res = await app.request("/api/rank/settle", {
+    const res = await app.request("/api/v1/rank/settle", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
         tierConfigAlias: "settle_cfg",
         externalMatchId: "route-m1",
         participants: [
-          { endUserId: "route-a", teamId: "A", placement: 1, win: true },
-          { endUserId: "route-b", teamId: "B", placement: 2, win: false },
+          { endUserId: "route-a", matchTeamId: "A", placement: 1, win: true },
+          { endUserId: "route-b", matchTeamId: "B", placement: 2, win: false },
         ],
       }),
     });

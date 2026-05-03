@@ -1,5 +1,13 @@
 import { Link, useLocation } from "@tanstack/react-router"
-import { Building2, KeyRound, UserCircle, Webhook, type LucideIcon } from "lucide-react"
+import {
+  Building2,
+  FolderKanban,
+  KeyRound,
+  ShieldCheck,
+  UserCircle,
+  Webhook,
+  type LucideIcon,
+} from "lucide-react"
 
 import { cn } from "#/lib/utils"
 import * as m from "../paraglide/messages.js"
@@ -8,14 +16,16 @@ type SettingsNavItem = {
   title: () => string
   to:
     | "/settings/account"
+    | "/settings/organization"
     | "/settings/project"
+    | "/settings/project/roles"
     | "/settings/api-keys"
     | "/settings/webhooks"
   icon: LucideIcon
 }
 
 type SettingsNavSection = {
-  key: "personal" | "project"
+  key: "personal" | "organization" | "project"
   label: () => string
   items: SettingsNavItem[]
 }
@@ -34,13 +44,34 @@ function getSections(): SettingsNavSection[] {
       ],
     },
     {
+      key: "organization",
+      // Org-level: billing, members across projects, delete organization.
+      label: () => "Organization",
+      items: [
+        {
+          title: () => "Organization settings",
+          to: "/settings/organization",
+          icon: Building2,
+        },
+      ],
+    },
+    {
       key: "project",
+      // Project (= Better Auth team) level. Sees the active project's
+      // sub-resources (API keys, webhooks, members of THIS project).
+      // The TeamsCard list view at /settings/project itself shows all
+      // projects the user can access in the active company.
       label: m.settings_section_project,
       items: [
         {
           title: m.nav_project_settings,
           to: "/settings/project",
-          icon: Building2,
+          icon: FolderKanban,
+        },
+        {
+          title: () => "Roles",
+          to: "/settings/project/roles",
+          icon: ShieldCheck,
         },
         {
           title: m.nav_api_keys,
@@ -63,6 +94,17 @@ export function SettingsNav() {
   // 拍平 sections → items,移动端水平 tab 用
   const flatItems = sections.flatMap((s) => s.items)
 
+  // Active match —— `/settings/project/roles` 不应让 `/settings/project`
+  // 也亮起来。规则:在所有匹配的 item 里,选 item.to 最长那一条 active,
+  // 其它即使 prefix 匹配也不算。这是 Linear/Sentry sidebar 的标准行为。
+  const allItems = sections.flatMap((s) => s.items)
+  const activeItem = allItems
+    .filter(
+      (i) => pathname === i.to || pathname.startsWith(`${i.to}/`),
+    )
+    .sort((a, b) => b.to.length - a.to.length)[0]
+  const isActiveItem = (to: string) => activeItem?.to === to
+
   return (
     <>
       {/* 移动端:横向 scroll 的 tab bar(<md 显示) */}
@@ -75,8 +117,7 @@ export function SettingsNav() {
         </h2>
         <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
           {flatItems.map((item) => {
-            const isActive =
-              pathname === item.to || pathname.startsWith(`${item.to}/`)
+            const isActive = isActiveItem(item.to)
             return (
               <Link
                 key={item.to}
@@ -114,8 +155,7 @@ export function SettingsNav() {
               </div>
               <ul className="flex flex-col gap-px">
                 {section.items.map((item) => {
-                  const isActive =
-                    pathname === item.to || pathname.startsWith(`${item.to}/`)
+                  const isActive = isActiveItem(item.to)
                   return (
                     <li key={item.to}>
                       <Link

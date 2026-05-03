@@ -33,7 +33,7 @@ const TAG = "Shop (Client)";
 function serializeUserProduct(row: UserProductView) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     categoryId: row.categoryId,
     alias: row.alias,
     name: row.name,
@@ -78,7 +78,7 @@ function serializeUserProduct(row: UserProductView) {
       ? {
           productId: row.userPurchaseState.productId,
           endUserId: row.userPurchaseState.endUserId,
-          organizationId: row.userPurchaseState.organizationId,
+          tenantId: row.userPurchaseState.tenantId,
           totalCount: row.userPurchaseState.totalCount,
           cycleCount: row.userPurchaseState.cycleCount,
           cycleResetAt: row.userPurchaseState.cycleResetAt
@@ -91,7 +91,7 @@ function serializeUserProduct(row: UserProductView) {
       : null,
     tags: row.tags.map((t) => ({
       id: t.id,
-      organizationId: t.organizationId,
+      tenantId: t.tenantId,
       alias: t.alias,
       name: t.name,
       color: t.color,
@@ -131,12 +131,12 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { productKey, idempotencyKey } = c.req.valid("json");
 
     const result = await shopService.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       productKey,
       idempotencyKey,
@@ -166,12 +166,12 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { stageId, idempotencyKey } = c.req.valid("json");
 
     const result = await shopService.claimGrowthStage({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       stageId,
       idempotencyKey,
@@ -199,12 +199,12 @@ shopClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { categoryId, tagId, productType } = c.req.valid("query");
 
     const views = await shopService.listUserProducts({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       query: { categoryId, tagId, productType },
     });

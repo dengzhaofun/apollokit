@@ -1,9 +1,9 @@
 /**
- * `/api/chat` — Fumadocs Ask-AI backend.
+ * `/api/v1/chat` — Fumadocs Ask-AI backend.
  *
  * 客户端 (`components/ai/search.tsx`) 通过 `@ai-sdk/react` 的 `useChat`
  * 把每条用户消息 POST 到这里。我们用 OpenRouter 跑 LLM,通过 ai SDK 的
- * tool calling 把 fumadocs 的 Orama 搜索引擎 (`/api/search` 同一份索引)
+ * tool calling 把 fumadocs 的 Orama 搜索引擎 (`/api/v1/search` 同一份索引)
  * 暴露给模型,让它先检索再答题。
  *
  * 区别于 fumadocs CLI 默认生成 (Next.js + flexsearch + process.env):
@@ -12,7 +12,7 @@
  *   - process.env 在 Workers 里是空的,改用 cloudflare:workers `env`,
  *     dev (Node SSR) 通过 dotenv 把 `.dev.vars` 注入 process.env 做兜底;
  *   - Next.js route handler 直接 export POST,这里是 TanStack Start 的
- *     `createFileRoute` + `server.handlers.POST`(同 routes/api/search.ts)。
+ *     `createFileRoute` + `server.handlers.POST`(同 routes/api/v1/search.ts)。
  */
 import { createFileRoute } from '@tanstack/react-router'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
@@ -29,7 +29,7 @@ import { createTokenizer as createMandarinTokenizer } from '@orama/tokenizers/ma
 import { source } from '#/lib/source-server'
 import { i18n } from '#/lib/source'
 
-// 跟 routes/api/search.ts 用同一份 Orama 索引(loader 里的 search.url 字段
+// 跟 routes/api/v1/search.ts 用同一份 Orama 索引(loader 里的 search.url 字段
 // 与 page.url 等价),工具调用直接走它就行,免得再起一份内存索引。
 const searchAPI = createFromSource(source, {
   localeMap: {
@@ -95,7 +95,7 @@ const SYSTEM_PROMPT = [
   'Style: concise, technical, code-first. Use fenced code blocks for snippets. Do not chit-chat.',
 ].join('\n')
 
-export const Route = createFileRoute('/api/chat')({
+export const Route = createFileRoute('/api/v1/chat')({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -132,7 +132,7 @@ export const Route = createFileRoute('/api/chat')({
           inputSchema: SearchToolInput,
           async execute({ query, locale, limit }) {
             const targetLocale = locale ?? lastLocale
-            const url = new URL('http://internal/api/search')
+            const url = new URL('http://internal/api/v1/search')
             url.searchParams.set('query', query)
             url.searchParams.set('locale', targetLocale)
             const fakeReq = new Request(url.toString())

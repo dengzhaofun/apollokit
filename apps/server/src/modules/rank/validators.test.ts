@@ -105,8 +105,8 @@ describe("SettleMatchBodySchema", () => {
     const r = SettleMatchBodySchema.safeParse({
       externalMatchId: "m1",
       participants: [
-        { endUserId: "a", teamId: "A", placement: 1, win: true },
-        { endUserId: "b", teamId: "B", placement: 2, win: false },
+        { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
       ],
     });
     expect(r.success).toBe(false);
@@ -117,8 +117,8 @@ describe("SettleMatchBodySchema", () => {
       tierConfigAlias: "classic_5v5",
       externalMatchId: "m1",
       participants: [
-        { endUserId: "a", teamId: "A", placement: 1, win: true },
-        { endUserId: "b", teamId: "B", placement: 2, win: false },
+        { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "b", matchTeamId: "B", placement: 2, win: false },
       ],
     });
     expect(r.success).toBe(true);
@@ -129,8 +129,8 @@ describe("SettleMatchBodySchema", () => {
       tierConfigAlias: "x",
       externalMatchId: "m1",
       participants: [
-        { endUserId: "a", teamId: "A", placement: 1, win: true },
-        { endUserId: "b", teamId: "A", placement: 2, win: false },
+        { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "b", matchTeamId: "A", placement: 2, win: false },
       ],
     });
     expect(r.success).toBe(false);
@@ -141,8 +141,8 @@ describe("SettleMatchBodySchema", () => {
       tierConfigAlias: "x",
       externalMatchId: "m1",
       participants: [
-        { endUserId: "a", teamId: "A", placement: 1, win: true },
-        { endUserId: "a", teamId: "B", placement: 2, win: false },
+        { endUserId: "a", matchTeamId: "A", placement: 1, win: true },
+        { endUserId: "a", matchTeamId: "B", placement: 2, win: false },
       ],
     });
     expect(r.success).toBe(false);

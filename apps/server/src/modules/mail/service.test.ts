@@ -230,7 +230,7 @@ describe("mail service", () => {
     expect(result.claimedAt).toBeInstanceOf(Date);
 
     const bal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-claim",
       definitionId: goldDef.id,
     });
@@ -256,7 +256,7 @@ describe("mail service", () => {
     });
 
     const bal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-dup",
       definitionId: def.id,
     });
@@ -286,7 +286,7 @@ describe("mail service", () => {
 
     // No grant happened.
     const bal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-gate",
       definitionId: def.id,
     });
@@ -299,7 +299,7 @@ describe("mail service", () => {
     expect(result.readAt).toBeInstanceOf(Date);
 
     const bal2 = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-gate",
       definitionId: def.id,
     });
@@ -373,7 +373,7 @@ describe("mail service", () => {
 
     // Items granted exactly once.
     const bal = await itemSvc.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-race",
       definitionId: def.id,
     });

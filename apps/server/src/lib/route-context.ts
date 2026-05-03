@@ -16,10 +16,23 @@ import type { Context } from "hono";
 import type { HonoEnv } from "../env";
 
 /**
- * Active organization id for an authenticated admin request.
- * Guaranteed by `requireAuth` / `requireAdminOrApiKey`.
+ * Active tenant (project / Better Auth team) id for an authenticated
+ * admin request. Guaranteed by `requireAuth` / `requireAdminOrApiKey`.
+ *
+ * Kept named `getOrgId` for backward-compat with call sites; the
+ * returned value is `activeTeamId` (the project id), not the org id.
+ * Renaming all call sites is a follow-up refactor.
  */
 export function getOrgId(c: Context<HonoEnv>): string {
+  return c.var.session!.activeTeamId!;
+}
+
+/**
+ * Active organization (company) id — the parent of the active project.
+ * Use only for org-level operations (billing, member mgmt, project
+ * create/delete). For business data scope use `getOrgId` (tenantId).
+ */
+export function getOrgScopedCompanyId(c: Context<HonoEnv>): string {
   return c.var.session!.activeOrganizationId!;
 }
 
@@ -28,7 +41,7 @@ export function getOrgId(c: Context<HonoEnv>): string {
  * Guaranteed by `requireClientCredential`.
  */
 export function getClientOrgId(c: Context<HonoEnv>): string {
-  return c.var.clientCredential!.organizationId;
+  return c.var.clientCredential!.tenantId;
 }
 
 /**

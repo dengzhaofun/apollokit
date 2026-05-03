@@ -22,7 +22,7 @@ registerEvent({
   description:
     "Fired when a user contributes a score to a leaderboard. `applied` is the effective delta after aggregation policy.",
   fields: [
-    { path: "organizationId", type: "string", required: true },
+    { path: "tenantId", type: "string", required: true },
     { path: "endUserId", type: "string", required: true },
     { path: "metricKey", type: "string", required: true },
     { path: "value", type: "number", required: true },
@@ -51,7 +51,7 @@ export const leaderboardService = createLeaderboardService(
 deps.events.on("task.claimed", async (evt) => {
   try {
     await leaderboardService.contribute({
-      organizationId: evt.organizationId,
+      tenantId: evt.tenantId,
       endUserId: evt.endUserId,
       metricKey: "task.claimed",
       value: Math.max(1, evt.progressValue),
@@ -71,7 +71,7 @@ deps.events.on("task.claimed", async (evt) => {
 deps.events.on("level.cleared", async (evt) => {
   try {
     await leaderboardService.contribute({
-      organizationId: evt.organizationId,
+      tenantId: evt.tenantId,
       endUserId: evt.endUserId,
       metricKey: "level.stars",
       value: evt.stars,
@@ -80,7 +80,7 @@ deps.events.on("level.cleared", async (evt) => {
     });
     if (evt.firstClear) {
       await leaderboardService.contribute({
-        organizationId: evt.organizationId,
+        tenantId: evt.tenantId,
         endUserId: evt.endUserId,
         metricKey: "level.cleared",
         value: 1,

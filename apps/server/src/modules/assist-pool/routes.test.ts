@@ -5,7 +5,7 @@
  *   - `requireAdminOrApiKey` → 401 without a cookie
  *   - Zod input validation → 400
  *   - `ModuleError` → router `onError` status mapping
- *   - Path prefix (`/api/assist-pool`) + happy-path end-to-end
+ *   - Path prefix (`/api/v1/assist-pool`) + happy-path end-to-end
  *   - Force-expire admin action
  *
  * Drives the real `/api/auth/sign-up/email` + `/api/auth/organization/create`
@@ -110,13 +110,13 @@ describe("assist-pool routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/assist-pool/configs without cookie → 401", async () => {
-    const res = await app.request("/api/assist-pool/configs");
+  test("GET /api/v1/assist-pool/configs without cookie → 401", async () => {
+    const res = await app.request("/api/v1/assist-pool/configs");
     expect(res.status).toBe(401);
   });
 
   test("zod validation: negative targetAmount → 400", async () => {
-    const res = await app.request("/api/assist-pool/configs", {
+    const res = await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -132,7 +132,7 @@ describe("assist-pool routes", () => {
   });
 
   test("zod validation: uniform policy with max < min → 400", async () => {
-    const res = await app.request("/api/assist-pool/configs", {
+    const res = await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -148,7 +148,7 @@ describe("assist-pool routes", () => {
   });
 
   test("happy path: create config, initiate, contribute, complete", async () => {
-    const create = await app.request("/api/assist-pool/configs", {
+    const create = await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -167,7 +167,7 @@ describe("assist-pool routes", () => {
     const cfg = await expectOk<{ id: string; alias: string }>(create);
     expect(cfg.alias).toBe("route-happy");
 
-    const initiate = await app.request("/api/assist-pool/instances", {
+    const initiate = await app.request("/api/v1/assist-pool/instances", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -190,7 +190,7 @@ describe("assist-pool routes", () => {
     // Drive 3 contributions from distinct assisters
     for (const assister of ["helper-1", "helper-2", "helper-3"]) {
       const contrib = await app.request(
-        `/api/assist-pool/instances/${inst.id}/contribute`,
+        `/api/v1/assist-pool/instances/${inst.id}/contribute`,
         {
           method: "POST",
           headers: {
@@ -205,7 +205,7 @@ describe("assist-pool routes", () => {
 
     // Final read shows completed
     const finalRead = await app.request(
-      `/api/assist-pool/instances/${inst.id}`,
+      `/api/v1/assist-pool/instances/${inst.id}`,
       { headers: { cookie: fx.cookie } },
     );
     expect(finalRead.status).toBe(200);
@@ -218,7 +218,7 @@ describe("assist-pool routes", () => {
   });
 
   test("ModuleError mapping: duplicate alias → 409", async () => {
-    await app.request("/api/assist-pool/configs", {
+    await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -231,7 +231,7 @@ describe("assist-pool routes", () => {
         contributionPolicy: { kind: "fixed", amount: 5 },
       }),
     });
-    const dup = await app.request("/api/assist-pool/configs", {
+    const dup = await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -249,7 +249,7 @@ describe("assist-pool routes", () => {
   });
 
   test("ModuleError mapping: self-assist forbidden → 409", async () => {
-    await app.request("/api/assist-pool/configs", {
+    await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -262,7 +262,7 @@ describe("assist-pool routes", () => {
         contributionPolicy: { kind: "fixed", amount: 10 },
       }),
     });
-    const init = await app.request("/api/assist-pool/instances", {
+    const init = await app.request("/api/v1/assist-pool/instances", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -276,7 +276,7 @@ describe("assist-pool routes", () => {
     const inst = await expectOk<{ id: string }>(init);
 
     const selfContrib = await app.request(
-      `/api/assist-pool/instances/${inst.id}/contribute`,
+      `/api/v1/assist-pool/instances/${inst.id}/contribute`,
       {
         method: "POST",
         headers: {
@@ -291,7 +291,7 @@ describe("assist-pool routes", () => {
   });
 
   test("force-expire flips status to expired", async () => {
-    await app.request("/api/assist-pool/configs", {
+    await app.request("/api/v1/assist-pool/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -304,7 +304,7 @@ describe("assist-pool routes", () => {
         contributionPolicy: { kind: "fixed", amount: 10 },
       }),
     });
-    const init = await app.request("/api/assist-pool/instances", {
+    const init = await app.request("/api/v1/assist-pool/instances", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -318,7 +318,7 @@ describe("assist-pool routes", () => {
     const inst = await expectOk<{ id: string }>(init);
 
     const expire = await app.request(
-      `/api/assist-pool/instances/${inst.id}/force-expire`,
+      `/api/v1/assist-pool/instances/${inst.id}/force-expire`,
       {
         method: "POST",
         headers: { cookie: fx.cookie },
@@ -330,7 +330,7 @@ describe("assist-pool routes", () => {
 
     // Further contribute calls → 409 instance_expired
     const contrib = await app.request(
-      `/api/assist-pool/instances/${inst.id}/contribute`,
+      `/api/v1/assist-pool/instances/${inst.id}/contribute`,
       {
         method: "POST",
         headers: {
@@ -345,7 +345,7 @@ describe("assist-pool routes", () => {
   });
 
   test("404 on missing config alias", async () => {
-    const res = await app.request("/api/assist-pool/configs/does-not-exist", {
+    const res = await app.request("/api/v1/assist-pool/configs/does-not-exist", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(404);
@@ -353,7 +353,7 @@ describe("assist-pool routes", () => {
 
   test("list filters respect query params (status=in_progress)", async () => {
     const list = await app.request(
-      "/api/assist-pool/instances?status=in_progress",
+      "/api/v1/assist-pool/instances?status=in_progress",
       { headers: { cookie: fx.cookie } },
     );
     expect(list.status).toBe(200);

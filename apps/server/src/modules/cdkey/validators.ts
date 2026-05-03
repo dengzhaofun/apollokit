@@ -199,7 +199,7 @@ const RewardEntryResponseSchema = z.object({
 export const BatchResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -224,7 +224,7 @@ export const BatchListResponseSchema = pageOf(BatchResponseSchema).openapi(
 export const CodeResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     batchId: z.string(),
     code: z.string(),
     status: z.string(),
@@ -254,7 +254,7 @@ export const RedeemResultSchema = z
 export const LogResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     endUserId: z.string(),
     batchId: z.string(),
     codeId: z.string().nullable(),

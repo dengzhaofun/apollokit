@@ -2,7 +2,7 @@
  * Documentation tools for the admin agent.
  *
  * Backed by the admin worker's existing Fumadocs endpoints:
- *   - `/api/search`            → Orama bilingual search (en/zh, mandarin tokenizer)
+ *   - `/api/v1/search`            → Orama bilingual search (en/zh, mandarin tokenizer)
  *   - `/docs-md/<lang>/<slug>` → single page as raw processed markdown
  *   - `/llms.txt`              → short TOC (titles + URLs + descriptions)
  *
@@ -135,7 +135,7 @@ export async function runSearchDocs(args: {
   const { query } = args;
   const locale = args.locale ?? "zh";
   const limit = args.limit ?? 5;
-  const url = new URL(`${adminBaseUrl()}/api/search`);
+  const url = new URL(`${adminBaseUrl()}/api/v1/search`);
   url.searchParams.set("query", query);
   url.searchParams.set("locale", locale);
   const res = await fetch(url);

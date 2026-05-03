@@ -11,7 +11,7 @@ export function registerShopSubscribers(
 
   events.on("shop.purchased", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "shop.purchased",
       source: "shop",
@@ -32,7 +32,7 @@ export function registerShopSubscribers(
 
   events.on("shop.stage_claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "shop.stage_claimed",
       source: "shop",

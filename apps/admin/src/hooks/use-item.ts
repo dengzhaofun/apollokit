@@ -43,7 +43,7 @@ export function useItemCategories(route: any) {
     filterDefs: ITEM_CATEGORY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<ItemCategory>>(
-        `/api/item/categories?${qs({ cursor, limit, q })}`,
+        `/api/v1/item/categories?${qs({ cursor, limit, q })}`,
       ),
   })
 }
@@ -59,7 +59,7 @@ export function useAllItemCategories() {
     queryKey: [...CATEGORIES_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<ItemCategory>>(`/api/item/categories?${qs({ limit: 200 })}`)
+        .get<Page<ItemCategory>>(`/api/v1/item/categories?${qs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -67,7 +67,7 @@ export function useAllItemCategories() {
 export function useItemCategory(key: string) {
   return useQuery({
     queryKey: [...CATEGORIES_KEY, key],
-    queryFn: () => api.get<ItemCategory>(`/api/item/categories/${key}`),
+    queryFn: () => api.get<ItemCategory>(`/api/v1/item/categories/${key}`),
     enabled: !!key,
   })
 }
@@ -76,7 +76,7 @@ export function useCreateItemCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCategoryInput) =>
-      api.post<ItemCategory>("/api/item/categories", input),
+      api.post<ItemCategory>("/api/v1/item/categories", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   })
 }
@@ -85,7 +85,7 @@ export function useUpdateItemCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateCategoryInput & { id: string }) =>
-      api.patch<ItemCategory>(`/api/item/categories/${id}`, input),
+      api.patch<ItemCategory>(`/api/v1/item/categories/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   })
 }
@@ -93,7 +93,7 @@ export function useUpdateItemCategory() {
 export function useDeleteItemCategory() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/item/categories/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/item/categories/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   })
 }
@@ -135,7 +135,7 @@ export function useItemDefinitions(route: any, filterDefs: FilterDef[]) {
     filterDefs,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ItemDefinition>>(
-        `/api/item/definitions?${qs({
+        `/api/v1/item/definitions?${qs({
           cursor,
           limit,
           q,
@@ -158,7 +158,7 @@ export function useAllItemDefinitions(opts: { categoryId?: string } = {}) {
     queryFn: () =>
       api
         .get<Page<ItemDefinition>>(
-          `/api/item/definitions?${qs({ limit: 200, categoryId })}`,
+          `/api/v1/item/definitions?${qs({ limit: 200, categoryId })}`,
         )
         .then((p) => p.items),
   })
@@ -167,7 +167,7 @@ export function useAllItemDefinitions(opts: { categoryId?: string } = {}) {
 export function useItemDefinition(key: string) {
   return useQuery({
     queryKey: [...DEFINITIONS_KEY, key],
-    queryFn: () => api.get<ItemDefinition>(`/api/item/definitions/${key}`),
+    queryFn: () => api.get<ItemDefinition>(`/api/v1/item/definitions/${key}`),
     enabled: !!key,
   })
 }
@@ -176,7 +176,7 @@ export function useCreateItemDefinition() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateDefinitionInput) =>
-      api.post<ItemDefinition>("/api/item/definitions", input),
+      api.post<ItemDefinition>("/api/v1/item/definitions", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -185,7 +185,7 @@ export function useUpdateItemDefinition() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateDefinitionInput & { id: string }) =>
-      api.patch<ItemDefinition>(`/api/item/definitions/${id}`, input),
+      api.patch<ItemDefinition>(`/api/v1/item/definitions/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -193,7 +193,7 @@ export function useUpdateItemDefinition() {
 export function useDeleteItemDefinition() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/item/definitions/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/item/definitions/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -206,7 +206,7 @@ export function useUserInventory(endUserId: string, definitionId?: string) {
     queryFn: () => {
       const params = definitionId ? `?definitionId=${definitionId}` : ""
       return api.get<{ items: InventoryView[] }>(
-        `/api/item/users/${endUserId}/inventory${params}`,
+        `/api/v1/item/users/${endUserId}/inventory${params}`,
       )
     },
     select: (data) => data.items,
@@ -218,7 +218,7 @@ export function useUserBalance(endUserId: string, key: string) {
   return useQuery({
     queryKey: ["item-balance", endUserId, key],
     queryFn: () =>
-      api.get<BalanceResult>(`/api/item/users/${endUserId}/balance/${key}`),
+      api.get<BalanceResult>(`/api/v1/item/users/${endUserId}/balance/${key}`),
     enabled: !!endUserId && !!key,
   })
 }
@@ -229,7 +229,7 @@ export function useGrantItems() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: GrantItemsInput) =>
-      api.post<GrantResult>("/api/item/grant", input),
+      api.post<GrantResult>("/api/v1/item/grant", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["item-inventory"] })
       qc.invalidateQueries({ queryKey: ["item-balance"] })
@@ -241,7 +241,7 @@ export function useDeductItems() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: DeductItemsInput) =>
-      api.post<DeductResult>("/api/item/deduct", input),
+      api.post<DeductResult>("/api/v1/item/deduct", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["item-inventory"] })
       qc.invalidateQueries({ queryKey: ["item-balance"] })

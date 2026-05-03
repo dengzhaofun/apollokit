@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { fractionalSortKey } from "./_fractional-sort";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Experiment (A/B test) module — per-tenant flag/variant assignment with
@@ -23,7 +23,7 @@ import { organization } from "./auth";
  *
  * - Flow: tenant admin defines an experiment + variants (with traffic
  *   allocation summing to 100), starts it, then game clients call
- *   `POST /api/client/experiment/evaluate` per session. The service layer
+ *   `POST /api/v1/client/experiment/evaluate` per session. The service layer
  *   does deterministic SHA-256 hash bucketing on (experimentId, endUserId),
  *   persists the assignment to `experiment_assignments` via a single
  *   atomic upsert, and emits `experiment.exposure` exactly once per
@@ -152,9 +152,9 @@ export const experiments = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     key: text("key").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -193,11 +193,11 @@ export const experiments = pgTable(
   },
   (table) => [
     uniqueIndex("experiment_experiments_org_key_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.key,
     ),
-    index("experiment_experiments_org_status_started_idx").on(
-      table.organizationId,
+    index("experiment_experiments_tenant_status_started_idx").on(
+      table.tenantId,
       table.status,
       table.startedAt,
     ),
@@ -229,7 +229,7 @@ export const experimentVariants = pgTable(
     experimentId: uuid("experiment_id")
       .notNull()
       .references(() => experiments.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     variantKey: text("variant_key").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -247,7 +247,7 @@ export const experimentVariants = pgTable(
       table.experimentId,
       table.variantKey,
     ),
-    index("experiment_variants_org_idx").on(table.organizationId),
+    index("experiment_variants_tenant_idx").on(table.tenantId),
     index("experiment_variants_experiment_sort_idx").on(
       table.experimentId,
       table.sortOrder,
@@ -284,7 +284,7 @@ export const experimentAssignments = pgTable(
       .notNull()
       .references(() => experiments.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     variantId: uuid("variant_id")
       .notNull()
       .references(() => experimentVariants.id, { onDelete: "restrict" }),
@@ -296,8 +296,8 @@ export const experimentAssignments = pgTable(
       columns: [table.experimentId, table.endUserId],
       name: "experiment_assignments_pk",
     }),
-    index("experiment_assignments_org_user_idx").on(
-      table.organizationId,
+    index("experiment_assignments_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("experiment_assignments_variant_idx").on(table.variantId),

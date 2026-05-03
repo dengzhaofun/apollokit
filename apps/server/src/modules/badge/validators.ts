@@ -88,7 +88,7 @@ export const NodeKeyParamSchema = z.object({
 export const BadgeNodeResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     key: z.string(),
     parentKey: z.string().nullable(),
     displayType: z.string(),
@@ -233,7 +233,7 @@ export const SignalRegistryUpsertSchema = z
 
 export const SignalRegistryResponseSchema = z
   .object({
-    organizationId: z.string(),
+    tenantId: z.string(),
     keyPattern: z.string(),
     isDynamic: z.boolean(),
     label: z.string(),

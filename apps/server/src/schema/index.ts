@@ -26,7 +26,7 @@ export * from "./navigation";
 export * from "./shop";
 export * from "./friend";
 export * from "./guild";
-export * from "./team";
+export * from "./match-squad";
 export * from "./friend-gift";
 export * from "./entity";
 export * from "./level";

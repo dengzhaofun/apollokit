@@ -51,7 +51,7 @@ const TAG = "Triggers";
 function serializeRule(row: TriggerRuleRow) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     status: row.status as "active" | "disabled" | "archived",
@@ -70,7 +70,7 @@ function serializeRule(row: TriggerRuleRow) {
 function serializeExecution(row: TriggerExecutionRow) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     ruleId: row.ruleId,
     ruleVersion: row.ruleVersion,
     eventName: row.eventName,
@@ -305,7 +305,7 @@ triggersRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { ruleId, status, limit } = c.req.valid("query");
-    const where = [eq(triggerExecutions.organizationId, orgId)];
+    const where = [eq(triggerExecutions.tenantId, orgId)];
     if (ruleId) where.push(eq(triggerExecutions.ruleId, ruleId));
     if (status) where.push(eq(triggerExecutions.status, status));
     const rows = await db

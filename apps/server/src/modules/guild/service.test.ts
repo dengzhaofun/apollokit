@@ -46,7 +46,7 @@ describe("guild service", () => {
       maxOfficers: 3,
       joinMode: "request",
     });
-    expect(s.organizationId).toBe(orgId);
+    expect(s.tenantId).toBe(orgId);
     expect(s.maxMembers).toBe(30);
     expect(s.maxOfficers).toBe(3);
     expect(s.joinMode).toBe("request");

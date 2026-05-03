@@ -290,7 +290,7 @@ export const EndUserIdParamSchema = z.object({
 export const LotteryPoolResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -310,7 +310,7 @@ export const LotteryTierResponseSchema = z
   .object({
     id: z.string(),
     poolId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     alias: z.string().nullable(),
     baseWeight: z.number().int(),
@@ -329,7 +329,7 @@ export const LotteryPrizeResponseSchema = z
     id: z.string(),
     tierId: z.string().nullable(),
     poolId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     rewardItems: z.array(ItemEntryResponseSchema),
@@ -351,7 +351,7 @@ export const LotteryPityRuleResponseSchema = z
   .object({
     id: z.string(),
     poolId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     guaranteeTierId: z.string(),
     hardPityThreshold: z.number().int(),
     softPityStartAt: z.number().int().nullable(),

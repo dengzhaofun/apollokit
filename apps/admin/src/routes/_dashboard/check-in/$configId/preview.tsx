@@ -220,7 +220,7 @@ function CheckInPreviewPage() {
                     />
                     <Row label={m.checkin_config_id()} value={latestResult.state.configId} mono />
                     <Row label={m.checkin_end_user_id()} value={latestResult.state.endUserId} mono />
-                    <Row label={m.checkin_project_id()} value={latestResult.state.organizationId} mono />
+                    <Row label={m.checkin_project_id()} value={latestResult.state.tenantId} mono />
                   </div>
                 </div>
               </div>

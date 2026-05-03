@@ -47,7 +47,7 @@ export type InternalEventDescriptor = {
   description: string;
   /**
    * 事件 payload 的字段 schema。被 task 桥接消费的事件必须含
-   * `organizationId` 和 `endUserId`(forwarder 会 fail-closed 地过滤)。
+   * `tenantId` 和 `endUserId`(forwarder 会 fail-closed 地过滤)。
    */
   fields: EventFieldSchema[];
   /**

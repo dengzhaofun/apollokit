@@ -96,7 +96,7 @@ function OfflineCheckInDetailPage() {
   // Re-seed the form when the campaign data lands or changes. The form
   // controller's `reset` accepts any subset that maps onto its values
   // shape; we lift the editable fields out by name (skipping server-only
-  // fields like id/organizationId/status).
+  // fields like id/tenantId/status).
   useEffect(() => {
     if (!campaign) return
     form.reset({

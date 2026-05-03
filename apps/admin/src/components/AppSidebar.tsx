@@ -1,4 +1,6 @@
 import { OrganizationSwitcher } from "@daveyplate/better-auth-ui"
+
+import { ProjectSwitcher } from "#/components/auth/ProjectSwitcher"
 import { Link, useLocation, useNavigate } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
@@ -156,7 +158,7 @@ type NavRoute =
   | "/friend"
   | "/invite"
   | "/guild"
-  | "/team"
+  | "/match-squad"
   | "/leaderboard"
   | "/rank"
   | "/end-user"
@@ -279,7 +281,7 @@ const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
   "/friend": { resource: "friend" },
   "/invite": { resource: "invite" },
   "/guild": { resource: "guild" },
-  "/team": { resource: "team" },
+  "/match-squad": { resource: "team" },
   "/leaderboard": { resource: "leaderboard" },
   "/rank": { resource: "rank" },
   "/end-user": { resource: "endUser" },
@@ -463,7 +465,7 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_friend, to: "/friend", icon: Users },
         { title: m.nav_invite, to: "/invite", icon: UserPlus },
         { title: m.nav_guild, to: "/guild", icon: Shield },
-        { title: m.nav_team, to: "/team", icon: Swords },
+        { title: m.nav_team, to: "/match-squad", icon: Swords },
         { title: m.nav_leaderboard, to: "/leaderboard", icon: Trophy },
         { title: m.nav_rank, to: "/rank", icon: Medal },
         { title: m.nav_end_user, to: "/end-user", icon: Contact },
@@ -1050,7 +1052,7 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
 export function AppSidebar() {
   const allGroups = getNavGroups()
   const { data: session } = authClient.useSession()
-  const orgId = session?.session.activeOrganizationId ?? null
+  const orgId = session?.session.activeTeamId ?? null
   const { data: capabilities } = useCapabilities(orgId)
   const groups = filterGroupsByCapabilities(allGroups, capabilities)
   const { pathname } = useLocation()
@@ -1087,14 +1089,21 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
+        {/* 双层 picker —— 顶层 OrganizationSwitcher 选公司,二层
+            ProjectSwitcher 选项目(=Better Auth team)。日常 99% 用户只看
+            ProjectSwitcher;OrganizationSwitcher 给多公司用户用。 */}
         <div
           className={
             isIcon
-              ? "flex justify-center py-1"
-              : "px-2 py-1 [&_button]:w-full"
+              ? "flex flex-col items-center gap-1 py-1"
+              : "flex flex-col gap-1 px-2 py-1 [&_button]:w-full"
           }
         >
-          <OrganizationSwitcher size={isIcon ? "icon" : undefined} />
+          <OrganizationSwitcher
+            size={isIcon ? "icon" : undefined}
+            hidePersonal
+          />
+          <ProjectSwitcher size={isIcon ? "icon" : undefined} />
         </div>
 
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
@@ -1178,7 +1187,7 @@ export function AppSidebar() {
               className={
                 isIcon
                   ? "flex justify-center py-1"
-                  : "px-1 py-1 [&_button]:w-full"
+                  : "min-w-0 overflow-hidden px-1 py-1 [&_button]:w-full"
               }
             >
               <UserMenuButton isIcon={isIcon} />

@@ -46,7 +46,7 @@ const issueTokenRoute = createAdminRoute({
 
 analyticsRouter.openapi(issueTokenRoute, async (c) => {
   const session = c.get("session")!;
-  const orgId = session.activeOrganizationId!;
+  const orgId = session.activeTeamId!;
   const { pipes, ttlSeconds } = c.req.valid("json");
 
   const token = await deps.analytics.signTenantToken(

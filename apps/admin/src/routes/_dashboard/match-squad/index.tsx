@@ -7,17 +7,17 @@ import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
 import { DataTable } from "#/components/data-table/DataTable"
 import { PageHeaderActions } from "#/components/PageHeader"
-import { TeamConfigForm } from "#/components/team/TeamConfigForm"
-import { useTeamConfigForm } from "#/components/team/use-config-form"
+import { MatchSquadConfigForm } from "#/components/match-squad/MatchSquadConfigForm"
+import { useMatchSquadConfigForm } from "#/components/match-squad/use-config-form"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import {
-  useCreateTeamConfig,
-  useTeamConfig,
-  useTeamConfigs,
-  useUpdateTeamConfig,
-} from "#/hooks/use-team"
+  useCreateMatchSquadConfig,
+  useMatchSquadConfig,
+  useMatchSquadConfigs,
+  useUpdateMatchSquadConfig,
+} from "#/hooks/use-match-squad"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
 import {
@@ -26,18 +26,18 @@ import {
   openCreateModal,
   openEditModal,
 } from "#/lib/modal-search"
-import type { TeamConfig } from "#/lib/types/team"
+import type { MatchSquadConfig } from "#/lib/types/match-squad"
 
 const FORM_ID = "team-config-form"
 
-export const Route = createFileRoute("/_dashboard/team/")({
+export const Route = createFileRoute("/_dashboard/match-squad/")({
   component: TeamPage,
   validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
 })
 
-const columnHelper = createColumnHelper<TeamConfig>()
+const columnHelper = createColumnHelper<MatchSquadConfig>()
 
-function useColumns(): ColumnDef<TeamConfig, unknown>[] {
+function useColumns(): ColumnDef<MatchSquadConfig, unknown>[] {
   return useMemo(
     () => [
       columnHelper.accessor("name", {
@@ -45,7 +45,7 @@ function useColumns(): ColumnDef<TeamConfig, unknown>[] {
         meta: { primary: true },
         cell: (info) => (
           <Link
-            to="/team"
+            to="/match-squad"
             search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -80,7 +80,7 @@ function useColumns(): ColumnDef<TeamConfig, unknown>[] {
       }),
     ],
     [],
-  ) as ColumnDef<TeamConfig, unknown>[]
+  ) as ColumnDef<MatchSquadConfig, unknown>[]
 }
 
 function TeamPage() {
@@ -96,7 +96,7 @@ function TeamPage() {
     void navigate({ search: (prev) => ({ ...prev, ...openCreateModal }) })
   }
 
-  const list = useTeamConfigs(Route)
+  const list = useMatchSquadConfigs(Route)
   const columns = useColumns()
 
   return (
@@ -144,13 +144,13 @@ interface DialogShellProps {
 }
 
 function CreateTeamConfigDialog({ onClose }: DialogShellProps) {
-  const createMutation = useCreateTeamConfig()
+  const createMutation = useCreateMatchSquadConfig()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
-  const form = useTeamConfigForm({
+  const form = useMatchSquadConfigForm({
     onSubmit: async (values) => {
       try {
         await createMutation.mutateAsync(values)
@@ -188,7 +188,7 @@ function CreateTeamConfigDialog({ onClose }: DialogShellProps) {
         </>
       }
     >
-      <TeamConfigForm
+      <MatchSquadConfigForm
         id={FORM_ID}
         hideSubmitButton
         onStateChange={setFormState}
@@ -203,7 +203,7 @@ function EditTeamConfigDialog({
   id,
   onClose,
 }: DialogShellProps & { id: string }) {
-  const { data: cfg, isPending: loading, error } = useTeamConfig(id)
+  const { data: cfg, isPending: loading, error } = useMatchSquadConfig(id)
   if (loading) {
     return (
       <div className="py-10 text-center text-sm text-muted-foreground">
@@ -225,15 +225,15 @@ function EditTeamConfigDialogLoaded({
   cfg,
   onClose,
 }: DialogShellProps & {
-  cfg: NonNullable<ReturnType<typeof useTeamConfig>["data"]>
+  cfg: NonNullable<ReturnType<typeof useMatchSquadConfig>["data"]>
 }) {
-  const updateMutation = useUpdateTeamConfig()
+  const updateMutation = useUpdateMatchSquadConfig()
   const [formState, setFormState] = useState({
     canSubmit: false,
     isDirty: false,
     isSubmitting: false,
   })
-  const form = useTeamConfigForm({
+  const form = useMatchSquadConfigForm({
     defaultValues: {
       name: cfg.name,
       alias: cfg.alias,
@@ -280,7 +280,7 @@ function EditTeamConfigDialogLoaded({
         </>
       }
     >
-      <TeamConfigForm
+      <MatchSquadConfigForm
         id={FORM_ID}
         hideSubmitButton
         onStateChange={setFormState}

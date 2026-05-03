@@ -24,9 +24,9 @@ export const emitEventAction: ActionHandler<EmitEventAction> = async (
     );
   }
 
-  // 在 data 里注入 organizationId（trigger 引擎是 org-scoped），调用方未给则补。
+  // 在 data 里注入 tenantId（trigger 引擎是 org-scoped），调用方未给则补。
   const enrichedData = {
-    organizationId: ctx.orgId,
+    tenantId: ctx.orgId,
     ...action.data,
   };
 

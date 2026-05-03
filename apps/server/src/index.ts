@@ -91,9 +91,9 @@ import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
 import {
-  teamRouter,
-  teamClientRouter,
-} from "./modules/team";
+  matchSquadRouter,
+  matchSquadClientRouter,
+} from "./modules/match-squad";
 // level / leaderboard / activity MUST be imported BEFORE task — the task
 // barrel installs an event forwarder that walks the registry at import
 // time, so every event these modules publish must already be registered.
@@ -130,6 +130,7 @@ import { installEventDispatcher } from "./lib/event-dispatcher";
 import { getTraceId } from "./lib/request-context";
 import { health } from "./routes/health";
 import { meRouter } from "./routes/me";
+import { requirePublicApiKey } from "./middleware/require-public-api-key";
 import { queue as queueHandler } from "./queue";
 import { scheduled } from "./scheduled";
 
@@ -157,7 +158,7 @@ app.use("*", requestId());
 app.use("*", honoLogger());
 app.use("*", prettyJSON());
 // `crossOriginResourcePolicy: "cross-origin"` — the media-library
-// `<img>` proxy (`/api/media-library/object/...`) is loaded via same-
+// `<img>` proxy (`/api/v1/media-library/object/...`) is loaded via same-
 // origin admin URL in the main flow, but browsers still mark such
 // sub-resource loads as cross-origin when the request path is served
 // by a different worker underneath service binding. Keep cross-origin
@@ -171,7 +172,7 @@ app.use(
 // No CORS: admin reaches this worker through a service binding (not a
 // browser cross-origin fetch), and no first-party browser consumer of
 // this worker exists yet. If a real cross-origin use-case lands later
-// (e.g. SDK calling `/api/client/auth/*` from a game's web client),
+// (e.g. SDK calling `/api/v1/client/auth/*` from a game's web client),
 // re-introduce `cors()` scoped to those paths only.
 
 // Global error handler — returns the standard envelope. Module-level
@@ -180,7 +181,7 @@ app.use(
 // anything that reaches here is unexpected.
 app.onError((err, c) => {
   // Globally-mounted middleware (e.g. requireClientCredential on
-  // /api/client/auth/*) throws ModuleError and never enters a router,
+  // /api/v1/client/auth/*) throws ModuleError and never enters a router,
   // so the per-router `attachErrorHandler` doesn't see it. Map here
   // so the standard envelope covers those paths too.
   if (err instanceof ModuleError) {
@@ -196,7 +197,7 @@ app.onError((err, c) => {
 // Global 404 — fires when no route matched at all (Hono's default is
 // `404 Not Found` plain text). Business module routers already cover
 // their own sub-paths; Better Auth's `/api/auth/*` and
-// `/api/client/auth/*` wildcards claim those prefixes. Anything that
+// `/api/v1/client/auth/*` wildcards claim those prefixes. Anything that
 // still lands here is an unknown URL, so we return the standard
 // envelope so SDKs / frontend wrappers don't have to branch on
 // content-type.
@@ -218,8 +219,8 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 // Any other route in this file that forwards requests to
 // `endUserAuth.handler` without going through this middleware MUST
 // also strip the header.
-app.use("/api/client/auth/*", requireClientCredential);
-app.on(["POST", "GET"], "/api/client/auth/*", (c) => {
+app.use("/api/v1/client/auth/*", requireClientCredential);
+app.on(["POST", "GET"], "/api/v1/client/auth/*", (c) => {
   const orgId = getClientOrgId(c);
   const scopedHeaders = new Headers(c.req.raw.headers);
   scopedHeaders.delete(EU_ORG_ID_HEADER);
@@ -260,8 +261,8 @@ app.use("*", (c, next) =>
 app.use("*", requestLog);
 // Auto-record admin mutations to the `audit_logs` table. Must run AFTER
 // `session` (needs `c.var.user` / `c.var.session`) and AFTER `requestId()`
-// (uses traceId). Self-skips reads, /api/auth/*, /api/client/*, and
-// /api/audit-logs/* (own router, defensive).
+// (uses traceId). Self-skips reads, /api/auth/*, /api/v1/client/*, and
+// /api/v1/audit-logs/* (own router, defensive).
 app.use("*", auditLog);
 
 // Business routes
@@ -270,86 +271,147 @@ app.route("/health", health);
 
 // Admin routes — session or admin API key
 //
-// `/api/ai/admin/*` is the AI agent endpoint — single chat shared across
+// `/api/v1/ai/admin/*` is the AI agent endpoint — single chat shared across
 // every admin module. Streaming SSE response, NOT enveloped, NOT in OpenAPI.
 // See `modules/admin-agent/routes.ts` for the rationale.
-app.route("/api/me", meRouter);
-app.route("/api/ai/admin", adminAgentRouter);
-app.route("/api/analytics", analyticsRouter);
-app.route("/api/announcement", announcementRouter);
-app.route("/api/audit-logs", auditLogRouter);
-app.route("/api/badge", badgeRouter);
-app.route("/api/banner", bannerRouter);
-app.route("/api/battle-pass", battlePassRouter);
-app.route("/api/cdkey", cdkeyRouter);
-app.route("/api/character", characterRouter);
-app.route("/api/check-in", checkInRouter);
-app.route("/api/offline-check-in", offlineCheckInRouter);
-app.route("/api/experiment", experimentRouter);
-app.route("/api/client-credentials", clientCredentialRouter);
-app.route("/api/cms", cmsRouter);
-app.route("/api/end-user", endUserRouter);
-app.route("/api/collection", collectionRouter);
-app.route("/api/currency", currencyRouter);
-app.route("/api/dialogue", dialogueRouter);
-app.route("/api/entity", entityRouter);
-app.route("/api/item", itemRouter);
-app.route("/api/exchange", exchangeRouter);
-app.route("/api/friend", friendRouter);
-app.route("/api/friend-gift", friendGiftRouter);
-app.route("/api/invite", inviteRouter);
-app.route("/api/guild", guildRouter);
-app.route("/api/lottery", lotteryRouter);
-app.route("/api/mail", mailRouter);
+app.route("/api/v1/me", meRouter);
+app.route("/api/v1/ai/admin", adminAgentRouter);
+app.route("/api/v1/analytics", analyticsRouter);
+app.route("/api/v1/announcement", announcementRouter);
+app.route("/api/v1/audit-logs", auditLogRouter);
+app.route("/api/v1/badge", badgeRouter);
+app.route("/api/v1/banner", bannerRouter);
+app.route("/api/v1/battle-pass", battlePassRouter);
+app.route("/api/v1/cdkey", cdkeyRouter);
+app.route("/api/v1/character", characterRouter);
+app.route("/api/v1/check-in", checkInRouter);
+app.route("/api/v1/offline-check-in", offlineCheckInRouter);
+app.route("/api/v1/experiment", experimentRouter);
+app.route("/api/v1/client-credentials", clientCredentialRouter);
+app.route("/api/v1/cms", cmsRouter);
+app.route("/api/v1/end-user", endUserRouter);
+app.route("/api/v1/collection", collectionRouter);
+app.route("/api/v1/currency", currencyRouter);
+app.route("/api/v1/dialogue", dialogueRouter);
+app.route("/api/v1/entity", entityRouter);
+app.route("/api/v1/item", itemRouter);
+app.route("/api/v1/exchange", exchangeRouter);
+app.route("/api/v1/friend", friendRouter);
+app.route("/api/v1/friend-gift", friendGiftRouter);
+app.route("/api/v1/invite", inviteRouter);
+app.route("/api/v1/guild", guildRouter);
+app.route("/api/v1/lottery", lotteryRouter);
+app.route("/api/v1/mail", mailRouter);
 // MCP — public Streamable HTTP endpoint for LLM clients (Claude.ai, Cursor,
 // custom agent hosts). NOT a normal admin module: no envelope, no OpenAPI,
 // JSON-RPC over HTTP. See `modules/mcp/routes.ts` for the rationale.
-app.route("/api/mcp", mcpRouter);
-app.route("/api/navigation", navigationRouter);
-app.route("/api/shop", shopRouter);
-app.route("/api/storage-box", storageBoxRouter);
-app.route("/api/media-library", mediaLibraryRouter);
-app.route("/api/task", taskRouter);
-app.route("/api/team", teamRouter);
-app.route("/api/level", levelRouter);
-app.route("/api/leaderboard", leaderboardRouter);
-app.route("/api/activity", activityRouter);
-app.route("/api/assist-pool", assistPoolRouter);
-app.route("/api/event-catalog", eventCatalogRouter);
-app.route("/api/rank", rankRouter);
-app.route("/api/webhooks", webhooksRouter);
-app.route("/api/triggers", triggersRouter);
+app.route("/api/v1/mcp", mcpRouter);
+app.route("/api/v1/navigation", navigationRouter);
+app.route("/api/v1/shop", shopRouter);
+app.route("/api/v1/storage-box", storageBoxRouter);
+app.route("/api/v1/media-library", mediaLibraryRouter);
+app.route("/api/v1/task", taskRouter);
+app.route("/api/v1/match-squad", matchSquadRouter);
+app.route("/api/v1/level", levelRouter);
+app.route("/api/v1/leaderboard", leaderboardRouter);
+app.route("/api/v1/activity", activityRouter);
+app.route("/api/v1/assist-pool", assistPoolRouter);
+app.route("/api/v1/event-catalog", eventCatalogRouter);
+app.route("/api/v1/rank", rankRouter);
+app.route("/api/v1/webhooks", webhooksRouter);
+app.route("/api/v1/triggers", triggersRouter);
+
+// ─── 公开 API: /api/v1/projects/:projectId/<module>/* ──────────────
+//
+// 给集成方 / SDK 调用 —— `x-api-key` 鉴权 + URL 显式带 projectId。
+// `requirePublicApiKey` middleware 校验 key 的 metadata.teamId 与 URL
+// 的 projectId 匹配,然后合成 session(activeTeamId=projectId)交给同一组
+// 业务 router。每个 module 的 router 内部 `requireAdminOrApiKey` 看到
+// authMethod=admin-api-key + activeTeamId 已设,直接 short-circuit 不
+// 重复校验。一份业务逻辑两条入口路径(admin 隐式 / public 显式)。
+{
+  // OpenAPIHono so the mounted module routers' OpenAPI declarations
+  // propagate up with the `/projects/:projectId/<module>` prefix —
+  // /openapi.json then exposes both the admin paths AND the v1 public
+  // paths, so the SDK regen pipeline (`packages/sdk-server-ts`) gets
+  // typed clients for both surfaces automatically.
+  const v1 = new OpenAPIHono<HonoEnv>({
+    defaultHook: validationDefaultHook,
+  });
+  v1.use("/projects/:projectId/*", requirePublicApiKey);
+
+  v1.route("/projects/:projectId/announcement", announcementRouter);
+  v1.route("/projects/:projectId/badge", badgeRouter);
+  v1.route("/projects/:projectId/banner", bannerRouter);
+  v1.route("/projects/:projectId/battle-pass", battlePassRouter);
+  v1.route("/projects/:projectId/cdkey", cdkeyRouter);
+  v1.route("/projects/:projectId/character", characterRouter);
+  v1.route("/projects/:projectId/check-in", checkInRouter);
+  v1.route("/projects/:projectId/offline-check-in", offlineCheckInRouter);
+  v1.route("/projects/:projectId/client-credentials", clientCredentialRouter);
+  v1.route("/projects/:projectId/cms", cmsRouter);
+  v1.route("/projects/:projectId/collection", collectionRouter);
+  v1.route("/projects/:projectId/currency", currencyRouter);
+  v1.route("/projects/:projectId/dialogue", dialogueRouter);
+  v1.route("/projects/:projectId/end-user", endUserRouter);
+  v1.route("/projects/:projectId/entity", entityRouter);
+  v1.route("/projects/:projectId/experiment", experimentRouter);
+  v1.route("/projects/:projectId/exchange", exchangeRouter);
+  v1.route("/projects/:projectId/friend", friendRouter);
+  v1.route("/projects/:projectId/friend-gift", friendGiftRouter);
+  v1.route("/projects/:projectId/invite", inviteRouter);
+  v1.route("/projects/:projectId/guild", guildRouter);
+  v1.route("/projects/:projectId/item", itemRouter);
+  v1.route("/projects/:projectId/lottery", lotteryRouter);
+  v1.route("/projects/:projectId/mail", mailRouter);
+  v1.route("/projects/:projectId/navigation", navigationRouter);
+  v1.route("/projects/:projectId/shop", shopRouter);
+  v1.route("/projects/:projectId/storage-box", storageBoxRouter);
+  v1.route("/projects/:projectId/media-library", mediaLibraryRouter);
+  v1.route("/projects/:projectId/task", taskRouter);
+  v1.route("/projects/:projectId/match-squad", matchSquadRouter);
+  v1.route("/projects/:projectId/level", levelRouter);
+  v1.route("/projects/:projectId/leaderboard", leaderboardRouter);
+  v1.route("/projects/:projectId/activity", activityRouter);
+  v1.route("/projects/:projectId/assist-pool", assistPoolRouter);
+  v1.route("/projects/:projectId/event-catalog", eventCatalogRouter);
+  v1.route("/projects/:projectId/rank", rankRouter);
+  v1.route("/projects/:projectId/webhooks", webhooksRouter);
+  v1.route("/projects/:projectId/triggers", triggersRouter);
+
+  app.route("/api/v1", v1);
+}
 
 // C-end client routes — client credential + HMAC
-app.route("/api/client/announcement", announcementClientRouter);
-app.route("/api/client/badge", badgeClientRouter);
-app.route("/api/client/banner", bannerClientRouter);
-app.route("/api/client/battle-pass", battlePassClientRouter);
-app.route("/api/client/cdkey", cdkeyClientRouter);
-app.route("/api/client/check-in", checkInClientRouter);
-app.route("/api/client/offline-check-in", offlineCheckInClientRouter);
-app.route("/api/client/experiment", experimentClientRouter);
-app.route("/api/client/cms", cmsClientRouter);
-app.route("/api/client/collection", collectionClientRouter);
-app.route("/api/client/currency", currencyClientRouter);
-app.route("/api/client/dialogue", dialogueClientRouter);
-app.route("/api/client/entity", entityClientRouter);
-app.route("/api/client/item", itemClientRouter);
-app.route("/api/client/exchange", exchangeClientRouter);
-app.route("/api/client/friend", friendClientRouter);
-app.route("/api/client/friend-gift", friendGiftClientRouter);
-app.route("/api/client/invite", inviteClientRouter);
-app.route("/api/client/guild", guildClientRouter);
-app.route("/api/client/lottery", lotteryClientRouter);
-app.route("/api/client/mail", mailClientRouter);
-app.route("/api/client/shop", shopClientRouter);
-app.route("/api/client/task", taskClientRouter);
-app.route("/api/client/team", teamClientRouter);
-app.route("/api/client/level", levelClientRouter);
-app.route("/api/client/leaderboard", leaderboardClientRouter);
-app.route("/api/client/rank", rankClientRouter);
-app.route("/api/client/activity", activityClientRouter);
-app.route("/api/client/assist-pool", assistPoolClientRouter);
+app.route("/api/v1/client/announcement", announcementClientRouter);
+app.route("/api/v1/client/badge", badgeClientRouter);
+app.route("/api/v1/client/banner", bannerClientRouter);
+app.route("/api/v1/client/battle-pass", battlePassClientRouter);
+app.route("/api/v1/client/cdkey", cdkeyClientRouter);
+app.route("/api/v1/client/check-in", checkInClientRouter);
+app.route("/api/v1/client/offline-check-in", offlineCheckInClientRouter);
+app.route("/api/v1/client/experiment", experimentClientRouter);
+app.route("/api/v1/client/cms", cmsClientRouter);
+app.route("/api/v1/client/collection", collectionClientRouter);
+app.route("/api/v1/client/currency", currencyClientRouter);
+app.route("/api/v1/client/dialogue", dialogueClientRouter);
+app.route("/api/v1/client/entity", entityClientRouter);
+app.route("/api/v1/client/item", itemClientRouter);
+app.route("/api/v1/client/exchange", exchangeClientRouter);
+app.route("/api/v1/client/friend", friendClientRouter);
+app.route("/api/v1/client/friend-gift", friendGiftClientRouter);
+app.route("/api/v1/client/invite", inviteClientRouter);
+app.route("/api/v1/client/guild", guildClientRouter);
+app.route("/api/v1/client/lottery", lotteryClientRouter);
+app.route("/api/v1/client/mail", mailClientRouter);
+app.route("/api/v1/client/shop", shopClientRouter);
+app.route("/api/v1/client/task", taskClientRouter);
+app.route("/api/v1/client/match-squad", matchSquadClientRouter);
+app.route("/api/v1/client/level", levelClientRouter);
+app.route("/api/v1/client/leaderboard", leaderboardClientRouter);
+app.route("/api/v1/client/rank", rankClientRouter);
+app.route("/api/v1/client/activity", activityClientRouter);
+app.route("/api/v1/client/assist-pool", assistPoolClientRouter);
 
 // Kind Handler 事件接线 —— 每个派生玩法 module 在自己的 barrel
 // import 时通过 `kindRegistry.register(...)` 完成注册；所有 module
@@ -395,9 +457,10 @@ app.doc31("/openapi.json", {
     version: "0.1.0",
     description:
       "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n" +
-      "- **Admin** (`/api/<module>/...`): server-to-server calls (operations dashboards, cron, data pipelines). Authenticate with an admin API key (`x-api-key: ak_…`).\n" +
-      "- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\n" +
-      "Every business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format.",
+      "- **Admin** (`/api/v1/<module>/...`): server-to-server calls from your dashboard / cron / data pipelines. Session cookie or admin API key (`x-api-key: ak_…`). Each admin key is project-scoped (one Better Auth team).\n" +
+      "- **Public** (`/api/v1/projects/{projectId}/<module>/...`): same business surface as Admin but with the project id explicit in the URL — preferred for SDK / external integrations using admin API keys. The key's metadata.teamId must match {projectId}.\n" +
+      "- **Client** (`/api/v1/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\n" +
+      "Every business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/v1/client/auth/*`) keep the third-party library's native format.",
   },
   servers: [{ url: "http://localhost:8787", description: "Dev" }],
 });

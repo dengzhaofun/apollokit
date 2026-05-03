@@ -53,7 +53,7 @@ export const UpdateRuleSchema = z
 
 export const DryRunSchema = z
   .object({
-    /** Sample payload —— 任意 JSON 对象,触发引擎读取里面的 organizationId / endUserId / 自定义字段。 */
+    /** Sample payload —— 任意 JSON 对象,触发引擎读取里面的 tenantId / endUserId / 自定义字段。 */
     payload: z.record(z.string(), z.unknown()),
   })
   .openapi("DryRunTriggerRuleRequest");
@@ -67,7 +67,7 @@ export const RuleIdParamSchema = z
 const TriggerRuleResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     status: z.enum(TRIGGER_RULE_STATUSES),
@@ -143,7 +143,7 @@ export const ListExecutionsQuerySchema = z
 export const ExecutionResponseSchema = z
   .object({
     id: z.string().uuid(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     ruleId: z.string().uuid(),
     ruleVersion: z.number().int(),
     eventName: z.string(),

@@ -15,8 +15,8 @@
  *
  * 契约刻意不规定：
  *   ✗ 通用 `listClaimable / claim` —— 不同 kind 领奖机制不同，各 kind
- *     走自己的命令或业务语义糖路由（`/api/battle-pass/:id/claim-all`）。
- *   ✗ 统一 `/api/activity/:id/*` dispatcher 路由 —— 暂不过度抽象，等
+ *     走自己的命令或业务语义糖路由（`/api/v1/battle-pass/:id/claim-all`）。
+ *   ✗ 统一 `/api/v1/activity/:id/*` dispatcher 路由 —— 暂不过度抽象，等
  *     出现第二种 kind 且有共同访问模式时再抽。
  *
  * **面向平台内部工程师，不对 SaaS 客户开放**。客户要自定义玩法走

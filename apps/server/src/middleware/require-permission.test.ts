@@ -23,7 +23,8 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { db } from "../db";
 import app from "../index";
-import { member, organization, user } from "../schema";
+import { member, organization, teamMember, user } from "../schema";
+import { getDefaultTeamId } from "../testing/fixtures";
 
 const ORIGIN = "http://localhost:8787";
 
@@ -98,6 +99,18 @@ describe("requirePermission — four-role matrix", () => {
       id: subjectMemberRowId,
       organizationId: orgId,
       userId: subjectUserId,
+      role: "orgViewer", // org-level role for the company
+      createdAt: new Date(),
+    });
+
+    // Add subject as teamMember on the auto-created default project.
+    // require-permission middleware reads teamMember.role for business
+    // resource gating.
+    const tid = await getDefaultTeamId(orgId);
+    await db.insert(teamMember).values({
+      id: `test-teamMember-${crypto.randomUUID()}`,
+      teamId: tid,
+      userId: subjectUserId,
       role: "viewer", // initial; setSubjectRole flips it per test
       createdAt: new Date(),
     });
@@ -118,6 +131,41 @@ describe("requirePermission — four-role matrix", () => {
         `set-active failed ${setActive.status}: ${await setActive.text()}`,
       );
     }
+    // set-active may issue a fresh Set-Cookie with the updated session
+    // payload (now containing activeOrganizationId + activeTeamId
+    // populated by session.update.before hook). The cookieCache embeds
+    // session data in the cookie, so we MUST swap to the new cookie or
+    // subsequent requests would still see the old (no activeTeamId)
+    // payload.
+    const newCookie1 = setActive.headers.get("set-cookie");
+    if (newCookie1) {
+      subjectCookie = newCookie1.split(";")[0]!;
+    }
+
+    // Explicitly pin activeTeamId via set-active-team so business
+    // permission checks (which read teamMember.role for activeTeamId)
+    // have a deterministic team context.
+    const setActiveTeam = await app.request(
+      "/api/auth/organization/set-active-team",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: ORIGIN,
+          cookie: subjectCookie,
+        },
+        body: JSON.stringify({ teamId: tid }),
+      },
+    );
+    if (setActiveTeam.status !== 200) {
+      throw new Error(
+        `set-active-team failed ${setActiveTeam.status}: ${await setActiveTeam.text()}`,
+      );
+    }
+    const newCookie2 = setActiveTeam.headers.get("set-cookie");
+    if (newCookie2) {
+      subjectCookie = newCookie2.split(";")[0]!;
+    }
   });
 
   afterAll(async () => {
@@ -128,13 +176,14 @@ describe("requirePermission — four-role matrix", () => {
   });
 
   async function setSubjectRole(role: string) {
+    const tid = await getDefaultTeamId(orgId);
     await db
-      .update(member)
+      .update(teamMember)
       .set({ role })
       .where(
         and(
-          eq(member.userId, subjectUserId),
-          eq(member.organizationId, orgId),
+          eq(teamMember.userId, subjectUserId),
+          eq(teamMember.teamId, tid),
         ),
       );
   }
@@ -142,17 +191,17 @@ describe("requirePermission — four-role matrix", () => {
   // --- read business module: every role passes ---
 
   for (const role of ["admin", "operator", "viewer", "member"] as const) {
-    test(`${role}: GET /api/check-in/configs → 200 (read allowed)`, async () => {
+    test(`${role}: GET /api/v1/check-in/configs → 200 (read allowed)`, async () => {
       await setSubjectRole(role);
-      const res = await app.request("/api/check-in/configs", {
+      const res = await app.request("/api/v1/check-in/configs", {
         headers: { cookie: subjectCookie },
       });
       expect(res.status).toBe(200);
     });
   }
 
-  test("owner: GET /api/check-in/configs → 200 (read allowed)", async () => {
-    const res = await app.request("/api/check-in/configs", {
+  test("owner: GET /api/v1/check-in/configs → 200 (read allowed)", async () => {
+    const res = await app.request("/api/v1/check-in/configs", {
       headers: { cookie: ownerCookie },
     });
     expect(res.status).toBe(200);
@@ -161,10 +210,10 @@ describe("requirePermission — four-role matrix", () => {
   // --- write business module: viewer denied, others allowed ---
 
   for (const role of ["admin", "operator", "member"] as const) {
-    test(`${role}: POST /api/check-in/configs → 201 (write allowed)`, async () => {
+    test(`${role}: POST /api/v1/check-in/configs → 201 (write allowed)`, async () => {
       await setSubjectRole(role);
       const stamp = Math.random().toString(36).slice(2, 8);
-      const res = await app.request("/api/check-in/configs", {
+      const res = await app.request("/api/v1/check-in/configs", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -181,9 +230,9 @@ describe("requirePermission — four-role matrix", () => {
     });
   }
 
-  test("viewer: POST /api/check-in/configs → 403 (write denied)", async () => {
+  test("viewer: POST /api/v1/check-in/configs → 403 (write denied)", async () => {
     await setSubjectRole("viewer");
-    const res = await app.request("/api/check-in/configs", {
+    const res = await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -203,25 +252,25 @@ describe("requirePermission — four-role matrix", () => {
 
   // --- audit-log: only owner/admin can read ---
 
-  test("owner: GET /api/audit-logs → 200", async () => {
-    const res = await app.request("/api/audit-logs", {
+  test("owner: GET /api/v1/audit-logs → 200", async () => {
+    const res = await app.request("/api/v1/audit-logs", {
       headers: { cookie: ownerCookie },
     });
     expect(res.status).toBe(200);
   });
 
-  test("admin: GET /api/audit-logs → 200", async () => {
+  test("admin: GET /api/v1/audit-logs → 200", async () => {
     await setSubjectRole("admin");
-    const res = await app.request("/api/audit-logs", {
+    const res = await app.request("/api/v1/audit-logs", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);
   });
 
   for (const role of ["operator", "viewer", "member"] as const) {
-    test(`${role}: GET /api/audit-logs → 403`, async () => {
+    test(`${role}: GET /api/v1/audit-logs → 403`, async () => {
       await setSubjectRole(role);
-      const res = await app.request("/api/audit-logs", {
+      const res = await app.request("/api/v1/audit-logs", {
         headers: { cookie: subjectCookie },
       });
       expect(res.status).toBe(403);
@@ -230,9 +279,9 @@ describe("requirePermission — four-role matrix", () => {
 
   // --- /me/capabilities: shape sanity check per role ---
 
-  test("operator: GET /api/me/capabilities → bag has checkIn read+write but no auditLog", async () => {
+  test("operator: GET /api/v1/me/capabilities → bag has checkIn read+write but no auditLog", async () => {
     await setSubjectRole("operator");
-    const res = await app.request("/api/me/capabilities", {
+    const res = await app.request("/api/v1/me/capabilities", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);
@@ -246,9 +295,9 @@ describe("requirePermission — four-role matrix", () => {
     expect(body.data.capabilities.auditLog).toBeUndefined();
   });
 
-  test("viewer: GET /api/me/capabilities → bag has read only, no auditLog", async () => {
+  test("viewer: GET /api/v1/me/capabilities → bag has read only, no auditLog", async () => {
     await setSubjectRole("viewer");
-    const res = await app.request("/api/me/capabilities", {
+    const res = await app.request("/api/v1/me/capabilities", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);

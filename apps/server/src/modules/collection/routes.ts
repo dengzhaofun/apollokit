@@ -57,7 +57,7 @@ const TAG_OPS = "Collection Ops";
 
 function serializeAlbum(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -72,7 +72,7 @@ function serializeAlbum(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -90,7 +90,7 @@ function serializeAlbum(row: {
 function serializeGroup(row: {
   id: string;
   albumId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -102,7 +102,7 @@ function serializeGroup(row: {
   return {
     id: row.id,
     albumId: row.albumId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     icon: row.icon,
@@ -117,7 +117,7 @@ function serializeEntry(row: {
   id: string;
   albumId: string;
   groupId: string | null;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -136,7 +136,7 @@ function serializeEntry(row: {
     id: row.id,
     albumId: row.albumId,
     groupId: row.groupId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -155,7 +155,7 @@ function serializeEntry(row: {
 
 function serializeMilestone(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   albumId: string;
   scope: string;
   groupId: string | null;
@@ -171,7 +171,7 @@ function serializeMilestone(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     albumId: row.albumId,
     scope: row.scope,
     groupId: row.groupId,
@@ -820,7 +820,7 @@ collectionRouter.openapi(
     const { key } = c.req.valid("param");
     const { endUserId } = c.req.valid("json");
     const entries = await collectionService.syncFromInventory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       albumKey: key,
     });

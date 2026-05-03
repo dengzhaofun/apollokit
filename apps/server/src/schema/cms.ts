@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Generic CMS — schema-driven content management.
@@ -46,9 +46,9 @@ export const cmsTypes = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -75,11 +75,11 @@ export const cmsTypes = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("cms_types_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("cms_types_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
-    index("cms_types_org_status_idx").on(table.organizationId, table.status),
+    index("cms_types_tenant_status_idx").on(table.tenantId, table.status),
   ],
 );
 
@@ -89,15 +89,15 @@ export const cmsEntries = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     typeId: uuid("type_id")
       .notNull()
       .references(() => cmsTypes.id, { onDelete: "cascade" }),
     /**
      * Denormalized copy of `cms_types.alias` so client-route lookups
-     * (`/api/client/cms/by-alias/{typeAlias}/{entryAlias}`) can hit a
+     * (`/api/v1/client/cms/by-alias/{typeAlias}/{entryAlias}`) can hit a
      * single table without a join. Kept in sync by the service layer.
      */
     typeAlias: text("type_alias").notNull(),
@@ -135,13 +135,13 @@ export const cmsEntries = pgTable(
   (table) => [
     // alias unique within (org, type)
     uniqueIndex("cms_entries_org_type_alias_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.typeAlias,
       table.alias,
     ),
     // client-route: list-by-group
-    index("cms_entries_org_type_group_status_idx").on(
-      table.organizationId,
+    index("cms_entries_tenant_type_group_status_idx").on(
+      table.tenantId,
       table.typeAlias,
       table.groupKey,
       table.status,
@@ -149,8 +149,8 @@ export const cmsEntries = pgTable(
     // client-route: list-by-tag — GIN on array column for `&&` / `@>` operators
     index("cms_entries_tags_gin").using("gin", table.tags),
     // admin list pagination
-    index("cms_entries_org_type_updated_idx").on(
-      table.organizationId,
+    index("cms_entries_tenant_type_updated_idx").on(
+      table.tenantId,
       table.typeId,
       table.updatedAt,
     ),

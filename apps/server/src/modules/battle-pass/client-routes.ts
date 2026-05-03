@@ -5,7 +5,7 @@
  *   requireClientCredential — 验证 cpk_... 公钥，populate c.var.clientCredential
  *   requireClientUser       — 验证 HMAC，populate c.var.endUserId
  *
- * organizationId 从 clientCredential 里解出（不是 session）。
+ * tenantId 从 clientCredential 里解出（不是 session）。
  */
 
 import { z } from "@hono/zod-openapi";
@@ -34,7 +34,7 @@ const TAG = "Battle Pass (Client)";
 function serializeConfig(row: BattlePassConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     activityId: row.activityId,
     code: row.code,
     name: row.name,
@@ -53,11 +53,11 @@ function serializeConfig(row: BattlePassConfig) {
 }
 
 function resolveOrgId(c: {
-  var: { clientCredential: { organizationId: string } | null };
+  var: { clientCredential: { tenantId: string } | null };
 }): string {
-  const orgId = c.var.clientCredential?.organizationId;
+  const orgId = c.var.clientCredential?.tenantId;
   if (!orgId) {
-    throw new Error("clientCredential missing organizationId");
+    throw new Error("clientCredential missing tenantId");
   }
   return orgId;
 }
@@ -87,8 +87,8 @@ battlePassClientRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = resolveOrgId(c);
-    const row = await battlePassService.getCurrentSeason(organizationId);
+    const tenantId = resolveOrgId(c);
+    const row = await battlePassService.getCurrentSeason(tenantId);
     return c.json(ok(row ? serializeConfig(row) : null), 200);
   },
 );
@@ -116,11 +116,11 @@ battlePassClientRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = resolveOrgId(c);
+    const tenantId = resolveOrgId(c);
     const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const view = await battlePassService.getAggregateView(
-      organizationId,
+      tenantId,
       seasonId,
       endUserId,
     );
@@ -154,12 +154,12 @@ battlePassClientRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = resolveOrgId(c);
+    const tenantId = resolveOrgId(c);
     const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const input = c.req.valid("json");
     const outcome = await battlePassService.claimLevel({
-      organizationId,
+      tenantId,
       seasonId,
       endUserId,
       level: input.level,
@@ -200,11 +200,11 @@ battlePassClientRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = resolveOrgId(c);
+    const tenantId = resolveOrgId(c);
     const endUserId = getEndUserId(c);
     const { seasonId } = c.req.valid("param");
     const results = await battlePassService.claimAll({
-      organizationId,
+      tenantId,
       seasonId,
       endUserId,
     });

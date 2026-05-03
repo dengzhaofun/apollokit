@@ -37,7 +37,7 @@ export const patchAnnouncementExecute = tool({
   execute: async ({ key, patch }, { experimental_context }) => {
     const { execCtx, deps } = experimental_context as AgentToolContext;
     const updated = await deps.announcement.update(
-      execCtx.organizationId,
+      execCtx.tenantId,
       key,
       patch,
     );

@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Level (关卡) module — tenant-configurable level/stage progression system.
@@ -81,9 +81,9 @@ export const levelConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -100,9 +100,9 @@ export const levelConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("level_configs_org_idx").on(table.organizationId),
-    uniqueIndex("level_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("level_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("level_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -110,7 +110,7 @@ export const levelConfigs = pgTable(
 /**
  * Level stages — optional grouping layer within a config (e.g. chapters).
  *
- * `organizationId` is denormalized here (and on other child tables) so
+ * `tenantId` is denormalized here (and on other child tables) so
  * the admin UI can filter by tenant without traversing back to the
  * config row. ON DELETE CASCADE from the config keeps it consistent.
  *
@@ -127,7 +127,7 @@ export const levelStages = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => levelConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
@@ -142,7 +142,7 @@ export const levelStages = pgTable(
   },
   (table) => [
     index("level_stages_config_sort_idx").on(table.configId, table.sortOrder),
-    index("level_stages_org_idx").on(table.organizationId),
+    index("level_stages_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -178,7 +178,7 @@ export const levels = pgTable(
     stageId: uuid("stage_id").references(() => levelStages.id, {
       onDelete: "set null",
     }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -203,7 +203,7 @@ export const levels = pgTable(
       table.stageId,
       table.sortOrder,
     ),
-    index("levels_org_idx").on(table.organizationId),
+    index("levels_tenant_idx").on(table.tenantId),
     uniqueIndex("levels_config_alias_uidx")
       .on(table.configId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
@@ -238,7 +238,7 @@ export const levelUserProgress = pgTable(
   {
     levelId: uuid("level_id").notNull(),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     configId: uuid("config_id").notNull(),
     status: text("status").default("unlocked").notNull(),
     stars: integer("stars").default(0).notNull(),
@@ -259,8 +259,8 @@ export const levelUserProgress = pgTable(
       columns: [table.levelId, table.endUserId],
       name: "level_user_progress_pk",
     }),
-    index("level_user_progress_org_user_config_idx").on(
-      table.organizationId,
+    index("level_user_progress_tenant_user_config_idx").on(
+      table.tenantId,
       table.endUserId,
       table.configId,
     ),

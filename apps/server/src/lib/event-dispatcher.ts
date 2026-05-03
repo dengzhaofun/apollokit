@@ -57,10 +57,10 @@ export function installEventDispatcher(
       }
       const p = payload as Record<string, unknown>;
       const orgId =
-        typeof p.organizationId === "string" ? p.organizationId : null;
+        typeof p.tenantId === "string" ? p.tenantId : null;
       if (!orgId) {
         logger.warn(
-          `event-dispatcher: skipping ${desc.name} (missing organizationId)`,
+          `event-dispatcher: skipping ${desc.name} (missing tenantId)`,
         );
         return;
       }

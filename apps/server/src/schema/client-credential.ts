@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Client credentials for C-end API access with HMAC identity verification.
@@ -32,9 +32,9 @@ export const clientCredentials = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     publishableKey: text("publishable_key").notNull(),
     encryptedSecret: text("encrypted_secret").notNull(),
@@ -49,7 +49,7 @@ export const clientCredentials = pgTable(
       .notNull(),
   },
   (table) => [
-    index("client_credentials_organization_id_idx").on(table.organizationId),
+    index("client_credentials_organization_id_idx").on(table.tenantId),
     uniqueIndex("client_credentials_publishable_key_uidx").on(
       table.publishableKey,
     ),

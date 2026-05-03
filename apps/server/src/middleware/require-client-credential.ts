@@ -14,7 +14,7 @@
  * service.verifyRequest() with the full (publishableKey, endUserId, userHash).
  *
  * Mount per-router, not globally (one exception: it's mounted on
- * `/api/client/auth/*` in `src/index.ts` so end-user-auth routes can
+ * `/api/v1/client/auth/*` in `src/index.ts` so end-user-auth routes can
  * resolve the org). Throws `ModuleError` subclasses so the global
  * `app.onError` emits the standard envelope.
  */
@@ -39,7 +39,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
     const [cred] = await db
       .select({
         id: clientCredentials.id,
-        organizationId: clientCredentials.organizationId,
+        tenantId: clientCredentials.tenantId,
         publishableKey: clientCredentials.publishableKey,
         enabled: clientCredentials.enabled,
         expiresAt: clientCredentials.expiresAt,
@@ -60,7 +60,7 @@ export const requireClientCredential = createMiddleware<HonoEnv>(
 
     // Place org context for downstream handlers
     c.set("session", {
-      activeOrganizationId: cred.organizationId,
+      activeTeamId: cred.tenantId,
     } as NonNullable<typeof c.var.session>);
     c.set("user", null);
     c.set("authMethod", "client-credential");

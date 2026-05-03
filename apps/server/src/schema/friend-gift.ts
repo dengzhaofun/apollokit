@@ -14,7 +14,7 @@ import {
 
 import { fractionalSortKey } from "./_fractional-sort";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Friend gift settings — per-organization gifting configuration.
@@ -28,9 +28,9 @@ export const friendGiftSettings = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     dailySendLimit: integer("daily_send_limit").default(5).notNull(),
     dailyReceiveLimit: integer("daily_receive_limit").default(10).notNull(),
     timezone: text("timezone").default("UTC").notNull(),
@@ -42,7 +42,7 @@ export const friendGiftSettings = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("friend_gift_settings_org_uidx").on(table.organizationId),
+    uniqueIndex("friend_gift_settings_org_uidx").on(table.tenantId),
   ],
 );
 
@@ -58,7 +58,7 @@ export const friendGiftPackages = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -76,9 +76,9 @@ export const friendGiftPackages = pgTable(
       .notNull(),
   },
   (table) => [
-    index("friend_gift_packages_org_idx").on(table.organizationId),
-    uniqueIndex("friend_gift_packages_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("friend_gift_packages_tenant_idx").on(table.tenantId),
+    uniqueIndex("friend_gift_packages_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -96,7 +96,7 @@ export const friendGiftSends = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     packageId: uuid("package_id").references(() => friendGiftPackages.id, {
       onDelete: "set null",
     }),
@@ -117,13 +117,13 @@ export const friendGiftSends = pgTable(
       .notNull(),
   },
   (table) => [
-    index("friend_gift_sends_org_sender_idx").on(
-      table.organizationId,
+    index("friend_gift_sends_tenant_sender_idx").on(
+      table.tenantId,
       table.senderUserId,
       table.createdAt,
     ),
-    index("friend_gift_sends_org_receiver_status_idx").on(
-      table.organizationId,
+    index("friend_gift_sends_tenant_receiver_status_idx").on(
+      table.tenantId,
       table.receiverUserId,
       table.status,
     ),
@@ -140,7 +140,7 @@ export const friendGiftSends = pgTable(
 export const friendGiftDailyStates = pgTable(
   "friend_gift_daily_states",
   {
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     dateKey: text("date_key").notNull(),
     sendCount: integer("send_count").default(0).notNull(),
@@ -154,7 +154,7 @@ export const friendGiftDailyStates = pgTable(
   },
   (table) => [
     primaryKey({
-      columns: [table.organizationId, table.endUserId, table.dateKey],
+      columns: [table.tenantId, table.endUserId, table.dateKey],
       name: "friend_gift_daily_states_pk",
     }),
   ],

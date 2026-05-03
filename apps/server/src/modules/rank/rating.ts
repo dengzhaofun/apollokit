@@ -8,7 +8,7 @@
  * 团队模式：teamMode = "avgTeamElo"
  * ---------------------------------------------------------------------
  *
- * 1. 按 teamId 分组算队均 MMR `R_team`；
+ * 1. 按 matchTeamId 分组算队均 MMR `R_team`；
  * 2. 两队情形：对每个玩家用 `E = 1/(1 + 10^((R_other - R_self_team)/400))`
  *    算期望胜率；`actual = win ? 1 : 0`（平局 0.5）；
  * 3. 多队 / FFA：把每位玩家分别与"每一个其他队均分"两两结算，delta
@@ -21,7 +21,7 @@
 
 export type RatingInput = {
   endUserId: string;
-  teamId: string;
+  matchTeamId: string;
   placement: number;
   win: boolean;
   performanceScore?: number | null;
@@ -82,12 +82,12 @@ export function createEloStrategy(): RatingStrategy {
         }));
       }
 
-      // 1. 按 teamId 分组
+      // 1. 按 matchTeamId 分组
       const teams = new Map<string, RatingInput[]>();
       for (const p of participants) {
-        const arr = teams.get(p.teamId) ?? [];
+        const arr = teams.get(p.matchTeamId) ?? [];
         arr.push(p);
-        teams.set(p.teamId, arr);
+        teams.set(p.matchTeamId, arr);
       }
 
       // 2. 算每队均分 + 每队"实际得分"（胜=1 / 负=0，平局 / 多队用
@@ -97,67 +97,67 @@ export function createEloStrategy(): RatingStrategy {
       const avgMmrByTeam = new Map<string, number>();
       const actualByTeam = new Map<string, number>();
 
-      for (const teamId of teamIds) {
-        const arr = teams.get(teamId)!;
+      for (const matchTeamId of teamIds) {
+        const arr = teams.get(matchTeamId)!;
         const avg = arr.reduce((s, p) => s + p.mmrBefore, 0) / arr.length;
-        avgMmrByTeam.set(teamId, avg);
+        avgMmrByTeam.set(matchTeamId, avg);
       }
 
       if (teamCount === 2) {
         // 两队：谁胜谁拿 1。同队的 win 应该一致（service 也会校验），
         // 取第一人即可；若两队都 false（平局）→ 各 0.5
-        for (const teamId of teamIds) {
-          const arr = teams.get(teamId)!;
+        for (const matchTeamId of teamIds) {
+          const arr = teams.get(matchTeamId)!;
           const teamWon = arr.some((p) => p.win);
-          actualByTeam.set(teamId, teamWon ? 1 : 0);
+          actualByTeam.set(matchTeamId, teamWon ? 1 : 0);
         }
         const wins = [...actualByTeam.values()].filter((v) => v === 1).length;
         if (wins === 0) {
           // 双方都 false → 平局
-          for (const teamId of teamIds) actualByTeam.set(teamId, 0.5);
+          for (const matchTeamId of teamIds) actualByTeam.set(matchTeamId, 0.5);
         } else if (wins === teamIds.length) {
           // 双方都 win → 也按平局处理（防御）
-          for (const teamId of teamIds) actualByTeam.set(teamId, 0.5);
+          for (const matchTeamId of teamIds) actualByTeam.set(matchTeamId, 0.5);
         }
       } else {
         // 多队：用每队最佳 placement 做线性归一化
         const bestPlacement = new Map<string, number>();
-        for (const teamId of teamIds) {
-          const arr = teams.get(teamId)!;
+        for (const matchTeamId of teamIds) {
+          const arr = teams.get(matchTeamId)!;
           bestPlacement.set(
-            teamId,
+            matchTeamId,
             arr.reduce((m, p) => Math.min(m, p.placement), Infinity),
           );
         }
         // 最优名次 = 1，最差 = teamCount
         // actual = (teamCount - placement) / (teamCount - 1)，线性归一化到 [0,1]
-        for (const teamId of teamIds) {
-          const p = bestPlacement.get(teamId)!;
+        for (const matchTeamId of teamIds) {
+          const p = bestPlacement.get(matchTeamId)!;
           const actual = (teamCount - p) / (teamCount - 1);
-          actualByTeam.set(teamId, clamp(actual, 0, 1));
+          actualByTeam.set(matchTeamId, clamp(actual, 0, 1));
         }
       }
 
       // 3. 对每队算"对所有其他队"的平均期望胜率
       const expectedByTeam = new Map<string, number>();
-      for (const teamId of teamIds) {
-        const rSelf = avgMmrByTeam.get(teamId)!;
+      for (const matchTeamId of teamIds) {
+        const rSelf = avgMmrByTeam.get(matchTeamId)!;
         let sum = 0;
         let n = 0;
         for (const otherId of teamIds) {
-          if (otherId === teamId) continue;
+          if (otherId === matchTeamId) continue;
           const rOther = avgMmrByTeam.get(otherId)!;
           sum += expected(rSelf, rOther);
           n++;
         }
-        expectedByTeam.set(teamId, n > 0 ? sum / n : 0.5);
+        expectedByTeam.set(matchTeamId, n > 0 ? sum / n : 0.5);
       }
 
       // 4. 给每位玩家发 delta。同队共用 `actual - E`，再叠加个人表现项。
       const out: RatingOutput[] = [];
       for (const p of participants) {
-        const actual = actualByTeam.get(p.teamId)!;
-        const exp = expectedByTeam.get(p.teamId)!;
+        const actual = actualByTeam.get(p.matchTeamId)!;
+        const exp = expectedByTeam.get(p.matchTeamId)!;
         let delta = K * (actual - exp);
 
         if (

@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Webhook endpoints — org-scoped outbound delivery targets.
@@ -36,9 +36,9 @@ export const webhooksEndpoints = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     url: text("url").notNull(),
     description: text("description"),
@@ -60,9 +60,9 @@ export const webhooksEndpoints = pgTable(
       .notNull(),
   },
   (table) => [
-    index("webhooks_endpoints_org_idx").on(table.organizationId),
-    index("webhooks_endpoints_org_status_idx").on(
-      table.organizationId,
+    index("webhooks_endpoints_tenant_idx").on(table.tenantId),
+    index("webhooks_endpoints_tenant_status_idx").on(
+      table.tenantId,
       table.status,
     ),
   ],
@@ -89,9 +89,9 @@ export const webhooksDeliveries = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     endpointId: uuid("endpoint_id")
       .notNull()
       .references(() => webhooksEndpoints.id, { onDelete: "cascade" }),
@@ -112,8 +112,8 @@ export const webhooksDeliveries = pgTable(
     index("webhooks_deliveries_due_idx")
       .on(table.status, table.nextAttemptAt)
       .where(sql`status in ('pending', 'failed')`),
-    index("webhooks_deliveries_org_event_type_idx").on(
-      table.organizationId,
+    index("webhooks_deliveries_tenant_event_type_idx").on(
+      table.tenantId,
       table.eventType,
     ),
     index("webhooks_deliveries_endpoint_created_idx").on(

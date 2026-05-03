@@ -47,10 +47,10 @@ describe("trigger-loop integration — emit → queue → dispatch → HTTP POST
   afterAll(async () => {
     await db
       .delete(webhooksDeliveries)
-      .where(eq(webhooksDeliveries.organizationId, orgId))
+      .where(eq(webhooksDeliveries.tenantId, orgId))
     await db
       .delete(webhooksEndpoints)
-      .where(eq(webhooksEndpoints.organizationId, orgId))
+      .where(eq(webhooksEndpoints.tenantId, orgId))
     await deleteTestOrg(orgId)
   })
 
@@ -110,7 +110,7 @@ describe("trigger-loop integration — emit → queue → dispatch → HTTP POST
 
     // 4. emit ——> bridge ——> stub queue
     await events.emit("task.completed" as never, {
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-1",
       taskId: "t-1",
       taskAlias: "daily-1",
@@ -144,7 +144,7 @@ describe("trigger-loop integration — emit → queue → dispatch → HTTP POST
     const deliveries = await db
       .select()
       .from(webhooksDeliveries)
-      .where(eq(webhooksDeliveries.organizationId, orgId))
+      .where(eq(webhooksDeliveries.tenantId, orgId))
     expect(deliveries).toHaveLength(1)
     expect(deliveries[0]?.eventType).toBe("task.completed")
     expect(deliveries[0]?.status).toBe("success")
@@ -161,9 +161,9 @@ describe("trigger-loop integration — emit → queue → dispatch → HTTP POST
     expect(req.headers["content-type"]).toBe("application/json")
     expect(req.body).toMatchObject({
       type: "task.completed",
-      organization_id: orgId,
+      tenant_id: orgId,
       data: expect.objectContaining({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-1",
         taskId: "t-1",
       }),

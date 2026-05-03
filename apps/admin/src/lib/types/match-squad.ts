@@ -1,6 +1,6 @@
-export interface TeamConfig {
+export interface MatchSquadConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   maxMembers: number
@@ -13,7 +13,7 @@ export interface TeamConfig {
 
 export interface Team {
   id: string
-  organizationId: string
+  tenantId: string
   configId: string
   leaderUserId: string
   status: string
@@ -24,7 +24,7 @@ export interface Team {
   updatedAt: string
 }
 
-export interface CreateTeamConfigInput {
+export interface CreateMatchSquadConfigInput {
   name: string
   alias?: string | null
   maxMembers?: number
@@ -33,7 +33,7 @@ export interface CreateTeamConfigInput {
   metadata?: Record<string, unknown> | null
 }
 
-export interface UpdateTeamConfigInput {
+export interface UpdateMatchSquadConfigInput {
   name?: string
   alias?: string | null
   maxMembers?: number

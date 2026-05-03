@@ -34,7 +34,7 @@ export const unlockFeatureAction: ActionHandler<UnlockFeatureAction> = async (
   const inserted = await deps.db
     .insert(featureUnlocks)
     .values({
-      organizationId: ctx.orgId,
+      tenantId: ctx.orgId,
       endUserId,
       featureKey: action.featureKey,
       source: `trigger:${ctx.traceId}`,

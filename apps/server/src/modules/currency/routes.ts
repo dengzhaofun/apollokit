@@ -40,7 +40,7 @@ const TAG_LEDGER = "Currency Ledger";
 
 function serializeDefinition(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -55,7 +55,7 @@ function serializeDefinition(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -72,7 +72,7 @@ function serializeDefinition(row: {
 
 function serializeLedgerEntry(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   currencyId: string;
   delta: number;
@@ -84,7 +84,7 @@ function serializeLedgerEntry(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     endUserId: row.endUserId,
     currencyId: row.currencyId,
     delta: row.delta,
@@ -352,7 +352,7 @@ currencyRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await currencyService.grant({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       grants: body.grants,
       source: body.source,
@@ -385,7 +385,7 @@ currencyRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await currencyService.deduct({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       deductions: body.deductions,
       source: body.source,

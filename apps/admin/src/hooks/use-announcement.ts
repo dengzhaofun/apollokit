@@ -58,7 +58,7 @@ export function useAnnouncements(route: any) {
     filterDefs: ANNOUNCEMENT_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Announcement>>(
-        `/api/announcement?${buildQs({
+        `/api/v1/announcement?${buildQs({
           cursor,
           limit,
           q,
@@ -73,7 +73,7 @@ export function useAnnouncement(alias: string) {
   return useQuery({
     queryKey: [...KEY, alias],
     queryFn: () =>
-      api.get<Announcement>(`/api/announcement/${encodeURIComponent(alias)}`),
+      api.get<Announcement>(`/api/v1/announcement/${encodeURIComponent(alias)}`),
     enabled: !!alias,
   })
 }
@@ -82,7 +82,7 @@ export function useCreateAnnouncement() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateAnnouncementInput) =>
-      api.post<Announcement>("/api/announcement", input),
+      api.post<Announcement>("/api/v1/announcement", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }
@@ -98,7 +98,7 @@ export function useUpdateAnnouncement() {
       input: UpdateAnnouncementInput
     }) =>
       api.patch<Announcement>(
-        `/api/announcement/${encodeURIComponent(alias)}`,
+        `/api/v1/announcement/${encodeURIComponent(alias)}`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -112,7 +112,7 @@ export function useDeleteAnnouncement() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (alias: string) =>
-      api.delete(`/api/announcement/${encodeURIComponent(alias)}`),
+      api.delete(`/api/v1/announcement/${encodeURIComponent(alias)}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }

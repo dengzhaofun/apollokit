@@ -1,10 +1,10 @@
 /**
  * Admin-facing HTTP routes for the rank module.
  *
- * Mounted at /api/rank. Guarded by `requireAdminOrApiKey` so both
+ * Mounted at /api/v1/rank. Guarded by `requireAdminOrApiKey` so both
  * session-cookie-authed dashboard users and server-to-server admin API
- * keys can drive CRUD. `organizationId` comes from
- * `c.var.session.activeOrganizationId` (synthesized by the guard for the
+ * keys can drive CRUD. `tenantId` comes from
+ * `c.var.session.activeTeamId` (synthesized by the guard for the
  * API-key path).
  *
  * Structure mirrors `announcement/routes.ts`: serialize → call service →
@@ -75,7 +75,7 @@ function serializeTierConfig(input: { config: RankTierConfig; tiers: RankTier[] 
   const { config, tiers } = input;
   return {
     id: config.id,
-    organizationId: config.organizationId,
+    tenantId: config.tenantId,
     alias: config.alias,
     name: config.name,
     description: config.description,
@@ -92,7 +92,7 @@ function serializeTierConfig(input: { config: RankTierConfig; tiers: RankTier[] 
 function serializeSeason(row: RankSeason) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     tierConfigId: row.tierConfigId,
     alias: row.alias,
     name: row.name,
@@ -123,7 +123,7 @@ function serializeParticipant(row: RankMatchParticipant) {
     id: row.id,
     matchId: row.matchId,
     endUserId: row.endUserId,
-    teamId: row.teamId,
+    matchTeamId: row.matchTeamId,
     placement: row.placement,
     win: row.win,
     mmrBefore: row.mmrBefore,
@@ -180,7 +180,7 @@ rankRouter.openapi(
     const reportedBy = c.var.user?.id ?? null;
     const result = await rankService.settleMatch({
       ...input,
-      organizationId: orgId,
+      tenantId: orgId,
       ...(reportedBy ? { reportedBy } : {}),
     });
     return c.json(ok(result), 200);
@@ -502,7 +502,7 @@ rankRouter.openapi(
     const { id } = c.req.valid("param");
     const { tierId, endUserId, limit } = c.req.valid("query");
     const items = await rankService.listPlayerStates({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: id,
       tierId,
       endUserId,
@@ -583,7 +583,7 @@ rankRouter.openapi(
     const { id } = c.req.valid("param");
     const { limit, cursor } = c.req.valid("query");
     const { items, nextCursor } = await rankService.listSeasonMatches({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: id,
       limit,
       cursor,

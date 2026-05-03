@@ -32,7 +32,7 @@ const TAG = "Announcement (Admin)";
 function serialize(row: Announcement) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     kind: row.kind as AnnouncementKind,
     title: row.title,

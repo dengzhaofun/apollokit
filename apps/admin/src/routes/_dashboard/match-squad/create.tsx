@@ -2,10 +2,10 @@ import { createFileRoute, redirect } from "@tanstack/react-router"
 
 import { openCreateModal } from "#/lib/modal-search"
 
-export const Route = createFileRoute("/_dashboard/team/create")({
+export const Route = createFileRoute("/_dashboard/match-squad/create")({
   beforeLoad: () => {
     throw redirect({
-      to: "/team",
+      to: "/match-squad",
       search: openCreateModal,
     })
   },

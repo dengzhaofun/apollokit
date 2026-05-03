@@ -49,7 +49,7 @@ const TAG_LEVEL = "Level Levels";
 
 function serializeConfig(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -64,7 +64,7 @@ function serializeConfig(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -82,7 +82,7 @@ function serializeConfig(row: {
 function serializeStage(row: {
   id: string;
   configId: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -95,7 +95,7 @@ function serializeStage(row: {
   return {
     id: row.id,
     configId: row.configId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     icon: row.icon,
@@ -111,7 +111,7 @@ function serializeLevel(row: {
   id: string;
   configId: string;
   stageId: string | null;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   description: string | null;
@@ -131,7 +131,7 @@ function serializeLevel(row: {
     id: row.id,
     configId: row.configId,
     stageId: row.stageId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,

@@ -55,7 +55,7 @@ export function useTaskCategories(route: any) {
     filterDefs: TASK_CATEGORY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<TaskCategory>>(
-        `/api/task/categories?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/task/categories?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -66,7 +66,7 @@ export function useAllTaskCategories() {
     queryKey: [...CATEGORIES_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<TaskCategory>>(`/api/task/categories?${buildQs({ limit: 200 })}`)
+        .get<Page<TaskCategory>>(`/api/v1/task/categories?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -74,7 +74,7 @@ export function useAllTaskCategories() {
 export function useTaskCategory(id: string) {
   return useQuery({
     queryKey: categoryKey(id),
-    queryFn: () => api.get<TaskCategory>(`/api/task/categories/${id}`),
+    queryFn: () => api.get<TaskCategory>(`/api/v1/task/categories/${id}`),
     enabled: !!id,
   })
 }
@@ -83,7 +83,7 @@ export function useCreateTaskCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCategoryInput) =>
-      api.post<TaskCategory>("/api/task/categories", input),
+      api.post<TaskCategory>("/api/v1/task/categories", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   })
 }
@@ -92,7 +92,7 @@ export function useUpdateTaskCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateCategoryInput }) =>
-      api.patch<TaskCategory>(`/api/task/categories/${id}`, input),
+      api.patch<TaskCategory>(`/api/v1/task/categories/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: CATEGORIES_KEY })
       qc.invalidateQueries({ queryKey: categoryKey(vars.id) })
@@ -103,7 +103,7 @@ export function useUpdateTaskCategory() {
 export function useDeleteTaskCategory() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/task/categories/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/task/categories/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   })
 }
@@ -197,7 +197,7 @@ export function useTaskDefinitions(
     filterDefs: TASK_DEFINITION_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<TaskDefinition>>(
-        `/api/task/definitions?${buildQs({
+        `/api/v1/task/definitions?${buildQs({
           cursor,
           limit,
           q,
@@ -236,7 +236,7 @@ export function useAllTaskDefinitions(
     queryFn: () =>
       api
         .get<Page<TaskDefinition>>(
-          `/api/task/definitions?${buildQs({
+          `/api/v1/task/definitions?${buildQs({
             limit: 200,
             categoryId,
             period,
@@ -252,7 +252,7 @@ export function useTaskDefinition(key: string) {
   return useQuery({
     queryKey: definitionKey(key),
     queryFn: () =>
-      api.get<TaskDefinition>(`/api/task/definitions/${key}`),
+      api.get<TaskDefinition>(`/api/v1/task/definitions/${key}`),
     enabled: !!key,
   })
 }
@@ -261,7 +261,7 @@ export function useCreateTaskDefinition() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateDefinitionInput) =>
-      api.post<TaskDefinition>("/api/task/definitions", input),
+      api.post<TaskDefinition>("/api/v1/task/definitions", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -275,7 +275,7 @@ export function useUpdateTaskDefinition() {
     }: {
       key: string
       input: UpdateDefinitionInput
-    }) => api.patch<TaskDefinition>(`/api/task/definitions/${key}`, input),
+    }) => api.patch<TaskDefinition>(`/api/v1/task/definitions/${key}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: DEFINITIONS_KEY })
       qc.invalidateQueries({ queryKey: definitionKey(vars.key) })
@@ -286,7 +286,7 @@ export function useUpdateTaskDefinition() {
 export function useDeleteTaskDefinition() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (key: string) => api.delete(`/api/task/definitions/${key}`),
+    mutationFn: (key: string) => api.delete(`/api/v1/task/definitions/${key}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -320,7 +320,7 @@ export function useTaskAssignments(
     queryKey: assignmentsKey(taskKey, filter),
     queryFn: () =>
       api.get<AssignmentListResponse>(
-        `/api/task/definitions/${taskKey}/assignments${qs ? `?${qs}` : ""}`,
+        `/api/v1/task/definitions/${taskKey}/assignments${qs ? `?${qs}` : ""}`,
       ),
     select: (data) => data.items,
     enabled: !!taskKey,
@@ -332,7 +332,7 @@ export function useAssignTask(taskKey: string) {
   return useMutation({
     mutationFn: (input: AssignTaskInput) =>
       api.post<AssignBatchResponse>(
-        `/api/task/definitions/${taskKey}/assignments`,
+        `/api/v1/task/definitions/${taskKey}/assignments`,
         input,
       ),
     onSuccess: () =>
@@ -345,7 +345,7 @@ export function useRevokeAssignment(taskKey: string) {
   return useMutation({
     mutationFn: (endUserId: string) =>
       api.delete(
-        `/api/task/definitions/${taskKey}/assignments/${encodeURIComponent(endUserId)}`,
+        `/api/v1/task/definitions/${taskKey}/assignments/${encodeURIComponent(endUserId)}`,
       ),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["task-assignments", taskKey] }),

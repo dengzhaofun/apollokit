@@ -27,7 +27,7 @@ const TAG = "Dialogue (Admin)";
 function serializeScript(row: DialogueScript) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,

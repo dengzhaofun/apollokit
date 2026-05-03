@@ -1,23 +1,59 @@
 /**
  * Test fixtures for apps/server.
  *
- * The isolation model is: each test file seeds its own `organization`
- * row with a random id and relies on ON DELETE CASCADE to clean up
- * everything that references it (`check_in_configs` →
- * `check_in_user_states`, future `points_*`, `task_*`, …). The
- * fixture helpers here are the only bits of code that know that the
- * `organization` table exists — test files never touch it directly.
+ * Dual-tenant model: tests scope to a single project (Better Auth `team`)
+ * which lives inside a single organization. The shared id stored on
+ * business tables is `tenant_id` and FKs to `team.id`. To keep service
+ * tests painless we still expose `createTestOrg(label) → string` that
+ * returns one id usable as `tenantId` — under the hood that id names
+ * BOTH the organization row AND the team row, so existing tests don't
+ * have to change.
  *
- * We deliberately bypass Better Auth's org API: the service layer
- * does not care how an organization was created, only that the id
- * exists. Going through Better Auth would add a session + user + member
- * dance that's pure setup noise for service tests.
+ * If a test needs distinct org and team ids (e.g. cross-project
+ * isolation tests) it should use `createTestProject(label)` which
+ * returns `{ orgId, teamId }`.
+ *
+ * We bypass Better Auth's org API on purpose: services don't care how
+ * a project came to be, only that the id exists. Going through Better
+ * Auth would add a session + user + member dance that's pure setup
+ * noise.
  */
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "../db";
-import { organization, member, session, user, account } from "../schema";
+import {
+  account,
+  member,
+  organization,
+  session,
+  team,
+  user,
+} from "../schema";
 
+/**
+ * Find the default project (Better Auth team) created when an org was
+ * provisioned via `/api/auth/organization/create`. Returns the team id
+ * that route tests can pass as `tenantId` to service factories.
+ */
+export async function getDefaultTeamId(orgId: string): Promise<string> {
+  const [t] = await db
+    .select({ id: team.id })
+    .from(team)
+    .where(eq(team.organizationId, orgId))
+    .orderBy(asc(team.createdAt))
+    .limit(1);
+  if (!t) {
+    throw new Error(`no team found for org ${orgId}`);
+  }
+  return t.id;
+}
+
+/**
+ * Creates an organization + a single team (project) inside it. Both rows
+ * share the SAME id so service tests can pass the returned string as
+ * `tenantId` (FK → team.id) interchangeably with what they used to pass
+ * as `organizationId`.
+ */
 export async function createTestOrg(label = "test"): Promise<string> {
   const id = `test-org-${crypto.randomUUID()}`;
   await db.insert(organization).values({
@@ -27,13 +63,46 @@ export async function createTestOrg(label = "test"): Promise<string> {
     slug: id,
     createdAt: new Date(),
   });
+  // Team row with the same id — keeps existing tests' single-id calls
+  // (service.foo(tenantId, …)) working without rewrites.
+  await db.insert(team).values({
+    id,
+    name: `${label} project`,
+    organizationId: id,
+    createdAt: new Date(),
+  });
   return id;
 }
 
 export async function deleteTestOrg(id: string): Promise<void> {
-  // Cascade takes care of `check_in_configs`, `check_in_user_states`,
-  // and any future module tables that reference `organization.id`.
+  // Cascade from organization removes team, teamMember, member, invitation,
+  // and every business-table row whose tenant_id is this team.
   await db.delete(organization).where(eq(organization.id, id));
+}
+
+/**
+ * Cross-project isolation helper — creates an org with two distinct teams
+ * inside it, returning all three ids.
+ */
+export async function createTestProject(label = "test"): Promise<{
+  orgId: string;
+  teamId: string;
+}> {
+  const orgId = `test-org-${crypto.randomUUID()}`;
+  const teamId = `test-team-${crypto.randomUUID()}`;
+  await db.insert(organization).values({
+    id: orgId,
+    name: `${label} org`,
+    slug: orgId,
+    createdAt: new Date(),
+  });
+  await db.insert(team).values({
+    id: teamId,
+    name: `${label} project`,
+    organizationId: orgId,
+    createdAt: new Date(),
+  });
+  return { orgId, teamId };
 }
 
 /**

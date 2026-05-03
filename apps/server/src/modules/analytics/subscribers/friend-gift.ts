@@ -11,7 +11,7 @@ export function registerFriendGiftSubscribers(
 
   events.on("friend_gift.sent", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "friend_gift.sent",
       source: "friend-gift",
@@ -26,7 +26,7 @@ export function registerFriendGiftSubscribers(
 
   events.on("friend_gift.claimed", (p) => {
     write({
-      orgId: p.organizationId,
+      orgId: p.tenantId,
       endUserId: p.endUserId,
       event: "friend_gift.claimed",
       source: "friend-gift",

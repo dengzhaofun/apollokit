@@ -75,30 +75,30 @@ type AnnouncementDeps = Pick<AppDeps, "db"> &
 declare module "../../lib/event-bus" {
   interface EventMap {
     "announcement.created": {
-      organizationId: string;
+      tenantId: string;
       announcementId: string;
       alias: string;
       kind: AnnouncementKind;
     };
     "announcement.updated": {
-      organizationId: string;
+      tenantId: string;
       announcementId: string;
       alias: string;
     };
     "announcement.deleted": {
-      organizationId: string;
+      tenantId: string;
       announcementId: string;
       alias: string;
     };
     "announcement.impression": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       announcementId: string;
       alias: string;
       kind: AnnouncementKind;
     };
     "announcement.click": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       announcementId: string;
       alias: string;
@@ -146,7 +146,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
   const { db, events } = d;
 
   async function loadByAlias(
-    organizationId: string,
+    tenantId: string,
     alias: string,
   ): Promise<Announcement> {
     const rows = await db
@@ -154,7 +154,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
       .from(announcements)
       .where(
         and(
-          eq(announcements.organizationId, organizationId),
+          eq(announcements.tenantId, tenantId),
           eq(announcements.alias, alias),
         ),
       )
@@ -167,12 +167,12 @@ export function createAnnouncementService(d: AnnouncementDeps) {
     // ─── Admin ─────────────────────────────────────────────────
 
     async list(
-      organizationId: string,
+      tenantId: string,
       filter: ListAnnouncementsQuery & PageParams = {},
     ): Promise<Page<Announcement>> {
       const limit = clampLimit(filter.limit);
       const where = and(
-        eq(announcements.organizationId, organizationId),
+        eq(announcements.tenantId, tenantId),
         announcementFilters.where(filter as Record<string, unknown>),
         cursorWhere(filter.cursor, announcements.createdAt, announcements.id),
       );
@@ -186,14 +186,14 @@ export function createAnnouncementService(d: AnnouncementDeps) {
     },
 
     async getByAlias(
-      organizationId: string,
+      tenantId: string,
       alias: string,
     ): Promise<Announcement> {
-      return loadByAlias(organizationId, alias);
+      return loadByAlias(tenantId, alias);
     },
 
     async create(
-      organizationId: string,
+      tenantId: string,
       input: CreateAnnouncementInput,
       createdBy: string | null,
     ): Promise<Announcement> {
@@ -202,7 +202,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
         const [row] = await db
           .insert(announcements)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias,
             kind: input.kind,
             title: input.title,
@@ -222,7 +222,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
 
         if (events) {
           await events.emit("announcement.created", {
-            organizationId,
+            tenantId,
             announcementId: row.id,
             alias: row.alias,
             kind: row.kind as AnnouncementKind,
@@ -238,11 +238,11 @@ export function createAnnouncementService(d: AnnouncementDeps) {
     },
 
     async update(
-      organizationId: string,
+      tenantId: string,
       alias: string,
       input: UpdateAnnouncementInput,
     ): Promise<Announcement> {
-      const existing = await loadByAlias(organizationId, alias);
+      const existing = await loadByAlias(tenantId, alias);
 
       const mergedFrom =
         input.visibleFrom !== undefined
@@ -280,7 +280,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
         .set(patch)
         .where(
           and(
-            eq(announcements.organizationId, organizationId),
+            eq(announcements.tenantId, tenantId),
             eq(announcements.alias, alias),
           ),
         )
@@ -289,7 +289,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
 
       if (events) {
         await events.emit("announcement.updated", {
-          organizationId,
+          tenantId,
           announcementId: row.id,
           alias: row.alias,
         });
@@ -297,12 +297,12 @@ export function createAnnouncementService(d: AnnouncementDeps) {
       return row;
     },
 
-    async remove(organizationId: string, alias: string): Promise<void> {
+    async remove(tenantId: string, alias: string): Promise<void> {
       const deleted = await db
         .delete(announcements)
         .where(
           and(
-            eq(announcements.organizationId, organizationId),
+            eq(announcements.tenantId, tenantId),
             eq(announcements.alias, alias),
           ),
         )
@@ -315,7 +315,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
 
       if (events) {
         await events.emit("announcement.deleted", {
-          organizationId,
+          tenantId,
           announcementId: row.id,
           alias: row.alias,
         });
@@ -331,7 +331,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
      * change, not a contract change.
      */
     async getActiveForClient(
-      organizationId: string,
+      tenantId: string,
       _endUserId: string,
       nowParam?: Date,
     ): Promise<ClientAnnouncement[]> {
@@ -341,7 +341,7 @@ export function createAnnouncementService(d: AnnouncementDeps) {
         .from(announcements)
         .where(
           and(
-            eq(announcements.organizationId, organizationId),
+            eq(announcements.tenantId, tenantId),
             eq(announcements.isActive, true),
             or(
               isNull(announcements.visibleFrom),
@@ -368,14 +368,14 @@ export function createAnnouncementService(d: AnnouncementDeps) {
      * not to retroactively decide whether rendering was allowed.
      */
     async recordImpression(
-      organizationId: string,
+      tenantId: string,
       alias: string,
       endUserId: string,
     ): Promise<void> {
-      const row = await loadByAlias(organizationId, alias);
+      const row = await loadByAlias(tenantId, alias);
       if (events) {
         await events.emit("announcement.impression", {
-          organizationId,
+          tenantId,
           endUserId,
           announcementId: row.id,
           alias: row.alias,
@@ -385,14 +385,14 @@ export function createAnnouncementService(d: AnnouncementDeps) {
     },
 
     async recordClick(
-      organizationId: string,
+      tenantId: string,
       alias: string,
       endUserId: string,
     ): Promise<void> {
-      const row = await loadByAlias(organizationId, alias);
+      const row = await loadByAlias(tenantId, alias);
       if (events) {
         await events.emit("announcement.click", {
-          organizationId,
+          tenantId,
           endUserId,
           announcementId: row.id,
           alias: row.alias,

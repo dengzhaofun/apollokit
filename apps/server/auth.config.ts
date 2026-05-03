@@ -38,11 +38,23 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
-    organization(),
+    organization({
+      teams: {
+        enabled: true,
+        maximumTeams: 50,
+        allowRemovingAllTeams: false,
+      },
+      dynamicAccessControl: {
+        enabled: true,
+      },
+    }),
     apiKey([
       {
         configId: "admin",
         defaultPrefix: "ak_",
+        // Owned by organization; team scoping is encoded in metadata.teamId
+        // (Better Auth apikey plugin only supports `user` / `organization` for
+        // references — see plan §2.3 / spike report).
         references: "organization",
       },
     ]),

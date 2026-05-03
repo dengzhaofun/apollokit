@@ -1,7 +1,7 @@
 /**
  * Client-facing CMS routes.
  *
- * Mounted at `/api/client/cms`. Auth: `requireClientCredential` only —
+ * Mounted at `/api/v1/client/cms`. Auth: `requireClientCredential` only —
  * a `cpk_…` API key is enough to identify the org. We deliberately skip
  * `requireClientUser` because CMS content is org-scoped, not per-end-user;
  * forcing every reader to have an end-user HMAC is friction without
@@ -74,7 +74,7 @@ cmsClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { typeAlias, entryAlias } = c.req.valid("param");
     const row = await cmsService.clientGetByAlias(orgId, typeAlias, entryAlias);
     if (!row) {
@@ -106,7 +106,7 @@ cmsClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { typeAlias, groupKey } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await cmsService.clientListByGroup(
@@ -141,7 +141,7 @@ cmsClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { tag } = c.req.valid("param");
     const { limit, offset } = c.req.valid("query");
     const rows = await cmsService.clientListByTag(orgId, tag, {
@@ -174,7 +174,7 @@ cmsClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { typeAlias } = c.req.valid("param");
     const q = c.req.valid("query");
     const rows = await cmsService.clientListType(orgId, typeAlias, {

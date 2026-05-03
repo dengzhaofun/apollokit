@@ -79,7 +79,7 @@ describe("event-catalog service", () => {
       owner: "level",
       description: "Player clears a level",
       fields: [
-        { path: "organizationId", type: "string", required: true },
+        { path: "tenantId", type: "string", required: true },
         { path: "endUserId", type: "string", required: true },
         { path: "levelId", type: "string", required: true },
       ],

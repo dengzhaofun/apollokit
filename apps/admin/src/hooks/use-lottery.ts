@@ -55,7 +55,7 @@ export function useLotteryPools(
     filterDefs: LOTTERY_POOL_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPool>>(
-        `/api/lottery/pools?${buildQs({
+        `/api/v1/lottery/pools?${buildQs({
           cursor,
           limit,
           q,
@@ -78,7 +78,7 @@ export function useAllLotteryPools(
     queryFn: () =>
       api
         .get<Page<LotteryPool>>(
-          `/api/lottery/pools?${buildQs({
+          `/api/v1/lottery/pools?${buildQs({
             limit: 200,
             activityId,
             includeActivity: includeActivity ? "true" : undefined,
@@ -91,7 +91,7 @@ export function useAllLotteryPools(
 export function useLotteryPool(key: string) {
   return useQuery({
     queryKey: [...POOLS_KEY, key],
-    queryFn: () => api.get<LotteryPool>(`/api/lottery/pools/${key}`),
+    queryFn: () => api.get<LotteryPool>(`/api/v1/lottery/pools/${key}`),
     enabled: !!key,
   })
 }
@@ -100,7 +100,7 @@ export function useCreateLotteryPool() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreatePoolInput) =>
-      api.post<LotteryPool>("/api/lottery/pools", input),
+      api.post<LotteryPool>("/api/v1/lottery/pools", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: POOLS_KEY }),
   })
 }
@@ -109,7 +109,7 @@ export function useUpdateLotteryPool() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdatePoolInput & { id: string }) =>
-      api.patch<LotteryPool>(`/api/lottery/pools/${id}`, input),
+      api.patch<LotteryPool>(`/api/v1/lottery/pools/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: POOLS_KEY }),
   })
 }
@@ -117,7 +117,7 @@ export function useUpdateLotteryPool() {
 export function useDeleteLotteryPool() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/lottery/pools/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/lottery/pools/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: POOLS_KEY }),
   })
 }
@@ -135,7 +135,7 @@ export function useLotteryTiers(poolKey: string, route: any) {
     filterDefs: LOTTERY_TIER_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryTier>>(
-        `/api/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!poolKey,
   })
@@ -148,7 +148,7 @@ export function useAllLotteryTiers(poolKey: string) {
     queryFn: () =>
       api
         .get<Page<LotteryTier>>(
-          `/api/lottery/pools/${poolKey}/tiers?${buildQs({ limit: 200 })}`,
+          `/api/v1/lottery/pools/${poolKey}/tiers?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
     enabled: !!poolKey,
@@ -163,7 +163,7 @@ export function useCreateLotteryTier() {
       ...input
     }: CreateTierInput & { poolKey: string }) =>
       api.post<LotteryTier>(
-        `/api/lottery/pools/${poolKey}/tiers`,
+        `/api/v1/lottery/pools/${poolKey}/tiers`,
         input,
       ),
     onSuccess: () =>
@@ -175,7 +175,7 @@ export function useUpdateLotteryTier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ tierId, ...input }: UpdateTierInput & { tierId: string }) =>
-      api.patch<LotteryTier>(`/api/lottery/tiers/${tierId}`, input),
+      api.patch<LotteryTier>(`/api/v1/lottery/tiers/${tierId}`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["lottery-tiers"] }),
   })
@@ -185,7 +185,7 @@ export function useDeleteLotteryTier() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (tierId: string) =>
-      api.delete(`/api/lottery/tiers/${tierId}`),
+      api.delete(`/api/v1/lottery/tiers/${tierId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["lottery-tiers"] }),
   })
@@ -204,7 +204,7 @@ export function useLotteryPrizes(poolKey: string, route: any) {
     filterDefs: LOTTERY_PRIZE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPrize>>(
-        `/api/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!poolKey,
   })
@@ -217,7 +217,7 @@ export function useAllLotteryPrizes(poolKey: string) {
     queryFn: () =>
       api
         .get<Page<LotteryPrize>>(
-          `/api/lottery/pools/${poolKey}/prizes?${buildQs({ limit: 200 })}`,
+          `/api/v1/lottery/pools/${poolKey}/prizes?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
     enabled: !!poolKey,
@@ -233,8 +233,8 @@ export function useCreateLotteryPrize() {
       ...input
     }: CreatePrizeInput & { poolKey: string; tierId?: string }) => {
       const path = tierId
-        ? `/api/lottery/pools/${poolKey}/tiers/${tierId}/prizes`
-        : `/api/lottery/pools/${poolKey}/prizes`
+        ? `/api/v1/lottery/pools/${poolKey}/tiers/${tierId}/prizes`
+        : `/api/v1/lottery/pools/${poolKey}/prizes`
       return api.post<LotteryPrize>(path, input)
     },
     onSuccess: () =>
@@ -249,7 +249,7 @@ export function useUpdateLotteryPrize() {
       prizeId,
       ...input
     }: UpdatePrizeInput & { prizeId: string }) =>
-      api.patch<LotteryPrize>(`/api/lottery/prizes/${prizeId}`, input),
+      api.patch<LotteryPrize>(`/api/v1/lottery/prizes/${prizeId}`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["lottery-prizes"] }),
   })
@@ -259,7 +259,7 @@ export function useDeleteLotteryPrize() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (prizeId: string) =>
-      api.delete(`/api/lottery/prizes/${prizeId}`),
+      api.delete(`/api/v1/lottery/prizes/${prizeId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["lottery-prizes"] }),
   })
@@ -278,7 +278,7 @@ export function useLotteryPityRules(poolKey: string, route: any) {
     filterDefs: LOTTERY_PITY_RULE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPityRule>>(
-        `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!poolKey,
   })
@@ -291,7 +291,7 @@ export function useAllLotteryPityRules(poolKey: string) {
     queryFn: () =>
       api
         .get<Page<LotteryPityRule>>(
-          `/api/lottery/pools/${poolKey}/pity-rules?${buildQs({ limit: 200 })}`,
+          `/api/v1/lottery/pools/${poolKey}/pity-rules?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
     enabled: !!poolKey,
@@ -306,7 +306,7 @@ export function useCreateLotteryPityRule() {
       ...input
     }: CreatePityRuleInput & { poolKey: string }) =>
       api.post<LotteryPityRule>(
-        `/api/lottery/pools/${poolKey}/pity-rules`,
+        `/api/v1/lottery/pools/${poolKey}/pity-rules`,
         input,
       ),
     onSuccess: () =>
@@ -322,7 +322,7 @@ export function useUpdateLotteryPityRule() {
       ...input
     }: UpdatePityRuleInput & { ruleId: string }) =>
       api.patch<LotteryPityRule>(
-        `/api/lottery/pity-rules/${ruleId}`,
+        `/api/v1/lottery/pity-rules/${ruleId}`,
         input,
       ),
     onSuccess: () =>
@@ -334,7 +334,7 @@ export function useDeleteLotteryPityRule() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (ruleId: string) =>
-      api.delete(`/api/lottery/pity-rules/${ruleId}`),
+      api.delete(`/api/v1/lottery/pity-rules/${ruleId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["lottery-pity-rules"] }),
   })
@@ -348,7 +348,7 @@ export function useLotteryPull() {
       poolKey,
       ...input
     }: PullInput & { poolKey: string }) =>
-      api.post<PullResult>(`/api/lottery/pools/${poolKey}/pull`, input),
+      api.post<PullResult>(`/api/v1/lottery/pools/${poolKey}/pull`, input),
   })
 }
 
@@ -359,7 +359,7 @@ export function useLotteryMultiPull() {
       ...input
     }: MultiPullInput & { poolKey: string }) =>
       api.post<PullResult>(
-        `/api/lottery/pools/${poolKey}/multi-pull`,
+        `/api/v1/lottery/pools/${poolKey}/multi-pull`,
         input,
       ),
   })
@@ -372,7 +372,7 @@ export function useLotteryUserState(poolKey: string, endUserId: string) {
     queryKey: ["lottery-user-state", poolKey, endUserId],
     queryFn: () =>
       api.get<LotteryUserState>(
-        `/api/lottery/pools/${poolKey}/users/${endUserId}/state`,
+        `/api/v1/lottery/pools/${poolKey}/users/${endUserId}/state`,
       ),
     enabled: !!poolKey && !!endUserId,
   })
@@ -383,7 +383,7 @@ export function useLotteryPullHistory(poolKey: string, endUserId: string) {
     queryKey: ["lottery-pull-history", poolKey, endUserId],
     queryFn: () =>
       api.get<{ items: LotteryPullLog[] }>(
-        `/api/lottery/pools/${poolKey}/users/${endUserId}/history`,
+        `/api/v1/lottery/pools/${poolKey}/users/${endUserId}/history`,
       ),
     select: (data) => data.items,
     enabled: !!poolKey && !!endUserId,

@@ -53,7 +53,7 @@ export type UpsertSettingsInput = z.input<typeof UpsertSettingsSchema>;
 export const GuildSettingsResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     maxMembers: z.number().int(),
     maxOfficers: z.number().int(),
     createCost: z.array(CostItemSchema),
@@ -95,7 +95,7 @@ export type UpdateGuildInput = z.input<typeof UpdateGuildSchema>;
 export const GuildResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
@@ -123,7 +123,7 @@ export const GuildMemberResponseSchema = z
   .object({
     guildId: z.string(),
     endUserId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     role: z.enum(GUILD_ROLES),
     contribution: z.number().int(),
     joinedAt: z.string(),
@@ -143,7 +143,7 @@ export const GuildMemberListResponseSchema = z
 export const JoinRequestResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     guildId: z.string(),
     endUserId: z.string(),
     type: z.enum(REQUEST_TYPES),
@@ -168,7 +168,7 @@ export const JoinRequestListResponseSchema = z
 export const ContributionLogResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     guildId: z.string(),
     endUserId: z.string(),
     delta: z.number().int(),

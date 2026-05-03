@@ -24,7 +24,7 @@ describe("installEventDispatcher", () => {
     installEventDispatcher(bus, sink);
 
     await bus.emit("task.completed" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
       endUserId: "user-y",
       taskId: "t-1",
     } as never);
@@ -37,7 +37,7 @@ describe("installEventDispatcher", () => {
       eventName: "task.completed",
       orgId: "org-x",
       payload: expect.objectContaining({
-        organizationId: "org-x",
+        tenantId: "org-x",
         taskId: "t-1",
       }),
       capabilities: ["webhook"],
@@ -57,7 +57,7 @@ describe("installEventDispatcher", () => {
     installEventDispatcher(bus, sink);
 
     await bus.emit("level.cleared" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
       endUserId: "user-y",
       level: 10,
     } as never);
@@ -85,7 +85,7 @@ describe("installEventDispatcher", () => {
     installEventDispatcher(bus, sink);
 
     await bus.emit("task.completed" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
       endUserId: "user-y",
     } as never);
 
@@ -111,13 +111,13 @@ describe("installEventDispatcher", () => {
     installEventDispatcher(bus, sink);
 
     await bus.emit("internal.only" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
     } as never);
 
     expect(sink).not.toHaveBeenCalled();
   });
 
-  test("skips payloads missing organizationId (fail-closed)", async () => {
+  test("skips payloads missing tenantId (fail-closed)", async () => {
     const sink = vi.fn<EventDispatchSink>(async () => {});
     registerEvent({
       name: "task.completed",
@@ -168,7 +168,7 @@ describe("installEventDispatcher", () => {
 
     await expect(
       bus.emit("task.completed" as never, {
-        organizationId: "org-x",
+        tenantId: "org-x",
       } as never),
     ).resolves.toBeUndefined();
     expect(sink).toHaveBeenCalled();
@@ -188,7 +188,7 @@ describe("installEventDispatcher", () => {
     });
 
     await bus.emit("task.completed" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
     } as never);
 
     expect(sink).not.toHaveBeenCalled();

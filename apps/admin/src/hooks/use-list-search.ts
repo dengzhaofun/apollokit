@@ -606,7 +606,7 @@ export function useListSearch<T>({
  * Helper: build a query string from a flat object, dropping undefined
  * / null / empty values. Use at the route call site:
  *
- *   api.get(`/api/end-user?${qs({ cursor, limit, q, ...filters })}`)
+ *   api.get(`/api/v1/end-user?${qs({ cursor, limit, q, ...filters })}`)
  *
  * Re-exported here so call sites don't need to import from the legacy
  * sibling URL helpers.

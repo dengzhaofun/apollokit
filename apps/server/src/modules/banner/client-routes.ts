@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the banner module.
  *
- * Mounted at /api/client/banner. Auth pattern:
+ * Mounted at /api/v1/client/banner. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
@@ -59,7 +59,7 @@ bannerClientRouter.openapi(
   async (c) => {
     const { alias } = c.req.valid("param");
     const endUserId = getEndUserId(c);
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const group = await bannerService.getClientGroupByAlias(
       orgId,
       alias,

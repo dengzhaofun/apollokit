@@ -532,12 +532,12 @@ function DryRunPanel(props: {
     filledFor.current = eventName ?? ""
     setPayloadText(
       JSON.stringify(
-        buildSamplePayload(eventDef, props.rule?.organizationId),
+        buildSamplePayload(eventDef, props.rule?.tenantId),
         null,
         2,
       ),
     )
-  }, [events, eventName, eventDef, props.rule?.organizationId])
+  }, [events, eventName, eventDef, props.rule?.tenantId])
 
   const dryRun = useDryRunTriggerRule()
 
@@ -726,7 +726,7 @@ function PayloadSchemaCard({ eventDef }: { eventDef: CatalogEventView }) {
  * 根据事件 schema 自动生成 dry-run sample payload。
  *
  * - 每个字段按 type 给一个合理示例值
- * - organizationId 用当前 rule 的 orgId(已知);endUserId 给一个 demo 标识
+ * - tenantId 用当前 rule 的 orgId(已知);endUserId 给一个 demo 标识
  * - sample 应该让用户「看一眼就知道这是什么字段」,不是要做完美随机数据
  */
 function buildSamplePayload(
@@ -735,12 +735,12 @@ function buildSamplePayload(
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   // 默认两个公共字段(几乎所有业务事件都有)
-  out.organizationId = orgId ?? "<your-org-id>"
+  out.tenantId = orgId ?? "<your-org-id>"
   out.endUserId = "demo-user"
 
   if (!eventDef) return out
   for (const field of eventDef.fields) {
-    if (field.path === "organizationId" || field.path === "endUserId") continue
+    if (field.path === "tenantId" || field.path === "endUserId") continue
     if (!isTopLevelPath(field.path)) continue // 嵌套路径暂不展开,留 user 自己加
     out[field.path] = sampleValueForField(field)
   }

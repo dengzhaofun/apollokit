@@ -43,7 +43,7 @@ export function createAuditLogService(deps: AuditLogDeps) {
       const limit = clampLimit(filter.limit);
 
       const where = and(
-        eq(auditLogs.organizationId, orgId),
+        eq(auditLogs.tenantId, orgId),
         auditLogFilters.where(filter as Record<string, unknown>),
         cursorWhere(filter.cursor, auditLogs.ts, auditLogs.id),
       );
@@ -73,7 +73,7 @@ export function createAuditLogService(deps: AuditLogDeps) {
         .select()
         .from(auditLogs)
         .where(
-          and(eq(auditLogs.organizationId, orgId), eq(auditLogs.id, id)),
+          and(eq(auditLogs.tenantId, orgId), eq(auditLogs.id, id)),
         )
         .limit(1);
       if (!row) throw new AuditLogNotFound(id);
@@ -93,7 +93,7 @@ export function createAuditLogService(deps: AuditLogDeps) {
       const rows = await db
         .selectDistinct({ resourceType: auditLogs.resourceType })
         .from(auditLogs)
-        .where(eq(auditLogs.organizationId, orgId))
+        .where(eq(auditLogs.tenantId, orgId))
         .orderBy(auditLogs.resourceType);
       return rows.map((r) => r.resourceType);
     },
@@ -106,7 +106,7 @@ export function createAuditLogService(deps: AuditLogDeps) {
       const [row] = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.organizationId, orgId))
+        .where(eq(auditLogs.tenantId, orgId))
         .orderBy(desc(auditLogs.ts), desc(auditLogs.id))
         .limit(1);
       // sql import keeps drizzle-orm tree-shaking it; otherwise unused.

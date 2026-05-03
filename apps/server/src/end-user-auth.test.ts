@@ -25,14 +25,14 @@ type Tenant = { orgId: string; cpk: string };
 
 /**
  * Seed a client credential in dev mode (HMAC bypassed) so the test can
- * drive /api/client/auth/* with only `x-api-key: cpk_...`.
+ * drive /api/v1/client/auth/* with only `x-api-key: cpk_...`.
  */
 async function createTenant(label: string): Promise<Tenant> {
   const orgId = await createTestOrg(label);
   const cpk = `cpk_iauth_${crypto.randomUUID().slice(0, 8)}`;
   await db.insert(clientCredentials).values({
     id: crypto.randomUUID(),
-    organizationId: orgId,
+    tenantId: orgId,
     name: label,
     publishableKey: cpk,
     encryptedSecret: "dev-placeholder",
@@ -57,7 +57,7 @@ async function signUp(
   password: string,
   name: string,
 ): Promise<Response> {
-  return app.request("/api/client/auth/sign-up/email", {
+  return app.request("/api/v1/client/auth/sign-up/email", {
     method: "POST",
     headers: {
       "x-api-key": t.cpk,
@@ -72,7 +72,7 @@ async function signIn(
   email: string,
   password: string,
 ): Promise<Response> {
-  return app.request("/api/client/auth/sign-in/email", {
+  return app.request("/api/v1/client/auth/sign-in/email", {
     method: "POST",
     headers: {
       "x-api-key": t.cpk,
@@ -93,7 +93,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
     await dropTenant(a);
   });
 
-  test("sign-up stores scoped email and injects organizationId", async () => {
+  test("sign-up stores scoped email and injects tenantId", async () => {
     const res = await signUp(a, "alice@example.com", "pw12345678", "Alice");
     expect(res.status).toBe(200);
     const body = (await res.json()) as SignUpResponse;
@@ -105,7 +105,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
       .where(eq(euUser.id, body.user.id));
     expect(row).toBeTruthy();
     expect(row!.email).toBe(scopeEmail(a.orgId, "alice@example.com"));
-    expect(row!.organizationId).toBe(a.orgId);
+    expect(row!.tenantId).toBe(a.orgId);
 
     // Credential account is created with a non-null password hash
     const [acc] = await db
@@ -122,7 +122,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
   });
 
   test("sign-up without x-api-key → 401", async () => {
-    const res = await app.request("/api/client/auth/sign-up/email", {
+    const res = await app.request("/api/v1/client/auth/sign-up/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +150,7 @@ describe("end-user-auth — email namespacing + org injection", () => {
       .select()
       .from(euSession)
       .where(eq(euSession.userId, body.user.id));
-    expect(sess!.organizationId).toBe(a.orgId);
+    expect(sess!.tenantId).toBe(a.orgId);
   });
 });
 
@@ -187,8 +187,8 @@ describe("end-user-auth — tenant isolation", () => {
       .select()
       .from(euUser)
       .where(eq(euUser.id, ub.user.id));
-    expect(rowA!.organizationId).toBe(a.orgId);
-    expect(rowB!.organizationId).toBe(b.orgId);
+    expect(rowA!.tenantId).toBe(a.orgId);
+    expect(rowB!.tenantId).toBe(b.orgId);
   });
 
   test("sign-in with orgA's cpk can't resolve orgB's user — wrong tenant email lookup", async () => {
@@ -222,8 +222,8 @@ describe("end-user-auth — cross-tenant session guard on business routes", () =
     await dropTenant(b);
   });
 
-  test("orgA session + orgA cpk on /api/client/rank/* reaches the router (requireClientUser passes)", async () => {
-    const res = await app.request("/api/client/rank/seasons", {
+  test("orgA session + orgA cpk on /api/v1/client/rank/* reaches the router (requireClientUser passes)", async () => {
+    const res = await app.request("/api/v1/client/rank/seasons", {
       headers: { "x-api-key": a.cpk, cookie: cookieA },
     });
     // 200 if the route has a handler, 404 if no such path but middleware
@@ -233,7 +233,7 @@ describe("end-user-auth — cross-tenant session guard on business routes", () =
   });
 
   test("orgA session + orgB cpk → 403 session_tenant_mismatch", async () => {
-    const res = await app.request("/api/client/rank/seasons", {
+    const res = await app.request("/api/v1/client/rank/seasons", {
       headers: { "x-api-key": b.cpk, cookie: cookieA },
     });
     expect(res.status).toBe(403);

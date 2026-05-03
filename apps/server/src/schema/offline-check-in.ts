@@ -17,7 +17,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 import { collectionAlbums } from "./collection";
 import { mediaAssets } from "./media-library";
 
@@ -135,9 +135,9 @@ export const offlineCheckInCampaigns = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -171,13 +171,13 @@ export const offlineCheckInCampaigns = pgTable(
       .notNull(),
   },
   (table) => [
-    index("offline_check_in_campaigns_org_status_start_idx").on(
-      table.organizationId,
+    index("offline_check_in_campaigns_tenant_status_start_idx").on(
+      table.tenantId,
       table.status,
       table.startAt,
     ),
-    uniqueIndex("offline_check_in_campaigns_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("offline_check_in_campaigns_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("offline_check_in_campaigns_album_idx").on(table.collectionAlbumId),
   ],
@@ -211,7 +211,7 @@ export const offlineCheckInSpots = pgTable(
     campaignId: uuid("campaign_id")
       .notNull()
       .references(() => offlineCheckInCampaigns.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -244,7 +244,7 @@ export const offlineCheckInSpots = pgTable(
       table.campaignId,
       table.sortOrder,
     ),
-    index("offline_check_in_spots_org_idx").on(table.organizationId),
+    index("offline_check_in_spots_tenant_idx").on(table.tenantId),
     uniqueIndex("offline_check_in_spots_campaign_alias_uidx").on(
       table.campaignId,
       table.alias,
@@ -284,7 +284,7 @@ export const offlineCheckInLogs = pgTable(
     spotId: uuid("spot_id")
       .notNull()
       .references(() => offlineCheckInSpots.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     accepted: boolean("accepted").notNull(),
     rejectReason: text("reject_reason"),
@@ -319,8 +319,8 @@ export const offlineCheckInLogs = pgTable(
       table.spotId,
       table.createdAt,
     ),
-    index("offline_check_in_logs_org_created_idx").on(
-      table.organizationId,
+    index("offline_check_in_logs_tenant_created_idx").on(
+      table.tenantId,
       table.createdAt,
     ),
   ],
@@ -353,7 +353,7 @@ export const offlineCheckInUserProgress = pgTable(
       .notNull()
       .references(() => offlineCheckInCampaigns.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     spotsCompleted: jsonb("spots_completed")
       .$type<string[]>()
       .notNull()
@@ -379,8 +379,8 @@ export const offlineCheckInUserProgress = pgTable(
       columns: [table.campaignId, table.endUserId],
       name: "offline_check_in_user_progress_pk",
     }),
-    index("offline_check_in_user_progress_org_user_idx").on(
-      table.organizationId,
+    index("offline_check_in_user_progress_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("offline_check_in_user_progress_campaign_completed_idx").on(
@@ -409,7 +409,7 @@ export const offlineCheckInGrants = pgTable(
       .references(() => offlineCheckInCampaigns.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
     rewardKey: text("reward_key").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     rewardItems: jsonb("reward_items").$type<RewardEntry[]>().notNull(),
     grantedAt: timestamp("granted_at").defaultNow().notNull(),
   },
@@ -418,8 +418,8 @@ export const offlineCheckInGrants = pgTable(
       columns: [table.campaignId, table.endUserId, table.rewardKey],
       name: "offline_check_in_grants_pk",
     }),
-    index("offline_check_in_grants_org_user_idx").on(
-      table.organizationId,
+    index("offline_check_in_grants_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],

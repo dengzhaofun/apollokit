@@ -31,7 +31,7 @@ export function useWebhookEndpoints(route: any) {
     filterDefs: WEBHOOK_ENDPOINT_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<WebhookEndpoint>>(
-        `/api/webhooks/endpoints?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/webhooks/endpoints?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -61,7 +61,7 @@ export function useCreateWebhookEndpoint() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateWebhookEndpointInput) =>
-      api.post<WebhookEndpointWithSecret>("/api/webhooks/endpoints", input),
+      api.post<WebhookEndpointWithSecret>("/api/v1/webhooks/endpoints", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ENDPOINTS_KEY }),
   })
 }
@@ -73,7 +73,7 @@ export function useUpdateWebhookEndpoint() {
       id,
       ...patch
     }: UpdateWebhookEndpointInput & { id: string }) =>
-      api.patch<WebhookEndpoint>(`/api/webhooks/endpoints/${id}`, patch),
+      api.patch<WebhookEndpoint>(`/api/v1/webhooks/endpoints/${id}`, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: ENDPOINTS_KEY }),
   })
 }
@@ -83,7 +83,7 @@ export function useRotateWebhookSecret() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<WebhookEndpointWithSecret>(
-        `/api/webhooks/endpoints/${id}/rotate-secret`,
+        `/api/v1/webhooks/endpoints/${id}/rotate-secret`,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ENDPOINTS_KEY }),
   })
@@ -92,7 +92,7 @@ export function useRotateWebhookSecret() {
 export function useDeleteWebhookEndpoint() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/webhooks/endpoints/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/webhooks/endpoints/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ENDPOINTS_KEY }),
   })
 }
@@ -119,7 +119,7 @@ export function useWebhookDeliveries(
     queryFn: () =>
       api
         .get<Page<WebhookDelivery>>(
-          `/api/webhooks/endpoints/${endpointId}/deliveries?${buildQs({
+          `/api/v1/webhooks/endpoints/${endpointId}/deliveries?${buildQs({
             status: filter.status,
             limit,
           })}`,
@@ -134,7 +134,7 @@ export function useReplayWebhookDelivery(endpointId: string) {
   return useMutation({
     mutationFn: (deliveryId: string) =>
       api.post<WebhookDelivery>(
-        `/api/webhooks/deliveries/${deliveryId}/replay`,
+        `/api/v1/webhooks/deliveries/${deliveryId}/replay`,
       ),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: deliveriesKey(endpointId) }),

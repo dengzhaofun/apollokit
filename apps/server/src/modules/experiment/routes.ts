@@ -1,7 +1,7 @@
 /**
  * Admin routes for the experiment module.
  *
- * Mounted at `/api/experiment/*` in src/index.ts. All routes require an
+ * Mounted at `/api/v1/experiment/*` in src/index.ts. All routes require an
  * admin session OR an admin API key (`ak_`); end-user (cpk_) routes
  * live in `client-routes.ts`.
  */
@@ -56,7 +56,7 @@ function serializeExperiment(
 ) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     key: row.key,
     name: row.name,
     description: row.description,
@@ -82,7 +82,7 @@ function serializeVariant(
   return {
     id: row.id,
     experimentId: row.experimentId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     variantKey: row.variantKey,
     name: row.name,
     description: row.description,
@@ -99,7 +99,7 @@ function serializeAssignment(row: ExperimentAssignment) {
   return {
     experimentId: row.experimentId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     variantId: row.variantId,
     variantKey: row.variantKey,
     assignedAt: row.assignedAt.toISOString(),

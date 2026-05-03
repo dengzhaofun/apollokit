@@ -2,7 +2,7 @@ import type { euUser } from "../../schema/end-user-auth";
 
 export type EndUser = typeof euUser.$inferSelect;
 
-/** Result of `POST /api/end-user/sync`. */
+/** Result of `POST /api/v1/end-user/sync`. */
 export type SyncResult = {
   euUserId: string;
   /**
@@ -25,7 +25,7 @@ export type EndUserView = {
   /**
    * "managed" = has a `providerId='credential'` row in eu_account (player
    * can sign in with email+password). "synced" = no credential account,
-   * was brought in via POST /api/end-user/sync or mixed-in later.
+   * was brought in via POST /api/v1/end-user/sync or mixed-in later.
    */
   origin: "managed" | "synced";
   sessionCount: number;

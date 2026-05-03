@@ -42,7 +42,7 @@ import { isAdminSurface, type ChatRequestBody } from "./types";
 export const adminAgentRouter = new Hono<HonoEnv>();
 adminAgentRouter.use("*", requireAuth);
 
-// /api/ai/admin/mentions/* — type registry + entity search for the @-mention popover.
+// /api/v1/ai/admin/mentions/* — type registry + entity search for the @-mention popover.
 adminAgentRouter.route("/mentions", mentionsRouter);
 
 adminAgentRouter.post("/chat", async (c) => {
@@ -67,13 +67,13 @@ adminAgentRouter.post("/chat", async (c) => {
   }
 
   // requireAuth has already guaranteed both `user` and an active org.
-  const organizationId = c.var.session?.activeOrganizationId;
-  if (!organizationId) {
+  const tenantId = c.var.session?.activeTeamId;
+  if (!tenantId) {
     // Defensive — should be unreachable past requireAuth.
     return c.json({ error: "no_active_organization" }, 400);
   }
 
   // streamChat returns a `Response` already (createAgentUIStreamResponse
   // is HTTP-aware). No need to wrap or call .toUIMessageStreamResponse().
-  return adminAgentService.streamChat(body, { organizationId });
+  return adminAgentService.streamChat(body, { tenantId });
 });

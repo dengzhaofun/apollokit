@@ -9,7 +9,7 @@
  * Redeem concurrency model (single atomic statements + idempotency log):
  *
  *   1. Write a pending row in cdkey_redemption_logs keyed by
- *      UNIQUE (organizationId, source, sourceId). If the insert conflicts,
+ *      UNIQUE (tenantId, source, sourceId). If the insert conflicts,
  *      the request is a retry; return the cached result (success) or re-throw
  *      the failure reason.
  *   2. Load the (code, batch) pair via a single JOIN. Reject on invalid /
@@ -112,16 +112,16 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
   const { db, analytics } = d;
 
   async function loadBatchByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<CdkeyBatch> {
     const where = looksLikeId(key)
       ? and(
-          eq(cdkeyBatches.organizationId, organizationId),
+          eq(cdkeyBatches.tenantId, tenantId),
           eq(cdkeyBatches.id, key),
         )
       : and(
-          eq(cdkeyBatches.organizationId, organizationId),
+          eq(cdkeyBatches.tenantId, tenantId),
           eq(cdkeyBatches.alias, key),
         );
     const rows = await db.select().from(cdkeyBatches).where(where).limit(1);
@@ -130,7 +130,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
   }
 
   async function insertCodesForUniqueBatch(
-    organizationId: string,
+    tenantId: string,
     batchId: string,
     count: number,
   ): Promise<number> {
@@ -151,7 +151,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         if (seen.has(code)) continue;
         seen.add(code);
         rows.push({
-          organizationId,
+          tenantId,
           batchId,
           code,
           status: "pending",
@@ -176,7 +176,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     // ─── Batch CRUD ────────────────────────────────────────────
 
     async createBatch(
-      organizationId: string,
+      tenantId: string,
       input: CreateBatchInput,
     ): Promise<CdkeyBatch> {
       if (input.codeType === "unique" && input.universalCode) {
@@ -206,7 +206,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         const [row] = await db
           .insert(cdkeyBatches)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -241,7 +241,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         }
         try {
           await db.insert(cdkeyCodes).values({
-            organizationId,
+            tenantId,
             batchId: batch.id,
             code,
             status: "active",
@@ -258,7 +258,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
       } else {
         // unique
         await insertCodesForUniqueBatch(
-          organizationId,
+          tenantId,
           batch.id,
           input.initialCount!,
         );
@@ -268,11 +268,11 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     },
 
     async updateBatch(
-      organizationId: string,
+      tenantId: string,
       key: string,
       patch: UpdateBatchInput,
     ): Promise<CdkeyBatch> {
-      const existing = await loadBatchByKey(organizationId, key);
+      const existing = await loadBatchByKey(tenantId, key);
       const updates: Partial<typeof cdkeyBatches.$inferInsert> = {};
       if (patch.name !== undefined) updates.name = patch.name;
       if (patch.alias !== undefined) updates.alias = patch.alias;
@@ -300,7 +300,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(cdkeyBatches.id, existing.id),
-              eq(cdkeyBatches.organizationId, organizationId),
+              eq(cdkeyBatches.tenantId, tenantId),
             ),
           )
           .returning();
@@ -314,14 +314,14 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
       }
     },
 
-    async deleteBatch(organizationId: string, key: string): Promise<void> {
-      const existing = await loadBatchByKey(organizationId, key);
+    async deleteBatch(tenantId: string, key: string): Promise<void> {
+      const existing = await loadBatchByKey(tenantId, key);
       const deleted = await db
         .delete(cdkeyBatches)
         .where(
           and(
             eq(cdkeyBatches.id, existing.id),
-            eq(cdkeyBatches.organizationId, organizationId),
+            eq(cdkeyBatches.tenantId, tenantId),
           ),
         )
         .returning({ id: cdkeyBatches.id });
@@ -329,11 +329,11 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     },
 
     async listBatches(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<CdkeyBatch>> {
       const limit = clampLimit(params.limit);
-      const conds: SQL[] = [eq(cdkeyBatches.organizationId, organizationId)];
+      const conds: SQL[] = [eq(cdkeyBatches.tenantId, tenantId)];
       const seek = cursorWhere(params.cursor, cdkeyBatches.createdAt, cdkeyBatches.id);
       if (seek) conds.push(seek);
       if (params.q) {
@@ -350,8 +350,8 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
       return buildPage(rows, limit);
     },
 
-    async getBatch(organizationId: string, key: string): Promise<CdkeyBatch> {
-      return loadBatchByKey(organizationId, key);
+    async getBatch(tenantId: string, key: string): Promise<CdkeyBatch> {
+      return loadBatchByKey(tenantId, key);
     },
 
     /**
@@ -360,7 +360,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
      * — use listCodes() for pagination.
      */
     async getBatchUniversalCode(
-      organizationId: string,
+      tenantId: string,
       batchId: string,
     ): Promise<CdkeyCode | null> {
       const [row] = await db
@@ -368,7 +368,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         .from(cdkeyCodes)
         .where(
           and(
-            eq(cdkeyCodes.organizationId, organizationId),
+            eq(cdkeyCodes.tenantId, tenantId),
             eq(cdkeyCodes.batchId, batchId),
           ),
         )
@@ -379,11 +379,11 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     // ─── Codes ─────────────────────────────────────────────────
 
     async generateCodes(
-      organizationId: string,
+      tenantId: string,
       batchId: string,
       input: GenerateCodesInput,
     ): Promise<{ generated: number }> {
-      const batch = await loadBatchByKey(organizationId, batchId);
+      const batch = await loadBatchByKey(tenantId, batchId);
       if (batch.codeType !== "unique") {
         throw new CdkeyInvalidInput(
           "generateCodes is only valid for unique batches",
@@ -392,7 +392,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
       if (input.count > MAX_GENERATE_PER_REQUEST)
         throw new CdkeyGenerateCountExceeded(MAX_GENERATE_PER_REQUEST);
       const generated = await insertCodesForUniqueBatch(
-        organizationId,
+        tenantId,
         batch.id,
         input.count,
       );
@@ -400,14 +400,14 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     },
 
     async listCodes(
-      organizationId: string,
+      tenantId: string,
       batchId: string,
       opts: PageParams & { status?: string } = {},
     ): Promise<Page<CdkeyCode>> {
-      const batch = await loadBatchByKey(organizationId, batchId);
+      const batch = await loadBatchByKey(tenantId, batchId);
       const limit = clampLimit(opts.limit);
       const where = and(
-        eq(cdkeyCodes.organizationId, organizationId),
+        eq(cdkeyCodes.tenantId, tenantId),
         eq(cdkeyCodes.batchId, batch.id),
         cdkeyCodeFilters.where(opts as Record<string, unknown>),
         cursorWhere(opts.cursor, cdkeyCodes.createdAt, cdkeyCodes.id),
@@ -422,7 +422,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     },
 
     async revokeCode(
-      organizationId: string,
+      tenantId: string,
       codeId: string,
     ): Promise<CdkeyCode> {
       const [row] = await db
@@ -431,7 +431,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(cdkeyCodes.id, codeId),
-            eq(cdkeyCodes.organizationId, organizationId),
+            eq(cdkeyCodes.tenantId, tenantId),
           ),
         )
         .returning();
@@ -440,14 +440,14 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     },
 
     async listRedemptionLogs(
-      organizationId: string,
+      tenantId: string,
       batchId: string,
       opts: PageParams & { status?: string } = {},
     ): Promise<Page<CdkeyRedemptionLog>> {
-      const batch = await loadBatchByKey(organizationId, batchId);
+      const batch = await loadBatchByKey(tenantId, batchId);
       const limit = clampLimit(opts.limit);
       const where = and(
-        eq(cdkeyRedemptionLogs.organizationId, organizationId),
+        eq(cdkeyRedemptionLogs.tenantId, tenantId),
         eq(cdkeyRedemptionLogs.batchId, batch.id),
         cdkeyLogFilters.where(opts as Record<string, unknown>),
         cursorWhere(
@@ -471,7 +471,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     // ─── Redeem ────────────────────────────────────────────────
 
     async redeem(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       code: string;
       idempotencyKey: string;
@@ -489,7 +489,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         const [row] = await db
           .insert(cdkeyRedemptionLogs)
           .values({
-            organizationId: params.organizationId,
+            tenantId: params.tenantId,
             endUserId: params.endUserId,
             // Placeholder batchId; we update once we resolve the code. The
             // column is NOT NULL, so use a sentinel UUID. On success we
@@ -513,7 +513,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
           .from(cdkeyRedemptionLogs)
           .where(
             and(
-              eq(cdkeyRedemptionLogs.organizationId, params.organizationId),
+              eq(cdkeyRedemptionLogs.tenantId, params.tenantId),
               eq(cdkeyRedemptionLogs.source, source),
               eq(cdkeyRedemptionLogs.sourceId, params.idempotencyKey),
             ),
@@ -552,7 +552,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
           .innerJoin(cdkeyBatches, eq(cdkeyCodes.batchId, cdkeyBatches.id))
           .where(
             and(
-              eq(cdkeyCodes.organizationId, params.organizationId),
+              eq(cdkeyCodes.tenantId, params.tenantId),
               eq(cdkeyCodes.code, normalized),
             ),
           )
@@ -604,7 +604,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
             .values({
               batchId: batch.id,
               endUserId: params.endUserId,
-              organizationId: params.organizationId,
+              tenantId: params.tenantId,
               count: 1,
             })
             .onConflictDoUpdate({
@@ -654,7 +654,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         // 4. Grant reward via item service (item's own idempotency layer
         //    dedups on (source='cdkey', sourceId=idempotencyKey)).
         await itemSvc.grantItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           grants: batch.reward,
           source: "cdkey",
@@ -675,7 +675,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         if (analytics) {
           void analytics.writer.logEvent({
             ts: new Date(),
-            orgId: params.organizationId,
+            orgId: params.tenantId,
             endUserId: params.endUserId,
             traceId: getTraceId(),
             event: "cdkey.redeemed",
@@ -721,7 +721,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
     // ─── Utility ───────────────────────────────────────────────
 
     async getUserState(
-      organizationId: string,
+      tenantId: string,
       batchId: string,
       endUserId: string,
     ): Promise<{ batchId: string; endUserId: string; count: number }> {
@@ -730,7 +730,7 @@ export function createCdkeyService(d: CdkeyDeps, itemSvc: ItemService) {
         .from(cdkeyUserStates)
         .where(
           and(
-            eq(cdkeyUserStates.organizationId, organizationId),
+            eq(cdkeyUserStates.tenantId, tenantId),
             eq(cdkeyUserStates.batchId, batchId),
             eq(cdkeyUserStates.endUserId, endUserId),
           ),

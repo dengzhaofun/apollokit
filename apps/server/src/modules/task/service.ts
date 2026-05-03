@@ -86,7 +86,7 @@ type TaskDeps = Pick<AppDeps, "db"> &
 declare module "../../lib/event-bus" {
   interface EventMap {
     "task.claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       taskId: string;
       taskAlias: string | null;
@@ -97,7 +97,7 @@ declare module "../../lib/event-bus" {
       claimedAt: Date;
     };
     "task.completed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       taskId: string;
       taskAlias: string | null;
@@ -105,7 +105,7 @@ declare module "../../lib/event-bus" {
       completedAt: Date;
     };
     "task.tier.claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       taskId: string;
       taskAlias: string | null;
@@ -211,7 +211,7 @@ export function createTaskService(
   // ─── Load helpers ─────────────────────────────────────────────
 
   async function loadCategoryById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<TaskCategory> {
     const rows = await db
@@ -219,7 +219,7 @@ export function createTaskService(
       .from(taskCategories)
       .where(
         and(
-          eq(taskCategories.organizationId, organizationId),
+          eq(taskCategories.tenantId, tenantId),
           eq(taskCategories.id, id),
         ),
       )
@@ -230,16 +230,16 @@ export function createTaskService(
   }
 
   async function loadDefinitionByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<TaskDefinition> {
     const where = looksLikeId(key)
       ? and(
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
           eq(taskDefinitions.id, key),
         )
       : and(
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
           eq(taskDefinitions.alias, key),
         );
     const rows = await db
@@ -255,12 +255,12 @@ export function createTaskService(
   // ─── Category CRUD ────────────────────────────────────────────
 
   async function listCategories(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<TaskCategory>> {
     const limit = clampLimit(params.limit);
     const where = and(
-      eq(taskCategories.organizationId, organizationId),
+      eq(taskCategories.tenantId, tenantId),
       taskCategoryFilters.where(params as Record<string, unknown>),
       cursorWhere(params.cursor, taskCategories.createdAt, taskCategories.id),
     );
@@ -274,22 +274,22 @@ export function createTaskService(
   }
 
   async function getCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<TaskCategory> {
-    return loadCategoryById(organizationId, id);
+    return loadCategoryById(tenantId, id);
   }
 
   async function createCategory(
-    organizationId: string,
+    tenantId: string,
     input: CreateCategoryInput,
   ): Promise<TaskCategory> {
     try {
-      const __sortKey = await appendKey(db, { table: taskCategories, sortColumn: taskCategories.sortOrder, scopeWhere: eq(taskCategories.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: taskCategories, sortColumn: taskCategories.sortOrder, scopeWhere: eq(taskCategories.tenantId, tenantId)! });
       const [row] = await db
         .insert(taskCategories)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           description: input.description ?? null,
@@ -311,11 +311,11 @@ export function createTaskService(
   }
 
   async function updateCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
     patch: UpdateCategoryInput,
   ): Promise<TaskCategory> {
-    const existing = await loadCategoryById(organizationId, id);
+    const existing = await loadCategoryById(tenantId, id);
     const values: Partial<typeof taskCategories.$inferInsert> = {};
     if (patch.name !== undefined) values.name = patch.name;
     if (patch.alias !== undefined) values.alias = patch.alias;
@@ -334,7 +334,7 @@ export function createTaskService(
         .where(
           and(
             eq(taskCategories.id, existing.id),
-            eq(taskCategories.organizationId, organizationId),
+            eq(taskCategories.tenantId, tenantId),
           ),
         )
         .returning();
@@ -349,16 +349,16 @@ export function createTaskService(
   }
 
   async function moveCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
     body: MoveBody,
   ): Promise<TaskCategory> {
-    const existing = await loadCategoryById(organizationId, id);
+    const existing = await loadCategoryById(tenantId, id);
     return moveAndReturn<TaskCategory>(db, {
       table: taskCategories,
       sortColumn: taskCategories.sortOrder,
       idColumn: taskCategories.id,
-      partitionWhere: eq(taskCategories.organizationId, organizationId)!,
+      partitionWhere: eq(taskCategories.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new TaskCategoryNotFound(sid),
@@ -366,16 +366,16 @@ export function createTaskService(
   }
 
   async function deleteCategory(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
-    await loadCategoryById(organizationId, id);
+    await loadCategoryById(tenantId, id);
     await db
       .delete(taskCategories)
       .where(
         and(
           eq(taskCategories.id, id),
-          eq(taskCategories.organizationId, organizationId),
+          eq(taskCategories.tenantId, tenantId),
         ),
       );
   }
@@ -383,7 +383,7 @@ export function createTaskService(
   // ─── Definition CRUD ──────────────────────────────────────────
 
   async function listDefinitions(
-    organizationId: string,
+    tenantId: string,
     filters: PageParams & {
       categoryId?: string;
       period?: string;
@@ -410,7 +410,7 @@ export function createTaskService(
     }
     delete filterInput.includeActivity;
     const where = and(
-      eq(taskDefinitions.organizationId, organizationId),
+      eq(taskDefinitions.tenantId, tenantId),
       taskDefinitionFilters.where(filterInput),
       cursorWhere(
         filters.cursor,
@@ -428,19 +428,19 @@ export function createTaskService(
   }
 
   async function getDefinition(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<TaskDefinition> {
-    return loadDefinitionByKey(organizationId, key);
+    return loadDefinitionByKey(tenantId, key);
   }
 
   async function createDefinition(
-    organizationId: string,
+    tenantId: string,
     input: CreateDefinitionInput,
   ): Promise<TaskDefinition> {
     // Validate parent nesting depth: only one level allowed
     if (input.parentId) {
-      const parent = await loadDefinitionByKey(organizationId, input.parentId);
+      const parent = await loadDefinitionByKey(tenantId, input.parentId);
       if (parent.parentId) {
         throw new TaskNestingTooDeep();
       }
@@ -451,7 +451,7 @@ export function createTaskService(
     // fall open — the existing test suite doesn't simulate the catalog.
     if (input.eventName && eventCatalog) {
       const ok = await eventCatalog.hasCapability(
-        organizationId,
+        tenantId,
         input.eventName,
         "task-trigger",
       );
@@ -459,11 +459,11 @@ export function createTaskService(
     }
 
     try {
-      const __sortKey = await appendKey(db, { table: taskDefinitions, sortColumn: taskDefinitions.sortOrder, scopeWhere: eq(taskDefinitions.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: taskDefinitions, sortColumn: taskDefinitions.sortOrder, scopeWhere: eq(taskDefinitions.tenantId, tenantId)! });
       const [row] = await db
         .insert(taskDefinitions)
         .values({
-          organizationId,
+          tenantId,
           categoryId: input.categoryId ?? null,
           parentId: input.parentId ?? null,
           alias: input.alias ?? null,
@@ -505,15 +505,15 @@ export function createTaskService(
   }
 
   async function updateDefinition(
-    organizationId: string,
+    tenantId: string,
     key: string,
     patch: UpdateDefinitionInput,
   ): Promise<TaskDefinition> {
-    const existing = await loadDefinitionByKey(organizationId, key);
+    const existing = await loadDefinitionByKey(tenantId, key);
 
     // Validate parent nesting if changing parentId
     if (patch.parentId !== undefined && patch.parentId !== null) {
-      const parent = await loadDefinitionByKey(organizationId, patch.parentId);
+      const parent = await loadDefinitionByKey(tenantId, patch.parentId);
       if (parent.parentId) {
         throw new TaskNestingTooDeep();
       }
@@ -558,7 +558,7 @@ export function createTaskService(
     // (null) or leaving it unchanged (undefined).
     if (patch.eventName && eventCatalog) {
       const ok = await eventCatalog.hasCapability(
-        organizationId,
+        tenantId,
         patch.eventName,
         "task-trigger",
       );
@@ -610,7 +610,7 @@ export function createTaskService(
         .where(
           and(
             eq(taskDefinitions.id, existing.id),
-            eq(taskDefinitions.organizationId, organizationId),
+            eq(taskDefinitions.tenantId, tenantId),
           ),
         )
         .returning();
@@ -625,16 +625,16 @@ export function createTaskService(
   }
 
   async function moveDefinition(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<TaskDefinition> {
-    const existing = await loadDefinitionByKey(organizationId, key);
+    const existing = await loadDefinitionByKey(tenantId, key);
     return moveAndReturn<TaskDefinition>(db, {
       table: taskDefinitions,
       sortColumn: taskDefinitions.sortOrder,
       idColumn: taskDefinitions.id,
-      partitionWhere: eq(taskDefinitions.organizationId, organizationId)!,
+      partitionWhere: eq(taskDefinitions.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new TaskDefinitionNotFound(sid),
@@ -642,16 +642,16 @@ export function createTaskService(
   }
 
   async function deleteDefinition(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<void> {
-    const existing = await loadDefinitionByKey(organizationId, key);
+    const existing = await loadDefinitionByKey(tenantId, key);
     await db
       .delete(taskDefinitions)
       .where(
         and(
           eq(taskDefinitions.id, existing.id),
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
         ),
       );
   }
@@ -663,7 +663,7 @@ export function createTaskService(
    * Returns the number of task definitions that were processed.
    */
   async function processEvent(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     eventName: string,
     eventData: Record<string, unknown>,
@@ -681,7 +681,7 @@ export function createTaskService(
     if (eventCatalog) {
       try {
         await eventCatalog.recordExternalEvent(
-          organizationId,
+          tenantId,
           eventName,
           eventData,
           ts,
@@ -697,7 +697,7 @@ export function createTaskService(
       .from(taskDefinitions)
       .where(
         and(
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
           eq(taskDefinitions.eventName, eventName),
           eq(taskDefinitions.isActive, true),
         ),
@@ -750,7 +750,7 @@ export function createTaskService(
       //    getActiveAssignment for expiry semantics.
       if (def.visibility === "assigned") {
         const assignment = await getActiveAssignment(
-          organizationId,
+          tenantId,
           endUserId,
           def.id,
           ts,
@@ -761,7 +761,7 @@ export function createTaskService(
       // 4. Check prerequisites
       if (def.prerequisiteTaskIds.length > 0) {
         const prereqsMet = await checkPrerequisites(
-          organizationId,
+          tenantId,
           endUserId,
           def.prerequisiteTaskIds,
           ts,
@@ -787,7 +787,7 @@ export function createTaskService(
         .values({
           taskId: def.id,
           endUserId,
-          organizationId,
+          tenantId,
           periodKey: currentPeriodKey,
           currentValue: increment,
           isCompleted: increment >= def.targetValue,
@@ -845,7 +845,7 @@ export function createTaskService(
       if (analytics) {
         void analytics.writer.logEvent({
           ts,
-          orgId: organizationId,
+          orgId: tenantId,
           endUserId,
           traceId: getTraceId(),
           event: "task.progress_reported",
@@ -868,7 +868,7 @@ export function createTaskService(
       // Idempotency is enforced by the ledger's unique PK, so calling
       // this on a stale/no-change update is safe.
       try {
-        await evaluateAndDispatchTiers(organizationId, endUserId, def, row, ts);
+        await evaluateAndDispatchTiers(tenantId, endUserId, def, row, ts);
       } catch (err) {
         logger.error("task: evaluateAndDispatchTiers failed", err);
       }
@@ -881,7 +881,7 @@ export function createTaskService(
         // Propagate to parent
         if (def.parentId) {
           try {
-            await propagateToParent(organizationId, endUserId, def, ts);
+            await propagateToParent(tenantId, endUserId, def, ts);
           } catch (err) {
             logger.error("task: propagateToParent failed", err);
           }
@@ -890,7 +890,7 @@ export function createTaskService(
         // Auto-claim via mail
         if (def.autoClaim) {
           try {
-            await handleAutoClaim(organizationId, endUserId, def, row, ts);
+            await handleAutoClaim(tenantId, endUserId, def, row, ts);
           } catch (err) {
             logger.error("task: handleAutoClaim failed", err);
           }
@@ -908,7 +908,7 @@ export function createTaskService(
         row.completedAt?.getTime() === ts.getTime()
       ) {
         await events.emit("task.completed", {
-          organizationId,
+          tenantId,
           endUserId,
           taskId: def.id,
           taskAlias: def.alias,
@@ -925,7 +925,7 @@ export function createTaskService(
    * Check whether all prerequisite tasks are completed for this user.
    */
   async function checkPrerequisites(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     prereqIds: string[],
     now: Date,
@@ -938,7 +938,7 @@ export function createTaskService(
       .from(taskDefinitions)
       .where(
         and(
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
           inArray(taskDefinitions.id, prereqIds),
         ),
       );
@@ -983,7 +983,7 @@ export function createTaskService(
    * Uses SUM(parentProgressValue) of completed children — idempotent.
    */
   async function propagateToParent(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     childDef: TaskDefinition,
     now: Date,
@@ -991,7 +991,7 @@ export function createTaskService(
     if (!childDef.parentId) return;
 
     const parentDef = await loadDefinitionByKey(
-      organizationId,
+      tenantId,
       childDef.parentId,
     );
 
@@ -1009,7 +1009,7 @@ export function createTaskService(
       .from(taskDefinitions)
       .where(
         and(
-          eq(taskDefinitions.organizationId, organizationId),
+          eq(taskDefinitions.tenantId, tenantId),
           eq(taskDefinitions.parentId, parentDef.id),
         ),
       );
@@ -1055,7 +1055,7 @@ export function createTaskService(
       .values({
         taskId: parentDef.id,
         endUserId,
-        organizationId,
+        tenantId,
         periodKey: parentPeriodKey,
         currentValue: totalValue,
         isCompleted: completed,
@@ -1095,7 +1095,7 @@ export function createTaskService(
     // completed.
     try {
       await evaluateAndDispatchTiers(
-        organizationId,
+        tenantId,
         endUserId,
         parentDef,
         row,
@@ -1112,7 +1112,7 @@ export function createTaskService(
       parentDef.autoClaim
     ) {
       try {
-        await handleAutoClaim(organizationId, endUserId, parentDef, row, now);
+        await handleAutoClaim(tenantId, endUserId, parentDef, row, now);
       } catch (err) {
         logger.error("task: parent handleAutoClaim failed", err);
       }
@@ -1125,7 +1125,7 @@ export function createTaskService(
       row.completedAt?.getTime() === now.getTime()
     ) {
       await events.emit("task.completed", {
-        organizationId,
+        tenantId,
         endUserId,
         taskId: parentDef.id,
         taskAlias: parentDef.alias,
@@ -1181,7 +1181,7 @@ export function createTaskService(
    * and then lose eligibility.
    */
   async function evaluateAndDispatchTiers(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     def: TaskDefinition,
     progress: TaskUserProgress,
@@ -1215,7 +1215,7 @@ export function createTaskService(
           .values({
             taskId: def.id,
             endUserId,
-            organizationId,
+            tenantId,
             periodKey: progress.periodKey,
             tierAlias: tier.alias,
             claimedAt: now,
@@ -1231,7 +1231,7 @@ export function createTaskService(
 
       if (!mailSvc) continue;
       try {
-        await mailSvc.createMessage(organizationId, {
+        await mailSvc.createMessage(tenantId, {
           title: def.name,
           content: `Task tier reached: ${def.name} (${tier.alias})`,
           rewards: tier.rewards,
@@ -1252,7 +1252,7 @@ export function createTaskService(
    * Handle auto-claim: send rewards via mail.
    */
   async function handleAutoClaim(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     def: TaskDefinition,
     progress: TaskUserProgress,
@@ -1279,7 +1279,7 @@ export function createTaskService(
 
     // Send mail with rewards
     const originSourceId = `${def.id}:${endUserId}:${progress.periodKey}`;
-    await mailSvc.createMessage(organizationId, {
+    await mailSvc.createMessage(tenantId, {
       title: def.name,
       content: `Task completed: ${def.name}`,
       rewards: def.rewards,
@@ -1296,7 +1296,7 @@ export function createTaskService(
    * Get all tasks with progress for a player.
    */
   async function getTasksForUser(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     filters?: {
       categoryId?: string;
@@ -1309,7 +1309,7 @@ export function createTaskService(
 
     // Load definitions
     const conditions = [
-      eq(taskDefinitions.organizationId, organizationId),
+      eq(taskDefinitions.tenantId, tenantId),
       eq(taskDefinitions.isActive, true),
     ];
     if (filters?.categoryId) {
@@ -1340,7 +1340,7 @@ export function createTaskService(
         .from(taskUserAssignments)
         .where(
           and(
-            eq(taskUserAssignments.organizationId, organizationId),
+            eq(taskUserAssignments.tenantId, tenantId),
             eq(taskUserAssignments.endUserId, endUserId),
             inArray(taskUserAssignments.taskId, assignedDefIds),
             isNull(taskUserAssignments.revokedAt),
@@ -1360,7 +1360,7 @@ export function createTaskService(
       .where(
         and(
           eq(taskUserProgress.endUserId, endUserId),
-          eq(taskUserProgress.organizationId, organizationId),
+          eq(taskUserProgress.tenantId, tenantId),
           inArray(taskUserProgress.taskId, defIds),
         ),
       );
@@ -1388,7 +1388,7 @@ export function createTaskService(
         .where(
           and(
             eq(taskUserMilestoneClaims.endUserId, endUserId),
-            eq(taskUserMilestoneClaims.organizationId, organizationId),
+            eq(taskUserMilestoneClaims.tenantId, tenantId),
             inArray(taskUserMilestoneClaims.taskId, tieredDefIds),
           ),
         );
@@ -1420,7 +1420,7 @@ export function createTaskService(
         .from(taskDefinitions)
         .where(
           and(
-            eq(taskDefinitions.organizationId, organizationId),
+            eq(taskDefinitions.tenantId, tenantId),
             inArray(taskDefinitions.id, [...allPrereqIds]),
           ),
         );
@@ -1542,13 +1542,13 @@ export function createTaskService(
    * Manual reward claim for a completed task.
    */
   async function claimReward(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     taskId: string,
     now?: Date,
   ) {
     const ts = now ?? new Date();
-    const def = await loadDefinitionByKey(organizationId, taskId);
+    const def = await loadDefinitionByKey(tenantId, taskId);
 
     if (def.autoClaim) throw new TaskAutoClaimOnly();
 
@@ -1607,7 +1607,7 @@ export function createTaskService(
     const sourceId = `${def.id}:${endUserId}:${progress.periodKey}`;
     await grantRewards(
       rewardServices,
-      organizationId,
+      tenantId,
       endUserId,
       def.rewards,
       CLAIM_SOURCE,
@@ -1619,7 +1619,7 @@ export function createTaskService(
     // bus; a failing handler is logged and does not affect the claim.
     if (events) {
       await events.emit("task.claimed", {
-        organizationId,
+        tenantId,
         endUserId,
         taskId: def.id,
         taskAlias: def.alias,
@@ -1646,14 +1646,14 @@ export function createTaskService(
    * same (task, user, period, tier) throws TaskAlreadyClaimed.
    */
   async function claimTier(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     taskId: string,
     tierAlias: string,
     now?: Date,
   ) {
     const ts = now ?? new Date();
-    const def = await loadDefinitionByKey(organizationId, taskId);
+    const def = await loadDefinitionByKey(tenantId, taskId);
 
     if (def.autoClaim) throw new TaskAutoClaimOnly();
 
@@ -1707,7 +1707,7 @@ export function createTaskService(
         .values({
           taskId: def.id,
           endUserId,
-          organizationId,
+          tenantId,
           periodKey: progress.periodKey,
           tierAlias: tier.alias,
           claimedAt: ts,
@@ -1726,7 +1726,7 @@ export function createTaskService(
     const sourceId = `${def.id}:${endUserId}:${progress.periodKey}:${tier.alias}`;
     await grantRewards(
       rewardServices,
-      organizationId,
+      tenantId,
       endUserId,
       tier.rewards,
       TIER_CLAIM_SOURCE,
@@ -1735,7 +1735,7 @@ export function createTaskService(
 
     if (events) {
       await events.emit("task.tier.claimed", {
-        organizationId,
+        tenantId,
         endUserId,
         taskId: def.id,
         taskAlias: def.alias,
@@ -1765,7 +1765,7 @@ export function createTaskService(
    * `expires_at` is null or strictly in the future.
    */
   async function getActiveAssignment(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     taskId: string,
     now: Date,
@@ -1775,7 +1775,7 @@ export function createTaskService(
       .from(taskUserAssignments)
       .where(
         and(
-          eq(taskUserAssignments.organizationId, organizationId),
+          eq(taskUserAssignments.tenantId, tenantId),
           eq(taskUserAssignments.endUserId, endUserId),
           eq(taskUserAssignments.taskId, taskId),
           isNull(taskUserAssignments.revokedAt),
@@ -1839,7 +1839,7 @@ export function createTaskService(
    * plan doc as "harmless noop on broadcast defs".
    */
   async function assignTask(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     taskKey: string,
     options: AssignTaskOptions = {},
@@ -1851,7 +1851,7 @@ export function createTaskService(
     }
 
     const ts = options.now ?? new Date();
-    const def = await loadDefinitionByKey(organizationId, taskKey);
+    const def = await loadDefinitionByKey(tenantId, taskKey);
     if (!def.isActive) {
       throw new TaskNotAssignable("task is inactive");
     }
@@ -1870,7 +1870,7 @@ export function createTaskService(
         .values({
           taskId: def.id,
           endUserId,
-          organizationId,
+          tenantId,
           assignedAt: ts,
           expiresAt,
           revokedAt: null,
@@ -1903,7 +1903,7 @@ export function createTaskService(
       .values({
         taskId: def.id,
         endUserId,
-        organizationId,
+        tenantId,
         assignedAt: ts,
         expiresAt,
         revokedAt: null,
@@ -1955,7 +1955,7 @@ export function createTaskService(
    * requested `endUserIds`.
    */
   async function assignTaskToUsers(
-    organizationId: string,
+    tenantId: string,
     taskKey: string,
     endUserIds: string[],
     options: AssignTaskOptions = {},
@@ -1981,7 +1981,7 @@ export function createTaskService(
 
     // Resolve the definition once, not N times — `assignTask`'s own
     // load-by-key is correct but wasteful in a batch loop.
-    const def = await loadDefinitionByKey(organizationId, taskKey);
+    const def = await loadDefinitionByKey(tenantId, taskKey);
     if (!def.isActive) {
       throw new TaskNotAssignable("task is inactive");
     }
@@ -1991,8 +1991,8 @@ export function createTaskService(
     const items: TaskUserAssignment[] = [];
 
     for (const uid of unique) {
-      const before = await getActiveAssignment(organizationId, uid, def.id, ts);
-      const row = await assignTask(organizationId, uid, def.id, {
+      const before = await getActiveAssignment(tenantId, uid, def.id, ts);
+      const row = await assignTask(tenantId, uid, def.id, {
         ...options,
         now: ts,
       });
@@ -2015,13 +2015,13 @@ export function createTaskService(
    * left off (subject to period reset).
    */
   async function revokeAssignment(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     taskKey: string,
     options?: { now?: Date },
   ): Promise<void> {
     const ts = options?.now ?? new Date();
-    const def = await loadDefinitionByKey(organizationId, taskKey);
+    const def = await loadDefinitionByKey(tenantId, taskKey);
 
     const [row] = await db
       .update(taskUserAssignments)
@@ -2030,7 +2030,7 @@ export function createTaskService(
         and(
           eq(taskUserAssignments.taskId, def.id),
           eq(taskUserAssignments.endUserId, endUserId),
-          eq(taskUserAssignments.organizationId, organizationId),
+          eq(taskUserAssignments.tenantId, tenantId),
           isNull(taskUserAssignments.revokedAt),
         ),
       )
@@ -2048,14 +2048,14 @@ export function createTaskService(
    * `activeOnly` (default true) excludes revoked and expired rows.
    */
   async function listAssignments(
-    organizationId: string,
+    tenantId: string,
     filter: { endUserId?: string; taskId?: string; activeOnly?: boolean } = {},
     options?: { limit?: number; now?: Date },
   ): Promise<TaskUserAssignment[]> {
     const ts = options?.now ?? new Date();
     const activeOnly = filter.activeOnly ?? true;
 
-    const conditions = [eq(taskUserAssignments.organizationId, organizationId)];
+    const conditions = [eq(taskUserAssignments.tenantId, tenantId)];
     if (filter.taskId) {
       conditions.push(eq(taskUserAssignments.taskId, filter.taskId));
     }

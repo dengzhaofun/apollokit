@@ -248,7 +248,7 @@ export const ConfigIdParamSchema = z.object({
 export const BattlePassConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     activityId: z.string(),
     code: z.string(),
     name: z.string(),

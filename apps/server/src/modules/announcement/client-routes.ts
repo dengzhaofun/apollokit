@@ -1,13 +1,13 @@
 /**
  * C-end client routes for the announcement module.
  *
- * Mounted at /api/client/announcement. Auth pattern:
+ * Mounted at /api/v1/client/announcement. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  *
  * Surface:
@@ -60,7 +60,7 @@ announcementClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const items = await announcementService.getActiveForClient(
       orgId,
@@ -89,7 +89,7 @@ announcementClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     await announcementService.recordImpression(orgId, alias, endUserId);
@@ -116,7 +116,7 @@ announcementClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { alias } = c.req.valid("param");
     await announcementService.recordClick(orgId, alias, endUserId);

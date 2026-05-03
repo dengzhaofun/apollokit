@@ -19,7 +19,7 @@ import { applyLotteryConfig } from "./lottery";
 import { applyMailConfig } from "./mail";
 import { applyRankConfig } from "./rank";
 import { applyShopProductConfig } from "./shop";
-import { applyTeamConfig } from "./team";
+import { applyTeamConfig } from "./match-squad";
 
 /**
  * Module → apply-tool name + tool object. Keep the **name** here

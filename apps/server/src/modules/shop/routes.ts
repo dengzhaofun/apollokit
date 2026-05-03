@@ -69,7 +69,7 @@ const TAG_EXEC = "Shop Execution";
 function serializeCategory(row: ShopCategory) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     parentId: row.parentId,
     alias: row.alias,
     name: row.name,
@@ -96,7 +96,7 @@ function serializeTree(node: TreeNode): unknown {
 function serializeTag(row: ShopTag) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     color: row.color,
@@ -112,7 +112,7 @@ function serializeTag(row: ShopTag) {
 function serializeProduct(row: ShopProduct & { tags?: ShopTag[] }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     categoryId: row.categoryId,
     alias: row.alias,
     name: row.name,
@@ -156,7 +156,7 @@ function serializeStage(row: ShopGrowthStage) {
   return {
     id: row.id,
     productId: row.productId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     stageIndex: row.stageIndex,
     name: row.name,
     description: row.description,
@@ -178,7 +178,7 @@ function serializeState(row: ShopUserPurchaseState) {
   return {
     productId: row.productId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     totalCount: row.totalCount,
     cycleCount: row.cycleCount,
     cycleResetAt: row.cycleResetAt ? row.cycleResetAt.toISOString() : null,
@@ -878,7 +878,7 @@ shopRouter.openapi(
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await shopService.purchase({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       productKey: id,
       idempotencyKey: body.idempotencyKey,
@@ -910,7 +910,7 @@ shopRouter.openapi(
     const { endUserId, stageId } = c.req.valid("param");
     const body = c.req.valid("json");
     const result = await shopService.claimGrowthStage({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       stageId,
       idempotencyKey: body.idempotencyKey,
@@ -944,7 +944,7 @@ shopRouter.openapi(
     const { endUserId } = c.req.valid("param");
     const query = c.req.valid("query");
     const views = await shopService.listUserProducts({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       query,
     });

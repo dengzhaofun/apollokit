@@ -63,7 +63,7 @@ export class TaskInvalidEventBinding extends ModuleError {
     super(
       "task.invalid_event_binding",
       400,
-      `eventName '${eventName}' is not a task-trigger event — see GET /api/event-catalog?capability=task-trigger for the valid set`,
+      `eventName '${eventName}' is not a task-trigger event — see GET /api/v1/event-catalog?capability=task-trigger for the valid set`,
     );
     this.name = "TaskInvalidEventBinding";
   }

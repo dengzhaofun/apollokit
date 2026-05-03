@@ -11,7 +11,7 @@ export function useCheckInRewards(configKey: string) {
     queryKey: ["check-in-rewards", configKey],
     queryFn: () =>
       api.get<{ items: CheckInReward[] }>(
-        `/api/check-in/configs/${configKey}/rewards`,
+        `/api/v1/check-in/configs/${configKey}/rewards`,
       ),
     select: (data) => data.items,
     enabled: !!configKey,
@@ -26,7 +26,7 @@ export function useCreateCheckInReward() {
       ...input
     }: CreateRewardInput & { configKey: string }) =>
       api.post<CheckInReward>(
-        `/api/check-in/configs/${configKey}/rewards`,
+        `/api/v1/check-in/configs/${configKey}/rewards`,
         input,
       ),
     onSuccess: () =>
@@ -41,7 +41,7 @@ export function useUpdateCheckInReward() {
       rewardId,
       ...input
     }: UpdateRewardInput & { rewardId: string }) =>
-      api.patch<CheckInReward>(`/api/check-in/rewards/${rewardId}`, input),
+      api.patch<CheckInReward>(`/api/v1/check-in/rewards/${rewardId}`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["check-in-rewards"] }),
   })
@@ -51,7 +51,7 @@ export function useDeleteCheckInReward() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (rewardId: string) =>
-      api.delete(`/api/check-in/rewards/${rewardId}`),
+      api.delete(`/api/v1/check-in/rewards/${rewardId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["check-in-rewards"] }),
   })

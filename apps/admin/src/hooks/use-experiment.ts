@@ -55,7 +55,7 @@ export function useExperiments(
     filterDefs: EXPERIMENT_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Experiment>>(
-        `/api/experiment/experiments?${buildQs({
+        `/api/v1/experiment/experiments?${buildQs({
           cursor,
           limit,
           q,
@@ -71,7 +71,7 @@ export function useExperiment(key: string) {
   return useQuery({
     queryKey: [...EXPERIMENTS_KEY, key],
     queryFn: () =>
-      api.get<Experiment>(`/api/experiment/experiments/${key}`),
+      api.get<Experiment>(`/api/v1/experiment/experiments/${key}`),
     enabled: !!key,
   })
 }
@@ -80,7 +80,7 @@ export function useCreateExperiment() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateExperimentInput) =>
-      api.post<Experiment>("/api/experiment/experiments", input),
+      api.post<Experiment>("/api/v1/experiment/experiments", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPERIMENTS_KEY }),
   })
 }
@@ -89,7 +89,7 @@ export function useUpdateExperiment() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateExperimentInput & { id: string }) =>
-      api.patch<Experiment>(`/api/experiment/experiments/${id}`, input),
+      api.patch<Experiment>(`/api/v1/experiment/experiments/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPERIMENTS_KEY }),
   })
 }
@@ -98,7 +98,7 @@ export function useDeleteExperiment() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/experiment/experiments/${id}`),
+      api.delete(`/api/v1/experiment/experiments/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPERIMENTS_KEY }),
   })
 }
@@ -108,7 +108,7 @@ export function useTransitionExperiment() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, to }: { id: string; to: ExperimentStatus }) =>
-      api.post<Experiment>(`/api/experiment/experiments/${id}:transition`, {
+      api.post<Experiment>(`/api/v1/experiment/experiments/${id}:transition`, {
         to,
       }),
     onSuccess: (_data, vars) => {
@@ -129,7 +129,7 @@ export function useExperimentVariants(experimentKey: string) {
     queryFn: () =>
       api
         .get<{ items: ExperimentVariant[] }>(
-          `/api/experiment/experiments/${experimentKey}/variants`,
+          `/api/v1/experiment/experiments/${experimentKey}/variants`,
         )
         .then((r) => r.items),
     enabled: !!experimentKey,
@@ -141,7 +141,7 @@ export function useCreateVariant(experimentKey: string) {
   return useMutation({
     mutationFn: (input: CreateVariantInput) =>
       api.post<ExperimentVariant>(
-        `/api/experiment/experiments/${experimentKey}/variants`,
+        `/api/v1/experiment/experiments/${experimentKey}/variants`,
         input,
       ),
     onSuccess: () => {
@@ -155,7 +155,7 @@ export function useUpdateVariant(experimentKey: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateVariantInput & { id: string }) =>
-      api.patch<ExperimentVariant>(`/api/experiment/variants/${id}`, input),
+      api.patch<ExperimentVariant>(`/api/v1/experiment/variants/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: variantsKey(experimentKey) })
       qc.invalidateQueries({ queryKey: EXPERIMENTS_KEY })
@@ -166,7 +166,7 @@ export function useUpdateVariant(experimentKey: string) {
 export function useDeleteVariant(experimentKey: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/experiment/variants/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/experiment/variants/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: variantsKey(experimentKey) })
       qc.invalidateQueries({ queryKey: EXPERIMENTS_KEY })
@@ -184,7 +184,7 @@ export function usePreviewBucketing(experimentKey: string) {
       attributes_sample?: Record<string, unknown>
     }) =>
       api.post<PreviewBucketingResult>(
-        `/api/experiment/experiments/${experimentKey}/preview-bucketing`,
+        `/api/v1/experiment/experiments/${experimentKey}/preview-bucketing`,
         input,
       ),
   })
@@ -205,7 +205,7 @@ export function useSetPrimaryMetric(experimentKey: string) {
       metricWindowDays?: number
     }) =>
       api.patch<Experiment>(
-        `/api/experiment/experiments/${id}/primary-metric`,
+        `/api/v1/experiment/experiments/${id}/primary-metric`,
         { primaryMetric, metricWindowDays },
       ),
     onSuccess: () => {
@@ -228,7 +228,7 @@ export function useExperimentAssignments(
     filterDefs: [],
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExperimentAssignment>>(
-        `/api/experiment/experiments/${experimentKey}/assignments?${buildQs({
+        `/api/v1/experiment/experiments/${experimentKey}/assignments?${buildQs({
           cursor,
           limit,
           q,

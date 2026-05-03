@@ -5,7 +5,7 @@
  *
  * Tenancy
  * -------
- * Players are scoped to an `organization` via `eu_user.organizationId`. The
+ * Players are scoped to an `organization` via `eu_user.tenantId`. The
  * org id is pulled out of the `cpk_` publishable key by
  * `requireClientCredential` and re-attached to the inner Better Auth
  * request via a header (`x-apollo-eu-org-id`) that we set inside the route
@@ -86,7 +86,7 @@ const EMAIL_LOOKUP_PATHS = new Set([
 // 同样延迟到首次访问。
 function buildEndUserAuth() {
   return betterAuth({
-    basePath: "/api/client/auth",
+    basePath: "/api/v1/client/auth",
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
@@ -125,7 +125,7 @@ function buildEndUserAuth() {
       // because `input: false` means the client can't supply it and
       // there's no default.
       additionalFields: {
-        organizationId: { type: "string", required: false, input: false },
+        tenantId: { type: "string", required: false, input: false },
         externalId: { type: "string", required: false, input: false },
         // Exposed here so Better Auth's drizzle-adapter picks up the
         // column (without this declaration it would be invisible to the
@@ -141,7 +141,7 @@ function buildEndUserAuth() {
       // injected by `session.create.before` and the DB rejects the
       // NOT NULL insert.
       additionalFields: {
-        organizationId: { type: "string", required: false, input: false },
+        tenantId: { type: "string", required: false, input: false },
       },
     },
     hooks: {
@@ -199,7 +199,7 @@ function buildEndUserAuth() {
             return {
               data: {
                 ...user,
-                organizationId: orgId,
+                tenantId: orgId,
               },
             };
           },
@@ -208,14 +208,14 @@ function buildEndUserAuth() {
       session: {
         create: {
           before: async (session) => {
-            // Denormalize organizationId onto the session so request-time
+            // Denormalize tenantId onto the session so request-time
             // guards don't need an extra round-trip to eu_user. Also
             // refuse to mint a session for a disabled player — this is
             // the sign-in-time half of the soft-ban (the other half is
             // `setDisabled` deleting existing sessions).
             const [row] = await db
               .select({
-                organizationId: schema.euUser.organizationId,
+                tenantId: schema.euUser.tenantId,
                 disabled: schema.euUser.disabled,
               })
               .from(schema.euUser)
@@ -234,7 +234,7 @@ function buildEndUserAuth() {
             return {
               data: {
                 ...session,
-                organizationId: row.organizationId,
+                tenantId: row.tenantId,
               },
             };
           },

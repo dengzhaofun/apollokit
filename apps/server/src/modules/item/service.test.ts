@@ -44,7 +44,7 @@ describe("item service", () => {
       expect(typeof cat.sortOrder).toBe("string");
       expect(cat.sortOrder.length).toBeGreaterThan(0);
       expect(cat.isActive).toBe(true);
-      expect(cat.organizationId).toBe(orgId);
+      expect(cat.tenantId).toBe(orgId);
 
       const page = await svc.listCategories(orgId);
       expect(page.items.some((c) => c.id === cat.id)).toBe(true);
@@ -181,13 +181,13 @@ describe("item service", () => {
 
     test("grant 100 gold, check balance=100", async () => {
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         grants: [{ definitionId: goldDefId, quantity: 100 }],
         source: "test",
       });
       const balance = await svc.getBalance({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         definitionId: goldDefId,
       });
@@ -196,13 +196,13 @@ describe("item service", () => {
 
     test("grant 50 more → balance=150", async () => {
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         grants: [{ definitionId: goldDefId, quantity: 50 }],
         source: "test",
       });
       const balance = await svc.getBalance({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         definitionId: goldDefId,
       });
@@ -211,13 +211,13 @@ describe("item service", () => {
 
     test("deduct 30 → balance=120", async () => {
       await svc.deductItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         deductions: [{ definitionId: goldDefId, quantity: 30 }],
         source: "test",
       });
       const balance = await svc.getBalance({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-gold",
         definitionId: goldDefId,
       });
@@ -227,7 +227,7 @@ describe("item service", () => {
     test("deduct too much → insufficient_balance error", async () => {
       await expect(
         svc.deductItems({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "u-gold",
           deductions: [{ definitionId: goldDefId, quantity: 999 }],
           source: "test",
@@ -248,14 +248,14 @@ describe("item service", () => {
       });
 
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-stack",
         grants: [{ definitionId: def.id, quantity: 12 }],
         source: "test",
       });
 
       const inv = await svc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-stack",
         definitionId: def.id,
       });
@@ -286,14 +286,14 @@ describe("item service", () => {
 
     test("grant 2, check inventory has 2 individual stacks", async () => {
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-nonstak",
         grants: [{ definitionId: swordDefId, quantity: 2 }],
         source: "test",
       });
 
       const inv = await svc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-nonstak",
         definitionId: swordDefId,
       });
@@ -309,7 +309,7 @@ describe("item service", () => {
     test("grant 2 more → holdLimit error", async () => {
       await expect(
         svc.grantItems({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "u-nonstak",
           grants: [{ definitionId: swordDefId, quantity: 2 }],
           source: "test",
@@ -329,28 +329,28 @@ describe("item service", () => {
       });
 
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-deduct-ns",
         grants: [{ definitionId: def.id, quantity: 3 }],
         source: "test",
       });
 
       await svc.deductItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-deduct-ns",
         deductions: [{ definitionId: def.id, quantity: 1 }],
         source: "test",
       });
 
       const balance = await svc.getBalance({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-deduct-ns",
         definitionId: def.id,
       });
       expect(balance).toBe(2);
 
       const inv = await svc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-deduct-ns",
         definitionId: def.id,
       });
@@ -374,7 +374,7 @@ describe("item service", () => {
       });
 
       await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-multi",
         grants: [
           { definitionId: defA.id, quantity: 10 },
@@ -384,7 +384,7 @@ describe("item service", () => {
       });
 
       const inv = await svc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-multi",
       });
 
@@ -410,7 +410,7 @@ describe("item service", () => {
       });
 
       const result1 = await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-log",
         grants: [{ definitionId: def.id, quantity: 50 }],
         source: "quest",
@@ -423,7 +423,7 @@ describe("item service", () => {
       expect(result1.grants[0]!.delta).toBe(50);
 
       const result2 = await svc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-log",
         grants: [{ definitionId: def.id, quantity: 25 }],
         source: "quest",
@@ -436,7 +436,7 @@ describe("item service", () => {
 
       // Deduct also writes logs with negative delta
       const deductResult = await svc.deductItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: "u-log",
         deductions: [{ definitionId: def.id, quantity: 10 }],
         source: "shop",

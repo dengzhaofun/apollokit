@@ -28,9 +28,9 @@ export function createBattlePassHandler(
 
     async loadConfig(activity) {
       try {
-        // activity.organizationId 一定有
+        // activity.tenantId 一定有
         return await svcGetter()
-          .listConfigs(activity.organizationId)
+          .listConfigs(activity.tenantId)
           .then(
             (configs) =>
               configs.find((c) => c.activityId === activity.id) ?? null,
@@ -44,13 +44,13 @@ export function createBattlePassHandler(
     async onEvent({ eventName, payload }) {
       if (eventName !== "task.completed") return;
       const p = payload as {
-        organizationId: string;
+        tenantId: string;
         endUserId: string;
         taskId: string;
       };
-      if (!p?.organizationId || !p?.endUserId || !p?.taskId) return;
+      if (!p?.tenantId || !p?.endUserId || !p?.taskId) return;
       await svcGetter().grantXpForTask({
-        organizationId: p.organizationId,
+        tenantId: p.tenantId,
         endUserId: p.endUserId,
         taskDefinitionId: p.taskId,
       });
@@ -59,11 +59,11 @@ export function createBattlePassHandler(
     async getUserState({ activity, endUserId }) {
       // 找到 activity 对应的纪行 config
       const config = await svcGetter()
-        .listConfigs(activity.organizationId)
+        .listConfigs(activity.tenantId)
         .then((configs) => configs.find((c) => c.activityId === activity.id));
       if (!config) throw new BattlePassConfigNotFound(activity.id);
       return await svcGetter().getAggregateView(
-        activity.organizationId,
+        activity.tenantId,
         config.id,
         endUserId,
       );
@@ -73,14 +73,14 @@ export function createBattlePassHandler(
     async executeCommand({ activity, command }) {
       const svc = svcGetter();
       const config = await svc
-        .listConfigs(activity.organizationId)
+        .listConfigs(activity.tenantId)
         .then((configs) => configs.find((c) => c.activityId === activity.id));
       if (!config) throw new BattlePassConfigNotFound(activity.id);
 
       switch (command.type) {
         case "grant-tier":
           return await svc.grantTier({
-            organizationId: activity.organizationId,
+            tenantId: activity.tenantId,
             seasonId: config.id,
             endUserId: command.payload.endUserId,
             tierCode: command.payload.tierCode,
@@ -89,7 +89,7 @@ export function createBattlePassHandler(
           });
         case "claim-level":
           return await svc.claimLevel({
-            organizationId: activity.organizationId,
+            tenantId: activity.tenantId,
             seasonId: config.id,
             endUserId: command.payload.endUserId,
             level: command.payload.level,
@@ -97,7 +97,7 @@ export function createBattlePassHandler(
           });
         case "claim-all":
           return await svc.claimAll({
-            organizationId: activity.organizationId,
+            tenantId: activity.tenantId,
             seasonId: config.id,
             endUserId: command.payload.endUserId,
           });
@@ -114,7 +114,7 @@ export function createBattlePassHandler(
     async onArchive({ activity }) {
       const svc = svcGetter();
       const config = await svc
-        .listConfigs(activity.organizationId)
+        .listConfigs(activity.tenantId)
         .then((configs) => configs.find((c) => c.activityId === activity.id));
       if (!config) return; // 没对应 config 就跳过
       await svc.purgeUserProgressForSeason(config.id);

@@ -42,7 +42,7 @@ const TAG = "Leaderboard";
 function serializeConfig(row: LeaderboardConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -238,7 +238,7 @@ leaderboardRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await leaderboardService.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       metricKey: body.metricKey,
       value: body.value,
@@ -276,7 +276,7 @@ leaderboardRouter.openapi(
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const result = await leaderboardService.getTop({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
       cycleKey: q.cycleKey,
       scopeKey: q.scopeKey,
@@ -312,7 +312,7 @@ leaderboardRouter.openapi(
     const { key } = c.req.valid("param");
     const q = c.req.valid("query");
     const result = await leaderboardService.getNeighbors({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
       endUserId: q.endUserId,
       cycleKey: q.cycleKey,
@@ -345,14 +345,14 @@ leaderboardRouter.openapi(
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const rows = await leaderboardService.listSnapshots({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: key,
     });
     return c.json(ok({
         items: rows.map((r) => ({
           id: r.id,
           configId: r.configId,
-          organizationId: r.organizationId,
+          tenantId: r.tenantId,
           cycleKey: r.cycleKey,
           scopeKey: r.scopeKey,
           rankings: r.rankings,

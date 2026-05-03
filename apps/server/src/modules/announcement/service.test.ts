@@ -84,7 +84,7 @@ describe("announcement service", () => {
       { alias: "shared", kind: "modal", title: "orgB", body: "b" },
       null,
     );
-    expect(other.organizationId).toBe(otherOrgId);
+    expect(other.tenantId).toBe(otherOrgId);
   });
 
   test("getByAlias is tenant-isolated", async () => {
@@ -135,7 +135,7 @@ describe("announcement service", () => {
 
     let deletedPayload:
       | {
-          organizationId: string;
+          tenantId: string;
           announcementId: string;
           alias: string;
         }
@@ -280,13 +280,13 @@ describe("announcement service", () => {
     await svc.recordClick(orgId, "evt", "player-1");
 
     expect(imp).toMatchObject({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "player-1",
       alias: "evt",
       kind: "modal",
     });
     expect(click).toMatchObject({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "player-1",
       alias: "evt",
       ctaUrl: "https://example.com/buy",

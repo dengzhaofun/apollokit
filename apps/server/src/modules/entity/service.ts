@@ -91,14 +91,14 @@ type EntityDeps = Pick<AppDeps, "db">;
 /** Minimal item service interface — avoids circular import. */
 export type ItemSvc = {
   grantItems: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     grants: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
     sourceId?: string;
   }) => Promise<unknown>;
   deductItems: (params: {
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     deductions: Array<{ type?: string; id: string; count: number } | { definitionId: string; quantity: number }>;
     source: string;
@@ -114,16 +114,16 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function loadSchemaByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntitySchema> {
     const where = looksLikeId(key)
       ? and(
-          eq(entitySchemas.organizationId, organizationId),
+          eq(entitySchemas.tenantId, tenantId),
           eq(entitySchemas.id, key),
         )
       : and(
-          eq(entitySchemas.organizationId, organizationId),
+          eq(entitySchemas.tenantId, tenantId),
           eq(entitySchemas.alias, key),
         );
     const rows = await db.select().from(entitySchemas).where(where).limit(1);
@@ -133,15 +133,15 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function createSchema(
-    organizationId: string,
+    tenantId: string,
     input: CreateSchemaInputType,
   ): Promise<EntitySchema> {
     try {
-      const __sortKey = await appendKey(db, { table: entitySchemas, sortColumn: entitySchemas.sortOrder, scopeWhere: eq(entitySchemas.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: entitySchemas, sortColumn: entitySchemas.sortOrder, scopeWhere: eq(entitySchemas.tenantId, tenantId)! });
       const rows = await db
         .insert(entitySchemas)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           description: input.description ?? null,
@@ -170,11 +170,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function updateSchema(
-    organizationId: string,
+    tenantId: string,
     id: string,
     input: UpdateSchemaInputType,
   ): Promise<EntitySchema> {
-    const existing = await loadSchemaByKey(organizationId, id);
+    const existing = await loadSchemaByKey(tenantId, id);
 
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -202,7 +202,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         .set(patch)
         .where(
           and(
-            eq(entitySchemas.organizationId, organizationId),
+            eq(entitySchemas.tenantId, tenantId),
             eq(entitySchemas.id, existing.id),
           ),
         )
@@ -216,16 +216,16 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function moveSchema(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<EntitySchema> {
-    const existing = await loadSchemaByKey(organizationId, key);
+    const existing = await loadSchemaByKey(tenantId, key);
     return moveAndReturn<EntitySchema>(db, {
       table: entitySchemas,
       sortColumn: entitySchemas.sortOrder,
       idColumn: entitySchemas.id,
-      partitionWhere: eq(entitySchemas.organizationId, organizationId)!,
+      partitionWhere: eq(entitySchemas.tenantId, tenantId)!,
       id: existing.id,
       body,
       notFound: (sid) => new EntitySchemaNotFound(sid),
@@ -233,26 +233,26 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function deleteSchema(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
-    const existing = await loadSchemaByKey(organizationId, id);
+    const existing = await loadSchemaByKey(tenantId, id);
     await db
       .delete(entitySchemas)
       .where(
         and(
-          eq(entitySchemas.organizationId, organizationId),
+          eq(entitySchemas.tenantId, tenantId),
           eq(entitySchemas.id, existing.id),
         ),
       );
   }
 
   async function listSchemas(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<EntitySchema>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(entitySchemas.organizationId, organizationId)];
+    const conds: SQL[] = [eq(entitySchemas.tenantId, tenantId)];
     const seek = cursorWhere(params.cursor, entitySchemas.createdAt, entitySchemas.id);
     if (seek) conds.push(seek);
     if (params.q) {
@@ -270,10 +270,10 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function getSchema(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntitySchema> {
-    return loadSchemaByKey(organizationId, key);
+    return loadSchemaByKey(tenantId, key);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -281,16 +281,16 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function loadBlueprintByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntityBlueprint> {
     const where = looksLikeId(key)
       ? and(
-          eq(entityBlueprints.organizationId, organizationId),
+          eq(entityBlueprints.tenantId, tenantId),
           eq(entityBlueprints.id, key),
         )
       : and(
-          eq(entityBlueprints.organizationId, organizationId),
+          eq(entityBlueprints.tenantId, tenantId),
           eq(entityBlueprints.alias, key),
         );
     const rows = await db
@@ -304,18 +304,18 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function createBlueprint(
-    organizationId: string,
+    tenantId: string,
     input: CreateBlueprintInputType,
   ): Promise<EntityBlueprint> {
     // Validate schema exists
-    await loadSchemaByKey(organizationId, input.schemaId);
+    await loadSchemaByKey(tenantId, input.schemaId);
 
     try {
-      const __sortKey = await appendKey(db, { table: entityBlueprints, sortColumn: entityBlueprints.sortOrder, scopeWhere: eq(entityBlueprints.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: entityBlueprints, sortColumn: entityBlueprints.sortOrder, scopeWhere: eq(entityBlueprints.tenantId, tenantId)! });
       const rows = await db
         .insert(entityBlueprints)
         .values({
-          organizationId,
+          tenantId,
           schemaId: input.schemaId,
           name: input.name,
           alias: input.alias ?? null,
@@ -346,11 +346,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function updateBlueprint(
-    organizationId: string,
+    tenantId: string,
     id: string,
     input: UpdateBlueprintInputType,
   ): Promise<EntityBlueprint> {
-    const existing = await loadBlueprintByKey(organizationId, id);
+    const existing = await loadBlueprintByKey(tenantId, id);
 
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -382,7 +382,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         .set(patch)
         .where(
           and(
-            eq(entityBlueprints.organizationId, organizationId),
+            eq(entityBlueprints.tenantId, tenantId),
             eq(entityBlueprints.id, existing.id),
           ),
         )
@@ -396,18 +396,18 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function moveBlueprint(
-    organizationId: string,
+    tenantId: string,
     key: string,
     body: MoveBody,
   ): Promise<EntityBlueprint> {
-    const existing = await loadBlueprintByKey(organizationId, key);
+    const existing = await loadBlueprintByKey(tenantId, key);
     // Scope by schemaId so blueprints reorder within their parent schema only.
     return moveAndReturn<EntityBlueprint>(db, {
       table: entityBlueprints,
       sortColumn: entityBlueprints.sortOrder,
       idColumn: entityBlueprints.id,
       partitionWhere: and(
-        eq(entityBlueprints.organizationId, organizationId),
+        eq(entityBlueprints.tenantId, tenantId),
         eq(entityBlueprints.schemaId, existing.schemaId),
       )!,
       id: existing.id,
@@ -417,26 +417,26 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function deleteBlueprint(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
-    const existing = await loadBlueprintByKey(organizationId, id);
+    const existing = await loadBlueprintByKey(tenantId, id);
     await db
       .delete(entityBlueprints)
       .where(
         and(
-          eq(entityBlueprints.organizationId, organizationId),
+          eq(entityBlueprints.tenantId, tenantId),
           eq(entityBlueprints.id, existing.id),
         ),
       );
   }
 
   async function listBlueprints(
-    organizationId: string,
+    tenantId: string,
     opts: PageParams & { schemaId?: string; activityId?: string | null } = {},
   ): Promise<Page<EntityBlueprint>> {
     const limit = clampLimit(opts.limit);
-    const conditions: SQL[] = [eq(entityBlueprints.organizationId, organizationId)];
+    const conditions: SQL[] = [eq(entityBlueprints.tenantId, tenantId)];
     if (opts.schemaId) {
       conditions.push(eq(entityBlueprints.schemaId, opts.schemaId));
     }
@@ -464,10 +464,10 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function getBlueprint(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntityBlueprint> {
-    return loadBlueprintByKey(organizationId, key);
+    return loadBlueprintByKey(tenantId, key);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -475,7 +475,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function loadSkinById(
-    organizationId: string,
+    tenantId: string,
     skinId: string,
   ): Promise<EntityBlueprintSkin> {
     const rows = await db
@@ -483,7 +483,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .from(entityBlueprintSkins)
       .where(
         and(
-          eq(entityBlueprintSkins.organizationId, organizationId),
+          eq(entityBlueprintSkins.tenantId, tenantId),
           eq(entityBlueprintSkins.id, skinId),
         ),
       )
@@ -494,19 +494,19 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function createSkin(
-    organizationId: string,
+    tenantId: string,
     blueprintId: string,
     input: CreateSkinInputType,
   ): Promise<EntityBlueprintSkin> {
     // Validate blueprint exists
-    await loadBlueprintByKey(organizationId, blueprintId);
+    await loadBlueprintByKey(tenantId, blueprintId);
 
     try {
-      const __sortKey = await appendKey(db, { table: entityBlueprintSkins, sortColumn: entityBlueprintSkins.sortOrder, scopeWhere: eq(entityBlueprintSkins.organizationId, organizationId)! });
+      const __sortKey = await appendKey(db, { table: entityBlueprintSkins, sortColumn: entityBlueprintSkins.sortOrder, scopeWhere: eq(entityBlueprintSkins.tenantId, tenantId)! });
       const rows = await db
         .insert(entityBlueprintSkins)
         .values({
-          organizationId,
+          tenantId,
           blueprintId,
           name: input.name,
           alias: input.alias ?? null,
@@ -528,11 +528,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function updateSkin(
-    organizationId: string,
+    tenantId: string,
     skinId: string,
     input: UpdateSkinInputType,
   ): Promise<EntityBlueprintSkin> {
-    const existing = await loadSkinById(organizationId, skinId);
+    const existing = await loadSkinById(tenantId, skinId);
 
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -552,7 +552,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         .set(patch)
         .where(
           and(
-            eq(entityBlueprintSkins.organizationId, organizationId),
+            eq(entityBlueprintSkins.tenantId, tenantId),
             eq(entityBlueprintSkins.id, existing.id),
           ),
         )
@@ -566,17 +566,17 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function moveSkin(
-    organizationId: string,
+    tenantId: string,
     skinId: string,
     body: MoveBody,
   ): Promise<EntityBlueprintSkin> {
-    const existing = await loadSkinById(organizationId, skinId);
+    const existing = await loadSkinById(tenantId, skinId);
     return moveAndReturn<EntityBlueprintSkin>(db, {
       table: entityBlueprintSkins,
       sortColumn: entityBlueprintSkins.sortOrder,
       idColumn: entityBlueprintSkins.id,
       partitionWhere: and(
-        eq(entityBlueprintSkins.organizationId, organizationId),
+        eq(entityBlueprintSkins.tenantId, tenantId),
         eq(entityBlueprintSkins.blueprintId, existing.blueprintId),
       )!,
       id: existing.id,
@@ -586,22 +586,22 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function deleteSkin(
-    organizationId: string,
+    tenantId: string,
     skinId: string,
   ): Promise<void> {
-    const existing = await loadSkinById(organizationId, skinId);
+    const existing = await loadSkinById(tenantId, skinId);
     await db
       .delete(entityBlueprintSkins)
       .where(
         and(
-          eq(entityBlueprintSkins.organizationId, organizationId),
+          eq(entityBlueprintSkins.tenantId, tenantId),
           eq(entityBlueprintSkins.id, existing.id),
         ),
       );
   }
 
   async function listSkins(
-    organizationId: string,
+    tenantId: string,
     blueprintId: string,
   ): Promise<EntityBlueprintSkin[]> {
     return db
@@ -609,7 +609,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .from(entityBlueprintSkins)
       .where(
         and(
-          eq(entityBlueprintSkins.organizationId, organizationId),
+          eq(entityBlueprintSkins.tenantId, tenantId),
           eq(entityBlueprintSkins.blueprintId, blueprintId),
         ),
       )
@@ -620,10 +620,10 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function getSkin(
-    organizationId: string,
+    tenantId: string,
     skinId: string,
   ): Promise<EntityBlueprintSkin> {
-    return loadSkinById(organizationId, skinId);
+    return loadSkinById(tenantId, skinId);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -631,16 +631,16 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function loadFormationConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntityFormationConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(entityFormationConfigs.organizationId, organizationId),
+          eq(entityFormationConfigs.tenantId, tenantId),
           eq(entityFormationConfigs.id, key),
         )
       : and(
-          eq(entityFormationConfigs.organizationId, organizationId),
+          eq(entityFormationConfigs.tenantId, tenantId),
           eq(entityFormationConfigs.alias, key),
         );
     const rows = await db
@@ -654,14 +654,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function createFormationConfig(
-    organizationId: string,
+    tenantId: string,
     input: CreateFormationConfigInputType,
   ): Promise<EntityFormationConfig> {
     try {
       const rows = await db
         .insert(entityFormationConfigs)
         .values({
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           maxFormations: input.maxFormations ?? 5,
@@ -680,11 +680,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function updateFormationConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
     input: UpdateFormationConfigInputType,
   ): Promise<EntityFormationConfig> {
-    const existing = await loadFormationConfigByKey(organizationId, id);
+    const existing = await loadFormationConfigByKey(tenantId, id);
 
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -706,7 +706,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         .set(patch)
         .where(
           and(
-            eq(entityFormationConfigs.organizationId, organizationId),
+            eq(entityFormationConfigs.tenantId, tenantId),
             eq(entityFormationConfigs.id, existing.id),
           ),
         )
@@ -720,26 +720,26 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function deleteFormationConfig(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<void> {
-    const existing = await loadFormationConfigByKey(organizationId, id);
+    const existing = await loadFormationConfigByKey(tenantId, id);
     await db
       .delete(entityFormationConfigs)
       .where(
         and(
-          eq(entityFormationConfigs.organizationId, organizationId),
+          eq(entityFormationConfigs.tenantId, tenantId),
           eq(entityFormationConfigs.id, existing.id),
         ),
       );
   }
 
   async function listFormationConfigs(
-    organizationId: string,
+    tenantId: string,
     params: PageParams = {},
   ): Promise<Page<EntityFormationConfig>> {
     const limit = clampLimit(params.limit);
-    const conds: SQL[] = [eq(entityFormationConfigs.organizationId, organizationId)];
+    const conds: SQL[] = [eq(entityFormationConfigs.tenantId, tenantId)];
     const seek = cursorWhere(
       params.cursor,
       entityFormationConfigs.createdAt,
@@ -764,10 +764,10 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function getFormationConfig(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<EntityFormationConfig> {
-    return loadFormationConfigByKey(organizationId, key);
+    return loadFormationConfigByKey(tenantId, key);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -833,11 +833,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
 
   /** Recompute and persist computedStats for an instance. */
   async function recomputeAndSave(
-    organizationId: string,
+    tenantId: string,
     instanceId: string,
   ): Promise<EntityInstance> {
-    const inst = await loadInstanceById(organizationId, instanceId);
-    const bp = await loadBlueprintByKey(organizationId, inst.blueprintId);
+    const inst = await loadInstanceById(tenantId, instanceId);
+    const bp = await loadBlueprintByKey(tenantId, inst.blueprintId);
 
     // Load equipped entities' computed stats
     const slots = await db
@@ -848,7 +848,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     const equippedStats: Record<string, number>[] = [];
     for (const slot of slots) {
       const eqInst = await loadInstanceById(
-        organizationId,
+        tenantId,
         slot.equippedInstanceId,
       );
       equippedStats.push(eqInst.computedStats);
@@ -857,7 +857,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     // Load skin bonuses
     let skinBonuses: Record<string, number> | undefined;
     if (inst.skinId) {
-      const skin = await loadSkinById(organizationId, inst.skinId);
+      const skin = await loadSkinById(tenantId, inst.skinId);
       skinBonuses = skin.statBonuses;
     }
 
@@ -869,7 +869,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
         ),
       )
       .returning();
@@ -881,7 +881,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function loadInstanceById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<EntityInstance> {
     const rows = await db
@@ -889,7 +889,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .from(entityInstances)
       .where(
         and(
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.id, id),
         ),
       )
@@ -900,15 +900,15 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function acquireEntity(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     blueprintId: string,
     source: string,
     sourceId?: string,
     context?: { activityId?: string; activityNodeId?: string },
   ): Promise<EntityInstance> {
-    const bp = await loadBlueprintByKey(organizationId, blueprintId);
-    const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+    const bp = await loadBlueprintByKey(tenantId, blueprintId);
+    const schema = await loadSchemaByKey(tenantId, bp.schemaId);
 
     // Activity-phase gate: if the blueprint is bound to an activity,
     // minting new instances of it is restricted to the activity's
@@ -941,7 +941,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     const rows = await db
       .insert(entityInstances)
       .values({
-        organizationId,
+        tenantId,
         endUserId,
         blueprintId: bp.id,
         schemaId: bp.schemaId,
@@ -957,7 +957,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     const inst = rows[0]!;
 
     // Log
-    await logAction(organizationId, endUserId, inst.id, "acquire", {
+    await logAction(tenantId, endUserId, inst.id, "acquire", {
       blueprintId: bp.id,
       source,
       sourceId,
@@ -969,12 +969,12 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function listInstances(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     opts?: { schemaId?: string; blueprintId?: string },
   ): Promise<EntityInstance[]> {
     const conditions = [
-      eq(entityInstances.organizationId, organizationId),
+      eq(entityInstances.tenantId, tenantId),
       eq(entityInstances.endUserId, endUserId),
     ];
     if (opts?.schemaId)
@@ -990,14 +990,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function getInstance(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
   ): Promise<{
     instance: EntityInstance;
     slots: EntitySlotAssignment[];
   }> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
@@ -1010,11 +1010,11 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function discardEntity(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
   ): Promise<void> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
     if (inst.isLocked) throw new EntityLocked();
@@ -1035,23 +1035,23 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
         ),
       );
 
-    await logAction(organizationId, endUserId, instanceId, "discard", {
+    await logAction(tenantId, endUserId, instanceId, "discard", {
       blueprintId: inst.blueprintId,
       level: inst.level,
     });
   }
 
   async function toggleLock(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
     locked: boolean,
   ): Promise<EntityInstance> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
@@ -1061,7 +1061,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, inst.version),
         ),
       )
@@ -1069,7 +1069,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
     await logAction(
-      organizationId,
+      tenantId,
       endUserId,
       instanceId,
       locked ? "lock" : "unlock",
@@ -1084,7 +1084,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function addExp(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
     amount: number,
@@ -1092,12 +1092,12 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (amount <= 0)
       throw new EntityInvalidInput("exp amount must be positive");
 
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
-    const bp = await loadBlueprintByKey(organizationId, inst.blueprintId);
-    const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+    const bp = await loadBlueprintByKey(tenantId, inst.blueprintId);
+    const schema = await loadSchemaByKey(tenantId, bp.schemaId);
 
     if (!schema.levelConfig.enabled)
       throw new EntityInvalidInput("leveling is not enabled for this schema");
@@ -1113,14 +1113,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, inst.version),
         ),
       )
       .returning();
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
-    await logAction(organizationId, endUserId, instanceId, "add_exp", {
+    await logAction(tenantId, endUserId, instanceId, "add_exp", {
       amount,
       expBefore: inst.exp,
       expAfter: newExp,
@@ -1130,17 +1130,17 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function levelUp(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
     targetLevel?: number,
   ): Promise<EntityInstance> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
-    const bp = await loadBlueprintByKey(organizationId, inst.blueprintId);
-    const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+    const bp = await loadBlueprintByKey(tenantId, inst.blueprintId);
+    const schema = await loadSchemaByKey(tenantId, bp.schemaId);
 
     if (!schema.levelConfig.enabled)
       throw new EntityInvalidInput("leveling is not enabled for this schema");
@@ -1174,7 +1174,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       if (deductions.length > 0) {
         try {
           await itemSvc.deductItems({
-            organizationId,
+            tenantId,
             endUserId,
             deductions,
             source: "entity.level_up",
@@ -1193,33 +1193,33 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, inst.version),
         ),
       )
       .returning();
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
-    await logAction(organizationId, endUserId, instanceId, "level_up", {
+    await logAction(tenantId, endUserId, instanceId, "level_up", {
       levelBefore: inst.level,
       levelAfter: target,
     });
 
     // Recompute stats
-    return recomputeAndSave(organizationId, instanceId);
+    return recomputeAndSave(tenantId, instanceId);
   }
 
   async function rankUp(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
   ): Promise<EntityInstance> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
-    const bp = await loadBlueprintByKey(organizationId, inst.blueprintId);
-    const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+    const bp = await loadBlueprintByKey(tenantId, inst.blueprintId);
+    const schema = await loadSchemaByKey(tenantId, bp.schemaId);
 
     if (!schema.rankConfig.enabled)
       throw new EntityInvalidInput("ranking is not enabled for this schema");
@@ -1234,7 +1234,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (itemSvc && costEntry.cost.length > 0) {
       try {
         await itemSvc.deductItems({
-          organizationId,
+          tenantId,
           endUserId,
           deductions: costEntry.cost
             .filter((c) => c.type === "item")
@@ -1257,34 +1257,34 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, inst.version),
         ),
       )
       .returning();
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
-    await logAction(organizationId, endUserId, instanceId, "rank_up", {
+    await logAction(tenantId, endUserId, instanceId, "rank_up", {
       rankBefore: inst.rankKey,
       rankAfter: costEntry.toRank,
     });
 
-    return recomputeAndSave(organizationId, instanceId);
+    return recomputeAndSave(tenantId, instanceId);
   }
 
   async function synthesize(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     targetInstanceId: string,
     feedInstanceIds: string[],
   ): Promise<EntityInstance> {
-    const target = await loadInstanceById(organizationId, targetInstanceId);
+    const target = await loadInstanceById(tenantId, targetInstanceId);
     if (target.endUserId !== endUserId)
       throw new EntityInstanceNotFound(targetInstanceId);
     if (target.isLocked) throw new EntityLocked();
 
-    const bp = await loadBlueprintByKey(organizationId, target.blueprintId);
-    const schema = await loadSchemaByKey(organizationId, bp.schemaId);
+    const bp = await loadBlueprintByKey(tenantId, target.blueprintId);
+    const schema = await loadSchemaByKey(tenantId, bp.schemaId);
 
     if (!schema.synthesisConfig.enabled)
       throw new EntityInvalidInput(
@@ -1306,7 +1306,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     for (const fid of feedInstanceIds) {
       if (fid === targetInstanceId)
         throw new EntitySynthesisInvalid("target cannot be a feed");
-      const feed = await loadInstanceById(organizationId, fid);
+      const feed = await loadInstanceById(tenantId, fid);
       if (feed.endUserId !== endUserId)
         throw new EntityInstanceNotFound(fid);
       if (feed.isLocked) throw new EntityLocked();
@@ -1341,7 +1341,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (itemSvc && bp.synthesisCost.cost.length > 0) {
       try {
         await itemSvc.deductItems({
-          organizationId,
+          tenantId,
           endUserId,
           deductions: bp.synthesisCost.cost
             .filter((c) => c.type === "item")
@@ -1376,7 +1376,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, targetInstanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, target.version),
         ),
       )
@@ -1384,7 +1384,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
     await logAction(
-      organizationId,
+      tenantId,
       endUserId,
       targetInstanceId,
       "synthesize",
@@ -1394,7 +1394,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       },
     );
 
-    return recomputeAndSave(organizationId, targetInstanceId);
+    return recomputeAndSave(tenantId, targetInstanceId);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1402,23 +1402,23 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function equip(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     ownerInstanceId: string,
     slotKey: string,
     slotIndex: number,
     equippedInstanceId: string,
   ): Promise<EntitySlotAssignment> {
-    const owner = await loadInstanceById(organizationId, ownerInstanceId);
+    const owner = await loadInstanceById(tenantId, ownerInstanceId);
     if (owner.endUserId !== endUserId)
       throw new EntityInstanceNotFound(ownerInstanceId);
 
-    const equipped = await loadInstanceById(organizationId, equippedInstanceId);
+    const equipped = await loadInstanceById(tenantId, equippedInstanceId);
     if (equipped.endUserId !== endUserId)
       throw new EntityInstanceNotFound(equippedInstanceId);
 
     // Validate slot exists on owner's schema
-    const schema = await loadSchemaByKey(organizationId, owner.schemaId);
+    const schema = await loadSchemaByKey(tenantId, owner.schemaId);
     const slotDef = schema.slotDefinitions.find(
       (s) => s.key === slotKey,
     );
@@ -1440,9 +1440,9 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
 
     // Validate tag compatibility (if acceptsTags is configured)
     if (slotDef.acceptsTags) {
-      const ownerBp = await loadBlueprintByKey(organizationId, owner.blueprintId);
+      const ownerBp = await loadBlueprintByKey(tenantId, owner.blueprintId);
       const equippedBp = await loadBlueprintByKey(
-        organizationId,
+        tenantId,
         equipped.blueprintId,
       );
 
@@ -1499,31 +1499,31 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         slotKey,
         slotIndex,
         equippedInstanceId,
-        organizationId,
+        tenantId,
         endUserId,
       })
       .returning();
 
-    await logAction(organizationId, endUserId, ownerInstanceId, "equip", {
+    await logAction(tenantId, endUserId, ownerInstanceId, "equip", {
       slotKey,
       slotIndex,
       equippedInstanceId,
     });
 
     // Recompute owner stats
-    await recomputeAndSave(organizationId, ownerInstanceId);
+    await recomputeAndSave(tenantId, ownerInstanceId);
 
     return rows[0]!;
   }
 
   async function unequip(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     ownerInstanceId: string,
     slotKey: string,
     slotIndex: number,
   ): Promise<void> {
-    const owner = await loadInstanceById(organizationId, ownerInstanceId);
+    const owner = await loadInstanceById(tenantId, ownerInstanceId);
     if (owner.endUserId !== endUserId)
       throw new EntityInstanceNotFound(ownerInstanceId);
 
@@ -1541,28 +1541,28 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (deleted.length === 0)
       throw new EntityInvalidInput("slot is empty");
 
-    await logAction(organizationId, endUserId, ownerInstanceId, "unequip", {
+    await logAction(tenantId, endUserId, ownerInstanceId, "unequip", {
       slotKey,
       slotIndex,
       equippedInstanceId: deleted[0]!.equippedInstanceId,
     });
 
     // Recompute owner stats
-    await recomputeAndSave(organizationId, ownerInstanceId);
+    await recomputeAndSave(tenantId, ownerInstanceId);
   }
 
   async function changeSkin(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
     skinId: string | null,
   ): Promise<EntityInstance> {
-    const inst = await loadInstanceById(organizationId, instanceId);
+    const inst = await loadInstanceById(tenantId, instanceId);
     if (inst.endUserId !== endUserId)
       throw new EntityInstanceNotFound(instanceId);
 
     if (skinId) {
-      const skin = await loadSkinById(organizationId, skinId);
+      const skin = await loadSkinById(tenantId, skinId);
       // Validate skin belongs to this blueprint
       if (skin.blueprintId !== inst.blueprintId)
         throw new EntityInvalidInput(
@@ -1579,7 +1579,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .where(
         and(
           eq(entityInstances.id, instanceId),
-          eq(entityInstances.organizationId, organizationId),
+          eq(entityInstances.tenantId, tenantId),
           eq(entityInstances.version, inst.version),
         ),
       )
@@ -1587,14 +1587,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     if (rows.length === 0) throw new EntityConcurrencyConflict();
 
     await logAction(
-      organizationId,
+      tenantId,
       endUserId,
       instanceId,
       "change_skin",
       { skinBefore: inst.skinId, skinAfter: skinId },
     );
 
-    return recomputeAndSave(organizationId, instanceId);
+    return recomputeAndSave(tenantId, instanceId);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1602,7 +1602,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function listFormations(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     configId: string,
   ): Promise<EntityFormation[]> {
@@ -1611,7 +1611,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       .from(entityFormations)
       .where(
         and(
-          eq(entityFormations.organizationId, organizationId),
+          eq(entityFormations.tenantId, tenantId),
           eq(entityFormations.endUserId, endUserId),
           eq(entityFormations.configId, configId),
         ),
@@ -1620,14 +1620,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   }
 
   async function updateFormation(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     configId: string,
     formationIndex: number,
     name: string | null,
     slots: FormationSlot[],
   ): Promise<EntityFormation> {
-    const config = await loadFormationConfigByKey(organizationId, configId);
+    const config = await loadFormationConfigByKey(tenantId, configId);
 
     if (formationIndex >= config.maxFormations)
       throw new EntityInvalidInput(
@@ -1644,7 +1644,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
         );
 
       if (slot.instanceId) {
-        const inst = await loadInstanceById(organizationId, slot.instanceId);
+        const inst = await loadInstanceById(tenantId, slot.instanceId);
         if (inst.endUserId !== endUserId)
           throw new EntityInstanceNotFound(slot.instanceId);
 
@@ -1679,7 +1679,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
       })
       .where(
         and(
-          eq(entityFormations.organizationId, organizationId),
+          eq(entityFormations.tenantId, tenantId),
           eq(entityFormations.endUserId, endUserId),
           eq(entityFormations.configId, configId),
           eq(entityFormations.formationIndex, formationIndex),
@@ -1693,7 +1693,7 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
     const inserted = await db
       .insert(entityFormations)
       .values({
-        organizationId,
+        tenantId,
         endUserId,
         configId,
         formationIndex,
@@ -1710,14 +1710,14 @@ export function createEntityService(d: EntityDeps, itemSvc?: ItemSvc) {
   // ═══════════════════════════════════════════════════════════════
 
   async function logAction(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     instanceId: string,
     action: EntityAction,
     details: Record<string, unknown>,
   ): Promise<void> {
     await db.insert(entityActionLogs).values({
-      organizationId,
+      tenantId,
       endUserId,
       instanceId,
       action,

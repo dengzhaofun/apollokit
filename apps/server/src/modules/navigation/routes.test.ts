@@ -1,5 +1,5 @@
 /**
- * Route-layer tests for /api/navigation.
+ * Route-layer tests for /api/v1/navigation.
  *
  * Thin tests:
  *  - 401 without cookie
@@ -93,13 +93,13 @@ describe("navigation routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId))
   })
 
-  test("GET /api/navigation/favorites without cookie → 401", async () => {
-    const res = await app.request("/api/navigation/favorites")
+  test("GET /api/v1/navigation/favorites without cookie → 401", async () => {
+    const res = await app.request("/api/v1/navigation/favorites")
     expect(res.status).toBe(401)
   })
 
   test("happy path: POST then GET then DELETE", async () => {
-    const create = await app.request("/api/navigation/favorites", {
+    const create = await app.request("/api/v1/navigation/favorites", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({ routePath: "/shop/categories" }),
@@ -107,7 +107,7 @@ describe("navigation routes", () => {
     expect(create.status).toBe(201)
     await expectOk<{ id: string; routePath: string }>(create)
 
-    const list = await app.request("/api/navigation/favorites", {
+    const list = await app.request("/api/v1/navigation/favorites", {
       headers: { cookie: fx.cookie },
     })
     expect(list.status).toBe(200)
@@ -117,7 +117,7 @@ describe("navigation routes", () => {
     expect(data.items.map((i) => i.routePath)).toContain("/shop/categories")
 
     const del = await app.request(
-      `/api/navigation/favorites?routePath=${encodeURIComponent("/shop/categories")}`,
+      `/api/v1/navigation/favorites?routePath=${encodeURIComponent("/shop/categories")}`,
       {
         method: "DELETE",
         headers: { cookie: fx.cookie },
@@ -125,7 +125,7 @@ describe("navigation routes", () => {
     )
     expect(del.status).toBe(200)
 
-    const after = await app.request("/api/navigation/favorites", {
+    const after = await app.request("/api/v1/navigation/favorites", {
       headers: { cookie: fx.cookie },
     })
     const afterData = await expectOk<{
@@ -137,7 +137,7 @@ describe("navigation routes", () => {
   })
 
   test("POST with invalid routePath → 400", async () => {
-    const res = await app.request("/api/navigation/favorites", {
+    const res = await app.request("/api/v1/navigation/favorites", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({ routePath: "no-leading-slash" }),
@@ -147,7 +147,7 @@ describe("navigation routes", () => {
 
   test("DELETE unknown routePath → 404", async () => {
     const res = await app.request(
-      `/api/navigation/favorites?routePath=${encodeURIComponent("/never-pinned")}`,
+      `/api/v1/navigation/favorites?routePath=${encodeURIComponent("/never-pinned")}`,
       {
         method: "DELETE",
         headers: { cookie: fx.cookie },

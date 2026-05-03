@@ -25,7 +25,7 @@ const TAG = "Friend";
 
 function serializeSettings(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   maxFriends: number;
   maxBlocked: number;
   maxPendingRequests: number;
@@ -35,7 +35,7 @@ function serializeSettings(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     maxFriends: row.maxFriends,
     maxBlocked: row.maxBlocked,
     maxPendingRequests: row.maxPendingRequests,
@@ -47,7 +47,7 @@ function serializeSettings(row: {
 
 function serializeRelationship(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   userA: string;
   userB: string;
   metadata: unknown;
@@ -55,7 +55,7 @@ function serializeRelationship(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     userA: row.userA,
     userB: row.userB,
     metadata: (row.metadata ?? null) as Record<string, unknown> | null,

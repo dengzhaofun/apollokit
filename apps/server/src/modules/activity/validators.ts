@@ -296,7 +296,7 @@ export const IdParam = z.object({
 export const ActivityConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     name: z.string(),
     description: z.string().nullable(),

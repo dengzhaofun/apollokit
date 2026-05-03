@@ -1,5 +1,5 @@
 /**
- * Route-layer tests for /api/event-catalog.
+ * Route-layer tests for /api/v1/event-catalog.
  *
  * Verifies the auth gate, internal + external merge, PATCH upgrade to
  * canonical, and the read-only guard on internal events.
@@ -11,6 +11,7 @@ import { db } from "../../db";
 import app from "../../index";
 import { organization, user } from "../../schema";
 import { expectOk } from "../../testing/envelope";
+import { getDefaultTeamId } from "../../testing/fixtures";
 import { eventCatalogService } from "./index";
 
 const ORIGIN = "http://localhost:8787";
@@ -18,6 +19,7 @@ const ORIGIN = "http://localhost:8787";
 type SignedInFixture = {
   cookie: string;
   orgId: string;
+  tenantId: string;
   adminUserId: string;
   email: string;
 };
@@ -75,7 +77,7 @@ async function signUpAndOrg(): Promise<SignedInFixture> {
   const userRows = await db.select().from(user).where(eq(user.email, email));
   const adminUserId = userRows[0]!.id;
 
-  return { cookie, orgId, adminUserId, email };
+  const tenantId = await getDefaultTeamId(orgId); return { cookie, orgId, tenantId, adminUserId, email };
 }
 
 describe("event-catalog routes", () => {
@@ -90,15 +92,15 @@ describe("event-catalog routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/event-catalog without cookie → 401", async () => {
-    const res = await app.request("/api/event-catalog");
+  test("GET /api/v1/event-catalog without cookie → 401", async () => {
+    const res = await app.request("/api/v1/event-catalog");
     expect(res.status).toBe(401);
   });
 
-  test("GET /api/event-catalog returns internal events (level.cleared)", async () => {
+  test("GET /api/v1/event-catalog returns internal events (level.cleared)", async () => {
     // level.cleared is registered by modules/level/index.ts at barrel load.
     // Route handler serialization must include it for this org.
-    const res = await app.request("/api/event-catalog", {
+    const res = await app.request("/api/v1/event-catalog", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
@@ -111,8 +113,8 @@ describe("event-catalog routes", () => {
     expect(lc!.owner).toBe("level");
   });
 
-  test("GET /api/event-catalog/:name returns a single internal event", async () => {
-    const res = await app.request("/api/event-catalog/level.cleared", {
+  test("GET /api/v1/event-catalog/:name returns a single internal event", async () => {
+    const res = await app.request("/api/v1/event-catalog/level.cleared", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
@@ -126,15 +128,15 @@ describe("event-catalog routes", () => {
     expect(data.fields.map((f) => f.path)).toContain("stars");
   });
 
-  test("GET /api/event-catalog/:name 404 for unknown external event", async () => {
-    const res = await app.request("/api/event-catalog/no_such_event", {
+  test("GET /api/v1/event-catalog/:name 404 for unknown external event", async () => {
+    const res = await app.request("/api/v1/event-catalog/no_such_event", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(404);
   });
 
-  test("PATCH /api/event-catalog/:name rejects internal events (400)", async () => {
-    const res = await app.request("/api/event-catalog/level.cleared", {
+  test("PATCH /api/v1/event-catalog/:name rejects internal events (400)", async () => {
+    const res = await app.request("/api/v1/event-catalog/level.cleared", {
       method: "PATCH",
       headers: {
         "content-type": "application/json",
@@ -145,13 +147,13 @@ describe("event-catalog routes", () => {
     expect(res.status).toBe(400);
   });
 
-  test("PATCH /api/event-catalog/:name upgrades external to canonical", async () => {
+  test("PATCH /api/v1/event-catalog/:name upgrades external to canonical", async () => {
     // Seed an external entry via the service directly.
     const uniqueName = `route_upgrade_${Date.now()}`;
-    await eventCatalogService.recordExternalEvent(fx.orgId, uniqueName, {
+    await eventCatalogService.recordExternalEvent(fx.tenantId, uniqueName, {
       ts: 1,
     });
-    const res = await app.request(`/api/event-catalog/${uniqueName}`, {
+    const res = await app.request(`/api/v1/event-catalog/${uniqueName}`, {
       method: "PATCH",
       headers: {
         "content-type": "application/json",

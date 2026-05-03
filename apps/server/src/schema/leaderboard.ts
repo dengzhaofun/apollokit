@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Reward tier within a leaderboard cycle settlement.
@@ -46,7 +46,7 @@ export type LeaderboardSnapshotRow = {
  * A config is the "template" for a single ranking stream. The stream's
  * instance is keyed by (cycleKey, scopeKey):
  *   - `cycleKey` — "2026-04-17" / "2026-W16" / "2026-04" / "all"
- *   - `scopeKey` — organizationId (global) | guildId | teamId | friend owner
+ *   - `scopeKey` — tenantId (global) | guildId | teamId | friend owner
  *
  * Multiple configs can subscribe to the same `metricKey` so that a single
  * `contribute(metricKey=X, value=Y)` call fans out to daily + weekly +
@@ -64,9 +64,9 @@ export const leaderboardConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -94,12 +94,12 @@ export const leaderboardConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("leaderboard_configs_org_alias_uidx").on(
-      table.organizationId,
+    uniqueIndex("leaderboard_configs_tenant_alias_uidx").on(
+      table.tenantId,
       table.alias,
     ),
-    index("leaderboard_configs_org_metric_status_idx").on(
-      table.organizationId,
+    index("leaderboard_configs_tenant_metric_status_idx").on(
+      table.tenantId,
       table.metricKey,
       table.status,
     ),
@@ -134,7 +134,7 @@ export const leaderboardEntries = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => leaderboardConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     cycleKey: text("cycle_key").notNull(),
     scopeKey: text("scope_key").notNull(),
     endUserId: text("end_user_id").notNull(),
@@ -183,7 +183,7 @@ export const leaderboardSnapshots = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => leaderboardConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     cycleKey: text("cycle_key").notNull(),
     scopeKey: text("scope_key").notNull(),
     rankings: jsonb("rankings")
@@ -201,8 +201,8 @@ export const leaderboardSnapshots = pgTable(
       table.cycleKey,
       table.scopeKey,
     ),
-    index("leaderboard_snapshots_org_settled_idx").on(
-      table.organizationId,
+    index("leaderboard_snapshots_tenant_settled_idx").on(
+      table.tenantId,
       table.settledAt,
     ),
   ],
@@ -225,7 +225,7 @@ export const leaderboardRewardClaims = pgTable(
     configId: uuid("config_id")
       .notNull()
       .references(() => leaderboardConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     cycleKey: text("cycle_key").notNull(),
     scopeKey: text("scope_key").notNull(),
     endUserId: text("end_user_id").notNull(),

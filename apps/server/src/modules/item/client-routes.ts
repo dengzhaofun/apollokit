@@ -1,13 +1,13 @@
 /**
  * C-end client routes for the item module.
  *
- * Mounted at /api/client/item. Auth pattern:
+ * Mounted at /api/v1/client/item. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body or query.
  */
 
@@ -67,11 +67,11 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { definitionId } = c.req.valid("query");
     const items = await itemService.getInventory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       definitionId,
     });
@@ -98,12 +98,12 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const def = await itemService.getDefinition(orgId, key);
     const balance = await itemService.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       definitionId: def.id,
     });
@@ -132,7 +132,7 @@ itemClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { definitionId, idempotencyKey } = c.req.valid("json");
 
@@ -141,7 +141,7 @@ itemClientRouter.openapi(
 
     // 2. Deduct 1 from inventory
     await itemService.deductItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       deductions: [{ definitionId: def.id, quantity: 1 }],
       source: "use_item",
@@ -152,7 +152,7 @@ itemClientRouter.openapi(
     let lotteryResult = null;
     if (def.lotteryPoolId) {
       lotteryResult = await lotteryService.pull({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         poolKey: def.lotteryPoolId,
         idempotencyKey,

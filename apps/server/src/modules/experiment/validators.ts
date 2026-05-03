@@ -340,7 +340,7 @@ export const VariantIdParamSchema = z.object({
 export const ExperimentResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     key: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -365,7 +365,7 @@ export const VariantResponseSchema = z
   .object({
     id: z.string(),
     experimentId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     variantKey: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -383,7 +383,7 @@ export const AssignmentResponseSchema = z
   .object({
     experimentId: z.string(),
     endUserId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     variantId: z.string(),
     variantKey: z.string(),
     assignedAt: z.string(),

@@ -20,7 +20,7 @@ import { createBattlePassService } from "./service";
 
 type Granted = {
   kind: "item" | "currency" | "entity";
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   source: string;
   sourceId?: string;
@@ -37,7 +37,7 @@ function makeMockRewardServices(): {
       async grantItems(params) {
         granted.push({
           kind: "item",
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           source: params.source,
           sourceId: params.sourceId,
@@ -52,7 +52,7 @@ function makeMockRewardServices(): {
       async grant(params) {
         granted.push({
           kind: "currency",
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           source: params.source,
           sourceId: params.sourceId,
@@ -81,7 +81,7 @@ async function createActiveActivity(params: {
   const [row] = await db
     .insert(activityConfigs)
     .values({
-      organizationId: params.orgId,
+      tenantId: params.orgId,
       alias: params.alias,
       name: `test-${params.alias}`,
       kind: params.kind ?? "season_pass",
@@ -217,7 +217,7 @@ describe("battle-pass service", () => {
   test("grantXpForTask returns idempotent when task is not bound", async () => {
     const taskId = crypto.randomUUID();
     const [outcome] = await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-not-bound",
       taskDefinitionId: taskId,
     });
@@ -238,7 +238,7 @@ describe("battle-pass service", () => {
 
     // First completion → 100 xp → level 1
     const [r1] = await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -250,7 +250,7 @@ describe("battle-pass service", () => {
 
     // Second completion → 200 xp → level 2
     const [r2] = await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -260,12 +260,12 @@ describe("battle-pass service", () => {
 
     // Third and fourth → level 3 capped
     await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
     const [r4] = await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -289,7 +289,7 @@ describe("battle-pass service", () => {
     });
 
     const [outcome] = await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-inactive",
       taskDefinitionId: taskId,
     });
@@ -303,7 +303,7 @@ describe("battle-pass service", () => {
     const endUserId = "u-tier-flow";
 
     const first = await svc.grantTier({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       tierCode: "premium",
@@ -315,7 +315,7 @@ describe("battle-pass service", () => {
     expect(first.ownedTiers).toContain("premium");
 
     const repeat = await svc.grantTier({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       tierCode: "premium",
@@ -334,7 +334,7 @@ describe("battle-pass service", () => {
     );
     await expect(
       svc.grantTier({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         endUserId: "u-x",
         tierCode: "nonexistent",
@@ -355,7 +355,7 @@ describe("battle-pass service", () => {
     // 未达等级 → error
     await expect(
       svc.claimLevel({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         endUserId,
         level: 1,
@@ -365,7 +365,7 @@ describe("battle-pass service", () => {
 
     // 升到 L1
     await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -373,7 +373,7 @@ describe("battle-pass service", () => {
     // 未持档（没激活 premium 就想领 premium 奖）→ error
     await expect(
       svc.claimLevel({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         endUserId,
         level: 1,
@@ -384,7 +384,7 @@ describe("battle-pass service", () => {
     // 领 free 档 L1 奖励
     const before = granted.length;
     const out = await svc.claimLevel({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       level: 1,
@@ -397,7 +397,7 @@ describe("battle-pass service", () => {
 
     // 重复领 → 幂等，不再调 grantRewards
     const again = await svc.claimLevel({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       level: 1,
@@ -419,7 +419,7 @@ describe("battle-pass service", () => {
     // Earn up to level 3 (max)
     for (let i = 0; i < 3; i++) {
       await svc.grantXpForTask({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         taskDefinitionId: taskId,
       });
@@ -427,7 +427,7 @@ describe("battle-pass service", () => {
 
     // Activate premium to unlock premium rewards on all 3 levels
     await svc.grantTier({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       tierCode: "premium",
@@ -436,7 +436,7 @@ describe("battle-pass service", () => {
 
     const before = granted.length;
     const outcomes = await svc.claimAll({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
     });
@@ -447,7 +447,7 @@ describe("battle-pass service", () => {
 
     // Repeat → all idempotent
     const repeat = await svc.claimAll({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
     });
@@ -464,7 +464,7 @@ describe("battle-pass service", () => {
     const endUserId = "u-agg";
 
     await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -492,19 +492,19 @@ describe("battle-pass service", () => {
     const endUserId = "u-purge";
 
     await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
     await svc.grantTier({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       tierCode: "premium",
       source: "admin_grant",
     });
     await svc.claimLevel({
-      organizationId: orgId,
+      tenantId: orgId,
       seasonId: s.id,
       endUserId,
       level: 1,
@@ -543,7 +543,7 @@ describe("battle-pass service", () => {
 
     // 让玩家升到 L1
     await svc.grantXpForTask({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       taskDefinitionId: taskId,
     });
@@ -566,7 +566,7 @@ describe("battle-pass service", () => {
 
     await expect(
       svc.claimLevel({
-        organizationId: orgId,
+        tenantId: orgId,
         seasonId: s.id,
         endUserId,
         level: 1,

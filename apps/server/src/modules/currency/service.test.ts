@@ -117,7 +117,7 @@ describe("currency service", () => {
       const uid = "user-grant-1";
 
       const result = await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 100 }],
         source: "test-grant",
@@ -143,13 +143,13 @@ describe("currency service", () => {
       const uid = "user-grant-2";
 
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 40 }],
         source: "test-grant",
       });
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 60 }],
         source: "test-grant",
@@ -164,13 +164,13 @@ describe("currency service", () => {
       });
       const uid = "user-deduct-1";
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 50 }],
         source: "test-grant",
       });
       const res = await svc.deduct({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         deductions: [{ currencyId: c.id, amount: 30 }],
         source: "test-deduct",
@@ -186,14 +186,14 @@ describe("currency service", () => {
       });
       const uid = "user-deduct-2";
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 5 }],
         source: "test-grant",
       });
       await expect(
         svc.deduct({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: uid,
           deductions: [{ currencyId: c.id, amount: 100 }],
           source: "test-deduct",
@@ -210,7 +210,7 @@ describe("currency service", () => {
       });
       await expect(
         svc.grant({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "user-x",
           grants: [{ currencyId: c.id, amount: 0 }],
           source: "test-grant",
@@ -226,7 +226,7 @@ describe("currency service", () => {
       });
       const uid = "user-wallets-1";
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 7 }],
         source: "test-grant",
@@ -250,14 +250,14 @@ describe("currency service", () => {
       });
       const uid = "user-ledger-1";
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 3 }],
         source: "unit-test",
         sourceId: "txn-A",
       });
       await svc.grant({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId: uid,
         grants: [{ currencyId: c.id, amount: 4 }],
         source: "unit-test",

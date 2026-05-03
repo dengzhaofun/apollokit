@@ -23,7 +23,7 @@ import type { Redis } from "@upstash/redis/cloudflare";
 export type ZSetAggregation = "sum" | "max" | "latest";
 
 export type LeaderboardKey = {
-  organizationId: string;
+  tenantId: string;
   configId: string;
   cycleKey: string;
   scopeKey: string;
@@ -34,7 +34,7 @@ export type LeaderboardKey = {
  * Format: `lb:{orgId}:{configId}:{cycleKey}:{scopeKey}`
  */
 export function leaderboardKey(k: LeaderboardKey): string {
-  return `lb:${k.organizationId}:${k.configId}:${k.cycleKey}:${k.scopeKey}`;
+  return `lb:${k.tenantId}:${k.configId}:${k.cycleKey}:${k.scopeKey}`;
 }
 
 /**

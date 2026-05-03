@@ -4,7 +4,7 @@ export type MailTargetType = "broadcast" | "multicast"
 
 export interface MailMessage {
   id: string
-  organizationId: string
+  tenantId: string
   title: string
   content: string
   rewards: RewardEntry[]

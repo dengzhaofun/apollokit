@@ -41,7 +41,7 @@ const TAG_INV = "Item Inventory";
 
 function serializeCategory(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   icon: string | null;
@@ -53,7 +53,7 @@ function serializeCategory(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     icon: row.icon,
@@ -67,7 +67,7 @@ function serializeCategory(row: {
 
 function serializeDefinition(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   categoryId: string | null;
   alias: string | null;
   name: string;
@@ -85,7 +85,7 @@ function serializeDefinition(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     categoryId: row.categoryId,
     alias: row.alias,
     name: row.name,
@@ -424,7 +424,7 @@ itemRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await itemService.grantItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       grants: body.grants,
       source: body.source,
@@ -455,7 +455,7 @@ itemRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const result = await itemService.deductItems({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: body.endUserId,
       deductions: body.deductions,
       source: body.source,
@@ -488,7 +488,7 @@ itemRouter.openapi(
     const { endUserId } = c.req.valid("param");
     const { definitionId } = c.req.valid("query");
     const items = await itemService.getInventory({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       definitionId,
     });
@@ -518,7 +518,7 @@ itemRouter.openapi(
     const { endUserId, key } = c.req.valid("param");
     const def = await itemService.getDefinition(orgId, key);
     const balance = await itemService.getBalance({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       definitionId: def.id,
     });

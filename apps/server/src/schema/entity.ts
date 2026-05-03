@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 // ─── JSONB type helpers ──────────────────────────────────────────
 
@@ -118,9 +118,9 @@ export const entitySchemas = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -159,9 +159,9 @@ export const entitySchemas = pgTable(
       .notNull(),
   },
   (table) => [
-    index("entity_schemas_org_idx").on(table.organizationId),
-    uniqueIndex("entity_schemas_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("entity_schemas_tenant_idx").on(table.tenantId),
+    uniqueIndex("entity_schemas_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -182,9 +182,9 @@ export const entityBlueprints = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     schemaId: uuid("schema_id")
       .notNull()
       .references(() => entitySchemas.id, { onDelete: "cascade" }),
@@ -233,14 +233,14 @@ export const entityBlueprints = pgTable(
       .notNull(),
   },
   (table) => [
-    index("entity_blueprints_org_idx").on(table.organizationId),
+    index("entity_blueprints_tenant_idx").on(table.tenantId),
     index("entity_blueprints_schema_idx").on(table.schemaId),
-    index("entity_blueprints_org_schema_idx").on(
-      table.organizationId,
+    index("entity_blueprints_tenant_schema_idx").on(
+      table.tenantId,
       table.schemaId,
     ),
-    uniqueIndex("entity_blueprints_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    uniqueIndex("entity_blueprints_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
     index("entity_blueprints_activity_idx").on(table.activityId),
   ],
@@ -258,7 +258,7 @@ export const entityBlueprintSkins = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     blueprintId: uuid("blueprint_id")
       .notNull()
       .references(() => entityBlueprints.id, { onDelete: "cascade" }),
@@ -282,7 +282,7 @@ export const entityBlueprintSkins = pgTable(
   },
   (table) => [
     index("entity_blueprint_skins_blueprint_idx").on(table.blueprintId),
-    index("entity_blueprint_skins_org_idx").on(table.organizationId),
+    index("entity_blueprint_skins_tenant_idx").on(table.tenantId),
     uniqueIndex("entity_blueprint_skins_bp_alias_uidx")
       .on(table.blueprintId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
@@ -309,7 +309,7 @@ export const entityInstances = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     blueprintId: uuid("blueprint_id")
       .notNull()
@@ -363,17 +363,17 @@ export const entityInstances = pgTable(
       .notNull(),
   },
   (table) => [
-    index("entity_instances_org_user_idx").on(
-      table.organizationId,
+    index("entity_instances_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
-    index("entity_instances_org_user_schema_idx").on(
-      table.organizationId,
+    index("entity_instances_tenant_user_schema_idx").on(
+      table.tenantId,
       table.endUserId,
       table.schemaId,
     ),
-    index("entity_instances_org_user_bp_idx").on(
-      table.organizationId,
+    index("entity_instances_tenant_user_bp_idx").on(
+      table.tenantId,
       table.endUserId,
       table.blueprintId,
     ),
@@ -401,7 +401,7 @@ export const entitySlotAssignments = pgTable(
     equippedInstanceId: uuid("equipped_instance_id")
       .notNull()
       .references(() => entityInstances.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -413,8 +413,8 @@ export const entitySlotAssignments = pgTable(
     uniqueIndex("entity_slot_assignments_equipped_uidx").on(
       table.equippedInstanceId,
     ),
-    index("entity_slot_assignments_org_user_idx").on(
-      table.organizationId,
+    index("entity_slot_assignments_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -433,9 +433,9 @@ export const entityFormationConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     maxFormations: integer("max_formations").default(5).notNull(),
@@ -455,9 +455,9 @@ export const entityFormationConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("entity_formation_configs_org_idx").on(table.organizationId),
-    uniqueIndex("entity_formation_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("entity_formation_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("entity_formation_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -481,7 +481,7 @@ export const entityFormations = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     configId: uuid("config_id")
       .notNull()
@@ -497,14 +497,14 @@ export const entityFormations = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("entity_formations_org_user_config_idx_uidx").on(
-      table.organizationId,
+    uniqueIndex("entity_formations_tenant_user_config_idx_uidx").on(
+      table.tenantId,
       table.endUserId,
       table.configId,
       table.formationIndex,
     ),
-    index("entity_formations_org_user_idx").on(
-      table.organizationId,
+    index("entity_formations_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -523,7 +523,7 @@ export const entityActionLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     instanceId: uuid("instance_id").notNull(),
     action: text("action").notNull(),
@@ -531,8 +531,8 @@ export const entityActionLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("entity_action_logs_org_user_idx").on(
-      table.organizationId,
+    index("entity_action_logs_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("entity_action_logs_instance_idx").on(table.instanceId),

@@ -35,7 +35,7 @@ const TAG = "Guild";
 
 function serializeSettings(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   maxMembers: number;
   maxOfficers: number;
   createCost: unknown;
@@ -47,7 +47,7 @@ function serializeSettings(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     maxMembers: row.maxMembers,
     maxOfficers: row.maxOfficers,
     createCost: row.createCost as { definitionId: string; quantity: number }[],
@@ -61,7 +61,7 @@ function serializeSettings(row: {
 
 function serializeGuild(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -81,7 +81,7 @@ function serializeGuild(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     description: row.description,
     icon: row.icon,
@@ -104,7 +104,7 @@ function serializeGuild(row: {
 function serializeMember(row: {
   guildId: string;
   endUserId: string;
-  organizationId: string;
+  tenantId: string;
   role: string;
   contribution: number;
   joinedAt: Date;
@@ -114,7 +114,7 @@ function serializeMember(row: {
   return {
     guildId: row.guildId,
     endUserId: row.endUserId,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     role: row.role as "leader" | "officer" | "member",
     contribution: row.contribution,
     joinedAt: row.joinedAt.toISOString(),
@@ -125,7 +125,7 @@ function serializeMember(row: {
 
 function serializeJoinRequest(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   guildId: string;
   endUserId: string;
   type: string;
@@ -139,7 +139,7 @@ function serializeJoinRequest(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     guildId: row.guildId,
     endUserId: row.endUserId,
     type: row.type as "application" | "invitation",
@@ -155,7 +155,7 @@ function serializeJoinRequest(row: {
 
 function serializeContributionLog(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   guildId: string;
   endUserId: string;
   delta: number;
@@ -166,7 +166,7 @@ function serializeContributionLog(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     guildId: row.guildId,
     endUserId: row.endUserId,
     delta: row.delta,

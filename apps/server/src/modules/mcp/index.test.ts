@@ -9,7 +9,7 @@
  *      (echo, list_doc_modules) without any HTTP or admin worker
  *      dependencies. This is the load-bearing test.
  *
- *   2. **HTTP edge guard**: hits `/api/mcp` via `app.request` to
+ *   2. **HTTP edge guard**: hits `/api/v1/mcp` via `app.request` to
  *      verify `requireAdminOrApiKey` rejects unauthenticated
  *      requests. We don't replay the full JSON-RPC handshake here —
  *      the in-memory test already covers protocol correctness, and
@@ -109,7 +109,7 @@ describe("mcp in-memory roundtrip", () => {
 
 describe("mcp HTTP edge", () => {
   test("401 without cookie or admin api key", async () => {
-    const res = await app.request("/api/mcp", {
+    const res = await app.request("/api/v1/mcp", {
       method: "POST",
       headers: {
         "content-type": "application/json",

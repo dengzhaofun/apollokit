@@ -41,7 +41,7 @@ const STAGES_KEY = ["shop-stages"] as const
 export function useShopCategories() {
   return useQuery({
     queryKey: CATEGORIES_KEY,
-    queryFn: () => api.get<{ items: ShopCategory[] }>("/api/shop/categories"),
+    queryFn: () => api.get<{ items: ShopCategory[] }>("/api/v1/shop/categories"),
     select: (data) => data.items,
   })
 }
@@ -50,7 +50,7 @@ export function useShopCategoryTree() {
   return useQuery({
     queryKey: CATEGORY_TREE_KEY,
     queryFn: () =>
-      api.get<{ items: ShopCategoryNode[] }>("/api/shop/categories/tree"),
+      api.get<{ items: ShopCategoryNode[] }>("/api/v1/shop/categories/tree"),
     select: (data) => data.items,
   })
 }
@@ -58,7 +58,7 @@ export function useShopCategoryTree() {
 export function useShopCategory(key: string) {
   return useQuery({
     queryKey: [...CATEGORIES_KEY, key],
-    queryFn: () => api.get<ShopCategory>(`/api/shop/categories/${key}`),
+    queryFn: () => api.get<ShopCategory>(`/api/v1/shop/categories/${key}`),
     enabled: !!key,
   })
 }
@@ -67,7 +67,7 @@ export function useCreateShopCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateShopCategoryInput) =>
-      api.post<ShopCategory>("/api/shop/categories", input),
+      api.post<ShopCategory>("/api/v1/shop/categories", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CATEGORIES_KEY })
       qc.invalidateQueries({ queryKey: CATEGORY_TREE_KEY })
@@ -82,7 +82,7 @@ export function useUpdateShopCategory() {
       id,
       ...input
     }: UpdateShopCategoryInput & { id: string }) =>
-      api.patch<ShopCategory>(`/api/shop/categories/${id}`, input),
+      api.patch<ShopCategory>(`/api/v1/shop/categories/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CATEGORIES_KEY })
       qc.invalidateQueries({ queryKey: CATEGORY_TREE_KEY })
@@ -93,7 +93,7 @@ export function useUpdateShopCategory() {
 export function useDeleteShopCategory() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/shop/categories/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/shop/categories/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CATEGORIES_KEY })
       qc.invalidateQueries({ queryKey: CATEGORY_TREE_KEY })
@@ -114,7 +114,7 @@ export function useShopTags(route: any) {
     filterDefs: SHOP_TAG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ShopTag>>(
-        `/api/shop/tags?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/shop/tags?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -125,7 +125,7 @@ export function useAllShopTags() {
     queryKey: [...TAGS_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<ShopTag>>(`/api/shop/tags?${buildQs({ limit: 200 })}`)
+        .get<Page<ShopTag>>(`/api/v1/shop/tags?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -133,7 +133,7 @@ export function useAllShopTags() {
 export function useShopTag(key: string) {
   return useQuery({
     queryKey: [...TAGS_KEY, key],
-    queryFn: () => api.get<ShopTag>(`/api/shop/tags/${key}`),
+    queryFn: () => api.get<ShopTag>(`/api/v1/shop/tags/${key}`),
     enabled: !!key,
   })
 }
@@ -142,7 +142,7 @@ export function useCreateShopTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateShopTagInput) =>
-      api.post<ShopTag>("/api/shop/tags", input),
+      api.post<ShopTag>("/api/v1/shop/tags", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: TAGS_KEY }),
   })
 }
@@ -151,7 +151,7 @@ export function useUpdateShopTag() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateShopTagInput & { id: string }) =>
-      api.patch<ShopTag>(`/api/shop/tags/${id}`, input),
+      api.patch<ShopTag>(`/api/v1/shop/tags/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: TAGS_KEY }),
   })
 }
@@ -159,7 +159,7 @@ export function useUpdateShopTag() {
 export function useDeleteShopTag() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/shop/tags/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/shop/tags/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: TAGS_KEY }),
   })
 }
@@ -182,7 +182,7 @@ export function useShopProducts(
     filterDefs: SHOP_PRODUCT_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ShopProduct>>(
-        `/api/shop/products?${buildQs({
+        `/api/v1/shop/products?${buildQs({
           cursor,
           limit,
           q,
@@ -206,7 +206,7 @@ export function useShopProducts(
 export function useShopProduct(key: string) {
   return useQuery({
     queryKey: [...PRODUCTS_KEY, "detail", key],
-    queryFn: () => api.get<ShopProduct>(`/api/shop/products/${key}`),
+    queryFn: () => api.get<ShopProduct>(`/api/v1/shop/products/${key}`),
     enabled: !!key,
   })
 }
@@ -215,7 +215,7 @@ export function useCreateShopProduct() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateShopProductInput) =>
-      api.post<ShopProduct>("/api/shop/products", input),
+      api.post<ShopProduct>("/api/v1/shop/products", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: PRODUCTS_KEY }),
   })
 }
@@ -224,7 +224,7 @@ export function useUpdateShopProduct() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateShopProductInput & { id: string }) =>
-      api.patch<ShopProduct>(`/api/shop/products/${id}`, input),
+      api.patch<ShopProduct>(`/api/v1/shop/products/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: PRODUCTS_KEY }),
   })
 }
@@ -232,7 +232,7 @@ export function useUpdateShopProduct() {
 export function useDeleteShopProduct() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/shop/products/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/shop/products/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: PRODUCTS_KEY }),
   })
 }
@@ -244,7 +244,7 @@ export function useShopStages(productId: string) {
     queryKey: [...STAGES_KEY, productId],
     queryFn: () =>
       api.get<{ items: ShopGrowthStage[] }>(
-        `/api/shop/products/${productId}/stages`,
+        `/api/v1/shop/products/${productId}/stages`,
       ),
     select: (data) => data.items,
     enabled: !!productId,
@@ -259,7 +259,7 @@ export function useCreateShopStage() {
       ...input
     }: CreateShopGrowthStageInput & { productId: string }) =>
       api.post<ShopGrowthStage>(
-        `/api/shop/products/${productId}/stages`,
+        `/api/v1/shop/products/${productId}/stages`,
         input,
       ),
     onSuccess: (_data, vars) =>
@@ -274,7 +274,7 @@ export function useUpdateShopStage() {
       stageId,
       ...input
     }: UpdateShopGrowthStageInput & { stageId: string }) =>
-      api.patch<ShopGrowthStage>(`/api/shop/stages/${stageId}`, input),
+      api.patch<ShopGrowthStage>(`/api/v1/shop/stages/${stageId}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: STAGES_KEY }),
   })
 }
@@ -282,7 +282,7 @@ export function useUpdateShopStage() {
 export function useDeleteShopStage() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (stageId: string) => api.delete(`/api/shop/stages/${stageId}`),
+    mutationFn: (stageId: string) => api.delete(`/api/v1/shop/stages/${stageId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: STAGES_KEY }),
   })
 }
@@ -296,7 +296,7 @@ export function usePurchaseShopProduct() {
       ...input
     }: ShopPurchaseInput & { productId: string }) =>
       api.post<ShopPurchaseResult>(
-        `/api/shop/products/${productId}/purchase`,
+        `/api/v1/shop/products/${productId}/purchase`,
         input,
       ),
   })
@@ -310,7 +310,7 @@ export function useClaimShopStage() {
       ...input
     }: ShopClaimStageInput & { endUserId: string; stageId: string }) =>
       api.post<ShopClaimStageResult>(
-        `/api/shop/users/${endUserId}/stages/${stageId}/claim`,
+        `/api/v1/shop/users/${endUserId}/stages/${stageId}/claim`,
         input,
       ),
   })
@@ -335,7 +335,7 @@ export function useShopUserProducts(
     queryKey: [...PRODUCTS_KEY, "user", endUserId, query],
     queryFn: () =>
       api.get<{ items: ShopUserProductView[] }>(
-        `/api/shop/users/${endUserId}/products${buildUserProductsQueryString(query)}`,
+        `/api/v1/shop/users/${endUserId}/products${buildUserProductsQueryString(query)}`,
       ),
     select: (data) => data.items,
     enabled: !!endUserId,

@@ -49,7 +49,7 @@ describe("friend service", () => {
       maxPendingRequests: 10,
       metadata: { tier: "premium" },
     });
-    expect(result.organizationId).toBe(orgId);
+    expect(result.tenantId).toBe(orgId);
     expect(result.maxFriends).toBe(100);
     expect(result.maxBlocked).toBe(30);
     expect(result.maxPendingRequests).toBe(10);
@@ -78,7 +78,7 @@ describe("friend service", () => {
 
   test("sendRequest creates a pending request", async () => {
     const req = await svc.sendRequest(orgId, "fr-u1", "fr-u2", "hi!");
-    expect(req.organizationId).toBe(orgId);
+    expect(req.tenantId).toBe(orgId);
     expect(req.fromUserId).toBe("fr-u1");
     expect(req.toUserId).toBe("fr-u2");
     expect(req.status).toBe("pending");

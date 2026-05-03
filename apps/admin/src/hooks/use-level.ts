@@ -29,7 +29,7 @@ const levelKey = (id: string) => ["level", id] as const
 export function useLevelConfigs() {
   return useQuery({
     queryKey: CONFIGS_KEY,
-    queryFn: () => api.get<ConfigListResponse>("/api/level/configs"),
+    queryFn: () => api.get<ConfigListResponse>("/api/v1/level/configs"),
     select: (data) => data.items,
   })
 }
@@ -37,7 +37,7 @@ export function useLevelConfigs() {
 export function useLevelConfig(key: string) {
   return useQuery({
     queryKey: configKey(key),
-    queryFn: () => api.get<LevelConfig>(`/api/level/configs/${key}`),
+    queryFn: () => api.get<LevelConfig>(`/api/v1/level/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -46,7 +46,7 @@ export function useCreateLevelConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateConfigInput) =>
-      api.post<LevelConfig>("/api/level/configs", input),
+      api.post<LevelConfig>("/api/v1/level/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -55,7 +55,7 @@ export function useUpdateLevelConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateConfigInput }) =>
-      api.put<LevelConfig>(`/api/level/configs/${id}`, input),
+      api.put<LevelConfig>(`/api/v1/level/configs/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: CONFIGS_KEY })
       qc.invalidateQueries({ queryKey: configKey(vars.id) })
@@ -66,7 +66,7 @@ export function useUpdateLevelConfig() {
 export function useDeleteLevelConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/level/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/level/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -78,7 +78,7 @@ export function useLevelStages(configId: string) {
     queryKey: stagesKey(configId),
     queryFn: () =>
       api.get<StageListResponse>(
-        `/api/level/configs/${configId}/stages`,
+        `/api/v1/level/configs/${configId}/stages`,
       ),
     select: (data) => data.items,
     enabled: !!configId,
@@ -96,7 +96,7 @@ export function useCreateLevelStage() {
       input: CreateStageInput
     }) =>
       api.post<LevelStage>(
-        `/api/level/configs/${configId}/stages`,
+        `/api/v1/level/configs/${configId}/stages`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -115,7 +115,7 @@ export function useUpdateLevelStage() {
       id: string
       configId: string
       input: UpdateStageInput
-    }) => api.put<LevelStage>(`/api/level/stages/${id}`, input),
+    }) => api.put<LevelStage>(`/api/v1/level/stages/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: stagesKey(vars.configId) })
     },
@@ -126,7 +126,7 @@ export function useDeleteLevelStage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; configId: string }) =>
-      api.delete(`/api/level/stages/${id}`),
+      api.delete(`/api/v1/level/stages/${id}`),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: stagesKey(vars.configId) })
       qc.invalidateQueries({ queryKey: levelsKey(vars.configId) })
@@ -141,7 +141,7 @@ export function useLevels(configId: string, stageId?: string) {
     queryKey: [...levelsKey(configId), stageId ?? "all"],
     queryFn: () =>
       api.get<LevelListResponse>(
-        `/api/level/configs/${configId}/levels${stageId ? `?stageId=${stageId}` : ""}`,
+        `/api/v1/level/configs/${configId}/levels${stageId ? `?stageId=${stageId}` : ""}`,
       ),
     select: (data) => data.items,
     enabled: !!configId,
@@ -151,7 +151,7 @@ export function useLevels(configId: string, stageId?: string) {
 export function useLevel(id: string) {
   return useQuery({
     queryKey: levelKey(id),
-    queryFn: () => api.get<Level>(`/api/level/levels/${id}`),
+    queryFn: () => api.get<Level>(`/api/v1/level/levels/${id}`),
     enabled: !!id,
   })
 }
@@ -167,7 +167,7 @@ export function useCreateLevel() {
       input: CreateLevelInput
     }) =>
       api.post<Level>(
-        `/api/level/configs/${configId}/levels`,
+        `/api/v1/level/configs/${configId}/levels`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -186,7 +186,7 @@ export function useUpdateLevel() {
       id: string
       configId: string
       input: UpdateLevelInput
-    }) => api.put<Level>(`/api/level/levels/${id}`, input),
+    }) => api.put<Level>(`/api/v1/level/levels/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: levelsKey(vars.configId) })
       qc.invalidateQueries({ queryKey: levelKey(vars.id) })
@@ -198,7 +198,7 @@ export function useDeleteLevel() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; configId: string }) =>
-      api.delete(`/api/level/levels/${id}`),
+      api.delete(`/api/v1/level/levels/${id}`),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: levelsKey(vars.configId) })
     },

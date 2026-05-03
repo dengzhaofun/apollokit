@@ -2,13 +2,13 @@
  * Tinybird 前端接入 — JWT + fetch + React Query。
  *
  * 设计参考 game-saas-jaunty-dahl.md 的"Tinybird 前端接入方案"节,要点:
- *   1. 后端 `POST /api/analytics/token` 签发短 TTL JWT,JWT 里用 `fixed_params.org_id`
+ *   1. 后端 `POST /api/v1/analytics/token` 签发短 TTL JWT,JWT 里用 `fixed_params.org_id`
  *      做租户隔离 —— 前端即使手动拼 URL query 也改不了 Tinybird 端的 org_id 过滤。
  *   2. 前端用 React Query 缓存 token(按 pipe 组合 + activeOrgId 做 key),
  *      9 分钟后自动重新签发,避开 600s 过期边界。
  *   3. 单次查询 hook `useTinybirdQuery(pipe, params)` 直接打 Tinybird CDN
  *      (`{baseUrl}/{pipe}.json?<params>&token=<jwt>`),绕过后端,延迟最低。
- *   4. 所有 queryKey 都包含 `activeOrganizationId`,租户切换时自动失效、重查。
+ *   4. 所有 queryKey 都包含 `activeTeamId`,租户切换时自动失效、重查。
  *
  * 后端对应:apps/server/src/modules/analytics/{routes,validators,index}.ts
  *           apps/server/src/lib/analytics/{jwt,types,index}.ts
@@ -40,7 +40,7 @@ export const TENANT_PIPES = [
 
 export type TenantPipeName = (typeof TENANT_PIPES)[number]
 
-/** 后端 `/api/analytics/token` 的响应(envelope 已被 api-client 解包)。 */
+/** 后端 `/api/v1/analytics/token` 的响应(envelope 已被 api-client 解包)。 */
 export interface TinybirdTokenResponse {
   /** 短 TTL JWT,原样用作 URL 里的 `?token=...`。 */
   token: string
@@ -85,7 +85,7 @@ function normalizePipeKey(pipes: readonly TenantPipeName[]): string {
 /**
  * 获取当前租户的 Tinybird JWT。
  *
- * - queryKey 里包含 `activeOrganizationId`,切换租户自动失效并重新签发。
+ * - queryKey 里包含 `activeTeamId`,切换租户自动失效并重新签发。
  * - `staleTime` = 9min、`refetchInterval` = 9min,确保在 token 过期前(10min)
  *   就预刷新,客户端视角永远不会触发 403。
  * - 若后端未配置 Tinybird secrets,这里会直接 500;上层组件应该给出清晰的
@@ -99,7 +99,7 @@ export function useTinybirdToken(pipes: readonly TenantPipeName[]) {
   return useQuery<TinybirdTokenResponse>({
     queryKey: ["tinybird", "token", orgId, pipeKey],
     queryFn: () =>
-      api.post<TinybirdTokenResponse>("/api/analytics/token", {
+      api.post<TinybirdTokenResponse>("/api/v1/analytics/token", {
         pipes: Array.from(new Set(pipes)),
         ttlSeconds: 600,
       }),

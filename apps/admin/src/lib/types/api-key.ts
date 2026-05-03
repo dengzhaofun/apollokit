@@ -1,6 +1,6 @@
 export interface ClientCredential {
   id: string
-  organizationId: string
+  tenantId: string
   name: string
   publishableKey: string
   devMode: boolean

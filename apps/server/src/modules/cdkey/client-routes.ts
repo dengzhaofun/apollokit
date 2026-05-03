@@ -3,7 +3,7 @@
  *
  * Protected by `requireClientCredential` + `requireClientUser`. The end user
  * identity (x-end-user-id + x-user-hash HMAC) is verified by middleware, so
- * handlers read orgId from c.get("clientCredential")!.organizationId and
+ * handlers read orgId from c.get("clientCredential")!.tenantId and
  * endUserId from getEndUserId(c). No inline verifyRequest calls.
  */
 
@@ -53,9 +53,9 @@ cdkeyClientRouter.openapi(
     const endUserId = getEndUserId(c);
     const { code, idempotencyKey } = c.req.valid("json");
 
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const result = await cdkeyService.redeem({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       code,
       idempotencyKey,

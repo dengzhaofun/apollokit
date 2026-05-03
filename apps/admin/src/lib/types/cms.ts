@@ -68,7 +68,7 @@ export type CmsEntryStatus = "draft" | "published" | "archived"
 
 export type CmsType = {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null
@@ -83,7 +83,7 @@ export type CmsType = {
 
 export type CmsEntry = {
   id: string
-  organizationId: string
+  tenantId: string
   typeId: string
   typeAlias: string
   alias: string

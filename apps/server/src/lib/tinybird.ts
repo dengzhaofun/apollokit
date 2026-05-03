@@ -6,7 +6,7 @@
  *   - events        : business events (event + eventData JSON) via event-bus subscribers
  *
  * Endpoints, all parameterized on org_id (injected via JWT fixed_params
- * by the /api/analytics/token route — tenants cannot query other tenants):
+ * by the /api/v1/analytics/token route — tenants cannot query other tenants):
  *   - tenant_request_overview  : request count / error count / p95 latency over time
  *   - tenant_event_counts      : event-type distribution
  *   - tenant_trace             : full event stream for a single trace_id

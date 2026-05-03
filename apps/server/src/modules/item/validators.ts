@@ -191,7 +191,7 @@ export const InventoryQuerySchema = z.object({
 export const ItemCategoryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     icon: z.string().nullable(),
@@ -206,7 +206,7 @@ export const ItemCategoryResponseSchema = z
 export const ItemDefinitionResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     categoryId: z.string().nullable(),
     alias: z.string().nullable(),
     name: z.string(),

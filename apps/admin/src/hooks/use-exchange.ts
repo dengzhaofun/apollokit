@@ -33,7 +33,7 @@ export function useExchangeConfigs(route: any) {
     filterDefs: EXCHANGE_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExchangeConfig>>(
-        `/api/exchange/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/exchange/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -44,7 +44,7 @@ export function useAllExchangeConfigs() {
     queryKey: [...CONFIGS_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<ExchangeConfig>>(`/api/exchange/configs?${buildQs({ limit: 200 })}`)
+        .get<Page<ExchangeConfig>>(`/api/v1/exchange/configs?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -52,7 +52,7 @@ export function useAllExchangeConfigs() {
 export function useExchangeConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
-    queryFn: () => api.get<ExchangeConfig>(`/api/exchange/configs/${key}`),
+    queryFn: () => api.get<ExchangeConfig>(`/api/v1/exchange/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -61,7 +61,7 @@ export function useCreateExchangeConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateConfigInput) =>
-      api.post<ExchangeConfig>("/api/exchange/configs", input),
+      api.post<ExchangeConfig>("/api/v1/exchange/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -70,7 +70,7 @@ export function useUpdateExchangeConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateConfigInput & { id: string }) =>
-      api.patch<ExchangeConfig>(`/api/exchange/configs/${id}`, input),
+      api.patch<ExchangeConfig>(`/api/v1/exchange/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -78,7 +78,7 @@ export function useUpdateExchangeConfig() {
 export function useDeleteExchangeConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/exchange/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/exchange/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -96,7 +96,7 @@ export function useExchangeOptions(configKey: string, route: any) {
     filterDefs: EXCHANGE_OPTION_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExchangeOption>>(
-        `/api/exchange/configs/${configKey}/options?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/exchange/configs/${configKey}/options?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!configKey,
   })
@@ -109,7 +109,7 @@ export function useAllExchangeOptions(configKey: string) {
     queryFn: () =>
       api
         .get<Page<ExchangeOption>>(
-          `/api/exchange/configs/${configKey}/options?${buildQs({ limit: 200 })}`,
+          `/api/v1/exchange/configs/${configKey}/options?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
     enabled: !!configKey,
@@ -124,7 +124,7 @@ export function useCreateExchangeOption() {
       ...input
     }: CreateOptionInput & { configKey: string }) =>
       api.post<ExchangeOption>(
-        `/api/exchange/configs/${configKey}/options`,
+        `/api/v1/exchange/configs/${configKey}/options`,
         input,
       ),
     onSuccess: () =>
@@ -136,7 +136,7 @@ export function useUpdateExchangeOption() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ optionId, ...input }: UpdateOptionInput & { optionId: string }) =>
-      api.patch<ExchangeOption>(`/api/exchange/options/${optionId}`, input),
+      api.patch<ExchangeOption>(`/api/v1/exchange/options/${optionId}`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["exchange-options"] }),
   })
@@ -146,7 +146,7 @@ export function useDeleteExchangeOption() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (optionId: string) =>
-      api.delete(`/api/exchange/options/${optionId}`),
+      api.delete(`/api/v1/exchange/options/${optionId}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["exchange-options"] }),
   })
@@ -161,7 +161,7 @@ export function useExecuteExchange() {
       ...input
     }: ExecuteExchangeInput & { optionId: string }) =>
       api.post<ExchangeResult>(
-        `/api/exchange/options/${optionId}/execute`,
+        `/api/v1/exchange/options/${optionId}/execute`,
         input,
       ),
   })
@@ -172,7 +172,7 @@ export function useExchangeUserState(optionId: string, endUserId: string) {
     queryKey: ["exchange-user-state", optionId, endUserId],
     queryFn: () =>
       api.get<ExchangeUserState>(
-        `/api/exchange/options/${optionId}/users/${endUserId}/state`,
+        `/api/v1/exchange/options/${optionId}/users/${endUserId}/state`,
       ),
     enabled: !!optionId && !!endUserId,
   })

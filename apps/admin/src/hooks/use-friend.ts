@@ -13,7 +13,7 @@ const RELATIONSHIPS_KEY = ["friend-relationships"] as const
 export function useFriendSettings() {
   return useQuery({
     queryKey: SETTINGS_KEY,
-    queryFn: () => api.get<FriendSettings>("/api/friend/settings"),
+    queryFn: () => api.get<FriendSettings>("/api/v1/friend/settings"),
   })
 }
 
@@ -21,7 +21,7 @@ export function useUpsertFriendSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: UpsertFriendSettingsInput) =>
-      api.put<FriendSettings>("/api/friend/settings", input),
+      api.put<FriendSettings>("/api/v1/friend/settings", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: SETTINGS_KEY }),
   })
 }
@@ -30,7 +30,7 @@ export function useFriendRelationships() {
   return useQuery({
     queryKey: RELATIONSHIPS_KEY,
     queryFn: () =>
-      api.get<{ items: FriendRelationship[] }>("/api/friend/relationships"),
+      api.get<{ items: FriendRelationship[] }>("/api/v1/friend/relationships"),
     select: (data) => data.items,
   })
 }
@@ -39,7 +39,7 @@ export function useDeleteFriendRelationship() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/friend/relationships/${id}`),
+      api.delete(`/api/v1/friend/relationships/${id}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: RELATIONSHIPS_KEY }),
   })

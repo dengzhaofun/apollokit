@@ -33,7 +33,7 @@ export function useStorageBoxConfigs(route: any) {
     filterDefs: STORAGE_BOX_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<StorageBoxConfig>>(
-        `/api/storage-box/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/storage-box/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -45,7 +45,7 @@ export function useAllStorageBoxConfigs() {
     queryFn: () =>
       api
         .get<Page<StorageBoxConfig>>(
-          `/api/storage-box/configs?${buildQs({ limit: 200 })}`,
+          `/api/v1/storage-box/configs?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
   })
@@ -55,7 +55,7 @@ export function useStorageBoxConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
     queryFn: () =>
-      api.get<StorageBoxConfig>(`/api/storage-box/configs/${key}`),
+      api.get<StorageBoxConfig>(`/api/v1/storage-box/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -64,7 +64,7 @@ export function useCreateStorageBoxConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateStorageBoxConfigInput) =>
-      api.post<StorageBoxConfig>("/api/storage-box/configs", input),
+      api.post<StorageBoxConfig>("/api/v1/storage-box/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -76,7 +76,7 @@ export function useUpdateStorageBoxConfig() {
       id,
       ...input
     }: UpdateStorageBoxConfigInput & { id: string }) =>
-      api.patch<StorageBoxConfig>(`/api/storage-box/configs/${id}`, input),
+      api.patch<StorageBoxConfig>(`/api/v1/storage-box/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -84,7 +84,7 @@ export function useUpdateStorageBoxConfig() {
 export function useDeleteStorageBoxConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/storage-box/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/storage-box/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -96,7 +96,7 @@ export function useUserDeposits(endUserId: string) {
     queryKey: [...DEPOSITS_KEY, endUserId],
     queryFn: () =>
       api.get<{ items: StorageBoxDepositView[] }>(
-        `/api/storage-box/deposits/${endUserId}`,
+        `/api/v1/storage-box/deposits/${endUserId}`,
       ),
     select: (data) => data.items,
     enabled: !!endUserId,
@@ -107,7 +107,7 @@ export function useDeposit() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: DepositInput) =>
-      api.post<DepositResult>("/api/storage-box/deposits", input),
+      api.post<DepositResult>("/api/v1/storage-box/deposits", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DEPOSITS_KEY })
       qc.invalidateQueries({ queryKey: ["item-inventory"] })
@@ -120,7 +120,7 @@ export function useWithdraw() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: WithdrawInput) =>
-      api.post<WithdrawResult>("/api/storage-box/withdrawals", input),
+      api.post<WithdrawResult>("/api/v1/storage-box/withdrawals", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DEPOSITS_KEY })
       qc.invalidateQueries({ queryKey: ["item-inventory"] })

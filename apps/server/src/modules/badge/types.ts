@@ -30,7 +30,7 @@ export type BadgeSignalMode = (typeof BADGE_SIGNAL_MODES)[number];
 
 /**
  * Input to `BadgeService.signal(...)`. Customer-side authoritative data
- * push. `organizationId` is always resolved by the caller (middleware
+ * push. `tenantId` is always resolved by the caller (middleware
  * strips it from the request context — never trust it from the body).
  */
 export type SignalInput = {

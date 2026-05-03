@@ -3,7 +3,7 @@
  *
  * Goals:
  *   - `requireAdminOrApiKey` 401 without a session cookie
- *   - Path prefix `/api/cms` is mounted
+ *   - Path prefix `/api/v1/cms` is mounted
  *   - Zod validation → 400 with `code: "validation_error"`
  *   - Module errors translated to typed envelope (alias conflict 409)
  *   - Happy path: create type → create entry → publish → fetch as admin
@@ -87,13 +87,13 @@ describe("cms admin routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/cms/types without cookie → 401", async () => {
-    const res = await app.request("/api/cms/types");
+  test("GET /api/v1/cms/types without cookie → 401", async () => {
+    const res = await app.request("/api/v1/cms/types");
     expect(res.status).toBe(401);
   });
 
-  test("POST /api/cms/types: create type → 201", async () => {
-    const res = await app.request("/api/cms/types", {
+  test("POST /api/v1/cms/types: create type → 201", async () => {
+    const res = await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -108,8 +108,8 @@ describe("cms admin routes", () => {
     expect(t.schemaVersion).toBe(1);
   });
 
-  test("POST /api/cms/types: zod validation rejects bad alias → 400", async () => {
-    const res = await app.request("/api/cms/types", {
+  test("POST /api/v1/cms/types: zod validation rejects bad alias → 400", async () => {
+    const res = await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -122,8 +122,8 @@ describe("cms admin routes", () => {
     await expectFail(res, "validation_error");
   });
 
-  test("POST /api/cms/types: duplicate alias → 409", async () => {
-    const r1 = await app.request("/api/cms/types", {
+  test("POST /api/v1/cms/types: duplicate alias → 409", async () => {
+    const r1 = await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -134,7 +134,7 @@ describe("cms admin routes", () => {
     });
     expect(r1.status).toBe(201);
 
-    const r2 = await app.request("/api/cms/types", {
+    const r2 = await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -147,8 +147,8 @@ describe("cms admin routes", () => {
     await expectFail(r2, "cms.type_alias_conflict");
   });
 
-  test("GET /api/cms/types/{key} works for both id and alias", async () => {
-    const create = await app.request("/api/cms/types", {
+  test("GET /api/v1/cms/types/{key} works for both id and alias", async () => {
+    const create = await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -159,13 +159,13 @@ describe("cms admin routes", () => {
     });
     const t = await expectOk<{ id: string; alias: string }>(create);
 
-    const byAlias = await app.request("/api/cms/types/key-test", {
+    const byAlias = await app.request("/api/v1/cms/types/key-test", {
       headers: { cookie: fx.cookie },
     });
     expect(byAlias.status).toBe(200);
     expect((await expectOk<{ id: string }>(byAlias)).id).toBe(t.id);
 
-    const byId = await app.request(`/api/cms/types/${t.id}`, {
+    const byId = await app.request(`/api/v1/cms/types/${t.id}`, {
       headers: { cookie: fx.cookie },
     });
     expect(byId.status).toBe(200);
@@ -174,7 +174,7 @@ describe("cms admin routes", () => {
 
   test("entry create + publish + list filters", async () => {
     // Create type
-    await app.request("/api/cms/types", {
+    await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -185,7 +185,7 @@ describe("cms admin routes", () => {
     });
 
     // Bad data → CmsInvalidData (400)
-    const bad = await app.request("/api/cms/types/faq/entries", {
+    const bad = await app.request("/api/v1/cms/types/faq/entries", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -197,7 +197,7 @@ describe("cms admin routes", () => {
     await expectFail(bad, "cms.invalid_data");
 
     // Good entry → 201, draft
-    const create = await app.request("/api/cms/types/faq/entries", {
+    const create = await app.request("/api/v1/cms/types/faq/entries", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -217,7 +217,7 @@ describe("cms admin routes", () => {
 
     // Publish
     const pub = await app.request(
-      "/api/cms/types/faq/entries/first/publish",
+      "/api/v1/cms/types/faq/entries/first/publish",
       {
         method: "POST",
         headers: { cookie: fx.cookie },
@@ -230,7 +230,7 @@ describe("cms admin routes", () => {
 
     // List with status filter
     const list = await app.request(
-      "/api/cms/types/faq/entries?status=published",
+      "/api/v1/cms/types/faq/entries?status=published",
       { headers: { cookie: fx.cookie } },
     );
     expect(list.status).toBe(200);
@@ -242,7 +242,7 @@ describe("cms admin routes", () => {
   });
 
   test("PATCH entry with stale version → 409", async () => {
-    await app.request("/api/cms/types", {
+    await app.request("/api/v1/cms/types", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -251,7 +251,7 @@ describe("cms admin routes", () => {
         schema: baseSchema,
       }),
     });
-    await app.request("/api/cms/types/ver-route/entries", {
+    await app.request("/api/v1/cms/types/ver-route/entries", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -260,7 +260,7 @@ describe("cms admin routes", () => {
       }),
     });
     const stale = await app.request(
-      "/api/cms/types/ver-route/entries/x",
+      "/api/v1/cms/types/ver-route/entries/x",
       {
         method: "PATCH",
         headers: { "content-type": "application/json", cookie: fx.cookie },

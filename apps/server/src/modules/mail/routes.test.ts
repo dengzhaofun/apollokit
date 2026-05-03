@@ -91,13 +91,13 @@ describe("mail routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/mail/messages without cookie → 401", async () => {
-    const res = await app.request("/api/mail/messages");
+  test("GET /api/v1/mail/messages without cookie → 401", async () => {
+    const res = await app.request("/api/v1/mail/messages");
     expect(res.status).toBe(401);
   });
 
   test("happy path: create broadcast, list, get detail, revoke", async () => {
-    const create = await app.request("/api/mail/messages", {
+    const create = await app.request("/api/v1/mail/messages", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -118,7 +118,7 @@ describe("mail routes", () => {
     expect(mail.targetType).toBe("broadcast");
     expect(mail.senderAdminId).toBe(fx.adminUserId);
 
-    const list = await app.request("/api/mail/messages", {
+    const list = await app.request("/api/v1/mail/messages", {
       headers: { cookie: fx.cookie },
     });
     expect(list.status).toBe(200);
@@ -128,7 +128,7 @@ describe("mail routes", () => {
     }>(list);
     expect(listData.items.some((i) => i.id === mail.id)).toBe(true);
 
-    const detail = await app.request(`/api/mail/messages/${mail.id}`, {
+    const detail = await app.request(`/api/v1/mail/messages/${mail.id}`, {
       headers: { cookie: fx.cookie },
     });
     expect(detail.status).toBe(200);
@@ -144,7 +144,7 @@ describe("mail routes", () => {
     expect(detailData.targetCount).toBeNull();
 
     const revoke = await app.request(
-      `/api/mail/messages/${mail.id}/revoke`,
+      `/api/v1/mail/messages/${mail.id}/revoke`,
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(revoke.status).toBe(200);
@@ -154,7 +154,7 @@ describe("mail routes", () => {
     // Admin HTTP does not expose originSource. But the invalid-target rule
     // lives in the service validator — `targetType='broadcast'` + non-empty
     // `targetUserIds` is rejected with mail.invalid_target.
-    const res = await app.request("/api/mail/messages", {
+    const res = await app.request("/api/v1/mail/messages", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -170,7 +170,7 @@ describe("mail routes", () => {
   });
 
   test("zod validation: unknown targetType → 400", async () => {
-    const res = await app.request("/api/mail/messages", {
+    const res = await app.request("/api/v1/mail/messages", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -185,7 +185,7 @@ describe("mail routes", () => {
 
   test("GET detail for unknown id → 404 via onError", async () => {
     const res = await app.request(
-      "/api/mail/messages/00000000-0000-0000-0000-000000000000",
+      "/api/v1/mail/messages/00000000-0000-0000-0000-000000000000",
       { headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(404);
@@ -194,7 +194,7 @@ describe("mail routes", () => {
 
   test("DELETE unknown id → 404", async () => {
     const res = await app.request(
-      "/api/mail/messages/00000000-0000-0000-0000-000000000000",
+      "/api/v1/mail/messages/00000000-0000-0000-0000-000000000000",
       { method: "DELETE", headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(404);
@@ -202,7 +202,7 @@ describe("mail routes", () => {
 
   test("client routes require x-api-key (401 without)", async () => {
     const res = await app.request(
-      "/api/client/mail/messages?endUserId=u-any",
+      "/api/v1/client/mail/messages?endUserId=u-any",
     );
     expect(res.status).toBe(401);
   });

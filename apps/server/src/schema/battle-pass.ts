@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Battle Pass / 纪行赛季配置。一个赛季对应一条 activity_configs 行
@@ -33,9 +33,9 @@ export const battlePassConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     /** activity_configs.id — 绑定的活动（时间窗口/状态机由 activity 管）。 */
     activityId: uuid("activity_id").notNull(),
     /** 租户内唯一可读 code，一般和 activity 的 code 呼应。 */
@@ -82,10 +82,10 @@ export const battlePassConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("battle_pass_configs_organization_id_idx").on(table.organizationId),
+    index("battle_pass_configs_organization_id_idx").on(table.tenantId),
     index("battle_pass_configs_activity_idx").on(table.activityId),
     uniqueIndex("battle_pass_configs_org_code_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.code,
     ),
     uniqueIndex("battle_pass_configs_activity_uidx").on(table.activityId),
@@ -107,7 +107,7 @@ export const battlePassSeasonTasks = pgTable(
     seasonId: uuid("season_id")
       .notNull()
       .references(() => battlePassConfigs.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     /**
      * task_definitions.id — 软关联（不加 FK，避免纪行模块 schema 依赖
      * task 模块 schema 顺序）。任务删除场景：task 模块删前管理端会提醒。
@@ -152,7 +152,7 @@ export const battlePassUserProgress = pgTable(
       .notNull()
       .references(() => battlePassConfigs.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     currentXp: integer("current_xp").default(0).notNull(),
     currentLevel: integer("current_level").default(0).notNull(),
     ownedTiers: text("owned_tiers")
@@ -171,8 +171,8 @@ export const battlePassUserProgress = pgTable(
       columns: [table.seasonId, table.endUserId],
       name: "battle_pass_user_progress_pk",
     }),
-    index("battle_pass_user_progress_org_user_idx").on(
-      table.organizationId,
+    index("battle_pass_user_progress_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -194,7 +194,7 @@ export const battlePassClaims = pgTable(
       .notNull()
       .references(() => battlePassConfigs.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     level: integer("level").notNull(),
     tierCode: text("tier_code").notNull(),
     /** 快照发放时的奖励内容，便于审计（配置变更不影响历史）。 */
@@ -209,8 +209,8 @@ export const battlePassClaims = pgTable(
       table.tierCode,
     ),
     index("battle_pass_claims_season_idx").on(table.seasonId),
-    index("battle_pass_claims_org_user_idx").on(
-      table.organizationId,
+    index("battle_pass_claims_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -234,7 +234,7 @@ export const battlePassTierGrants = pgTable(
       .notNull()
       .references(() => battlePassConfigs.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     tierCode: text("tier_code").notNull(),
     /** 'purchase' | 'admin_grant' | 'compensation' | 'promo_code'。 */
     source: text("source").notNull(),
@@ -248,8 +248,8 @@ export const battlePassTierGrants = pgTable(
       table.tierCode,
     ),
     index("battle_pass_tier_grants_season_idx").on(table.seasonId),
-    index("battle_pass_tier_grants_org_user_idx").on(
-      table.organizationId,
+    index("battle_pass_tier_grants_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],

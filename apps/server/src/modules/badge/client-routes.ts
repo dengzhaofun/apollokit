@@ -9,7 +9,7 @@
  * Auth: cpk_ + end-user channel (session cookie OR HMAC). Matches the
  * mail / announcement / battle-pass client surfaces exactly.
  *
- * organizationId comes from the client credential; endUserId comes from
+ * tenantId comes from the client credential; endUserId comes from
  * the end-user Better Auth session or HMAC header. Body fields that
  * claim an identity are ignored.
  */
@@ -55,7 +55,7 @@ badgeClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { rootKey } = c.req.valid("query");
     // Session-mode dismissals key off the player's current session.
@@ -104,7 +104,7 @@ badgeClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const input = c.req.valid("json");
     const result = await badgeService.dismiss(
@@ -139,7 +139,7 @@ badgeClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     await badgeService.resetSession(orgId, endUserId);
     return c.json(ok(null), 200);

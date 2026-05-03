@@ -621,7 +621,7 @@ const ItemResponseSchema = z.object({
 export const ShopCategoryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     parentId: z.string().nullable(),
     alias: z.string().nullable(),
     name: z.string(),
@@ -648,7 +648,7 @@ export const ShopCategoryTreeNodeSchema: z.ZodType<unknown> = z
 export const ShopTagResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     color: z.string().nullable(),
@@ -664,7 +664,7 @@ export const ShopTagResponseSchema = z
 export const ShopProductResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     categoryId: z.string().nullable(),
     alias: z.string().nullable(),
     name: z.string(),
@@ -697,7 +697,7 @@ export const ShopGrowthStageResponseSchema = z
   .object({
     id: z.string(),
     productId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     stageIndex: z.number().int(),
     name: z.string(),
     description: z.string().nullable(),
@@ -749,7 +749,7 @@ export const UserProductViewSchema = ShopProductResponseSchema.extend({
     .object({
       productId: z.string(),
       endUserId: z.string(),
-      organizationId: z.string(),
+      tenantId: z.string(),
       totalCount: z.number().int(),
       cycleCount: z.number().int(),
       cycleResetAt: z.string().nullable(),

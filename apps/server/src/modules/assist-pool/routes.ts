@@ -44,7 +44,7 @@ const TAG_INSTANCES = "Assist Pool Instances";
 function serializeConfig(row: AssistPoolConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -68,7 +68,7 @@ function serializeConfig(row: AssistPoolConfig) {
 function serializeInstance(row: AssistPoolInstance) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     configId: row.configId,
     initiatorEndUserId: row.initiatorEndUserId,
     status: row.status as "in_progress" | "completed" | "expired",
@@ -88,7 +88,7 @@ function serializeInstance(row: AssistPoolInstance) {
 function serializeContribution(row: AssistPoolContribution) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     instanceId: row.instanceId,
     assisterEndUserId: row.assisterEndUserId,
     amount: row.amount,
@@ -282,7 +282,7 @@ assistPoolRouter.openapi(
     const orgId = getOrgId(c);
     const body = c.req.valid("json");
     const row = await assistPoolService.initiateInstance({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: body.configKey,
       initiatorEndUserId: body.initiatorEndUserId,
     });
@@ -312,7 +312,7 @@ assistPoolRouter.openapi(
     const orgId = getOrgId(c);
     const q = c.req.valid("query");
     const rows = await assistPoolService.listInstances({
-      organizationId: orgId,
+      tenantId: orgId,
       configKey: q.configKey,
       initiatorEndUserId: q.initiatorEndUserId,
       status: q.status,
@@ -402,7 +402,7 @@ assistPoolRouter.openapi(
     const { instanceId } = c.req.valid("param");
     const { assisterEndUserId } = c.req.valid("json");
     const res = await assistPoolService.contribute({
-      organizationId: orgId,
+      tenantId: orgId,
       instanceId,
       assisterEndUserId,
     });

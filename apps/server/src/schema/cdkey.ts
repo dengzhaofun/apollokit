@@ -32,7 +32,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * cdkey_batches — a redemption-code activity.
@@ -52,9 +52,9 @@ export const cdkeyBatches = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -74,9 +74,9 @@ export const cdkeyBatches = pgTable(
       .notNull(),
   },
   (table) => [
-    index("cdkey_batches_org_idx").on(table.organizationId),
-    uniqueIndex("cdkey_batches_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("cdkey_batches_tenant_idx").on(table.tenantId),
+    uniqueIndex("cdkey_batches_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -100,7 +100,7 @@ export const cdkeyCodes = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     batchId: uuid("batch_id")
       .notNull()
       .references(() => cdkeyBatches.id, { onDelete: "cascade" }),
@@ -113,7 +113,7 @@ export const cdkeyCodes = pgTable(
   },
   (table) => [
     uniqueIndex("cdkey_codes_org_code_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.code,
     ),
     index("cdkey_codes_batch_status_idx").on(table.batchId, table.status),
@@ -136,7 +136,7 @@ export const cdkeyUserStates = pgTable(
       .notNull()
       .references(() => cdkeyBatches.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     count: integer("count").default(0).notNull(),
     version: integer("version").default(1).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -150,8 +150,8 @@ export const cdkeyUserStates = pgTable(
       columns: [table.batchId, table.endUserId],
       name: "cdkey_user_states_pk",
     }),
-    index("cdkey_user_states_org_user_idx").on(
-      table.organizationId,
+    index("cdkey_user_states_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],
@@ -174,7 +174,7 @@ export const cdkeyRedemptionLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     batchId: uuid("batch_id").notNull(),
     codeId: uuid("code_id"),
@@ -188,16 +188,16 @@ export const cdkeyRedemptionLogs = pgTable(
   },
   (table) => [
     uniqueIndex("cdkey_redemption_logs_source_uidx").on(
-      table.organizationId,
+      table.tenantId,
       table.source,
       table.sourceId,
     ),
-    index("cdkey_redemption_logs_org_user_idx").on(
-      table.organizationId,
+    index("cdkey_redemption_logs_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
-    index("cdkey_redemption_logs_org_batch_idx").on(
-      table.organizationId,
+    index("cdkey_redemption_logs_tenant_batch_idx").on(
+      table.tenantId,
       table.batchId,
     ),
   ],

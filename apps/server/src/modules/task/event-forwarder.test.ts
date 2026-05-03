@@ -25,7 +25,7 @@ describe("installTaskEventForwarder", () => {
     installTaskEventForwarder(bus, fakeTask);
 
     await bus.emit("level.cleared" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
       endUserId: "user-y",
       stars: 3,
     } as never);
@@ -53,7 +53,7 @@ describe("installTaskEventForwarder", () => {
     installTaskEventForwarder(bus, fakeTask);
 
     await bus.emit("activity.state.changed" as never, {
-      organizationId: "org-x",
+      tenantId: "org-x",
       activityId: "a-1",
       previousState: "draft",
       newState: "active",
@@ -62,7 +62,7 @@ describe("installTaskEventForwarder", () => {
     expect(processEvent).not.toHaveBeenCalled();
   });
 
-  test("skips payloads missing organizationId or endUserId", async () => {
+  test("skips payloads missing tenantId or endUserId", async () => {
     const processEvent = vi.fn(async () => 1);
     const fakeTask = { processEvent } as unknown as TaskService;
     registerEvent({
@@ -95,7 +95,7 @@ describe("installTaskEventForwarder", () => {
     // Should not throw despite the handler erroring.
     await expect(
       bus.emit("level.cleared" as never, {
-        organizationId: "org-x",
+        tenantId: "org-x",
         endUserId: "user-y",
       } as never),
     ).resolves.toBeUndefined();

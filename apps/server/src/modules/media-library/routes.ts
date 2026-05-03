@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the media library module.
  *
- * Mounted under `/api/media-library` and guarded by
+ * Mounted under `/api/v1/media-library` and guarded by
  * `requireAdminOrApiKey`. One exception: the `/object/:key` fallback
  * proxy is registered without the guard so browsers can load images via
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.
@@ -42,7 +42,7 @@ const TAG = "Media Library (Admin)";
 function serializeFolder(row: MediaFolder) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     parentId: row.parentId,
     name: row.name,
     isDefault: row.isDefault,
@@ -54,7 +54,7 @@ function serializeFolder(row: MediaFolder) {
 function serializeAsset(row: MediaAsset) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     folderId: row.folderId,
     objectKey: row.objectKey,
     filename: row.filename,
@@ -265,7 +265,7 @@ mediaLibraryRouter.post("/assets/upload", async (c) => {
 
   const buf = new Uint8Array(await file.arrayBuffer());
   const asset = await mediaLibraryService.uploadAsset({
-    organizationId: orgId,
+    tenantId: orgId,
     folderId,
     filename: file.name,
     mimeType: file.type,
@@ -303,7 +303,7 @@ mediaLibraryRouter.openapi(
     const request = c.req.valid("json");
     const { asset, objectKey, uploadUrl, publicUrl, expiresIn } =
       await mediaLibraryService.presignUpload({
-        organizationId: orgId,
+        tenantId: orgId,
         uploadedBy,
         request,
       });

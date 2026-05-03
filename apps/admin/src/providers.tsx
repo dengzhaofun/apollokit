@@ -79,7 +79,19 @@ export function Providers({ children }: { children: ReactNode }) {
         // as a backward-compat alias (the server-side `ac.ts` registers
         // it as an alias of operator), so existing rows render with a
         // sane label until the prod migration flips them.
+        // Organization-scoped views: keep custom role labels AND mount
+        // every internal daveyplate link under /settings/* — without
+        // basePath/viewPaths the library generates `/organization/*`
+        // links that 404 in our router. SETTINGS / MEMBERS land on the
+        // same `/settings/organization` (one combined page); TEAMS link
+        // resolves to `/settings/project` (current project settings).
         organization={{
+          basePath: "/settings",
+          viewPaths: {
+            SETTINGS: "organization",
+            MEMBERS: "organization",
+            TEAMS: "project",
+          },
           customRoles: [
             { role: "operator", label: m.role_label_operator() },
             { role: "viewer", label: m.role_label_viewer() },

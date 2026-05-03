@@ -2,26 +2,38 @@
  * Access control statements + role definitions for the admin app.
  *
  * Wired into Better Auth's `organization` plugin in `../auth.ts`. Every
- * permission check (`requirePermission` middleware on the server,
- * `useCan`/`<Can>` on the client) traces back to the matrix here.
+ * permission check (`requireOrgPermission` / `requirePermission` middleware
+ * on the server, `useCan`/`<Can>` on the client) traces back to the matrix
+ * here.
  *
- * Four roles, RBAC, no ABAC. Phase 1 keeps statements coarse (read /
- * write / manage with a few business verbs); per-module fine-grained
- * actions are added in Phase 2 PRs alongside the modules they describe.
+ * Two layers of RBAC, single ac registry:
  *
- *   owner    — full control, billing, transfer, delete-org
- *   admin    — full business + member management, no billing
- *   operator — daily ops: read + write business modules
- *   viewer   — global read-only (finance / external auditor)
- *   member   — alias of operator. Backward-compat for existing rows
- *              whose `member.role = "member"` (the old default before
- *              the four-role rollout). New invites should pick one of
- *              the four canonical roles; the alias is registered so
- *              existing data keeps working without a migration.
+ *   ─── Org-level (member.role — billing, member mgmt, project mgmt) ───
+ *   orgOwner   — full company control: billing.manage, transfer/delete org,
+ *                invite/remove org members, create/delete projects.
+ *   orgAdmin   — invite org members + create/update projects, read billing.
+ *   orgViewer  — read-only billing & company metadata. No project access
+ *                unless added as teamMember.
  *
- * The `manage` action on a resource is treated as "all actions on this
- * resource". The middleware short-circuits on `manage` so we never
- * enumerate verbs at the call site.
+ *   ─── Team-level (teamMember.role — business data inside a project) ───
+ *   owner      — full project control + transfer/delete project resources.
+ *   admin      — full business + apiKey/webhooks management, read auditLog.
+ *   operator   — daily ops: read+write business modules, no apiKey, no audit.
+ *   viewer     — read-only on business modules.
+ *   member     — alias of operator. Backward-compat for existing rows.
+ *
+ * The two layers live in ONE `ac` registry because Better Auth's
+ * organization plugin only accepts one `roles` config. Role name (string)
+ * decides which table to look up at permission-check time:
+ *   - org-level actions → `member` table query
+ *   - team-level actions → `teamMember` table query
+ *
+ * `dynamicAccessControl` (enabled in auth.ts) lets tenants define
+ * additional roles at runtime via `auth.api.createRole`. Those land in
+ * the Better Auth `organizationRole` table and are resolved at
+ * permission check time without any custom code on our side.
+ *
+ * The `manage` action is treated as "all actions on this resource".
  */
 
 import { createAccessControl } from "better-auth/plugins/access";
@@ -33,26 +45,27 @@ import {
 } from "better-auth/plugins/organization/access";
 
 /**
- * Resource × action dictionary.
+ * Resource × action dictionary — single ac for both layers.
  *
- * - `defaultStatements` ships the built-in `organization` / `member` /
- *   `invitation` / `team` resources from Better Auth — we spread it in
- *   so the org-management endpoints (invite-member, update-role, etc.)
- *   keep working with the four custom roles below.
+ * - `defaultStatements` ships Better Auth's built-in `organization` /
+ *   `member` / `invitation` / `team` resources. We spread it so org
+ *   built-ins (invite-member, create-team, update-org, etc.) keep
+ *   working with our role names.
  * - Module names use camelCase (matching `apps/admin/src/lib/capabilities.ts`).
- *   The kebab folder name `check-in` becomes `checkIn`. This keeps the
- *   key set stable when modules are renamed in their folder layout.
+ *   Folder name `check-in` becomes `checkIn`.
  *
- * Every business-module resource declares the canonical `read`,
- * `write`, `manage` triple. `manage` is the catch-all the middleware
- * uses for fall-through; `write` is the per-module mutation gate.
- * Add business-specific verbs (publish / issue / refund / …) only when
- * a module needs them — Phase 1 keeps it minimal.
+ * Actions: `read`, `write`, `manage`, plus per-module verbs (`publish`,
+ * `issue`, …) where needed. `manage` is the wildcard.
  */
 export const statement = {
   ...defaultStatements,
 
-  // --- Business modules (admin-facing, org-scoped) ---
+  // ─── Org-level (member.role-bound) ─────────────────────────────
+  billing: ["read", "manage"],
+  orgMember: ["invite", "remove"],
+
+  // ─── Team-level (teamMember.role-bound) ────────────────────────
+  // Business modules — admin-facing, project-scoped (tenantId).
   activity: ["read", "write", "publish", "manage"],
   analytics: ["read", "manage"],
   announcement: ["read", "write", "manage"],
@@ -83,6 +96,7 @@ export const statement = {
   level: ["read", "write", "manage"],
   lottery: ["read", "write", "manage"],
   mail: ["read", "write", "manage"],
+  matchSquad: ["read", "write", "manage"],
   mediaLibrary: ["read", "write", "manage"],
   navigation: ["read", "write", "manage"],
   offlineCheckIn: ["read", "write", "manage"],
@@ -93,137 +107,157 @@ export const statement = {
   triggers: ["read", "write", "manage"],
   webhooks: ["read", "write", "manage"],
 
-  // --- Platform / org-management surface ---
+  // Platform — team-scoped (apikey carries tenantId via metadata).
   apiKey: ["read", "write", "manage"],
-  billing: ["read", "manage"],
 } as const;
 
 export const ac = createAccessControl(statement);
 
 /**
- * Build a record that grants `manage` on every business resource.
- *
- * `manage` is the wildcard the middleware checks for. Owner/admin
- * normally have `manage` everywhere, so we generate this once instead
- * of typing the same `[..., "manage"]` 40 times.
+ * Resources that live at the team (project / tenantId) layer. Anything
+ * not in `defaultStatements` and not in the small org-level set.
  */
+const ORG_LEVEL_KEYS = new Set<keyof typeof statement>(["billing", "orgMember"]);
+
+function teamLevelKeys(): (keyof typeof statement)[] {
+  return (Object.keys(statement) as (keyof typeof statement)[]).filter(
+    (k) => !(k in defaultStatements) && !ORG_LEVEL_KEYS.has(k),
+  );
+}
+
 function manageEverywhere() {
   const out: Record<string, readonly string[]> = {};
-  for (const [resource, actions] of Object.entries(statement)) {
-    // Skip Better Auth's built-in resources — those come from
-    // `adminAc.statements` / `ownerAc.statements` so we don't
-    // overwrite the framework's per-action grants (e.g. `member.create`
-    // vs `member.delete` are distinct in the default admin role).
-    if (resource in defaultStatements) continue;
-    if ((actions as readonly string[]).includes("manage")) {
-      out[resource] = ["manage"];
-    } else {
-      out[resource] = actions as readonly string[];
-    }
+  for (const r of teamLevelKeys()) {
+    const actions = statement[r] as readonly string[];
+    out[r] = actions.includes("manage") ? ["manage"] : actions;
   }
   return out;
 }
 
-/**
- * Build a record that grants `read` on every business resource that
- * exposes a `read` action. Used for the viewer role.
- */
 function readEverywhere() {
   const out: Record<string, readonly string[]> = {};
-  for (const [resource, actions] of Object.entries(statement)) {
-    if (resource in defaultStatements) continue;
-    if ((actions as readonly string[]).includes("read")) {
-      out[resource] = ["read"];
-    }
+  for (const r of teamLevelKeys()) {
+    const actions = statement[r] as readonly string[];
+    if (actions.includes("read")) out[r] = ["read"];
   }
   return out;
 }
 
-/**
- * Build a record that grants `read` + `write` (+ `publish` / `issue`
- * if defined) on every business resource. Used for the operator role.
- */
 function operatorEverywhere() {
   const out: Record<string, readonly string[]> = {};
-  for (const [resource, actions] of Object.entries(statement)) {
-    if (resource in defaultStatements) continue;
-    const grants: string[] = [];
-    for (const a of actions as readonly string[]) {
-      if (a === "manage") continue;
-      // operator gets read/write/publish/issue but NOT super-actions
-      // like billing.* (billing has only read+manage, no write).
-      grants.push(a);
-    }
-    if (grants.length > 0) {
-      out[resource] = grants;
-    }
+  for (const r of teamLevelKeys()) {
+    const actions = statement[r] as readonly string[];
+    const grants = actions.filter((a) => a !== "manage");
+    if (grants.length > 0) out[r] = grants;
   }
-  // operator does not get to look at audit logs or billing.
+  // operator: no audit-log, no api-key, no platform internals.
   delete out.auditLog;
-  delete out.billing;
   delete out.apiKey;
   return out;
 }
 
-// owner — superset of admin + Better Auth ownerAc (org delete/transfer).
-export const owner = ac.newRole({
+// ─── Org-level roles (member.role) ──────────────────────────────
+
+// orgOwner — full company control: own everything Better Auth ships
+// for org admin/delete + billing.manage + orgMember invite/remove.
+// Also retains team-level statements so org owner can act inside any
+// project (the require-permission middleware additionally short-circuits
+// for org owner, see middleware/require-permission.ts).
+export const orgOwner = ac.newRole({
   ...ownerAc.statements,
+  billing: ["read", "manage"],
+  orgMember: ["invite", "remove"],
   ...manageEverywhere(),
-  // ownerAc already covers organization.delete + member.transfer — we
-  // intentionally do NOT spread admin's manage over the same keys.
 });
 
-// admin — every business module + member management, no org delete.
-export const admin = ac.newRole({
+// orgAdmin — invite/remove org members, create/update projects, read billing.
+// Cannot delete the org or change billing settings.
+export const orgAdmin = ac.newRole({
   ...adminAc.statements,
-  ...manageEverywhere(),
-  // Override apiKey/billing to read-only for admin (only owner manages).
-  apiKey: ["read", "write"],
   billing: ["read"],
+  orgMember: ["invite", "remove"],
+});
+
+// orgViewer — read-only billing + company metadata. Project access requires
+// being added as a teamMember on the specific project.
+export const orgViewer = ac.newRole({
+  ...memberAc.statements,
+  billing: ["read"],
+});
+
+// ─── Team-level roles (teamMember.role) ─────────────────────────
+
+// owner — full project control: manage every business resource + apiKey + auditLog.
+// Spreads `memberAc.statements` first to anchor type inference for ac.newRole's
+// strict Subset checker (the helper functions return Record<string, ...> which
+// won't satisfy Subset on its own).
+export const owner = ac.newRole({
+  ...memberAc.statements,
+  ...manageEverywhere(),
+});
+
+// admin — manage business modules + apiKey rw + audit read. No org-level grants.
+export const admin = ac.newRole({
+  ...memberAc.statements,
+  ...manageEverywhere(),
+  apiKey: ["read", "write"],
   auditLog: ["read"],
 });
 
-// operator — read+write business modules, no member management,
-// no audit-log, no billing, no api-key.
+// operator — read+write business modules. No api-key, no audit, no billing.
 export const operator = ac.newRole({
   ...memberAc.statements,
   ...operatorEverywhere(),
 });
 
-// viewer — global read-only on business modules ONLY.
-// Explicit empties for the platform-sensitive resources whose mere
-// existence shouldn't leak: audit-log (operator activity), billing
-// (financial), apiKey (server-to-server credentials).
+// viewer — global read-only on business modules.
 export const viewer = ac.newRole({
   ...memberAc.statements,
   ...readEverywhere(),
   auditLog: [],
-  billing: [],
   apiKey: [],
 });
 
-// member — alias of operator for backward compat with existing rows
-// whose `member.role = "member"`. New invites should pick one of the
-// four canonical roles above.
+// member — alias of operator (backward compat for legacy `member.role = "member"` rows).
 export const member = ac.newRole({
   ...memberAc.statements,
   ...operatorEverywhere(),
 });
 
 /**
- * Map of role name → role definition, ready to pass to
- * `organization({ ac, roles })`. Role keys correspond to values stored
- * in `member.role` (text column, comma-separated for multi-role).
+ * Roles registered with Better Auth. `member.role` and `teamMember.role`
+ * both store strings that look up here.
  */
-export const roles = { owner, admin, operator, viewer, member } as const;
+export const roles = {
+  // org-level
+  orgOwner,
+  orgAdmin,
+  orgViewer,
+  // team-level
+  owner,
+  admin,
+  operator,
+  viewer,
+  member,
+} as const;
 
 export type RoleName = keyof typeof roles;
 export type ResourceName = keyof typeof statement;
 
+export const ORG_LEVEL_ROLES = ["orgOwner", "orgAdmin", "orgViewer"] as const;
+export type OrgRoleName = (typeof ORG_LEVEL_ROLES)[number];
+
+export const TEAM_LEVEL_ROLES = ["owner", "admin", "operator", "viewer", "member"] as const;
+export type TeamRoleName = (typeof TEAM_LEVEL_ROLES)[number];
+
 /**
- * Names of every business resource (excludes Better Auth built-ins).
- * Used by the `/me/capabilities` route to enumerate what to check.
+ * Names of every team-level (project/tenantId) business resource. Used by
+ * the `/me/capabilities` route to enumerate what to check for the active
+ * project.
  */
-export const BUSINESS_RESOURCES = (
-  Object.keys(statement) as ResourceName[]
-).filter((r) => !(r in defaultStatements));
+export const BUSINESS_RESOURCES: ResourceName[] = teamLevelKeys();
+
+/**
+ * Names of org-level resources (used for `/me/org-capabilities`).
+ */
+export const ORG_RESOURCES: ResourceName[] = Array.from(ORG_LEVEL_KEYS);

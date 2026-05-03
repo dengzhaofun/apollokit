@@ -77,7 +77,7 @@ export type AdminAgentService = ReturnType<typeof createAdminAgentService>;
 export function createAdminAgentService(d: AdminAgentDeps) {
   return {
     /**
-     * `execCtx` carries the per-request `organizationId` from the route
+     * `execCtx` carries the per-request `tenantId` from the route
      * handler (read from the Hono session). Patch tools' `execute`
      * callbacks read it from `experimental_context` (set on the
      * `ToolLoopAgent` constructor below). Query tools still use closures
@@ -101,7 +101,7 @@ export function createAdminAgentService(d: AdminAgentDeps) {
       // chat can proceed even if the user mentioned something that
       // was deleted between popover-select and submit.
       const snapshots = await resolveMentions(
-        execCtx.organizationId,
+        execCtx.tenantId,
         context.mentions ?? [],
       );
 

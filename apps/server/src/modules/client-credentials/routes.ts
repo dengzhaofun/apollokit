@@ -30,7 +30,7 @@ const TAG = "Client Credentials";
 
 function serialize(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   name: string;
   publishableKey: string;
   devMode: boolean;
@@ -42,7 +42,7 @@ function serialize(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     name: row.name,
     publishableKey: row.publishableKey,
     devMode: row.devMode,

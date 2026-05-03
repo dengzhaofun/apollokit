@@ -11,11 +11,11 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { Checkbox } from "#/components/ui/checkbox"
 import {
-  useTeamConfig,
-  useUpdateTeamConfig,
-  useDeleteTeamConfig,
+  useMatchSquadConfig,
+  useUpdateMatchSquadConfig,
+  useDeleteMatchSquadConfig,
   useTeams,
-} from "#/hooks/use-team"
+} from "#/hooks/use-match-squad"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
 import {
@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "#/components/ui/table"
 
-export const Route = createFileRoute("/_dashboard/team/$configId/")({
+export const Route = createFileRoute("/_dashboard/match-squad/$configId/")({
   component: TeamDetailPage,
   validateSearch: listSearchSchema.passthrough(),
 })
@@ -37,13 +37,13 @@ function TeamDetailPage() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
 
-  const { data: config, isPending, error } = useTeamConfig(configId)
+  const { data: config, isPending, error } = useMatchSquadConfig(configId)
   // Server filters by configKey so the page only sees this config's teams.
   // Capped at the first page (50); add full pagination if a single config
   // ever has hundreds of active teams.
   const teamsList = useTeams(Route, { configKey: configId })
-  const updateMutation = useUpdateTeamConfig()
-  const deleteMutation = useDeleteTeamConfig()
+  const updateMutation = useUpdateMatchSquadConfig()
+  const deleteMutation = useDeleteMatchSquadConfig()
 
   // Edit form state
   const [editName, setEditName] = useState("")
@@ -92,7 +92,7 @@ function TeamDetailPage() {
     try {
       await deleteMutation.mutateAsync(config.id)
       toast.success(m.team_config_deleted())
-      navigate({ to: "/team" })
+      navigate({ to: "/match-squad" })
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)
@@ -132,7 +132,7 @@ function TeamDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/team">
+                <Link to="/match-squad">
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>

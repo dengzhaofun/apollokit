@@ -99,7 +99,7 @@ type MailDeps = Pick<AppDeps, "db"> &
 declare module "../../lib/event-bus" {
   interface EventMap {
     "mail.claimed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       messageId: string;
       rewards: RewardEntry[];
@@ -154,7 +154,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
   const { db, events, analytics } = d;
 
   async function loadMessageById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<MailMessage> {
     const rows = await db
@@ -163,7 +163,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(mailMessages.id, id),
-          eq(mailMessages.organizationId, organizationId),
+          eq(mailMessages.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -212,14 +212,14 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      *
      * When `originSource` / `originSourceId` are provided the call becomes
      * idempotent against the partial unique index
-     * `(organizationId, origin_source, origin_source_id)`: retried calls
+     * `(tenantId, origin_source, origin_source_id)`: retried calls
      * return the existing row instead of inserting a second one.
      *
      * `senderAdminId` is optional audit metadata — null for system-triggered
      * sends (task completion, activity settlement, order refund…).
      */
     async createMessage(
-      organizationId: string,
+      tenantId: string,
       input: ProgrammaticCreateMailInput,
     ): Promise<MailMessage> {
       validateCreateTargeting(input);
@@ -240,7 +240,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
           .from(mailMessages)
           .where(
             and(
-              eq(mailMessages.organizationId, organizationId),
+              eq(mailMessages.tenantId, tenantId),
               eq(mailMessages.originSource, input.originSource),
               eq(mailMessages.originSourceId, input.originSourceId),
             ),
@@ -253,7 +253,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         const [row] = await db
           .insert(mailMessages)
           .values({
-            organizationId,
+            tenantId,
             title: input.title,
             content: input.content,
             rewards,
@@ -281,7 +281,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
             .from(mailMessages)
             .where(
               and(
-                eq(mailMessages.organizationId, organizationId),
+                eq(mailMessages.tenantId, tenantId),
                 eq(mailMessages.originSource, input.originSource),
                 eq(mailMessages.originSourceId, input.originSourceId),
               ),
@@ -299,11 +299,11 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      * external event (task completion, order refund…) and needs idempotency.
      */
     async sendUnicast(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       input: UnicastInput,
     ): Promise<MailMessage> {
-      return this.createMessage(organizationId, {
+      return this.createMessage(tenantId, {
         ...input,
         targetType: "multicast",
         targetUserIds: [endUserId],
@@ -313,7 +313,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
     // ─── Admin — list / get / revoke / delete ──────────────────
 
     async listMessages(
-      organizationId: string,
+      tenantId: string,
       query: {
         limit?: number;
         cursor?: string;
@@ -324,7 +324,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       const limit = query.limit ?? 50;
       const cursorDate = query.cursor ? new Date(query.cursor) : null;
 
-      const conditions = [eq(mailMessages.organizationId, organizationId)];
+      const conditions = [eq(mailMessages.tenantId, tenantId)];
       if (query.targetType) {
         conditions.push(eq(mailMessages.targetType, query.targetType));
       }
@@ -352,10 +352,10 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
     },
 
     async getMessage(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<MailMessageWithStats> {
-      const msg = await loadMessageById(organizationId, id);
+      const msg = await loadMessageById(tenantId, id);
       const stats = await loadStats(id);
       return {
         ...msg,
@@ -367,14 +367,14 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
     },
 
     /** Soft delete — hides from inboxes, preserves audit trail. */
-    async revokeMessage(organizationId: string, id: string): Promise<void> {
+    async revokeMessage(tenantId: string, id: string): Promise<void> {
       const [row] = await db
         .update(mailMessages)
         .set({ revokedAt: new Date() })
         .where(
           and(
             eq(mailMessages.id, id),
-            eq(mailMessages.organizationId, organizationId),
+            eq(mailMessages.tenantId, tenantId),
             isNull(mailMessages.revokedAt),
           ),
         )
@@ -382,18 +382,18 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       if (!row) {
         // Either the message doesn't exist, doesn't belong to the org, or is
         // already revoked. Distinguish by re-reading.
-        await loadMessageById(organizationId, id);
+        await loadMessageById(tenantId, id);
         // exists → already revoked; make that idempotent by succeeding silently
       }
     },
 
-    async deleteMessage(organizationId: string, id: string): Promise<void> {
+    async deleteMessage(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(mailMessages)
         .where(
           and(
             eq(mailMessages.id, id),
-            eq(mailMessages.organizationId, organizationId),
+            eq(mailMessages.tenantId, tenantId),
           ),
         )
         .returning({ id: mailMessages.id });
@@ -415,7 +415,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      * this user's read/claim state (nulls when no state row exists yet).
      */
     async listInbox(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       query: { since?: Date; limit?: number },
     ): Promise<{ items: InboxMessage[] }> {
@@ -444,7 +444,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         )
         .where(
           and(
-            eq(mailMessages.organizationId, organizationId),
+            eq(mailMessages.tenantId, tenantId),
             isNull(mailMessages.revokedAt),
             or(isNull(mailMessages.expiresAt), gt(mailMessages.expiresAt, now)),
             or(
@@ -474,11 +474,11 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      * Frontends that want read-on-open call POST /read explicitly.
      */
     async getInboxMessage(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       id: string,
     ): Promise<InboxMessage> {
-      const msg = await loadMessageById(organizationId, id);
+      const msg = await loadMessageById(tenantId, id);
       assertVisible(msg, new Date());
       assertTargeted(msg, endUserId);
 
@@ -512,11 +512,11 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      * subsequent calls return the existing row unchanged.
      */
     async markRead(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       messageId: string,
     ): Promise<MailUserState> {
-      const msg = await loadMessageById(organizationId, messageId);
+      const msg = await loadMessageById(tenantId, messageId);
       assertVisible(msg, new Date());
       assertTargeted(msg, endUserId);
 
@@ -526,7 +526,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         .values({
           messageId,
           endUserId,
-          organizationId,
+          tenantId,
           readAt: now,
         })
         .onConflictDoUpdate({
@@ -545,7 +545,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         if (analytics) {
           void analytics.writer.logEvent({
             ts: now,
-            orgId: organizationId,
+            orgId: tenantId,
             endUserId,
             traceId: getTraceId(),
             event: "mail.read",
@@ -585,11 +585,11 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
      * the user retries; we surface the cached rewards without re-granting.
      */
     async claim(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       messageId: string,
     ): Promise<ClaimResult> {
-      const msg = await loadMessageById(organizationId, messageId);
+      const msg = await loadMessageById(tenantId, messageId);
       assertVisible(msg, new Date());
       assertTargeted(msg, endUserId);
 
@@ -603,7 +603,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         .from(itemGrantLogs)
         .where(
           and(
-            eq(itemGrantLogs.organizationId, organizationId),
+            eq(itemGrantLogs.tenantId, tenantId),
             eq(itemGrantLogs.endUserId, endUserId),
             eq(itemGrantLogs.source, CLAIM_SOURCE),
             eq(itemGrantLogs.sourceId, sourceId),
@@ -645,7 +645,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
         .values({
           messageId,
           endUserId,
-          organizationId,
+          tenantId,
           readAt: null,
           claimedAt: insertClaimedAt,
         })
@@ -701,7 +701,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
       // We won the claim. Grant rewards.
       if (msg.rewards.length > 0) {
         await itemSvc.grantItems({
-          organizationId,
+          tenantId,
           endUserId,
           grants: msg.rewards,
           source: CLAIM_SOURCE,
@@ -711,7 +711,7 @@ export function createMailService(d: MailDeps, itemSvc: ItemService) {
 
       if (events) {
         await events.emit("mail.claimed", {
-          organizationId,
+          tenantId,
           endUserId,
           messageId,
           rewards: msg.rewards,

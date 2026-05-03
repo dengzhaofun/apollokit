@@ -37,7 +37,7 @@ describe("invite service — settings", () => {
       allowSelfInvite: false,
       metadata: { tier: "pro" },
     });
-    expect(result.organizationId).toBe(orgId);
+    expect(result.tenantId).toBe(orgId);
     expect(result.enabled).toBe(true);
     expect(result.codeLength).toBe(12);
     expect(result.allowSelfInvite).toBe(false);
@@ -156,7 +156,7 @@ describe("invite service — bind", () => {
     expect(emitted).toHaveLength(1);
     expect(emitted[0]!.type).toBe("invite.bound");
     expect(emitted[0]!.payload).toMatchObject({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "inviter-1", // task 归属
       inviterEndUserId: "inviter-1",
       inviteeEndUserId: "invitee-1",
@@ -257,7 +257,7 @@ describe("invite service — qualify", () => {
 
     expect(emitted).toHaveLength(1);
     expect(emitted[0]!.payload).toMatchObject({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "inviter-q1",
       inviterEndUserId: "inviter-q1",
       inviteeEndUserId: "invitee-q1",

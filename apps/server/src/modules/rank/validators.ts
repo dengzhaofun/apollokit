@@ -288,7 +288,7 @@ export const SettleMatchBodySchema = z
       .array(
         z.object({
           endUserId: z.string().min(1).max(256),
-          teamId: z.string().min(1).max(64),
+          matchTeamId: z.string().min(1).max(64),
           placement: z.number().int().min(1).max(100),
           win: z.boolean(),
           performanceScore: z.number().min(0).max(1).optional(),
@@ -305,7 +305,7 @@ export const SettleMatchBodySchema = z
         message: "one of tierConfigAlias or seasonId is required",
       });
     }
-    const teams = new Set(val.participants.map((p) => p.teamId));
+    const teams = new Set(val.participants.map((p) => p.matchTeamId));
     if (teams.size < 2) {
       ctx.addIssue({
         code: "custom",
@@ -491,7 +491,7 @@ const TierResponseSchema = z.object({
 export const RankTierConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -512,7 +512,7 @@ export const RankTierConfigListResponseSchema = pageOf(RankTierConfigResponseSch
 export const RankSeasonResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     tierConfigId: z.string(),
     alias: z.string(),
     name: z.string(),
@@ -580,7 +580,7 @@ export const ParticipantDeltaResponseSchema = z.object({
   id: z.string(),
   matchId: z.string(),
   endUserId: z.string(),
-  teamId: z.string(),
+  matchTeamId: z.string(),
   placement: z.number().int().nullable(),
   win: z.boolean(),
   mmrBefore: z.number(),
@@ -615,7 +615,7 @@ export const RankMatchDetailResponseSchema = z
 
 const SettleParticipantDeltaSchema = z.object({
   endUserId: z.string(),
-  teamId: z.string(),
+  matchTeamId: z.string(),
   win: z.boolean(),
   mmrBefore: z.number(),
   mmrAfter: z.number(),

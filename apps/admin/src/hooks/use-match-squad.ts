@@ -8,11 +8,11 @@ import {
   type Page,
 } from "#/hooks/use-list-search"
 import type {
-  CreateTeamConfigInput,
+  CreateMatchSquadConfigInput,
   Team,
-  TeamConfig,
-  UpdateTeamConfigInput,
-} from "#/lib/types/team"
+  MatchSquadConfig,
+  UpdateMatchSquadConfigInput,
+} from "#/lib/types/match-squad"
 
 const CONFIGS_KEY = ["team-configs"] as const
 const TEAMS_KEY = ["teams"] as const
@@ -21,59 +21,59 @@ export const TEAM_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated team configs — URL-driven. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useTeamConfigs(route: any) {
-  return useListSearch<TeamConfig>({
+export function useMatchSquadConfigs(route: any) {
+  return useListSearch<MatchSquadConfig>({
     route,
     queryKey: CONFIGS_KEY,
     filterDefs: TEAM_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
-      api.get<Page<TeamConfig>>(
-        `/api/team/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+      api.get<Page<MatchSquadConfig>>(
+        `/api/v1/match-squad/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
 
 /** Non-paginated convenience for selectors (200 cap). */
-export function useAllTeamConfigs() {
+export function useAllMatchSquadConfigs() {
   return useQuery({
     queryKey: [...CONFIGS_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<TeamConfig>>(`/api/team/configs?${buildQs({ limit: 200 })}`)
+        .get<Page<MatchSquadConfig>>(`/api/v1/match-squad/configs?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
 
-export function useTeamConfig(key: string) {
+export function useMatchSquadConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
-    queryFn: () => api.get<TeamConfig>(`/api/team/configs/${key}`),
+    queryFn: () => api.get<MatchSquadConfig>(`/api/v1/match-squad/configs/${key}`),
     enabled: !!key,
   })
 }
 
-export function useCreateTeamConfig() {
+export function useCreateMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: CreateTeamConfigInput) =>
-      api.post<TeamConfig>("/api/team/configs", input),
+    mutationFn: (input: CreateMatchSquadConfigInput) =>
+      api.post<MatchSquadConfig>("/api/v1/match-squad/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
 
-export function useUpdateTeamConfig() {
+export function useUpdateMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdateTeamConfigInput }) =>
-      api.patch<TeamConfig>(`/api/team/configs/${id}`, input),
+    mutationFn: ({ id, input }: { id: string; input: UpdateMatchSquadConfigInput }) =>
+      api.patch<MatchSquadConfig>(`/api/v1/match-squad/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
 
-export function useDeleteTeamConfig() {
+export function useDeleteMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/team/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/match-squad/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -111,7 +111,7 @@ export function useTeams(
     filterDefs: TEAM_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Team>>(
-        `/api/team/teams?${buildQs({
+        `/api/v1/match-squad/squads?${buildQs({
           cursor,
           limit,
           q,
@@ -126,7 +126,7 @@ export function useTeams(
 export function useTeam(id: string) {
   return useQuery({
     queryKey: [...TEAMS_KEY, id],
-    queryFn: () => api.get<Team>(`/api/team/teams/${id}`),
+    queryFn: () => api.get<Team>(`/api/v1/match-squad/squads/${id}`),
     enabled: !!id,
   })
 }

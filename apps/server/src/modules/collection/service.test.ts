@@ -29,7 +29,7 @@ import type { RewardEntry } from "../../lib/rewards";
 import { createCollectionService } from "./service";
 
 type CapturedMail = {
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   input: {
     title: string;
@@ -48,11 +48,11 @@ describe("collection service", () => {
   // Stub mailService — we only need sendUnicast for the autoClaim path.
   const stubMail = {
     sendUnicast: async (
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       input: CapturedMail["input"],
     ) => {
-      captured.push({ organizationId, endUserId, input });
+      captured.push({ tenantId, endUserId, input });
       return { id: `mail-${captured.length}` } as unknown as Awaited<
         ReturnType<MailService["sendUnicast"]>
       >;
@@ -269,14 +269,14 @@ describe("collection service", () => {
     test("granting a trigger item unlocks the matching entry", async () => {
       const endUserId = "c-u1";
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defFireDragonId, quantity: 1 }],
         source: "test.grant",
       });
 
       const detail = await svc.getAlbumDetailForUser({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -290,20 +290,20 @@ describe("collection service", () => {
       captured.length = 0;
 
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defFireDragonId, quantity: 1 }],
         source: "test.grant",
       });
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defFireDragonId, quantity: 1 }],
         source: "test.grant",
       });
 
       const detail = await svc.getAlbumDetailForUser({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -315,7 +315,7 @@ describe("collection service", () => {
       captured.length = 0;
 
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defFireDragonId, quantity: 1 }],
         source: "collection.milestone",
@@ -323,7 +323,7 @@ describe("collection service", () => {
       });
 
       const detail = await svc.getAlbumDetailForUser({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -341,7 +341,7 @@ describe("collection service", () => {
       // Insert inventory WITHOUT the hook (temporarily unwire it).
       itemSvc.setGrantHook(async () => {});
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defWaterDragonId, quantity: 1 }],
         source: "test.grant",
@@ -353,7 +353,7 @@ describe("collection service", () => {
 
       // Pre-sync: entry is NOT unlocked (hook was disabled).
       const pre = await svc.getAlbumDetailForUser({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -361,7 +361,7 @@ describe("collection service", () => {
 
       // Run sync.
       const unlocked = await svc.syncFromInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -369,7 +369,7 @@ describe("collection service", () => {
 
       // Post-sync: entry now unlocked.
       const post = await svc.getAlbumDetailForUser({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         albumKey: "c-dragons",
       });
@@ -383,14 +383,14 @@ describe("collection service", () => {
     test("claim entry-scope milestone after unlock", async () => {
       const endUserId = "c-u-claim";
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [{ definitionId: defFireDragonId, quantity: 1 }],
         source: "test.grant",
       });
 
       const result = await svc.claimMilestone({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         milestoneId: entryMilestoneId,
       });
@@ -398,7 +398,7 @@ describe("collection service", () => {
       expect(result.grantedItems[0]!.id).toBe(defDiamondId);
 
       const inv = await itemSvc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         definitionId: defDiamondId,
       });
@@ -409,7 +409,7 @@ describe("collection service", () => {
       const endUserId = "c-u-claim"; // reuse previous user's already-claimed state
       await expect(
         svc.claimMilestone({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           milestoneId: entryMilestoneId,
         }),
@@ -420,7 +420,7 @@ describe("collection service", () => {
       const endUserId = "c-u-not-reached";
       await expect(
         svc.claimMilestone({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId,
           milestoneId: groupMilestoneId,
         }),
@@ -432,7 +432,7 @@ describe("collection service", () => {
       await svc.updateMilestone(orgId, albumMilestoneId, { autoClaim: true });
       await expect(
         svc.claimMilestone({
-          organizationId: orgId,
+          tenantId: orgId,
           endUserId: "c-u-auto-only",
           milestoneId: albumMilestoneId,
         }),
@@ -453,7 +453,7 @@ describe("collection service", () => {
 
       // Unlock two entries (fire + water) → reaches album threshold=2.
       await itemSvc.grantItems({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         grants: [
           { definitionId: defFireDragonId, quantity: 1 },
@@ -477,7 +477,7 @@ describe("collection service", () => {
       // The hook did NOT grant items directly — diamond inventory for this
       // user was untouched by the collection layer (only mail dispatch).
       const inv = await itemSvc.getInventory({
-        organizationId: orgId,
+        tenantId: orgId,
         endUserId,
         definitionId: defDiamondId,
       });
@@ -490,7 +490,7 @@ describe("collection service", () => {
         .where(
           and(
             eq(collectionMilestones.id, albumMilestoneId),
-            eq(collectionMilestones.organizationId, orgId),
+            eq(collectionMilestones.tenantId, orgId),
           ),
         );
       expect(rows.length).toBe(1);

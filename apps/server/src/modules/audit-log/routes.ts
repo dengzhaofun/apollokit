@@ -1,5 +1,5 @@
 /**
- * Audit-log admin routes —— 挂在 `/api/audit-logs`。
+ * Audit-log admin routes —— 挂在 `/api/v1/audit-logs`。
  *
  * 鉴权栈：`requireAdminOrApiKey` → `requirePermission("auditLog", "read")`（admin/owner
  * 才能看；operator/viewer 直接 403，与其他业务模块的 `requirePermissionByMethod` 行为不同
@@ -50,7 +50,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const query = c.req.valid("query");
     const page = await auditLogService.list(orgId, query);
     return c.json(ok(page), 200);
@@ -77,7 +77,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const items = await auditLogService.listResourceTypes(orgId);
     return c.json(ok({ items }), 200);
   },
@@ -101,7 +101,7 @@ auditLogRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.var.session!.activeOrganizationId!;
+    const orgId = c.var.session!.activeTeamId!;
     const { id } = c.req.valid("param");
     const view = await auditLogService.get(orgId, id);
     return c.json(ok(view), 200);

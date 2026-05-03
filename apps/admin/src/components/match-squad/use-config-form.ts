@@ -1,8 +1,8 @@
 import { useForm } from "@tanstack/react-form"
 
-import type { CreateTeamConfigInput } from "#/lib/types/team"
+import type { CreateMatchSquadConfigInput } from "#/lib/types/match-squad"
 
-export type TeamConfigFormValues = {
+export type MatchSquadConfigFormValues = {
   name: string
   alias: string
   maxMembers: number
@@ -10,12 +10,12 @@ export type TeamConfigFormValues = {
   allowQuickMatch: boolean
 }
 
-export function useTeamConfigForm({
+export function useMatchSquadConfigForm({
   defaultValues,
   onSubmit,
 }: {
-  defaultValues?: Partial<CreateTeamConfigInput>
-  onSubmit: (values: CreateTeamConfigInput) => void | Promise<void>
+  defaultValues?: Partial<CreateMatchSquadConfigInput>
+  onSubmit: (values: CreateMatchSquadConfigInput) => void | Promise<void>
 }) {
   return useForm({
     defaultValues: {
@@ -24,7 +24,7 @@ export function useTeamConfigForm({
       maxMembers: defaultValues?.maxMembers ?? 4,
       autoDissolveOnLeaderLeave: defaultValues?.autoDissolveOnLeaderLeave ?? false,
       allowQuickMatch: defaultValues?.allowQuickMatch ?? false,
-    } as TeamConfigFormValues,
+    } as MatchSquadConfigFormValues,
     onSubmit: async ({ value }) => {
       await onSubmit({
         name: value.name,
@@ -37,4 +37,4 @@ export function useTeamConfigForm({
   })
 }
 
-export type TeamConfigFormApi = ReturnType<typeof useTeamConfigForm>
+export type MatchSquadConfigFormApi = ReturnType<typeof useMatchSquadConfigForm>

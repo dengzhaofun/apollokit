@@ -93,7 +93,7 @@ export const ListAssetsQuerySchema = z.object({
 export const FolderResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     parentId: z.string().nullable(),
     name: z.string(),
     isDefault: z.boolean(),
@@ -114,7 +114,7 @@ export const FolderListResponseSchema = z
 export const AssetResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     folderId: z.string(),
     objectKey: z.string(),
     filename: z.string(),

@@ -296,7 +296,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
   void itemSvc;
 
   async function assertRewardDefinitionsExist(
-    organizationId: string,
+    tenantId: string,
     nodes: DialogueNode[],
   ): Promise<void> {
     const ids = collectRewardDefinitionIds(nodes);
@@ -306,7 +306,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .from(itemDefinitions)
       .where(
         and(
-          eq(itemDefinitions.organizationId, organizationId),
+          eq(itemDefinitions.tenantId, tenantId),
           inArray(itemDefinitions.id, ids),
         ),
       );
@@ -323,7 +323,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
    * avoids a cross-module service handle for a single table read.
    */
   async function assertSpeakerCharactersExist(
-    organizationId: string,
+    tenantId: string,
     nodes: DialogueNode[],
   ): Promise<void> {
     const ids = collectSpeakerCharacterIds(nodes);
@@ -333,7 +333,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .from(characterDefinitions)
       .where(
         and(
-          eq(characterDefinitions.organizationId, organizationId),
+          eq(characterDefinitions.tenantId, tenantId),
           inArray(characterDefinitions.id, ids),
         ),
       );
@@ -349,7 +349,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
    * history re-read) has a fresh view of each speaker.
    */
   async function loadCharactersForScript(
-    organizationId: string,
+    tenantId: string,
     script: DialogueScript,
   ): Promise<Map<string, SpeakerCharacter>> {
     const ids = collectSpeakerCharacterIds(script.nodes);
@@ -363,7 +363,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .from(characterDefinitions)
       .where(
         and(
-          eq(characterDefinitions.organizationId, organizationId),
+          eq(characterDefinitions.tenantId, tenantId),
           inArray(characterDefinitions.id, ids),
         ),
       );
@@ -371,7 +371,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
   }
 
   async function loadScriptById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<DialogueScript> {
     const rows = await db
@@ -380,7 +380,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(dialogueScripts.id, id),
-          eq(dialogueScripts.organizationId, organizationId),
+          eq(dialogueScripts.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -389,7 +389,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
   }
 
   async function loadScriptByAlias(
-    organizationId: string,
+    tenantId: string,
     alias: string,
   ): Promise<DialogueScript> {
     const rows = await db
@@ -398,7 +398,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .where(
         and(
           eq(dialogueScripts.alias, alias),
-          eq(dialogueScripts.organizationId, organizationId),
+          eq(dialogueScripts.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -407,7 +407,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
   }
 
   async function loadProgress(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     scriptId: string,
   ): Promise<DialogueProgress | null> {
@@ -416,7 +416,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .from(dialogueProgress)
       .where(
         and(
-          eq(dialogueProgress.organizationId, organizationId),
+          eq(dialogueProgress.tenantId, tenantId),
           eq(dialogueProgress.endUserId, endUserId),
           eq(dialogueProgress.scriptId, scriptId),
         ),
@@ -430,7 +430,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
    * logged for this user. Returns whether new rewards were granted.
    */
   async function grantIfNew(
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     rewards: ItemEntry[],
     source: string,
@@ -442,7 +442,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .from(itemGrantLogs)
       .where(
         and(
-          eq(itemGrantLogs.organizationId, organizationId),
+          eq(itemGrantLogs.tenantId, tenantId),
           eq(itemGrantLogs.endUserId, endUserId),
           eq(itemGrantLogs.source, source),
           eq(itemGrantLogs.sourceId, sourceId),
@@ -451,7 +451,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       .limit(1);
     if (prior.length > 0) return false;
     await itemSvc.grantItems({
-      organizationId,
+      tenantId,
       endUserId,
       grants: rewards,
       source,
@@ -506,19 +506,19 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     // ─── Admin — CRUD ──────────────────────────────────────────
 
     async createScript(
-      organizationId: string,
+      tenantId: string,
       input: CreateDialogueScriptInput,
     ): Promise<DialogueScript> {
       const nodes = input.nodes as DialogueNode[];
       validateGraph(input.startNodeId, nodes);
-      await assertSpeakerCharactersExist(organizationId, nodes);
-      await assertRewardDefinitionsExist(organizationId, nodes);
+      await assertSpeakerCharactersExist(tenantId, nodes);
+      await assertRewardDefinitionsExist(tenantId, nodes);
 
       try {
         const [row] = await db
           .insert(dialogueScripts)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias ?? null,
             name: input.name,
             description: input.description ?? null,
@@ -541,11 +541,11 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     },
 
     async updateScript(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateDialogueScriptInput,
     ): Promise<DialogueScript> {
-      const existing = await loadScriptById(organizationId, id);
+      const existing = await loadScriptById(tenantId, id);
 
       // Validate merged graph so partial updates can't leave the script
       // in an inconsistent state.
@@ -557,8 +557,8 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       if (input.nodes !== undefined || input.startNodeId !== undefined) {
         validateGraph(mergedStart, mergedNodes);
         if (input.nodes !== undefined) {
-          await assertSpeakerCharactersExist(organizationId, mergedNodes);
-          await assertRewardDefinitionsExist(organizationId, mergedNodes);
+          await assertSpeakerCharactersExist(tenantId, mergedNodes);
+          await assertRewardDefinitionsExist(tenantId, mergedNodes);
         }
       }
 
@@ -583,7 +583,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(dialogueScripts.id, id),
-              eq(dialogueScripts.organizationId, organizationId),
+              eq(dialogueScripts.tenantId, tenantId),
             ),
           )
           .returning();
@@ -597,13 +597,13 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       }
     },
 
-    async deleteScript(organizationId: string, id: string): Promise<void> {
+    async deleteScript(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(dialogueScripts)
         .where(
           and(
             eq(dialogueScripts.id, id),
-            eq(dialogueScripts.organizationId, organizationId),
+            eq(dialogueScripts.tenantId, tenantId),
           ),
         )
         .returning({ id: dialogueScripts.id });
@@ -611,11 +611,11 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     },
 
     async listScripts(
-      organizationId: string,
+      tenantId: string,
       params: PageParams = {},
     ): Promise<Page<DialogueScript>> {
       const limit = clampLimit(params.limit);
-      const conds: SQL[] = [eq(dialogueScripts.organizationId, organizationId)];
+      const conds: SQL[] = [eq(dialogueScripts.tenantId, tenantId)];
       const seek = cursorWhere(params.cursor, dialogueScripts.createdAt, dialogueScripts.id);
       if (seek) conds.push(seek);
       if (params.q) {
@@ -633,10 +633,10 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
     },
 
     async getScript(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<DialogueScript> {
-      return loadScriptById(organizationId, id);
+      return loadScriptById(tenantId, id);
     },
 
     // ─── Client — start / advance / reset ──────────────────────
@@ -648,26 +648,26 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
      * startNode, grants startNode.onEnter.rewards (idempotent).
      * Subsequent visits: returns the current progress unchanged.
      * Concurrent first-visits are resolved by the unique constraint on
-     * (organizationId, endUserId, scriptId) — the loser falls through
+     * (tenantId, endUserId, scriptId) — the loser falls through
      * to the re-read branch.
      */
     async start(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       alias: string,
     ): Promise<DialogueSessionView> {
-      const script = await loadScriptByAlias(organizationId, alias);
+      const script = await loadScriptByAlias(tenantId, alias);
       if (!script.isActive) throw new DialogueScriptInactive(alias);
 
       const startNode = findNode(script, script.startNodeId);
       const granted: DialogueRewardGrant[] = [];
       // Pulled once per request so every speaker flatten in this call
       // (current node, re-read fallbacks) sees the same snapshot.
-      const characters = await loadCharactersForScript(organizationId, script);
+      const characters = await loadCharactersForScript(tenantId, script);
 
       // Upsert-first path: if a progress row exists, don't overwrite it.
       const existing = await loadProgress(
-        organizationId,
+        tenantId,
         endUserId,
         script.id,
       );
@@ -680,7 +680,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         const [row] = await db
           .insert(dialogueProgress)
           .values({
-            organizationId,
+            tenantId,
             endUserId,
             scriptId: script.id,
             currentNodeId: script.startNodeId,
@@ -693,7 +693,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         // Grant onEnter rewards for the start node (idempotent).
         const enterRewards = startNode.onEnter?.rewards ?? [];
         const didGrant = await grantIfNew(
-          organizationId,
+          tenantId,
           endUserId,
           enterRewards,
           SOURCE_ENTER,
@@ -707,7 +707,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
           });
         }
 
-        trackDialogue("dialogue.started", organizationId, endUserId, {
+        trackDialogue("dialogue.started", tenantId, endUserId, {
           scriptId: script.id,
           scriptAlias: script.alias,
           startNodeId: startNode.id,
@@ -718,7 +718,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       } catch (err) {
         if (!isUniqueViolation(err)) throw err;
         const fallback = await loadProgress(
-          organizationId,
+          tenantId,
           endUserId,
           script.id,
         );
@@ -738,16 +738,16 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
      * (completedAt set, currentNodeId cleared).
      */
     async advance(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       alias: string,
       optionId: string | undefined,
     ): Promise<DialogueSessionView> {
-      const script = await loadScriptByAlias(organizationId, alias);
+      const script = await loadScriptByAlias(tenantId, alias);
       if (!script.isActive) throw new DialogueScriptInactive(alias);
 
       const progress = await loadProgress(
-        organizationId,
+        tenantId,
         endUserId,
         script.id,
       );
@@ -806,7 +806,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         // If the current state matches what we would have produced, treat
         // as an idempotent retry. Otherwise it's a genuine invalid op.
         const latest = await loadProgress(
-          organizationId,
+          tenantId,
           endUserId,
           script.id,
         );
@@ -834,7 +834,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
       if (chosenOption && (chosenOption.rewards ?? []).length > 0) {
         const rewards = chosenOption.rewards!;
         const didGrant = await grantIfNew(
-          organizationId,
+          tenantId,
           endUserId,
           rewards,
           SOURCE_OPTION,
@@ -860,7 +860,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         const enterRewards = nextNode.onEnter?.rewards ?? [];
         if (enterRewards.length > 0) {
           const didGrant = await grantIfNew(
-            organizationId,
+            tenantId,
             endUserId,
             enterRewards,
             SOURCE_ENTER,
@@ -876,7 +876,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         }
       }
 
-      trackDialogue("dialogue.advanced", organizationId, endUserId, {
+      trackDialogue("dialogue.advanced", tenantId, endUserId, {
         scriptId: script.id,
         scriptAlias: script.alias,
         fromNodeId: fromNode.id,
@@ -884,7 +884,7 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         grantedCount: granted.length,
       });
 
-      const characters = await loadCharactersForScript(organizationId, script);
+      const characters = await loadCharactersForScript(tenantId, script);
       return buildSessionView(script, effectiveProgress, granted, characters);
     },
 
@@ -895,22 +895,22 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
      * re-grant rewards — see file header.
      */
     async reset(
-      organizationId: string,
+      tenantId: string,
       endUserId: string,
       alias: string,
     ): Promise<DialogueSessionView> {
-      const script = await loadScriptByAlias(organizationId, alias);
+      const script = await loadScriptByAlias(tenantId, alias);
       if (!script.repeatable) throw new DialogueNotRepeatable(alias);
 
       const progress = await loadProgress(
-        organizationId,
+        tenantId,
         endUserId,
         script.id,
       );
       if (!progress) {
         // No progress yet — calling reset is effectively a no-op; fall
         // through to a normal start so clients don't have to branch.
-        return this.start(organizationId, endUserId, alias);
+        return this.start(tenantId, endUserId, alias);
       }
 
       const [row] = await db
@@ -926,12 +926,12 @@ export function createDialogueService(d: DialogueDeps, itemSvc: ItemService) {
         throw new DialogueProgressNotFound(alias, endUserId);
       }
 
-      trackDialogue("dialogue.reset", organizationId, endUserId, {
+      trackDialogue("dialogue.reset", tenantId, endUserId, {
         scriptId: script.id,
         scriptAlias: script.alias,
       });
 
-      const characters = await loadCharactersForScript(organizationId, script);
+      const characters = await loadCharactersForScript(tenantId, script);
       return buildSessionView(script, row, [], characters);
     },
   };

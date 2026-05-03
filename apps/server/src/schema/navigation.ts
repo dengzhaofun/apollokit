@@ -7,13 +7,13 @@ import {
 } from "drizzle-orm/pg-core"
 
 import { fractionalSortKey } from "./_fractional-sort";
-import { organization, user } from "./auth"
+import { team, user } from "./auth"
 
 /**
  * Navigation favorites — per-user, per-org pinned routes shown in the
  * admin sidebar's "Favorites" group above the main navigation.
  *
- * Scope is `(organizationId, userId)`: every project keeps its own
+ * Scope is `(tenantId, userId)`: every project keeps its own
  * pinned set so an operator working on a marketing-heavy project and a
  * commerce-heavy project doesn't see the same shortlist in both.
  *
@@ -35,9 +35,9 @@ export const navigationFavorites = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -51,12 +51,12 @@ export const navigationFavorites = pgTable(
   },
   (t) => [
     uniqueIndex("navigation_favorites_unique").on(
-      t.organizationId,
+      t.tenantId,
       t.userId,
       t.routePath,
     ),
     index("navigation_favorites_lookup").on(
-      t.organizationId,
+      t.tenantId,
       t.userId,
     ),
   ],

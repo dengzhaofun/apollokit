@@ -137,7 +137,7 @@ export const GroupAliasParamSchema = z.object({
 export const BannerGroupResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -153,7 +153,7 @@ export const BannerGroupResponseSchema = z
 export const BannerResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     groupId: z.string(),
     title: z.string(),
     imageUrlMobile: z.string(),

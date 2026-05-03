@@ -23,7 +23,7 @@ import type { CreatePoolInput } from "#/lib/types/lottery"
 import type { CreateMailInput } from "#/lib/types/mail"
 import type { CreateRankSeasonInput } from "#/lib/types/rank"
 import type { CreateShopProductInput } from "#/lib/types/shop"
-import type { CreateTeamConfigInput } from "#/lib/types/team"
+import type { CreateMatchSquadConfigInput } from "#/lib/types/match-squad"
 
 import type { AnnouncementFormApi } from "../announcement/use-announcement-form"
 import type { AssistPoolFormApi } from "../assist-pool/use-config-form"
@@ -38,7 +38,7 @@ import type { LotteryPoolFormApi } from "../lottery/use-pool-form"
 import type { MessageFormApi } from "../mail/use-message-form"
 import type { SeasonFormApi as RankSeasonFormApi } from "../rank/use-season-form"
 import type { ProductFormApi as ShopProductFormApi } from "../shop/use-product-form"
-import type { TeamConfigFormApi } from "../team/use-config-form"
+import type { MatchSquadConfigFormApi } from "../match-squad/use-config-form"
 
 /**
  * Apply an `applyCheckInConfig` tool input to the live check-in create
@@ -330,10 +330,10 @@ export function applyLotteryToForm(
   }
 }
 
-/** Apply an `applyTeamConfig` tool input to the team config form. */
-export function applyTeamToForm(
-  form: TeamConfigFormApi,
-  input: CreateTeamConfigInput,
+/** Apply an `applyMatchSquadConfig` tool input to the team config form. */
+export function applyMatchSquadToForm(
+  form: MatchSquadConfigFormApi,
+  input: CreateMatchSquadConfigInput,
 ) {
   if (input.name !== undefined) form.setFieldValue("name", input.name)
   if (input.alias !== undefined) form.setFieldValue("alias", input.alias ?? "")

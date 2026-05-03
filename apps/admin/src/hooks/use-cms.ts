@@ -43,7 +43,7 @@ export function useCmsTypes(route: any) {
     filterDefs: CMS_TYPE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsType>>(
-        `/api/cms/types?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/cms/types?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -55,7 +55,7 @@ export function useAllCmsTypes(opts: { status?: CmsTypeStatus } = {}) {
     queryKey: [...TYPES_KEY, "all", { status: status ?? null }],
     queryFn: () =>
       api
-        .get<Page<CmsType>>(`/api/cms/types?${buildQs({ limit: 200, status })}`)
+        .get<Page<CmsType>>(`/api/v1/cms/types?${buildQs({ limit: 200, status })}`)
         .then((p) => p.items),
   })
 }
@@ -63,7 +63,7 @@ export function useAllCmsTypes(opts: { status?: CmsTypeStatus } = {}) {
 export function useCmsType(typeKey: string | undefined) {
   return useQuery({
     queryKey: [...TYPES_KEY, "single", typeKey ?? ""],
-    queryFn: () => api.get<CmsType>(`/api/cms/types/${typeKey}`),
+    queryFn: () => api.get<CmsType>(`/api/v1/cms/types/${typeKey}`),
     enabled: !!typeKey,
   })
 }
@@ -72,7 +72,7 @@ export function useCreateCmsType() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCmsTypeInput) =>
-      api.post<CmsType>("/api/cms/types", input),
+      api.post<CmsType>("/api/v1/cms/types", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: TYPES_KEY }),
   })
 }
@@ -84,7 +84,7 @@ export function useUpdateCmsType() {
       typeKey,
       ...input
     }: UpdateCmsTypeInput & { typeKey: string }) =>
-      api.patch<CmsType>(`/api/cms/types/${typeKey}`, input),
+      api.patch<CmsType>(`/api/v1/cms/types/${typeKey}`, input),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: TYPES_KEY })
       qc.invalidateQueries({
@@ -97,7 +97,7 @@ export function useUpdateCmsType() {
 export function useDeleteCmsType() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (typeKey: string) => api.delete(`/api/cms/types/${typeKey}`),
+    mutationFn: (typeKey: string) => api.delete(`/api/v1/cms/types/${typeKey}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: TYPES_KEY }),
   })
 }
@@ -144,7 +144,7 @@ export function useCmsEntries(
     filterDefs: CMS_ENTRY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsEntry>>(
-        `/api/cms/types/${typeAlias}/entries?${buildQs({
+        `/api/v1/cms/types/${typeAlias}/entries?${buildQs({
           cursor,
           limit,
           q,
@@ -166,7 +166,7 @@ export function useCmsEntry(
   return useQuery({
     queryKey: [...entriesKey(typeAlias ?? ""), "single", entryKey ?? ""],
     queryFn: () =>
-      api.get<CmsEntry>(`/api/cms/types/${typeAlias}/entries/${entryKey}`),
+      api.get<CmsEntry>(`/api/v1/cms/types/${typeAlias}/entries/${entryKey}`),
     enabled: !!typeAlias && !!entryKey,
   })
 }
@@ -175,7 +175,7 @@ export function useCreateCmsEntry(typeAlias: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCmsEntryInput) =>
-      api.post<CmsEntry>(`/api/cms/types/${typeAlias}/entries`, input),
+      api.post<CmsEntry>(`/api/v1/cms/types/${typeAlias}/entries`, input),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: entriesKey(typeAlias) }),
   })
@@ -189,7 +189,7 @@ export function useUpdateCmsEntry(typeAlias: string) {
       ...input
     }: UpdateCmsEntryInput & { entryKey: string }) =>
       api.patch<CmsEntry>(
-        `/api/cms/types/${typeAlias}/entries/${entryKey}`,
+        `/api/v1/cms/types/${typeAlias}/entries/${entryKey}`,
         input,
       ),
     onSuccess: () =>
@@ -201,7 +201,7 @@ export function useDeleteCmsEntry(typeAlias: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (entryKey: string) =>
-      api.delete(`/api/cms/types/${typeAlias}/entries/${entryKey}`),
+      api.delete(`/api/v1/cms/types/${typeAlias}/entries/${entryKey}`),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: entriesKey(typeAlias) }),
   })
@@ -212,7 +212,7 @@ export function usePublishCmsEntry(typeAlias: string) {
   return useMutation({
     mutationFn: (entryKey: string) =>
       api.post<CmsEntry>(
-        `/api/cms/types/${typeAlias}/entries/${entryKey}/publish`,
+        `/api/v1/cms/types/${typeAlias}/entries/${entryKey}/publish`,
         undefined,
       ),
     onSuccess: () =>
@@ -225,7 +225,7 @@ export function useUnpublishCmsEntry(typeAlias: string) {
   return useMutation({
     mutationFn: (entryKey: string) =>
       api.post<CmsEntry>(
-        `/api/cms/types/${typeAlias}/entries/${entryKey}/unpublish`,
+        `/api/v1/cms/types/${typeAlias}/entries/${entryKey}/unpublish`,
         undefined,
       ),
     onSuccess: () =>

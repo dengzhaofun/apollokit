@@ -16,37 +16,29 @@ import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 
 /**
- * First-run project onboarding.
+ * First-run project onboarding (Sentry-style).
  *
- * `_dashboard.tsx` redirects here when `session.session.activeOrganizationId`
- * is null. Two sub-cases, handled by the same route:
+ * Sign-up auto-provisions an organization + a "Default project" team server-side
+ * (see `databaseHooks.user.create.after` in `apps/server/src/auth.ts`),
+ * so by the time we get here the user already has org + team rows. The
+ * UI's only job is to let them rename "Default project" to something
+ * meaningful before landing on the dashboard.
  *
- *  - User has zero projects → render the "create your first project" form.
- *    On submit: `organization.create` → `organization.setActive` →
- *    refresh session cache (so `activeOrganizationId` propagates without
- *    requiring sign-out) → navigate to `/dashboard`.
- *  - User has ≥1 projects but session lost the active one (e.g. the old
- *    `session.create.before` hook was removed, or Better Auth session
- *    was rebuilt mid-flight) → silently `setActive(firstProject)` and
- *    bounce to `/dashboard`. No UI flash.
+ * `_dashboard.tsx` redirects here when `session.session.activeTeamId`
+ * is null — which can still happen for old/test users created before
+ * the auto-provisioning hook landed. For those we silently bootstrap
+ * (find first org → setActive → bounce to dashboard) without showing a
+ * form, since there's nothing meaningful to ask.
  *
  * The page lives OUTSIDE `_dashboard` on purpose: the dashboard layout
  * mounts sidebar + command palette + project-scoped data hooks, all of
- * which assume `activeOrganizationId` is present. Rendering any part
- * of that shell from an unscoped session is what produces the silent
- * 401 cascade this page exists to prevent.
+ * which assume `activeTeamId` is present.
  */
 export const Route = createFileRoute("/onboarding/create-project")({
   head: () => seo({ title: "Create project", noindex: true }),
   component: CreateProjectPage,
 })
 
-/**
- * SSR gate — `better-auth/react`'s `useSession` dies under Vite SSR due
- * to a dual-React-package hazard (see `_dashboard.tsx` for the same
- * workaround). Render a skeleton on the server + first client tick,
- * then mount the session-aware component.
- */
 function CreateProjectPage() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -63,22 +55,13 @@ function CreateProjectPage() {
   return <CreateProjectClient />
 }
 
-function slugify(name: string): string {
-  const base = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40)
-  return base ? `${base}-${Date.now().toString(36)}` : `project-${Date.now().toString(36)}`
-}
-
 function CreateProjectClient() {
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [name, setName] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
+  const [defaultTeamId, setDefaultTeamId] = useState<string | null>(null)
   // StrictMode double-invoke guard for the auto-setActive path.
   const autoRan = useRef(false)
 
@@ -88,7 +71,7 @@ function CreateProjectClient() {
       navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
       return
     }
-    if (session.session.activeOrganizationId) {
+    if (session.session.activeTeamId) {
       navigate({ to: "/dashboard", replace: true })
       return
     }
@@ -96,12 +79,37 @@ function CreateProjectClient() {
     autoRan.current = true
     ;(async () => {
       const { data: orgs } = await authClient.organization.list()
-      if (orgs && orgs.length > 0) {
-        await authClient.organization.setActive({ organizationId: orgs[0].id })
-        await authClient.getSession({ query: { disableCookieCache: true } })
+      if (!orgs || orgs.length === 0) {
+        // Edge case: user signed up but auto-provisioning didn't run.
+        // Bounce to sign-out so they retry — shouldn't happen in practice.
+        toast.error("No organization found. Please sign in again.")
+        navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
+        return
+      }
+      // Set the auto-created org as active and prep the rename form
+      // against the auto-created "Default project".
+      const orgId = orgs[0].id
+      await authClient.organization.setActive({ organizationId: orgId })
+      await authClient.getSession({ query: { disableCookieCache: true } })
+
+      type ListTeamsArg = { query: { organizationId: string } }
+      const teamsRes = await (
+        authClient.organization as unknown as {
+          listTeams: (args: ListTeamsArg) => Promise<{
+            data?: Array<{ id: string; name: string }> | null
+          }>
+        }
+      ).listTeams({ query: { organizationId: orgId } })
+      const teams = teamsRes?.data ?? []
+      if (teams.length === 0) {
+        // Even more edge: org exists but no team. Skip onboarding form
+        // and let the user create one from Settings later.
         navigate({ to: "/dashboard", replace: true })
         return
       }
+      const firstTeam = teams[0]
+      setDefaultTeamId(firstTeam.id)
+      setName(firstTeam.name === "Default project" ? "" : firstTeam.name)
       setBootstrapping(false)
     })().catch(() => {
       setBootstrapping(false)
@@ -110,23 +118,39 @@ function CreateProjectClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || submitting) return
+    if (!name.trim() || submitting || !defaultTeamId) return
     setSubmitting(true)
     try {
-      const { data: created, error } = await authClient.organization.create({
-        name: name.trim(),
-        slug: slugify(name),
-      })
-      if (error || !created) {
-        toast.error(error?.message ?? "Failed to create project")
+      type UpdateTeamArgs = { teamId: string; data: { name: string } }
+      const { error } = await (
+        authClient.organization as unknown as {
+          updateTeam: (
+            args: UpdateTeamArgs,
+          ) => Promise<{ data?: unknown; error?: { message?: string } | null }>
+        }
+      ).updateTeam({ teamId: defaultTeamId, data: { name: name.trim() } })
+      if (error) {
+        toast.error(error.message ?? "Failed to rename project")
         setSubmitting(false)
         return
       }
-      await authClient.organization.setActive({ organizationId: created.id })
+      await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
       await authClient.getSession({ query: { disableCookieCache: true } })
       navigate({ to: "/dashboard", replace: true })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create project")
+      toast.error(err instanceof Error ? err.message : "Failed to rename project")
+      setSubmitting(false)
+    }
+  }
+
+  async function handleSkip() {
+    if (!defaultTeamId || submitting) return
+    setSubmitting(true)
+    try {
+      await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
+      await authClient.getSession({ query: { disableCookieCache: true } })
+      navigate({ to: "/dashboard", replace: true })
+    } catch {
       setSubmitting(false)
     }
   }
@@ -143,10 +167,11 @@ function CreateProjectClient() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-4 py-14">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Create your project</CardTitle>
+          <CardTitle>Name your first project</CardTitle>
           <CardDescription>
-            ApolloKit is multi-tenant — every workspace is a project.
-            Give yours a name to continue.
+            We created a workspace for you. Give your first project a
+            name — your game, app, or environment. You can add more
+            projects, rename, or transfer them later from Settings.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,8 +181,7 @@ function CreateProjectClient() {
               <Input
                 id="project-name"
                 autoFocus
-                autoComplete="organization"
-                placeholder="Acme Games"
+                placeholder="My Game"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -165,9 +189,23 @@ function CreateProjectClient() {
                 maxLength={80}
               />
             </div>
-            <Button type="submit" disabled={submitting || !name.trim()}>
-              {submitting ? "Creating…" : "Create project"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                disabled={submitting || !name.trim()}
+                className="flex-1"
+              >
+                {submitting ? "Saving…" : "Continue"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={submitting}
+                onClick={handleSkip}
+              >
+                Skip
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

@@ -10,13 +10,13 @@
  *   - 36 个业务模块，per-router 挂会忘一个就漏一类；
  *   - 全局挂 + 内部用 `path/method/status` 过滤就能精确决定要不要写。
  *
- * **过滤规则**：只审计能稳定归属到一个 org 的"管理员对业务资源做的写操作"：
+ * **过滤规则**：只审计能稳定归属到一个 team(=tenant=project) 的"管理员对业务资源做的写操作"：
  *   - method ∈ {POST, PUT, PATCH, DELETE}（GET/HEAD 不写，已有 http_requests）
  *   - path 必须以 `/api/` 开头，且**不**进入：
  *       · `/api/auth/*`           Better Auth 自管，第三方授权流程
- *       · `/api/client/*`         end-user 流量，不是管理员操作
- *       · `/api/audit-logs/*`     这个模块只暴露 GET，理论上不会进；保险跳过
- *   - 必须有 `activeOrganizationId`（未认证或没有 active org 时跳过）
+ *       · `/api/v1/client/*`         end-user 流量，不是管理员操作
+ *       · `/api/v1/audit-logs/*`     这个模块只暴露 GET，理论上不会进；保险跳过
+ *   - 必须有 `activeTeamId`（未认证或没有 active project 时跳过）
  *   - 响应状态：成功（2xx）或业务冲突（409）才写。4xx/5xx（验证失败、auth
  *     失败、role 拒绝、内部错误）已由 `http_requests` 留痕，不污染审计表。
  *
@@ -42,10 +42,14 @@ import { insertAuditRow } from "../lib/audit-log-insert";
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /**
- * 不审计这些前缀。`/api/audit-logs` 自身 router 只暴露 GET，理论上不会触发，
- * 但留在白名单避免未来手滑加端点造成审计自反馈。
+ * 不审计这些前缀:
+ *   `/api/auth/*`             Better Auth 自管(没有 v1 前缀,它独立)
+ *   `/api/v1/client/*`        end-user 流量,不是 admin 操作
+ *   `/api/v1/audit-logs/*`    自我反馈防护
+ *   `/api/v1/projects/:id/.*` 公开 API 路径(等价于 admin 路径,不重复审计)
  */
-const SKIP_PATH_RE = /^\/api\/(auth|client|audit-logs)(\/|$)/;
+const SKIP_PATH_RE =
+  /^\/api\/(auth\/|v1\/(client|audit-logs|projects)\/)/;
 
 export const auditLog = createMiddleware<HonoEnv>(async (c, next) => {
   const method = c.req.method.toUpperCase();
@@ -69,8 +73,8 @@ export const auditLog = createMiddleware<HonoEnv>(async (c, next) => {
   // service 层显式 skip ⇒ 直接放弃这一行
   if (detail.skip) return;
 
-  const orgId = c.get("session")?.activeOrganizationId ?? null;
-  if (!orgId) return; // 未认证 / 没 active org
+  const tenantId = c.get("session")?.activeTeamId ?? null;
+  if (!tenantId) return; // 未认证 / 没 active project
 
   const status = c.res.status;
   // 仅成功（2xx）和业务冲突（409）写审计。其它失败已在 http_requests。
@@ -105,12 +109,15 @@ export const auditLog = createMiddleware<HonoEnv>(async (c, next) => {
     method === "POST" ? "create" : method === "DELETE" ? "delete" : "update";
   const action = detail.action ?? defaultAction;
 
-  // resourceType 兜底：从 path 第二段（`/api/<name>/...`）推断
-  const moduleSegment = path.split("/")[2] ?? "unknown";
+  // resourceType 兜底：从 path 第三段（`/api/v1/<name>/...`）推断 module
+  // 名称。所有 admin 业务路径都在 /api/v1 下,所以位置 [2] 永远是 "v1",
+  // 真正的 module 段在 [3]。
+  const segs = path.split("/");
+  const moduleSegment = segs[2] === "v1" ? (segs[3] ?? "unknown") : (segs[2] ?? "unknown");
   const resourceType = detail.resourceType ?? `module:${moduleSegment}`;
 
   const row = {
-    organizationId: orgId,
+    tenantId,
     actorType: actor.type,
     actorId: actor.id,
     actorLabel: actor.label,

@@ -146,7 +146,7 @@ export function createBannerService(d: BannerDeps) {
   const { db } = d;
 
   async function loadGroupById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<BannerGroup> {
     const rows = await db
@@ -155,7 +155,7 @@ export function createBannerService(d: BannerDeps) {
       .where(
         and(
           eq(bannerGroups.id, id),
-          eq(bannerGroups.organizationId, organizationId),
+          eq(bannerGroups.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -164,7 +164,7 @@ export function createBannerService(d: BannerDeps) {
   }
 
   async function loadGroupByAlias(
-    organizationId: string,
+    tenantId: string,
     alias: string,
   ): Promise<BannerGroup> {
     const rows = await db
@@ -173,7 +173,7 @@ export function createBannerService(d: BannerDeps) {
       .where(
         and(
           eq(bannerGroups.alias, alias),
-          eq(bannerGroups.organizationId, organizationId),
+          eq(bannerGroups.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -182,7 +182,7 @@ export function createBannerService(d: BannerDeps) {
   }
 
   async function loadBannerById(
-    organizationId: string,
+    tenantId: string,
     id: string,
   ): Promise<Banner> {
     const rows = await db
@@ -191,7 +191,7 @@ export function createBannerService(d: BannerDeps) {
       .where(
         and(
           eq(banners.id, id),
-          eq(banners.organizationId, organizationId),
+          eq(banners.tenantId, tenantId),
         ),
       )
       .limit(1);
@@ -203,14 +203,14 @@ export function createBannerService(d: BannerDeps) {
     // ─── Admin — groups ────────────────────────────────────────
 
     async createGroup(
-      organizationId: string,
+      tenantId: string,
       input: CreateBannerGroupInput,
     ): Promise<BannerGroup> {
       try {
         const [row] = await db
           .insert(bannerGroups)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias ?? null,
             name: input.name,
             description: input.description ?? null,
@@ -233,13 +233,13 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async updateGroup(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateBannerGroupInput,
     ): Promise<BannerGroup> {
       // Ensure the row exists in this org before UPDATE (explicit 404 beats
       // "0 rows affected" ambiguity).
-      await loadGroupById(organizationId, id);
+      await loadGroupById(tenantId, id);
       const patch: Record<string, unknown> = {};
       if (input.alias !== undefined) patch.alias = input.alias;
       if (input.name !== undefined) patch.name = input.name;
@@ -252,7 +252,7 @@ export function createBannerService(d: BannerDeps) {
         patch.activityNodeId = input.activityNodeId;
       if (input.metadata !== undefined) patch.metadata = input.metadata;
       if (Object.keys(patch).length === 0) {
-        return loadGroupById(organizationId, id);
+        return loadGroupById(tenantId, id);
       }
       try {
         const [row] = await db
@@ -261,7 +261,7 @@ export function createBannerService(d: BannerDeps) {
           .where(
             and(
               eq(bannerGroups.id, id),
-              eq(bannerGroups.organizationId, organizationId),
+              eq(bannerGroups.tenantId, tenantId),
             ),
           )
           .returning();
@@ -275,13 +275,13 @@ export function createBannerService(d: BannerDeps) {
       }
     },
 
-    async deleteGroup(organizationId: string, id: string): Promise<void> {
+    async deleteGroup(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(bannerGroups)
         .where(
           and(
             eq(bannerGroups.id, id),
-            eq(bannerGroups.organizationId, organizationId),
+            eq(bannerGroups.tenantId, tenantId),
           ),
         )
         .returning({ id: bannerGroups.id });
@@ -296,11 +296,11 @@ export function createBannerService(d: BannerDeps) {
      * list everything.
      */
     async listGroups(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
     ): Promise<Page<BannerGroup>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(bannerGroups.organizationId, organizationId)];
+      const conds: SQL[] = [eq(bannerGroups.tenantId, tenantId)];
       if (filter.activityId) {
         conds.push(eq(bannerGroups.activityId, filter.activityId));
       } else if (!filter.includeActivity) {
@@ -323,20 +323,20 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async getGroup(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<BannerGroup> {
-      return loadGroupById(organizationId, id);
+      return loadGroupById(tenantId, id);
     },
 
     // ─── Admin — banners within a group ────────────────────────
 
     async createBanner(
-      organizationId: string,
+      tenantId: string,
       groupId: string,
       input: CreateBannerInput,
     ): Promise<Banner> {
-      await loadGroupById(organizationId, groupId); // 404 on wrong org/group
+      await loadGroupById(tenantId, groupId); // 404 on wrong org/group
       validateTargeting(input);
       validateVisibilityWindow(input);
 
@@ -348,7 +348,7 @@ export function createBannerService(d: BannerDeps) {
         table: banners,
         sortColumn: banners.sortOrder,
         scopeWhere: and(
-          eq(banners.organizationId, organizationId),
+          eq(banners.tenantId, tenantId),
           eq(banners.groupId, groupId),
         )!,
       });
@@ -356,7 +356,7 @@ export function createBannerService(d: BannerDeps) {
       const [row] = await db
         .insert(banners)
         .values({
-          organizationId,
+          tenantId,
           groupId,
           title: input.title,
           imageUrlMobile: input.imageUrlMobile,
@@ -377,11 +377,11 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async updateBanner(
-      organizationId: string,
+      tenantId: string,
       id: string,
       input: UpdateBannerInput,
     ): Promise<Banner> {
-      const existing = await loadBannerById(organizationId, id);
+      const existing = await loadBannerById(tenantId, id);
 
       // Re-validate targeting + window with merged values so partial updates
       // can't leave the row in an inconsistent state.
@@ -443,7 +443,7 @@ export function createBannerService(d: BannerDeps) {
         .where(
           and(
             eq(banners.id, id),
-            eq(banners.organizationId, organizationId),
+            eq(banners.tenantId, tenantId),
           ),
         )
         .returning();
@@ -452,7 +452,7 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async deleteBanner(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<void> {
       const deleted = await db
@@ -460,7 +460,7 @@ export function createBannerService(d: BannerDeps) {
         .where(
           and(
             eq(banners.id, id),
-            eq(banners.organizationId, organizationId),
+            eq(banners.tenantId, tenantId),
           ),
         )
         .returning({ id: banners.id });
@@ -468,14 +468,14 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async listBanners(
-      organizationId: string,
+      tenantId: string,
       groupId: string,
       params: PageParams = {},
     ): Promise<Page<Banner>> {
-      await loadGroupById(organizationId, groupId);
+      await loadGroupById(tenantId, groupId);
       const limit = clampLimit(params.limit);
       const conds: SQL[] = [
-        eq(banners.organizationId, organizationId),
+        eq(banners.tenantId, tenantId),
         eq(banners.groupId, groupId),
       ];
       if (params.q) {
@@ -498,25 +498,25 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async getBanner(
-      organizationId: string,
+      tenantId: string,
       id: string,
     ): Promise<Banner> {
-      return loadBannerById(organizationId, id);
+      return loadBannerById(tenantId, id);
     },
 
     async reorderBanners(
-      organizationId: string,
+      tenantId: string,
       groupId: string,
       orderedIds: string[],
     ): Promise<Banner[]> {
-      await loadGroupById(organizationId, groupId);
+      await loadGroupById(tenantId, groupId);
 
       const rows = await db
         .select({ id: banners.id })
         .from(banners)
         .where(
           and(
-            eq(banners.organizationId, organizationId),
+            eq(banners.tenantId, tenantId),
             eq(banners.groupId, groupId),
           ),
         );
@@ -548,7 +548,7 @@ export function createBannerService(d: BannerDeps) {
             .where(
               and(
                 eq(banners.id, id),
-                eq(banners.organizationId, organizationId),
+                eq(banners.tenantId, tenantId),
                 eq(banners.groupId, groupId),
               ),
             ),
@@ -560,7 +560,7 @@ export function createBannerService(d: BannerDeps) {
         .from(banners)
         .where(
           and(
-            eq(banners.organizationId, organizationId),
+            eq(banners.tenantId, tenantId),
             eq(banners.groupId, groupId),
           ),
         )
@@ -568,14 +568,14 @@ export function createBannerService(d: BannerDeps) {
     },
 
     async moveBanner(
-      organizationId: string,
+      tenantId: string,
       id: string,
       body: MoveBody,
     ): Promise<Banner> {
-      const existing = await loadBannerById(organizationId, id);
+      const existing = await loadBannerById(tenantId, id);
 
       const scopeWhere = and(
-        eq(banners.organizationId, organizationId),
+        eq(banners.tenantId, tenantId),
         eq(banners.groupId, existing.groupId),
         sql`${banners.id} <> ${id}`,
       )!;
@@ -596,7 +596,7 @@ export function createBannerService(d: BannerDeps) {
               .where(
                 and(
                   eq(banners.id, siblingId),
-                  eq(banners.organizationId, organizationId),
+                  eq(banners.tenantId, tenantId),
                   eq(banners.groupId, existing.groupId),
                 ),
               )
@@ -617,7 +617,7 @@ export function createBannerService(d: BannerDeps) {
         .where(
           and(
             eq(banners.id, id),
-            eq(banners.organizationId, organizationId),
+            eq(banners.tenantId, tenantId),
           ),
         )
         .returning();
@@ -636,12 +636,12 @@ export function createBannerService(d: BannerDeps) {
      * doesn't exist" via HTTP status (200 + empty vs 404).
      */
     async getClientGroupByAlias(
-      organizationId: string,
+      tenantId: string,
       alias: string,
       endUserId: string,
       nowParam?: Date,
     ): Promise<ClientBannerGroup> {
-      const group = await loadGroupByAlias(organizationId, alias);
+      const group = await loadGroupByAlias(tenantId, alias);
       if (!group.alias) {
         // Defensive — we queried by alias so this shouldn't happen, but the
         // type system doesn't know that.
@@ -664,7 +664,7 @@ export function createBannerService(d: BannerDeps) {
 
       // Visibility predicate. Multicast uses jsonb containment (GIN-backed).
       const visibilityClauses = and(
-        eq(banners.organizationId, organizationId),
+        eq(banners.tenantId, tenantId),
         eq(banners.groupId, group.id),
         eq(banners.isActive, true),
         or(isNull(banners.visibleFrom), sql`${banners.visibleFrom} <= ${now}`),

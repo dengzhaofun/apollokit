@@ -13,7 +13,7 @@ import {
 
 import { fractionalSortKey } from "./_fractional-sort";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 import { currencies } from "./currency";
 
 /**
@@ -38,9 +38,9 @@ export const storageBoxConfigs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -68,9 +68,9 @@ export const storageBoxConfigs = pgTable(
       .notNull(),
   },
   (table) => [
-    index("storage_box_configs_org_idx").on(table.organizationId),
-    uniqueIndex("storage_box_configs_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("storage_box_configs_tenant_idx").on(table.tenantId),
+    uniqueIndex("storage_box_configs_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -102,7 +102,7 @@ export const storageBoxDeposits = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     boxConfigId: uuid("box_config_id")
       .notNull()
@@ -126,8 +126,8 @@ export const storageBoxDeposits = pgTable(
       .notNull(),
   },
   (table) => [
-    index("storage_box_deposits_org_user_idx").on(
-      table.organizationId,
+    index("storage_box_deposits_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("storage_box_deposits_box_idx").on(table.boxConfigId),
@@ -135,7 +135,7 @@ export const storageBoxDeposits = pgTable(
     // (org, user, box, currency). Enables ON CONFLICT DO UPDATE upsert.
     uniqueIndex("storage_box_deposits_demand_uidx")
       .on(
-        table.organizationId,
+        table.tenantId,
         table.endUserId,
         table.boxConfigId,
         table.currencyDefinitionId,
@@ -157,7 +157,7 @@ export const storageBoxLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     endUserId: text("end_user_id").notNull(),
     depositId: uuid("deposit_id").notNull(),
     boxConfigId: uuid("box_config_id").notNull(),
@@ -171,8 +171,8 @@ export const storageBoxLogs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("storage_box_logs_org_user_idx").on(
-      table.organizationId,
+    index("storage_box_logs_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
     index("storage_box_logs_deposit_idx").on(table.depositId),

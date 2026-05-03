@@ -131,7 +131,7 @@ describe("media-library service", () => {
   test("upload happy path lands in default folder when folderId omitted", async () => {
     const def = await svc.ensureDefaultFolder(orgId, null);
     const asset = await svc.uploadAsset({
-      organizationId: orgId,
+      tenantId: orgId,
       folderId: null,
       filename: "cover.png",
       mimeType: "image/png",
@@ -147,7 +147,7 @@ describe("media-library service", () => {
   test("upload rejects disallowed mime type", async () => {
     await expect(
       svc.uploadAsset({
-        organizationId: orgId,
+        tenantId: orgId,
         folderId: null,
         filename: "hack.exe",
         mimeType: "application/x-msdownload",
@@ -160,7 +160,7 @@ describe("media-library service", () => {
   test("upload rejects oversized file", async () => {
     await expect(
       svc.uploadAsset({
-        organizationId: orgId,
+        tenantId: orgId,
         folderId: null,
         filename: "big.png",
         mimeType: "image/png",
@@ -172,7 +172,7 @@ describe("media-library service", () => {
 
   test("deleteAsset removes row AND storage object", async () => {
     const asset = await svc.uploadAsset({
-      organizationId: orgId,
+      tenantId: orgId,
       folderId: null,
       filename: "tmp.png",
       mimeType: "image/png",
@@ -190,7 +190,7 @@ describe("media-library service", () => {
   test("deleteFolder refuses non-empty folders", async () => {
     const folder = await svc.createFolder(orgId, { name: "tmp-full" }, null);
     await svc.uploadAsset({
-      organizationId: orgId,
+      tenantId: orgId,
       folderId: folder.id,
       filename: "a.png",
       mimeType: "image/png",

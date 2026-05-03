@@ -2,7 +2,7 @@ import type { RewardEntry } from "./rewards"
 
 export interface LotteryPool {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -22,7 +22,7 @@ export interface LotteryPool {
 export interface LotteryTier {
   id: string
   poolId: string
-  organizationId: string
+  tenantId: string
   name: string
   alias: string | null
   baseWeight: number
@@ -39,7 +39,7 @@ export interface LotteryPrize {
   id: string
   tierId: string | null
   poolId: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   rewardItems: RewardEntry[]
@@ -59,7 +59,7 @@ export interface LotteryPrize {
 export interface LotteryPityRule {
   id: string
   poolId: string
-  organizationId: string
+  tenantId: string
   guaranteeTierId: string
   hardPityThreshold: number
   softPityStartAt: number | null

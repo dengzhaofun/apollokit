@@ -12,7 +12,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Media library folders — adjacency list (parentId self-FK).
@@ -34,9 +34,9 @@ export const mediaFolders = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     // Null parent means "root of this org's drive". The self-FK uses
     // ON DELETE RESTRICT so a parent folder can't be dropped while it
     // still has children — the service layer enforces "must be empty"
@@ -55,8 +55,8 @@ export const mediaFolders = pgTable(
       .notNull(),
   },
   (table) => [
-    index("media_folders_org_parent_idx").on(
-      table.organizationId,
+    index("media_folders_tenant_parent_idx").on(
+      table.tenantId,
       table.parentId,
     ),
     // Sibling names are unique within a parent. NULL values compare
@@ -64,14 +64,14 @@ export const mediaFolders = pgTable(
     // one for sibling folders under a real parent, one for root-level
     // folders (parent_id IS NULL). We express both via partial indexes.
     uniqueIndex("media_folders_name_under_parent_uidx")
-      .on(table.organizationId, table.parentId, table.name)
+      .on(table.tenantId, table.parentId, table.name)
       .where(sql`${table.parentId} IS NOT NULL`),
     uniqueIndex("media_folders_name_at_root_uidx")
-      .on(table.organizationId, table.name)
+      .on(table.tenantId, table.name)
       .where(sql`${table.parentId} IS NULL`),
     // At most one default folder per org.
     uniqueIndex("media_folders_org_default_uidx")
-      .on(table.organizationId)
+      .on(table.tenantId)
       .where(sql`${table.isDefault} = true`),
   ],
 );
@@ -94,9 +94,9 @@ export const mediaAssets = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     folderId: uuid("folder_id")
       .notNull()
       .references(() => mediaFolders.id, { onDelete: "restrict" }),
@@ -111,8 +111,8 @@ export const mediaAssets = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("media_assets_org_folder_created_idx").on(
-      table.organizationId,
+    index("media_assets_tenant_folder_created_idx").on(
+      table.tenantId,
       table.folderId,
       table.createdAt,
     ),

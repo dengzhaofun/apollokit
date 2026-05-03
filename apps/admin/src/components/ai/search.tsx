@@ -7,7 +7,7 @@
  *      ghost/outline/destructive/link),不是 CLI 模板里的 `color`;
  *   2. cn 来自 `#/lib/utils`,跟其他业务组件保持一致;
  *   3. useChat sendMessage 时把 `data-locale` part 注入,后端
- *      `routes/api/chat.ts` 据此分片 Orama 索引。
+ *      `routes/api/v1/chat.ts` 据此分片 Orama 索引。
  */
 'use client';
 import {
@@ -36,7 +36,7 @@ import { useChat, type UseChatHelpers } from '@ai-sdk/react';
 import { DefaultChatTransport, type Tool, type UIToolInvocation } from 'ai';
 import { Markdown } from './markdown';
 import * as Presence from '@radix-ui/react-presence';
-import type { ChatUIMessage, SearchDocsTool } from '#/routes/api/chat';
+import type { ChatUIMessage, SearchDocsTool } from '#/routes/api/v1/chat';
 
 const Context = createContext<{
   open: boolean;
@@ -376,7 +376,7 @@ export function AISearch({
   const chat = useChat<ChatUIMessage>({
     id: 'docs-ask-ai',
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: '/api/v1/chat',
     }),
   });
 

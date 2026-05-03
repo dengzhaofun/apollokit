@@ -204,7 +204,7 @@ export const TopQuerySchema = z.object({
     .openapi({
       param: { name: "scopeKey", in: "query" },
       description:
-        "Defaults to organizationId for scope=global; required for guild/team/friend.",
+        "Defaults to tenantId for scope=global; required for guild/team/friend.",
     }),
   limit: z
     .string()
@@ -259,7 +259,7 @@ const RewardTierResponseSchema = z.object({
 export const LeaderboardConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string(),
     name: z.string(),
     description: z.string().nullable(),
@@ -338,7 +338,7 @@ export const SnapshotResponseSchema = z
   .object({
     id: z.string(),
     configId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     cycleKey: z.string(),
     scopeKey: z.string(),
     rankings: z.array(SnapshotRowSchema),

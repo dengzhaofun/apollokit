@@ -1,8 +1,8 @@
 /**
- * Admin-facing HTTP routes for the team module.
+ * Admin-facing HTTP routes for the match-squad module.
  *
- * Guarded by `requireAdminOrApiKey`. Exposes config CRUD, team listing,
- * and admin-level team dissolution.
+ * Guarded by `requireAdminOrApiKey`. Exposes config CRUD, squad listing,
+ * and admin-level squad dissolution.
  */
 
 import type { HonoEnv } from "../../env";
@@ -12,7 +12,7 @@ import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
-import { teamService } from "./index";
+import { matchSquadService } from "./index";
 import {
   ConfigKeyParamSchema,
   ConfigListResponseSchema,
@@ -25,11 +25,11 @@ import {
   UpdateConfigSchema,
 } from "./validators";
 
-const TAG = "Team";
+const TAG = "MatchSquad";
 
 function serializeConfig(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   alias: string | null;
   name: string;
   maxMembers: number;
@@ -41,7 +41,7 @@ function serializeConfig(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     maxMembers: row.maxMembers,
@@ -53,9 +53,9 @@ function serializeConfig(row: {
   };
 }
 
-function serializeTeam(row: {
+function serializeSquad(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   configId: string;
   leaderUserId: string;
   status: string;
@@ -66,16 +66,16 @@ function serializeTeam(row: {
   createdAt: Date;
   updatedAt: Date;
   members?: Array<{
-    teamId: string;
+    squadId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: string;
     joinedAt: Date;
   }>;
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     configId: row.configId,
     leaderUserId: row.leaderUserId,
     status: row.status as "open" | "closed" | "in_game" | "dissolved",
@@ -88,9 +88,9 @@ function serializeTeam(row: {
     ...(row.members
       ? {
           members: row.members.map((m) => ({
-            teamId: m.teamId,
+            squadId: m.squadId,
             endUserId: m.endUserId,
-            organizationId: m.organizationId,
+            tenantId: m.tenantId,
             role: m.role as "leader" | "member",
             joinedAt: m.joinedAt.toISOString(),
           })),
@@ -99,20 +99,20 @@ function serializeTeam(row: {
   };
 }
 
-export const teamRouter = createAdminRouter();
+export const matchSquadRouter = createAdminRouter();
 
-teamRouter.use("*", requireAdminOrApiKey);
-teamRouter.use("*", requirePermissionByMethod("team"));
+matchSquadRouter.use("*", requireAdminOrApiKey);
+matchSquadRouter.use("*", requirePermissionByMethod("matchSquad"));
 
 // ─── Config CRUD ─────────────────────────────────────────────────
 
-// POST /team/configs
-teamRouter.openapi(
+// POST /match-squad/configs
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "post",
     path: "/configs",
     tags: [TAG],
-    summary: "Create a team config for the current project",
+    summary: "Create a squad config for the current project",
     request: {
       body: {
         content: { "application/json": { schema: CreateConfigSchema } },
@@ -130,18 +130,18 @@ teamRouter.openapi(
   }),
   async (c) => {
     const orgId = getOrgId(c);
-    const row = await teamService.createConfig(orgId, c.req.valid("json"));
+    const row = await matchSquadService.createConfig(orgId, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 201);
   },
 );
 
-// GET /team/configs
-teamRouter.openapi(
+// GET /match-squad/configs
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "get",
     path: "/configs",
     tags: [TAG],
-    summary: "List team configs for the current project",
+    summary: "List squad configs for the current project",
     request: { query: PaginationQuerySchema },
     responses: {
       200: {
@@ -153,7 +153,7 @@ teamRouter.openapi(
   }),
   async (c) => {
     const orgId = getOrgId(c);
-    const page = await teamService.listConfigs(orgId, c.req.valid("query"));
+    const page = await matchSquadService.listConfigs(orgId, c.req.valid("query"));
     return c.json(
       ok({ items: page.items.map(serializeConfig), nextCursor: page.nextCursor }),
       200,
@@ -161,13 +161,13 @@ teamRouter.openapi(
   },
 );
 
-// GET /team/configs/:key
-teamRouter.openapi(
+// GET /match-squad/configs/:key
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "get",
     path: "/configs/{key}",
     tags: [TAG],
-    summary: "Fetch a team config by id or alias",
+    summary: "Fetch a squad config by id or alias",
     request: { params: ConfigKeyParamSchema },
     responses: {
       200: {
@@ -182,18 +182,18 @@ teamRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
-    const row = await teamService.getConfig(orgId, key);
+    const row = await matchSquadService.getConfig(orgId, key);
     return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
-// PUT /team/configs/:key
-teamRouter.openapi(
+// PUT /match-squad/configs/:key
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "put",
     path: "/configs/{key}",
     tags: [TAG],
-    summary: "Update a team config",
+    summary: "Update a squad config",
     request: {
       params: ConfigKeyParamSchema,
       body: {
@@ -213,18 +213,18 @@ teamRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
-    const row = await teamService.updateConfig(orgId, key, c.req.valid("json"));
+    const row = await matchSquadService.updateConfig(orgId, key, c.req.valid("json"));
     return c.json(ok(serializeConfig(row)), 200);
   },
 );
 
-// DELETE /team/configs/:key
-teamRouter.openapi(
+// DELETE /match-squad/configs/:key
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "delete",
     path: "/configs/{key}",
     tags: [TAG],
-    summary: "Delete a team config (cascades to teams and members)",
+    summary: "Delete a squad config (cascades to squads and members)",
     request: { params: ConfigKeyParamSchema },
     responses: {
       200: {
@@ -237,18 +237,18 @@ teamRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
-    await teamService.deleteConfig(orgId, key);
+    await matchSquadService.deleteConfig(orgId, key);
     return c.json(ok(null), 200);
   },
 );
 
-// ─── Team admin routes ───────────────────────────────────────────
+// ─── MatchSquad admin routes ───────────────────────────────────────────
 
-// GET /team/teams
-teamRouter.openapi(
+// GET /match-squad/teams
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "get",
-    path: "/teams",
+    path: "/squads",
     tags: [TAG],
     summary: "List teams for the current project",
     request: { query: TeamListQuerySchema },
@@ -265,21 +265,21 @@ teamRouter.openapi(
     const query = c.req.valid("query") as Record<string, unknown> & {
       configKey?: string;
     };
-    const page = await teamService.listTeams(orgId, query);
+    const page = await matchSquadService.listMatchSquads(orgId, query);
     return c.json(
-      ok({ items: page.items.map(serializeTeam), nextCursor: page.nextCursor }),
+      ok({ items: page.items.map(serializeSquad), nextCursor: page.nextCursor }),
       200,
     );
   },
 );
 
-// GET /team/teams/:id
-teamRouter.openapi(
+// GET /match-squad/teams/:id
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "get",
-    path: "/teams/{id}",
+    path: "/squads/{id}",
     tags: [TAG],
-    summary: "Fetch a team by id with members",
+    summary: "Fetch a squad by id with members",
     request: { params: TeamIdParamSchema },
     responses: {
       200: {
@@ -294,18 +294,18 @@ teamRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.getTeam(orgId, id);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.getMatchSquad(orgId, id);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /team/teams/:id/dissolve — admin force dissolve
-teamRouter.openapi(
+// POST /match-squad/teams/:id/dissolve — admin force dissolve
+matchSquadRouter.openapi(
   createAdminRoute({
     method: "post",
-    path: "/teams/{id}/dissolve",
+    path: "/squads/{id}/dissolve",
     tags: [TAG],
-    summary: "Admin force dissolve a team",
+    summary: "Admin force dissolve a squad",
     request: { params: TeamIdParamSchema },
     responses: {
       200: {
@@ -320,7 +320,7 @@ teamRouter.openapi(
   async (c) => {
     const orgId = getOrgId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.adminDissolveTeam(orgId, id);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.adminDissolveMatchSquad(orgId, id);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );

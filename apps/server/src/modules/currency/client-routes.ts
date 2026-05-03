@@ -1,13 +1,13 @@
 /**
  * C-end client routes for the currency module.
  *
- * Mounted at /api/client/currency. Auth pattern:
+ * Mounted at /api/v1/client/currency. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and endUserId from
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and endUserId from
  * getEndUserId(c). No inline verifyRequest calls; no auth fields in body, query, or path.
  *
  * Exposes read-only wallet / balance queries for end users.
@@ -59,7 +59,7 @@ currencyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const wallets = await currencyService.getWallets(orgId, endUserId);
     return c.json(ok({ items: wallets }), 200);
@@ -83,7 +83,7 @@ currencyClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { key } = c.req.valid("param");
     const def = await currencyService.getDefinition(orgId, key);

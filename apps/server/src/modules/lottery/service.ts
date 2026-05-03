@@ -87,7 +87,7 @@ type LotteryDeps = Pick<AppDeps, "db"> & Partial<Pick<AppDeps, "events">>;
 declare module "../../lib/event-bus" {
   interface EventMap {
     "lottery.pulled": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       batchId: string;
       poolId: string;
@@ -106,16 +106,16 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
   // ─── Internal helpers ────────────────────────────────────────
 
   async function loadPoolByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<LotteryPool> {
     const where = looksLikeId(key)
       ? and(
-          eq(lotteryPools.organizationId, organizationId),
+          eq(lotteryPools.tenantId, tenantId),
           eq(lotteryPools.id, key),
         )
       : and(
-          eq(lotteryPools.organizationId, organizationId),
+          eq(lotteryPools.tenantId, tenantId),
           eq(lotteryPools.alias, key),
         );
     const rows = await db.select().from(lotteryPools).where(where).limit(1);
@@ -133,8 +133,8 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     }
   }
 
-  async function loadPoolData(organizationId: string, poolKey: string) {
-    const pool = await loadPoolByKey(organizationId, poolKey);
+  async function loadPoolData(tenantId: string, poolKey: string) {
+    const pool = await loadPoolByKey(tenantId, poolKey);
     const [tiers, prizes, pityRules] = await Promise.all([
       db
         .select()
@@ -157,14 +157,14 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
   async function loadOrInitUserState(
     poolId: string,
     endUserId: string,
-    organizationId: string,
+    tenantId: string,
   ) {
     const upserted = await db
       .insert(lotteryUserStates)
       .values({
         poolId,
         endUserId,
-        organizationId,
+        tenantId,
         totalPullCount: 0,
         pityCounters: {},
       })
@@ -241,14 +241,14 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     // ─── Pool CRUD ─────────────────────────────────────────────
 
     async createPool(
-      organizationId: string,
+      tenantId: string,
       input: CreatePoolInput,
     ): Promise<LotteryPool> {
       try {
         const [row] = await db
           .insert(lotteryPools)
           .values({
-            organizationId,
+            tenantId,
             name: input.name,
             alias: input.alias ?? null,
             description: input.description ?? null,
@@ -273,11 +273,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async updatePool(
-      organizationId: string,
+      tenantId: string,
       id: string,
       patch: UpdatePoolInput,
     ): Promise<LotteryPool> {
-      const existing = await loadPoolByKey(organizationId, id);
+      const existing = await loadPoolByKey(tenantId, id);
       const v: Partial<typeof lotteryPools.$inferInsert> = {};
       if (patch.name !== undefined) v.name = patch.name;
       if (patch.alias !== undefined) v.alias = patch.alias;
@@ -304,7 +304,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(lotteryPools.id, existing.id),
-              eq(lotteryPools.organizationId, organizationId),
+              eq(lotteryPools.tenantId, tenantId),
             ),
           )
           .returning();
@@ -318,13 +318,13 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       }
     },
 
-    async deletePool(organizationId: string, id: string): Promise<void> {
+    async deletePool(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(lotteryPools)
         .where(
           and(
             eq(lotteryPools.id, id),
-            eq(lotteryPools.organizationId, organizationId),
+            eq(lotteryPools.tenantId, tenantId),
           ),
         )
         .returning({ id: lotteryPools.id });
@@ -337,11 +337,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
      * activity's pools, or `{ includeActivity: true }` for everything.
      */
     async listPools(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { includeActivity?: boolean; activityId?: string } = {},
     ): Promise<Page<LotteryPool>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(lotteryPools.organizationId, organizationId)];
+      const conds: SQL[] = [eq(lotteryPools.tenantId, tenantId)];
       if (filter.activityId) {
         conds.push(eq(lotteryPools.activityId, filter.activityId));
       } else if (!filter.includeActivity) {
@@ -364,26 +364,26 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async getPool(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<LotteryPool> {
-      return loadPoolByKey(organizationId, idOrAlias);
+      return loadPoolByKey(tenantId, idOrAlias);
     },
 
     // ─── Tier CRUD ─────────────────────────────────────────────
 
     async createTier(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       input: CreateTierInput,
     ): Promise<LotteryTier> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
-      const __sortKey = await appendKey(db, { table: lotteryTiers, sortColumn: lotteryTiers.sortOrder, scopeWhere: eq(lotteryTiers.organizationId, organizationId)! });
+      const pool = await loadPoolByKey(tenantId, poolKey);
+      const __sortKey = await appendKey(db, { table: lotteryTiers, sortColumn: lotteryTiers.sortOrder, scopeWhere: eq(lotteryTiers.tenantId, tenantId)! });
       const [row] = await db
         .insert(lotteryTiers)
         .values({
           poolId: pool.id,
-          organizationId,
+          tenantId,
           name: input.name,
           alias: input.alias ?? null,
           baseWeight: input.baseWeight,
@@ -399,7 +399,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async updateTier(
-      organizationId: string,
+      tenantId: string,
       tierId: string,
       patch: UpdateTierInput,
     ): Promise<LotteryTier> {
@@ -419,7 +419,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(lotteryTiers.id, tierId),
-              eq(lotteryTiers.organizationId, organizationId),
+              eq(lotteryTiers.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -433,7 +433,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryTiers.id, tierId),
-            eq(lotteryTiers.organizationId, organizationId),
+            eq(lotteryTiers.tenantId, tenantId),
           ),
         )
         .returning();
@@ -442,7 +442,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async moveTier(
-      organizationId: string,
+      tenantId: string,
       tierId: string,
       body: MoveBody,
     ): Promise<LotteryTier> {
@@ -452,7 +452,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryTiers.id, tierId),
-            eq(lotteryTiers.organizationId, organizationId),
+            eq(lotteryTiers.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -463,7 +463,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         sortColumn: lotteryTiers.sortOrder,
         idColumn: lotteryTiers.id,
         partitionWhere: and(
-          eq(lotteryTiers.organizationId, organizationId),
+          eq(lotteryTiers.tenantId, tenantId),
           eq(lotteryTiers.poolId, tier.poolId),
         )!,
         id: tier.id,
@@ -473,7 +473,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async deleteTier(
-      organizationId: string,
+      tenantId: string,
       tierId: string,
     ): Promise<void> {
       const deleted = await db
@@ -481,7 +481,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryTiers.id, tierId),
-            eq(lotteryTiers.organizationId, organizationId),
+            eq(lotteryTiers.tenantId, tenantId),
           ),
         )
         .returning({ id: lotteryTiers.id });
@@ -489,11 +489,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async listTiers(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       params: PageParams = {},
     ): Promise<Page<LotteryTier>> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
+      const pool = await loadPoolByKey(tenantId, poolKey);
       const limit = clampLimit(params.limit);
       const conds: SQL[] = [eq(lotteryTiers.poolId, pool.id)];
       const seek = cursorWhere(params.cursor, lotteryTiers.createdAt, lotteryTiers.id);
@@ -515,19 +515,19 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     // ─── Prize CRUD ────────────────────────────────────────────
 
     async createPrize(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       tierId: string | null,
       input: CreatePrizeInput,
     ): Promise<LotteryPrize> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
-      const __sortKey = await appendKey(db, { table: lotteryPrizes, sortColumn: lotteryPrizes.sortOrder, scopeWhere: eq(lotteryPrizes.organizationId, organizationId)! });
+      const pool = await loadPoolByKey(tenantId, poolKey);
+      const __sortKey = await appendKey(db, { table: lotteryPrizes, sortColumn: lotteryPrizes.sortOrder, scopeWhere: eq(lotteryPrizes.tenantId, tenantId)! });
       const [row] = await db
         .insert(lotteryPrizes)
         .values({
           poolId: pool.id,
           tierId: tierId ?? null,
-          organizationId,
+          tenantId,
           name: input.name,
           description: input.description ?? null,
           rewardItems: input.rewardItems,
@@ -546,7 +546,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async updatePrize(
-      organizationId: string,
+      tenantId: string,
       prizeId: string,
       patch: UpdatePrizeInput,
     ): Promise<LotteryPrize> {
@@ -571,7 +571,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(lotteryPrizes.id, prizeId),
-              eq(lotteryPrizes.organizationId, organizationId),
+              eq(lotteryPrizes.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -585,7 +585,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryPrizes.id, prizeId),
-            eq(lotteryPrizes.organizationId, organizationId),
+            eq(lotteryPrizes.tenantId, tenantId),
           ),
         )
         .returning();
@@ -594,7 +594,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async movePrize(
-      organizationId: string,
+      tenantId: string,
       prizeId: string,
       body: MoveBody,
     ): Promise<LotteryPrize> {
@@ -604,7 +604,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryPrizes.id, prizeId),
-            eq(lotteryPrizes.organizationId, organizationId),
+            eq(lotteryPrizes.tenantId, tenantId),
           ),
         )
         .limit(1);
@@ -615,7 +615,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         sortColumn: lotteryPrizes.sortOrder,
         idColumn: lotteryPrizes.id,
         partitionWhere: and(
-          eq(lotteryPrizes.organizationId, organizationId),
+          eq(lotteryPrizes.tenantId, tenantId),
           eq(lotteryPrizes.poolId, prize.poolId),
         )!,
         id: prize.id,
@@ -625,7 +625,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async deletePrize(
-      organizationId: string,
+      tenantId: string,
       prizeId: string,
     ): Promise<void> {
       const deleted = await db
@@ -633,7 +633,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryPrizes.id, prizeId),
-            eq(lotteryPrizes.organizationId, organizationId),
+            eq(lotteryPrizes.tenantId, tenantId),
           ),
         )
         .returning({ id: lotteryPrizes.id });
@@ -641,11 +641,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async listPrizes(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       params: PageParams = {},
     ): Promise<Page<LotteryPrize>> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
+      const pool = await loadPoolByKey(tenantId, poolKey);
       const limit = clampLimit(params.limit);
       const conds: SQL[] = [eq(lotteryPrizes.poolId, pool.id)];
       const seek = cursorWhere(params.cursor, lotteryPrizes.createdAt, lotteryPrizes.id);
@@ -665,17 +665,17 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     // ─── Pity Rule CRUD ────────────────────────────────────────
 
     async createPityRule(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       input: CreatePityRuleInput,
     ): Promise<LotteryPityRule> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
+      const pool = await loadPoolByKey(tenantId, poolKey);
       try {
         const [row] = await db
           .insert(lotteryPityRules)
           .values({
             poolId: pool.id,
-            organizationId,
+            tenantId,
             guaranteeTierId: input.guaranteeTierId,
             hardPityThreshold: input.hardPityThreshold,
             softPityStartAt: input.softPityStartAt ?? null,
@@ -698,7 +698,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async updatePityRule(
-      organizationId: string,
+      tenantId: string,
       ruleId: string,
       patch: UpdatePityRuleInput,
     ): Promise<LotteryPityRule> {
@@ -719,7 +719,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           .where(
             and(
               eq(lotteryPityRules.id, ruleId),
-              eq(lotteryPityRules.organizationId, organizationId),
+              eq(lotteryPityRules.tenantId, tenantId),
             ),
           )
           .limit(1);
@@ -733,7 +733,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryPityRules.id, ruleId),
-            eq(lotteryPityRules.organizationId, organizationId),
+            eq(lotteryPityRules.tenantId, tenantId),
           ),
         )
         .returning();
@@ -742,7 +742,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async deletePityRule(
-      organizationId: string,
+      tenantId: string,
       ruleId: string,
     ): Promise<void> {
       const deleted = await db
@@ -750,7 +750,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
         .where(
           and(
             eq(lotteryPityRules.id, ruleId),
-            eq(lotteryPityRules.organizationId, organizationId),
+            eq(lotteryPityRules.tenantId, tenantId),
           ),
         )
         .returning({ id: lotteryPityRules.id });
@@ -758,11 +758,11 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async listPityRules(
-      organizationId: string,
+      tenantId: string,
       poolKey: string,
       params: PageParams = {},
     ): Promise<Page<LotteryPityRule>> {
-      const pool = await loadPoolByKey(organizationId, poolKey);
+      const pool = await loadPoolByKey(tenantId, poolKey);
       const limit = clampLimit(params.limit);
       const conds: SQL[] = [eq(lotteryPityRules.poolId, pool.id)];
       const seek = cursorWhere(params.cursor, lotteryPityRules.createdAt, lotteryPityRules.id);
@@ -779,7 +779,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     // ─── Pull execution ────────────────────────────────────────
 
     async pull(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       poolKey: string;
       idempotencyKey?: string;
@@ -820,7 +820,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
 
       // 2. Load pool + validate
       const { pool, tiers, prizes, pityRules } = await loadPoolData(
-        params.organizationId,
+        params.tenantId,
         params.poolKey,
       );
       validatePoolActive(pool);
@@ -854,7 +854,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       const costItems = pool.costPerPull;
       if (costItems.length > 0) {
         await itemSvc.deductItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           deductions: costItems,
           source: "lottery",
@@ -866,7 +866,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       const userState = await loadOrInitUserState(
         pool.id,
         params.endUserId,
-        params.organizationId,
+        params.tenantId,
       );
 
       // 6. Selection with stock fallback
@@ -953,7 +953,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       // 8. Grant reward items
       if (selection.prize.rewardItems.length > 0) {
         await itemSvc.grantItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           grants: selection.prize.rewardItems,
           source: "lottery",
@@ -974,7 +974,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       };
 
       await db.insert(lotteryPullLogs).values({
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         poolId: pool.id,
         endUserId: params.endUserId,
         batchId,
@@ -992,7 +992,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
 
       if (events) {
         await events.emit("lottery.pulled", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           batchId,
           poolId: pool.id,
@@ -1014,7 +1014,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async multiPull(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       poolKey: string;
       count: number;
@@ -1055,7 +1055,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
 
       // 2. Load pool + validate
       const { pool, tiers, prizes, pityRules } = await loadPoolData(
-        params.organizationId,
+        params.tenantId,
         params.poolKey,
       );
       validatePoolActive(pool);
@@ -1091,7 +1091,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       } as RewardEntry));
       if (totalCost.length > 0) {
         await itemSvc.deductItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           deductions: totalCost,
           source: "lottery",
@@ -1103,7 +1103,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       const userState = await loadOrInitUserState(
         pool.id,
         params.endUserId,
-        params.organizationId,
+        params.tenantId,
       );
 
       // 6. Selection loop (in-memory pity tracking)
@@ -1244,7 +1244,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
           ([definitionId, quantity]) => ({ definitionId, quantity }),
         );
         await itemSvc.grantItems({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           grants,
           source: "lottery",
@@ -1255,7 +1255,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
       // 10. Insert pull logs (batch insert)
       await db.insert(lotteryPullLogs).values(
         pullEntries.map((entry) => ({
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           poolId: pool.id,
           endUserId: params.endUserId,
           batchId,
@@ -1283,7 +1283,7 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
 
       if (events) {
         await events.emit("lottery.pulled", {
-          organizationId: params.organizationId,
+          tenantId: params.tenantId,
           endUserId: params.endUserId,
           batchId,
           poolId: pool.id,
@@ -1307,12 +1307,12 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     // ─── Query helpers ─────────────────────────────────────────
 
     async getUserState(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       poolKey: string;
     }) {
       const pool = await loadPoolByKey(
-        params.organizationId,
+        params.tenantId,
         params.poolKey,
       );
       const rows = await db
@@ -1334,14 +1334,14 @@ export function createLotteryService(d: LotteryDeps, itemSvc: ItemService) {
     },
 
     async getPullHistory(params: {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       poolKey: string;
       limit?: number;
       offset?: number;
     }) {
       const pool = await loadPoolByKey(
-        params.organizationId,
+        params.tenantId,
         params.poolKey,
       );
       const limit = params.limit ?? 50;

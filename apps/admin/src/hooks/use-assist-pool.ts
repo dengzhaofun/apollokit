@@ -40,7 +40,7 @@ export function useAssistPoolConfigs(
     filterDefs: ASSIST_POOL_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<AssistPoolConfig>>(
-        `/api/assist-pool/configs?${buildQs({
+        `/api/v1/assist-pool/configs?${buildQs({
           cursor,
           limit,
           q,
@@ -57,7 +57,7 @@ export function useAssistPoolConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
     queryFn: () =>
-      api.get<AssistPoolConfig>(`/api/assist-pool/configs/${key}`),
+      api.get<AssistPoolConfig>(`/api/v1/assist-pool/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -66,7 +66,7 @@ export function useCreateAssistPoolConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateAssistPoolConfigInput) =>
-      api.post<AssistPoolConfig>("/api/assist-pool/configs", input),
+      api.post<AssistPoolConfig>("/api/v1/assist-pool/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -78,7 +78,7 @@ export function useUpdateAssistPoolConfig() {
       id,
       ...input
     }: UpdateAssistPoolConfigInput & { id: string }) =>
-      api.patch<AssistPoolConfig>(`/api/assist-pool/configs/${id}`, input),
+      api.patch<AssistPoolConfig>(`/api/v1/assist-pool/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -86,7 +86,7 @@ export function useUpdateAssistPoolConfig() {
 export function useDeleteAssistPoolConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/assist-pool/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/assist-pool/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -114,7 +114,7 @@ export function useAssistPoolInstances(filter: {
     ],
     queryFn: () =>
       api.get<{ items: AssistPoolInstance[] }>(
-        `/api/assist-pool/instances${qs ? `?${qs}` : ""}`,
+        `/api/v1/assist-pool/instances${qs ? `?${qs}` : ""}`,
       ),
     select: (data) => data.items,
   })
@@ -125,7 +125,7 @@ export function useForceExpireInstance() {
   return useMutation({
     mutationFn: (instanceId: string) =>
       api.post<AssistPoolInstance>(
-        `/api/assist-pool/instances/${instanceId}/force-expire`,
+        `/api/v1/assist-pool/instances/${instanceId}/force-expire`,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: INSTANCES_KEY }),
   })

@@ -17,7 +17,7 @@ import { serializeForAgent } from "./serialize";
  *
  *   - `patchCheckInConfigPropose` — no `execute`. Used by the **form-fill**
  *     agent. Frontend renders `PatchConfigCard`, user clicks "确认", FE
- *     fires `PATCH /api/check-in/configs/{key}`.
+ *     fires `PATCH /api/v1/check-in/configs/{key}`.
  *   - `patchCheckInConfigExecute` — has `execute` that calls
  *     `checkInService.updateConfig` directly. Used by the **global-assistant**
  *     agent. The user expects "execute, don't ask".
@@ -57,7 +57,7 @@ export const patchCheckInConfigExecute = tool({
   execute: async ({ key, patch }, { experimental_context }) => {
     const { execCtx, deps } = experimental_context as AgentToolContext;
     const updated = await deps.checkIn.updateConfig(
-      execCtx.organizationId,
+      execCtx.tenantId,
       key,
       patch,
     );

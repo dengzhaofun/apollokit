@@ -5,7 +5,7 @@
  *
  * Tenancy model
  * -------------
- * Every row carries `organizationId` (FK → organization). One player belongs
+ * Every row carries `tenantId` (FK → organization). One player belongs
  * to exactly one organization — the `cpk_` publishable key used by the game
  * client determines which org, and we refuse to ever let that change.
  *
@@ -27,7 +27,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 export const euUser = pgTable(
   "eu_user",
@@ -42,11 +42,11 @@ export const euUser = pgTable(
     image: text("image"),
     // Tenant anchor. Populated from the cpk_ publishable key in
     // `user.create.before` — never trusted from client input.
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     // Opaque id the tenant uses in their own user system. Populated only by
-    // POST /api/users/sync. Partial-unique so a row without an external id
+    // POST /api/v1/users/sync. Partial-unique so a row without an external id
     // (managed-only) doesn't collide on NULL.
     externalId: text("external_id"),
     // Soft-ban: disabled players can't sign in (enforced in
@@ -62,9 +62,9 @@ export const euUser = pgTable(
       .notNull(),
   },
   (table) => [
-    index("eu_user_organization_id_idx").on(table.organizationId),
+    index("eu_user_organization_id_idx").on(table.tenantId),
     uniqueIndex("eu_user_org_external_id_uidx")
-      .on(table.organizationId, table.externalId)
+      .on(table.tenantId, table.externalId)
       .where(sql`${table.externalId} IS NOT NULL`),
   ],
 );
@@ -87,13 +87,13 @@ export const euSession = pgTable(
     // Denormalized from eu_user — filled by `session.create.before`. Lets
     // `requireClientUser` compare against the cpk_-derived org id in a
     // single cookie-round-trip without an extra user lookup.
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
   },
   (table) => [
     index("eu_session_user_id_idx").on(table.userId),
-    index("eu_session_organization_id_idx").on(table.organizationId),
+    index("eu_session_organization_id_idx").on(table.tenantId),
   ],
 );
 
@@ -140,9 +140,9 @@ export const euVerification = pgTable(
 export const euUserRelations = relations(euUser, ({ many, one }) => ({
   sessions: many(euSession),
   accounts: many(euAccount),
-  organization: one(organization, {
-    fields: [euUser.organizationId],
-    references: [organization.id],
+  tenant: one(team, {
+    fields: [euUser.tenantId],
+    references: [team.id],
   }),
 }));
 
@@ -151,9 +151,9 @@ export const euSessionRelations = relations(euSession, ({ one }) => ({
     fields: [euSession.userId],
     references: [euUser.id],
   }),
-  organization: one(organization, {
-    fields: [euSession.organizationId],
-    references: [organization.id],
+  tenant: one(team, {
+    fields: [euSession.tenantId],
+    references: [team.id],
   }),
 }));
 

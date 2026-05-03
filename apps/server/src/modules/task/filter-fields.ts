@@ -4,7 +4,7 @@
  * 粗略实现：匹配 `[A-Za-z_][A-Za-z0-9_.]*` 的 token，排除 filtrex 保留字
  * 和函数名。用于软校验 —— 漏报比误报更安全，校验结果只作 warning。
  *
- * 当前阶段仅作为 util 导出，UI 可以调 `/api/event-catalog/:name` 拿字段
+ * 当前阶段仅作为 util 导出，UI 可以调 `/api/v1/event-catalog/:name` 拿字段
  * 列表后在前端本地比对；future work：改造 task create/update 返回
  * `{ definition, warnings }` 把 warning 带到 API。
  */

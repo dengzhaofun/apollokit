@@ -44,12 +44,12 @@ export type ConfigStatus = (typeof CONFIG_STATUSES)[number];
 
 /**
  * Context passed to `contribute()`. Every field except
- * `organizationId`, `endUserId`, `metricKey`, `value` is optional —
+ * `tenantId`, `endUserId`, `metricKey`, `value` is optional —
  * the service figures out which configs match based on what it can
  * compute a scopeKey for.
  */
 export type ContributeInput = {
-  organizationId: string;
+  tenantId: string;
   endUserId: string;
   metricKey: string;
   value: number;

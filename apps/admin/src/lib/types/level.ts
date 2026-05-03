@@ -17,7 +17,7 @@ export type UnlockRule =
 
 export interface LevelConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -34,7 +34,7 @@ export interface LevelConfig {
 export interface LevelStage {
   id: string
   configId: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   icon: string | null
@@ -49,7 +49,7 @@ export interface Level {
   id: string
   configId: string
   stageId: string | null
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null

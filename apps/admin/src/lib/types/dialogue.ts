@@ -13,7 +13,7 @@ export interface DialogueOption {
 
 /**
  * Authored speaker. Either `characterId` (reference to a row in
- * `/api/character/characters`) or `name` (inline) must be present.
+ * `/api/v1/character/characters`) or `name` (inline) must be present.
  * When both are set, inline `name`/`avatarUrl` override the character
  * for this node only. `side` is always required.
  */
@@ -43,7 +43,7 @@ export type DialogueTriggerCondition =
 
 export interface DialogueScript {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null

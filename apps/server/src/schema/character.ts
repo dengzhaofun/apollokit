@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { organization } from "./auth";
+import { team } from "./auth";
 
 /**
  * Character definitions — the master catalog of NPC / dialogue speakers
@@ -38,9 +38,9 @@ export const characterDefinitions = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -63,9 +63,9 @@ export const characterDefinitions = pgTable(
       .notNull(),
   },
   (table) => [
-    index("character_definitions_org_idx").on(table.organizationId),
-    uniqueIndex("character_definitions_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("character_definitions_tenant_idx").on(table.tenantId),
+    uniqueIndex("character_definitions_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );

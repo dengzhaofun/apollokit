@@ -1,6 +1,6 @@
 export interface FriendGiftSettings {
   id: string
-  organizationId: string
+  tenantId: string
   dailySendLimit: number
   dailyReceiveLimit: number
   timezone: string
@@ -11,7 +11,7 @@ export interface FriendGiftSettings {
 
 export interface FriendGiftPackage {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -26,7 +26,7 @@ export interface FriendGiftPackage {
 
 export interface FriendGiftSend {
   id: string
-  organizationId: string
+  tenantId: string
   packageId: string | null
   senderUserId: string
   receiverUserId: string

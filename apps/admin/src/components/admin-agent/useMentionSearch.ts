@@ -2,7 +2,7 @@ import * as React from "react"
 
 import type { MentionResult } from "./mention-types"
 
-const SEARCH_ENDPOINT = "/api/ai/admin/mentions/search"
+const SEARCH_ENDPOINT = "/api/v1/ai/admin/mentions/search"
 const DEBOUNCE_MS = 200
 
 /**

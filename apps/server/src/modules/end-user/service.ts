@@ -67,7 +67,7 @@ export function createEndUserService(deps: EndUserDeps) {
     emailVerified: boolean;
     externalId: string | null;
     disabled: boolean;
-    organizationId: string;
+    tenantId: string;
     createdAt: Date;
     updatedAt: Date;
     hasCredential: boolean;
@@ -92,7 +92,7 @@ export function createEndUserService(deps: EndUserDeps) {
     const [row] = await db
       .select()
       .from(euUser)
-      .where(and(eq(euUser.id, id), eq(euUser.organizationId, orgId)))
+      .where(and(eq(euUser.id, id), eq(euUser.tenantId, orgId)))
       .limit(1);
     return row;
   }
@@ -118,7 +118,7 @@ export function createEndUserService(deps: EndUserDeps) {
           .from(euUser)
           .where(
             and(
-              eq(euUser.organizationId, orgId),
+              eq(euUser.tenantId, orgId),
               eq(euUser.externalId, input.externalId),
             ),
           )
@@ -133,7 +133,7 @@ export function createEndUserService(deps: EndUserDeps) {
         // Cross-org safety: scopeEmail includes orgId, so this should be
         // impossible. Belt-and-braces so a refactor that accidentally
         // removes the prefix can't silently cross tenants.
-        if (existing && existing.organizationId !== orgId) {
+        if (existing && existing.tenantId !== orgId) {
           existing = undefined;
         }
       }
@@ -158,7 +158,7 @@ export function createEndUserService(deps: EndUserDeps) {
             email: scopedEmail,
             emailVerified: input.emailVerified ?? true,
             image: input.image ?? null,
-            organizationId: orgId,
+            tenantId: orgId,
             externalId: input.externalId ?? null,
           })
           .returning({ id: euUser.id });
@@ -212,7 +212,7 @@ export function createEndUserService(deps: EndUserDeps) {
       // and the advanced AST in one call. Cursor and org-scope are
       // composed on top — those aren't filter-DSL concerns.
       const where = and(
-        eq(euUser.organizationId, orgId),
+        eq(euUser.tenantId, orgId),
         endUserFilters.where(filter as Record<string, unknown>),
         cursorWhere(filter.cursor, euUser.createdAt, euUser.id),
       );

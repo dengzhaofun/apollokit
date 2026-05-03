@@ -46,7 +46,7 @@ describe("client-credentials service", () => {
     expect(cred.publishableKey).toMatch(/^cpk_/);
     expect(cred.secret).toMatch(/^csk_/);
     expect(cred.name).toBe("test-create");
-    expect(cred.organizationId).toBe(orgId);
+    expect(cred.tenantId).toBe(orgId);
     expect(cred.enabled).toBe(true);
     expect(cred.devMode).toBe(false);
   });
@@ -118,7 +118,7 @@ describe("client-credentials service", () => {
       hash,
     );
     expect(result.valid).toBe(true);
-    expect(result.organizationId).toBe(orgId);
+    expect(result.tenantId).toBe(orgId);
     expect(result.devMode).toBe(false);
   });
 

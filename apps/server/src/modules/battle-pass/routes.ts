@@ -39,7 +39,7 @@ const TAG = "Battle Pass";
 function serializeConfig(row: BattlePassConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     activityId: row.activityId,
     code: row.code,
     name: row.name,
@@ -87,9 +87,9 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const input = c.req.valid("json");
-    const row = await battlePassService.createConfig(organizationId, input);
+    const row = await battlePassService.createConfig(tenantId, input);
     return c.json(ok(serializeConfig(row)), 201);
   },
 );
@@ -114,8 +114,8 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
-    const rows = await battlePassService.listConfigs(organizationId);
+    const tenantId = getOrgId(c);
+    const rows = await battlePassService.listConfigs(tenantId);
     return c.json(
       ok({ items: rows.map(serializeConfig) }),
       200,
@@ -146,9 +146,9 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { id } = c.req.valid("param");
-    const row = await battlePassService.getConfig(organizationId, id);
+    const row = await battlePassService.getConfig(tenantId, id);
     return c.json(ok(serializeConfig(row)), 200);
   },
 );
@@ -179,11 +179,11 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const row = await battlePassService.updateConfig(
-      organizationId,
+      tenantId,
       id,
       input,
     );
@@ -210,9 +210,9 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { id } = c.req.valid("param");
-    await battlePassService.deleteConfig(organizationId, id);
+    await battlePassService.deleteConfig(tenantId, id);
     return c.json(ok(null), 200);
   },
 );
@@ -239,10 +239,10 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
-    await battlePassService.bindTasks(organizationId, id, input);
+    await battlePassService.bindTasks(tenantId, id, input);
     return c.json(ok(null), 200);
   },
 );
@@ -270,9 +270,9 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { id } = c.req.valid("param");
-    const rows = await battlePassService.listSeasonTasks(organizationId, id);
+    const rows = await battlePassService.listSeasonTasks(tenantId, id);
     return c.json(
       ok({
         items: rows.map((r) => ({
@@ -320,11 +320,11 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { seasonId } = c.req.valid("param");
     const input = c.req.valid("json");
     const outcome = await battlePassService.grantTier({
-      organizationId,
+      tenantId,
       seasonId,
       endUserId: input.endUserId,
       tierCode: input.tierCode,
@@ -360,11 +360,11 @@ battlePassRouter.openapi(
     },
   }),
   async (c) => {
-    const organizationId = getOrgId(c);
+    const tenantId = getOrgId(c);
     const { seasonId } = c.req.valid("param");
     const { endUserId } = c.req.valid("query");
     const view = await battlePassService.getAggregateView(
-      organizationId,
+      tenantId,
       seasonId,
       endUserId,
     );

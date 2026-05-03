@@ -155,7 +155,7 @@ const ExchangeItemResponseSchema = z.object({
 export const ExchangeConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -170,7 +170,7 @@ export const ExchangeOptionResponseSchema = z
   .object({
     id: z.string(),
     configId: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     costItems: z.array(ExchangeItemResponseSchema),

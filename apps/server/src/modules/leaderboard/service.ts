@@ -61,7 +61,7 @@ import {
 declare module "../../lib/event-bus" {
   interface EventMap {
     "leaderboard.contributed": {
-      organizationId: string;
+      tenantId: string;
       endUserId: string;
       metricKey: string;
       value: number;
@@ -121,7 +121,7 @@ type LeaderboardDeps = Pick<AppDeps, "db" | "redis" | "events">;
  */
 type MailLike = {
   sendUnicast: (
-    organizationId: string,
+    tenantId: string,
     endUserId: string,
     input: {
       title: string;
@@ -161,16 +161,16 @@ export function createLeaderboardService(
   const { db, redis, events } = d;
 
   async function loadConfigByKey(
-    organizationId: string,
+    tenantId: string,
     key: string,
   ): Promise<LeaderboardConfig> {
     const where = looksLikeId(key)
       ? and(
-          eq(leaderboardConfigs.organizationId, organizationId),
+          eq(leaderboardConfigs.tenantId, tenantId),
           eq(leaderboardConfigs.id, key),
         )
       : and(
-          eq(leaderboardConfigs.organizationId, organizationId),
+          eq(leaderboardConfigs.tenantId, tenantId),
           eq(leaderboardConfigs.alias, key),
         );
     const rows = await db
@@ -205,7 +205,7 @@ export function createLeaderboardService(
       .insert(leaderboardEntries)
       .values({
         configId: config.id,
-        organizationId: config.organizationId,
+        tenantId: config.tenantId,
         cycleKey,
         scopeKey,
         endUserId,
@@ -253,7 +253,7 @@ export function createLeaderboardService(
   ): Promise<number | null> {
     try {
       const key = leaderboardKey({
-        organizationId: config.organizationId,
+        tenantId: config.tenantId,
         configId: config.id,
         cycleKey,
         scopeKey,
@@ -282,10 +282,10 @@ export function createLeaderboardService(
 
   function deriveScope(
     config: LeaderboardConfig,
-    organizationId: string,
+    tenantId: string,
     ctx: ContributeInput["scopeContext"],
   ): string[] {
-    return resolveScopeKeys(organizationId, config.scope as ScopeMode, ctx);
+    return resolveScopeKeys(tenantId, config.scope as ScopeMode, ctx);
   }
 
   function isWithinWindow(
@@ -303,14 +303,14 @@ export function createLeaderboardService(
     // ─── CRUD ────────────────────────────────────────────────────
 
     async createConfig(
-      organizationId: string,
+      tenantId: string,
       input: CreateConfigInput,
     ): Promise<LeaderboardConfig> {
       try {
         const [row] = await db
           .insert(leaderboardConfigs)
           .values({
-            organizationId,
+            tenantId,
             alias: input.alias,
             name: input.name,
             description: input.description ?? null,
@@ -342,11 +342,11 @@ export function createLeaderboardService(
     },
 
     async updateConfig(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
       patch: UpdateConfigInput,
     ): Promise<LeaderboardConfig> {
-      const existing = await loadConfigByKey(organizationId, idOrAlias);
+      const existing = await loadConfigByKey(tenantId, idOrAlias);
       const values: Partial<typeof leaderboardConfigs.$inferInsert> = {};
       if (patch.alias !== undefined) values.alias = patch.alias;
       if (patch.name !== undefined) values.name = patch.name;
@@ -377,7 +377,7 @@ export function createLeaderboardService(
           .where(
             and(
               eq(leaderboardConfigs.id, existing.id),
-              eq(leaderboardConfigs.organizationId, organizationId),
+              eq(leaderboardConfigs.tenantId, tenantId),
             ),
           )
           .returning();
@@ -391,13 +391,13 @@ export function createLeaderboardService(
       }
     },
 
-    async deleteConfig(organizationId: string, id: string): Promise<void> {
+    async deleteConfig(tenantId: string, id: string): Promise<void> {
       const deleted = await db
         .delete(leaderboardConfigs)
         .where(
           and(
             eq(leaderboardConfigs.id, id),
-            eq(leaderboardConfigs.organizationId, organizationId),
+            eq(leaderboardConfigs.tenantId, tenantId),
           ),
         )
         .returning({ id: leaderboardConfigs.id });
@@ -405,11 +405,11 @@ export function createLeaderboardService(
     },
 
     async listConfigs(
-      organizationId: string,
+      tenantId: string,
       filter: PageParams & { metricKey?: string; status?: ConfigStatus } = {},
     ): Promise<Page<LeaderboardConfig>> {
       const limit = clampLimit(filter.limit);
-      const conds: SQL[] = [eq(leaderboardConfigs.organizationId, organizationId)];
+      const conds: SQL[] = [eq(leaderboardConfigs.tenantId, tenantId)];
       if (filter.metricKey)
         conds.push(eq(leaderboardConfigs.metricKey, filter.metricKey));
       if (filter.status)
@@ -431,10 +431,10 @@ export function createLeaderboardService(
     },
 
     async getConfig(
-      organizationId: string,
+      tenantId: string,
       idOrAlias: string,
     ): Promise<LeaderboardConfig> {
-      return loadConfigByKey(organizationId, idOrAlias);
+      return loadConfigByKey(tenantId, idOrAlias);
     },
 
     // ─── Contribute (the fan-out API) ────────────────────────────
@@ -452,7 +452,7 @@ export function createLeaderboardService(
 
       // Find candidate configs.
       const conds = [
-        eq(leaderboardConfigs.organizationId, input.organizationId),
+        eq(leaderboardConfigs.tenantId, input.tenantId),
         eq(leaderboardConfigs.metricKey, input.metricKey),
         eq(leaderboardConfigs.status, "active"),
       ];
@@ -505,7 +505,7 @@ export function createLeaderboardService(
 
         const scopeKeys = deriveScope(
           config,
-          input.organizationId,
+          input.tenantId,
           input.scopeContext,
         );
         if (scopeKeys.length === 0) {
@@ -584,7 +584,7 @@ export function createLeaderboardService(
       // Fire an event for any listeners (future: activity modules that
       // want to react to score updates without tight coupling).
       await events.emit("leaderboard.contributed", {
-        organizationId: input.organizationId,
+        tenantId: input.tenantId,
         endUserId: input.endUserId,
         metricKey: input.metricKey,
         value: input.value,
@@ -597,7 +597,7 @@ export function createLeaderboardService(
     // ─── Read ────────────────────────────────────────────────────
 
     async getTop(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       cycleKey?: string;
       scopeKey?: string;
@@ -606,7 +606,7 @@ export function createLeaderboardService(
       now?: Date;
     }): Promise<TopResult> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       const now = params.now ?? new Date();
@@ -620,7 +620,7 @@ export function createLeaderboardService(
         );
       const scopeKey = resolveReadScope(
         config,
-        params.organizationId,
+        params.tenantId,
         params.scopeKey,
       );
       const limit = Math.max(
@@ -632,7 +632,7 @@ export function createLeaderboardService(
         cycleKey,
         scopeKey,
         limit,
-        params.organizationId,
+        params.tenantId,
         redis,
         db,
       );
@@ -660,7 +660,7 @@ export function createLeaderboardService(
     },
 
     async getNeighbors(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       endUserId: string;
       cycleKey?: string;
@@ -669,7 +669,7 @@ export function createLeaderboardService(
       now?: Date;
     }): Promise<TopResult> {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       const now = params.now ?? new Date();
@@ -683,13 +683,13 @@ export function createLeaderboardService(
         );
       const scopeKey = resolveReadScope(
         config,
-        params.organizationId,
+        params.tenantId,
         params.scopeKey,
       );
       const window = Math.max(1, Math.min(params.window ?? 5, 50));
 
       const key = leaderboardKey({
-        organizationId: params.organizationId,
+        tenantId: params.tenantId,
         configId: config.id,
         cycleKey,
         scopeKey,
@@ -726,12 +726,12 @@ export function createLeaderboardService(
     },
 
     async listSnapshots(params: {
-      organizationId: string;
+      tenantId: string;
       configKey: string;
       limit?: number;
     }) {
       const config = await loadConfigByKey(
-        params.organizationId,
+        params.tenantId,
         params.configKey,
       );
       const limit = Math.max(1, Math.min(params.limit ?? 50, 200));
@@ -741,7 +741,7 @@ export function createLeaderboardService(
         .where(
           and(
             eq(leaderboardSnapshots.configId, config.id),
-            eq(leaderboardSnapshots.organizationId, params.organizationId),
+            eq(leaderboardSnapshots.tenantId, params.tenantId),
           ),
         )
         .orderBy(desc(leaderboardSnapshots.settledAt))
@@ -857,7 +857,7 @@ export function createLeaderboardService(
       const { config, cycleKey, scopeKey } = params;
       const now = params.now ?? new Date();
       const key = leaderboardKey({
-        organizationId: config.organizationId,
+        tenantId: config.tenantId,
         configId: config.id,
         cycleKey,
         scopeKey,
@@ -941,7 +941,7 @@ export function createLeaderboardService(
           .insert(leaderboardSnapshots)
           .values({
             configId: config.id,
-            organizationId: config.organizationId,
+            tenantId: config.tenantId,
             cycleKey,
             scopeKey,
             rankings,
@@ -1010,7 +1010,7 @@ async function readTop(
   db: AppDeps["db"],
 ): Promise<LeaderboardRanking[]> {
   const key = leaderboardKey({
-    organizationId: config.organizationId,
+    tenantId: config.tenantId,
     configId: config.id,
     cycleKey,
     scopeKey,
@@ -1087,7 +1087,7 @@ async function readSelf(
   db: AppDeps["db"],
 ): Promise<{ rank: number | null; score: number | null }> {
   const key = leaderboardKey({
-    organizationId: config.organizationId,
+    tenantId: config.tenantId,
     configId: config.id,
     cycleKey,
     scopeKey,
@@ -1153,7 +1153,7 @@ async function dispatchTierRewards(params: {
     try {
       await db.insert(leaderboardRewardClaims).values({
         configId: config.id,
-        organizationId: config.organizationId,
+        tenantId: config.tenantId,
         cycleKey,
         scopeKey,
         endUserId: row.endUserId,
@@ -1168,7 +1168,7 @@ async function dispatchTierRewards(params: {
     if (!mail) continue; // no mail wired — the claim row is still correct
 
     try {
-      await mail.sendUnicast(config.organizationId, row.endUserId, {
+      await mail.sendUnicast(config.tenantId, row.endUserId, {
         title: `Leaderboard: ${config.name}`,
         content: `You placed #${row.rank} for cycle ${cycleKey}. Rewards inside.`,
         rewards: tier.rewards as RewardEntry[],

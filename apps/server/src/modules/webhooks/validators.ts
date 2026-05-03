@@ -116,7 +116,7 @@ export const ListDeliveriesQuerySchema = webhookDeliveryFilters.querySchema.open
 export const EndpointResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     name: z.string(),
     url: z.string(),
     description: z.string().nullable(),
@@ -146,7 +146,7 @@ export const EndpointListResponseSchema = pageOf(EndpointResponseSchema).openapi
 export const DeliveryResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     endpointId: z.string(),
     eventId: z.string(),
     eventType: z.string(),

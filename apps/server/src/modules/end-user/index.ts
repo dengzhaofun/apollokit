@@ -1,5 +1,5 @@
 /**
- * End-user module barrel — wiring for the `/api/end-user/*` admin routes
+ * End-user module barrel — wiring for the `/api/v1/end-user/*` admin routes
  * and the protocol-agnostic service factory. Keep the shape identical to
  * other modules so generic tooling (OpenAPI, tests, future event-bus
  * subscribers) can discover it uniformly.

@@ -46,7 +46,7 @@ describe("storage-box service", () => {
     amount: number,
   ) {
     await currencySvc.grant({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId,
       grants: [{ currencyId, amount }],
       source: "test-seed",
@@ -148,7 +148,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-demand-1", gold.id, 1000);
 
     const r1 = await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-demand-1",
         boxConfigId: cfg.id,
@@ -157,7 +157,7 @@ describe("storage-box service", () => {
       },
     });
     const r2 = await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-demand-1",
         boxConfigId: cfg.id,
@@ -185,7 +185,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-rej-1", silver.id, 100);
     await expect(
       svc.deposit({
-        organizationId: orgId,
+        tenantId: orgId,
         input: {
           endUserId: "u-rej-1",
           boxConfigId: cfg.id,
@@ -208,7 +208,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-min-1", gold.id, 500);
     await expect(
       svc.deposit({
-        organizationId: orgId,
+        tenantId: orgId,
         input: {
           endUserId: "u-min-1",
           boxConfigId: cfg.id,
@@ -235,7 +235,7 @@ describe("storage-box service", () => {
     const t1 = new Date("2027-01-01T00:00:00Z");
 
     await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-withdraw-1",
         boxConfigId: cfg.id,
@@ -253,7 +253,7 @@ describe("storage-box service", () => {
     expect(midBal).toBe(0);
 
     const w = await svc.withdraw({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-withdraw-1",
         boxConfigId: cfg.id,
@@ -284,7 +284,7 @@ describe("storage-box service", () => {
     });
     await grantCurrency("u-partial-1", gold.id, 1000);
     await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-partial-1",
         boxConfigId: cfg.id,
@@ -293,7 +293,7 @@ describe("storage-box service", () => {
       },
     });
     const w = await svc.withdraw({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-partial-1",
         boxConfigId: cfg.id,
@@ -322,7 +322,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-lock-1", gold.id, 1000);
     const t0 = new Date("2026-01-01T00:00:00Z");
     const d = await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-lock-1",
         boxConfigId: cfg.id,
@@ -337,7 +337,7 @@ describe("storage-box service", () => {
     const tEarly = new Date("2026-01-05T00:00:00Z");
     await expect(
       svc.withdraw({
-        organizationId: orgId,
+        tenantId: orgId,
         input: {
           endUserId: "u-lock-1",
           depositId: d.deposit.id,
@@ -349,7 +349,7 @@ describe("storage-box service", () => {
     // Withdraw after maturity pays principal + interest.
     const tMature = new Date("2026-01-08T00:00:00Z");
     const w = await svc.withdraw({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-lock-1",
         depositId: d.deposit.id,
@@ -376,7 +376,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-early-1", gold.id, 1000);
     const t0 = new Date("2026-01-01T00:00:00Z");
     const d = await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-early-1",
         boxConfigId: cfg.id,
@@ -387,7 +387,7 @@ describe("storage-box service", () => {
     });
     const tEarly = new Date("2026-01-10T00:00:00Z");
     const w = await svc.withdraw({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-early-1",
         depositId: d.deposit.id,
@@ -412,7 +412,7 @@ describe("storage-box service", () => {
     await grantCurrency("u-list-1", gold.id, 1000);
     const t0 = new Date("2026-01-01T00:00:00Z");
     await svc.deposit({
-      organizationId: orgId,
+      tenantId: orgId,
       input: {
         endUserId: "u-list-1",
         boxConfigId: cfg.id,
@@ -423,7 +423,7 @@ describe("storage-box service", () => {
     });
     const t1 = new Date("2027-01-01T00:00:00Z");
     const views = await svc.listDepositsForUser({
-      organizationId: orgId,
+      tenantId: orgId,
       endUserId: "u-list-1",
       now: t1,
     });

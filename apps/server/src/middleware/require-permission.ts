@@ -1,38 +1,37 @@
 /**
  * Permission gate backed by Better Auth's organization access control.
  *
- * Two flavors:
+ * The dual-tenant model (org + team/project) splits the gate into two:
  *
- *   `requirePermission(resource, action)` — strict. Always enforce
- *      `<resource>:<action>` regardless of HTTP method. Use for
- *      sensitive routes (audit-log, billing, etc.) and for individual
- *      handlers that need a specific verb beyond the per-method default.
+ *   `requirePermission(resource, action)` — **team-level (project)**.
+ *     Strict: always enforce `<resource>:<action>` regardless of HTTP
+ *     method. Reads `teamMember.role` for the active project. Use for
+ *     business-module resources (activity, shop, item, ...) and for any
+ *     handler that needs a specific verb beyond the per-method default.
  *
- *   `requirePermissionByMethod(resource)` — derives the action from
- *      the request method:
- *        GET / HEAD / OPTIONS → `<resource>:read`
- *        POST / PUT / PATCH / DELETE → `<resource>:write`
- *      Use as the per-router `.use("*", ...)` mount that replaces the
- *      old `requireOrgManage` — preserves the existing semantics
- *      ("read = anyone in the org with read perm; write = operator+")
- *      with the new four-role matrix.
+ *   `requirePermissionByMethod(resource)` — **team-level (project)**,
+ *     auto-derives action from request method:
+ *       GET / HEAD / OPTIONS → `<resource>:read`
+ *       POST / PUT / PATCH / DELETE → `<resource>:write`
+ *     Use as the per-router `.use("*", ...)` mount.
  *
- * Both flavors short-circuit on `admin-api-key` auth — admin API keys
- * are scoped to a single org and treated as trusted-operator credentials,
- * matching how `requireOrgManage` and `requireOrgReadSensitive` worked.
+ * Both team-level flavors short-circuit on `admin-api-key` auth —
+ * admin API keys carry a `metadata.teamId` that pins them to one
+ * project; the auth middleware translates that into `activeTeamId`
+ * upstream, so by the time we get here the apikey is already scoped.
  *
- * The role lookup hits the `member` table directly (not Better Auth's
+ * The role lookup hits `teamMember` directly (not Better Auth's
  * `auth.api.hasPermission`) because:
  *   1. We're inside Hono middleware where `auth.api.hasPermission`
  *      requires forwarding cookies / building a sub-request — heavier
  *      than a single indexed SELECT.
- *   2. We support comma-separated multi-role values (`"operator,viewer"`)
- *      with the union semantics Better Auth gives client-side.
+ *   2. We support comma-separated multi-role values with union semantics.
  *   3. `manage` short-circuits any specific verb on the same resource.
  *
- * The actual permission dictionary lives in `../auth/ac.ts`. The
- * middleware imports `roles` so changes to the matrix are picked up
- * automatically.
+ * For org-level permissions (billing, orgMember invite, project create
+ * — see `auth/ac.ts` org-level statements), see `require-org-permission.ts`.
+ *
+ * The actual permission dictionary lives in `../auth/ac.ts`.
  */
 
 import { and, eq } from "drizzle-orm";
@@ -42,27 +41,26 @@ import { roles, type ResourceName } from "../auth/ac";
 import { db } from "../db";
 import type { HonoEnv } from "../env";
 import { fail } from "../lib/response";
-import { member } from "../schema";
+import { teamMember } from "../schema";
 
 const FORBIDDEN_CODE = "forbidden";
 
 const READ_ONLY_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 /**
- * Look up a single member's role string in the active org. Returns
- * `null` when the user has no membership row (which `requireAuth`
- * should have prevented — fail closed if it happens).
+ * Look up a single team member's role string in the active project.
+ * Returns `null` when the user has no membership row in this team
+ * (which `requireAuth` should have prevented — fail closed if it
+ * happens).
  */
-async function getMemberRole(
+async function getTeamMemberRole(
   userId: string,
-  organizationId: string,
+  teamId: string,
 ): Promise<string | null> {
   const [row] = await db
-    .select({ role: member.role })
-    .from(member)
-    .where(
-      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
-    )
+    .select({ role: teamMember.role })
+    .from(teamMember)
+    .where(and(eq(teamMember.userId, userId), eq(teamMember.teamId, teamId)))
     .limit(1);
   return row?.role ?? null;
 }
@@ -110,8 +108,8 @@ export function requirePermission(resource: ResourceName, action: string) {
     }
 
     const userId = c.var.user?.id;
-    const orgId = c.var.session?.activeOrganizationId;
-    if (!userId || !orgId) {
+    const teamId = c.var.session?.activeTeamId;
+    if (!userId || !teamId) {
       return c.json(
         fail(
           FORBIDDEN_CODE,
@@ -121,7 +119,7 @@ export function requirePermission(resource: ResourceName, action: string) {
       );
     }
 
-    const roleString = await getMemberRole(userId, orgId);
+    const roleString = await getTeamMemberRole(userId, teamId);
     if (!roleHasPermission(roleString, resource, action)) {
       return c.json(
         fail(
@@ -148,8 +146,8 @@ export function requirePermissionByMethod(resource: ResourceName) {
     }
 
     const userId = c.var.user?.id;
-    const orgId = c.var.session?.activeOrganizationId;
-    if (!userId || !orgId) {
+    const teamId = c.var.session?.activeTeamId;
+    if (!userId || !teamId) {
       return c.json(
         fail(
           FORBIDDEN_CODE,
@@ -162,7 +160,7 @@ export function requirePermissionByMethod(resource: ResourceName) {
     const method = c.req.method.toUpperCase();
     const action = READ_ONLY_METHODS.has(method) ? "read" : "write";
 
-    const roleString = await getMemberRole(userId, orgId);
+    const roleString = await getTeamMemberRole(userId, teamId);
     if (!roleHasPermission(roleString, resource, action)) {
       return c.json(
         fail(

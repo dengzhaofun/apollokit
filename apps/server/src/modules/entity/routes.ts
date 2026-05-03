@@ -60,7 +60,7 @@ const TAG_FORMATION = "Entity Formations (Admin)";
 function serializeSchema(row: EntitySchema) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     description: row.description,
@@ -82,7 +82,7 @@ function serializeSchema(row: EntitySchema) {
 function serializeBlueprint(row: EntityBlueprint) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     schemaId: row.schemaId,
     alias: row.alias,
     name: row.name,
@@ -110,7 +110,7 @@ function serializeBlueprint(row: EntityBlueprint) {
 function serializeSkin(row: EntityBlueprintSkin) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     blueprintId: row.blueprintId,
     alias: row.alias,
     name: row.name,
@@ -129,7 +129,7 @@ function serializeSkin(row: EntityBlueprintSkin) {
 function serializeFormationConfig(row: EntityFormationConfig) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     alias: row.alias,
     name: row.name,
     maxFormations: row.maxFormations,

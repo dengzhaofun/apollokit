@@ -1,12 +1,12 @@
 /**
- * C-end client routes for the team module.
+ * C-end client routes for the match-squad module.
  *
  * Auth pattern (matches the invite module):
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,
  *                             populates c.var.endUserId
  *
- * Handlers read orgId from c.get("clientCredential")!.organizationId and the caller's
+ * Handlers read orgId from c.get("clientCredential")!.tenantId and the caller's
  * endUserId from getEndUserId(c). No inline verifyRequest calls; no auth fields in
  * body or query.
  */
@@ -17,7 +17,7 @@ import { getEndUserId } from "../../lib/route-context";
 import { createClientRouter, createClientRoute } from "../../lib/openapi";
 import { requireClientCredential } from "../../middleware/require-client-credential";
 import { requireClientUser } from "../../middleware/require-client-user";
-import { teamService } from "./index";
+import { matchSquadService } from "./index";
 import {
   ConfigAliasQuerySchema,
   CreateTeamSchema,
@@ -32,27 +32,27 @@ import {
   UpdateTeamStatusSchema,
 } from "./validators";
 
-const TAG = "Team (Client)";
+const TAG = "MatchSquad (Client)";
 
 function serializeMember(m: {
-  teamId: string;
+  squadId: string;
   endUserId: string;
-  organizationId: string;
+  tenantId: string;
   role: string;
   joinedAt: Date;
 }) {
   return {
-    teamId: m.teamId,
+    squadId: m.squadId,
     endUserId: m.endUserId,
-    organizationId: m.organizationId,
+    tenantId: m.tenantId,
     role: m.role as "leader" | "member",
     joinedAt: m.joinedAt.toISOString(),
   };
 }
 
-function serializeTeam(row: {
+function serializeSquad(row: {
   id: string;
-  organizationId: string;
+  tenantId: string;
   configId: string;
   leaderUserId: string;
   status: string;
@@ -63,16 +63,16 @@ function serializeTeam(row: {
   createdAt: Date;
   updatedAt: Date;
   members?: Array<{
-    teamId: string;
+    squadId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: string;
     joinedAt: Date;
   }>;
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    tenantId: row.tenantId,
     configId: row.configId,
     leaderUserId: row.leaderUserId,
     status: row.status as "open" | "closed" | "in_game" | "dissolved",
@@ -90,8 +90,8 @@ function serializeTeam(row: {
 
 function serializeInvitation(row: {
   id: string;
-  organizationId: string;
-  teamId: string;
+  tenantId: string;
+  squadId: string;
   fromUserId: string;
   toUserId: string;
   status: string;
@@ -102,8 +102,8 @@ function serializeInvitation(row: {
 }) {
   return {
     id: row.id,
-    organizationId: row.organizationId,
-    teamId: row.teamId,
+    tenantId: row.tenantId,
+    squadId: row.squadId,
     fromUserId: row.fromUserId,
     toUserId: row.toUserId,
     status: row.status as "pending" | "accepted" | "rejected" | "expired",
@@ -114,18 +114,18 @@ function serializeInvitation(row: {
   };
 }
 
-export const teamClientRouter = createClientRouter();
+export const matchSquadClientRouter = createClientRouter();
 
-teamClientRouter.use("*", requireClientCredential);
-teamClientRouter.use("*", requireClientUser);
+matchSquadClientRouter.use("*", requireClientCredential);
+matchSquadClientRouter.use("*", requireClientUser);
 
-// POST /teams — create a new team
-teamClientRouter.openapi(
+// POST /squads — create a new squad
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams",
+    path: "/squads",
     tags: [TAG],
-    summary: "Create a new team (caller becomes leader)",
+    summary: "Create a new squad (caller becomes leader)",
     request: {
       body: {
         content: { "application/json": { schema: CreateTeamSchema } },
@@ -140,28 +140,28 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configKey, metadata } = c.req.valid("json");
 
-    const team = await teamService.createTeam(orgId, configKey, endUserId, metadata);
-    return c.json(ok(serializeTeam(team)), 201);
+    const squad = await matchSquadService.createMatchSquad(orgId, configKey, endUserId, metadata);
+    return c.json(ok(serializeSquad(squad)), 201);
   },
 );
 
-// GET /my-team?configAlias=
-teamClientRouter.openapi(
+// GET /my-squad?configAlias=
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "get",
-    path: "/my-team",
+    path: "/my-squad",
     tags: [TAG],
-    summary: "Get the current user's active team for a config",
+    summary: "Get the current user's active squad for a config",
     request: {
       query: ConfigAliasQuerySchema,
     },
     responses: {
       200: {
-        description: "OK (returns team or null)",
+        description: "OK (returns squad or null)",
         content: {
           "application/json": {
             schema: envelopeOf(TeamResponseSchema.nullable(),)
@@ -172,21 +172,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configAlias } = c.req.valid("query");
-    const team = await teamService.getMyTeam(orgId, configAlias, endUserId);
-    return c.json(ok(team ? serializeTeam(team) : null), 200);
+    const squad = await matchSquadService.getMyMatchSquad(orgId, configAlias, endUserId);
+    return c.json(ok(squad ? serializeSquad(squad) : null), 200);
   },
 );
 
-// GET /teams/:id
-teamClientRouter.openapi(
+// GET /squads/:id
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "get",
-    path: "/teams/{id}",
+    path: "/squads/{id}",
     tags: [TAG],
-    summary: "Get a team by id with members",
+    summary: "Get a squad by id with members",
     request: { params: TeamIdParamSchema },
     responses: {
       200: {
@@ -197,20 +197,20 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const { id } = c.req.valid("param");
-    const team = await teamService.getTeam(orgId, id);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.getMatchSquad(orgId, id);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/join
-teamClientRouter.openapi(
+// POST /squads/:id/join
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/join",
+    path: "/squads/{id}/join",
     tags: [TAG],
-    summary: "Join an open team",
+    summary: "Join an open squad",
     request: {
       params: TeamIdParamSchema,
     },
@@ -223,21 +223,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.joinTeam(orgId, id, endUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.joinMatchSquad(orgId, id, endUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/leave
-teamClientRouter.openapi(
+// POST /squads/:id/leave
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/leave",
+    path: "/squads/{id}/leave",
     tags: [TAG],
-    summary: "Leave a team",
+    summary: "Leave a squad",
     request: {
       params: TeamIdParamSchema,
     },
@@ -250,21 +250,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.leaveTeam(orgId, id, endUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.leaveMatchSquad(orgId, id, endUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/dissolve
-teamClientRouter.openapi(
+// POST /squads/:id/dissolve
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/dissolve",
+    path: "/squads/{id}/dissolve",
     tags: [TAG],
-    summary: "Dissolve a team (leader only)",
+    summary: "Dissolve a squad (leader only)",
     request: {
       params: TeamIdParamSchema,
     },
@@ -277,21 +277,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.dissolveTeam(orgId, id, endUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.dissolveMatchSquad(orgId, id, endUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/kick/:userId
-teamClientRouter.openapi(
+// POST /squads/:id/kick/:userId
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/kick/{userId}",
+    path: "/squads/{id}/kick/{userId}",
     tags: [TAG],
-    summary: "Kick a member from the team (leader only)",
+    summary: "Kick a member from the squad (leader only)",
     request: {
       params: TeamIdAndUserParamSchema,
     },
@@ -304,21 +304,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id, userId } = c.req.valid("param");
-    const team = await teamService.kickMember(orgId, id, endUserId, userId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.kickMember(orgId, id, endUserId, userId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/transfer-leader
-teamClientRouter.openapi(
+// POST /squads/:id/transfer-leader
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/transfer-leader",
+    path: "/squads/{id}/transfer-leader",
     tags: [TAG],
-    summary: "Transfer team leadership to another member",
+    summary: "Transfer squad leadership to another member",
     request: {
       params: TeamIdParamSchema,
       body: {
@@ -334,22 +334,22 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { newLeaderUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
-    const team = await teamService.transferLeader(orgId, id, endUserId, newLeaderUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.transferLeader(orgId, id, endUserId, newLeaderUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
 // PUT /teams/:id/status
-teamClientRouter.openapi(
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "put",
-    path: "/teams/{id}/status",
+    path: "/squads/{id}/status",
     tags: [TAG],
-    summary: "Update team status (leader only)",
+    summary: "Update squad status (leader only)",
     request: {
       params: TeamIdParamSchema,
       body: {
@@ -365,22 +365,22 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { status } = c.req.valid("json");
     const { id } = c.req.valid("param");
-    const team = await teamService.updateTeamStatus(orgId, id, endUserId, status);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.updateMatchSquadStatus(orgId, id, endUserId, status);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
-// POST /teams/:id/invite
-teamClientRouter.openapi(
+// POST /squads/:id/invite
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
-    path: "/teams/{id}/invite",
+    path: "/squads/{id}/invite",
     tags: [TAG],
-    summary: "Invite a user to the team",
+    summary: "Invite a user to the squad",
     request: {
       params: TeamIdParamSchema,
       body: {
@@ -398,22 +398,22 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { toUserId } = c.req.valid("json");
     const { id } = c.req.valid("param");
-    const inv = await teamService.inviteUser(orgId, id, endUserId, toUserId);
+    const inv = await matchSquadService.inviteUser(orgId, id, endUserId, toUserId);
     return c.json(ok(serializeInvitation(inv)), 201);
   },
 );
 
 // POST /invitations/:id/accept
-teamClientRouter.openapi(
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
     path: "/invitations/{id}/accept",
     tags: [TAG],
-    summary: "Accept a team invitation",
+    summary: "Accept a squad invitation",
     request: {
       params: InvitationIdParamSchema,
     },
@@ -426,21 +426,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
-    const team = await teamService.acceptInvitation(orgId, id, endUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.acceptInvitation(orgId, id, endUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );
 
 // POST /invitations/:id/reject
-teamClientRouter.openapi(
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
     path: "/invitations/{id}/reject",
     tags: [TAG],
-    summary: "Reject a team invitation",
+    summary: "Reject a squad invitation",
     request: {
       params: InvitationIdParamSchema,
     },
@@ -455,21 +455,21 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { id } = c.req.valid("param");
-    const inv = await teamService.rejectInvitation(orgId, id, endUserId);
+    const inv = await matchSquadService.rejectInvitation(orgId, id, endUserId);
     return c.json(ok(serializeInvitation(inv)), 200);
   },
 );
 
 // POST /quick-match?configAlias=
-teamClientRouter.openapi(
+matchSquadClientRouter.openapi(
   createClientRoute({
     method: "post",
     path: "/quick-match",
     tags: [TAG],
-    summary: "Quick match — join the fullest open team or create a new one",
+    summary: "Quick match — join the fullest open squad or create a new one",
     request: {
       query: QuickMatchQuerySchema,
     },
@@ -482,10 +482,10 @@ teamClientRouter.openapi(
     },
   }),
   async (c) => {
-    const orgId = c.get("clientCredential")!.organizationId;
+    const orgId = c.get("clientCredential")!.tenantId;
     const endUserId = getEndUserId(c);
     const { configAlias } = c.req.valid("query");
-    const team = await teamService.quickMatch(orgId, configAlias, endUserId);
-    return c.json(ok(serializeTeam(team)), 200);
+    const squad = await matchSquadService.quickMatch(orgId, configAlias, endUserId);
+    return c.json(ok(serializeSquad(squad)), 200);
   },
 );

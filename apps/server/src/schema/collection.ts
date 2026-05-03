@@ -15,7 +15,7 @@ import {
 import { fractionalSortKey } from "./_fractional-sort";
 
 import type { RewardEntry } from "../lib/rewards";
-import { organization } from "./auth";
+import { team } from "./auth";
 import { itemDefinitions } from "./item";
 
 /**
@@ -81,9 +81,9 @@ export const collectionAlbums = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
+    tenantId: text("tenant_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => team.id, { onDelete: "cascade" }),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -100,9 +100,9 @@ export const collectionAlbums = pgTable(
       .notNull(),
   },
   (table) => [
-    index("collection_albums_org_idx").on(table.organizationId),
-    uniqueIndex("collection_albums_org_alias_uidx")
-      .on(table.organizationId, table.alias)
+    index("collection_albums_tenant_idx").on(table.tenantId),
+    uniqueIndex("collection_albums_tenant_alias_uidx")
+      .on(table.tenantId, table.alias)
       .where(sql`${table.alias} IS NOT NULL`),
   ],
 );
@@ -110,7 +110,7 @@ export const collectionAlbums = pgTable(
 /**
  * Groups — optional chapters inside an album.
  *
- * `organizationId` is denormalized here (and on other child tables) so
+ * `tenantId` is denormalized here (and on other child tables) so
  * the admin UI can filter by tenant without traversing back to the
  * album row. ON DELETE CASCADE from the album keeps it consistent.
  */
@@ -123,7 +123,7 @@ export const collectionGroups = pgTable(
     albumId: uuid("album_id")
       .notNull()
       .references(() => collectionAlbums.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
@@ -137,7 +137,7 @@ export const collectionGroups = pgTable(
   },
   (table) => [
     index("collection_groups_album_idx").on(table.albumId, table.sortOrder),
-    index("collection_groups_org_idx").on(table.organizationId),
+    index("collection_groups_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -156,7 +156,7 @@ export const collectionGroups = pgTable(
  * `hiddenUntilUnlocked` drives server-side redaction in the client API —
  * unlocked readers see full details; locked readers see '???'.
  *
- * The `(organizationId, triggerItemDefinitionId)` index supports the
+ * The `(tenantId, triggerItemDefinitionId)` index supports the
  * hot reverse lookup performed by `collectionService.onItemGranted`:
  * given a set of newly-granted definition IDs, fetch all entries that
  * should light up.
@@ -173,7 +173,7 @@ export const collectionEntries = pgTable(
     groupId: uuid("group_id").references(() => collectionGroups.id, {
       onDelete: "set null",
     }),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     alias: text("alias"),
     name: text("name").notNull(),
     description: text("description"),
@@ -202,8 +202,8 @@ export const collectionEntries = pgTable(
       table.groupId,
       table.sortOrder,
     ),
-    index("collection_entries_org_trigger_idx").on(
-      table.organizationId,
+    index("collection_entries_tenant_trigger_idx").on(
+      table.tenantId,
       table.triggerItemDefinitionId,
     ),
     uniqueIndex("collection_entries_album_alias_uidx")
@@ -239,7 +239,7 @@ export const collectionMilestones = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     albumId: uuid("album_id")
       .notNull()
       .references(() => collectionAlbums.id, { onDelete: "cascade" }),
@@ -268,7 +268,7 @@ export const collectionMilestones = pgTable(
       table.scope,
       table.threshold,
     ),
-    index("collection_milestones_org_idx").on(table.organizationId),
+    index("collection_milestones_tenant_idx").on(table.tenantId),
   ],
 );
 
@@ -291,7 +291,7 @@ export const collectionUserEntries = pgTable(
       .notNull()
       .references(() => collectionEntries.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     albumId: uuid("album_id").notNull(),
     unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
     source: text("source"),
@@ -303,8 +303,8 @@ export const collectionUserEntries = pgTable(
       columns: [table.entryId, table.endUserId],
       name: "collection_user_entries_pk",
     }),
-    index("collection_user_entries_org_user_album_idx").on(
-      table.organizationId,
+    index("collection_user_entries_tenant_user_album_idx").on(
+      table.tenantId,
       table.endUserId,
       table.albumId,
     ),
@@ -327,7 +327,7 @@ export const collectionUserMilestones = pgTable(
       .notNull()
       .references(() => collectionMilestones.id, { onDelete: "cascade" }),
     endUserId: text("end_user_id").notNull(),
-    organizationId: text("organization_id").notNull(),
+    tenantId: text("tenant_id").notNull(),
     albumId: uuid("album_id").notNull(),
     claimedAt: timestamp("claimed_at").defaultNow().notNull(),
     deliveryMode: text("delivery_mode").notNull(),
@@ -338,8 +338,8 @@ export const collectionUserMilestones = pgTable(
       columns: [table.milestoneId, table.endUserId],
       name: "collection_user_milestones_pk",
     }),
-    index("collection_user_milestones_org_user_idx").on(
-      table.organizationId,
+    index("collection_user_milestones_tenant_user_idx").on(
+      table.tenantId,
       table.endUserId,
     ),
   ],

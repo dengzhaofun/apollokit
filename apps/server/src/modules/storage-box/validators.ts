@@ -132,7 +132,7 @@ export const EndUserIdParamSchema = z.object({
 export const ConfigResponseSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     alias: z.string().nullable(),
     name: z.string(),
     description: z.string().nullable(),
@@ -160,7 +160,7 @@ export const ConfigListResponseSchema = pageOf(ConfigResponseSchema).openapi(
 export const DepositViewSchema = z
   .object({
     id: z.string(),
-    organizationId: z.string(),
+    tenantId: z.string(),
     endUserId: z.string(),
     boxConfigId: z.string(),
     currencyDefinitionId: z.string(),
