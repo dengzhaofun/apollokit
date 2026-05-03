@@ -34,6 +34,7 @@ import {
   ConfigListResponseSchema,
   CreateConfigSchema,
   CreateRewardSchema,
+  ResetUserStateResponseSchema,
   RewardIdParamSchema,
   RewardListResponseSchema,
   UpdateConfigSchema,
@@ -394,6 +395,32 @@ checkInRouter.openapi(
         isCompleted: view.isCompleted,
         remaining: view.remaining,
       }), 200,);
+  },
+);
+
+// DELETE /check-in/configs/:key/users/:endUserId/state
+checkInRouter.openapi(
+  createAdminRoute({
+    method: "delete",
+    path: "/configs/{key}/users/{endUserId}/state",
+    tags: [TAG],
+    summary: "Reset an end user's check-in progress (deletes state row; next check-in starts fresh)",
+    request: { params: UserStateParamSchema },
+    responses: {
+      200: {
+        description: "Reset result",
+        content: {
+          "application/json": { schema: envelopeOf(ResetUserStateResponseSchema) },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key, endUserId } = c.req.valid("param");
+    const result = await checkInService.resetUserState(orgId, key, endUserId);
+    return c.json(ok(result), 200);
   },
 );
 

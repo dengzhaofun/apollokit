@@ -105,6 +105,11 @@ declare module "../../lib/event-bus" {
       justCompletedCycle: boolean;
       rewards: RewardEntry[] | null;
     };
+    "check_in.state_reset": {
+      tenantId: string;
+      endUserId: string;
+      configId: string;
+    };
   }
 }
 
@@ -771,6 +776,35 @@ export function createCheckInService(d: CheckInDeps, itemSvc?: ItemService) {
         .from(checkInRewards)
         .where(eq(checkInRewards.configId, config.id))
         .orderBy(checkInRewards.dayNumber);
+    },
+
+    async resetUserState(
+      tenantId: string,
+      configIdOrAlias: string,
+      endUserId: string,
+    ): Promise<{ reset: boolean }> {
+      const config = await loadConfigByKey(tenantId, configIdOrAlias);
+      const [deleted] = await db
+        .delete(checkInUserStates)
+        .where(
+          and(
+            eq(checkInUserStates.configId, config.id),
+            eq(checkInUserStates.endUserId, endUserId),
+          ),
+        )
+        .returning({ configId: checkInUserStates.configId });
+
+      const reset = deleted !== undefined;
+
+      if (reset && events) {
+        await events.emit("check_in.state_reset", {
+          tenantId,
+          endUserId,
+          configId: config.id,
+        });
+      }
+
+      return { reset };
     },
   };
 }
