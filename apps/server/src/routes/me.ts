@@ -19,6 +19,7 @@ import { eq, and } from "drizzle-orm";
 import {
   ac,
   BUSINESS_RESOURCES,
+  ORG_RESOURCES,
   roles,
   type ResourceName,
 } from "../auth/ac";
@@ -27,8 +28,21 @@ import type { HonoEnv } from "../env";
 import { createAdminRouter, createAdminRoute } from "../lib/openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../lib/response";
 import { requireAdminOrApiKey } from "../middleware/require-admin-or-api-key";
-import { teamMember } from "../schema";
+import { member, teamMember } from "../schema";
 import { z } from "@hono/zod-openapi";
+
+// Better Auth's defaultStatements gives ownerAc/adminAc/memberAc the
+// `organization` / `member` / `invitation` / `team` resource set. The
+// RouteGuard / <Can /> on /settings/* checks for `organization:update`
+// etc., so we expose those alongside our own `billing` / `orgMember`
+// extension under ORG_RESOURCES.
+const ORG_LEVEL_KEYS = [
+  "organization",
+  "invitation",
+  "team",
+  "member",
+  ...ORG_RESOURCES,
+] as readonly string[];
 
 const TAG = "Me";
 
@@ -73,6 +87,21 @@ async function getActiveRole(
   return row?.role ?? null;
 }
 
+/** Org-level role from `member.role`, used for `<Can resource="organization">` etc. */
+async function getActiveOrgRole(
+  userId: string,
+  organizationId: string,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ role: member.role })
+    .from(member)
+    .where(
+      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
+    )
+    .limit(1);
+  return row?.role ?? null;
+}
+
 /**
  * Compute the capability bag for a role string. Comma-separated multi-
  * roles take the union; unknown role names are silently skipped.
@@ -82,6 +111,7 @@ async function getActiveRole(
  */
 function computeCapabilities(
   roleString: string | null,
+  resourceList: readonly string[],
 ): Record<string, string[]> {
   const bag: Record<string, Set<string>> = {};
   if (!roleString) return {};
@@ -99,7 +129,7 @@ function computeCapabilities(
       >
     )[name];
     if (!role) continue;
-    for (const resource of BUSINESS_RESOURCES) {
+    for (const resource of resourceList) {
       const granted = role.statements[resource];
       if (!granted || granted.length === 0) continue;
       if (!bag[resource]) bag[resource] = new Set();
@@ -135,7 +165,7 @@ meRouter.openapi(
     },
   }),
   async (c) => {
-    // admin-api-key bypass: API keys are pre-scoped to an org and
+    // admin-api-key bypass: API keys are pre-scoped to a project and
     // implicitly trusted as full-manage. Return the union of all
     // resource:[manage] grants so the SDK / SPA flow still works.
     if (c.var.authMethod === "admin-api-key") {
@@ -148,11 +178,21 @@ meRouter.openapi(
 
     const userId = c.var.user!.id;
     const tenantId = c.var.session!.activeTeamId!;
-    const roleString = await getActiveRole(userId, tenantId);
+    const orgId = c.var.session!.activeOrganizationId!;
+
+    // Two layers union into one bag — RouteGuard / <Can /> consumers
+    // treat the result as flat. Keys never collide across layers
+    // (BUSINESS_RESOURCES vs ORG_LEVEL_KEYS are disjoint by construction).
+    const teamRoleString = await getActiveRole(userId, tenantId);
+    const orgRoleString = await getActiveOrgRole(userId, orgId);
+    const teamBag = computeCapabilities(teamRoleString, BUSINESS_RESOURCES);
+    const orgBag = computeCapabilities(orgRoleString, ORG_LEVEL_KEYS);
     return c.json(
       ok({
-        role: roleString,
-        capabilities: computeCapabilities(roleString),
+        // Surface the team-level role (the daily one). Org-level role is
+        // already inferable from the org-level capabilities.
+        role: teamRoleString,
+        capabilities: { ...teamBag, ...orgBag },
       }),
     );
   },

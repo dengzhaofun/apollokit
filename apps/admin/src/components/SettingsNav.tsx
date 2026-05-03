@@ -45,16 +45,11 @@ function getSections(): SettingsNavSection[] {
     },
     {
       key: "organization",
-      // Company-level (billing parent + cross-project member mgmt).
-      // Reuses the existing settings_section_project label since the
-      // paraglide messages aren't double-translated yet — the label is
-      // displayed-as "Company / 公司" via auth-localization mapping
-      // wherever daveyplate cards render. Section heading copy here is
-      // generic ("Settings") so no churn needed.
-      label: m.settings_section_project,
+      // Org-level: billing, members across projects, delete organization.
+      label: () => "Organization",
       items: [
         {
-          title: m.nav_project_settings,
+          title: () => "Organization settings",
           to: "/settings/organization",
           icon: Building2,
         },
@@ -99,6 +94,17 @@ export function SettingsNav() {
   // 拍平 sections → items,移动端水平 tab 用
   const flatItems = sections.flatMap((s) => s.items)
 
+  // Active match —— `/settings/project/roles` 不应让 `/settings/project`
+  // 也亮起来。规则:在所有匹配的 item 里,选 item.to 最长那一条 active,
+  // 其它即使 prefix 匹配也不算。这是 Linear/Sentry sidebar 的标准行为。
+  const allItems = sections.flatMap((s) => s.items)
+  const activeItem = allItems
+    .filter(
+      (i) => pathname === i.to || pathname.startsWith(`${i.to}/`),
+    )
+    .sort((a, b) => b.to.length - a.to.length)[0]
+  const isActiveItem = (to: string) => activeItem?.to === to
+
   return (
     <>
       {/* 移动端:横向 scroll 的 tab bar(<md 显示) */}
@@ -111,8 +117,7 @@ export function SettingsNav() {
         </h2>
         <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
           {flatItems.map((item) => {
-            const isActive =
-              pathname === item.to || pathname.startsWith(`${item.to}/`)
+            const isActive = isActiveItem(item.to)
             return (
               <Link
                 key={item.to}
@@ -150,8 +155,7 @@ export function SettingsNav() {
               </div>
               <ul className="flex flex-col gap-px">
                 {section.items.map((item) => {
-                  const isActive =
-                    pathname === item.to || pathname.startsWith(`${item.to}/`)
+                  const isActive = isActiveItem(item.to)
                   return (
                     <li key={item.to}>
                       <Link

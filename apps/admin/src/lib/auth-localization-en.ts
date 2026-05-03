@@ -2,7 +2,7 @@ import type { AuthLocalization } from '@daveyplate/better-auth-ui'
 
 // Apollokit's user-facing terminology under the dual-tenant model:
 //
-//   Better Auth `organization` → "Company" (the parent account).
+//   Better Auth `organization` → "Organization" (the parent account).
 //     Maps to the user's billing entity. Most users see this once (during
 //     signup) and rarely afterwards — it's where billing & cross-project
 //     member management live.
@@ -16,67 +16,67 @@ import type { AuthLocalization } from '@daveyplate/better-auth-ui'
 // The schema string keys themselves are dictated by Better Auth and
 // `@daveyplate/better-auth-ui` — we only override the values.
 export const authLocalizationEn: AuthLocalization = {
-  // ── Organization (= Company) errors ──
+  // ── Organization (= Organization) errors ──
   YOU_ARE_NOT_ALLOWED_TO_CREATE_A_NEW_ORGANIZATION:
-    'You are not allowed to create a new company',
+    'You are not allowed to create a new organization',
   YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS:
     'You have reached the maximum number of companies',
-  ORGANIZATION_ALREADY_EXISTS: 'Company already exists',
-  ORGANIZATION_NOT_FOUND: 'Company not found',
-  USER_IS_NOT_A_MEMBER_OF_THE_ORGANIZATION: 'User is not a member of the company',
+  ORGANIZATION_ALREADY_EXISTS: 'Organization already exists',
+  ORGANIZATION_NOT_FOUND: 'Organization not found',
+  USER_IS_NOT_A_MEMBER_OF_THE_ORGANIZATION: 'User is not a member of the organization',
   YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_ORGANIZATION:
-    'You are not allowed to update this company',
+    'You are not allowed to update this organization',
   YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_ORGANIZATION:
-    'You are not allowed to delete this company',
-  NO_ACTIVE_ORGANIZATION: 'No active company',
+    'You are not allowed to delete this organization',
+  NO_ACTIVE_ORGANIZATION: 'No active organization',
   USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION:
-    'User is already a member of this company',
+    'User is already a member of this organization',
   YOU_CANNOT_LEAVE_THE_ORGANIZATION_AS_THE_ONLY_OWNER:
-    'You cannot leave the company as the only owner',
+    'You cannot leave the organization as the only owner',
   YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION:
-    'You are not allowed to invite users to this company',
+    'You are not allowed to invite users to this organization',
   USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION:
-    'User is already invited to this company',
+    'User is already invited to this organization',
   INVITER_IS_NO_LONGER_A_MEMBER_OF_THE_ORGANIZATION:
-    'Inviter is no longer a member of the company',
-  ORGANIZATION_MEMBERSHIP_LIMIT_REACHED: 'Company membership limit reached',
-  NOT_ORGANIZATION_MEMBER: 'Not a company member',
+    'Inviter is no longer a member of the organization',
+  ORGANIZATION_MEMBERSHIP_LIMIT_REACHED: 'Organization membership limit reached',
+  NOT_ORGANIZATION_MEMBER: 'Not an organization member',
 
-  // ── Organization (= Company) UI ──
-  CREATE_ORGANIZATION: 'Create company',
-  ORGANIZATION: 'Company',
+  // ── Organization (= Organization) UI ──
+  CREATE_ORGANIZATION: 'Create organization',
+  ORGANIZATION: 'Organization',
   ORGANIZATION_NAME: 'Name',
   ORGANIZATION_NAME_PLACEHOLDER: 'Acme Inc.',
-  ORGANIZATION_NAME_DESCRIPTION: 'This is your company display name.',
+  ORGANIZATION_NAME_DESCRIPTION: 'This is your organization display name.',
   ORGANIZATION_NAME_INSTRUCTIONS: 'Please use 32 characters at maximum.',
   ORGANIZATION_SLUG: 'URL slug',
-  ORGANIZATION_SLUG_DESCRIPTION: 'This is your company URL namespace.',
+  ORGANIZATION_SLUG_DESCRIPTION: 'This is your organization URL namespace.',
   ORGANIZATION_SLUG_INSTRUCTIONS: 'Please use 48 characters at maximum.',
   ORGANIZATION_SLUG_PLACEHOLDER: 'acme',
-  CREATE_ORGANIZATION_SUCCESS: 'Company created successfully',
-  ORGANIZATIONS: 'Companies',
+  CREATE_ORGANIZATION_SUCCESS: 'Organization created successfully',
+  ORGANIZATIONS: 'Organizations',
   ORGANIZATIONS_DESCRIPTION: 'Manage your companies and memberships.',
   ORGANIZATIONS_INSTRUCTIONS:
-    'Create a company to collaborate with other users.',
-  LEAVE_ORGANIZATION: 'Leave company',
-  LEAVE_ORGANIZATION_CONFIRM: 'Are you sure you want to leave this company?',
-  LEAVE_ORGANIZATION_SUCCESS: 'Successfully left the company.',
-  MANAGE_ORGANIZATION: 'Manage company',
+    'Create an organization to collaborate with other users.',
+  LEAVE_ORGANIZATION: 'Leave organization',
+  LEAVE_ORGANIZATION_CONFIRM: 'Are you sure you want to leave this organization?',
+  LEAVE_ORGANIZATION_SUCCESS: 'Successfully left the organization.',
+  MANAGE_ORGANIZATION: 'Manage organization',
   REMOVE_MEMBER_CONFIRM:
-    'Are you sure you want to remove this member from the company?',
-  MEMBERS_INSTRUCTIONS: 'Invite new members to your company.',
+    'Are you sure you want to remove this member from the organization?',
+  MEMBERS_INSTRUCTIONS: 'Invite new members to your organization.',
   INVITE_MEMBER_DESCRIPTION:
-    'Send an invitation to add a new member to your company.',
-  PENDING_INVITATIONS_DESCRIPTION: 'Manage pending invitations for the company.',
+    'Send an invitation to add a new member to your organization.',
+  PENDING_INVITATIONS_DESCRIPTION: 'Manage pending invitations for the organization.',
   PENDING_USER_INVITATIONS_DESCRIPTION:
-    'Company invitations you have received.',
-  ACCEPT_INVITATION_DESCRIPTION: 'You have been invited to join a company.',
-  DELETE_ORGANIZATION: 'Delete company',
+    'Organization invitations you have received.',
+  ACCEPT_INVITATION_DESCRIPTION: 'You have been invited to join an organization.',
+  DELETE_ORGANIZATION: 'Delete organization',
   DELETE_ORGANIZATION_DESCRIPTION:
-    'Permanently delete your company and all of its contents. This action is not reversible — please proceed with caution.',
-  DELETE_ORGANIZATION_SUCCESS: 'Company deleted',
-  DELETE_ORGANIZATION_INSTRUCTIONS: 'Enter the company slug to continue:',
-  SLUG_REQUIRED: 'Please enter the company slug',
+    'Permanently delete your organization and all of its contents. This action is not reversible — please proceed with caution.',
+  DELETE_ORGANIZATION_SUCCESS: 'Organization deleted',
+  DELETE_ORGANIZATION_INSTRUCTIONS: 'Enter the organization slug to continue:',
+  SLUG_REQUIRED: 'Please enter the organization slug',
 
   // ── Team (= Project) errors ──
   TEAM_LIMIT_REACHED: 'Project limit reached',
@@ -90,9 +90,9 @@ export const authLocalizationEn: AuthLocalization = {
   YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_TEAMS:
     'You have reached the maximum number of projects',
   YOU_ARE_NOT_ALLOWED_TO_CREATE_TEAMS_IN_THIS_ORGANIZATION:
-    'You are not allowed to create projects in this company',
+    'You are not allowed to create projects in this organization',
   YOU_ARE_NOT_ALLOWED_TO_DELETE_TEAMS_IN_THIS_ORGANIZATION:
-    'You are not allowed to delete projects in this company',
+    'You are not allowed to delete projects in this organization',
 
   // ── Team (= Project) UI ──
   TEAMS: 'Projects',
@@ -104,7 +104,7 @@ export const authLocalizationEn: AuthLocalization = {
   CREATE_TEAM_SUCCESS: 'Project created successfully',
   UPDATE_TEAM: 'Update project',
   UPDATE_TEAMS: 'Projects',
-  UPDATE_TEAMS_DESCRIPTION: 'Manage projects under this company.',
+  UPDATE_TEAMS_DESCRIPTION: 'Manage projects under this organization.',
   UPDATE_TEAM_DESCRIPTION: 'Rename or relabel this project.',
   UPDATE_TEAM_SUCCESS: 'Project updated',
   DELETE_TEAM: 'Delete project',

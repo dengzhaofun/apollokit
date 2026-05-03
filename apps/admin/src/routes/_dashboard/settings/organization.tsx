@@ -5,11 +5,11 @@ import { RouteGuard } from "#/components/auth/RouteGuard"
 import { seo } from "#/lib/seo"
 
 /**
- * Organization (= company / billing parent) settings.
+ * Organization (= organization / billing parent) settings.
  *
  * Renders the `@daveyplate/better-auth-ui` `OrganizationSettingsCards`
- * bundle — company name/slug, logo, member list with role-update,
- * pending invitations, and the danger zone (delete company).
+ * bundle — organization name/slug, logo, member list with role-update,
+ * pending invitations, and the danger zone (delete organization).
  *
  * Under the dual-tenant model, this is the COMPANY-level settings
  * page. Project (Better Auth team) settings live separately at
@@ -17,7 +17,7 @@ import { seo } from "#/lib/seo"
  *
  * The localization override (auth-localization-en.ts / -zh.ts mounted
  * in providers.tsx) maps Better Auth's internal `ORGANIZATION_*`
- * strings to "Company / 公司".
+ * strings to "Organization / 组织".
  *
  * Role-aware UI is handled by daveyplate: a `member`-role user won't
  * see the Invite / Remove / Update-Role buttons. The server-side

@@ -10,7 +10,7 @@ import { seo } from "#/lib/seo"
  * the active organization.
  *
  * Renders daveyplate's `TeamsCard` which shows every project under the
- * current company, with create/update/delete dialogs. Each row is a
+ * current organization, with create/update/delete dialogs. Each row is a
  * project (Better Auth team) tied to `tenantId` on every business table.
  *
  * Per-project deep settings (members, roles, API keys, webhooks, etc.)
@@ -18,10 +18,10 @@ import { seo } from "#/lib/seo"
  * business modules on existing routes; switching the project via the
  * sidebar `ProjectSwitcher` re-scopes the entire dashboard.
  *
- * Company-level settings (members, billing, delete) live at
+ * Organization-level settings (members, billing, delete) live at
  * `/settings/organization`.
  */
-export const Route = createFileRoute("/_dashboard/settings/project")({
+export const Route = createFileRoute("/_dashboard/settings/project/")({
   head: () => seo({ title: "Project settings", noindex: true }),
   component: ProjectSettingsPage,
 })

@@ -23,7 +23,12 @@ import {
 import { normalizeEmail } from "./lib/normalize-email";
 import { provisionTeamDefaults } from "./lib/provision-team";
 import { getTraceId } from "./lib/request-context";
-import { member, team, teamMember } from "./schema";
+import {
+  member,
+  organization as organizationTable,
+  team,
+  teamMember,
+} from "./schema";
 
 // Lazy via Proxy —— `betterAuth({...})` 编译 plugin chain(organization +
 // apiKey + drizzle adapter + databaseHooks)是 startup CPU 大头(参见 CF
@@ -188,9 +193,12 @@ function buildAdminAuth() {
           // creator as a teamMember. We just need to provision business
           // defaults for that team once it exists.
           afterCreateOrganization: async ({ organization, user }) => {
-            // Find the team Better Auth just created and seed its role
-            // (Better Auth doesn't set teamMember.role itself for the
-            // creator — set it to "owner" so RBAC works on day one).
+            // Find the team Better Auth just created and:
+            //   1. Rename it to "Default project" so the dropdown UI
+            //      doesn't show "Acme Inc" as both company name AND
+            //      first project name (confusing — looks duplicated).
+            //   2. Seed teamMember.role = "owner" so RBAC works on
+            //      day one (Better Auth doesn't set role on creator).
             const [createdTeam] = await db
               .select({ id: team.id })
               .from(team)
@@ -198,6 +206,10 @@ function buildAdminAuth() {
               .orderBy(asc(team.createdAt))
               .limit(1);
             if (!createdTeam) return;
+            await db
+              .update(team)
+              .set({ name: "Default project" })
+              .where(eq(team.id, createdTeam.id));
             await db
               .update(teamMember)
               .set({ role: "owner" })
@@ -430,10 +442,56 @@ function buildAdminAuth() {
             };
           },
           after: async (user, ctx) => {
-            // sign-up 落 audit_logs。这一刻用户尚未加入任何 project —— 列已
-            // 设为 nullable(见 schema/audit-log.ts),audit row tenantId=null。
+            // ─── Sentry 风格 onboarding —— 自动建公司 + 默认项目 ────
+            // 用户视角永远只看到「项目」,公司是后台 placeholder(可去
+            // settings/organization 改名)。注册成功一刻就有 org+team,
+            // session.create.before 后续接力把 activeOrganizationId /
+            // activeTeamId 选好,onboarding 只剩"给项目起名"一步。
+            //
+            // 直插表而不调 auth.api.createOrganization —— 后者需要现成
+            // session,而我们在 session 还没建好时 fire。afterCreateOrganization
+            // hook 也因此不会被触发,这里手工 replicate 它的最小动作:建
+            // 默认 team + teamMember(role=owner) + provisionTeamDefaults。
+            const orgId = crypto.randomUUID();
+            const emailLocal = user.email.split("@")[0] ?? "personal";
+            const slugBase = emailLocal
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .slice(0, 32);
+            const slug = `${slugBase || "user"}-${orgId.slice(0, 8)}`;
+            await db.insert(organizationTable).values({
+              id: orgId,
+              name: `${user.name || emailLocal}'s workspace`,
+              slug,
+              createdAt: new Date(),
+            });
+            await db.insert(member).values({
+              id: crypto.randomUUID(),
+              organizationId: orgId,
+              userId: user.id,
+              role: "orgOwner",
+              createdAt: new Date(),
+            });
+            const teamId = crypto.randomUUID();
+            await db.insert(team).values({
+              id: teamId,
+              name: "Default project",
+              organizationId: orgId,
+              createdAt: new Date(),
+            });
+            await db.insert(teamMember).values({
+              id: crypto.randomUUID(),
+              teamId,
+              userId: user.id,
+              role: "owner",
+              createdAt: new Date(),
+            });
+            await provisionTeamDefaults(teamId);
+
+            // sign-up 落 audit_logs。tenantId 现在是新 team.id,而不是 null。
             await insertAuditRow({
-              tenantId: null,
+              tenantId: teamId,
               actorType: "user",
               actorId: user.id,
               actorLabel: user.email,

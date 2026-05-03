@@ -32,7 +32,7 @@ import { seo } from "#/lib/seo"
  * Custom roles are created at runtime via `authClient.organization.
  * createRole({ role, permission })` and stored in the `organizationRole`
  * table. They live at the **organization** level (one role definition
- * shared across all projects in the company), but are typically used
+ * shared across all projects in the organization), but are typically used
  * for team-level (project-scoped) permission grants — write the role
  * with team-level resource keys (activity, shop, ...).
  *
@@ -102,7 +102,7 @@ function useCreateRole() {
       role: string
       permission: Record<string, string[]>
     }) => {
-      if (!orgId) throw new Error("no active company")
+      if (!orgId) throw new Error("no active organization")
       const { data, error } = await (
         authClient.organization as unknown as {
           createRole: (args: {
@@ -130,7 +130,7 @@ function useDeleteRole() {
   const orgId = session?.session.activeOrganizationId ?? null
   return useMutation({
     mutationFn: async (roleName: string) => {
-      if (!orgId) throw new Error("no active company")
+      if (!orgId) throw new Error("no active organization")
       const { error } = await (
         authClient.organization as unknown as {
           deleteRole: (args: {
@@ -174,7 +174,7 @@ function BuiltinRolesSection() {
       </p>
       <div className="mt-4 space-y-2">
         <RoleRowGroup
-          label="Org level (company)"
+          label="Org level (organization)"
           names={[...BUILTIN_ORG_ROLES]}
         />
         <RoleRowGroup
@@ -306,9 +306,26 @@ function CreateRoleDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("")
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({})
 
-  const resources = caps
-    ? Object.keys(caps as Record<string, unknown>).sort()
-    : []
+  // useCapabilities returns the full bag `{ role, capabilities }`. The
+  // matrix only edits team-level (project-scoped) business resources —
+  // org-level keys (organization / billing / orgMember / team / member /
+  // invitation) belong to RBAC for organization actions and are out of scope
+  // for a team-member-assigned custom role. Filter them out so the
+  // dialog doesn't render a row whose actions value is a string (role)
+  // or where the resource doesn't apply to the per-project context.
+  const ORG_LEVEL_KEYS = new Set([
+    "organization",
+    "invitation",
+    "team",
+    "member",
+    "billing",
+    "orgMember",
+  ])
+  const capsMap: Record<string, string[]> =
+    caps?.capabilities ?? ({} as Record<string, string[]>)
+  const resources = Object.keys(capsMap)
+    .filter((k) => !ORG_LEVEL_KEYS.has(k))
+    .sort()
 
   function toggle(resource: string, action: string) {
     setMatrix((prev) => {
@@ -347,7 +364,7 @@ function CreateRoleDialog({ onClose }: { onClose: () => void }) {
       <DialogHeader>
         <DialogTitle>Create custom role</DialogTitle>
         <DialogDescription>
-          Roles are defined at the company level and can be assigned to
+          Roles are defined at the organization level and can be assigned to
           team members in any project. You can only grant permissions
           your own role currently holds.
         </DialogDescription>
@@ -388,7 +405,6 @@ function CreateRoleDialog({ onClose }: { onClose: () => void }) {
                 </thead>
                 <tbody>
                   {resources.map((res) => {
-                    const capsMap = caps as unknown as Record<string, string[]>
                     const actions: string[] = capsMap[res] ?? []
                     const selected = matrix[res] ?? new Set<string>()
                     return (

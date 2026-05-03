@@ -1099,7 +1099,10 @@ export function AppSidebar() {
               : "flex flex-col gap-1 px-2 py-1 [&_button]:w-full"
           }
         >
-          <OrganizationSwitcher size={isIcon ? "icon" : undefined} />
+          <OrganizationSwitcher
+            size={isIcon ? "icon" : undefined}
+            hidePersonal
+          />
           <ProjectSwitcher size={isIcon ? "icon" : undefined} />
         </div>
 
@@ -1184,7 +1187,7 @@ export function AppSidebar() {
               className={
                 isIcon
                   ? "flex justify-center py-1"
-                  : "px-1 py-1 [&_button]:w-full"
+                  : "min-w-0 overflow-hidden px-1 py-1 [&_button]:w-full"
               }
             >
               <UserMenuButton isIcon={isIcon} />
