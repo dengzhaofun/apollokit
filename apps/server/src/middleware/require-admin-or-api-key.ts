@@ -31,6 +31,13 @@ import { UnauthorizedError } from "./auth-errors";
 
 export const requireAdminOrApiKey = createMiddleware<HonoEnv>(
   async (c, next) => {
+    // Path 0: already authenticated by an upstream middleware
+    // (e.g. `requirePublicApiKey` on `/api/v1/projects/:projectId/*`).
+    // Short-circuit so we don't double-verify.
+    if (c.var.authMethod === "admin-api-key" && c.var.session?.activeTeamId) {
+      return next();
+    }
+
     // Path 1: session auth (resolved by global session middleware).
     // require-auth.ts already guards activeTeamId for routes that mount
     // it; here we still accept session-only requests so endpoints that

@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Hono } from "hono";
 import { Scalar } from "@scalar/hono-api-reference";
 import { logger as honoLogger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
@@ -130,6 +131,7 @@ import { installEventDispatcher } from "./lib/event-dispatcher";
 import { getTraceId } from "./lib/request-context";
 import { health } from "./routes/health";
 import { meRouter } from "./routes/me";
+import { requirePublicApiKey } from "./middleware/require-public-api-key";
 import { queue as queueHandler } from "./queue";
 import { scheduled } from "./scheduled";
 
@@ -319,6 +321,60 @@ app.route("/api/event-catalog", eventCatalogRouter);
 app.route("/api/rank", rankRouter);
 app.route("/api/webhooks", webhooksRouter);
 app.route("/api/triggers", triggersRouter);
+
+// ─── 公开 API: /api/v1/projects/:projectId/<module>/* ──────────────
+//
+// 给集成方 / SDK 调用 —— `x-api-key` 鉴权 + URL 显式带 projectId。
+// `requirePublicApiKey` middleware 校验 key 的 metadata.teamId 与 URL
+// 的 projectId 匹配,然后合成 session(activeTeamId=projectId)交给同一组
+// 业务 router。每个 module 的 router 内部 `requireAdminOrApiKey` 看到
+// authMethod=admin-api-key + activeTeamId 已设,直接 short-circuit 不
+// 重复校验。一份业务逻辑两条入口路径(admin 隐式 / public 显式)。
+{
+  const v1 = new Hono<HonoEnv>();
+  v1.use("/projects/:projectId/*", requirePublicApiKey);
+
+  v1.route("/projects/:projectId/announcement", announcementRouter);
+  v1.route("/projects/:projectId/badge", badgeRouter);
+  v1.route("/projects/:projectId/banner", bannerRouter);
+  v1.route("/projects/:projectId/battle-pass", battlePassRouter);
+  v1.route("/projects/:projectId/cdkey", cdkeyRouter);
+  v1.route("/projects/:projectId/character", characterRouter);
+  v1.route("/projects/:projectId/check-in", checkInRouter);
+  v1.route("/projects/:projectId/offline-check-in", offlineCheckInRouter);
+  v1.route("/projects/:projectId/client-credentials", clientCredentialRouter);
+  v1.route("/projects/:projectId/cms", cmsRouter);
+  v1.route("/projects/:projectId/collection", collectionRouter);
+  v1.route("/projects/:projectId/currency", currencyRouter);
+  v1.route("/projects/:projectId/dialogue", dialogueRouter);
+  v1.route("/projects/:projectId/end-user", endUserRouter);
+  v1.route("/projects/:projectId/entity", entityRouter);
+  v1.route("/projects/:projectId/experiment", experimentRouter);
+  v1.route("/projects/:projectId/exchange", exchangeRouter);
+  v1.route("/projects/:projectId/friend", friendRouter);
+  v1.route("/projects/:projectId/friend-gift", friendGiftRouter);
+  v1.route("/projects/:projectId/invite", inviteRouter);
+  v1.route("/projects/:projectId/guild", guildRouter);
+  v1.route("/projects/:projectId/item", itemRouter);
+  v1.route("/projects/:projectId/lottery", lotteryRouter);
+  v1.route("/projects/:projectId/mail", mailRouter);
+  v1.route("/projects/:projectId/navigation", navigationRouter);
+  v1.route("/projects/:projectId/shop", shopRouter);
+  v1.route("/projects/:projectId/storage-box", storageBoxRouter);
+  v1.route("/projects/:projectId/media-library", mediaLibraryRouter);
+  v1.route("/projects/:projectId/task", taskRouter);
+  v1.route("/projects/:projectId/match-squad", matchSquadRouter);
+  v1.route("/projects/:projectId/level", levelRouter);
+  v1.route("/projects/:projectId/leaderboard", leaderboardRouter);
+  v1.route("/projects/:projectId/activity", activityRouter);
+  v1.route("/projects/:projectId/assist-pool", assistPoolRouter);
+  v1.route("/projects/:projectId/event-catalog", eventCatalogRouter);
+  v1.route("/projects/:projectId/rank", rankRouter);
+  v1.route("/projects/:projectId/webhooks", webhooksRouter);
+  v1.route("/projects/:projectId/triggers", triggersRouter);
+
+  app.route("/api/v1", v1);
+}
 
 // C-end client routes — client credential + HMAC
 app.route("/api/client/announcement", announcementClientRouter);
