@@ -1,4 +1,6 @@
 import { OrganizationSwitcher } from "@daveyplate/better-auth-ui"
+
+import { ProjectSwitcher } from "#/components/auth/ProjectSwitcher"
 import { Link, useLocation, useNavigate } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
@@ -1087,14 +1089,18 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
+        {/* 双层 picker —— 顶层 OrganizationSwitcher 选公司,二层
+            ProjectSwitcher 选项目(=Better Auth team)。日常 99% 用户只看
+            ProjectSwitcher;OrganizationSwitcher 给多公司用户用。 */}
         <div
           className={
             isIcon
-              ? "flex justify-center py-1"
-              : "px-2 py-1 [&_button]:w-full"
+              ? "flex flex-col items-center gap-1 py-1"
+              : "flex flex-col gap-1 px-2 py-1 [&_button]:w-full"
           }
         >
           <OrganizationSwitcher size={isIcon ? "icon" : undefined} />
+          <ProjectSwitcher size={isIcon ? "icon" : undefined} />
         </div>
 
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />

@@ -1,25 +1,25 @@
-import { OrganizationSettingsCards } from "@daveyplate/better-auth-ui"
+import { TeamsCard } from "@daveyplate/better-auth-ui"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { RouteGuard } from "#/components/auth/RouteGuard"
+import { authClient } from "#/lib/auth-client"
 import { seo } from "#/lib/seo"
 
 /**
- * Project settings.
+ * Project (= Better Auth team) settings — cross-project list view inside
+ * the active organization.
  *
- * Renders the `@daveyplate/better-auth-ui` composite card bundle —
- * name/slug, logo, members list with role-update, pending invitations,
- * and "leave project". The component reads session state from
- * the `AuthUIProvider` mounted in `providers.tsx` and drives all
- * mutations through `authClient.organization.*` (Better Auth's plugin
- * is still named `organization` internally; the UI uses "project"
- * terminology via the localization override in providers.tsx).
+ * Renders daveyplate's `TeamsCard` which shows every project under the
+ * current company, with create/update/delete dialogs. Each row is a
+ * project (Better Auth team) tied to `tenantId` on every business table.
  *
- * Role-aware UI is handled by the library: a `member`-role user won't
- * see the Invite / Remove / Update-Role buttons, so we don't need to
- * wrap anything in `<Can resource="organization" action="write" mode="disable">` here. The server-side
- * `/api/auth/organization/*` endpoints enforce the matrix as a second
- * line of defense.
+ * Per-project deep settings (members, roles, API keys, webhooks, etc.)
+ * are scoped to the **active** project — they live alongside the
+ * business modules on existing routes; switching the project via the
+ * sidebar `ProjectSwitcher` re-scopes the entire dashboard.
+ *
+ * Company-level settings (members, billing, delete) live at
+ * `/settings/organization`.
  */
 export const Route = createFileRoute("/_dashboard/settings/project")({
   head: () => seo({ title: "Project settings", noindex: true }),
@@ -27,15 +27,31 @@ export const Route = createFileRoute("/_dashboard/settings/project")({
 })
 
 function ProjectSettingsPage() {
-  // Project settings exposes member management + role-update + delete-org.
-  // operator/viewer have no business reading any of it. Use the
-  // unauthorized page so an operator who pasted the URL knows they
-  // need admin/owner.
+  // Org-level "team:create / team:delete" perms — orgAdmin and orgOwner
+  // can manage projects; orgViewer can only see the list. We gate
+  // visually with RouteGuard but server-side `/api/auth/organization/*-team`
+  // endpoints are the source of truth.
   return (
-    <RouteGuard resource="organization" action="update" visibility="unauthorized-page">
+    <RouteGuard
+      resource="organization"
+      action="update"
+      visibility="unauthorized-page"
+    >
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        <OrganizationSettingsCards />
+        <ActiveOrgTeamsCard />
       </div>
     </RouteGuard>
   )
+}
+
+function ActiveOrgTeamsCard() {
+  // daveyplate TeamsCard requires an organizationId. Pull it from the
+  // live session — switching organizations re-renders via useSession's
+  // subscription. While loading or when there is no active org we
+  // render nothing rather than passing undefined (which the TeamsCard
+  // prop type doesn't accept).
+  const { data: session } = authClient.useSession()
+  const orgId = session?.session.activeOrganizationId
+  if (!orgId) return null
+  return <TeamsCard organizationId={orgId} />
 }

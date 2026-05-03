@@ -1,5 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router"
-import { Building2, KeyRound, UserCircle, Webhook, type LucideIcon } from "lucide-react"
+import {
+  Building2,
+  FolderKanban,
+  KeyRound,
+  UserCircle,
+  Webhook,
+  type LucideIcon,
+} from "lucide-react"
 
 import { cn } from "#/lib/utils"
 import * as m from "../paraglide/messages.js"
@@ -8,6 +15,7 @@ type SettingsNavItem = {
   title: () => string
   to:
     | "/settings/account"
+    | "/settings/organization"
     | "/settings/project"
     | "/settings/api-keys"
     | "/settings/webhooks"
@@ -15,7 +23,7 @@ type SettingsNavItem = {
 }
 
 type SettingsNavSection = {
-  key: "personal" | "project"
+  key: "personal" | "organization" | "project"
   label: () => string
   items: SettingsNavItem[]
 }
@@ -34,13 +42,34 @@ function getSections(): SettingsNavSection[] {
       ],
     },
     {
+      key: "organization",
+      // Company-level (billing parent + cross-project member mgmt).
+      // Reuses the existing settings_section_project label since the
+      // paraglide messages aren't double-translated yet — the label is
+      // displayed-as "Company / 公司" via auth-localization mapping
+      // wherever daveyplate cards render. Section heading copy here is
+      // generic ("Settings") so no churn needed.
+      label: m.settings_section_project,
+      items: [
+        {
+          title: m.nav_project_settings,
+          to: "/settings/organization",
+          icon: Building2,
+        },
+      ],
+    },
+    {
       key: "project",
+      // Project (= Better Auth team) level. Sees the active project's
+      // sub-resources (API keys, webhooks, members of THIS project).
+      // The TeamsCard list view at /settings/project itself shows all
+      // projects the user can access in the active company.
       label: m.settings_section_project,
       items: [
         {
           title: m.nav_project_settings,
           to: "/settings/project",
-          icon: Building2,
+          icon: FolderKanban,
         },
         {
           title: m.nav_api_keys,
