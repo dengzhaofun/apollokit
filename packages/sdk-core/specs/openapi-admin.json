@@ -34,6 +34,116 @@
         }
       }
     },
+    "/api/me/capabilities": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "summary": "Capability bag for the current user in the active organization",
+        "description": "Returns the full set of (resource, action[]) the current user can perform. Used by the admin SPA to drive button enable/disable and menu visibility.",
+        "operationId": "me_get_capabilities",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CapabilityBag"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data",
+                    "message",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/analytics/token": {
       "post": {
         "tags": [
@@ -42533,13 +42643,13 @@
         }
       }
     },
-    "/api/team/configs": {
+    "/api/match-squad/configs": {
       "post": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Create a team config for the current project",
-        "operationId": "team_post_configs",
+        "summary": "Create a squad config for the current project",
+        "operationId": "matchsquad_post_configs",
         "security": [
           {
             "AdminApiKey": []
@@ -42549,7 +42659,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamCreateConfig"
+                "$ref": "#/components/schemas/MatchSquadCreateConfig"
               }
             }
           }
@@ -42569,7 +42679,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamConfig"
+                      "$ref": "#/components/schemas/MatchSquadConfig"
                     },
                     "message": {
                       "type": "string"
@@ -42652,10 +42762,10 @@
       },
       "get": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "List team configs for the current project",
-        "operationId": "team_get_configs",
+        "summary": "List squad configs for the current project",
+        "operationId": "matchsquad_get_configs",
         "security": [
           {
             "AdminApiKey": []
@@ -42792,13 +42902,13 @@
         }
       }
     },
-    "/api/team/configs/{key}": {
+    "/api/match-squad/configs/{key}": {
       "get": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Fetch a team config by id or alias",
-        "operationId": "team_get_configs_by_key",
+        "summary": "Fetch a squad config by id or alias",
+        "operationId": "matchsquad_get_configs_by_key",
         "security": [
           {
             "AdminApiKey": []
@@ -42832,7 +42942,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamConfig"
+                      "$ref": "#/components/schemas/MatchSquadConfig"
                     },
                     "message": {
                       "type": "string"
@@ -42915,10 +43025,10 @@
       },
       "put": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Update a team config",
-        "operationId": "team_put_configs_by_key",
+        "summary": "Update a squad config",
+        "operationId": "matchsquad_put_configs_by_key",
         "security": [
           {
             "AdminApiKey": []
@@ -42941,7 +43051,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamUpdateConfig"
+                "$ref": "#/components/schemas/MatchSquadUpdateConfig"
               }
             }
           }
@@ -42961,7 +43071,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamConfig"
+                      "$ref": "#/components/schemas/MatchSquadConfig"
                     },
                     "message": {
                       "type": "string"
@@ -43044,10 +43154,10 @@
       },
       "delete": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Delete a team config (cascades to teams and members)",
-        "operationId": "team_delete_configs_by_key",
+        "summary": "Delete a squad config (cascades to squads and members)",
+        "operationId": "matchsquad_delete_configs_by_key",
         "security": [
           {
             "AdminApiKey": []
@@ -43140,13 +43250,13 @@
         }
       }
     },
-    "/api/team/teams": {
+    "/api/match-squad/squads": {
       "get": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
         "summary": "List teams for the current project",
-        "operationId": "team_get_teams",
+        "operationId": "matchsquad_get_squads",
         "security": [
           {
             "AdminApiKey": []
@@ -43238,7 +43348,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamList"
+                      "$ref": "#/components/schemas/MatchSquadList"
                     },
                     "message": {
                       "type": "string"
@@ -43320,13 +43430,13 @@
         }
       }
     },
-    "/api/team/teams/{id}": {
+    "/api/match-squad/squads/{id}": {
       "get": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Fetch a team by id with members",
-        "operationId": "team_get_teams_by_id",
+        "summary": "Fetch a squad by id with members",
+        "operationId": "matchsquad_get_squads_by_id",
         "security": [
           {
             "AdminApiKey": []
@@ -43337,10 +43447,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -43360,7 +43470,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -43442,13 +43552,13 @@
         }
       }
     },
-    "/api/team/teams/{id}/dissolve": {
+    "/api/match-squad/squads/{id}/dissolve": {
       "post": {
         "tags": [
-          "Team"
+          "MatchSquad"
         ],
-        "summary": "Admin force dissolve a team",
-        "operationId": "team_post_teams_by_id_dissolve",
+        "summary": "Admin force dissolve a squad",
+        "operationId": "matchsquad_post_squads_by_id_dissolve",
         "security": [
           {
             "AdminApiKey": []
@@ -43459,10 +43569,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -43482,7 +43592,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -46395,10 +46505,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Defaults to organizationId for scope=global; required for guild/team/friend."
+              "description": "Defaults to tenantId for scope=global; required for guild/team/friend."
             },
             "required": false,
-            "description": "Defaults to organizationId for scope=global; required for guild/team/friend.",
+            "description": "Defaults to tenantId for scope=global; required for guild/team/friend.",
             "name": "scopeKey",
             "in": "query"
           },
@@ -49125,148 +49235,11 @@
                       "properties": {
                         "balance": {
                           "type": "integer"
-                        },
-                        "unlockedMilestones": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
                         }
                       },
                       "required": [
-                        "balance",
-                        "unlockedMilestones"
+                        "balance"
                       ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data",
-                    "message",
-                    "requestId"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/activity/{key}/claim-milestone": {
-      "post": {
-        "tags": [
-          "Activity"
-        ],
-        "summary": "Claim an activity milestone reward",
-        "operationId": "activity_post_by_key_claim_milestone",
-        "security": [
-          {
-            "AdminApiKey": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ActivityClaimMilestone"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "data": {
-                      "type": "object",
-                      "additionalProperties": {}
                     },
                     "message": {
                       "type": "string"
@@ -55891,6 +55864,63 @@
           "requestId"
         ]
       },
+      "CapabilityBag": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Comma-separated role string from member.role, or null for non-session auth (admin API key).",
+            "example": "admin"
+          },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Map of resource name → array of granted action names (excluding 'manage' which is implicit when present).",
+            "example": {
+              "activity": [
+                "read",
+                "write"
+              ],
+              "cdkey": [
+                "read"
+              ]
+            }
+          }
+        },
+        "required": [
+          "role",
+          "capabilities"
+        ]
+      },
+      "ApiErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "data": {},
+          "message": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "data",
+          "message",
+          "requestId"
+        ]
+      },
       "IssueAnalyticsTokenBody": {
         "type": "object",
         "properties": {
@@ -55984,27 +56014,6 @@
         "required": [
           "items",
           "nextCursor"
-        ]
-      },
-      "ApiErrorEnvelope": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "data": {},
-          "message": {
-            "type": "string"
-          },
-          "requestId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "data",
-          "message",
-          "requestId"
         ]
       },
       "AnnouncementCreateRequest": {
@@ -56107,7 +56116,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -56188,7 +56197,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "kind",
           "title",
@@ -56352,7 +56361,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "ts": {
@@ -56442,7 +56451,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "ts",
           "actorType",
           "actorId",
@@ -56593,7 +56602,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "key": {
@@ -56668,7 +56677,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "key",
           "parentKey",
           "displayType",
@@ -57301,7 +57310,7 @@
       "BadgeSignalRegistryEntry": {
         "type": "object",
         "properties": {
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "keyPattern": {
@@ -57334,7 +57343,7 @@
           }
         },
         "required": [
-          "organizationId",
+          "tenantId",
           "keyPattern",
           "isDynamic",
           "label",
@@ -57441,7 +57450,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -57483,7 +57492,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -57669,7 +57678,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "groupId": {
@@ -57742,7 +57751,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "groupId",
           "title",
           "imageUrlMobile",
@@ -57980,7 +57989,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "activityId": {
@@ -58047,7 +58056,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "activityId",
           "code",
           "name",
@@ -58525,7 +58534,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -58621,7 +58630,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -58806,7 +58815,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "batchId": {
@@ -58836,7 +58845,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "batchId",
           "code",
           "status",
@@ -59047,7 +59056,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -59101,7 +59110,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -59275,7 +59284,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -59333,7 +59342,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -59642,7 +59651,7 @@
           "configId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "dayNumber": {
@@ -59693,7 +59702,7 @@
         "required": [
           "id",
           "configId",
-          "organizationId",
+          "tenantId",
           "dayNumber",
           "rewardItems",
           "metadata",
@@ -59869,7 +59878,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -59963,7 +59972,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -60195,7 +60204,7 @@
           "campaignId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -60263,7 +60272,7 @@
         "required": [
           "id",
           "campaignId",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -60642,7 +60651,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "key": {
@@ -60718,7 +60727,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "key",
           "name",
           "description",
@@ -60907,7 +60916,7 @@
           "experimentId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "variantKey": {
@@ -60942,7 +60951,7 @@
         "required": [
           "id",
           "experimentId",
-          "organizationId",
+          "tenantId",
           "variantKey",
           "name",
           "description",
@@ -61219,7 +61228,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -61256,7 +61265,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "name",
           "publishableKey",
           "devMode",
@@ -61377,7 +61386,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -61429,7 +61438,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -61561,7 +61570,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "typeId": {
@@ -61618,7 +61627,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "typeId",
           "typeAlias",
           "alias",
@@ -61917,7 +61926,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -61976,7 +61985,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -62119,7 +62128,7 @@
           "albumId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -62161,7 +62170,7 @@
         "required": [
           "id",
           "albumId",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "icon",
@@ -62314,7 +62323,7 @@
               "null"
             ]
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -62384,7 +62393,7 @@
           "id",
           "albumId",
           "groupId",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -62599,7 +62608,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "albumId": {
@@ -62683,7 +62692,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "albumId",
           "scope",
           "groupId",
@@ -62933,7 +62942,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -62995,7 +63004,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -63587,7 +63596,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -63702,7 +63711,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -64242,7 +64251,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -64478,7 +64487,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -65019,7 +65028,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "schemaId": {
@@ -65264,7 +65273,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "schemaId",
           "alias",
           "name",
@@ -65541,7 +65550,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "blueprintId": {
@@ -65598,7 +65607,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "blueprintId",
           "alias",
           "name",
@@ -65806,7 +65815,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -65843,7 +65852,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "maxFormations",
@@ -65953,7 +65962,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -65997,7 +66006,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "icon",
@@ -66169,7 +66178,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "categoryId": {
@@ -66245,7 +66254,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "categoryId",
           "alias",
           "name",
@@ -66615,7 +66624,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -66652,7 +66661,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -66839,7 +66848,7 @@
           "configId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -66947,7 +66956,7 @@
         "required": [
           "id",
           "configId",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "costItems",
@@ -67204,7 +67213,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "maxFriends": {
@@ -67232,7 +67241,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "maxFriends",
           "maxBlocked",
           "maxPendingRequests",
@@ -67299,7 +67308,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "dailySendLimit": {
@@ -67327,7 +67336,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "dailySendLimit",
           "dailyReceiveLimit",
           "timezone",
@@ -67450,7 +67459,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -67520,7 +67529,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -67650,7 +67659,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "packageId": {
@@ -67718,7 +67727,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "packageId",
           "senderUserId",
           "receiverUserId",
@@ -67738,7 +67747,7 @@
           "null"
         ],
         "properties": {
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "enabled": {
@@ -67765,7 +67774,7 @@
           }
         },
         "required": [
-          "organizationId",
+          "tenantId",
           "enabled",
           "codeLength",
           "allowSelfInvite",
@@ -67889,7 +67898,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "maxMembers": {
@@ -67964,7 +67973,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "maxMembers",
           "maxOfficers",
           "createCost",
@@ -68082,7 +68091,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -68152,7 +68161,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "icon",
@@ -68252,7 +68261,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "guildId": {
@@ -68282,7 +68291,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "guildId",
           "endUserId",
           "delta",
@@ -68447,7 +68456,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -68532,7 +68541,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -68735,7 +68744,7 @@
           "poolId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -68789,7 +68798,7 @@
         "required": [
           "id",
           "poolId",
-          "organizationId",
+          "tenantId",
           "name",
           "alias",
           "baseWeight",
@@ -68977,7 +68986,7 @@
           "poolId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -69068,7 +69077,7 @@
           "id",
           "tierId",
           "poolId",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "rewardItems",
@@ -69246,7 +69255,7 @@
           "poolId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "guaranteeTierId": {
@@ -69287,7 +69296,7 @@
         "required": [
           "id",
           "poolId",
-          "organizationId",
+          "tenantId",
           "guaranteeTierId",
           "hardPityThreshold",
           "softPityStartAt",
@@ -69651,7 +69660,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "title": {
@@ -69750,7 +69759,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "title",
           "content",
           "rewards",
@@ -69853,7 +69862,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "userId": {
@@ -69878,7 +69887,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "userId",
           "routePath",
           "sortOrder",
@@ -69958,7 +69967,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "parentId": {
@@ -70023,7 +70032,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "parentId",
           "alias",
           "name",
@@ -70186,7 +70195,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -70236,7 +70245,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "color",
@@ -70558,7 +70567,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "categoryId": {
@@ -70761,7 +70770,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "categoryId",
           "alias",
           "name",
@@ -71140,7 +71149,7 @@
           "productId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "stageIndex": {
@@ -71222,7 +71231,7 @@
         "required": [
           "id",
           "productId",
-          "organizationId",
+          "tenantId",
           "stageIndex",
           "name",
           "description",
@@ -71625,7 +71634,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -71711,7 +71720,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -72024,7 +72033,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "parentId": {
@@ -72048,7 +72057,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "parentId",
           "name",
           "isDefault",
@@ -72194,7 +72203,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "folderId": {
@@ -72239,7 +72248,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "folderId",
           "objectKey",
           "filename",
@@ -72316,7 +72325,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -72369,7 +72378,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -72715,7 +72724,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "categoryId": {
@@ -72893,7 +72902,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "categoryId",
           "parentId",
           "alias",
@@ -73269,7 +73278,7 @@
           "items"
         ]
       },
-      "TeamCreateConfig": {
+      "MatchSquadCreateConfig": {
         "type": "object",
         "properties": {
           "name": {
@@ -73294,13 +73303,13 @@
             "exclusiveMinimum": 0,
             "maximum": 100,
             "default": 4,
-            "description": "Maximum number of members in a team.",
+            "description": "Maximum number of members in a squad.",
             "example": 5
           },
           "autoDissolveOnLeaderLeave": {
             "type": "boolean",
             "default": false,
-            "description": "Dissolve team when leader leaves instead of transferring leadership."
+            "description": "Dissolve squad when leader leaves instead of transferring leadership."
           },
           "allowQuickMatch": {
             "type": "boolean",
@@ -73320,13 +73329,13 @@
           "name"
         ]
       },
-      "TeamConfig": {
+      "MatchSquadConfig": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -73363,7 +73372,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "maxMembers",
@@ -73380,7 +73389,7 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TeamConfig"
+              "$ref": "#/components/schemas/MatchSquadConfig"
             }
           },
           "nextCursor": {
@@ -73396,7 +73405,7 @@
           "nextCursor"
         ]
       },
-      "TeamUpdateConfig": {
+      "MatchSquadUpdateConfig": {
         "type": "object",
         "properties": {
           "name": {
@@ -73436,13 +73445,13 @@
           }
         }
       },
-      "TeamList": {
+      "MatchSquadList": {
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Team"
+              "$ref": "#/components/schemas/MatchSquad"
             }
           },
           "nextCursor": {
@@ -73458,13 +73467,13 @@
           "nextCursor"
         ]
       },
-      "Team": {
+      "MatchSquad": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "configId": {
@@ -73510,13 +73519,13 @@
           "members": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TeamMember"
+              "$ref": "#/components/schemas/MatchSquadMember"
             }
           }
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "configId",
           "leaderUserId",
           "status",
@@ -73616,7 +73625,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -73675,7 +73684,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -73806,7 +73815,7 @@
           "configId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -73849,7 +73858,7 @@
         "required": [
           "id",
           "configId",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "icon",
@@ -74072,7 +74081,7 @@
               "null"
             ]
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -74213,7 +74222,7 @@
           "id",
           "configId",
           "stageId",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -74563,7 +74572,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -74714,7 +74723,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -75202,10 +75211,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "rewardEndAt": {
-            "type": "string",
-            "format": "date-time"
-          },
           "hiddenAt": {
             "type": "string",
             "format": "date-time"
@@ -75215,90 +75220,6 @@
             "minLength": 1,
             "maxLength": 64,
             "default": "UTC"
-          },
-          "currency": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "alias": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 32,
-                "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "icon": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "maxLength": 256
-              }
-            },
-            "required": [
-              "alias",
-              "name"
-            ]
-          },
-          "milestoneTiers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "alias": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64,
-                  "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-                },
-                "points": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "rewards": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "item",
-                          "entity",
-                          "currency"
-                        ]
-                      },
-                      "id": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "count": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "id",
-                      "count"
-                    ]
-                  },
-                  "minItems": 1
-                }
-              },
-              "required": [
-                "alias",
-                "points",
-                "rewards"
-              ]
-            },
-            "default": []
           },
           "globalRewards": {
             "type": "array",
@@ -75329,13 +75250,6 @@
               ]
             },
             "default": []
-          },
-          "kindMetadata": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {}
           },
           "cleanupRule": {
             "type": "object",
@@ -75428,7 +75342,6 @@
           "visibleAt",
           "startAt",
           "endAt",
-          "rewardEndAt",
           "hiddenAt"
         ]
       },
@@ -75438,7 +75351,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -75485,9 +75398,6 @@
           "endAt": {
             "type": "string"
           },
-          "rewardEndAt": {
-            "type": "string"
-          },
           "hiddenAt": {
             "type": "string"
           },
@@ -75496,89 +75406,6 @@
           },
           "status": {
             "type": "string"
-          },
-          "currency": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "alias": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 32,
-                "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "icon": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "maxLength": 256
-              }
-            },
-            "required": [
-              "alias",
-              "name"
-            ]
-          },
-          "milestoneTiers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "alias": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64,
-                  "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-                },
-                "points": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "rewards": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "item",
-                          "entity",
-                          "currency"
-                        ]
-                      },
-                      "id": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "count": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "id",
-                      "count"
-                    ]
-                  },
-                  "minItems": 1
-                }
-              },
-              "required": [
-                "alias",
-                "points",
-                "rewards"
-              ]
-            }
           },
           "globalRewards": {
             "type": "array",
@@ -75608,13 +75435,6 @@
                 "count"
               ]
             }
-          },
-          "kindMetadata": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {}
           },
           "cleanupRule": {
             "type": "object",
@@ -75704,7 +75524,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -75714,14 +75534,10 @@
           "visibleAt",
           "startAt",
           "endAt",
-          "rewardEndAt",
           "hiddenAt",
           "timezone",
           "status",
-          "currency",
-          "milestoneTiers",
           "globalRewards",
-          "kindMetadata",
           "cleanupRule",
           "joinRequirement",
           "visibility",
@@ -75773,10 +75589,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "rewardEndAt": {
-            "type": "string",
-            "format": "date-time"
-          },
           "hiddenAt": {
             "type": "string",
             "format": "date-time"
@@ -75785,89 +75597,6 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 64
-          },
-          "currency": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "alias": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 32,
-                "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "icon": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "maxLength": 256
-              }
-            },
-            "required": [
-              "alias",
-              "name"
-            ]
-          },
-          "milestoneTiers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "alias": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64,
-                  "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-                },
-                "points": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "rewards": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "item",
-                          "entity",
-                          "currency"
-                        ]
-                      },
-                      "id": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "count": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "id",
-                      "count"
-                    ]
-                  },
-                  "minItems": 1
-                }
-              },
-              "required": [
-                "alias",
-                "points",
-                "rewards"
-              ]
-            }
           },
           "globalRewards": {
             "type": "array",
@@ -75897,13 +75626,6 @@
                 "count"
               ]
             }
-          },
-          "kindMetadata": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {}
           },
           "cleanupRule": {
             "type": "object",
@@ -76155,7 +75877,6 @@
               "visible_at",
               "start_at",
               "end_at",
-              "reward_end_at",
               "hidden_at",
               null
             ]
@@ -76352,25 +76073,6 @@
           "source"
         ]
       },
-      "ActivityClaimMilestone": {
-        "type": "object",
-        "properties": {
-          "endUserId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256
-          },
-          "milestoneAlias": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          }
-        },
-        "required": [
-          "endUserId",
-          "milestoneAlias"
-        ]
-      },
       "ActivityTickResult": {
         "type": "object",
         "properties": {
@@ -76411,24 +76113,6 @@
           "p50Points": {
             "type": "number"
           },
-          "milestoneClaims": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "milestoneAlias": {
-                  "type": "string"
-                },
-                "count": {
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "milestoneAlias",
-                "count"
-              ]
-            }
-          },
           "pointsBuckets": {
             "type": "array",
             "items": {
@@ -76455,7 +76139,6 @@
           "avgPoints",
           "maxPoints",
           "p50Points",
-          "milestoneClaims",
           "pointsBuckets"
         ]
       },
@@ -76495,10 +76178,6 @@
                 "type": "integer",
                 "exclusiveMinimum": 0
               },
-              "rewardSeconds": {
-                "type": "integer",
-                "minimum": 0
-              },
               "hiddenSeconds": {
                 "type": "integer",
                 "minimum": 0
@@ -76507,7 +76186,6 @@
             "required": [
               "teaseSeconds",
               "activeSeconds",
-              "rewardSeconds",
               "hiddenSeconds"
             ]
           },
@@ -76626,9 +76304,9 @@
                 "refIdStrategy": {
                   "type": "string",
                   "enum": [
-                    "fixed",
-                    "omit",
-                    "link_only"
+                    "reuse_shared",
+                    "virtual",
+                    "manual_link"
                   ]
                 },
                 "fixedRefId": {
@@ -76730,6 +76408,206 @@
                 "alias",
                 "triggerKind",
                 "actionType"
+              ]
+            },
+            "default": []
+          },
+          "currenciesBlueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aliasPattern": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 2000
+                },
+                "icon": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 256
+                },
+                "metadata": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "aliasPattern",
+                "name"
+              ]
+            },
+            "default": []
+          },
+          "itemDefinitionsBlueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aliasPattern": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 2000
+                },
+                "icon": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 256
+                },
+                "categoryAlias": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 64
+                },
+                "stackable": {
+                  "type": "boolean"
+                },
+                "stackLimit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "exclusiveMinimum": 0
+                },
+                "holdLimit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "exclusiveMinimum": 0
+                },
+                "metadata": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "aliasPattern",
+                "name"
+              ]
+            },
+            "default": []
+          },
+          "entityBlueprintsBlueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aliasPattern": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "schemaAlias": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 2000
+                },
+                "icon": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 256
+                },
+                "rarity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 32
+                },
+                "tags": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "assets": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "baseStats": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "statGrowth": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "maxLevel": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "exclusiveMinimum": 0
+                },
+                "metadata": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "aliasPattern",
+                "schemaAlias",
+                "name"
               ]
             },
             "default": []
@@ -76877,7 +76755,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -76960,7 +76838,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -77101,7 +76979,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "configId": {
@@ -77161,7 +77039,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "configId",
           "initiatorEndUserId",
           "status",
@@ -77417,7 +77295,7 @@
                   "minLength": 1,
                   "maxLength": 256
                 },
-                "teamId": {
+                "matchTeamId": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 64
@@ -77438,7 +77316,7 @@
               },
               "required": [
                 "endUserId",
-                "teamId",
+                "matchTeamId",
                 "placement",
                 "win"
               ]
@@ -77469,7 +77347,7 @@
                 "endUserId": {
                   "type": "string"
                 },
-                "teamId": {
+                "matchTeamId": {
                   "type": "string"
                 },
                 "win": {
@@ -77545,7 +77423,7 @@
               },
               "required": [
                 "endUserId",
-                "teamId",
+                "matchTeamId",
                 "win",
                 "mmrBefore",
                 "mmrAfter",
@@ -77780,7 +77658,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -77883,7 +77761,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -78194,7 +78072,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "tierConfigId": {
@@ -78246,7 +78124,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "tierConfigId",
           "alias",
           "name",
@@ -78623,7 +78501,7 @@
                 "endUserId": {
                   "type": "string"
                 },
-                "teamId": {
+                "matchTeamId": {
                   "type": "string"
                 },
                 "placement": {
@@ -78692,7 +78570,7 @@
                 "id",
                 "matchId",
                 "endUserId",
-                "teamId",
+                "matchTeamId",
                 "placement",
                 "win",
                 "mmrBefore",
@@ -78805,7 +78683,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -78867,7 +78745,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "name",
           "url",
           "description",
@@ -78952,7 +78830,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "endpointId": {
@@ -79023,7 +78901,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "endpointId",
           "eventId",
           "eventType",
@@ -79104,7 +78982,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -79154,7 +79032,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "status",
@@ -79263,7 +79141,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "ruleId": {
@@ -79323,7 +79201,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "ruleId",
           "ruleVersion",
           "eventName",
@@ -79499,7 +79377,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "instanceId": {
@@ -79520,7 +79398,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "instanceId",
           "assisterEndUserId",
           "amount",
@@ -79753,7 +79631,7 @@
           "configId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "cycleKey": {
@@ -79846,7 +79724,7 @@
         "required": [
           "id",
           "configId",
-          "organizationId",
+          "tenantId",
           "cycleKey",
           "scopeKey",
           "rankings",
@@ -79994,16 +79872,16 @@
           }
         ]
       },
-      "TeamMember": {
+      "MatchSquadMember": {
         "type": "object",
         "properties": {
-          "teamId": {
+          "squadId": {
             "type": "string"
           },
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "role": {
@@ -80018,9 +79896,9 @@
           }
         },
         "required": [
-          "teamId",
+          "squadId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "role",
           "joinedAt"
         ]
@@ -80034,7 +79912,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "assignedAt": {
@@ -80078,7 +79956,7 @@
         "required": [
           "taskId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "assignedAt",
           "expiresAt",
           "revokedAt",
@@ -80149,7 +80027,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "endUserId": {
@@ -80209,7 +80087,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "endUserId",
           "boxConfigId",
           "currencyDefinitionId",
@@ -80279,7 +80157,7 @@
                   "endUserId": {
                     "type": "string"
                   },
-                  "organizationId": {
+                  "tenantId": {
                     "type": "string"
                   },
                   "totalCount": {
@@ -80304,7 +80182,7 @@
                 "required": [
                   "productId",
                   "endUserId",
-                  "organizationId",
+                  "tenantId",
                   "totalCount",
                   "cycleCount",
                   "cycleResetAt",
@@ -80467,7 +80345,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "guildId": {
@@ -80522,7 +80400,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "guildId",
           "endUserId",
           "type",
@@ -80544,7 +80422,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "role": {
@@ -80571,7 +80449,7 @@
         "required": [
           "guildId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "role",
           "contribution",
           "joinedAt",
@@ -80585,7 +80463,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "inviterEndUserId": {
@@ -80622,7 +80500,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "inviterEndUserId",
           "inviteeEndUserId",
           "inviterCodeSnapshot",
@@ -80638,7 +80516,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "userA": {
@@ -80660,7 +80538,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "userA",
           "userB",
           "metadata",
@@ -80959,7 +80837,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "endUserId": {
@@ -80998,7 +80876,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "endUserId",
           "currencyId",
           "delta",
@@ -81187,7 +81065,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "variantId": {
@@ -81203,7 +81081,7 @@
         "required": [
           "experimentId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "variantId",
           "variantKey",
           "assignedAt"
@@ -81267,7 +81145,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "spotsCompleted": {
@@ -81319,7 +81197,7 @@
         "required": [
           "campaignId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "spotsCompleted",
           "totalCount",
           "lastSpotId",
@@ -81500,7 +81378,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "totalDays": {
@@ -81549,7 +81427,7 @@
         "required": [
           "configId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "totalDays",
           "currentStreak",
           "longestStreak",
@@ -81568,7 +81446,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "endUserId": {
@@ -81637,7 +81515,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "endUserId",
           "batchId",
           "codeId",

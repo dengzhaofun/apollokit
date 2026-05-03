@@ -5,6 +5,26 @@ export type HealthResponse = {
     requestId: string;
 };
 
+export type CapabilityBag = {
+    /**
+     * Comma-separated role string from member.role, or null for non-session auth (admin API key).
+     */
+    role: string | null;
+    /**
+     * Map of resource name → array of granted action names (excluding 'manage' which is implicit when present).
+     */
+    capabilities: {
+        [key: string]: Array<string>;
+    };
+};
+
+export type ApiErrorEnvelope = {
+    code: string;
+    data: unknown;
+    message: string;
+    requestId: string;
+};
+
 export type IssueAnalyticsTokenBody = {
     /**
      * Pipes this JWT may query. Must be a non-empty subset.
@@ -32,13 +52,6 @@ export type AnnouncementList = {
      * Opaque cursor for the next page, or null if no more rows.
      */
     nextCursor: string | null;
-};
-
-export type ApiErrorEnvelope = {
-    code: string;
-    data: unknown;
-    message: string;
-    requestId: string;
 };
 
 export type AnnouncementCreateRequest = {
@@ -70,7 +83,7 @@ export type AnnouncementCreateRequest = {
 
 export type Announcement = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     /**
      * 'modal' = one-shot popup on app start; 'feed' = persistent list item; 'ticker' = scrolling short-text banner. Clients decide how to render.
@@ -138,7 +151,7 @@ export type AuditLogResourceTypes = {
 
 export type AuditLogView = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     ts: string;
     actorType: string;
     actorId: string | null;
@@ -189,7 +202,7 @@ export type BadgeNodeCreateRequest = {
 
 export type BadgeNode = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     key: string;
     parentKey: string | null;
     displayType: string;
@@ -349,7 +362,7 @@ export type BadgeSignalRegistryUpsert = {
 };
 
 export type BadgeSignalRegistryEntry = {
-    organizationId: string;
+    tenantId: string;
     keyPattern: string;
     isDynamic: boolean;
     label: string;
@@ -391,7 +404,7 @@ export type BannerGroupCreateRequest = {
 
 export type BannerGroup = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -455,7 +468,7 @@ export type BannerCreateRequest = {
 
 export type Banner = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     groupId: string;
     title: string;
     imageUrlMobile: string;
@@ -535,7 +548,7 @@ export type BattlePassCreateConfig = {
 
 export type BattlePassConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     activityId: string;
     code: string;
     name: string;
@@ -678,7 +691,7 @@ export type CdkeyCreateBatch = {
 
 export type CdkeyBatch = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -755,7 +768,7 @@ export type CdkeyCodeList = {
 
 export type CdkeyCode = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     batchId: string;
     code: string;
     status: string;
@@ -817,7 +830,7 @@ export type CharacterCreateRequest = {
 
 export type Character = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -888,7 +901,7 @@ export type CheckInCreateConfig = {
 
 export type CheckInConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1008,7 +1021,7 @@ export type CheckInCreateReward = {
 export type CheckInReward = {
     id: string;
     configId: string;
-    organizationId: string;
+    tenantId: string;
     dayNumber: number;
     rewardItems: Array<{
         type: 'item' | 'entity' | 'currency';
@@ -1070,7 +1083,7 @@ export type OfflineCheckInCreateCampaign = {
 
 export type OfflineCheckInCampaign = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1161,7 +1174,7 @@ export type OfflineCheckInCreateSpot = {
 export type OfflineCheckInSpot = {
     id: string;
     campaignId: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -1296,7 +1309,7 @@ export type ExperimentCreate = {
 
 export type Experiment = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     key: string;
     name: string;
     description: string | null;
@@ -1384,7 +1397,7 @@ export type ExperimentVariantCreate = {
 export type ExperimentVariant = {
     id: string;
     experimentId: string;
-    organizationId: string;
+    tenantId: string;
     variantKey: string;
     name: string;
     description: string | null;
@@ -1494,7 +1507,7 @@ export type ClientCredentialList = {
 
 export type ClientCredential = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     publishableKey: string;
     devMode: boolean;
@@ -1539,7 +1552,7 @@ export type CmsCreateType = {
 
 export type CmsType = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -1581,7 +1594,7 @@ export type CmsCreateEntry = {
 
 export type CmsEntry = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     typeId: string;
     typeAlias: string;
     alias: string;
@@ -1683,7 +1696,7 @@ export type CollectionCreateAlbum = {
 
 export type CollectionAlbum = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1747,7 +1760,7 @@ export type CollectionCreateGroup = {
 export type CollectionGroup = {
     id: string;
     albumId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     icon: string | null;
@@ -1807,7 +1820,7 @@ export type CollectionEntry = {
     id: string;
     albumId: string;
     groupId: string | null;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1889,7 +1902,7 @@ export type CollectionCreateMilestone = {
 
 export type CollectionMilestone = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     albumId: string;
     scope: string;
     groupId: string | null;
@@ -1985,7 +1998,7 @@ export type CurrencyCreateDefinition = {
 
 export type CurrencyDefinition = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -2146,7 +2159,7 @@ export type DialogueScriptCreateRequest = {
 
 export type DialogueScript = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -2284,7 +2297,7 @@ export type EntityCreateSchema = {
 
 export type EntitySchema = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -2468,7 +2481,7 @@ export type EntityCreateBlueprint = {
 
 export type EntityBlueprint = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     schemaId: string;
     alias: string | null;
     name: string;
@@ -2597,7 +2610,7 @@ export type EntityUpdateBlueprint = {
 
 export type EntitySkin = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     blueprintId: string;
     alias: string | null;
     name: string;
@@ -2693,7 +2706,7 @@ export type EntityCreateFormationConfig = {
 
 export type EntityFormationConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     maxFormations: number;
@@ -2744,7 +2757,7 @@ export type ItemCreateCategory = {
 
 export type ItemCategory = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     icon: string | null;
@@ -2824,7 +2837,7 @@ export type ItemCreateDefinition = {
 
 export type ItemDefinition = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     categoryId: string | null;
     alias: string | null;
     name: string;
@@ -2963,7 +2976,7 @@ export type ExchangeCreateConfig = {
 
 export type ExchangeConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -3032,7 +3045,7 @@ export type ExchangeCreateOption = {
 export type ExchangeOption = {
     id: string;
     configId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     costItems: Array<{
@@ -3127,7 +3140,7 @@ export type ExchangeUserState = {
 
 export type FriendSettings = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     maxFriends: number;
     maxBlocked: number;
     maxPendingRequests: number;
@@ -3166,7 +3179,7 @@ export type FriendRelationshipList = {
 
 export type FriendGiftSettings = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     dailySendLimit: number;
     dailyReceiveLimit: number;
     timezone: string;
@@ -3224,7 +3237,7 @@ export type FriendGiftCreatePackage = {
 
 export type FriendGiftPackage = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -3284,7 +3297,7 @@ export type FriendGiftSendList = {
 
 export type FriendGiftSendRecord = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     packageId: string | null;
     senderUserId: string;
     receiverUserId: string;
@@ -3302,7 +3315,7 @@ export type FriendGiftSendRecord = {
 };
 
 export type InviteSettingsView = {
-    organizationId: string;
+    tenantId: string;
     enabled: boolean;
     codeLength: number;
     allowSelfInvite: boolean;
@@ -3349,7 +3362,7 @@ export type InviteCodeView = {
 
 export type GuildSettings = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     maxMembers: number;
     maxOfficers: number;
     createCost: Array<{
@@ -3403,7 +3416,7 @@ export type GuildList = {
 
 export type Guild = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     icon: string | null;
@@ -3449,7 +3462,7 @@ export type GuildGrantExp = {
 
 export type GuildContributionLog = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     guildId: string;
     endUserId: string;
     delta: number;
@@ -3502,7 +3515,7 @@ export type LotteryCreatePool = {
 
 export type LotteryPool = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -3581,7 +3594,7 @@ export type LotteryCreateTier = {
 export type LotteryTier = {
     id: string;
     poolId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     alias: string | null;
     baseWeight: number;
@@ -3657,7 +3670,7 @@ export type LotteryPrize = {
     id: string;
     tierId: string | null;
     poolId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     rewardItems: Array<{
@@ -3742,7 +3755,7 @@ export type LotteryCreatePityRule = {
 export type LotteryPityRule = {
     id: string;
     poolId: string;
-    organizationId: string;
+    tenantId: string;
     guaranteeTierId: string;
     hardPityThreshold: number;
     softPityStartAt: number | null;
@@ -3868,7 +3881,7 @@ export type MailCreateRequest = {
 
 export type MailMessage = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     title: string;
     content: string;
     rewards: Array<{
@@ -3916,7 +3929,7 @@ export type NavigationFavoriteCreate = {
 
 export type NavigationFavorite = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     userId: string;
     routePath: string;
     /**
@@ -3954,7 +3967,7 @@ export type ShopCreateCategory = {
 
 export type ShopCategory = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     parentId: string | null;
     alias: string | null;
     name: string;
@@ -4032,7 +4045,7 @@ export type ShopCreateTag = {
 
 export type ShopTag = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     color: string | null;
@@ -4127,7 +4140,7 @@ export type ShopCreateProduct = {
 
 export type ShopProduct = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     categoryId: string | null;
     alias: string | null;
     name: string;
@@ -4249,7 +4262,7 @@ export type ShopCreateGrowthStage = {
 export type ShopGrowthStage = {
     id: string;
     productId: string;
-    organizationId: string;
+    tenantId: string;
     stageIndex: number;
     name: string;
     description: string | null;
@@ -4383,7 +4396,7 @@ export type StorageBoxCreateConfig = {
 
 export type StorageBoxConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -4492,7 +4505,7 @@ export type MediaFolderCreateRequest = {
 
 export type MediaFolder = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     parentId: string | null;
     name: string;
     isDefault: boolean;
@@ -4535,7 +4548,7 @@ export type MediaAssetConfirmRequest = {
 
 export type MediaAsset = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     folderId: string;
     objectKey: string;
     filename: string;
@@ -4568,7 +4581,7 @@ export type TaskCreateCategory = {
 
 export type TaskCategory = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -4705,7 +4718,7 @@ export type TaskCreateDefinition = {
 
 export type TaskDefinition = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     categoryId: string | null;
     parentId: string | null;
     alias: string | null;
@@ -4852,18 +4865,18 @@ export type TaskAssignmentList = {
     items: Array<TaskAssignment>;
 };
 
-export type TeamCreateConfig = {
+export type MatchSquadCreateConfig = {
     name: string;
     /**
      * Optional human-readable key, unique within the project.
      */
     alias?: string | null;
     /**
-     * Maximum number of members in a team.
+     * Maximum number of members in a squad.
      */
     maxMembers?: number;
     /**
-     * Dissolve team when leader leaves instead of transferring leadership.
+     * Dissolve squad when leader leaves instead of transferring leadership.
      */
     autoDissolveOnLeaderLeave?: boolean;
     /**
@@ -4878,9 +4891,9 @@ export type TeamCreateConfig = {
     } | null;
 };
 
-export type TeamConfig = {
+export type MatchSquadConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     maxMembers: number;
@@ -4894,14 +4907,14 @@ export type TeamConfig = {
 };
 
 export type TeamConfigList = {
-    items: Array<TeamConfig>;
+    items: Array<MatchSquadConfig>;
     /**
      * Opaque cursor for the next page, or null if no more rows.
      */
     nextCursor: string | null;
 };
 
-export type TeamUpdateConfig = {
+export type MatchSquadUpdateConfig = {
     name?: string;
     /**
      * Optional human-readable key, unique within the project.
@@ -4918,17 +4931,17 @@ export type TeamUpdateConfig = {
     } | null;
 };
 
-export type TeamList = {
-    items: Array<Team>;
+export type MatchSquadList = {
+    items: Array<MatchSquad>;
     /**
      * Opaque cursor for the next page, or null if no more rows.
      */
     nextCursor: string | null;
 };
 
-export type Team = {
+export type MatchSquad = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     configId: string;
     leaderUserId: string;
     status: 'open' | 'closed' | 'in_game' | 'dissolved';
@@ -4940,7 +4953,7 @@ export type Team = {
     } | null;
     createdAt: string;
     updatedAt: string;
-    members?: Array<TeamMember>;
+    members?: Array<MatchSquadMember>;
 };
 
 export type LevelConfigList = {
@@ -4972,7 +4985,7 @@ export type LevelCreateConfig = {
 
 export type LevelConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -5030,7 +5043,7 @@ export type LevelCreateStage = {
 export type LevelStage = {
     id: string;
     configId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     icon: string | null;
@@ -5101,7 +5114,7 @@ export type LevelLevel = {
     id: string;
     configId: string;
     stageId: string | null;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -5203,7 +5216,7 @@ export type LeaderboardCreateConfig = {
 
 export type LeaderboardConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -5347,31 +5360,13 @@ export type ActivityCreate = {
     visibleAt: string;
     startAt: string;
     endAt: string;
-    rewardEndAt: string;
     hiddenAt: string;
     timezone?: string;
-    currency?: {
-        alias: string;
-        name: string;
-        icon?: string | null;
-    } | null;
-    milestoneTiers?: Array<{
-        alias: string;
-        points: number;
-        rewards: Array<{
-            type: 'item' | 'entity' | 'currency';
-            id: string;
-            count: number;
-        }>;
-    }>;
     globalRewards?: Array<{
         type: 'item' | 'entity' | 'currency';
         id: string;
         count: number;
     }>;
-    kindMetadata?: {
-        [key: string]: unknown;
-    } | null;
     cleanupRule?: {
         mode: 'purge' | 'convert' | 'keep';
         conversionMap?: {
@@ -5395,7 +5390,7 @@ export type ActivityCreate = {
 
 export type Activity = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -5405,32 +5400,14 @@ export type Activity = {
     visibleAt: string;
     startAt: string;
     endAt: string;
-    rewardEndAt: string;
     hiddenAt: string;
     timezone: string;
     status: string;
-    currency: {
-        alias: string;
-        name: string;
-        icon?: string | null;
-    } | null;
-    milestoneTiers: Array<{
-        alias: string;
-        points: number;
-        rewards: Array<{
-            type: 'item' | 'entity' | 'currency';
-            id: string;
-            count: number;
-        }>;
-    }>;
     globalRewards: Array<{
         type: 'item' | 'entity' | 'currency';
         id: string;
         count: number;
     }>;
-    kindMetadata: {
-        [key: string]: unknown;
-    } | null;
     cleanupRule: {
         mode: 'purge' | 'convert' | 'keep';
         conversionMap?: {
@@ -5462,31 +5439,13 @@ export type ActivityUpdate = {
     visibleAt?: string;
     startAt?: string;
     endAt?: string;
-    rewardEndAt?: string;
     hiddenAt?: string;
     timezone?: string;
-    currency?: {
-        alias: string;
-        name: string;
-        icon?: string | null;
-    } | null;
-    milestoneTiers?: Array<{
-        alias: string;
-        points: number;
-        rewards: Array<{
-            type: 'item' | 'entity' | 'currency';
-            id: string;
-            count: number;
-        }>;
-    }>;
     globalRewards?: Array<{
         type: 'item' | 'entity' | 'currency';
         id: string;
         count: number;
     }>;
-    kindMetadata?: {
-        [key: string]: unknown;
-    } | null;
     cleanupRule?: {
         mode: 'purge' | 'convert' | 'keep';
         conversionMap?: {
@@ -5547,7 +5506,7 @@ export type ActivityCreateSchedule = {
     alias: string;
     triggerKind: 'once_at' | 'relative_offset' | 'cron';
     fireAt?: string | null;
-    offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'reward_end_at' | 'hidden_at' | null;
+    offsetFrom?: 'visible_at' | 'start_at' | 'end_at' | 'hidden_at' | null;
     offsetSeconds?: number | null;
     cronExpr?: string | null;
     actionType: 'emit_bus_event' | 'grant_reward' | 'broadcast_mail' | 'set_flag';
@@ -5596,11 +5555,6 @@ export type ActivityAddPoints = {
     sourceRef?: string;
 };
 
-export type ActivityClaimMilestone = {
-    endUserId: string;
-    milestoneAlias: string;
-};
-
 export type ActivityTickResult = {
     advanced: number;
     scheduleFired: number;
@@ -5614,10 +5568,6 @@ export type ActivityAnalytics = {
     avgPoints: number;
     maxPoints: number;
     p50Points: number;
-    milestoneClaims: Array<{
-        milestoneAlias: string;
-        count: number;
-    }>;
     pointsBuckets: Array<{
         bucket: string;
         count: number;
@@ -5634,7 +5584,6 @@ export type ActivityTemplateCreate = {
     durationSpec: {
         teaseSeconds: number;
         activeSeconds: number;
-        rewardSeconds: number;
         hiddenSeconds: number;
     };
     recurrence: {
@@ -5654,7 +5603,7 @@ export type ActivityTemplateCreate = {
     nodesBlueprint?: Array<{
         alias: string;
         nodeType: 'check_in' | 'task_group' | 'exchange' | 'leaderboard' | 'lottery' | 'banner' | 'assist_pool' | 'game_board' | 'custom';
-        refIdStrategy: 'fixed' | 'omit' | 'link_only';
+        refIdStrategy: 'reuse_shared' | 'virtual' | 'manual_link';
         fixedRefId?: string | null;
         orderIndex?: number;
         unlockRule?: {
@@ -5677,6 +5626,52 @@ export type ActivityTemplateCreate = {
             [key: string]: unknown;
         };
         enabled?: boolean;
+    }>;
+    currenciesBlueprint?: Array<{
+        aliasPattern: string;
+        name: string;
+        description?: string | null;
+        icon?: string | null;
+        metadata?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    itemDefinitionsBlueprint?: Array<{
+        aliasPattern: string;
+        name: string;
+        description?: string | null;
+        icon?: string | null;
+        categoryAlias?: string | null;
+        stackable?: boolean;
+        stackLimit?: number | null;
+        holdLimit?: number | null;
+        metadata?: {
+            [key: string]: unknown;
+        } | null;
+    }>;
+    entityBlueprintsBlueprint?: Array<{
+        aliasPattern: string;
+        schemaAlias: string;
+        name: string;
+        description?: string | null;
+        icon?: string | null;
+        rarity?: string | null;
+        tags?: {
+            [key: string]: string;
+        };
+        assets?: {
+            [key: string]: string;
+        };
+        baseStats?: {
+            [key: string]: number;
+        };
+        statGrowth?: {
+            [key: string]: number;
+        };
+        maxLevel?: number | null;
+        metadata?: {
+            [key: string]: unknown;
+        } | null;
     }>;
     autoPublish?: boolean;
     enabled?: boolean;
@@ -5718,7 +5713,7 @@ export type AssistPoolCreateConfig = {
 
 export type AssistPoolConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -5780,7 +5775,7 @@ export type AssistPoolAdminInitiate = {
 
 export type AssistPoolInstance = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     configId: string;
     initiatorEndUserId: string;
     status: 'in_progress' | 'completed' | 'expired';
@@ -5861,7 +5856,7 @@ export type RankSettleMatch = {
     } | null;
     participants: Array<{
         endUserId: string;
-        teamId: string;
+        matchTeamId: string;
         placement: number;
         win: boolean;
         performanceScore?: number;
@@ -5873,7 +5868,7 @@ export type RankSettleResult = {
     alreadySettled: boolean;
     participants: Array<{
         endUserId: string;
-        teamId: string;
+        matchTeamId: string;
         win: boolean;
         mmrBefore: number;
         mmrAfter: number;
@@ -5937,7 +5932,7 @@ export type RankCreateTierConfig = {
 
 export type RankTierConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -6037,7 +6032,7 @@ export type RankCreateSeason = {
 
 export type RankSeason = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     tierConfigId: string;
     alias: string;
     name: string;
@@ -6150,7 +6145,7 @@ export type RankMatchDetail = {
         id: string;
         matchId: string;
         endUserId: string;
-        teamId: string;
+        matchTeamId: string;
         placement: number | null;
         win: boolean;
         mmrBefore: number;
@@ -6199,7 +6194,7 @@ export type WebhookEndpointList = {
 
 export type WebhookEndpoint = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     url: string;
     description: string | null;
@@ -6235,7 +6230,7 @@ export type WebhookDeliveryList = {
 
 export type WebhookDelivery = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     endpointId: string;
     eventId: string;
     eventType: string;
@@ -6270,7 +6265,7 @@ export type CreateTriggerRuleRequest = {
 
 export type TriggerRule = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     status: 'active' | 'disabled' | 'archived';
@@ -6313,7 +6308,7 @@ export type TriggerExecutionListResponse = {
 
 export type TriggerExecution = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     ruleId: string;
     ruleVersion: number;
     eventName: string;
@@ -6367,7 +6362,7 @@ export type EventKind = 'internal-event' | 'external-event' | 'http-request' | '
 
 export type AssistPoolContribution = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     instanceId: string;
     assisterEndUserId: string;
     amount: number;
@@ -6431,7 +6426,7 @@ export type ActivityMembershipConfig = {
 export type LeaderboardSnapshot = {
     id: string;
     configId: string;
-    organizationId: string;
+    tenantId: string;
     cycleKey: string;
     scopeKey: string;
     rankings: Array<{
@@ -6477,10 +6472,10 @@ export type LevelUnlockRule = {
     rules: Array<LevelUnlockRule>;
 };
 
-export type TeamMember = {
-    teamId: string;
+export type MatchSquadMember = {
+    squadId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: 'leader' | 'member';
     joinedAt: string;
 };
@@ -6488,7 +6483,7 @@ export type TeamMember = {
 export type TaskAssignment = {
     taskId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     assignedAt: string;
     expiresAt: string | null;
     revokedAt: string | null;
@@ -6522,7 +6517,7 @@ export type TaskRewardTier = {
 
 export type StorageBoxDepositView = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     boxConfigId: string;
     currencyDefinitionId: string;
@@ -6550,7 +6545,7 @@ export type ShopUserProductView = ShopProduct & {
     userPurchaseState: {
         productId: string;
         endUserId: string;
-        organizationId: string;
+        tenantId: string;
         totalCount: number;
         cycleCount: number;
         cycleResetAt: string | null;
@@ -6589,7 +6584,7 @@ export type LotteryPullLog = {
 
 export type GuildJoinRequest = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     guildId: string;
     endUserId: string;
     type: 'application' | 'invitation';
@@ -6605,7 +6600,7 @@ export type GuildJoinRequest = {
 export type GuildMember = {
     guildId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: 'leader' | 'officer' | 'member';
     contribution: number;
     joinedAt: string;
@@ -6615,7 +6610,7 @@ export type GuildMember = {
 
 export type InviteRelationshipView = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     inviterEndUserId: string;
     inviteeEndUserId: string;
     inviterCodeSnapshot: string;
@@ -6629,7 +6624,7 @@ export type InviteRelationshipView = {
 
 export type FriendRelationship = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     userA: string;
     userB: string;
     metadata: {
@@ -6699,7 +6694,7 @@ export type DialogueNode = {
 
 export type CurrencyLedgerEntry = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     currencyId: string;
     delta: number;
@@ -6753,7 +6748,7 @@ export type CmsFieldDef = {
 export type ExperimentAssignment = {
     experimentId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     variantId: string;
     variantKey: string;
     assignedAt: string;
@@ -6779,7 +6774,7 @@ export type RewardEntry = {
 export type OfflineCheckInUserProgress = {
     campaignId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     spotsCompleted: Array<string>;
     totalCount: number;
     lastSpotId: string | null;
@@ -6824,7 +6819,7 @@ export type OfflineCheckInCompletionRule = {
 export type CheckInUserState = {
     configId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     totalDays: number;
     currentStreak: number;
     longestStreak: number;
@@ -6839,7 +6834,7 @@ export type CheckInUserState = {
 
 export type CdkeyRedemptionLog = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     endUserId: string;
     batchId: string;
     codeId: string | null;
@@ -6942,6 +6937,56 @@ export type MetaGetRootResponses = {
 };
 
 export type MetaGetRootResponse = MetaGetRootResponses[keyof MetaGetRootResponses];
+
+export type MeGetCapabilitiesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/me/capabilities';
+};
+
+export type MeGetCapabilitiesErrors = {
+    /**
+     * Bad request
+     */
+    400: ApiErrorEnvelope;
+    /**
+     * Unauthorized
+     */
+    401: ApiErrorEnvelope;
+    /**
+     * Forbidden
+     */
+    403: ApiErrorEnvelope;
+    /**
+     * Not found
+     */
+    404: ApiErrorEnvelope;
+    /**
+     * Conflict
+     */
+    409: ApiErrorEnvelope;
+    /**
+     * Internal server error
+     */
+    500: ApiErrorEnvelope;
+};
+
+export type MeGetCapabilitiesError = MeGetCapabilitiesErrors[keyof MeGetCapabilitiesErrors];
+
+export type MeGetCapabilitiesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        code: 'ok';
+        data: CapabilityBag;
+        message: string;
+        requestId: string;
+    };
+};
+
+export type MeGetCapabilitiesResponse = MeGetCapabilitiesResponses[keyof MeGetCapabilitiesResponses];
 
 export type AnalyticsPostTokenData = {
     body?: IssueAnalyticsTokenBody;
@@ -25336,7 +25381,7 @@ export type TaskAssignmentsGetAssignmentsResponses = {
 
 export type TaskAssignmentsGetAssignmentsResponse = TaskAssignmentsGetAssignmentsResponses[keyof TaskAssignmentsGetAssignmentsResponses];
 
-export type TeamGetConfigsData = {
+export type MatchsquadGetConfigsData = {
     body?: never;
     path?: never;
     query?: {
@@ -25353,10 +25398,10 @@ export type TeamGetConfigsData = {
          */
         q?: string;
     };
-    url: '/api/team/configs';
+    url: '/api/match-squad/configs';
 };
 
-export type TeamGetConfigsErrors = {
+export type MatchsquadGetConfigsErrors = {
     /**
      * Bad request
      */
@@ -25383,9 +25428,9 @@ export type TeamGetConfigsErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamGetConfigsError = TeamGetConfigsErrors[keyof TeamGetConfigsErrors];
+export type MatchsquadGetConfigsError = MatchsquadGetConfigsErrors[keyof MatchsquadGetConfigsErrors];
 
-export type TeamGetConfigsResponses = {
+export type MatchsquadGetConfigsResponses = {
     /**
      * OK
      */
@@ -25397,16 +25442,16 @@ export type TeamGetConfigsResponses = {
     };
 };
 
-export type TeamGetConfigsResponse = TeamGetConfigsResponses[keyof TeamGetConfigsResponses];
+export type MatchsquadGetConfigsResponse = MatchsquadGetConfigsResponses[keyof MatchsquadGetConfigsResponses];
 
-export type TeamPostConfigsData = {
-    body?: TeamCreateConfig;
+export type MatchsquadPostConfigsData = {
+    body?: MatchSquadCreateConfig;
     path?: never;
     query?: never;
-    url: '/api/team/configs';
+    url: '/api/match-squad/configs';
 };
 
-export type TeamPostConfigsErrors = {
+export type MatchsquadPostConfigsErrors = {
     /**
      * Bad request
      */
@@ -25433,23 +25478,23 @@ export type TeamPostConfigsErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamPostConfigsError = TeamPostConfigsErrors[keyof TeamPostConfigsErrors];
+export type MatchsquadPostConfigsError = MatchsquadPostConfigsErrors[keyof MatchsquadPostConfigsErrors];
 
-export type TeamPostConfigsResponses = {
+export type MatchsquadPostConfigsResponses = {
     /**
      * Created
      */
     201: {
         code: 'ok';
-        data: TeamConfig;
+        data: MatchSquadConfig;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamPostConfigsResponse = TeamPostConfigsResponses[keyof TeamPostConfigsResponses];
+export type MatchsquadPostConfigsResponse = MatchsquadPostConfigsResponses[keyof MatchsquadPostConfigsResponses];
 
-export type TeamDeleteConfigsByKeyData = {
+export type MatchsquadDeleteConfigsByKeyData = {
     body?: never;
     path: {
         /**
@@ -25458,10 +25503,10 @@ export type TeamDeleteConfigsByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/team/configs/{key}';
+    url: '/api/match-squad/configs/{key}';
 };
 
-export type TeamDeleteConfigsByKeyErrors = {
+export type MatchsquadDeleteConfigsByKeyErrors = {
     /**
      * Bad request
      */
@@ -25488,18 +25533,18 @@ export type TeamDeleteConfigsByKeyErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamDeleteConfigsByKeyError = TeamDeleteConfigsByKeyErrors[keyof TeamDeleteConfigsByKeyErrors];
+export type MatchsquadDeleteConfigsByKeyError = MatchsquadDeleteConfigsByKeyErrors[keyof MatchsquadDeleteConfigsByKeyErrors];
 
-export type TeamDeleteConfigsByKeyResponses = {
+export type MatchsquadDeleteConfigsByKeyResponses = {
     /**
      * Deleted
      */
     200: ApiNullEnvelope;
 };
 
-export type TeamDeleteConfigsByKeyResponse = TeamDeleteConfigsByKeyResponses[keyof TeamDeleteConfigsByKeyResponses];
+export type MatchsquadDeleteConfigsByKeyResponse = MatchsquadDeleteConfigsByKeyResponses[keyof MatchsquadDeleteConfigsByKeyResponses];
 
-export type TeamGetConfigsByKeyData = {
+export type MatchsquadGetConfigsByKeyData = {
     body?: never;
     path: {
         /**
@@ -25508,10 +25553,10 @@ export type TeamGetConfigsByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/team/configs/{key}';
+    url: '/api/match-squad/configs/{key}';
 };
 
-export type TeamGetConfigsByKeyErrors = {
+export type MatchsquadGetConfigsByKeyErrors = {
     /**
      * Bad request
      */
@@ -25538,24 +25583,24 @@ export type TeamGetConfigsByKeyErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamGetConfigsByKeyError = TeamGetConfigsByKeyErrors[keyof TeamGetConfigsByKeyErrors];
+export type MatchsquadGetConfigsByKeyError = MatchsquadGetConfigsByKeyErrors[keyof MatchsquadGetConfigsByKeyErrors];
 
-export type TeamGetConfigsByKeyResponses = {
+export type MatchsquadGetConfigsByKeyResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: TeamConfig;
+        data: MatchSquadConfig;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamGetConfigsByKeyResponse = TeamGetConfigsByKeyResponses[keyof TeamGetConfigsByKeyResponses];
+export type MatchsquadGetConfigsByKeyResponse = MatchsquadGetConfigsByKeyResponses[keyof MatchsquadGetConfigsByKeyResponses];
 
-export type TeamPutConfigsByKeyData = {
-    body?: TeamUpdateConfig;
+export type MatchsquadPutConfigsByKeyData = {
+    body?: MatchSquadUpdateConfig;
     path: {
         /**
          * Config id or alias.
@@ -25563,10 +25608,10 @@ export type TeamPutConfigsByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/team/configs/{key}';
+    url: '/api/match-squad/configs/{key}';
 };
 
-export type TeamPutConfigsByKeyErrors = {
+export type MatchsquadPutConfigsByKeyErrors = {
     /**
      * Bad request
      */
@@ -25593,23 +25638,23 @@ export type TeamPutConfigsByKeyErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamPutConfigsByKeyError = TeamPutConfigsByKeyErrors[keyof TeamPutConfigsByKeyErrors];
+export type MatchsquadPutConfigsByKeyError = MatchsquadPutConfigsByKeyErrors[keyof MatchsquadPutConfigsByKeyErrors];
 
-export type TeamPutConfigsByKeyResponses = {
+export type MatchsquadPutConfigsByKeyResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: TeamConfig;
+        data: MatchSquadConfig;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamPutConfigsByKeyResponse = TeamPutConfigsByKeyResponses[keyof TeamPutConfigsByKeyResponses];
+export type MatchsquadPutConfigsByKeyResponse = MatchsquadPutConfigsByKeyResponses[keyof MatchsquadPutConfigsByKeyResponses];
 
-export type TeamGetTeamsData = {
+export type MatchsquadGetSquadsData = {
     body?: never;
     path?: never;
     query?: {
@@ -25638,10 +25683,10 @@ export type TeamGetTeamsData = {
          */
         configKey?: string;
     };
-    url: '/api/team/teams';
+    url: '/api/match-squad/squads';
 };
 
-export type TeamGetTeamsErrors = {
+export type MatchsquadGetSquadsErrors = {
     /**
      * Bad request
      */
@@ -25668,35 +25713,35 @@ export type TeamGetTeamsErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamGetTeamsError = TeamGetTeamsErrors[keyof TeamGetTeamsErrors];
+export type MatchsquadGetSquadsError = MatchsquadGetSquadsErrors[keyof MatchsquadGetSquadsErrors];
 
-export type TeamGetTeamsResponses = {
+export type MatchsquadGetSquadsResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: TeamList;
+        data: MatchSquadList;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamGetTeamsResponse = TeamGetTeamsResponses[keyof TeamGetTeamsResponses];
+export type MatchsquadGetSquadsResponse = MatchsquadGetSquadsResponses[keyof MatchsquadGetSquadsResponses];
 
-export type TeamGetTeamsByIdData = {
+export type MatchsquadGetSquadsByIdData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/team/teams/{id}';
+    url: '/api/match-squad/squads/{id}';
 };
 
-export type TeamGetTeamsByIdErrors = {
+export type MatchsquadGetSquadsByIdErrors = {
     /**
      * Bad request
      */
@@ -25723,35 +25768,35 @@ export type TeamGetTeamsByIdErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamGetTeamsByIdError = TeamGetTeamsByIdErrors[keyof TeamGetTeamsByIdErrors];
+export type MatchsquadGetSquadsByIdError = MatchsquadGetSquadsByIdErrors[keyof MatchsquadGetSquadsByIdErrors];
 
-export type TeamGetTeamsByIdResponses = {
+export type MatchsquadGetSquadsByIdResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamGetTeamsByIdResponse = TeamGetTeamsByIdResponses[keyof TeamGetTeamsByIdResponses];
+export type MatchsquadGetSquadsByIdResponse = MatchsquadGetSquadsByIdResponses[keyof MatchsquadGetSquadsByIdResponses];
 
-export type TeamPostTeamsByIdDissolveData = {
+export type MatchsquadPostSquadsByIdDissolveData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/team/teams/{id}/dissolve';
+    url: '/api/match-squad/squads/{id}/dissolve';
 };
 
-export type TeamPostTeamsByIdDissolveErrors = {
+export type MatchsquadPostSquadsByIdDissolveErrors = {
     /**
      * Bad request
      */
@@ -25778,21 +25823,21 @@ export type TeamPostTeamsByIdDissolveErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamPostTeamsByIdDissolveError = TeamPostTeamsByIdDissolveErrors[keyof TeamPostTeamsByIdDissolveErrors];
+export type MatchsquadPostSquadsByIdDissolveError = MatchsquadPostSquadsByIdDissolveErrors[keyof MatchsquadPostSquadsByIdDissolveErrors];
 
-export type TeamPostTeamsByIdDissolveResponses = {
+export type MatchsquadPostSquadsByIdDissolveResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamPostTeamsByIdDissolveResponse = TeamPostTeamsByIdDissolveResponses[keyof TeamPostTeamsByIdDissolveResponses];
+export type MatchsquadPostSquadsByIdDissolveResponse = MatchsquadPostSquadsByIdDissolveResponses[keyof MatchsquadPostSquadsByIdDissolveResponses];
 
 export type LevelGetConfigsData = {
     body?: never;
@@ -27020,7 +27065,7 @@ export type LeaderboardGetConfigsByKeyTopData = {
          */
         cycleKey?: string;
         /**
-         * Defaults to organizationId for scope=global; required for guild/team/friend.
+         * Defaults to tenantId for scope=global; required for guild/team/friend.
          */
         scopeKey?: string;
         /**
@@ -28203,7 +28248,6 @@ export type ActivityPostByKeyAddPointsResponses = {
         code: 'ok';
         data: {
             balance: number;
-            unlockedMilestones: Array<string>;
         };
         message: string;
         requestId: string;
@@ -28211,60 +28255,6 @@ export type ActivityPostByKeyAddPointsResponses = {
 };
 
 export type ActivityPostByKeyAddPointsResponse = ActivityPostByKeyAddPointsResponses[keyof ActivityPostByKeyAddPointsResponses];
-
-export type ActivityPostByKeyClaimMilestoneData = {
-    body?: ActivityClaimMilestone;
-    path: {
-        key: string;
-    };
-    query?: never;
-    url: '/api/activity/{key}/claim-milestone';
-};
-
-export type ActivityPostByKeyClaimMilestoneErrors = {
-    /**
-     * Bad request
-     */
-    400: ApiErrorEnvelope;
-    /**
-     * Unauthorized
-     */
-    401: ApiErrorEnvelope;
-    /**
-     * Forbidden
-     */
-    403: ApiErrorEnvelope;
-    /**
-     * Not found
-     */
-    404: ApiErrorEnvelope;
-    /**
-     * Conflict
-     */
-    409: ApiErrorEnvelope;
-    /**
-     * Internal server error
-     */
-    500: ApiErrorEnvelope;
-};
-
-export type ActivityPostByKeyClaimMilestoneError = ActivityPostByKeyClaimMilestoneErrors[keyof ActivityPostByKeyClaimMilestoneErrors];
-
-export type ActivityPostByKeyClaimMilestoneResponses = {
-    /**
-     * OK
-     */
-    200: {
-        code: 'ok';
-        data: {
-            [key: string]: unknown;
-        };
-        message: string;
-        requestId: string;
-    };
-};
-
-export type ActivityPostByKeyClaimMilestoneResponse = ActivityPostByKeyClaimMilestoneResponses[keyof ActivityPostByKeyClaimMilestoneResponses];
 
 export type ActivityGetByKeyViewByEnduseridData = {
     body?: never;

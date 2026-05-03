@@ -15157,13 +15157,13 @@
         }
       }
     },
-    "/api/client/team/teams": {
+    "/api/client/match-squad/squads": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Create a new team (caller becomes leader)",
-        "operationId": "team_client_post_teams",
+        "summary": "Create a new squad (caller becomes leader)",
+        "operationId": "matchsquad_client_post_squads",
         "security": [
           {
             "ClientCredential": []
@@ -15173,7 +15173,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamCreateTeam"
+                "$ref": "#/components/schemas/MatchSquadCreate"
               }
             }
           }
@@ -15193,7 +15193,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -15275,13 +15275,13 @@
         }
       }
     },
-    "/api/client/team/my-team": {
+    "/api/client/match-squad/my-squad": {
       "get": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Get the current user's active team for a config",
-        "operationId": "team_client_get_my_team",
+        "summary": "Get the current user's active squad for a config",
+        "operationId": "matchsquad_client_get_my_squad",
         "security": [
           {
             "ClientCredential": []
@@ -15302,7 +15302,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK (returns team or null)",
+            "description": "OK (returns squad or null)",
             "content": {
               "application/json": {
                 "schema": {
@@ -15317,7 +15317,7 @@
                     "data": {
                       "allOf": [
                         {
-                          "$ref": "#/components/schemas/Team"
+                          "$ref": "#/components/schemas/MatchSquad"
                         },
                         {
                           "type": [
@@ -15407,13 +15407,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}": {
+    "/api/client/match-squad/squads/{id}": {
       "get": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Get a team by id with members",
-        "operationId": "team_client_get_teams_by_id",
+        "summary": "Get a squad by id with members",
+        "operationId": "matchsquad_client_get_squads_by_id",
         "security": [
           {
             "ClientCredential": []
@@ -15424,10 +15424,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -15447,7 +15447,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -15529,13 +15529,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/join": {
+    "/api/client/match-squad/squads/{id}/join": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Join an open team",
-        "operationId": "team_client_post_teams_by_id_join",
+        "summary": "Join an open squad",
+        "operationId": "matchsquad_client_post_squads_by_id_join",
         "security": [
           {
             "ClientCredential": []
@@ -15546,10 +15546,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -15569,7 +15569,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -15651,13 +15651,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/leave": {
+    "/api/client/match-squad/squads/{id}/leave": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Leave a team",
-        "operationId": "team_client_post_teams_by_id_leave",
+        "summary": "Leave a squad",
+        "operationId": "matchsquad_client_post_squads_by_id_leave",
         "security": [
           {
             "ClientCredential": []
@@ -15668,10 +15668,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -15691,7 +15691,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -15773,13 +15773,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/dissolve": {
+    "/api/client/match-squad/squads/{id}/dissolve": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Dissolve a team (leader only)",
-        "operationId": "team_client_post_teams_by_id_dissolve",
+        "summary": "Dissolve a squad (leader only)",
+        "operationId": "matchsquad_client_post_squads_by_id_dissolve",
         "security": [
           {
             "ClientCredential": []
@@ -15790,10 +15790,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -15813,7 +15813,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -15895,13 +15895,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/kick/{userId}": {
+    "/api/client/match-squad/squads/{id}/kick/{userId}": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Kick a member from the team (leader only)",
-        "operationId": "team_client_post_teams_by_id_kick_by_userid",
+        "summary": "Kick a member from the squad (leader only)",
+        "operationId": "matchsquad_client_post_squads_by_id_kick_by_userid",
         "security": [
           {
             "ClientCredential": []
@@ -15912,10 +15912,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           },
@@ -15946,7 +15946,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -16028,13 +16028,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/transfer-leader": {
+    "/api/client/match-squad/squads/{id}/transfer-leader": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Transfer team leadership to another member",
-        "operationId": "team_client_post_teams_by_id_transfer_leader",
+        "summary": "Transfer squad leadership to another member",
+        "operationId": "matchsquad_client_post_squads_by_id_transfer_leader",
         "security": [
           {
             "ClientCredential": []
@@ -16045,10 +16045,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -16057,7 +16057,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamTransferLeader"
+                "$ref": "#/components/schemas/MatchSquadTransferLeader"
               }
             }
           }
@@ -16077,7 +16077,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -16159,13 +16159,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/status": {
+    "/api/client/match-squad/squads/{id}/status": {
       "put": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Update team status (leader only)",
-        "operationId": "team_client_put_teams_by_id_status",
+        "summary": "Update squad status (leader only)",
+        "operationId": "matchsquad_client_put_squads_by_id_status",
         "security": [
           {
             "ClientCredential": []
@@ -16176,10 +16176,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -16188,7 +16188,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamUpdateStatus"
+                "$ref": "#/components/schemas/MatchSquadUpdateStatus"
               }
             }
           }
@@ -16208,7 +16208,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -16290,13 +16290,13 @@
         }
       }
     },
-    "/api/client/team/teams/{id}/invite": {
+    "/api/client/match-squad/squads/{id}/invite": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Invite a user to the team",
-        "operationId": "team_client_post_teams_by_id_invite",
+        "summary": "Invite a user to the squad",
+        "operationId": "matchsquad_client_post_squads_by_id_invite",
         "security": [
           {
             "ClientCredential": []
@@ -16307,10 +16307,10 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "description": "Team id."
+              "description": "MatchSquad id."
             },
             "required": true,
-            "description": "Team id.",
+            "description": "MatchSquad id.",
             "name": "id",
             "in": "path"
           }
@@ -16319,7 +16319,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TeamInvite"
+                "$ref": "#/components/schemas/MatchSquadInvite"
               }
             }
           }
@@ -16339,7 +16339,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamInvitation"
+                      "$ref": "#/components/schemas/MatchSquadInvitation"
                     },
                     "message": {
                       "type": "string"
@@ -16421,13 +16421,13 @@
         }
       }
     },
-    "/api/client/team/invitations/{id}/accept": {
+    "/api/client/match-squad/invitations/{id}/accept": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Accept a team invitation",
-        "operationId": "team_client_post_invitations_by_id_accept",
+        "summary": "Accept a squad invitation",
+        "operationId": "matchsquad_client_post_invitations_by_id_accept",
         "security": [
           {
             "ClientCredential": []
@@ -16461,7 +16461,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -16543,13 +16543,13 @@
         }
       }
     },
-    "/api/client/team/invitations/{id}/reject": {
+    "/api/client/match-squad/invitations/{id}/reject": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Reject a team invitation",
-        "operationId": "team_client_post_invitations_by_id_reject",
+        "summary": "Reject a squad invitation",
+        "operationId": "matchsquad_client_post_invitations_by_id_reject",
         "security": [
           {
             "ClientCredential": []
@@ -16583,7 +16583,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/TeamInvitation"
+                      "$ref": "#/components/schemas/MatchSquadInvitation"
                     },
                     "message": {
                       "type": "string"
@@ -16665,13 +16665,13 @@
         }
       }
     },
-    "/api/client/team/quick-match": {
+    "/api/client/match-squad/quick-match": {
       "post": {
         "tags": [
-          "Team (Client)"
+          "MatchSquad (Client)"
         ],
-        "summary": "Quick match — join the fullest open team or create a new one",
-        "operationId": "team_client_post_quick_match",
+        "summary": "Quick match — join the fullest open squad or create a new one",
+        "operationId": "matchsquad_client_post_quick_match",
         "security": [
           {
             "ClientCredential": []
@@ -16705,7 +16705,7 @@
                       ]
                     },
                     "data": {
-                      "$ref": "#/components/schemas/Team"
+                      "$ref": "#/components/schemas/MatchSquad"
                     },
                     "message": {
                       "type": "string"
@@ -18171,7 +18171,7 @@
                               "endUserId": {
                                 "type": "string"
                               },
-                              "teamId": {
+                              "matchTeamId": {
                                 "type": "string"
                               },
                               "placement": {
@@ -18240,7 +18240,7 @@
                               "id",
                               "matchId",
                               "endUserId",
-                              "teamId",
+                              "matchTeamId",
                               "placement",
                               "win",
                               "mmrBefore",
@@ -18617,7 +18617,7 @@
         "tags": [
           "Activity (Client)"
         ],
-        "summary": "List activities currently visible to the caller (teasing / active / settling / ended).",
+        "summary": "List activities currently visible to the caller (teasing / active / ended).",
         "operationId": "activity_client_get_list",
         "security": [
           {
@@ -18968,166 +18968,6 @@
             "in": "header"
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "data": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data",
-                    "message",
-                    "requestId"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/client/activity/{alias}/claim-milestone": {
-      "post": {
-        "tags": [
-          "Activity (Client)"
-        ],
-        "summary": "Claim an activity milestone reward.",
-        "operationId": "activity_client_post_by_alias_claim_milestone",
-        "security": [
-          {
-            "ClientCredential": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "alias",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Publishable key (cpk_...)"
-            },
-            "required": true,
-            "description": "Publishable key (cpk_...)",
-            "name": "x-api-key",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "End user's opaque id"
-            },
-            "required": true,
-            "description": "End user's opaque id",
-            "name": "x-end-user-id",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled."
-            },
-            "required": false,
-            "description": "HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.",
-            "name": "x-user-hash",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ActivityClaimMilestoneClient"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -19887,7 +19727,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "activityId": {
@@ -19954,7 +19794,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "activityId",
           "code",
           "name",
@@ -20367,7 +20207,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "spotsCompleted": {
@@ -20419,7 +20259,7 @@
         "required": [
           "campaignId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "spotsCompleted",
           "totalCount",
           "lastSpotId",
@@ -21158,7 +20998,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "fromUserId": {
@@ -21200,7 +21040,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "fromUserId",
           "toUserId",
           "status",
@@ -21337,7 +21177,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "packageId": {
@@ -21405,7 +21245,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "packageId",
           "senderUserId",
           "receiverUserId",
@@ -21717,7 +21557,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -21787,7 +21627,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "icon",
@@ -21890,7 +21730,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "guildId": {
@@ -21945,7 +21785,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "guildId",
           "endUserId",
           "type",
@@ -22006,7 +21846,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "role": {
@@ -22033,7 +21873,7 @@
         "required": [
           "guildId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "role",
           "contribution",
           "joinedAt",
@@ -22110,7 +21950,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "guildId": {
@@ -22140,7 +21980,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "guildId",
           "endUserId",
           "delta",
@@ -22932,7 +22772,7 @@
           "claimedAt"
         ]
       },
-      "TeamCreateTeam": {
+      "MatchSquadCreate": {
         "type": "object",
         "properties": {
           "configKey": {
@@ -22954,13 +22794,13 @@
           "configKey"
         ]
       },
-      "Team": {
+      "MatchSquad": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "configId": {
@@ -23006,13 +22846,13 @@
           "members": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TeamMember"
+              "$ref": "#/components/schemas/MatchSquadMember"
             }
           }
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "configId",
           "leaderUserId",
           "status",
@@ -23024,7 +22864,7 @@
           "updatedAt"
         ]
       },
-      "TeamTransferLeader": {
+      "MatchSquadTransferLeader": {
         "type": "object",
         "properties": {
           "newLeaderUserId": {
@@ -23038,7 +22878,7 @@
           "newLeaderUserId"
         ]
       },
-      "TeamUpdateStatus": {
+      "MatchSquadUpdateStatus": {
         "type": "object",
         "properties": {
           "status": {
@@ -23048,14 +22888,14 @@
               "closed",
               "in_game"
             ],
-            "description": "New team status. Cannot set to 'dissolved' — use dissolve endpoint."
+            "description": "New squad status. Cannot set to 'dissolved' — use dissolve endpoint."
           }
         },
         "required": [
           "status"
         ]
       },
-      "TeamInvite": {
+      "MatchSquadInvite": {
         "type": "object",
         "properties": {
           "toUserId": {
@@ -23069,16 +22909,16 @@
           "toUserId"
         ]
       },
-      "TeamInvitation": {
+      "MatchSquadInvitation": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
-          "teamId": {
+          "squadId": {
             "type": "string"
           },
           "fromUserId": {
@@ -23114,8 +22954,8 @@
         },
         "required": [
           "id",
-          "organizationId",
-          "teamId",
+          "tenantId",
+          "squadId",
           "fromUserId",
           "toUserId",
           "status",
@@ -23686,7 +23526,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -23733,9 +23573,6 @@
           "endAt": {
             "type": "string"
           },
-          "rewardEndAt": {
-            "type": "string"
-          },
           "hiddenAt": {
             "type": "string"
           },
@@ -23744,89 +23581,6 @@
           },
           "status": {
             "type": "string"
-          },
-          "currency": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "alias": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 32,
-                "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "icon": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "maxLength": 256
-              }
-            },
-            "required": [
-              "alias",
-              "name"
-            ]
-          },
-          "milestoneTiers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "alias": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64,
-                  "pattern": "^[a-z0-9][a-z0-9\\-_]*$"
-                },
-                "points": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "rewards": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "item",
-                          "entity",
-                          "currency"
-                        ]
-                      },
-                      "id": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "count": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "id",
-                      "count"
-                    ]
-                  },
-                  "minItems": 1
-                }
-              },
-              "required": [
-                "alias",
-                "points",
-                "rewards"
-              ]
-            }
           },
           "globalRewards": {
             "type": "array",
@@ -23856,13 +23610,6 @@
                 "count"
               ]
             }
-          },
-          "kindMetadata": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {}
           },
           "cleanupRule": {
             "type": "object",
@@ -23952,7 +23699,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -23962,14 +23709,10 @@
           "visibleAt",
           "startAt",
           "endAt",
-          "rewardEndAt",
           "hiddenAt",
           "timezone",
           "status",
-          "currency",
-          "milestoneTiers",
           "globalRewards",
-          "kindMetadata",
           "cleanupRule",
           "joinRequirement",
           "visibility",
@@ -23978,19 +23721,6 @@
           "membership",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "ActivityClaimMilestoneClient": {
-        "type": "object",
-        "properties": {
-          "milestoneAlias": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          }
-        },
-        "required": [
-          "milestoneAlias"
         ]
       },
       "AssistPoolClientInitiate": {
@@ -24013,7 +23743,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "configId": {
@@ -24073,7 +23803,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "configId",
           "initiatorEndUserId",
           "status",
@@ -24138,7 +23868,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "instanceId": {
@@ -24159,7 +23889,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "instanceId",
           "assisterEndUserId",
           "amount",
@@ -24237,7 +23967,7 @@
           "configId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "cycleKey": {
@@ -24330,7 +24060,7 @@
         "required": [
           "id",
           "configId",
-          "organizationId",
+          "tenantId",
           "cycleKey",
           "scopeKey",
           "rankings",
@@ -24344,7 +24074,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -24403,7 +24133,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -24673,16 +24403,16 @@
           "totalStars"
         ]
       },
-      "TeamMember": {
+      "MatchSquadMember": {
         "type": "object",
         "properties": {
-          "teamId": {
+          "squadId": {
             "type": "string"
           },
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "role": {
@@ -24697,9 +24427,9 @@
           }
         },
         "required": [
-          "teamId",
+          "squadId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "role",
           "joinedAt"
         ]
@@ -25000,7 +24730,7 @@
                   "endUserId": {
                     "type": "string"
                   },
-                  "organizationId": {
+                  "tenantId": {
                     "type": "string"
                   },
                   "totalCount": {
@@ -25025,7 +24755,7 @@
                 "required": [
                   "productId",
                   "endUserId",
-                  "organizationId",
+                  "tenantId",
                   "totalCount",
                   "cycleCount",
                   "cycleResetAt",
@@ -25047,7 +24777,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "categoryId": {
@@ -25250,7 +24980,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "categoryId",
           "alias",
           "name",
@@ -25283,7 +25013,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -25333,7 +25063,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "color",
@@ -25471,7 +25201,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "inviterEndUserId": {
@@ -25508,7 +25238,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "inviterEndUserId",
           "inviteeEndUserId",
           "inviterCodeSnapshot",
@@ -25524,7 +25254,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -25594,7 +25324,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -25610,7 +25340,7 @@
       "FriendBlock": {
         "type": "object",
         "properties": {
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "blockerUserId": {
@@ -25624,7 +25354,7 @@
           }
         },
         "required": [
-          "organizationId",
+          "tenantId",
           "blockerUserId",
           "blockedUserId",
           "createdAt"
@@ -25636,7 +25366,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "userA": {
@@ -25658,7 +25388,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "userA",
           "userB",
           "metadata",
@@ -25974,7 +25704,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -26033,7 +25763,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -26056,7 +25786,7 @@
           "albumId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "name": {
@@ -26098,7 +25828,7 @@
         "required": [
           "id",
           "albumId",
-          "organizationId",
+          "tenantId",
           "name",
           "description",
           "icon",
@@ -26362,7 +26092,7 @@
           "id": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -26456,7 +26186,7 @@
         },
         "required": [
           "id",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -26484,7 +26214,7 @@
           "campaignId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "alias": {
@@ -26552,7 +26282,7 @@
         "required": [
           "id",
           "campaignId",
-          "organizationId",
+          "tenantId",
           "alias",
           "name",
           "description",
@@ -26738,7 +26468,7 @@
           "endUserId": {
             "type": "string"
           },
-          "organizationId": {
+          "tenantId": {
             "type": "string"
           },
           "totalDays": {
@@ -26787,7 +26517,7 @@
         "required": [
           "configId",
           "endUserId",
-          "organizationId",
+          "tenantId",
           "totalDays",
           "currentStreak",
           "longestStreak",

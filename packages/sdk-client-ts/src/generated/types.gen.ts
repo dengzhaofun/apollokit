@@ -47,7 +47,7 @@ export type ClientBannerGroup = {
 
 export type BattlePassConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     activityId: string;
     code: string;
     name: string;
@@ -168,7 +168,7 @@ export type OfflineCheckInClientCampaign = {
 export type OfflineCheckInUserProgress = {
     campaignId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     spotsCompleted: Array<string>;
     totalCount: number;
     lastSpotId: string | null;
@@ -380,7 +380,7 @@ export type ClientFriendSendRequest = {
 
 export type FriendRequest = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     fromUserId: string;
     toUserId: string;
     status: string;
@@ -439,7 +439,7 @@ export type ClientFriendGiftSend = {
 
 export type FriendGiftSendRecord = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     packageId: string | null;
     senderUserId: string;
     receiverUserId: string;
@@ -554,7 +554,7 @@ export type GuildList = {
 
 export type Guild = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     icon: string | null;
@@ -603,7 +603,7 @@ export type GuildApplyToJoin = {
 
 export type GuildJoinRequest = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     guildId: string;
     endUserId: string;
     type: 'application' | 'invitation';
@@ -631,7 +631,7 @@ export type GuildInviteUser = {
 export type GuildMember = {
     guildId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: 'leader' | 'officer' | 'member';
     contribution: number;
     joinedAt: string;
@@ -659,7 +659,7 @@ export type ClientContribute = {
 
 export type GuildContributionLog = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     guildId: string;
     endUserId: string;
     delta: number;
@@ -892,7 +892,7 @@ export type TaskClaimTierResponse = {
     claimedAt: string;
 };
 
-export type TeamCreateTeam = {
+export type MatchSquadCreate = {
     /**
      * Config id or alias.
      */
@@ -905,9 +905,9 @@ export type TeamCreateTeam = {
     } | null;
 };
 
-export type Team = {
+export type MatchSquad = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     configId: string;
     leaderUserId: string;
     status: 'open' | 'closed' | 'in_game' | 'dissolved';
@@ -919,34 +919,34 @@ export type Team = {
     } | null;
     createdAt: string;
     updatedAt: string;
-    members?: Array<TeamMember>;
+    members?: Array<MatchSquadMember>;
 };
 
-export type TeamTransferLeader = {
+export type MatchSquadTransferLeader = {
     /**
      * The new leader's end user id.
      */
     newLeaderUserId: string;
 };
 
-export type TeamUpdateStatus = {
+export type MatchSquadUpdateStatus = {
     /**
-     * New team status. Cannot set to 'dissolved' — use dissolve endpoint.
+     * New squad status. Cannot set to 'dissolved' — use dissolve endpoint.
      */
     status: 'open' | 'closed' | 'in_game';
 };
 
-export type TeamInvite = {
+export type MatchSquadInvite = {
     /**
      * Invitee end user id.
      */
     toUserId: string;
 };
 
-export type TeamInvitation = {
+export type MatchSquadInvitation = {
     id: string;
-    organizationId: string;
-    teamId: string;
+    tenantId: string;
+    squadId: string;
     fromUserId: string;
     toUserId: string;
     status: 'pending' | 'accepted' | 'rejected' | 'expired';
@@ -1100,7 +1100,7 @@ export type RankPlayerView = {
 
 export type Activity = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -1110,32 +1110,14 @@ export type Activity = {
     visibleAt: string;
     startAt: string;
     endAt: string;
-    rewardEndAt: string;
     hiddenAt: string;
     timezone: string;
     status: string;
-    currency: {
-        alias: string;
-        name: string;
-        icon?: string | null;
-    } | null;
-    milestoneTiers: Array<{
-        alias: string;
-        points: number;
-        rewards: Array<{
-            type: 'item' | 'entity' | 'currency';
-            id: string;
-            count: number;
-        }>;
-    }>;
     globalRewards: Array<{
         type: 'item' | 'entity' | 'currency';
         id: string;
         count: number;
     }>;
-    kindMetadata: {
-        [key: string]: unknown;
-    } | null;
     cleanupRule: {
         mode: 'purge' | 'convert' | 'keep';
         conversionMap?: {
@@ -1159,10 +1141,6 @@ export type Activity = {
     updatedAt: string;
 };
 
-export type ActivityClaimMilestoneClient = {
-    milestoneAlias: string;
-};
-
 export type AssistPoolClientInitiate = {
     /**
      * Config id or alias.
@@ -1172,7 +1150,7 @@ export type AssistPoolClientInitiate = {
 
 export type AssistPoolInstance = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     configId: string;
     initiatorEndUserId: string;
     status: 'in_progress' | 'completed' | 'expired';
@@ -1203,7 +1181,7 @@ export type AssistPoolContributeResult = {
 
 export type AssistPoolContribution = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     instanceId: string;
     assisterEndUserId: string;
     amount: number;
@@ -1229,7 +1207,7 @@ export type ActivityMembershipConfig = {
 export type LeaderboardSnapshot = {
     id: string;
     configId: string;
-    organizationId: string;
+    tenantId: string;
     cycleKey: string;
     scopeKey: string;
     rankings: Array<{
@@ -1254,7 +1232,7 @@ export type LeaderboardSnapshot = {
 
 export type LevelConfig = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1328,10 +1306,10 @@ export type LevelClientConfigSummary = {
     totalStars: number;
 };
 
-export type TeamMember = {
-    teamId: string;
+export type MatchSquadMember = {
+    squadId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     role: 'leader' | 'member';
     joinedAt: string;
 };
@@ -1415,7 +1393,7 @@ export type ShopUserProductView = ShopProduct & {
     userPurchaseState: {
         productId: string;
         endUserId: string;
-        organizationId: string;
+        tenantId: string;
         totalCount: number;
         cycleCount: number;
         cycleResetAt: string | null;
@@ -1425,7 +1403,7 @@ export type ShopUserProductView = ShopProduct & {
 
 export type ShopProduct = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     categoryId: string | null;
     alias: string | null;
     name: string;
@@ -1468,7 +1446,7 @@ export type ShopProduct = {
 
 export type ShopTag = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     color: string | null;
@@ -1512,7 +1490,7 @@ export type LotteryPullLog = {
 
 export type InviteRelationshipView = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     inviterEndUserId: string;
     inviteeEndUserId: string;
     inviterCodeSnapshot: string;
@@ -1526,7 +1504,7 @@ export type InviteRelationshipView = {
 
 export type FriendGiftPackage = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1548,7 +1526,7 @@ export type FriendGiftPackage = {
 };
 
 export type FriendBlock = {
-    organizationId: string;
+    tenantId: string;
     blockerUserId: string;
     blockedUserId: string;
     createdAt: string;
@@ -1556,7 +1534,7 @@ export type FriendBlock = {
 
 export type FriendRelationship = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     userA: string;
     userB: string;
     metadata: {
@@ -1636,7 +1614,7 @@ export type CurrencyWalletView = {
 
 export type CollectionAlbum = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1658,7 +1636,7 @@ export type CollectionAlbum = {
 export type CollectionGroup = {
     id: string;
     albumId: string;
-    organizationId: string;
+    tenantId: string;
     name: string;
     description: string | null;
     icon: string | null;
@@ -1735,7 +1713,7 @@ export type RewardEntry = {
 
 export type OfflineCheckInCampaign = {
     id: string;
-    organizationId: string;
+    tenantId: string;
     alias: string | null;
     name: string;
     description: string | null;
@@ -1765,7 +1743,7 @@ export type OfflineCheckInCampaign = {
 export type OfflineCheckInSpot = {
     id: string;
     campaignId: string;
-    organizationId: string;
+    tenantId: string;
     alias: string;
     name: string;
     description: string | null;
@@ -1817,7 +1795,7 @@ export type OfflineCheckInCompletionRule = {
 export type CheckInUserState = {
     configId: string;
     endUserId: string;
-    organizationId: string;
+    tenantId: string;
     totalDays: number;
     currentStreak: number;
     longestStreak: number;
@@ -8523,14 +8501,14 @@ export type TaskClientPostClaimTierResponses = {
 
 export type TaskClientPostClaimTierResponse = TaskClientPostClaimTierResponses[keyof TaskClientPostClaimTierResponses];
 
-export type TeamClientPostTeamsData = {
-    body?: TeamCreateTeam;
+export type MatchsquadClientPostSquadsData = {
+    body?: MatchSquadCreate;
     path?: never;
     query?: never;
-    url: '/api/client/team/teams';
+    url: '/api/client/match-squad/squads';
 };
 
-export type TeamClientPostTeamsErrors = {
+export type MatchsquadClientPostSquadsErrors = {
     /**
      * Bad request
      */
@@ -8557,23 +8535,23 @@ export type TeamClientPostTeamsErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsError = TeamClientPostTeamsErrors[keyof TeamClientPostTeamsErrors];
+export type MatchsquadClientPostSquadsError = MatchsquadClientPostSquadsErrors[keyof MatchsquadClientPostSquadsErrors];
 
-export type TeamClientPostTeamsResponses = {
+export type MatchsquadClientPostSquadsResponses = {
     /**
      * Created
      */
     201: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsResponse = TeamClientPostTeamsResponses[keyof TeamClientPostTeamsResponses];
+export type MatchsquadClientPostSquadsResponse = MatchsquadClientPostSquadsResponses[keyof MatchsquadClientPostSquadsResponses];
 
-export type TeamClientGetMyTeamData = {
+export type MatchsquadClientGetMySquadData = {
     body?: never;
     path?: never;
     query: {
@@ -8582,10 +8560,10 @@ export type TeamClientGetMyTeamData = {
          */
         configAlias: string;
     };
-    url: '/api/client/team/my-team';
+    url: '/api/client/match-squad/my-squad';
 };
 
-export type TeamClientGetMyTeamErrors = {
+export type MatchsquadClientGetMySquadErrors = {
     /**
      * Bad request
      */
@@ -8612,15 +8590,15 @@ export type TeamClientGetMyTeamErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientGetMyTeamError = TeamClientGetMyTeamErrors[keyof TeamClientGetMyTeamErrors];
+export type MatchsquadClientGetMySquadError = MatchsquadClientGetMySquadErrors[keyof MatchsquadClientGetMySquadErrors];
 
-export type TeamClientGetMyTeamResponses = {
+export type MatchsquadClientGetMySquadResponses = {
     /**
-     * OK (returns team or null)
+     * OK (returns squad or null)
      */
     200: {
         code: 'ok';
-        data: Team & ({
+        data: MatchSquad & ({
             [key: string]: unknown;
         } | null);
         message: string;
@@ -8628,21 +8606,21 @@ export type TeamClientGetMyTeamResponses = {
     };
 };
 
-export type TeamClientGetMyTeamResponse = TeamClientGetMyTeamResponses[keyof TeamClientGetMyTeamResponses];
+export type MatchsquadClientGetMySquadResponse = MatchsquadClientGetMySquadResponses[keyof MatchsquadClientGetMySquadResponses];
 
-export type TeamClientGetTeamsByIdData = {
+export type MatchsquadClientGetSquadsByIdData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}';
+    url: '/api/client/match-squad/squads/{id}';
 };
 
-export type TeamClientGetTeamsByIdErrors = {
+export type MatchsquadClientGetSquadsByIdErrors = {
     /**
      * Bad request
      */
@@ -8669,35 +8647,35 @@ export type TeamClientGetTeamsByIdErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientGetTeamsByIdError = TeamClientGetTeamsByIdErrors[keyof TeamClientGetTeamsByIdErrors];
+export type MatchsquadClientGetSquadsByIdError = MatchsquadClientGetSquadsByIdErrors[keyof MatchsquadClientGetSquadsByIdErrors];
 
-export type TeamClientGetTeamsByIdResponses = {
+export type MatchsquadClientGetSquadsByIdResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientGetTeamsByIdResponse = TeamClientGetTeamsByIdResponses[keyof TeamClientGetTeamsByIdResponses];
+export type MatchsquadClientGetSquadsByIdResponse = MatchsquadClientGetSquadsByIdResponses[keyof MatchsquadClientGetSquadsByIdResponses];
 
-export type TeamClientPostTeamsByIdJoinData = {
+export type MatchsquadClientPostSquadsByIdJoinData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/join';
+    url: '/api/client/match-squad/squads/{id}/join';
 };
 
-export type TeamClientPostTeamsByIdJoinErrors = {
+export type MatchsquadClientPostSquadsByIdJoinErrors = {
     /**
      * Bad request
      */
@@ -8724,35 +8702,35 @@ export type TeamClientPostTeamsByIdJoinErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdJoinError = TeamClientPostTeamsByIdJoinErrors[keyof TeamClientPostTeamsByIdJoinErrors];
+export type MatchsquadClientPostSquadsByIdJoinError = MatchsquadClientPostSquadsByIdJoinErrors[keyof MatchsquadClientPostSquadsByIdJoinErrors];
 
-export type TeamClientPostTeamsByIdJoinResponses = {
+export type MatchsquadClientPostSquadsByIdJoinResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdJoinResponse = TeamClientPostTeamsByIdJoinResponses[keyof TeamClientPostTeamsByIdJoinResponses];
+export type MatchsquadClientPostSquadsByIdJoinResponse = MatchsquadClientPostSquadsByIdJoinResponses[keyof MatchsquadClientPostSquadsByIdJoinResponses];
 
-export type TeamClientPostTeamsByIdLeaveData = {
+export type MatchsquadClientPostSquadsByIdLeaveData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/leave';
+    url: '/api/client/match-squad/squads/{id}/leave';
 };
 
-export type TeamClientPostTeamsByIdLeaveErrors = {
+export type MatchsquadClientPostSquadsByIdLeaveErrors = {
     /**
      * Bad request
      */
@@ -8779,35 +8757,35 @@ export type TeamClientPostTeamsByIdLeaveErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdLeaveError = TeamClientPostTeamsByIdLeaveErrors[keyof TeamClientPostTeamsByIdLeaveErrors];
+export type MatchsquadClientPostSquadsByIdLeaveError = MatchsquadClientPostSquadsByIdLeaveErrors[keyof MatchsquadClientPostSquadsByIdLeaveErrors];
 
-export type TeamClientPostTeamsByIdLeaveResponses = {
+export type MatchsquadClientPostSquadsByIdLeaveResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdLeaveResponse = TeamClientPostTeamsByIdLeaveResponses[keyof TeamClientPostTeamsByIdLeaveResponses];
+export type MatchsquadClientPostSquadsByIdLeaveResponse = MatchsquadClientPostSquadsByIdLeaveResponses[keyof MatchsquadClientPostSquadsByIdLeaveResponses];
 
-export type TeamClientPostTeamsByIdDissolveData = {
+export type MatchsquadClientPostSquadsByIdDissolveData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/dissolve';
+    url: '/api/client/match-squad/squads/{id}/dissolve';
 };
 
-export type TeamClientPostTeamsByIdDissolveErrors = {
+export type MatchsquadClientPostSquadsByIdDissolveErrors = {
     /**
      * Bad request
      */
@@ -8834,27 +8812,27 @@ export type TeamClientPostTeamsByIdDissolveErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdDissolveError = TeamClientPostTeamsByIdDissolveErrors[keyof TeamClientPostTeamsByIdDissolveErrors];
+export type MatchsquadClientPostSquadsByIdDissolveError = MatchsquadClientPostSquadsByIdDissolveErrors[keyof MatchsquadClientPostSquadsByIdDissolveErrors];
 
-export type TeamClientPostTeamsByIdDissolveResponses = {
+export type MatchsquadClientPostSquadsByIdDissolveResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdDissolveResponse = TeamClientPostTeamsByIdDissolveResponses[keyof TeamClientPostTeamsByIdDissolveResponses];
+export type MatchsquadClientPostSquadsByIdDissolveResponse = MatchsquadClientPostSquadsByIdDissolveResponses[keyof MatchsquadClientPostSquadsByIdDissolveResponses];
 
-export type TeamClientPostTeamsByIdKickByUseridData = {
+export type MatchsquadClientPostSquadsByIdKickByUseridData = {
     body?: never;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
         /**
@@ -8863,10 +8841,10 @@ export type TeamClientPostTeamsByIdKickByUseridData = {
         userId: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/kick/{userId}';
+    url: '/api/client/match-squad/squads/{id}/kick/{userId}';
 };
 
-export type TeamClientPostTeamsByIdKickByUseridErrors = {
+export type MatchsquadClientPostSquadsByIdKickByUseridErrors = {
     /**
      * Bad request
      */
@@ -8893,35 +8871,35 @@ export type TeamClientPostTeamsByIdKickByUseridErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdKickByUseridError = TeamClientPostTeamsByIdKickByUseridErrors[keyof TeamClientPostTeamsByIdKickByUseridErrors];
+export type MatchsquadClientPostSquadsByIdKickByUseridError = MatchsquadClientPostSquadsByIdKickByUseridErrors[keyof MatchsquadClientPostSquadsByIdKickByUseridErrors];
 
-export type TeamClientPostTeamsByIdKickByUseridResponses = {
+export type MatchsquadClientPostSquadsByIdKickByUseridResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdKickByUseridResponse = TeamClientPostTeamsByIdKickByUseridResponses[keyof TeamClientPostTeamsByIdKickByUseridResponses];
+export type MatchsquadClientPostSquadsByIdKickByUseridResponse = MatchsquadClientPostSquadsByIdKickByUseridResponses[keyof MatchsquadClientPostSquadsByIdKickByUseridResponses];
 
-export type TeamClientPostTeamsByIdTransferLeaderData = {
-    body?: TeamTransferLeader;
+export type MatchsquadClientPostSquadsByIdTransferLeaderData = {
+    body?: MatchSquadTransferLeader;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/transfer-leader';
+    url: '/api/client/match-squad/squads/{id}/transfer-leader';
 };
 
-export type TeamClientPostTeamsByIdTransferLeaderErrors = {
+export type MatchsquadClientPostSquadsByIdTransferLeaderErrors = {
     /**
      * Bad request
      */
@@ -8948,35 +8926,35 @@ export type TeamClientPostTeamsByIdTransferLeaderErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdTransferLeaderError = TeamClientPostTeamsByIdTransferLeaderErrors[keyof TeamClientPostTeamsByIdTransferLeaderErrors];
+export type MatchsquadClientPostSquadsByIdTransferLeaderError = MatchsquadClientPostSquadsByIdTransferLeaderErrors[keyof MatchsquadClientPostSquadsByIdTransferLeaderErrors];
 
-export type TeamClientPostTeamsByIdTransferLeaderResponses = {
+export type MatchsquadClientPostSquadsByIdTransferLeaderResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdTransferLeaderResponse = TeamClientPostTeamsByIdTransferLeaderResponses[keyof TeamClientPostTeamsByIdTransferLeaderResponses];
+export type MatchsquadClientPostSquadsByIdTransferLeaderResponse = MatchsquadClientPostSquadsByIdTransferLeaderResponses[keyof MatchsquadClientPostSquadsByIdTransferLeaderResponses];
 
-export type TeamClientPutTeamsByIdStatusData = {
-    body?: TeamUpdateStatus;
+export type MatchsquadClientPutSquadsByIdStatusData = {
+    body?: MatchSquadUpdateStatus;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/status';
+    url: '/api/client/match-squad/squads/{id}/status';
 };
 
-export type TeamClientPutTeamsByIdStatusErrors = {
+export type MatchsquadClientPutSquadsByIdStatusErrors = {
     /**
      * Bad request
      */
@@ -9003,35 +8981,35 @@ export type TeamClientPutTeamsByIdStatusErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPutTeamsByIdStatusError = TeamClientPutTeamsByIdStatusErrors[keyof TeamClientPutTeamsByIdStatusErrors];
+export type MatchsquadClientPutSquadsByIdStatusError = MatchsquadClientPutSquadsByIdStatusErrors[keyof MatchsquadClientPutSquadsByIdStatusErrors];
 
-export type TeamClientPutTeamsByIdStatusResponses = {
+export type MatchsquadClientPutSquadsByIdStatusResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPutTeamsByIdStatusResponse = TeamClientPutTeamsByIdStatusResponses[keyof TeamClientPutTeamsByIdStatusResponses];
+export type MatchsquadClientPutSquadsByIdStatusResponse = MatchsquadClientPutSquadsByIdStatusResponses[keyof MatchsquadClientPutSquadsByIdStatusResponses];
 
-export type TeamClientPostTeamsByIdInviteData = {
-    body?: TeamInvite;
+export type MatchsquadClientPostSquadsByIdInviteData = {
+    body?: MatchSquadInvite;
     path: {
         /**
-         * Team id.
+         * MatchSquad id.
          */
         id: string;
     };
     query?: never;
-    url: '/api/client/team/teams/{id}/invite';
+    url: '/api/client/match-squad/squads/{id}/invite';
 };
 
-export type TeamClientPostTeamsByIdInviteErrors = {
+export type MatchsquadClientPostSquadsByIdInviteErrors = {
     /**
      * Bad request
      */
@@ -9058,23 +9036,23 @@ export type TeamClientPostTeamsByIdInviteErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostTeamsByIdInviteError = TeamClientPostTeamsByIdInviteErrors[keyof TeamClientPostTeamsByIdInviteErrors];
+export type MatchsquadClientPostSquadsByIdInviteError = MatchsquadClientPostSquadsByIdInviteErrors[keyof MatchsquadClientPostSquadsByIdInviteErrors];
 
-export type TeamClientPostTeamsByIdInviteResponses = {
+export type MatchsquadClientPostSquadsByIdInviteResponses = {
     /**
      * Created
      */
     201: {
         code: 'ok';
-        data: TeamInvitation;
+        data: MatchSquadInvitation;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostTeamsByIdInviteResponse = TeamClientPostTeamsByIdInviteResponses[keyof TeamClientPostTeamsByIdInviteResponses];
+export type MatchsquadClientPostSquadsByIdInviteResponse = MatchsquadClientPostSquadsByIdInviteResponses[keyof MatchsquadClientPostSquadsByIdInviteResponses];
 
-export type TeamClientPostInvitationsByIdAcceptData = {
+export type MatchsquadClientPostInvitationsByIdAcceptData = {
     body?: never;
     path: {
         /**
@@ -9083,10 +9061,10 @@ export type TeamClientPostInvitationsByIdAcceptData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/team/invitations/{id}/accept';
+    url: '/api/client/match-squad/invitations/{id}/accept';
 };
 
-export type TeamClientPostInvitationsByIdAcceptErrors = {
+export type MatchsquadClientPostInvitationsByIdAcceptErrors = {
     /**
      * Bad request
      */
@@ -9113,23 +9091,23 @@ export type TeamClientPostInvitationsByIdAcceptErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostInvitationsByIdAcceptError = TeamClientPostInvitationsByIdAcceptErrors[keyof TeamClientPostInvitationsByIdAcceptErrors];
+export type MatchsquadClientPostInvitationsByIdAcceptError = MatchsquadClientPostInvitationsByIdAcceptErrors[keyof MatchsquadClientPostInvitationsByIdAcceptErrors];
 
-export type TeamClientPostInvitationsByIdAcceptResponses = {
+export type MatchsquadClientPostInvitationsByIdAcceptResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostInvitationsByIdAcceptResponse = TeamClientPostInvitationsByIdAcceptResponses[keyof TeamClientPostInvitationsByIdAcceptResponses];
+export type MatchsquadClientPostInvitationsByIdAcceptResponse = MatchsquadClientPostInvitationsByIdAcceptResponses[keyof MatchsquadClientPostInvitationsByIdAcceptResponses];
 
-export type TeamClientPostInvitationsByIdRejectData = {
+export type MatchsquadClientPostInvitationsByIdRejectData = {
     body?: never;
     path: {
         /**
@@ -9138,10 +9116,10 @@ export type TeamClientPostInvitationsByIdRejectData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/team/invitations/{id}/reject';
+    url: '/api/client/match-squad/invitations/{id}/reject';
 };
 
-export type TeamClientPostInvitationsByIdRejectErrors = {
+export type MatchsquadClientPostInvitationsByIdRejectErrors = {
     /**
      * Bad request
      */
@@ -9168,23 +9146,23 @@ export type TeamClientPostInvitationsByIdRejectErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostInvitationsByIdRejectError = TeamClientPostInvitationsByIdRejectErrors[keyof TeamClientPostInvitationsByIdRejectErrors];
+export type MatchsquadClientPostInvitationsByIdRejectError = MatchsquadClientPostInvitationsByIdRejectErrors[keyof MatchsquadClientPostInvitationsByIdRejectErrors];
 
-export type TeamClientPostInvitationsByIdRejectResponses = {
+export type MatchsquadClientPostInvitationsByIdRejectResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: TeamInvitation;
+        data: MatchSquadInvitation;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostInvitationsByIdRejectResponse = TeamClientPostInvitationsByIdRejectResponses[keyof TeamClientPostInvitationsByIdRejectResponses];
+export type MatchsquadClientPostInvitationsByIdRejectResponse = MatchsquadClientPostInvitationsByIdRejectResponses[keyof MatchsquadClientPostInvitationsByIdRejectResponses];
 
-export type TeamClientPostQuickMatchData = {
+export type MatchsquadClientPostQuickMatchData = {
     body?: never;
     path?: never;
     query: {
@@ -9193,10 +9171,10 @@ export type TeamClientPostQuickMatchData = {
          */
         configAlias: string;
     };
-    url: '/api/client/team/quick-match';
+    url: '/api/client/match-squad/quick-match';
 };
 
-export type TeamClientPostQuickMatchErrors = {
+export type MatchsquadClientPostQuickMatchErrors = {
     /**
      * Bad request
      */
@@ -9223,21 +9201,21 @@ export type TeamClientPostQuickMatchErrors = {
     500: ApiErrorEnvelope;
 };
 
-export type TeamClientPostQuickMatchError = TeamClientPostQuickMatchErrors[keyof TeamClientPostQuickMatchErrors];
+export type MatchsquadClientPostQuickMatchError = MatchsquadClientPostQuickMatchErrors[keyof MatchsquadClientPostQuickMatchErrors];
 
-export type TeamClientPostQuickMatchResponses = {
+export type MatchsquadClientPostQuickMatchResponses = {
     /**
      * OK
      */
     200: {
         code: 'ok';
-        data: Team;
+        data: MatchSquad;
         message: string;
         requestId: string;
     };
 };
 
-export type TeamClientPostQuickMatchResponse = TeamClientPostQuickMatchResponses[keyof TeamClientPostQuickMatchResponses];
+export type MatchsquadClientPostQuickMatchResponse = MatchsquadClientPostQuickMatchResponses[keyof MatchsquadClientPostQuickMatchResponses];
 
 export type LevelClientPostConfigsData = {
     body?: never;
@@ -9839,7 +9817,7 @@ export type RankClientGetHistoryResponses = {
                 id: string;
                 matchId: string;
                 endUserId: string;
-                teamId: string;
+                matchTeamId: string;
                 placement: number | null;
                 win: boolean;
                 mmrBefore: number;
@@ -10157,74 +10135,6 @@ export type ActivityClientPostByAliasJoinResponses = {
 };
 
 export type ActivityClientPostByAliasJoinResponse = ActivityClientPostByAliasJoinResponses[keyof ActivityClientPostByAliasJoinResponses];
-
-export type ActivityClientPostByAliasClaimMilestoneData = {
-    body?: ActivityClaimMilestoneClient;
-    headers: {
-        /**
-         * Publishable key (cpk_...)
-         */
-        'x-api-key': string;
-        /**
-         * End user's opaque id
-         */
-        'x-end-user-id': string;
-        /**
-         * HMAC-SHA256(endUserId, clientSecret). Required unless dev mode is enabled.
-         */
-        'x-user-hash'?: string;
-    };
-    path: {
-        alias: string;
-    };
-    query?: never;
-    url: '/api/client/activity/{alias}/claim-milestone';
-};
-
-export type ActivityClientPostByAliasClaimMilestoneErrors = {
-    /**
-     * Bad request
-     */
-    400: ApiErrorEnvelope;
-    /**
-     * Unauthorized
-     */
-    401: ApiErrorEnvelope;
-    /**
-     * Forbidden
-     */
-    403: ApiErrorEnvelope;
-    /**
-     * Not found
-     */
-    404: ApiErrorEnvelope;
-    /**
-     * Conflict
-     */
-    409: ApiErrorEnvelope;
-    /**
-     * Internal server error
-     */
-    500: ApiErrorEnvelope;
-};
-
-export type ActivityClientPostByAliasClaimMilestoneError = ActivityClientPostByAliasClaimMilestoneErrors[keyof ActivityClientPostByAliasClaimMilestoneErrors];
-
-export type ActivityClientPostByAliasClaimMilestoneResponses = {
-    /**
-     * OK
-     */
-    200: {
-        code: 'ok';
-        data: {
-            [key: string]: unknown;
-        };
-        message: string;
-        requestId: string;
-    };
-};
-
-export type ActivityClientPostByAliasClaimMilestoneResponse = ActivityClientPostByAliasClaimMilestoneResponses[keyof ActivityClientPostByAliasClaimMilestoneResponses];
 
 export type AssistPoolClientGetInstancesData = {
     body?: never;
