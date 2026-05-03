@@ -18,12 +18,12 @@ import { Label } from "#/components/ui/label"
 /**
  * First-run project onboarding.
  *
- * `_dashboard.tsx` redirects here when `session.session.activeOrganizationId`
+ * `_dashboard.tsx` redirects here when `session.session.activeTeamId`
  * is null. Two sub-cases, handled by the same route:
  *
  *  - User has zero projects → render the "create your first project" form.
  *    On submit: `organization.create` → `organization.setActive` →
- *    refresh session cache (so `activeOrganizationId` propagates without
+ *    refresh session cache (so `activeTeamId` propagates without
  *    requiring sign-out) → navigate to `/dashboard`.
  *  - User has ≥1 projects but session lost the active one (e.g. the old
  *    `session.create.before` hook was removed, or Better Auth session
@@ -32,7 +32,7 @@ import { Label } from "#/components/ui/label"
  *
  * The page lives OUTSIDE `_dashboard` on purpose: the dashboard layout
  * mounts sidebar + command palette + project-scoped data hooks, all of
- * which assume `activeOrganizationId` is present. Rendering any part
+ * which assume `activeTeamId` is present. Rendering any part
  * of that shell from an unscoped session is what produces the silent
  * 401 cascade this page exists to prevent.
  */
@@ -88,7 +88,7 @@ function CreateProjectClient() {
       navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
       return
     }
-    if (session.session.activeOrganizationId) {
+    if (session.session.activeTeamId) {
       navigate({ to: "/dashboard", replace: true })
       return
     }

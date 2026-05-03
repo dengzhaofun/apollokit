@@ -1,5 +1,5 @@
 export interface InviteSettings {
-  organizationId: string
+  tenantId: string
   enabled: boolean
   codeLength: number
   allowSelfInvite: boolean
@@ -10,7 +10,7 @@ export interface InviteSettings {
 
 export interface InviteRelationship {
   id: string
-  organizationId: string
+  tenantId: string
   inviterEndUserId: string
   inviteeEndUserId: string
   inviterCodeSnapshot: string

@@ -70,7 +70,7 @@ export interface SynthesisCostConfig {
 
 export interface EntitySchema {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -90,7 +90,7 @@ export interface EntitySchema {
 
 export interface EntityBlueprint {
   id: string
-  organizationId: string
+  tenantId: string
   schemaId: string
   alias: string | null
   name: string
@@ -116,7 +116,7 @@ export interface EntityBlueprint {
 
 export interface EntityBlueprintSkin {
   id: string
-  organizationId: string
+  tenantId: string
   blueprintId: string
   alias: string | null
   name: string
@@ -133,7 +133,7 @@ export interface EntityBlueprintSkin {
 
 export interface EntityFormationConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   maxFormations: number

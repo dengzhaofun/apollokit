@@ -1,6 +1,6 @@
 export interface GuildSettings {
   id: string
-  organizationId: string
+  tenantId: string
   maxMembers: number
   maxOfficers: number
   createCost: { definitionId: string; quantity: number }[]
@@ -13,7 +13,7 @@ export interface GuildSettings {
 
 export interface Guild {
   id: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   icon: string | null
@@ -34,7 +34,7 @@ export interface Guild {
 export interface GuildMember {
   guildId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   role: string
   contribution: number
   joinedAt: string

@@ -60,11 +60,11 @@ function DashboardLayoutClient() {
       navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
       return
     }
-    // Server-side admin routes gate on `activeOrganizationId` (see
+    // Server-side admin routes gate on `activeTeamId` (see
     // `require-admin-or-api-key.ts`). A session without one 401s every
     // business endpoint, producing a dashboard full of silent failures.
     // Send the user to onboarding to create (or pick) a project first.
-    if (!session.session.activeOrganizationId) {
+    if (!session.session.activeTeamId) {
       navigate({ to: "/onboarding/create-project", replace: true })
     }
   }, [isPending, session, navigate])
@@ -78,7 +78,7 @@ function DashboardLayoutClient() {
   }
 
   if (!session) return null
-  if (!session.session.activeOrganizationId) return null
+  if (!session.session.activeTeamId) return null
 
   return (
     <AssistProvider>

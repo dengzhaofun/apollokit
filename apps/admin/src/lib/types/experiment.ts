@@ -39,7 +39,7 @@ export interface ExperimentPrimaryMetric {
 
 export interface Experiment {
   id: string
-  organizationId: string
+  tenantId: string
   key: string
   name: string
   description: string | null
@@ -61,7 +61,7 @@ export interface Experiment {
 export interface ExperimentVariant {
   id: string
   experimentId: string
-  organizationId: string
+  tenantId: string
   variantKey: string
   name: string
   description: string | null
@@ -76,7 +76,7 @@ export interface ExperimentVariant {
 export interface ExperimentAssignment {
   experimentId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   variantId: string
   variantKey: string
   assignedAt: string

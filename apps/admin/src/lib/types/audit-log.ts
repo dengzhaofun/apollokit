@@ -7,7 +7,7 @@ export type AuditActorType = "user" | "admin-api-key" | "system"
 
 export interface AuditLog {
   id: string
-  organizationId: string
+  tenantId: string
   ts: string
   actorType: AuditActorType | string
   actorId: string | null

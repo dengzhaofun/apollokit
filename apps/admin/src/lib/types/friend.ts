@@ -1,6 +1,6 @@
 export interface FriendSettings {
   id: string
-  organizationId: string
+  tenantId: string
   maxFriends: number
   maxBlocked: number
   maxPendingRequests: number
@@ -11,7 +11,7 @@ export interface FriendSettings {
 
 export interface FriendRelationship {
   id: string
-  organizationId: string
+  tenantId: string
   userA: string
   userB: string
   metadata: Record<string, unknown> | null

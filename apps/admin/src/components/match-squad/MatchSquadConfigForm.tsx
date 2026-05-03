@@ -8,10 +8,10 @@ import {
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 
-import type { TeamConfigFormApi } from "./use-config-form"
+import type { MatchSquadConfigFormApi } from "./use-config-form"
 
-interface TeamConfigFormProps {
-  form: TeamConfigFormApi
+interface MatchSquadConfigFormProps {
+  form: MatchSquadConfigFormApi
   isPending?: boolean
   submitLabel?: string
   id?: string
@@ -19,14 +19,14 @@ interface TeamConfigFormProps {
   onStateChange?: (state: FormBridgeState) => void
 }
 
-export function TeamConfigForm({
+export function MatchSquadConfigForm({
   form,
   isPending,
   submitLabel,
   id,
   hideSubmitButton,
   onStateChange,
-}: TeamConfigFormProps) {
+}: MatchSquadConfigFormProps) {
   return (
     <form
       id={id}

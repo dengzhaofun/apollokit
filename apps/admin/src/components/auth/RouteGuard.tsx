@@ -61,7 +61,7 @@ export function RouteGuard({
 }: RouteGuardProps) {
   const { pathname } = useLocation()
   const { data: session, isPending: sessionPending } = authClient.useSession()
-  const orgId = session?.session.activeOrganizationId ?? null
+  const orgId = session?.session.activeTeamId ?? null
   const { data: bag, isPending: bagPending } = useCapabilities(orgId)
 
   // Wait for both session + bag before deciding. Without this the

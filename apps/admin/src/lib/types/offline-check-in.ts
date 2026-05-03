@@ -34,7 +34,7 @@ export type VerifiedKind = "gps" | "qr" | "manual_code" | "photo"
 
 export interface OfflineCheckInCampaign {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -56,7 +56,7 @@ export interface OfflineCheckInCampaign {
 export interface OfflineCheckInSpot {
   id: string
   campaignId: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null
@@ -77,7 +77,7 @@ export interface OfflineCheckInSpot {
 export interface OfflineCheckInProgress {
   campaignId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   spotsCompleted: string[]
   totalCount: number
   lastSpotId: string | null

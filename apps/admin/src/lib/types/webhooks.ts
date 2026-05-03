@@ -18,7 +18,7 @@ export type WebhookDeliveryStatus =
 
 export interface WebhookEndpoint {
   id: string
-  organizationId: string
+  tenantId: string
   name: string
   url: string
   description: string | null
@@ -56,7 +56,7 @@ export interface UpdateWebhookEndpointInput {
 
 export interface WebhookDelivery {
   id: string
-  organizationId: string
+  tenantId: string
   endpointId: string
   eventId: string
   eventType: string

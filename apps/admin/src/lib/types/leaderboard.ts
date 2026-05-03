@@ -15,7 +15,7 @@ export interface RewardTier {
 
 export interface LeaderboardConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null
@@ -56,7 +56,7 @@ export interface LeaderboardTop {
 export interface LeaderboardSnapshot {
   id: string
   configId: string
-  organizationId: string
+  tenantId: string
   cycleKey: string
   scopeKey: string
   rankings: LeaderboardRanking[]

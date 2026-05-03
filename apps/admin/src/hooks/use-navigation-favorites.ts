@@ -67,7 +67,7 @@ export function useToggleFavorite() {
                 // Optimistic placeholder — real id comes back from server.
                 // sortOrder = max+1 so it shows up at the top.
                 id: `optimistic-${routePath}`,
-                organizationId: "",
+                tenantId: "",
                 userId: "",
                 routePath,
                 sortOrder:

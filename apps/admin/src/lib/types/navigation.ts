@@ -5,7 +5,7 @@
 
 export type NavigationFavorite = {
   id: string
-  organizationId: string
+  tenantId: string
   userId: string
   routePath: string
   sortOrder: string

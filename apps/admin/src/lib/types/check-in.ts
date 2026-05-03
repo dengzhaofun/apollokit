@@ -2,7 +2,7 @@ export type ResetMode = "none" | "week" | "month"
 
 export interface CheckInConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -21,7 +21,7 @@ export interface CheckInConfig {
 export interface CheckInUserState {
   configId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   totalDays: number
   currentStreak: number
   longestStreak: number

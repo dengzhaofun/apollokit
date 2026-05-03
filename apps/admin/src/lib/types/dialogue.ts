@@ -43,7 +43,7 @@ export type DialogueTriggerCondition =
 
 export interface DialogueScript {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null

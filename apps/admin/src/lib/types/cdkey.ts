@@ -4,7 +4,7 @@ export type CdkeyCodeType = "universal" | "unique"
 
 export interface CdkeyBatch {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -23,7 +23,7 @@ export interface CdkeyBatch {
 
 export interface CdkeyCode {
   id: string
-  organizationId: string
+  tenantId: string
   batchId: string
   code: string
   status: string
@@ -34,7 +34,7 @@ export interface CdkeyCode {
 
 export interface CdkeyRedemptionLog {
   id: string
-  organizationId: string
+  tenantId: string
   endUserId: string
   batchId: string
   codeId: string | null

@@ -49,7 +49,7 @@ import {
  */
 export function useCan(resource: string, action: string): boolean {
   const { data: session } = authClient.useSession()
-  const orgId = session?.session.activeOrganizationId ?? null
+  const orgId = session?.session.activeTeamId ?? null
   const { data: bag } = useCapabilities(orgId)
   return hasAction(bag, resource, action)
 }
@@ -60,7 +60,7 @@ export function useCan(resource: string, action: string): boolean {
  */
 export function useCanAny(resource: string): boolean {
   const { data: session } = authClient.useSession()
-  const orgId = session?.session.activeOrganizationId ?? null
+  const orgId = session?.session.activeTeamId ?? null
   const { data: bag } = useCapabilities(orgId)
   return hasAnyAction(bag, resource)
 }

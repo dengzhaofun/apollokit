@@ -61,7 +61,7 @@ export type ActivityMemberStatus = "joined" | "completed" | "dropped" | "left"
 
 export interface Activity {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null
@@ -88,7 +88,7 @@ export interface Activity {
 export interface ActivityNode {
   id: string
   activityId: string
-  organizationId: string
+  tenantId: string
   alias: string
   nodeType: NodeType
   refId: string | null
@@ -103,7 +103,7 @@ export interface ActivityNode {
 export interface ActivitySchedule {
   id: string
   activityId: string
-  organizationId: string
+  tenantId: string
   alias: string
   triggerKind: TriggerKind
   cronExpr: string | null
@@ -159,7 +159,7 @@ export interface CreateNodeInput {
 export interface ActivityMember {
   id: string
   activityId: string
-  organizationId: string
+  tenantId: string
   endUserId: string
   joinedAt: string
   lastActiveAt: string
@@ -263,7 +263,7 @@ export interface ActivityScheduleBlueprint {
 
 export interface ActivityTemplate {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null

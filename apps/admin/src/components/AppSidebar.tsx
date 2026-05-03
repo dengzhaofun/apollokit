@@ -156,7 +156,7 @@ type NavRoute =
   | "/friend"
   | "/invite"
   | "/guild"
-  | "/team"
+  | "/match-squad"
   | "/leaderboard"
   | "/rank"
   | "/end-user"
@@ -279,7 +279,7 @@ const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
   "/friend": { resource: "friend" },
   "/invite": { resource: "invite" },
   "/guild": { resource: "guild" },
-  "/team": { resource: "team" },
+  "/match-squad": { resource: "team" },
   "/leaderboard": { resource: "leaderboard" },
   "/rank": { resource: "rank" },
   "/end-user": { resource: "endUser" },
@@ -463,7 +463,7 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_friend, to: "/friend", icon: Users },
         { title: m.nav_invite, to: "/invite", icon: UserPlus },
         { title: m.nav_guild, to: "/guild", icon: Shield },
-        { title: m.nav_team, to: "/team", icon: Swords },
+        { title: m.nav_team, to: "/match-squad", icon: Swords },
         { title: m.nav_leaderboard, to: "/leaderboard", icon: Trophy },
         { title: m.nav_rank, to: "/rank", icon: Medal },
         { title: m.nav_end_user, to: "/end-user", icon: Contact },
@@ -1050,7 +1050,7 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
 export function AppSidebar() {
   const allGroups = getNavGroups()
   const { data: session } = authClient.useSession()
-  const orgId = session?.session.activeOrganizationId ?? null
+  const orgId = session?.session.activeTeamId ?? null
   const { data: capabilities } = useCapabilities(orgId)
   const groups = filterGroupsByCapabilities(allGroups, capabilities)
   const { pathname } = useLocation()

@@ -1,6 +1,6 @@
 export interface CurrencyDefinition {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -29,7 +29,7 @@ export interface CurrencyBalance {
 
 export interface LedgerEntry {
   id: string
-  organizationId: string
+  tenantId: string
   endUserId: string
   currencyId: string
   delta: number

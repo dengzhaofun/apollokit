@@ -8,7 +8,7 @@
  *      9 分钟后自动重新签发,避开 600s 过期边界。
  *   3. 单次查询 hook `useTinybirdQuery(pipe, params)` 直接打 Tinybird CDN
  *      (`{baseUrl}/{pipe}.json?<params>&token=<jwt>`),绕过后端,延迟最低。
- *   4. 所有 queryKey 都包含 `activeOrganizationId`,租户切换时自动失效、重查。
+ *   4. 所有 queryKey 都包含 `activeTeamId`,租户切换时自动失效、重查。
  *
  * 后端对应:apps/server/src/modules/analytics/{routes,validators,index}.ts
  *           apps/server/src/lib/analytics/{jwt,types,index}.ts
@@ -85,7 +85,7 @@ function normalizePipeKey(pipes: readonly TenantPipeName[]): string {
 /**
  * 获取当前租户的 Tinybird JWT。
  *
- * - queryKey 里包含 `activeOrganizationId`,切换租户自动失效并重新签发。
+ * - queryKey 里包含 `activeTeamId`,切换租户自动失效并重新签发。
  * - `staleTime` = 9min、`refetchInterval` = 9min,确保在 token 过期前(10min)
  *   就预刷新,客户端视角永远不会触发 403。
  * - 若后端未配置 Tinybird secrets,这里会直接 500;上层组件应该给出清晰的

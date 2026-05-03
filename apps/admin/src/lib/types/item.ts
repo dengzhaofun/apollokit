@@ -1,6 +1,6 @@
 export interface ItemCategory {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   icon: string | null
@@ -13,7 +13,7 @@ export interface ItemCategory {
 
 export interface ItemDefinition {
   id: string
-  organizationId: string
+  tenantId: string
   categoryId: string | null
   alias: string | null
   name: string

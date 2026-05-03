@@ -2,7 +2,7 @@ import type { RewardEntry } from "./rewards"
 
 export interface ExchangeConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -15,7 +15,7 @@ export interface ExchangeConfig {
 export interface ExchangeOption {
   id: string
   configId: string
-  organizationId: string
+  tenantId: string
   name: string
   description: string | null
   costItems: RewardEntry[]

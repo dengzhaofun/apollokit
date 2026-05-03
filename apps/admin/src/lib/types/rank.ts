@@ -43,7 +43,7 @@ export interface RankTier {
 
 export interface RankTierConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   name: string
   description: string | null
@@ -88,7 +88,7 @@ export type UpdateRankTierConfigInput = Partial<
 
 export interface RankSeason {
   id: string
-  organizationId: string
+  tenantId: string
   tierConfigId: string
   alias: string
   name: string

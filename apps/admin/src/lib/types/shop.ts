@@ -22,7 +22,7 @@ export type ShopEligibilityStatus =
 
 export interface ShopCategory {
   id: string
-  organizationId: string
+  tenantId: string
   parentId: string | null
   alias: string | null
   name: string
@@ -43,7 +43,7 @@ export interface ShopCategoryNode extends ShopCategory {
 
 export interface ShopTag {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   color: string | null
@@ -57,7 +57,7 @@ export interface ShopTag {
 
 export interface ShopProduct {
   id: string
-  organizationId: string
+  tenantId: string
   categoryId: string | null
   alias: string | null
   name: string
@@ -90,7 +90,7 @@ export interface ShopProduct {
 export interface ShopGrowthStage {
   id: string
   productId: string
-  organizationId: string
+  tenantId: string
   stageIndex: number
   name: string
   description: string | null
@@ -106,7 +106,7 @@ export interface ShopGrowthStage {
 export interface ShopUserPurchaseState {
   productId: string
   endUserId: string
-  organizationId: string
+  tenantId: string
   totalCount: number
   cycleCount: number
   cycleResetAt: string | null

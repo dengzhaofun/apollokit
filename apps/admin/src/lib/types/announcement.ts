@@ -3,7 +3,7 @@ export type AnnouncementSeverity = "info" | "warning" | "urgent"
 
 export interface Announcement {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string
   kind: AnnouncementKind
   title: string

@@ -2,7 +2,7 @@ export type StorageBoxType = "demand" | "fixed"
 
 export interface StorageBoxConfig {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -24,7 +24,7 @@ export interface StorageBoxConfig {
 
 export interface StorageBoxDepositView {
   id: string
-  organizationId: string
+  tenantId: string
   endUserId: string
   boxConfigId: string
   currencyDefinitionId: string

@@ -1,6 +1,6 @@
 export interface MediaFolder {
   id: string
-  organizationId: string
+  tenantId: string
   parentId: string | null
   name: string
   isDefault: boolean
@@ -15,7 +15,7 @@ export interface BreadcrumbEntry {
 
 export interface MediaAsset {
   id: string
-  organizationId: string
+  tenantId: string
   folderId: string
   objectKey: string
   filename: string

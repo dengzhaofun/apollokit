@@ -5,7 +5,7 @@ export type BannerLayout = "carousel" | "single" | "grid"
 
 export interface BannerGroup {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null
@@ -21,7 +21,7 @@ export interface BannerGroup {
 
 export interface Banner {
   id: string
-  organizationId: string
+  tenantId: string
   groupId: string
   title: string
   imageUrlMobile: string

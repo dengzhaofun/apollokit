@@ -34,7 +34,7 @@ export type BadgeSignalMode = (typeof BADGE_SIGNAL_MODES)[number]
 
 export type BadgeNode = {
   id: string
-  organizationId: string
+  tenantId: string
   key: string
   parentKey: string | null
   displayType: string
@@ -162,7 +162,7 @@ export type BadgeSignalWriteResult = {
 }
 
 export type BadgeSignalRegistryEntry = {
-  organizationId: string
+  tenantId: string
   keyPattern: string
   isDynamic: boolean
   label: string

@@ -2,7 +2,7 @@ export type CharacterSide = "left" | "right"
 
 export interface Character {
   id: string
-  organizationId: string
+  tenantId: string
   alias: string | null
   name: string
   description: string | null

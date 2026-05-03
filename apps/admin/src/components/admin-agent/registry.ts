@@ -29,7 +29,7 @@ import {
   applyMailToForm,
   applyRankToForm,
   applyShopProductToForm,
-  applyTeamToForm,
+  applyMatchSquadToForm,
 } from "./apply-helpers"
 
 export type ModuleEntry = {
@@ -67,7 +67,7 @@ export const MODULE_REGISTRY: Record<string, ModuleEntry> = {
   "mail": adapt("applyMailConfig", applyMailToForm),
   "rank": adapt("applyRankConfig", applyRankToForm),
   "shop": adapt("applyShopProductConfig", applyShopProductToForm),
-  "team": adapt("applyTeamConfig", applyTeamToForm),
+  "matchSquad": adapt("applyMatchSquadConfig", applyMatchSquadToForm),
 }
 
 /**
