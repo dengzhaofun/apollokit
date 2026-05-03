@@ -59,9 +59,14 @@ export const auditLogs = pgTable(
     id: uuid("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id")
-      .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+    // 业务模块 mutation 永远落在某个 org 下;Better Auth 自身的 auth 事件
+    // (sign-up / sign-in / password change / account link 等) 由 auth.ts 的
+    // databaseHooks 直接写本表 —— sign-up 那一刻用户尚未加入任何 org,所以
+    // 列必须 nullable。业务模块 middleware 已自行检查 activeOrganizationId
+    // 不为空才写,不会出现"业务行 org_id=NULL"的情况。
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "cascade",
+    }),
     /** 操作发生的时刻（服务端时钟）。索引列。 */
     ts: timestamp("ts", { withTimezone: true }).defaultNow().notNull(),
 
