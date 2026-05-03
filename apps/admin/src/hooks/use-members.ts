@@ -209,16 +209,20 @@ export function useProjectMembers(teamId: string | null) {
     queryKey: ["project-members", teamId] as const,
     enabled: !!teamId,
     queryFn: async (): Promise<ProjectMemberRow[]> => {
-      try {
-        const res = await fetch(`/api/v1/team-members?teamId=${teamId}`, {
-          credentials: "include",
-        })
-        if (!res.ok) return []
-        const json = (await res.json()) as { items?: ProjectMemberRow[] }
-        return json.items ?? []
-      } catch {
-        return []
+      const res = await fetch(`/api/v1/team-members?teamId=${teamId}`, {
+        credentials: "include",
+      })
+      if (!res.ok) {
+        // 后端 503 / 网络错时返回空,避免 UI 报红
+        if (res.status >= 500 || res.status === 0) return []
+        throw new Error(`team-members fetch failed: ${res.status}`)
       }
+      // server 返回 envelope `{ code, data: { items: [...] }, message, requestId }`
+      const json = (await res.json()) as {
+        code?: string
+        data?: { items?: ProjectMemberRow[] }
+      }
+      return json.data?.items ?? []
     },
   })
 }
