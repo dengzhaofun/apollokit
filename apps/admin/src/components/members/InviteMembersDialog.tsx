@@ -66,7 +66,7 @@ export function InviteMembersDialog({ scope }: Props) {
       return
     }
     let succeeded = 0
-    let failed: string[] = []
+    const failed: string[] = []
     for (const email of emails) {
       try {
         await invite.mutateAsync({

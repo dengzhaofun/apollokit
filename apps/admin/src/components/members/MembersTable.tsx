@@ -95,8 +95,11 @@ export function MembersTable({ scope }: Props) {
   const projectMembers = useProjectMembers(scope === "project" ? teamId : null)
 
   const isLoading = scope === "org" ? orgMembers.isLoading : projectMembers.isLoading
-  const rows: (OrgMemberRow | ProjectMemberRow)[] =
-    scope === "org" ? orgMembers.data ?? [] : projectMembers.data ?? []
+  const rows = useMemo<(OrgMemberRow | ProjectMemberRow)[]>(
+    () =>
+      scope === "org" ? orgMembers.data ?? [] : projectMembers.data ?? [],
+    [scope, orgMembers.data, projectMembers.data],
+  )
 
   const [query, setQuery] = useState("")
   const filtered = useMemo(() => {
