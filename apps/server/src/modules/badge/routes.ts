@@ -14,7 +14,7 @@
  *      here to avoid a tampered game client inflating the player's
  *      own counters.
  *
- * Both surfaces share `requireAdminOrApiKey + requireOrgManage`. The
+ * Both surfaces share `requireAdminOrApiKey + requirePermissionByMethod("badge")`. The
  * key difference with other admin routes is that the signal writes
  * accept `endUserId` in the body — this is a trusted identity push,
  * not a self-service action for the logged-in admin.
@@ -31,7 +31,7 @@ import { MoveBodySchema } from "../../lib/fractional-order";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { badgeService } from "./index";
 import {
   BadgeNodeListResponseSchema,
@@ -59,7 +59,7 @@ const TAG = "Badge (Admin)";
 
 export const badgeRouter = createAdminRouter();
 badgeRouter.use("*", requireAdminOrApiKey);
-badgeRouter.use("*", requireOrgManage);
+badgeRouter.use("*", requirePermissionByMethod("badge"));
 
 // ─── Node CRUD ────────────────────────────────────────────────────
 

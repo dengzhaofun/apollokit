@@ -12,6 +12,7 @@ import {
 } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
 
+import { ac, roles } from "./auth/ac";
 import { db } from "./db";
 import { insertAuditRow } from "./lib/audit-log-insert";
 import {
@@ -157,13 +158,17 @@ function buildAdminAuth() {
     plugins: [
       organization({
         creatorRole: "owner",
+        // 4-role RBAC + statements live in `./auth/ac.ts`. Roles:
+        //   owner    full + billing + org delete/transfer
+        //   admin    business manage + member management, no billing
+        //   operator read+write business modules, no audit/billing
+        //   viewer   global read-only
+        //   member   alias of operator (backward-compat for old rows)
+        ac,
+        roles,
         // Better Auth calls this hook after it persists the invitation row.
         // We deliver the accept link via Cloudflare Email Service (or log
         // it to the console in dev — see `lib/mailer.ts`).
-        //
-        // Phase 2 will layer `createAccessControl({...statements})` + custom
-        // roles on top of this — the Phase 1 default is owner/admin/member
-        // from `better-auth/plugins/organization/access/statement`.
         async sendInvitationEmail(data) {
           const acceptUrl = `${env.ADMIN_URL}/accept-invitation/${data.id}`;
           const inviterName =

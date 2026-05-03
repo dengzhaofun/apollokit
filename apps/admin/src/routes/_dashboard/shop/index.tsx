@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import {
   useAllShopTags,
   useCreateShopProduct,
@@ -105,12 +105,12 @@ function ShopProductsPage() {
               }
               variant="outline" size="sm"
             />
-            <WriteGate>
+            <Can resource="shop" action="write" mode="disable">
               <Button size="sm" onClick={openCreate}>
                 <Plus />
                 {m.shop_new_product()}
               </Button>
-            </WriteGate>
+            </Can>
           </>
         }
       />

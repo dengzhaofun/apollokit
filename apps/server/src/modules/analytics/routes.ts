@@ -7,7 +7,7 @@ import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { TenantPipeName } from "../../lib/analytics";
 import { requireAuth } from "../../middleware/require-auth";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 
 import {
   issueTokenBodySchema,
@@ -16,7 +16,7 @@ import {
 
 export const analyticsRouter = createAdminRouter();
 analyticsRouter.use("*", requireAuth);
-analyticsRouter.use("*", requireOrgManage);
+analyticsRouter.use("*", requirePermissionByMethod("analytics"));
 
 const issueTokenRoute = createAdminRoute({
   method: "post",

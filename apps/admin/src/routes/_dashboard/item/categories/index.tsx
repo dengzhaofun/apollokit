@@ -7,7 +7,7 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { FormDialog } from "#/components/ui/form-dialog"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { CategoryForm } from "#/components/item/CategoryForm"
 import { CategoryTable } from "#/components/item/CategoryTable"
 import {
@@ -45,12 +45,12 @@ function ItemCategoriesPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <WriteGate>
+          <Can resource="item" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               {m.item_new_category()}
             </Button>
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

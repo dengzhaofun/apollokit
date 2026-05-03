@@ -14,7 +14,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { mediaLibraryService } from "./index";
 import type { MediaAsset, MediaFolder } from "./types";
 import { ALLOWED_MIME_TYPES, MAX_UPLOAD_SIZE } from "./types";
@@ -97,7 +97,7 @@ mediaLibraryRouter.get("/object/*", async (c) => {
 // ─── Guarded admin routes ──────────────────────────────────────
 
 mediaLibraryRouter.use("*", requireAdminOrApiKey);
-mediaLibraryRouter.use("*", requireOrgManage);
+mediaLibraryRouter.use("*", requirePermissionByMethod("mediaLibrary"));
 
 // ─── Folders ───────────────────────────────────────────────────
 

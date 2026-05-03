@@ -14,7 +14,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { clientCredentialService } from "./index";
 import {
   CreateCredentialSchema,
@@ -57,7 +57,7 @@ function serialize(row: {
 export const clientCredentialRouter = createAdminRouter();
 
 clientCredentialRouter.use("*", requireAdminOrApiKey);
-clientCredentialRouter.use("*", requireOrgManage);
+clientCredentialRouter.use("*", requirePermissionByMethod("clientCredentials"));
 
 // POST /client-credentials — create
 clientCredentialRouter.openapi(

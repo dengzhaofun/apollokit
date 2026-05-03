@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { TypeForm } from "#/components/cms/TypeForm"
 import { PageHeaderActions } from "#/components/PageHeader"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { Button } from "#/components/ui/button"
 import {
   AlertDialog,
@@ -40,7 +40,7 @@ function CmsTypeEditPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <WriteGate>
+          <Can resource="cms" action="write" mode="disable">
             <AlertDialog>
               <AlertDialogTrigger
                 render={
@@ -78,7 +78,7 @@ function CmsTypeEditPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

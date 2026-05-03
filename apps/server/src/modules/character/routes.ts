@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the character module.
  *
- * Guarded by `requireAdminOrApiKey` + `requireOrgManage`. No client
+ * Guarded by `requireAdminOrApiKey` + `requirePermissionByMethod("character")`. No client
  * routes — end users never list or fetch characters directly; they
  * receive flattened speaker payloads through the dialogue client API.
  */
@@ -17,7 +17,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { characterService } from "./index";
 import type { CharacterDefinition, CharacterSide } from "./types";
 import {
@@ -50,7 +50,7 @@ function serializeCharacter(row: CharacterDefinition) {
 export const characterRouter = createAdminRouter();
 
 characterRouter.use("*", requireAdminOrApiKey);
-characterRouter.use("*", requireOrgManage);
+characterRouter.use("*", requirePermissionByMethod("character"));
 
 characterRouter.openapi(
   createAdminRoute({

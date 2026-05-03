@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { EntryTable } from "#/components/cms/EntryTable"
 import { PageHeaderActions } from "#/components/PageHeader"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -47,7 +47,7 @@ function CmsEntryListPage() {
             }
             size="sm" variant="outline"
           />
-          <WriteGate>
+          <Can resource="cms" action="write" mode="disable">
             <Button
               render={
                 <Link to="/cms/$typeAlias/create" params={{ typeAlias }}>
@@ -57,7 +57,7 @@ function CmsEntryListPage() {
               }
               size="sm"
             />
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

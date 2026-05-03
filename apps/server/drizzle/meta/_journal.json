@@ -92,6 +92,13 @@
       "when": 1777801200008,
       "tag": "0012_lethal_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777801200010,
+      "tag": "0013_good_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }

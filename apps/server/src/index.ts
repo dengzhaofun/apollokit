@@ -129,6 +129,7 @@ import { webhooksRouter } from "./modules/webhooks";
 import { installEventDispatcher } from "./lib/event-dispatcher";
 import { getTraceId } from "./lib/request-context";
 import { health } from "./routes/health";
+import { meRouter } from "./routes/me";
 import { queue as queueHandler } from "./queue";
 import { scheduled } from "./scheduled";
 
@@ -272,6 +273,7 @@ app.route("/health", health);
 // `/api/ai/admin/*` is the AI agent endpoint — single chat shared across
 // every admin module. Streaming SSE response, NOT enveloped, NOT in OpenAPI.
 // See `modules/admin-agent/routes.ts` for the rationale.
+app.route("/api/me", meRouter);
 app.route("/api/ai/admin", adminAgentRouter);
 app.route("/api/analytics", analyticsRouter);
 app.route("/api/announcement", announcementRouter);

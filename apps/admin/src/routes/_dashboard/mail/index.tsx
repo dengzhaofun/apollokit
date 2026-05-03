@@ -7,7 +7,7 @@ import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { MessageForm } from "#/components/mail/MessageForm"
 import { useMessageForm } from "#/components/mail/use-message-form"
 import { MessageTable } from "#/components/mail/MessageTable"
@@ -43,12 +43,12 @@ function MailListPage() {
     <>
       <PageHeaderActions>
         <div className="ml-auto">
-          <WriteGate>
+          <Can resource="mail" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               {m.mail_new_message()}
             </Button>
-          </WriteGate>
+          </Can>
         </div>
       </PageHeaderActions>
 

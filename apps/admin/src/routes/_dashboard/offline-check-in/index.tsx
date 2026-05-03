@@ -9,7 +9,7 @@ import { useCampaignForm } from "#/components/offline-check-in/use-campaign-form
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import { useCreateOfflineCheckInCampaign } from "#/hooks/use-offline-check-in"
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
@@ -46,12 +46,12 @@ function OfflineCheckInListPage() {
         title={m.offline_checkin_title()}
         description={m.offline_checkin_description()}
         actions={
-          <WriteGate>
+          <Can resource="offlineCheckIn" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus />
               {m.offline_checkin_new_campaign()}
             </Button>
-          </WriteGate>
+          </Can>
         }
       />
       <PageBody>

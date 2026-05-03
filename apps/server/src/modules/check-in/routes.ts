@@ -21,7 +21,7 @@ import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { checkInService } from "./index";
 import {
   CheckInBodySchema,
@@ -117,7 +117,7 @@ function serializeState(row: {
 export const checkInRouter = createAdminRouter();
 
 checkInRouter.use("*", requireAdminOrApiKey);
-checkInRouter.use("*", requireOrgManage);
+checkInRouter.use("*", requirePermissionByMethod("checkIn"));
 
 // POST /check-in/configs — create
 checkInRouter.openapi(

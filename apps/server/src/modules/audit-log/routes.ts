@@ -1,8 +1,8 @@
 /**
  * Audit-log admin routes —— 挂在 `/api/audit-logs`。
  *
- * 鉴权栈：`requireAdminOrApiKey` → `requireOrgReadSensitive`（owner/admin
- * 才能看；member 直接 403，与其他业务模块的 `requireOrgManage` 行为不同
+ * 鉴权栈：`requireAdminOrApiKey` → `requirePermission("auditLog", "read")`（admin/owner
+ * 才能看；operator/viewer 直接 403，与其他业务模块的 `requirePermissionByMethod` 行为不同
  * 因为审计是敏感读）。
  *
  * **没有 mutation 端点**。本表是 append-only，写入完全由
@@ -12,7 +12,7 @@
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgReadSensitive } from "../../middleware/require-org-read-sensitive";
+import { requirePermission } from "../../middleware/require-permission";
 
 import { auditLogService } from "./index";
 import {
@@ -28,7 +28,7 @@ const TAG = "Audit Log";
 export const auditLogRouter = createAdminRouter();
 
 auditLogRouter.use("*", requireAdminOrApiKey);
-auditLogRouter.use("*", requireOrgReadSensitive);
+auditLogRouter.use("*", requirePermission("auditLog", "read"));
 
 auditLogRouter.openapi(
   createAdminRoute({

@@ -10,6 +10,7 @@ import { ScrollText } from "lucide-react"
 import { z } from "zod"
 
 import { AuditLogTable } from "#/components/audit-logs/AuditLogTable"
+import { RouteGuard } from "#/components/auth/RouteGuard"
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { listSearchSchema } from "#/lib/list-search"
 import { getLocale } from "#/paraglide/runtime.js"
@@ -42,19 +43,25 @@ export const Route = createFileRoute("/_dashboard/audit-logs/")({
 })
 
 function AuditLogsPage() {
+  // Audit log is admin/owner only — sidebar already hides it for the
+  // other roles, but a URL paste shouldn't render the page either.
+  // `redirect-dashboard` matches the visibility declared in
+  // `AppSidebar.tsx`'s ROUTE_PERMISSIONS for /audit-logs.
   return (
-    <PageShell>
-      <PageHeader
-        icon={<ScrollText className="size-5" />}
-        title={t("审计日志", "Audit logs")}
-        description={t(
-          "记录所有管理员对业务资源的写操作，跨所有模块按时间线呈现。",
-          "Append-only record of every admin write across all modules.",
-        )}
-      />
-      <PageBody>
-        <AuditLogTable route={Route} />
-      </PageBody>
-    </PageShell>
+    <RouteGuard resource="auditLog" action="read" visibility="redirect-dashboard">
+      <PageShell>
+        <PageHeader
+          icon={<ScrollText className="size-5" />}
+          title={t("审计日志", "Audit logs")}
+          description={t(
+            "记录所有管理员对业务资源的写操作，跨所有模块按时间线呈现。",
+            "Append-only record of every admin write across all modules.",
+          )}
+        />
+        <PageBody>
+          <AuditLogTable route={Route} />
+        </PageBody>
+      </PageShell>
+    </RouteGuard>
   )
 }

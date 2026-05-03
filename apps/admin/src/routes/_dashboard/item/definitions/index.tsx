@@ -12,7 +12,7 @@ import {
 } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawer } from "#/components/ui/form-drawer"
-import { WriteGate } from "#/components/WriteGate"
+import { Can } from "#/components/auth/Can"
 import {
   useCreateItemDefinition,
   useItemDefinition,
@@ -59,12 +59,12 @@ function ItemDefinitionsPage() {
           "Definitions back the shop, rewards, and inventory.",
         )}
         actions={
-          <WriteGate>
+          <Can resource="item" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus />
               {m.item_new_definition()}
             </Button>
-          </WriteGate>
+          </Can>
         }
       />
 

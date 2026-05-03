@@ -16,7 +16,7 @@ import {
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { webhooksService } from "./index";
 import type {
   WebhooksDelivery,
@@ -85,7 +85,7 @@ function serializeDelivery(row: WebhooksDelivery) {
 export const webhooksRouter = createAdminRouter();
 
 webhooksRouter.use("*", requireAdminOrApiKey);
-webhooksRouter.use("*", requireOrgManage);
+webhooksRouter.use("*", requirePermissionByMethod("webhooks"));
 
 // POST /endpoints — create (returns plaintext secret once)
 webhooksRouter.openapi(

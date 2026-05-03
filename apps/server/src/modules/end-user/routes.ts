@@ -20,7 +20,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 
 import { endUserService } from "./index";
 import {
@@ -39,7 +39,7 @@ const TAG = "End User";
 export const endUserRouter = createAdminRouter();
 
 endUserRouter.use("*", requireAdminOrApiKey);
-endUserRouter.use("*", requireOrgManage);
+endUserRouter.use("*", requirePermissionByMethod("endUser"));
 
 // POST /sync — upsert from tenant identity
 endUserRouter.openapi(

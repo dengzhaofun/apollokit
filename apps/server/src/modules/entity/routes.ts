@@ -16,7 +16,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { entityService } from "./index";
 import type {
   EntityBlueprint,
@@ -145,7 +145,7 @@ function serializeFormationConfig(row: EntityFormationConfig) {
 export const entityRouter = createAdminRouter();
 
 entityRouter.use("*", requireAdminOrApiKey);
-entityRouter.use("*", requireOrgManage);
+entityRouter.use("*", requirePermissionByMethod("entity"));
 
 // ═══════════════════════════════════════════════════════════════
 // Schema routes

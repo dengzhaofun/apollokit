@@ -10,7 +10,7 @@ import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
 import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
-import { requireOrgManage } from "../../middleware/require-org-manage";
+import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { exchangeService } from "./index";
 import {
   ConfigKeyParamSchema,
@@ -97,7 +97,7 @@ function serializeOption(row: {
 export const exchangeRouter = createAdminRouter();
 
 exchangeRouter.use("*", requireAdminOrApiKey);
-exchangeRouter.use("*", requireOrgManage);
+exchangeRouter.use("*", requirePermissionByMethod("exchange"));
 
 // ─── Config routes ────────────────────────────────────────────────
 

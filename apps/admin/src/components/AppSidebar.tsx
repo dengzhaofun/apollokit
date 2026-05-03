@@ -100,6 +100,11 @@ import {
   useSidebar,
 } from "#/components/ui/sidebar"
 import { useFavorites } from "#/hooks/use-navigation-favorites"
+import {
+  hasAnyAction,
+  useCapabilities,
+  type CapabilityBag,
+} from "#/lib/capabilities"
 import { cn } from "#/lib/utils"
 import { useCommandPalette } from "./command-palette-context"
 import { FavoriteStarButton } from "./FavoriteStarButton"
@@ -176,6 +181,12 @@ type NavItem = {
   icon: LucideIcon
   /** 存在则视为父分组,渲染二级菜单。父级 `to` 即点击文字时跳转的"模块默认页"。 */
   children?: NavItem[]
+  /**
+   * 权限要求 — 若声明,菜单项只对 capability bag 中含有
+   * `<resource>` 任意 action（默认即视作"能 read"）的用户可见。
+   * 不声明 = 对所有登录用户开放（如 /dashboard / /settings 入口）。
+   */
+  permission?: { resource: string }
 }
 
 type NavGroup = {
@@ -192,6 +203,132 @@ type NavGroup = {
   icon: LucideIcon
   items: NavItem[]
 }
+
+/**
+ * Centralized permission + visibility table — single source of truth
+ * for both the sidebar (filtering) and `<RouteGuard>` (URL-paste
+ * defense). Resource names mirror `apps/server/src/auth/ac.ts`.
+ *
+ * Visibility modes:
+ *   - "hidden"            (default) — sidebar drops the item; URL paste
+ *                          still loads the page (server middleware 403
+ *                          handles enforcement). Use for everyday
+ *                          modules where exposure is fine.
+ *   - "redirect-dashboard" — sidebar drops AND `<RouteGuard>` silently
+ *                          redirects to /dashboard. Use for resources
+ *                          the user shouldn't even know exist
+ *                          (audit-log, billing, member management).
+ *   - "unauthorized-page"  — sidebar drops AND `<RouteGuard>` redirects
+ *                          to /unauthorized. Use for moderately
+ *                          sensitive routes where surfacing "you don't
+ *                          have access" is preferable to silent redirect
+ *                          (api-keys, webhooks).
+ *
+ * Sub-routes inherit the parent's permission unless they declare their
+ * own here (e.g. `/item/definitions` is gated by `item`, same as the
+ * parent `/item`).
+ */
+type Visibility = "hidden" | "redirect-dashboard" | "unauthorized-page"
+type RoutePermission = {
+  resource: string
+  visibility?: Visibility // defaults to "hidden"
+}
+const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
+  "/analytics/users": { resource: "analytics" },
+  "/analytics/modules": { resource: "analytics" },
+  "/analytics/activity": { resource: "analytics" },
+  "/analytics/logs": { resource: "analytics" },
+  "/analytics/explore": { resource: "analytics" },
+  "/analytics/funnel": { resource: "analytics" },
+  "/audit-logs": { resource: "auditLog", visibility: "redirect-dashboard" },
+  "/check-in": { resource: "checkIn" },
+  "/offline-check-in": { resource: "offlineCheckIn" },
+  "/experiment": { resource: "experiment" },
+  "/item": { resource: "item" },
+  "/item/definitions": { resource: "item" },
+  "/item/categories": { resource: "item" },
+  "/item/tools": { resource: "item" },
+  "/currency": { resource: "currency" },
+  "/entity": { resource: "entity" },
+  "/entity/schemas": { resource: "entity" },
+  "/entity/formations": { resource: "entity" },
+  "/exchange": { resource: "exchange" },
+  "/cdkey": { resource: "cdkey" },
+  "/shop": { resource: "shop" },
+  "/shop/categories": { resource: "shop" },
+  "/shop/tags": { resource: "shop" },
+  "/storage-box": { resource: "storageBox" },
+  "/mail": { resource: "mail" },
+  "/banner": { resource: "banner" },
+  "/announcement": { resource: "announcement" },
+  "/activity": { resource: "activity" },
+  "/lottery": { resource: "lottery" },
+  "/assist-pool": { resource: "assistPool" },
+  "/friend-gift": { resource: "friendGift" },
+  "/task": { resource: "task" },
+  "/task/categories": { resource: "task" },
+  "/badge": { resource: "badge" },
+  "/cms": { resource: "cms" },
+  "/media-library": { resource: "mediaLibrary" },
+  "/character": { resource: "character" },
+  "/dialogue": { resource: "dialogue" },
+  "/collection": { resource: "collection" },
+  "/level": { resource: "level" },
+  "/event-catalog": { resource: "eventCatalog" },
+  "/triggers": { resource: "triggers" },
+  "/friend": { resource: "friend" },
+  "/invite": { resource: "invite" },
+  "/guild": { resource: "guild" },
+  "/team": { resource: "team" },
+  "/leaderboard": { resource: "leaderboard" },
+  "/rank": { resource: "rank" },
+  "/end-user": { resource: "endUser" },
+  // /dashboard, /cms, /settings: no permission entry → always visible
+}
+
+/**
+ * Filter a NavGroup tree to only items the current user can see.
+ * Drops items / parent items / entire groups whose `permission.resource`
+ * is not in the user's capability bag. Items with no permission entry
+ * are kept (default-allow for low-sensitivity / open routes).
+ */
+function filterGroupsByCapabilities(
+  groups: NavGroup[],
+  bag: CapabilityBag | undefined | null,
+): NavGroup[] {
+  const isAllowed = (route: NavRoute): boolean => {
+    const perm = ROUTE_PERMISSIONS[route]
+    if (!perm) return true
+    // While the bag is loading, treat as allowed — else the sidebar
+    // flashes empty on every nav. Server middleware still 403s if the
+    // user actually lacks permission.
+    if (bag === undefined) return true
+    return hasAnyAction(bag, perm.resource)
+  }
+
+  return groups
+    .map((group) => {
+      const items = group.items
+        .map((item) => {
+          if (!isAllowed(item.to)) return null
+          if (!item.children || item.children.length === 0) return item
+          const children = item.children.filter((c) => isAllowed(c.to))
+          // Parent + all children gated out → drop the whole branch.
+          // (Without this, we'd render an empty Collapsible carrying
+          // only the parent click target — confusing, since the parent
+          // looks like a leaf but its destination is the index page
+          // for a module the user can't see.)
+          if (children.length === 0) return null
+          return { ...item, children }
+        })
+        .filter((i): i is NavItem => i !== null)
+      return { ...group, items }
+    })
+    .filter((group) => group.items.length > 0)
+}
+
+export { ROUTE_PERMISSIONS }
+export type { RoutePermission, Visibility }
 
 function getNavGroups(): NavGroup[] {
   return [
@@ -911,7 +1048,11 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
 }
 
 export function AppSidebar() {
-  const groups = getNavGroups()
+  const allGroups = getNavGroups()
+  const { data: session } = authClient.useSession()
+  const orgId = session?.session.activeOrganizationId ?? null
+  const { data: capabilities } = useCapabilities(orgId)
+  const groups = filterGroupsByCapabilities(allGroups, capabilities)
   const { pathname } = useLocation()
   // collapsed=icon 模式下,OrganizationSwitcher 显式切到 size="icon" 才会
   // 渲染圆形头像而不是带文字+chevron 的全宽按钮,否则会在 3rem 宽的 icon rail
