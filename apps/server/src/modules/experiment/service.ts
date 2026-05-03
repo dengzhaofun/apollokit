@@ -1163,6 +1163,25 @@ export function createExperimentService(d: ExperimentDeps) {
       };
     },
 
+    async getExperimentStats(tenantId: string): Promise<{
+      draft: number;
+      running: number;
+      paused: number;
+      archived: number;
+    }> {
+      const rows = await db
+        .select({ status: experiments.status, n: count() })
+        .from(experiments)
+        .where(eq(experiments.tenantId, tenantId))
+        .groupBy(experiments.status);
+      const result = { draft: 0, running: 0, paused: 0, archived: 0 };
+      for (const row of rows) {
+        const s = row.status as ExperimentStatus;
+        if (s in result) result[s] = Number(row.n);
+      }
+      return result;
+    },
+
     async setPrimaryMetric(
       tenantId: string,
       idOrKey: string,

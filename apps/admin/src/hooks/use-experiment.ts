@@ -39,6 +39,23 @@ import type {
 } from "#/lib/types/experiment"
 
 const EXPERIMENTS_KEY = ["experiments"] as const
+const EXPERIMENT_STATS_KEY = ["experiment-stats"] as const
+
+export type ExperimentStats = {
+  draft: number
+  running: number
+  paused: number
+  archived: number
+}
+
+export function useExperimentStats() {
+  return useQuery({
+    queryKey: EXPERIMENT_STATS_KEY,
+    queryFn: () =>
+      api.get<ExperimentStats>("/api/v1/experiment/experiments:stats"),
+    staleTime: 30_000,
+  })
+}
 
 export const EXPERIMENT_FILTER_DEFS: FilterDef[] = []
 
