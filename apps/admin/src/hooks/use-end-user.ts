@@ -74,7 +74,7 @@ export function useEndUsers(route: any) {
     filterDefs: END_USER_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EndUser>>(
-        `/api/end-user?${buildQs({
+        `/api/v1/end-user?${buildQs({
           cursor,
           limit,
           q,
@@ -89,7 +89,7 @@ export function useEndUser(id: string | undefined) {
   return useQuery({
     queryKey: [...END_USERS_KEY, "one", id ?? ""],
     queryFn: () =>
-      api.get<EndUser>(`/api/end-user/${encodeURIComponent(id ?? "")}`),
+      api.get<EndUser>(`/api/v1/end-user/${encodeURIComponent(id ?? "")}`),
     enabled: !!id,
   })
 }
@@ -98,7 +98,7 @@ export function useUpdateEndUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateEndUserInput }) =>
-      api.patch<EndUser>(`/api/end-user/${encodeURIComponent(id)}`, input),
+      api.patch<EndUser>(`/api/v1/end-user/${encodeURIComponent(id)}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: END_USERS_KEY })
       qc.invalidateQueries({ queryKey: [...END_USERS_KEY, "one", vars.id] })
@@ -110,7 +110,7 @@ export function useDisableEndUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.post<EndUser>(`/api/end-user/${encodeURIComponent(id)}/disable`),
+      api.post<EndUser>(`/api/v1/end-user/${encodeURIComponent(id)}/disable`),
     onSuccess: (_row, id) => {
       qc.invalidateQueries({ queryKey: END_USERS_KEY })
       qc.invalidateQueries({ queryKey: [...END_USERS_KEY, "one", id] })
@@ -122,7 +122,7 @@ export function useEnableEndUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.post<EndUser>(`/api/end-user/${encodeURIComponent(id)}/enable`),
+      api.post<EndUser>(`/api/v1/end-user/${encodeURIComponent(id)}/enable`),
     onSuccess: (_row, id) => {
       qc.invalidateQueries({ queryKey: END_USERS_KEY })
       qc.invalidateQueries({ queryKey: [...END_USERS_KEY, "one", id] })
@@ -135,7 +135,7 @@ export function useSignOutEndUser() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<SignOutAllResponse>(
-        `/api/end-user/${encodeURIComponent(id)}/sign-out-all`,
+        `/api/v1/end-user/${encodeURIComponent(id)}/sign-out-all`,
       ),
     onSuccess: (_row, id) => {
       qc.invalidateQueries({ queryKey: END_USERS_KEY })
@@ -148,7 +148,7 @@ export function useDeleteEndUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/end-user/${encodeURIComponent(id)}`),
+      api.delete(`/api/v1/end-user/${encodeURIComponent(id)}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: END_USERS_KEY }),
   })
 }
@@ -157,7 +157,7 @@ export function useSyncEndUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: SyncEndUserInput) =>
-      api.post<SyncEndUserResponse>("/api/end-user/sync", input),
+      api.post<SyncEndUserResponse>("/api/v1/end-user/sync", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: END_USERS_KEY }),
   })
 }

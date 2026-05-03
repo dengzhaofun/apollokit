@@ -153,7 +153,7 @@ export function DefinitionTable({
     queryKey,
     queryFn: () =>
       api.get<Page<TaskDefinition>>(
-        `/api/task/definitions?${buildQs({
+        `/api/v1/task/definitions?${buildQs({
           limit: 50,
           categoryId,
           activityId,

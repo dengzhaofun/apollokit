@@ -26,7 +26,7 @@ export interface R2BindingStorageConfig {
    * Absolute URL prefix for public object access, e.g.
    * `https://cdn.example.com` or `https://pub-xxx.r2.dev`. If left
    * undefined, `getPublicUrl` returns a relative path under
-   * `/api/media-library/object/` so a worker proxy route can serve the
+   * `/api/v1/media-library/object/` so a worker proxy route can serve the
    * object — useful for local dev without R2 custom domains.
    */
   publicUrlBase?: string;
@@ -127,7 +127,7 @@ export class R2BindingStorage implements ObjectStorage {
     }
     // Fallback: server-side proxy. The admin api-client prefixes this
     // with VITE_AUTH_SERVER_URL, so returning a relative path is OK.
-    return `/api/media-library/object/${encodeURIComponent(key)}`;
+    return `/api/v1/media-library/object/${encodeURIComponent(key)}`;
   }
 
   private requireS3Creds(): {

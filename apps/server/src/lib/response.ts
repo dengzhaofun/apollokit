@@ -2,7 +2,7 @@
  * Standard API response envelope.
  *
  * Every business endpoint (everything under `/api/*` EXCEPT Better Auth's
- * `/api/auth/*` and `/api/client/auth/*`, which are third-party-owned)
+ * `/api/auth/*` and `/api/v1/client/auth/*`, which are third-party-owned)
  * returns:
  *
  *     { code: string, data: T | null, message: string, requestId: string }

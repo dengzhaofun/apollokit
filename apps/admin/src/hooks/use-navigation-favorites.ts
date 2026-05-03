@@ -16,7 +16,7 @@ export function useFavorites() {
   return useQuery({
     queryKey: FAVORITES_KEY,
     queryFn: () =>
-      api.get<NavigationFavoriteList>("/api/navigation/favorites"),
+      api.get<NavigationFavoriteList>("/api/v1/navigation/favorites"),
     select: (data) => data.items,
     // Favorites change rarely after the initial load — staleTime keeps the
     // sidebar from re-fetching on every route change.
@@ -46,12 +46,12 @@ export function useToggleFavorite() {
     }) => {
       if (currentlyFavorited) {
         await api.delete(
-          `/api/navigation/favorites?routePath=${encodeURIComponent(routePath)}`,
+          `/api/v1/navigation/favorites?routePath=${encodeURIComponent(routePath)}`,
         )
         return { removed: routePath }
       }
       const row = await api.post<NavigationFavorite>(
-        "/api/navigation/favorites",
+        "/api/v1/navigation/favorites",
         { routePath },
       )
       return { added: row }

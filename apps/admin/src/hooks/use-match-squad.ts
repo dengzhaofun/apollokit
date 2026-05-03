@@ -28,7 +28,7 @@ export function useMatchSquadConfigs(route: any) {
     filterDefs: TEAM_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<MatchSquadConfig>>(
-        `/api/match-squad/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/match-squad/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -39,7 +39,7 @@ export function useAllMatchSquadConfigs() {
     queryKey: [...CONFIGS_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<MatchSquadConfig>>(`/api/match-squad/configs?${buildQs({ limit: 200 })}`)
+        .get<Page<MatchSquadConfig>>(`/api/v1/match-squad/configs?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -47,7 +47,7 @@ export function useAllMatchSquadConfigs() {
 export function useMatchSquadConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
-    queryFn: () => api.get<MatchSquadConfig>(`/api/match-squad/configs/${key}`),
+    queryFn: () => api.get<MatchSquadConfig>(`/api/v1/match-squad/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -56,7 +56,7 @@ export function useCreateMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateMatchSquadConfigInput) =>
-      api.post<MatchSquadConfig>("/api/match-squad/configs", input),
+      api.post<MatchSquadConfig>("/api/v1/match-squad/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -65,7 +65,7 @@ export function useUpdateMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateMatchSquadConfigInput }) =>
-      api.patch<MatchSquadConfig>(`/api/match-squad/configs/${id}`, input),
+      api.patch<MatchSquadConfig>(`/api/v1/match-squad/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -73,7 +73,7 @@ export function useUpdateMatchSquadConfig() {
 export function useDeleteMatchSquadConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/match-squad/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/match-squad/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -111,7 +111,7 @@ export function useTeams(
     filterDefs: TEAM_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Team>>(
-        `/api/match-squad/squads?${buildQs({
+        `/api/v1/match-squad/squads?${buildQs({
           cursor,
           limit,
           q,
@@ -126,7 +126,7 @@ export function useTeams(
 export function useTeam(id: string) {
   return useQuery({
     queryKey: [...TEAMS_KEY, id],
-    queryFn: () => api.get<Team>(`/api/match-squad/squads/${id}`),
+    queryFn: () => api.get<Team>(`/api/v1/match-squad/squads/${id}`),
     enabled: !!id,
   })
 }

@@ -20,7 +20,7 @@ export function useMediaFolders(parentId: string | null | undefined) {
   return useQuery({
     queryKey: [...FOLDERS_KEY, parentId ?? null],
     queryFn: () =>
-      api.get<MediaFolderListResponse>(`/api/media-library/folders${qs}`),
+      api.get<MediaFolderListResponse>(`/api/v1/media-library/folders${qs}`),
   })
 }
 
@@ -28,7 +28,7 @@ export function useCreateMediaFolder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateMediaFolderInput) =>
-      api.post<MediaFolder>("/api/media-library/folders", input),
+      api.post<MediaFolder>("/api/v1/media-library/folders", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: FOLDERS_KEY }),
   })
 }
@@ -42,7 +42,7 @@ export function useUpdateMediaFolder() {
     }: {
       id: string
       input: UpdateMediaFolderInput
-    }) => api.patch<MediaFolder>(`/api/media-library/folders/${id}`, input),
+    }) => api.patch<MediaFolder>(`/api/v1/media-library/folders/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: FOLDERS_KEY }),
   })
 }
@@ -50,7 +50,7 @@ export function useUpdateMediaFolder() {
 export function useDeleteMediaFolder() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/media-library/folders/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/media-library/folders/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: FOLDERS_KEY }),
   })
 }
@@ -62,7 +62,7 @@ export function useMediaAssets(folderId: string | null | undefined) {
   return useQuery({
     queryKey: [...ASSETS_KEY, folderId ?? null],
     queryFn: () =>
-      api.get<MediaAssetListResponse>(`/api/media-library/assets${qs}`),
+      api.get<MediaAssetListResponse>(`/api/v1/media-library/assets${qs}`),
   })
 }
 
@@ -78,7 +78,7 @@ export function useUploadMediaAsset() {
       const form = new FormData()
       form.append("file", file)
       if (folderId) form.append("folderId", folderId)
-      return api.upload<MediaAsset>("/api/media-library/assets/upload", form)
+      return api.upload<MediaAsset>("/api/v1/media-library/assets/upload", form)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ASSETS_KEY }),
   })
@@ -87,7 +87,7 @@ export function useUploadMediaAsset() {
 export function useDeleteMediaAsset() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/media-library/assets/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/media-library/assets/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ASSETS_KEY }),
   })
 }

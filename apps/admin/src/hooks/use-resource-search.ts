@@ -26,7 +26,7 @@ export function useSearchCurrenciesInfinite(opts: SearchOpts = {}) {
     queryKey: ["currency-definitions", "search", { q: q ?? "", limit }],
     queryFn: ({ pageParam }) =>
       api.get<Page<CurrencyDefinition>>(
-        `/api/currency/definitions?${buildQs({
+        `/api/v1/currency/definitions?${buildQs({
           cursor: pageParam,
           limit,
           q,
@@ -45,7 +45,7 @@ export function useSearchItemDefinitionsInfinite(opts: SearchOpts = {}) {
     queryKey: ["item-definitions", "search", { q: q ?? "", limit }],
     queryFn: ({ pageParam }) =>
       api.get<Page<ItemDefinition>>(
-        `/api/item/definitions?${buildQs({
+        `/api/v1/item/definitions?${buildQs({
           cursor: pageParam,
           limit,
           q,
@@ -64,7 +64,7 @@ export function useSearchEntityBlueprintsInfinite(opts: SearchOpts = {}) {
     queryKey: ["entity-blueprints", "search", { q: q ?? "", limit }],
     queryFn: ({ pageParam }) =>
       api.get<Page<EntityBlueprint>>(
-        `/api/entity/blueprints?${buildQs({
+        `/api/v1/entity/blueprints?${buildQs({
           cursor: pageParam,
           limit,
           q,

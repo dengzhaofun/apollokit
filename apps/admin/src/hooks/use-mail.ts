@@ -26,7 +26,7 @@ export function useMailMessages(route: any) {
     filterDefs: MAIL_MESSAGE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<MailMessage>>(
-        `/api/mail/messages?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/mail/messages?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -34,7 +34,7 @@ export function useMailMessages(route: any) {
 export function useMailMessage(id: string) {
   return useQuery({
     queryKey: [...MESSAGES_KEY, id],
-    queryFn: () => api.get<MailMessageWithStats>(`/api/mail/messages/${id}`),
+    queryFn: () => api.get<MailMessageWithStats>(`/api/v1/mail/messages/${id}`),
     enabled: !!id,
   })
 }
@@ -43,7 +43,7 @@ export function useCreateMailMessage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateMailInput) =>
-      api.post<MailMessage>("/api/mail/messages", input),
+      api.post<MailMessage>("/api/v1/mail/messages", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: MESSAGES_KEY }),
   })
 }
@@ -52,7 +52,7 @@ export function useRevokeMailMessage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.post<void>(`/api/mail/messages/${id}/revoke`),
+      api.post<void>(`/api/v1/mail/messages/${id}/revoke`),
     onSuccess: () => qc.invalidateQueries({ queryKey: MESSAGES_KEY }),
   })
 }
@@ -60,7 +60,7 @@ export function useRevokeMailMessage() {
 export function useDeleteMailMessage() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/mail/messages/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/mail/messages/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: MESSAGES_KEY }),
   })
 }

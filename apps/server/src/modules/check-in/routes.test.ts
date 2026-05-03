@@ -2,7 +2,7 @@
  * Route-layer tests for check-in.
  *
  * These exist to catch HTTP-surface regressions that service-layer tests
- * can't see: `requireAuth` 401, path prefix (`/api/check-in`), zod input
+ * can't see: `requireAuth` 401, path prefix (`/api/v1/check-in`), zod input
  * validation, and the router-level `onError` mapping of `ModuleError`
  * subclasses onto status codes.
  *
@@ -126,13 +126,13 @@ describe("check-in routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/check-in/configs without cookie → 401", async () => {
-    const res = await app.request("/api/check-in/configs");
+  test("GET /api/v1/check-in/configs without cookie → 401", async () => {
+    const res = await app.request("/api/v1/check-in/configs");
     expect(res.status).toBe(401);
   });
 
   test("happy path: create config, check-in, fetch state", async () => {
-    const create = await app.request("/api/check-in/configs", {
+    const create = await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -150,7 +150,7 @@ describe("check-in routes", () => {
     expect(cfg.alias).toBe("route-happy");
 
     const checkIn = await app.request(
-      "/api/check-in/configs/route-happy/check-ins",
+      "/api/v1/check-in/configs/route-happy/check-ins",
       {
         method: "POST",
         headers: {
@@ -170,14 +170,14 @@ describe("check-in routes", () => {
     expect(data.state.currentStreak).toBe(1);
 
     const state = await app.request(
-      "/api/check-in/configs/route-happy/users/biz-user-route/state",
+      "/api/v1/check-in/configs/route-happy/users/biz-user-route/state",
       { headers: { cookie: fx.cookie } },
     );
     expect(state.status).toBe(200);
   });
 
   test("zod validation: week target > 7 → 400", async () => {
-    const res = await app.request("/api/check-in/configs", {
+    const res = await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -194,7 +194,7 @@ describe("check-in routes", () => {
   });
 
   test("ModuleError mapping: duplicate alias → 409", async () => {
-    await app.request("/api/check-in/configs", {
+    await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -207,7 +207,7 @@ describe("check-in routes", () => {
         timezone: "Asia/Shanghai",
       }),
     });
-    const res = await app.request("/api/check-in/configs", {
+    const res = await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -226,7 +226,7 @@ describe("check-in routes", () => {
 
   test("unknown alias → 404 from service layer via onError", async () => {
     const res = await app.request(
-      "/api/check-in/configs/does-not-exist/check-ins",
+      "/api/v1/check-in/configs/does-not-exist/check-ins",
       {
         method: "POST",
         headers: {

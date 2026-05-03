@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the currency module.
  *
- * Mounted at /api/client/currency. Auth pattern:
+ * Mounted at /api/v1/client/currency. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,

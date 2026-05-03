@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the CMS module.
  *
- * Mounted at `/api/cms`. Auth pattern matches every other admin module:
+ * Mounted at `/api/v1/cms`. Auth pattern matches every other admin module:
  * `requireAdminOrApiKey` (Better Auth session OR `ak_` API key) →
  * `requirePermissionByMethod("cms")` (org-scoped role check). Handlers read the active
  * org from the session.

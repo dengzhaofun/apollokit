@@ -1,7 +1,7 @@
 /**
  * Client routes for the experiment module.
  *
- * Mounted at `/api/client/experiment/*`. Auth pattern matches other
+ * Mounted at `/api/v1/client/experiment/*`. Auth pattern matches other
  * client modules:
  *   requireClientCredential — validates `cpk_…` x-api-key, populates orgId
  *   requireClientUser       — validates x-end-user-id + x-user-hash HMAC

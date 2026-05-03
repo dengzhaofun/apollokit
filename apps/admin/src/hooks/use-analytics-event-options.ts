@@ -4,7 +4,7 @@
  * 合并两路数据源：
  *   1. Tinybird `tenant_event_names` —— 当前租户在时间窗内**实际上报过**的
  *      event_name + 计数。新租户/empty state 时为空。
- *   2. `GET /api/event-catalog?capability=analytics` —— **平台目录**里
+ *   2. `GET /api/v1/event-catalog?capability=analytics` —— **平台目录**里
  *      声明的 internal-event + platform-event。即使没数据也能列出。
  *
  * 输出按"是否在目录"+"是否有数据"分桶排序，让用户在没数据时也能看到

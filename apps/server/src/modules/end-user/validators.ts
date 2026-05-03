@@ -6,7 +6,7 @@ import { pageOf } from "../../lib/pagination";
 import { euAccount, euUser } from "../../schema/end-user-auth";
 
 /**
- * Input schema for POST /api/end-user/sync.
+ * Input schema for POST /api/v1/end-user/sync.
  *
  * `emailVerified` defaults to `true` because tenants going through the
  * sync path already ran their own verification flow — we trust them.

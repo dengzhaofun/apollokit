@@ -46,7 +46,7 @@ export const euUser = pgTable(
       .notNull()
       .references(() => team.id, { onDelete: "cascade" }),
     // Opaque id the tenant uses in their own user system. Populated only by
-    // POST /api/users/sync. Partial-unique so a row without an external id
+    // POST /api/v1/users/sync. Partial-unique so a row without an external id
     // (managed-only) doesn't collide on NULL.
     externalId: text("external_id"),
     // Soft-ban: disabled players can't sign in (enforced in

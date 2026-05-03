@@ -21,17 +21,17 @@ interface AdminEnv {
 
 // `/api/*` 默认转发去 server worker(business endpoints + better-auth);
 // 但有几条 admin 自己持有的端点不能转发出去:
-//   - /api/search   docs Orama 搜索(routes/api/search.ts)
-//   - /api/chat     docs Ask-AI 流式接口(routes/api/chat.ts)
+//   - /api/v1/search   docs Orama 搜索(routes/api/v1/search.ts)
+//   - /api/v1/chat     docs Ask-AI 流式接口(routes/api/v1/chat.ts)
 //   - /api/_*       预留给 admin 内部端点
 // 这些走 TanStack Start handler;不在白名单的 /api/* 全部 service-binding
 // 出去。
 function isAdminLocalApi(pathname: string): boolean {
   return (
-    pathname === '/api/search' ||
-    pathname.startsWith('/api/search?') ||
-    pathname === '/api/chat' ||
-    pathname.startsWith('/api/chat?') ||
+    pathname === '/api/v1/search' ||
+    pathname.startsWith('/api/v1/search?') ||
+    pathname === '/api/v1/chat' ||
+    pathname.startsWith('/api/v1/chat?') ||
     pathname.startsWith('/api/_')
   )
 }

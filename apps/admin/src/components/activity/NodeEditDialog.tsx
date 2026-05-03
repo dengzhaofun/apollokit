@@ -35,7 +35,7 @@ import * as m from "#/paraglide/messages.js"
  *   - nodeConfig     freeform JSON (only meaningful for virtual nodes
  *                    like game_board / custom that store inline config)
  *
- * Submit: useUpdateActivityNode → PATCH /api/activity/nodes/:id.
+ * Submit: useUpdateActivityNode → PATCH /api/v1/activity/nodes/:id.
  */
 
 const RESOURCE_DETAIL_PATH: Partial<Record<string, (refId: string) => string>> =

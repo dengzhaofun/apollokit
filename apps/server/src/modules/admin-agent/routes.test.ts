@@ -93,8 +93,8 @@ describe("admin-agent routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("POST /api/ai/admin/chat without cookie → 401", async () => {
-    const res = await app.request("/api/ai/admin/chat", {
+  test("POST /api/v1/ai/admin/chat without cookie → 401", async () => {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -106,7 +106,7 @@ describe("admin-agent routes", () => {
   });
 
   test("invalid JSON body → 400", async () => {
-    const res = await app.request("/api/ai/admin/chat", {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: "not-json{",
@@ -115,7 +115,7 @@ describe("admin-agent routes", () => {
   });
 
   test("missing context.surface → 400", async () => {
-    const res = await app.request("/api/ai/admin/chat", {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({ messages: [], context: {} }),
@@ -128,7 +128,7 @@ describe("admin-agent routes", () => {
   test("unknown surface → 400 (whitelist enforced)", async () => {
     // Use a clearly-fake module name + invalid intent — unrelated to
     // any real ADMIN_MODULES entry so it can't drift back to passing.
-    const res = await app.request("/api/ai/admin/chat", {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -142,7 +142,7 @@ describe("admin-agent routes", () => {
   });
 
   test("invalid intent → 400", async () => {
-    const res = await app.request("/api/ai/admin/chat", {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -156,7 +156,7 @@ describe("admin-agent routes", () => {
   });
 
   test("messages must be an array → 400", async () => {
-    const res = await app.request("/api/ai/admin/chat", {
+    const res = await app.request("/api/v1/ai/admin/chat", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -169,15 +169,15 @@ describe("admin-agent routes", () => {
     expect(body.error).toBe("invalid_messages");
   });
 
-  test("GET /api/ai/admin/mentions/types without cookie → 401", async () => {
-    const res = await app.request("/api/ai/admin/mentions/types", {
+  test("GET /api/v1/ai/admin/mentions/types without cookie → 401", async () => {
+    const res = await app.request("/api/v1/ai/admin/mentions/types", {
       method: "GET",
     });
     expect(res.status).toBe(401);
   });
 
-  test("GET /api/ai/admin/mentions/types with cookie → registered types", async () => {
-    const res = await app.request("/api/ai/admin/mentions/types", {
+  test("GET /api/v1/ai/admin/mentions/types with cookie → registered types", async () => {
+    const res = await app.request("/api/v1/ai/admin/mentions/types", {
       method: "GET",
       headers: { cookie: fx.cookie },
     });
@@ -203,18 +203,18 @@ describe("admin-agent routes", () => {
     expect(task?.writable).toBe(false);
   });
 
-  test("GET /api/ai/admin/mentions/search without cookie → 401", async () => {
-    const res = await app.request("/api/ai/admin/mentions/search?q=x", {
+  test("GET /api/v1/ai/admin/mentions/search without cookie → 401", async () => {
+    const res = await app.request("/api/v1/ai/admin/mentions/search?q=x", {
       method: "GET",
     });
     expect(res.status).toBe(401);
   });
 
-  test("GET /api/ai/admin/mentions/search with cookie → empty results for fresh org", async () => {
+  test("GET /api/v1/ai/admin/mentions/search with cookie → empty results for fresh org", async () => {
     // Fresh org has no resources yet. We're verifying the route
     // dispatches without throwing — `results: []` is the success shape.
     const res = await app.request(
-      "/api/ai/admin/mentions/search?types=check-in,task&q=zzz_no_match",
+      "/api/v1/ai/admin/mentions/search?types=check-in,task&q=zzz_no_match",
       {
         method: "GET",
         headers: { cookie: fx.cookie },

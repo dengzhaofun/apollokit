@@ -1924,7 +1924,7 @@ export type AnnouncementClientGetActiveData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/announcement/active';
+    url: '/api/v1/client/announcement/active';
 };
 
 export type AnnouncementClientGetActiveErrors = {
@@ -1990,7 +1990,7 @@ export type AnnouncementClientPostByAliasImpressionData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/announcement/{alias}/impression';
+    url: '/api/v1/client/announcement/{alias}/impression';
 };
 
 export type AnnouncementClientPostByAliasImpressionErrors = {
@@ -2051,7 +2051,7 @@ export type AnnouncementClientPostByAliasClickData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/announcement/{alias}/click';
+    url: '/api/v1/client/announcement/{alias}/click';
 };
 
 export type AnnouncementClientPostByAliasClickErrors = {
@@ -2101,7 +2101,7 @@ export type BadgeClientGetTreeData = {
          */
         rootKey?: string;
     };
-    url: '/api/client/badge/tree';
+    url: '/api/v1/client/badge/tree';
 };
 
 export type BadgeClientGetTreeErrors = {
@@ -2151,7 +2151,7 @@ export type BadgeClientPostDismissData = {
     body?: BadgeDismissInput;
     path?: never;
     query?: never;
-    url: '/api/client/badge/dismiss';
+    url: '/api/v1/client/badge/dismiss';
 };
 
 export type BadgeClientPostDismissErrors = {
@@ -2201,7 +2201,7 @@ export type BadgeClientPostResetSessionData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/badge/reset-session';
+    url: '/api/v1/client/badge/reset-session';
 };
 
 export type BadgeClientPostResetSessionErrors = {
@@ -2262,7 +2262,7 @@ export type BannerClientGetGroupsByAliasData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/banner/groups/{alias}';
+    url: '/api/v1/client/banner/groups/{alias}';
 };
 
 export type BannerClientGetGroupsByAliasErrors = {
@@ -2312,7 +2312,7 @@ export type BattlePassClientGetCurrentData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/battle-pass/current';
+    url: '/api/v1/client/battle-pass/current';
 };
 
 export type BattlePassClientGetCurrentErrors = {
@@ -2369,7 +2369,7 @@ export type BattlePassClientGetBySeasonidAggregateData = {
         seasonId: string;
     };
     query?: never;
-    url: '/api/client/battle-pass/{seasonId}/aggregate';
+    url: '/api/v1/client/battle-pass/{seasonId}/aggregate';
 };
 
 export type BattlePassClientGetBySeasonidAggregateErrors = {
@@ -2424,7 +2424,7 @@ export type BattlePassClientPostBySeasonidClaimData = {
         seasonId: string;
     };
     query?: never;
-    url: '/api/client/battle-pass/{seasonId}/claim';
+    url: '/api/v1/client/battle-pass/{seasonId}/claim';
 };
 
 export type BattlePassClientPostBySeasonidClaimErrors = {
@@ -2479,7 +2479,7 @@ export type BattlePassClientPostBySeasonidClaimAllData = {
         seasonId: string;
     };
     query?: never;
-    url: '/api/client/battle-pass/{seasonId}/claim-all';
+    url: '/api/v1/client/battle-pass/{seasonId}/claim-all';
 };
 
 export type BattlePassClientPostBySeasonidClaimAllErrors = {
@@ -2543,7 +2543,7 @@ export type CdkeyClientPostRedeemData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/cdkey/redeem';
+    url: '/api/v1/client/cdkey/redeem';
 };
 
 export type CdkeyClientPostRedeemErrors = {
@@ -2593,7 +2593,7 @@ export type CheckInClientPostCheckInsData = {
     body?: ClientCheckInRequest;
     path?: never;
     query?: never;
-    url: '/api/client/check-in/check-ins';
+    url: '/api/v1/client/check-in/check-ins';
 };
 
 export type CheckInClientPostCheckInsErrors = {
@@ -2648,7 +2648,7 @@ export type CheckInClientGetStateData = {
          */
         configKey: string;
     };
-    url: '/api/client/check-in/state';
+    url: '/api/v1/client/check-in/state';
 };
 
 export type CheckInClientGetStateErrors = {
@@ -2703,7 +2703,7 @@ export type OfflineCheckInClientGetCampaignsByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/offline-check-in/campaigns/{key}';
+    url: '/api/v1/client/offline-check-in/campaigns/{key}';
 };
 
 export type OfflineCheckInClientGetCampaignsByKeyErrors = {
@@ -2758,7 +2758,7 @@ export type OfflineCheckInClientGetCampaignsByKeyMeData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/offline-check-in/campaigns/{key}/me';
+    url: '/api/v1/client/offline-check-in/campaigns/{key}/me';
 };
 
 export type OfflineCheckInClientGetCampaignsByKeyMeErrors = {
@@ -2813,7 +2813,7 @@ export type OfflineCheckInClientPostCampaignsByKeyCheckInData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/offline-check-in/campaigns/{key}/check-in';
+    url: '/api/v1/client/offline-check-in/campaigns/{key}/check-in';
 };
 
 export type OfflineCheckInClientPostCampaignsByKeyCheckInErrors = {
@@ -2863,7 +2863,7 @@ export type ExperimentClientPostEvaluateData = {
     body?: ExperimentEvaluateRequest;
     path?: never;
     query?: never;
-    url: '/api/client/experiment/evaluate';
+    url: '/api/v1/client/experiment/evaluate';
 };
 
 export type ExperimentClientPostEvaluateErrors = {
@@ -2916,7 +2916,7 @@ export type CmsClientGetByAliasByTypealiasByEntryaliasData = {
         entryAlias: string;
     };
     query?: never;
-    url: '/api/client/cms/by-alias/{typeAlias}/{entryAlias}';
+    url: '/api/v1/client/cms/by-alias/{typeAlias}/{entryAlias}';
 };
 
 export type CmsClientGetByAliasByTypealiasByEntryaliasErrors = {
@@ -2972,7 +2972,7 @@ export type CmsClientGetGroupByTypealiasByGroupkeyData = {
         limit?: number;
         offset?: number | null;
     };
-    url: '/api/client/cms/group/{typeAlias}/{groupKey}';
+    url: '/api/v1/client/cms/group/{typeAlias}/{groupKey}';
 };
 
 export type CmsClientGetGroupByTypealiasByGroupkeyErrors = {
@@ -3027,7 +3027,7 @@ export type CmsClientGetTagByTagData = {
         limit?: number;
         offset?: number | null;
     };
-    url: '/api/client/cms/tag/{tag}';
+    url: '/api/v1/client/cms/tag/{tag}';
 };
 
 export type CmsClientGetTagByTagErrors = {
@@ -3084,7 +3084,7 @@ export type CmsClientGetListByTypealiasData = {
         limit?: number;
         offset?: number | null;
     };
-    url: '/api/client/cms/list/{typeAlias}';
+    url: '/api/v1/client/cms/list/{typeAlias}';
 };
 
 export type CmsClientGetListByTypealiasErrors = {
@@ -3148,7 +3148,7 @@ export type CollectionClientGetAlbumsData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/collection/albums';
+    url: '/api/v1/client/collection/albums';
 };
 
 export type CollectionClientGetAlbumsErrors = {
@@ -3214,7 +3214,7 @@ export type CollectionClientGetAlbumsByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/collection/albums/{key}';
+    url: '/api/v1/client/collection/albums/{key}';
 };
 
 export type CollectionClientGetAlbumsByKeyErrors = {
@@ -3280,7 +3280,7 @@ export type CollectionClientPostAlbumsByKeySyncData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/collection/albums/{key}/sync';
+    url: '/api/v1/client/collection/albums/{key}/sync';
 };
 
 export type CollectionClientPostAlbumsByKeySyncErrors = {
@@ -3346,7 +3346,7 @@ export type CollectionClientPostMilestonesByIdClaimData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/collection/milestones/{id}/claim';
+    url: '/api/v1/client/collection/milestones/{id}/claim';
 };
 
 export type CollectionClientPostMilestonesByIdClaimErrors = {
@@ -3410,7 +3410,7 @@ export type CurrencyClientGetWalletsData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/currency/wallets';
+    url: '/api/v1/client/currency/wallets';
 };
 
 export type CurrencyClientGetWalletsErrors = {
@@ -3479,7 +3479,7 @@ export type CurrencyClientGetBalanceByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/currency/balance/{key}';
+    url: '/api/v1/client/currency/balance/{key}';
 };
 
 export type CurrencyClientGetBalanceByKeyErrors = {
@@ -3531,7 +3531,7 @@ export type DialogueClientGetScriptsByAliasStartData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/dialogue/scripts/{alias}/start';
+    url: '/api/v1/client/dialogue/scripts/{alias}/start';
 };
 
 export type DialogueClientGetScriptsByAliasStartErrors = {
@@ -3583,7 +3583,7 @@ export type DialogueClientPostScriptsByAliasAdvanceData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/dialogue/scripts/{alias}/advance';
+    url: '/api/v1/client/dialogue/scripts/{alias}/advance';
 };
 
 export type DialogueClientPostScriptsByAliasAdvanceErrors = {
@@ -3635,7 +3635,7 @@ export type DialogueClientPostScriptsByAliasResetData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/dialogue/scripts/{alias}/reset';
+    url: '/api/v1/client/dialogue/scripts/{alias}/reset';
 };
 
 export type DialogueClientPostScriptsByAliasResetErrors = {
@@ -3702,7 +3702,7 @@ export type EntityClientGetInstancesData = {
         schemaId?: string;
         blueprintId?: string;
     };
-    url: '/api/client/entity/instances';
+    url: '/api/v1/client/entity/instances';
 };
 
 export type EntityClientGetInstancesErrors = {
@@ -3768,7 +3768,7 @@ export type EntityClientGetInstancesByInstanceidData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}';
+    url: '/api/v1/client/entity/instances/{instanceId}';
 };
 
 export type EntityClientGetInstancesByInstanceidErrors = {
@@ -3836,7 +3836,7 @@ export type EntityClientPostAcquireData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/entity/acquire';
+    url: '/api/v1/client/entity/acquire';
 };
 
 export type EntityClientPostAcquireErrors = {
@@ -3902,7 +3902,7 @@ export type EntityClientPostInstancesByInstanceidDiscardData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/discard';
+    url: '/api/v1/client/entity/instances/{instanceId}/discard';
 };
 
 export type EntityClientPostInstancesByInstanceidDiscardErrors = {
@@ -3965,7 +3965,7 @@ export type EntityClientPostInstancesByInstanceidLockData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/lock';
+    url: '/api/v1/client/entity/instances/{instanceId}/lock';
 };
 
 export type EntityClientPostInstancesByInstanceidLockErrors = {
@@ -4033,7 +4033,7 @@ export type EntityClientPostInstancesByInstanceidAddExpData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/add-exp';
+    url: '/api/v1/client/entity/instances/{instanceId}/add-exp';
 };
 
 export type EntityClientPostInstancesByInstanceidAddExpErrors = {
@@ -4101,7 +4101,7 @@ export type EntityClientPostInstancesByInstanceidLevelUpData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/level-up';
+    url: '/api/v1/client/entity/instances/{instanceId}/level-up';
 };
 
 export type EntityClientPostInstancesByInstanceidLevelUpErrors = {
@@ -4167,7 +4167,7 @@ export type EntityClientPostInstancesByInstanceidRankUpData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/rank-up';
+    url: '/api/v1/client/entity/instances/{instanceId}/rank-up';
 };
 
 export type EntityClientPostInstancesByInstanceidRankUpErrors = {
@@ -4235,7 +4235,7 @@ export type EntityClientPostInstancesByInstanceidSynthesizeData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/synthesize';
+    url: '/api/v1/client/entity/instances/{instanceId}/synthesize';
 };
 
 export type EntityClientPostInstancesByInstanceidSynthesizeErrors = {
@@ -4305,7 +4305,7 @@ export type EntityClientPostInstancesByInstanceidEquipData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/equip';
+    url: '/api/v1/client/entity/instances/{instanceId}/equip';
 };
 
 export type EntityClientPostInstancesByInstanceidEquipErrors = {
@@ -4374,7 +4374,7 @@ export type EntityClientPostInstancesByInstanceidUnequipData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/unequip';
+    url: '/api/v1/client/entity/instances/{instanceId}/unequip';
 };
 
 export type EntityClientPostInstancesByInstanceidUnequipErrors = {
@@ -4437,7 +4437,7 @@ export type EntityClientPostInstancesByInstanceidChangeSkinData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/entity/instances/{instanceId}/change-skin';
+    url: '/api/v1/client/entity/instances/{instanceId}/change-skin';
 };
 
 export type EntityClientPostInstancesByInstanceidChangeSkinErrors = {
@@ -4503,7 +4503,7 @@ export type EntityClientGetFormationsByConfigidData = {
         configId: string;
     };
     query?: never;
-    url: '/api/client/entity/formations/{configId}';
+    url: '/api/v1/client/entity/formations/{configId}';
 };
 
 export type EntityClientGetFormationsByConfigidErrors = {
@@ -4576,7 +4576,7 @@ export type EntityClientPutFormationsByConfigidByFormationindexData = {
         formationIndex?: number | null;
     };
     query?: never;
-    url: '/api/client/entity/formations/{configId}/{formationIndex}';
+    url: '/api/v1/client/entity/formations/{configId}/{formationIndex}';
 };
 
 export type EntityClientPutFormationsByConfigidByFormationindexErrors = {
@@ -4631,7 +4631,7 @@ export type ItemClientGetInventoryData = {
          */
         definitionId?: string;
     };
-    url: '/api/client/item/inventory';
+    url: '/api/v1/client/item/inventory';
 };
 
 export type ItemClientGetInventoryErrors = {
@@ -4686,7 +4686,7 @@ export type ItemClientGetBalanceByKeyData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/item/balance/{key}';
+    url: '/api/v1/client/item/balance/{key}';
 };
 
 export type ItemClientGetBalanceByKeyErrors = {
@@ -4736,7 +4736,7 @@ export type ItemClientPostUseData = {
     body?: UseItemRequest;
     path?: never;
     query?: never;
-    url: '/api/client/item/use';
+    url: '/api/v1/client/item/use';
 };
 
 export type ItemClientPostUseErrors = {
@@ -4786,7 +4786,7 @@ export type ExchangeClientPostExecuteData = {
     body?: ClientExchangeExecuteRequest;
     path?: never;
     query?: never;
-    url: '/api/client/exchange/execute';
+    url: '/api/v1/client/exchange/execute';
 };
 
 export type ExchangeClientPostExecuteErrors = {
@@ -4836,7 +4836,7 @@ export type FriendClientPostRequestsData = {
     body?: ClientFriendSendRequest;
     path?: never;
     query?: never;
-    url: '/api/client/friend/requests';
+    url: '/api/v1/client/friend/requests';
 };
 
 export type FriendClientPostRequestsErrors = {
@@ -4886,7 +4886,7 @@ export type FriendClientGetRequestsIncomingData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/friend/requests/incoming';
+    url: '/api/v1/client/friend/requests/incoming';
 };
 
 export type FriendClientGetRequestsIncomingErrors = {
@@ -4936,7 +4936,7 @@ export type FriendClientGetRequestsOutgoingData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/friend/requests/outgoing';
+    url: '/api/v1/client/friend/requests/outgoing';
 };
 
 export type FriendClientGetRequestsOutgoingErrors = {
@@ -4991,7 +4991,7 @@ export type FriendClientPostRequestsByIdAcceptData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/friend/requests/{id}/accept';
+    url: '/api/v1/client/friend/requests/{id}/accept';
 };
 
 export type FriendClientPostRequestsByIdAcceptErrors = {
@@ -5046,7 +5046,7 @@ export type FriendClientPostRequestsByIdRejectData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/friend/requests/{id}/reject';
+    url: '/api/v1/client/friend/requests/{id}/reject';
 };
 
 export type FriendClientPostRequestsByIdRejectErrors = {
@@ -5101,7 +5101,7 @@ export type FriendClientPostRequestsByIdCancelData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/friend/requests/{id}/cancel';
+    url: '/api/v1/client/friend/requests/{id}/cancel';
 };
 
 export type FriendClientPostRequestsByIdCancelErrors = {
@@ -5160,7 +5160,7 @@ export type FriendClientGetFriendsData = {
          */
         offset?: number | null;
     };
-    url: '/api/client/friend/friends';
+    url: '/api/v1/client/friend/friends';
 };
 
 export type FriendClientGetFriendsErrors = {
@@ -5215,7 +5215,7 @@ export type FriendClientDeleteFriendsByIdData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/friend/friends/{id}';
+    url: '/api/v1/client/friend/friends/{id}';
 };
 
 export type FriendClientDeleteFriendsByIdErrors = {
@@ -5265,7 +5265,7 @@ export type FriendClientGetFriendsMutualData = {
          */
         withUserId: string;
     };
-    url: '/api/client/friend/friends/mutual';
+    url: '/api/v1/client/friend/friends/mutual';
 };
 
 export type FriendClientGetFriendsMutualErrors = {
@@ -5315,7 +5315,7 @@ export type FriendClientGetBlocksData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/friend/blocks';
+    url: '/api/v1/client/friend/blocks';
 };
 
 export type FriendClientGetBlocksErrors = {
@@ -5365,7 +5365,7 @@ export type FriendClientPostBlocksData = {
     body?: ClientFriendBlock;
     path?: never;
     query?: never;
-    url: '/api/client/friend/blocks';
+    url: '/api/v1/client/friend/blocks';
 };
 
 export type FriendClientPostBlocksErrors = {
@@ -5415,7 +5415,7 @@ export type FriendClientDeleteBlocksByBlockeduseridData = {
         blockedUserId: string;
     };
     query?: never;
-    url: '/api/client/friend/blocks/{blockedUserId}';
+    url: '/api/v1/client/friend/blocks/{blockedUserId}';
 };
 
 export type FriendClientDeleteBlocksByBlockeduseridErrors = {
@@ -5474,7 +5474,7 @@ export type FriendGiftClientGetPackagesData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/friend-gift/packages';
+    url: '/api/v1/client/friend-gift/packages';
 };
 
 export type FriendGiftClientGetPackagesErrors = {
@@ -5538,7 +5538,7 @@ export type FriendGiftClientPostSendData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/friend-gift/send';
+    url: '/api/v1/client/friend-gift/send';
 };
 
 export type FriendGiftClientPostSendErrors = {
@@ -5602,7 +5602,7 @@ export type FriendGiftClientGetInboxData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/friend-gift/inbox';
+    url: '/api/v1/client/friend-gift/inbox';
 };
 
 export type FriendGiftClientGetInboxErrors = {
@@ -5666,7 +5666,7 @@ export type FriendGiftClientGetSentData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/friend-gift/sent';
+    url: '/api/v1/client/friend-gift/sent';
 };
 
 export type FriendGiftClientGetSentErrors = {
@@ -5735,7 +5735,7 @@ export type FriendGiftClientPostSendsByIdClaimData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/friend-gift/sends/{id}/claim';
+    url: '/api/v1/client/friend-gift/sends/{id}/claim';
 };
 
 export type FriendGiftClientPostSendsByIdClaimErrors = {
@@ -5799,7 +5799,7 @@ export type FriendGiftClientGetDailyStatusData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/friend-gift/daily-status';
+    url: '/api/v1/client/friend-gift/daily-status';
 };
 
 export type FriendGiftClientGetDailyStatusErrors = {
@@ -5863,7 +5863,7 @@ export type InviteClientGetMyCodeData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/invite/my-code';
+    url: '/api/v1/client/invite/my-code';
 };
 
 export type InviteClientGetMyCodeErrors = {
@@ -5927,7 +5927,7 @@ export type InviteClientPostResetMyCodeData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/invite/reset-my-code';
+    url: '/api/v1/client/invite/reset-my-code';
 };
 
 export type InviteClientPostResetMyCodeErrors = {
@@ -5991,7 +5991,7 @@ export type InviteClientGetSummaryData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/invite/summary';
+    url: '/api/v1/client/invite/summary';
 };
 
 export type InviteClientGetSummaryErrors = {
@@ -6064,7 +6064,7 @@ export type InviteClientGetInviteesData = {
          */
         offset?: number | null;
     };
-    url: '/api/client/invite/invitees';
+    url: '/api/v1/client/invite/invitees';
 };
 
 export type InviteClientGetInviteesErrors = {
@@ -6128,7 +6128,7 @@ export type InviteClientPostBindData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/invite/bind';
+    url: '/api/v1/client/invite/bind';
 };
 
 export type InviteClientPostBindErrors = {
@@ -6192,7 +6192,7 @@ export type InviteClientPostQualifyData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/invite/qualify';
+    url: '/api/v1/client/invite/qualify';
 };
 
 export type InviteClientPostQualifyErrors = {
@@ -6264,7 +6264,7 @@ export type GuildClientGetGuildsData = {
         cursor?: string;
         limit?: number;
     };
-    url: '/api/client/guild/guilds';
+    url: '/api/v1/client/guild/guilds';
 };
 
 export type GuildClientGetGuildsErrors = {
@@ -6328,7 +6328,7 @@ export type GuildClientPostGuildsData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/guild/guilds';
+    url: '/api/v1/client/guild/guilds';
 };
 
 export type GuildClientPostGuildsErrors = {
@@ -6397,7 +6397,7 @@ export type GuildClientGetGuildsByIdData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}';
+    url: '/api/v1/client/guild/guilds/{id}';
 };
 
 export type GuildClientGetGuildsByIdErrors = {
@@ -6466,7 +6466,7 @@ export type GuildClientPutGuildsByIdData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}';
+    url: '/api/v1/client/guild/guilds/{id}';
 };
 
 export type GuildClientPutGuildsByIdErrors = {
@@ -6530,7 +6530,7 @@ export type GuildClientGetMyGuildData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/guild/my-guild';
+    url: '/api/v1/client/guild/my-guild';
 };
 
 export type GuildClientGetMyGuildErrors = {
@@ -6599,7 +6599,7 @@ export type GuildClientPostGuildsByIdJoinData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/join';
+    url: '/api/v1/client/guild/guilds/{id}/join';
 };
 
 export type GuildClientPostGuildsByIdJoinErrors = {
@@ -6668,7 +6668,7 @@ export type GuildClientPostGuildsByIdLeaveData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/leave';
+    url: '/api/v1/client/guild/guilds/{id}/leave';
 };
 
 export type GuildClientPostGuildsByIdLeaveErrors = {
@@ -6737,7 +6737,7 @@ export type GuildClientPostGuildsByIdDisbandData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/disband';
+    url: '/api/v1/client/guild/guilds/{id}/disband';
 };
 
 export type GuildClientPostGuildsByIdDisbandErrors = {
@@ -6819,7 +6819,7 @@ export type GuildClientGetGuildsByIdRequestsData = {
          */
         offset?: string;
     };
-    url: '/api/client/guild/guilds/{id}/requests';
+    url: '/api/v1/client/guild/guilds/{id}/requests';
 };
 
 export type GuildClientGetGuildsByIdRequestsErrors = {
@@ -6888,7 +6888,7 @@ export type GuildClientPostRequestsByIdAcceptData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/requests/{id}/accept';
+    url: '/api/v1/client/guild/requests/{id}/accept';
 };
 
 export type GuildClientPostRequestsByIdAcceptErrors = {
@@ -6957,7 +6957,7 @@ export type GuildClientPostRequestsByIdRejectData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/requests/{id}/reject';
+    url: '/api/v1/client/guild/requests/{id}/reject';
 };
 
 export type GuildClientPostRequestsByIdRejectErrors = {
@@ -7026,7 +7026,7 @@ export type GuildClientPostGuildsByIdInviteData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/invite';
+    url: '/api/v1/client/guild/guilds/{id}/invite';
 };
 
 export type GuildClientPostGuildsByIdInviteErrors = {
@@ -7095,7 +7095,7 @@ export type GuildClientPostInvitationsByIdAcceptData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/invitations/{id}/accept';
+    url: '/api/v1/client/guild/invitations/{id}/accept';
 };
 
 export type GuildClientPostInvitationsByIdAcceptErrors = {
@@ -7164,7 +7164,7 @@ export type GuildClientPostInvitationsByIdRejectData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/invitations/{id}/reject';
+    url: '/api/v1/client/guild/invitations/{id}/reject';
 };
 
 export type GuildClientPostInvitationsByIdRejectErrors = {
@@ -7237,7 +7237,7 @@ export type GuildClientPostGuildsByIdMembersByUseridPromoteData = {
         userId: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/members/{userId}/promote';
+    url: '/api/v1/client/guild/guilds/{id}/members/{userId}/promote';
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridPromoteErrors = {
@@ -7310,7 +7310,7 @@ export type GuildClientPostGuildsByIdMembersByUseridDemoteData = {
         userId: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/members/{userId}/demote';
+    url: '/api/v1/client/guild/guilds/{id}/members/{userId}/demote';
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridDemoteErrors = {
@@ -7383,7 +7383,7 @@ export type GuildClientPostGuildsByIdMembersByUseridKickData = {
         userId: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/members/{userId}/kick';
+    url: '/api/v1/client/guild/guilds/{id}/members/{userId}/kick';
 };
 
 export type GuildClientPostGuildsByIdMembersByUseridKickErrors = {
@@ -7452,7 +7452,7 @@ export type GuildClientPostGuildsByIdTransferLeaderData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/transfer-leader';
+    url: '/api/v1/client/guild/guilds/{id}/transfer-leader';
 };
 
 export type GuildClientPostGuildsByIdTransferLeaderErrors = {
@@ -7521,7 +7521,7 @@ export type GuildClientPostGuildsByIdContributeData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/contribute';
+    url: '/api/v1/client/guild/guilds/{id}/contribute';
 };
 
 export type GuildClientPostGuildsByIdContributeErrors = {
@@ -7599,7 +7599,7 @@ export type GuildClientGetGuildsByIdContributionsData = {
          */
         offset?: string;
     };
-    url: '/api/client/guild/guilds/{id}/contributions';
+    url: '/api/v1/client/guild/guilds/{id}/contributions';
 };
 
 export type GuildClientGetGuildsByIdContributionsErrors = {
@@ -7668,7 +7668,7 @@ export type GuildClientGetGuildsByIdMembersData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/guild/guilds/{id}/members';
+    url: '/api/v1/client/guild/guilds/{id}/members';
 };
 
 export type GuildClientGetGuildsByIdMembersErrors = {
@@ -7718,7 +7718,7 @@ export type LotteryClientPostPullData = {
     body?: ClientLotteryPullRequest;
     path?: never;
     query?: never;
-    url: '/api/client/lottery/pull';
+    url: '/api/v1/client/lottery/pull';
 };
 
 export type LotteryClientPostPullErrors = {
@@ -7768,7 +7768,7 @@ export type LotteryClientPostMultiPullData = {
     body?: ClientLotteryMultiPullRequest;
     path?: never;
     query?: never;
-    url: '/api/client/lottery/multi-pull';
+    url: '/api/v1/client/lottery/multi-pull';
 };
 
 export type LotteryClientPostMultiPullErrors = {
@@ -7823,7 +7823,7 @@ export type LotteryClientGetPoolsByPoolkeyStateData = {
         poolKey: string;
     };
     query?: never;
-    url: '/api/client/lottery/pools/{poolKey}/state';
+    url: '/api/v1/client/lottery/pools/{poolKey}/state';
 };
 
 export type LotteryClientGetPoolsByPoolkeyStateErrors = {
@@ -7878,7 +7878,7 @@ export type LotteryClientGetPoolsByPoolkeyHistoryData = {
         poolKey: string;
     };
     query?: never;
-    url: '/api/client/lottery/pools/{poolKey}/history';
+    url: '/api/v1/client/lottery/pools/{poolKey}/history';
 };
 
 export type LotteryClientGetPoolsByPoolkeyHistoryErrors = {
@@ -7934,7 +7934,7 @@ export type MailClientGetMessagesData = {
         since?: string;
         limit?: number;
     };
-    url: '/api/client/mail/messages';
+    url: '/api/v1/client/mail/messages';
 };
 
 export type MailClientGetMessagesErrors = {
@@ -7989,7 +7989,7 @@ export type MailClientGetMessagesByIdData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/mail/messages/{id}';
+    url: '/api/v1/client/mail/messages/{id}';
 };
 
 export type MailClientGetMessagesByIdErrors = {
@@ -8044,7 +8044,7 @@ export type MailClientPostMessagesByIdReadData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/mail/messages/{id}/read';
+    url: '/api/v1/client/mail/messages/{id}/read';
 };
 
 export type MailClientPostMessagesByIdReadErrors = {
@@ -8099,7 +8099,7 @@ export type MailClientPostMessagesByIdClaimData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/mail/messages/{id}/claim';
+    url: '/api/v1/client/mail/messages/{id}/claim';
 };
 
 export type MailClientPostMessagesByIdClaimErrors = {
@@ -8149,7 +8149,7 @@ export type ShopClientPostPurchaseData = {
     body?: ShopClientPurchaseRequest;
     path?: never;
     query?: never;
-    url: '/api/client/shop/purchase';
+    url: '/api/v1/client/shop/purchase';
 };
 
 export type ShopClientPostPurchaseErrors = {
@@ -8199,7 +8199,7 @@ export type ShopClientPostClaimStageData = {
     body?: ShopClientClaimStageRequest;
     path?: never;
     query?: never;
-    url: '/api/client/shop/claim-stage';
+    url: '/api/v1/client/shop/claim-stage';
 };
 
 export type ShopClientPostClaimStageErrors = {
@@ -8253,7 +8253,7 @@ export type ShopClientGetProductsData = {
         tagId?: string;
         productType?: 'regular' | 'growth_pack';
     };
-    url: '/api/client/shop/products';
+    url: '/api/v1/client/shop/products';
 };
 
 export type ShopClientGetProductsErrors = {
@@ -8303,7 +8303,7 @@ export type TaskClientPostEventsData = {
     body?: TaskEventBody;
     path?: never;
     query?: never;
-    url: '/api/client/task/events';
+    url: '/api/v1/client/task/events';
 };
 
 export type TaskClientPostEventsErrors = {
@@ -8353,7 +8353,7 @@ export type TaskClientPostListData = {
     body?: TaskListBody;
     path?: never;
     query?: never;
-    url: '/api/client/task/list';
+    url: '/api/v1/client/task/list';
 };
 
 export type TaskClientPostListErrors = {
@@ -8405,7 +8405,7 @@ export type TaskClientPostClaimByTaskidData = {
         taskId: string;
     };
     query?: never;
-    url: '/api/client/task/claim/{taskId}';
+    url: '/api/v1/client/task/claim/{taskId}';
 };
 
 export type TaskClientPostClaimByTaskidErrors = {
@@ -8455,7 +8455,7 @@ export type TaskClientPostClaimTierData = {
     body?: TaskClaimTierBody;
     path?: never;
     query?: never;
-    url: '/api/client/task/claim-tier';
+    url: '/api/v1/client/task/claim-tier';
 };
 
 export type TaskClientPostClaimTierErrors = {
@@ -8505,7 +8505,7 @@ export type MatchsquadClientPostSquadsData = {
     body?: MatchSquadCreate;
     path?: never;
     query?: never;
-    url: '/api/client/match-squad/squads';
+    url: '/api/v1/client/match-squad/squads';
 };
 
 export type MatchsquadClientPostSquadsErrors = {
@@ -8560,7 +8560,7 @@ export type MatchsquadClientGetMySquadData = {
          */
         configAlias: string;
     };
-    url: '/api/client/match-squad/my-squad';
+    url: '/api/v1/client/match-squad/my-squad';
 };
 
 export type MatchsquadClientGetMySquadErrors = {
@@ -8617,7 +8617,7 @@ export type MatchsquadClientGetSquadsByIdData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}';
+    url: '/api/v1/client/match-squad/squads/{id}';
 };
 
 export type MatchsquadClientGetSquadsByIdErrors = {
@@ -8672,7 +8672,7 @@ export type MatchsquadClientPostSquadsByIdJoinData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/join';
+    url: '/api/v1/client/match-squad/squads/{id}/join';
 };
 
 export type MatchsquadClientPostSquadsByIdJoinErrors = {
@@ -8727,7 +8727,7 @@ export type MatchsquadClientPostSquadsByIdLeaveData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/leave';
+    url: '/api/v1/client/match-squad/squads/{id}/leave';
 };
 
 export type MatchsquadClientPostSquadsByIdLeaveErrors = {
@@ -8782,7 +8782,7 @@ export type MatchsquadClientPostSquadsByIdDissolveData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/dissolve';
+    url: '/api/v1/client/match-squad/squads/{id}/dissolve';
 };
 
 export type MatchsquadClientPostSquadsByIdDissolveErrors = {
@@ -8841,7 +8841,7 @@ export type MatchsquadClientPostSquadsByIdKickByUseridData = {
         userId: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/kick/{userId}';
+    url: '/api/v1/client/match-squad/squads/{id}/kick/{userId}';
 };
 
 export type MatchsquadClientPostSquadsByIdKickByUseridErrors = {
@@ -8896,7 +8896,7 @@ export type MatchsquadClientPostSquadsByIdTransferLeaderData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/transfer-leader';
+    url: '/api/v1/client/match-squad/squads/{id}/transfer-leader';
 };
 
 export type MatchsquadClientPostSquadsByIdTransferLeaderErrors = {
@@ -8951,7 +8951,7 @@ export type MatchsquadClientPutSquadsByIdStatusData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/status';
+    url: '/api/v1/client/match-squad/squads/{id}/status';
 };
 
 export type MatchsquadClientPutSquadsByIdStatusErrors = {
@@ -9006,7 +9006,7 @@ export type MatchsquadClientPostSquadsByIdInviteData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/squads/{id}/invite';
+    url: '/api/v1/client/match-squad/squads/{id}/invite';
 };
 
 export type MatchsquadClientPostSquadsByIdInviteErrors = {
@@ -9061,7 +9061,7 @@ export type MatchsquadClientPostInvitationsByIdAcceptData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/invitations/{id}/accept';
+    url: '/api/v1/client/match-squad/invitations/{id}/accept';
 };
 
 export type MatchsquadClientPostInvitationsByIdAcceptErrors = {
@@ -9116,7 +9116,7 @@ export type MatchsquadClientPostInvitationsByIdRejectData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/match-squad/invitations/{id}/reject';
+    url: '/api/v1/client/match-squad/invitations/{id}/reject';
 };
 
 export type MatchsquadClientPostInvitationsByIdRejectErrors = {
@@ -9171,7 +9171,7 @@ export type MatchsquadClientPostQuickMatchData = {
          */
         configAlias: string;
     };
-    url: '/api/client/match-squad/quick-match';
+    url: '/api/v1/client/match-squad/quick-match';
 };
 
 export type MatchsquadClientPostQuickMatchErrors = {
@@ -9221,7 +9221,7 @@ export type LevelClientPostConfigsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/client/level/configs';
+    url: '/api/v1/client/level/configs';
 };
 
 export type LevelClientPostConfigsErrors = {
@@ -9276,7 +9276,7 @@ export type LevelClientPostConfigsByKeyOverviewData = {
         key: string;
     };
     query?: never;
-    url: '/api/client/level/configs/{key}/overview';
+    url: '/api/v1/client/level/configs/{key}/overview';
 };
 
 export type LevelClientPostConfigsByKeyOverviewErrors = {
@@ -9328,7 +9328,7 @@ export type LevelClientPostLevelsByIdDetailData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/level/levels/{id}/detail';
+    url: '/api/v1/client/level/levels/{id}/detail';
 };
 
 export type LevelClientPostLevelsByIdDetailErrors = {
@@ -9380,7 +9380,7 @@ export type LevelClientPostLevelsByIdClearData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/level/levels/{id}/clear';
+    url: '/api/v1/client/level/levels/{id}/clear';
 };
 
 export type LevelClientPostLevelsByIdClearErrors = {
@@ -9432,7 +9432,7 @@ export type LevelClientPostLevelsByIdClaimData = {
         id: string;
     };
     query?: never;
-    url: '/api/client/level/levels/{id}/claim';
+    url: '/api/v1/client/level/levels/{id}/claim';
 };
 
 export type LevelClientPostLevelsByIdClaimErrors = {
@@ -9502,7 +9502,7 @@ export type LeaderboardClientGetConfigsByAliasTopData = {
         scopeKey?: string;
         limit?: string;
     };
-    url: '/api/client/leaderboard/configs/{alias}/top';
+    url: '/api/v1/client/leaderboard/configs/{alias}/top';
 };
 
 export type LeaderboardClientGetConfigsByAliasTopErrors = {
@@ -9572,7 +9572,7 @@ export type LeaderboardClientGetConfigsByAliasNeighborsData = {
         scopeKey?: string;
         window?: string;
     };
-    url: '/api/client/leaderboard/configs/{alias}/neighbors';
+    url: '/api/v1/client/leaderboard/configs/{alias}/neighbors';
 };
 
 export type LeaderboardClientGetConfigsByAliasNeighborsErrors = {
@@ -9638,7 +9638,7 @@ export type LeaderboardClientGetConfigsByAliasSnapshotsData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/leaderboard/configs/{alias}/snapshots';
+    url: '/api/v1/client/leaderboard/configs/{alias}/snapshots';
 };
 
 export type LeaderboardClientGetConfigsByAliasSnapshotsErrors = {
@@ -9705,7 +9705,7 @@ export type RankClientGetStateData = {
         tierConfigAlias?: string;
         seasonId?: string;
     };
-    url: '/api/client/rank/state';
+    url: '/api/v1/client/rank/state';
 };
 
 export type RankClientGetStateErrors = {
@@ -9774,7 +9774,7 @@ export type RankClientGetHistoryData = {
         limit?: string;
         cursor?: string;
     };
-    url: '/api/client/rank/history';
+    url: '/api/v1/client/rank/history';
 };
 
 export type RankClientGetHistoryErrors = {
@@ -9870,7 +9870,7 @@ export type RankClientGetLeaderboardData = {
         limit?: string;
         around?: 'self';
     };
-    url: '/api/client/rank/leaderboard';
+    url: '/api/v1/client/rank/leaderboard';
 };
 
 export type RankClientGetLeaderboardErrors = {
@@ -9952,7 +9952,7 @@ export type ActivityClientGetListData = {
     };
     path?: never;
     query?: never;
-    url: '/api/client/activity/list';
+    url: '/api/v1/client/activity/list';
 };
 
 export type ActivityClientGetListErrors = {
@@ -10020,7 +10020,7 @@ export type ActivityClientGetByAliasData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/activity/{alias}';
+    url: '/api/v1/client/activity/{alias}';
 };
 
 export type ActivityClientGetByAliasErrors = {
@@ -10088,7 +10088,7 @@ export type ActivityClientPostByAliasJoinData = {
         alias: string;
     };
     query?: never;
-    url: '/api/client/activity/{alias}/join';
+    url: '/api/v1/client/activity/{alias}/join';
 };
 
 export type ActivityClientPostByAliasJoinErrors = {
@@ -10142,7 +10142,7 @@ export type AssistPoolClientGetInstancesData = {
     query?: {
         configKey?: string;
     };
-    url: '/api/client/assist-pool/instances';
+    url: '/api/v1/client/assist-pool/instances';
 };
 
 export type AssistPoolClientGetInstancesErrors = {
@@ -10192,7 +10192,7 @@ export type AssistPoolClientPostInstancesData = {
     body?: AssistPoolClientInitiate;
     path?: never;
     query?: never;
-    url: '/api/client/assist-pool/instances';
+    url: '/api/v1/client/assist-pool/instances';
 };
 
 export type AssistPoolClientPostInstancesErrors = {
@@ -10247,7 +10247,7 @@ export type AssistPoolClientGetInstancesByInstanceidData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/assist-pool/instances/{instanceId}';
+    url: '/api/v1/client/assist-pool/instances/{instanceId}';
 };
 
 export type AssistPoolClientGetInstancesByInstanceidErrors = {
@@ -10302,7 +10302,7 @@ export type AssistPoolClientPostInstancesByInstanceidContributeData = {
         instanceId: string;
     };
     query?: never;
-    url: '/api/client/assist-pool/instances/{instanceId}/contribute';
+    url: '/api/v1/client/assist-pool/instances/{instanceId}/contribute';
 };
 
 export type AssistPoolClientPostInstancesByInstanceidContributeErrors = {

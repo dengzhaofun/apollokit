@@ -1,7 +1,7 @@
 /**
  * Admin-facing routes for the invite module.
  *
- * Mounted at /api/invite in src/index.ts. Session cookie required;
+ * Mounted at /api/v1/invite in src/index.ts. Session cookie required;
  * tenantId is read from session.activeTeamId.
  */
 

@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the media library module.
  *
- * Mounted under `/api/media-library` and guarded by
+ * Mounted under `/api/v1/media-library` and guarded by
  * `requireAdminOrApiKey`. One exception: the `/object/:key` fallback
  * proxy is registered without the guard so browsers can load images via
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.

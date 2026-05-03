@@ -82,13 +82,13 @@ describe("webhooks routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/webhooks/endpoints without cookie → 401", async () => {
-    const res = await app.request("/api/webhooks/endpoints");
+  test("GET /api/v1/webhooks/endpoints without cookie → 401", async () => {
+    const res = await app.request("/api/v1/webhooks/endpoints");
     expect(res.status).toBe(401);
   });
 
   test("POST create → 201; secret present once; then GET hides secret", async () => {
-    const create = await app.request("/api/webhooks/endpoints", {
+    const create = await app.request("/api/v1/webhooks/endpoints", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -105,7 +105,7 @@ describe("webhooks routes", () => {
     expect(created.secret).toMatch(/^whsec_/);
 
     const get = await app.request(
-      `/api/webhooks/endpoints/${created.id}`,
+      `/api/v1/webhooks/endpoints/${created.id}`,
       { headers: { cookie: fx.cookie } },
     );
     expect(get.status).toBe(200);
@@ -115,7 +115,7 @@ describe("webhooks routes", () => {
   });
 
   test("POST create with non-https URL → 400 validation", async () => {
-    const res = await app.request("/api/webhooks/endpoints", {
+    const res = await app.request("/api/v1/webhooks/endpoints", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -129,7 +129,7 @@ describe("webhooks routes", () => {
 
   test("GET unknown id → 404 with typed error code", async () => {
     const res = await app.request(
-      "/api/webhooks/endpoints/00000000-0000-4000-8000-000000000000",
+      "/api/v1/webhooks/endpoints/00000000-0000-4000-8000-000000000000",
       { headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(404);

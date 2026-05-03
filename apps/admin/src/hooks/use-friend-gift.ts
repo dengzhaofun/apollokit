@@ -26,7 +26,7 @@ const SENDS_KEY = ["friend-gift-sends"] as const
 export function useFriendGiftSettings() {
   return useQuery({
     queryKey: SETTINGS_KEY,
-    queryFn: () => api.get<FriendGiftSettings>("/api/friend-gift/settings"),
+    queryFn: () => api.get<FriendGiftSettings>("/api/v1/friend-gift/settings"),
   })
 }
 
@@ -34,7 +34,7 @@ export function useUpsertFriendGiftSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: UpsertFriendGiftSettingsInput) =>
-      api.put<FriendGiftSettings>("/api/friend-gift/settings", input),
+      api.put<FriendGiftSettings>("/api/v1/friend-gift/settings", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: SETTINGS_KEY }),
   })
 }
@@ -48,7 +48,7 @@ export function useFriendGiftPackages(route: any) {
     filterDefs: FRIEND_GIFT_PACKAGE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<FriendGiftPackage>>(
-        `/api/friend-gift/packages?${buildQs({ cursor, limit, q })}`,
+        `/api/v1/friend-gift/packages?${buildQs({ cursor, limit, q })}`,
       ),
   })
 }
@@ -60,7 +60,7 @@ export function useAllFriendGiftPackages() {
     queryFn: () =>
       api
         .get<Page<FriendGiftPackage>>(
-          `/api/friend-gift/packages?${buildQs({ limit: 200 })}`,
+          `/api/v1/friend-gift/packages?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
   })
@@ -70,7 +70,7 @@ export function useFriendGiftPackage(id: string) {
   return useQuery({
     queryKey: [...PACKAGES_KEY, id],
     queryFn: () =>
-      api.get<FriendGiftPackage>(`/api/friend-gift/packages/${id}`),
+      api.get<FriendGiftPackage>(`/api/v1/friend-gift/packages/${id}`),
     enabled: !!id,
   })
 }
@@ -79,7 +79,7 @@ export function useCreateFriendGiftPackage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateFriendGiftPackageInput) =>
-      api.post<FriendGiftPackage>("/api/friend-gift/packages", input),
+      api.post<FriendGiftPackage>("/api/v1/friend-gift/packages", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: PACKAGES_KEY }),
   })
 }
@@ -93,7 +93,7 @@ export function useUpdateFriendGiftPackage() {
     }: {
       id: string
       input: UpdateFriendGiftPackageInput
-    }) => api.patch<FriendGiftPackage>(`/api/friend-gift/packages/${id}`, input),
+    }) => api.patch<FriendGiftPackage>(`/api/v1/friend-gift/packages/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: PACKAGES_KEY }),
   })
 }
@@ -102,7 +102,7 @@ export function useDeleteFriendGiftPackage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/friend-gift/packages/${id}`),
+      api.delete(`/api/v1/friend-gift/packages/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: PACKAGES_KEY }),
   })
 }
@@ -116,7 +116,7 @@ export function useFriendGiftSends(route: any) {
     filterDefs: FRIEND_GIFT_SEND_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<FriendGiftSend>>(
-        `/api/friend-gift/sends?${buildQs({ cursor, limit, q })}`,
+        `/api/v1/friend-gift/sends?${buildQs({ cursor, limit, q })}`,
       ),
   })
 }

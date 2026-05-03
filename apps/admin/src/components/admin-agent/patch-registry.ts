@@ -27,31 +27,31 @@ export type PatchEntry = {
 export const PATCH_REGISTRY: Record<string, PatchEntry> = {
   patchCheckInConfig: {
     label: "签到配置",
-    endpoint: "/api/check-in/configs/{key}",
+    endpoint: "/api/v1/check-in/configs/{key}",
   },
   patchTaskDefinition: {
     label: "任务",
-    endpoint: "/api/task/definitions/{key}",
+    endpoint: "/api/v1/task/definitions/{key}",
   },
   patchActivityConfig: {
     label: "活动",
-    endpoint: "/api/activity/{key}",
+    endpoint: "/api/v1/activity/{key}",
   },
   patchItemDefinition: {
     label: "道具",
-    endpoint: "/api/item/definitions/{key}",
+    endpoint: "/api/v1/item/definitions/{key}",
   },
   patchCharacterConfig: {
     label: "角色",
-    endpoint: "/api/character/characters/{key}",
+    endpoint: "/api/v1/character/characters/{key}",
   },
   patchDialogueScript: {
     label: "剧情脚本",
-    endpoint: "/api/dialogue/scripts/{key}",
+    endpoint: "/api/v1/dialogue/scripts/{key}",
   },
   patchAnnouncement: {
     label: "公告",
-    endpoint: "/api/announcement/{key}",
+    endpoint: "/api/v1/announcement/{key}",
   },
 }
 

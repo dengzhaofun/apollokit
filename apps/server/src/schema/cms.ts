@@ -97,7 +97,7 @@ export const cmsEntries = pgTable(
       .references(() => cmsTypes.id, { onDelete: "cascade" }),
     /**
      * Denormalized copy of `cms_types.alias` so client-route lookups
-     * (`/api/client/cms/by-alias/{typeAlias}/{entryAlias}`) can hit a
+     * (`/api/v1/client/cms/by-alias/{typeAlias}/{entryAlias}`) can hit a
      * single table without a join. Kept in sync by the service layer.
      */
     typeAlias: text("type_alias").notNull(),

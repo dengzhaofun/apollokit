@@ -14,7 +14,7 @@ const RELATIONSHIPS_KEY = ["invite-relationships"] as const
 export function useInviteSettings() {
   return useQuery({
     queryKey: SETTINGS_KEY,
-    queryFn: () => api.get<InviteSettings | null>("/api/invite/settings"),
+    queryFn: () => api.get<InviteSettings | null>("/api/v1/invite/settings"),
   })
 }
 
@@ -22,7 +22,7 @@ export function useUpsertInviteSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: UpsertInviteSettingsInput) =>
-      api.put<InviteSettings>("/api/invite/settings", input),
+      api.put<InviteSettings>("/api/v1/invite/settings", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: SETTINGS_KEY }),
   })
 }
@@ -37,14 +37,14 @@ export function useInviteRelationships(query: InviteRelationshipListQuery = {}) 
   return useQuery({
     queryKey: [...RELATIONSHIPS_KEY, query] as const,
     queryFn: () =>
-      api.get<InviteRelationshipList>(`/api/invite/relationships${qs ? `?${qs}` : ""}`),
+      api.get<InviteRelationshipList>(`/api/v1/invite/relationships${qs ? `?${qs}` : ""}`),
   })
 }
 
 export function useDeleteInviteRelationship() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/invite/relationships/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/invite/relationships/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: RELATIONSHIPS_KEY }),
   })
 }

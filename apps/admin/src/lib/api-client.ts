@@ -148,7 +148,7 @@ async function request<T>(
  * Resolve a possibly-relative URL returned by the server into an
  * absolute URL browsers can load. Assets whose public URL is a CDN
  * domain come back absolute already; the worker-proxy fallback
- * returns `/api/media-library/object/...` which needs the server base.
+ * returns `/api/v1/media-library/object/...` which needs the server base.
  */
 export function resolveAssetUrl(url: string): string {
   if (url.startsWith("http://") || url.startsWith("https://")) return url

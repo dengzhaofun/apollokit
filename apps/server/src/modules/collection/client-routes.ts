@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the collection module.
  *
- * Mounted at /api/client/collection. Auth pattern:
+ * Mounted at /api/v1/client/collection. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,

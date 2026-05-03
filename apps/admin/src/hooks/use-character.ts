@@ -26,7 +26,7 @@ export function useCharacters(route: any) {
     filterDefs: CHARACTER_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Character>>(
-        `/api/character/characters?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/character/characters?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -37,7 +37,7 @@ export function useAllCharacters() {
     queryKey: [...CHARACTERS_KEY, "all"],
     queryFn: () =>
       api
-        .get<Page<Character>>(`/api/character/characters?${buildQs({ limit: 200 })}`)
+        .get<Page<Character>>(`/api/v1/character/characters?${buildQs({ limit: 200 })}`)
         .then((p) => p.items),
   })
 }
@@ -45,7 +45,7 @@ export function useAllCharacters() {
 export function useCharacter(id: string) {
   return useQuery({
     queryKey: [...CHARACTERS_KEY, id],
-    queryFn: () => api.get<Character>(`/api/character/characters/${id}`),
+    queryFn: () => api.get<Character>(`/api/v1/character/characters/${id}`),
     enabled: !!id,
   })
 }
@@ -54,7 +54,7 @@ export function useCreateCharacter() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCharacterInput) =>
-      api.post<Character>("/api/character/characters", input),
+      api.post<Character>("/api/v1/character/characters", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CHARACTERS_KEY }),
   })
 }
@@ -68,7 +68,7 @@ export function useUpdateCharacter() {
     }: {
       id: string
       input: UpdateCharacterInput
-    }) => api.patch<Character>(`/api/character/characters/${id}`, input),
+    }) => api.patch<Character>(`/api/v1/character/characters/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: CHARACTERS_KEY })
       qc.invalidateQueries({ queryKey: [...CHARACTERS_KEY, vars.id] })
@@ -79,7 +79,7 @@ export function useUpdateCharacter() {
 export function useDeleteCharacter() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/character/characters/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/character/characters/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CHARACTERS_KEY }),
   })
 }

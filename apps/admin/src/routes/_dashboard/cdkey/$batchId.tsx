@@ -177,7 +177,7 @@ function CodesPane({
     // Same-origin: admin worker forwards `/api/*` via service binding
     // (prod) or vite proxies it to localhost:8787 (dev). Either way, an
     // absolute origin is no longer needed.
-    window.open(`/api/cdkey/batches/${batchId}/codes.csv`, "_blank")
+    window.open(`/api/v1/cdkey/batches/${batchId}/codes.csv`, "_blank")
   }
 
   const handleGenerate = async () => {

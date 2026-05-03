@@ -73,14 +73,14 @@ describe("collection routes", () => {
     await db.delete(user).where(eq(user.id, fx.adminUserId));
   });
 
-  test("GET /api/collection/albums without cookie → 401", async () => {
-    const res = await app.request("/api/collection/albums");
+  test("GET /api/v1/collection/albums without cookie → 401", async () => {
+    const res = await app.request("/api/v1/collection/albums");
     expect(res.status).toBe(401);
   });
 
   test("happy path: create album → create group → create entry", async () => {
     // 1. Create album
-    const a = await app.request("/api/collection/albums", {
+    const a = await app.request("/api/v1/collection/albums", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -95,7 +95,7 @@ describe("collection routes", () => {
 
     // 2. Create group under album
     const g = await app.request(
-      "/api/collection/albums/route-dragons/groups",
+      "/api/v1/collection/albums/route-dragons/groups",
       {
         method: "POST",
         headers: { "content-type": "application/json", cookie: fx.cookie },
@@ -106,7 +106,7 @@ describe("collection routes", () => {
     const group = await expectOk<{ id: string }>(g);
 
     // 3. We need an item definition to bind to.
-    const defRes = await app.request("/api/item/definitions", {
+    const defRes = await app.request("/api/v1/item/definitions", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -120,7 +120,7 @@ describe("collection routes", () => {
 
     // 4. Create entry
     const e = await app.request(
-      "/api/collection/albums/route-dragons/entries",
+      "/api/v1/collection/albums/route-dragons/entries",
       {
         method: "POST",
         headers: { "content-type": "application/json", cookie: fx.cookie },
@@ -136,7 +136,7 @@ describe("collection routes", () => {
 
   test("zod validation: milestone with entry scope missing entryId → 400", async () => {
     const res = await app.request(
-      "/api/collection/albums/route-dragons/milestones",
+      "/api/v1/collection/albums/route-dragons/milestones",
       {
         method: "POST",
         headers: { "content-type": "application/json", cookie: fx.cookie },
@@ -152,7 +152,7 @@ describe("collection routes", () => {
   });
 
   test("ModuleError mapping: duplicate alias → 409", async () => {
-    const res = await app.request("/api/collection/albums", {
+    const res = await app.request("/api/v1/collection/albums", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({
@@ -165,7 +165,7 @@ describe("collection routes", () => {
   });
 
   test("unknown album alias → 404", async () => {
-    const res = await app.request("/api/collection/albums/does-not-exist", {
+    const res = await app.request("/api/v1/collection/albums/does-not-exist", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(404);

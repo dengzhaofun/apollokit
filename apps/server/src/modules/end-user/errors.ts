@@ -29,7 +29,7 @@ export class EndUserNotFound extends ModuleError {
 /**
  * Thrown by `session.create.before` in end-user-auth when a disabled
  * player tries to sign in. Admin has soft-banned them via
- * `POST /api/end-user/:id/disable`.
+ * `POST /api/v1/end-user/:id/disable`.
  */
 export class EndUserDisabled extends ModuleError {
   constructor(id: string) {

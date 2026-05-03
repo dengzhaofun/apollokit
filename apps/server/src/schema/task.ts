@@ -44,7 +44,7 @@ import { team } from "./auth";
  *    parent row idempotently. Only one nesting level is supported.
  *
  * 4. Event processing: external services POST events to
- *    `/api/client/task/events`. The service queries matching definitions
+ *    `/api/v1/client/task/events`. The service queries matching definitions
  *    by `(tenantId, eventName)` and updates progress atomically,
  *    one SQL per matching task.
  *

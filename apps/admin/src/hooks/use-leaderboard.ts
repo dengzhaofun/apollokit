@@ -28,7 +28,7 @@ export function useLeaderboardConfigs(route: any) {
     filterDefs: LEADERBOARD_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LeaderboardConfig>>(
-        `/api/leaderboard/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/leaderboard/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -37,7 +37,7 @@ export function useLeaderboardConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
     queryFn: () =>
-      api.get<LeaderboardConfig>(`/api/leaderboard/configs/${key}`),
+      api.get<LeaderboardConfig>(`/api/v1/leaderboard/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -55,7 +55,7 @@ export function useLeaderboardTop(
     queryKey: ["leaderboard-top", key, params],
     queryFn: () =>
       api.get<LeaderboardTop>(
-        `/api/leaderboard/configs/${key}/top${query ? `?${query}` : ""}`,
+        `/api/v1/leaderboard/configs/${key}/top${query ? `?${query}` : ""}`,
       ),
     enabled: !!key,
   })
@@ -66,7 +66,7 @@ export function useLeaderboardSnapshots(key: string) {
     queryKey: ["leaderboard-snapshots", key],
     queryFn: () =>
       api.get<{ items: LeaderboardSnapshot[] }>(
-        `/api/leaderboard/configs/${key}/snapshots`,
+        `/api/v1/leaderboard/configs/${key}/snapshots`,
       ),
     select: (data) => data.items,
     enabled: !!key,
@@ -77,7 +77,7 @@ export function useCreateLeaderboardConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateLeaderboardInput) =>
-      api.post<LeaderboardConfig>("/api/leaderboard/configs", input),
+      api.post<LeaderboardConfig>("/api/v1/leaderboard/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -86,7 +86,7 @@ export function useUpdateLeaderboardConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...patch }: UpdateLeaderboardInput & { id: string }) =>
-      api.patch<LeaderboardConfig>(`/api/leaderboard/configs/${id}`, patch),
+      api.patch<LeaderboardConfig>(`/api/v1/leaderboard/configs/${id}`, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -94,7 +94,7 @@ export function useUpdateLeaderboardConfig() {
 export function useDeleteLeaderboardConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/leaderboard/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/leaderboard/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -103,7 +103,7 @@ export function useRunLeaderboardSettle() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () =>
-      api.post<{ settled: number; errors: number }>("/api/leaderboard/settle/run"),
+      api.post<{ settled: number; errors: number }>("/api/v1/leaderboard/settle/run"),
     onSuccess: () => qc.invalidateQueries(),
   })
 }

@@ -3,7 +3,7 @@
   "info": {
     "title": "apollokit Client API",
     "version": "0.1.0",
-    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/<module>/...`): server-to-server calls (operations dashboards, cron, data pipelines). Authenticate with an admin API key (`x-api-key: ak_…`).\n- **Client** (`/api/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/client/auth/*`) keep the third-party library's native format."
+    "description": "apollokit is a multi-tenant game-SaaS backend. Routes are split into\n\n- **Admin** (`/api/v1/<module>/...`): server-to-server calls from your dashboard / cron / data pipelines. Session cookie or admin API key (`x-api-key: ak_…`). Each admin key is project-scoped (one Better Auth team).\n- **Public** (`/api/v1/projects/{projectId}/<module>/...`): same business surface as Admin but with the project id explicit in the URL — preferred for SDK / external integrations using admin API keys. The key's metadata.teamId must match {projectId}.\n- **Client** (`/api/v1/client/<module>/...`): consumed by tenant frontends on behalf of end users. Authenticate with a client publishable key (`x-api-key: cpk_…`). End-user-scoped routes additionally require `x-end-user-id` and `x-user-hash` headers — `x-user-hash` is HMAC-SHA256(endUserId, decrypted csk_) hex, computed by the client SDK at runtime.\n\nEvery business endpoint returns the standard envelope `{ code, data, message, requestId }`. Success uses `code: \"ok\"` and the payload in `data`. Validation errors use HTTP 400 and `code: \"validation_error\"`. Domain errors use the module-specific `code` (e.g. `check_in.config_not_found`) at their declared HTTP status. Better Auth routes (`/api/auth/*`, `/api/v1/client/auth/*`) keep the third-party library's native format."
   },
   "servers": [
     {
@@ -12,7 +12,7 @@
     }
   ],
   "paths": {
-    "/api/client/announcement/active": {
+    "/api/v1/client/announcement/active": {
       "get": {
         "tags": [
           "Announcement (Client)"
@@ -153,7 +153,7 @@
         }
       }
     },
-    "/api/client/announcement/{alias}/impression": {
+    "/api/v1/client/announcement/{alias}/impression": {
       "post": {
         "tags": [
           "Announcement (Client)"
@@ -282,7 +282,7 @@
         }
       }
     },
-    "/api/client/announcement/{alias}/click": {
+    "/api/v1/client/announcement/{alias}/click": {
       "post": {
         "tags": [
           "Announcement (Client)"
@@ -411,7 +411,7 @@
         }
       }
     },
-    "/api/client/badge/tree": {
+    "/api/v1/client/badge/tree": {
       "get": {
         "tags": [
           "Badge (Client)"
@@ -535,7 +535,7 @@
         }
       }
     },
-    "/api/client/badge/dismiss": {
+    "/api/v1/client/badge/dismiss": {
       "post": {
         "tags": [
           "Badge (Client)"
@@ -653,7 +653,7 @@
         }
       }
     },
-    "/api/client/badge/reset-session": {
+    "/api/v1/client/badge/reset-session": {
       "post": {
         "tags": [
           "Badge (Client)"
@@ -739,7 +739,7 @@
         }
       }
     },
-    "/api/client/banner/groups/{alias}": {
+    "/api/v1/client/banner/groups/{alias}": {
       "get": {
         "tags": [
           "Banner (Client)"
@@ -891,7 +891,7 @@
         }
       }
     },
-    "/api/client/battle-pass/current": {
+    "/api/v1/client/battle-pass/current": {
       "get": {
         "tags": [
           "Battle Pass (Client)"
@@ -1010,7 +1010,7 @@
         }
       }
     },
-    "/api/client/battle-pass/{seasonId}/aggregate": {
+    "/api/v1/client/battle-pass/{seasonId}/aggregate": {
       "get": {
         "tags": [
           "Battle Pass (Client)"
@@ -1132,7 +1132,7 @@
         }
       }
     },
-    "/api/client/battle-pass/{seasonId}/claim": {
+    "/api/v1/client/battle-pass/{seasonId}/claim": {
       "post": {
         "tags": [
           "Battle Pass (Client)"
@@ -1263,7 +1263,7 @@
         }
       }
     },
-    "/api/client/battle-pass/{seasonId}/claim-all": {
+    "/api/v1/client/battle-pass/{seasonId}/claim-all": {
       "post": {
         "tags": [
           "Battle Pass (Client)"
@@ -1395,7 +1395,7 @@
         }
       }
     },
-    "/api/client/cdkey/redeem": {
+    "/api/v1/client/cdkey/redeem": {
       "post": {
         "tags": [
           "CDKey (Client)"
@@ -1545,7 +1545,7 @@
         }
       }
     },
-    "/api/client/check-in/check-ins": {
+    "/api/v1/client/check-in/check-ins": {
       "post": {
         "tags": [
           "Check-In (Client)"
@@ -1663,7 +1663,7 @@
         }
       }
     },
-    "/api/client/check-in/state": {
+    "/api/v1/client/check-in/state": {
       "get": {
         "tags": [
           "Check-In (Client)"
@@ -1785,7 +1785,7 @@
         }
       }
     },
-    "/api/client/offline-check-in/campaigns/{key}": {
+    "/api/v1/client/offline-check-in/campaigns/{key}": {
       "get": {
         "tags": [
           "Offline Check-In (Client)"
@@ -1907,7 +1907,7 @@
         }
       }
     },
-    "/api/client/offline-check-in/campaigns/{key}/me": {
+    "/api/v1/client/offline-check-in/campaigns/{key}/me": {
       "get": {
         "tags": [
           "Offline Check-In (Client)"
@@ -2029,7 +2029,7 @@
         }
       }
     },
-    "/api/client/offline-check-in/campaigns/{key}/check-in": {
+    "/api/v1/client/offline-check-in/campaigns/{key}/check-in": {
       "post": {
         "tags": [
           "Offline Check-In (Client)"
@@ -2160,7 +2160,7 @@
         }
       }
     },
-    "/api/client/experiment/evaluate": {
+    "/api/v1/client/experiment/evaluate": {
       "post": {
         "tags": [
           "Experiment (Client)"
@@ -2278,7 +2278,7 @@
         }
       }
     },
-    "/api/client/cms/by-alias/{typeAlias}/{entryAlias}": {
+    "/api/v1/client/cms/by-alias/{typeAlias}/{entryAlias}": {
       "get": {
         "tags": [
           "CMS (Client)"
@@ -2411,7 +2411,7 @@
         }
       }
     },
-    "/api/client/cms/group/{typeAlias}/{groupKey}": {
+    "/api/v1/client/cms/group/{typeAlias}/{groupKey}": {
       "get": {
         "tags": [
           "CMS (Client)"
@@ -2567,7 +2567,7 @@
         }
       }
     },
-    "/api/client/cms/tag/{tag}": {
+    "/api/v1/client/cms/tag/{tag}": {
       "get": {
         "tags": [
           "CMS (Client)"
@@ -2712,7 +2712,7 @@
         }
       }
     },
-    "/api/client/cms/list/{typeAlias}": {
+    "/api/v1/client/cms/list/{typeAlias}": {
       "get": {
         "tags": [
           "CMS (Client)"
@@ -2878,7 +2878,7 @@
         }
       }
     },
-    "/api/client/collection/albums": {
+    "/api/v1/client/collection/albums": {
       "get": {
         "tags": [
           "Collection (Client)"
@@ -3019,7 +3019,7 @@
         }
       }
     },
-    "/api/client/collection/albums/{key}": {
+    "/api/v1/client/collection/albums/{key}": {
       "get": {
         "tags": [
           "Collection (Client)"
@@ -3169,7 +3169,7 @@
         }
       }
     },
-    "/api/client/collection/albums/{key}/sync": {
+    "/api/v1/client/collection/albums/{key}/sync": {
       "post": {
         "tags": [
           "Collection (Client)"
@@ -3319,7 +3319,7 @@
         }
       }
     },
-    "/api/client/collection/milestones/{id}/claim": {
+    "/api/v1/client/collection/milestones/{id}/claim": {
       "post": {
         "tags": [
           "Collection (Client)"
@@ -3469,7 +3469,7 @@
         }
       }
     },
-    "/api/client/currency/wallets": {
+    "/api/v1/client/currency/wallets": {
       "get": {
         "tags": [
           "Currency (Client)"
@@ -3610,7 +3610,7 @@
         }
       }
     },
-    "/api/client/currency/balance/{key}": {
+    "/api/v1/client/currency/balance/{key}": {
       "get": {
         "tags": [
           "Currency (Client)"
@@ -3762,7 +3762,7 @@
         }
       }
     },
-    "/api/client/dialogue/scripts/{alias}/start": {
+    "/api/v1/client/dialogue/scripts/{alias}/start": {
       "get": {
         "tags": [
           "Dialogue (Client)"
@@ -3884,7 +3884,7 @@
         }
       }
     },
-    "/api/client/dialogue/scripts/{alias}/advance": {
+    "/api/v1/client/dialogue/scripts/{alias}/advance": {
       "post": {
         "tags": [
           "Dialogue (Client)"
@@ -4015,7 +4015,7 @@
         }
       }
     },
-    "/api/client/dialogue/scripts/{alias}/reset": {
+    "/api/v1/client/dialogue/scripts/{alias}/reset": {
       "post": {
         "tags": [
           "Dialogue (Client)"
@@ -4137,7 +4137,7 @@
         }
       }
     },
-    "/api/client/entity/instances": {
+    "/api/v1/client/entity/instances": {
       "get": {
         "tags": [
           "Entity (Client)"
@@ -4297,7 +4297,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}": {
+    "/api/v1/client/entity/instances/{instanceId}": {
       "get": {
         "tags": [
           "Entity (Client)"
@@ -4444,7 +4444,7 @@
         }
       }
     },
-    "/api/client/entity/acquire": {
+    "/api/v1/client/entity/acquire": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -4608,7 +4608,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/discard": {
+    "/api/v1/client/entity/instances/{instanceId}/discard": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -4735,7 +4735,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/lock": {
+    "/api/v1/client/entity/instances/{instanceId}/lock": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -4899,7 +4899,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/add-exp": {
+    "/api/v1/client/entity/instances/{instanceId}/add-exp": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5064,7 +5064,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/level-up": {
+    "/api/v1/client/entity/instances/{instanceId}/level-up": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5226,7 +5226,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/rank-up": {
+    "/api/v1/client/entity/instances/{instanceId}/rank-up": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5373,7 +5373,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/synthesize": {
+    "/api/v1/client/entity/instances/{instanceId}/synthesize": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5542,7 +5542,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/equip": {
+    "/api/v1/client/entity/instances/{instanceId}/equip": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5717,7 +5717,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/unequip": {
+    "/api/v1/client/entity/instances/{instanceId}/unequip": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -5867,7 +5867,7 @@
         }
       }
     },
-    "/api/client/entity/instances/{instanceId}/change-skin": {
+    "/api/v1/client/entity/instances/{instanceId}/change-skin": {
       "post": {
         "tags": [
           "Entity (Client)"
@@ -6035,7 +6035,7 @@
         }
       }
     },
-    "/api/client/entity/formations/{configId}": {
+    "/api/v1/client/entity/formations/{configId}": {
       "get": {
         "tags": [
           "Entity (Client)"
@@ -6186,7 +6186,7 @@
         }
       }
     },
-    "/api/client/entity/formations/{configId}/{formationIndex}": {
+    "/api/v1/client/entity/formations/{configId}/{formationIndex}": {
       "put": {
         "tags": [
           "Entity (Client)"
@@ -6389,7 +6389,7 @@
         }
       }
     },
-    "/api/client/item/inventory": {
+    "/api/v1/client/item/inventory": {
       "get": {
         "tags": [
           "Item (Client)"
@@ -6511,7 +6511,7 @@
         }
       }
     },
-    "/api/client/item/balance/{key}": {
+    "/api/v1/client/item/balance/{key}": {
       "get": {
         "tags": [
           "Item (Client)"
@@ -6633,7 +6633,7 @@
         }
       }
     },
-    "/api/client/item/use": {
+    "/api/v1/client/item/use": {
       "post": {
         "tags": [
           "Item (Client)"
@@ -6751,7 +6751,7 @@
         }
       }
     },
-    "/api/client/exchange/execute": {
+    "/api/v1/client/exchange/execute": {
       "post": {
         "tags": [
           "Exchange (Client)"
@@ -6869,7 +6869,7 @@
         }
       }
     },
-    "/api/client/friend/requests": {
+    "/api/v1/client/friend/requests": {
       "post": {
         "tags": [
           "Friend (Client)"
@@ -6987,7 +6987,7 @@
         }
       }
     },
-    "/api/client/friend/requests/incoming": {
+    "/api/v1/client/friend/requests/incoming": {
       "get": {
         "tags": [
           "Friend (Client)"
@@ -7096,7 +7096,7 @@
         }
       }
     },
-    "/api/client/friend/requests/outgoing": {
+    "/api/v1/client/friend/requests/outgoing": {
       "get": {
         "tags": [
           "Friend (Client)"
@@ -7205,7 +7205,7 @@
         }
       }
     },
-    "/api/client/friend/requests/{id}/accept": {
+    "/api/v1/client/friend/requests/{id}/accept": {
       "post": {
         "tags": [
           "Friend (Client)"
@@ -7327,7 +7327,7 @@
         }
       }
     },
-    "/api/client/friend/requests/{id}/reject": {
+    "/api/v1/client/friend/requests/{id}/reject": {
       "post": {
         "tags": [
           "Friend (Client)"
@@ -7449,7 +7449,7 @@
         }
       }
     },
-    "/api/client/friend/requests/{id}/cancel": {
+    "/api/v1/client/friend/requests/{id}/cancel": {
       "post": {
         "tags": [
           "Friend (Client)"
@@ -7571,7 +7571,7 @@
         }
       }
     },
-    "/api/client/friend/friends": {
+    "/api/v1/client/friend/friends": {
       "get": {
         "tags": [
           "Friend (Client)"
@@ -7710,7 +7710,7 @@
         }
       }
     },
-    "/api/client/friend/friends/{id}": {
+    "/api/v1/client/friend/friends/{id}": {
       "delete": {
         "tags": [
           "Friend (Client)"
@@ -7809,7 +7809,7 @@
         }
       }
     },
-    "/api/client/friend/friends/mutual": {
+    "/api/v1/client/friend/friends/mutual": {
       "get": {
         "tags": [
           "Friend (Client)"
@@ -7932,7 +7932,7 @@
         }
       }
     },
-    "/api/client/friend/blocks": {
+    "/api/v1/client/friend/blocks": {
       "post": {
         "tags": [
           "Friend (Client)"
@@ -8134,7 +8134,7 @@
         }
       }
     },
-    "/api/client/friend/blocks/{blockedUserId}": {
+    "/api/v1/client/friend/blocks/{blockedUserId}": {
       "delete": {
         "tags": [
           "Friend (Client)"
@@ -8233,7 +8233,7 @@
         }
       }
     },
-    "/api/client/friend-gift/packages": {
+    "/api/v1/client/friend-gift/packages": {
       "get": {
         "tags": [
           "Friend Gift (Client)"
@@ -8374,7 +8374,7 @@
         }
       }
     },
-    "/api/client/friend-gift/send": {
+    "/api/v1/client/friend-gift/send": {
       "post": {
         "tags": [
           "Friend Gift (Client)"
@@ -8524,7 +8524,7 @@
         }
       }
     },
-    "/api/client/friend-gift/inbox": {
+    "/api/v1/client/friend-gift/inbox": {
       "get": {
         "tags": [
           "Friend Gift (Client)"
@@ -8665,7 +8665,7 @@
         }
       }
     },
-    "/api/client/friend-gift/sent": {
+    "/api/v1/client/friend-gift/sent": {
       "get": {
         "tags": [
           "Friend Gift (Client)"
@@ -8806,7 +8806,7 @@
         }
       }
     },
-    "/api/client/friend-gift/sends/{id}/claim": {
+    "/api/v1/client/friend-gift/sends/{id}/claim": {
       "post": {
         "tags": [
           "Friend Gift (Client)"
@@ -8967,7 +8967,7 @@
         }
       }
     },
-    "/api/client/friend-gift/daily-status": {
+    "/api/v1/client/friend-gift/daily-status": {
       "get": {
         "tags": [
           "Friend Gift (Client)"
@@ -9108,7 +9108,7 @@
         }
       }
     },
-    "/api/client/invite/my-code": {
+    "/api/v1/client/invite/my-code": {
       "get": {
         "tags": [
           "Invite (Client)"
@@ -9248,7 +9248,7 @@
         }
       }
     },
-    "/api/client/invite/reset-my-code": {
+    "/api/v1/client/invite/reset-my-code": {
       "post": {
         "tags": [
           "Invite (Client)"
@@ -9388,7 +9388,7 @@
         }
       }
     },
-    "/api/client/invite/summary": {
+    "/api/v1/client/invite/summary": {
       "get": {
         "tags": [
           "Invite (Client)"
@@ -9528,7 +9528,7 @@
         }
       }
     },
-    "/api/client/invite/invitees": {
+    "/api/v1/client/invite/invitees": {
       "get": {
         "tags": [
           "Invite (Client)"
@@ -9696,7 +9696,7 @@
         }
       }
     },
-    "/api/client/invite/bind": {
+    "/api/v1/client/invite/bind": {
       "post": {
         "tags": [
           "Invite (Client)"
@@ -9845,7 +9845,7 @@
         }
       }
     },
-    "/api/client/invite/qualify": {
+    "/api/v1/client/invite/qualify": {
       "post": {
         "tags": [
           "Invite (Client)"
@@ -9994,7 +9994,7 @@
         }
       }
     },
-    "/api/client/guild/guilds": {
+    "/api/v1/client/guild/guilds": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -10319,7 +10319,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}": {
+    "/api/v1/client/guild/guilds/{id}": {
       "get": {
         "tags": [
           "Guild (Client)"
@@ -10630,7 +10630,7 @@
         }
       }
     },
-    "/api/client/guild/my-guild": {
+    "/api/v1/client/guild/my-guild": {
       "get": {
         "tags": [
           "Guild (Client)"
@@ -10771,7 +10771,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/join": {
+    "/api/v1/client/guild/guilds/{id}/join": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -10932,7 +10932,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/leave": {
+    "/api/v1/client/guild/guilds/{id}/leave": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -11084,7 +11084,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/disband": {
+    "/api/v1/client/guild/guilds/{id}/disband": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -11236,7 +11236,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/requests": {
+    "/api/v1/client/guild/guilds/{id}/requests": {
       "get": {
         "tags": [
           "Guild (Client)"
@@ -11424,7 +11424,7 @@
         }
       }
     },
-    "/api/client/guild/requests/{id}/accept": {
+    "/api/v1/client/guild/requests/{id}/accept": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -11576,7 +11576,7 @@
         }
       }
     },
-    "/api/client/guild/requests/{id}/reject": {
+    "/api/v1/client/guild/requests/{id}/reject": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -11728,7 +11728,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/invite": {
+    "/api/v1/client/guild/guilds/{id}/invite": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -11889,7 +11889,7 @@
         }
       }
     },
-    "/api/client/guild/invitations/{id}/accept": {
+    "/api/v1/client/guild/invitations/{id}/accept": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12041,7 +12041,7 @@
         }
       }
     },
-    "/api/client/guild/invitations/{id}/reject": {
+    "/api/v1/client/guild/invitations/{id}/reject": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12193,7 +12193,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/members/{userId}/promote": {
+    "/api/v1/client/guild/guilds/{id}/members/{userId}/promote": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12356,7 +12356,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/members/{userId}/demote": {
+    "/api/v1/client/guild/guilds/{id}/members/{userId}/demote": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12519,7 +12519,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/members/{userId}/kick": {
+    "/api/v1/client/guild/guilds/{id}/members/{userId}/kick": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12682,7 +12682,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/transfer-leader": {
+    "/api/v1/client/guild/guilds/{id}/transfer-leader": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -12843,7 +12843,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/contribute": {
+    "/api/v1/client/guild/guilds/{id}/contribute": {
       "post": {
         "tags": [
           "Guild (Client)"
@@ -13004,7 +13004,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/contributions": {
+    "/api/v1/client/guild/guilds/{id}/contributions": {
       "get": {
         "tags": [
           "Guild (Client)"
@@ -13176,7 +13176,7 @@
         }
       }
     },
-    "/api/client/guild/guilds/{id}/members": {
+    "/api/v1/client/guild/guilds/{id}/members": {
       "get": {
         "tags": [
           "Guild (Client)"
@@ -13328,7 +13328,7 @@
         }
       }
     },
-    "/api/client/lottery/pull": {
+    "/api/v1/client/lottery/pull": {
       "post": {
         "tags": [
           "Lottery (Client)"
@@ -13446,7 +13446,7 @@
         }
       }
     },
-    "/api/client/lottery/multi-pull": {
+    "/api/v1/client/lottery/multi-pull": {
       "post": {
         "tags": [
           "Lottery (Client)"
@@ -13564,7 +13564,7 @@
         }
       }
     },
-    "/api/client/lottery/pools/{poolKey}/state": {
+    "/api/v1/client/lottery/pools/{poolKey}/state": {
       "get": {
         "tags": [
           "Lottery (Client)"
@@ -13686,7 +13686,7 @@
         }
       }
     },
-    "/api/client/lottery/pools/{poolKey}/history": {
+    "/api/v1/client/lottery/pools/{poolKey}/history": {
       "get": {
         "tags": [
           "Lottery (Client)"
@@ -13808,7 +13808,7 @@
         }
       }
     },
-    "/api/client/mail/messages": {
+    "/api/v1/client/mail/messages": {
       "get": {
         "tags": [
           "Mail (Client)"
@@ -13940,7 +13940,7 @@
         }
       }
     },
-    "/api/client/mail/messages/{id}": {
+    "/api/v1/client/mail/messages/{id}": {
       "get": {
         "tags": [
           "Mail (Client)"
@@ -14062,7 +14062,7 @@
         }
       }
     },
-    "/api/client/mail/messages/{id}/read": {
+    "/api/v1/client/mail/messages/{id}/read": {
       "post": {
         "tags": [
           "Mail (Client)"
@@ -14184,7 +14184,7 @@
         }
       }
     },
-    "/api/client/mail/messages/{id}/claim": {
+    "/api/v1/client/mail/messages/{id}/claim": {
       "post": {
         "tags": [
           "Mail (Client)"
@@ -14306,7 +14306,7 @@
         }
       }
     },
-    "/api/client/shop/purchase": {
+    "/api/v1/client/shop/purchase": {
       "post": {
         "tags": [
           "Shop (Client)"
@@ -14424,7 +14424,7 @@
         }
       }
     },
-    "/api/client/shop/claim-stage": {
+    "/api/v1/client/shop/claim-stage": {
       "post": {
         "tags": [
           "Shop (Client)"
@@ -14542,7 +14542,7 @@
         }
       }
     },
-    "/api/client/shop/products": {
+    "/api/v1/client/shop/products": {
       "get": {
         "tags": [
           "Shop (Client)"
@@ -14683,7 +14683,7 @@
         }
       }
     },
-    "/api/client/task/events": {
+    "/api/v1/client/task/events": {
       "post": {
         "tags": [
           "Task (Client)"
@@ -14801,7 +14801,7 @@
         }
       }
     },
-    "/api/client/task/list": {
+    "/api/v1/client/task/list": {
       "post": {
         "tags": [
           "Task (Client)"
@@ -14919,7 +14919,7 @@
         }
       }
     },
-    "/api/client/task/claim/{taskId}": {
+    "/api/v1/client/task/claim/{taskId}": {
       "post": {
         "tags": [
           "Task (Client)"
@@ -15039,7 +15039,7 @@
         }
       }
     },
-    "/api/client/task/claim-tier": {
+    "/api/v1/client/task/claim-tier": {
       "post": {
         "tags": [
           "Task (Client)"
@@ -15157,7 +15157,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads": {
+    "/api/v1/client/match-squad/squads": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -15275,7 +15275,7 @@
         }
       }
     },
-    "/api/client/match-squad/my-squad": {
+    "/api/v1/client/match-squad/my-squad": {
       "get": {
         "tags": [
           "MatchSquad (Client)"
@@ -15407,7 +15407,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}": {
+    "/api/v1/client/match-squad/squads/{id}": {
       "get": {
         "tags": [
           "MatchSquad (Client)"
@@ -15529,7 +15529,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/join": {
+    "/api/v1/client/match-squad/squads/{id}/join": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -15651,7 +15651,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/leave": {
+    "/api/v1/client/match-squad/squads/{id}/leave": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -15773,7 +15773,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/dissolve": {
+    "/api/v1/client/match-squad/squads/{id}/dissolve": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -15895,7 +15895,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/kick/{userId}": {
+    "/api/v1/client/match-squad/squads/{id}/kick/{userId}": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16028,7 +16028,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/transfer-leader": {
+    "/api/v1/client/match-squad/squads/{id}/transfer-leader": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16159,7 +16159,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/status": {
+    "/api/v1/client/match-squad/squads/{id}/status": {
       "put": {
         "tags": [
           "MatchSquad (Client)"
@@ -16290,7 +16290,7 @@
         }
       }
     },
-    "/api/client/match-squad/squads/{id}/invite": {
+    "/api/v1/client/match-squad/squads/{id}/invite": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16421,7 +16421,7 @@
         }
       }
     },
-    "/api/client/match-squad/invitations/{id}/accept": {
+    "/api/v1/client/match-squad/invitations/{id}/accept": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16543,7 +16543,7 @@
         }
       }
     },
-    "/api/client/match-squad/invitations/{id}/reject": {
+    "/api/v1/client/match-squad/invitations/{id}/reject": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16665,7 +16665,7 @@
         }
       }
     },
-    "/api/client/match-squad/quick-match": {
+    "/api/v1/client/match-squad/quick-match": {
       "post": {
         "tags": [
           "MatchSquad (Client)"
@@ -16787,7 +16787,7 @@
         }
       }
     },
-    "/api/client/level/configs": {
+    "/api/v1/client/level/configs": {
       "post": {
         "tags": [
           "Level (Client)"
@@ -16896,7 +16896,7 @@
         }
       }
     },
-    "/api/client/level/configs/{key}/overview": {
+    "/api/v1/client/level/configs/{key}/overview": {
       "post": {
         "tags": [
           "Level (Client)"
@@ -17018,7 +17018,7 @@
         }
       }
     },
-    "/api/client/level/levels/{id}/detail": {
+    "/api/v1/client/level/levels/{id}/detail": {
       "post": {
         "tags": [
           "Level (Client)"
@@ -17138,7 +17138,7 @@
         }
       }
     },
-    "/api/client/level/levels/{id}/clear": {
+    "/api/v1/client/level/levels/{id}/clear": {
       "post": {
         "tags": [
           "Level (Client)"
@@ -17267,7 +17267,7 @@
         }
       }
     },
-    "/api/client/level/levels/{id}/claim": {
+    "/api/v1/client/level/levels/{id}/claim": {
       "post": {
         "tags": [
           "Level (Client)"
@@ -17396,7 +17396,7 @@
         }
       }
     },
-    "/api/client/leaderboard/configs/{alias}/top": {
+    "/api/v1/client/leaderboard/configs/{alias}/top": {
       "get": {
         "tags": [
           "Leaderboard (Client)"
@@ -17571,7 +17571,7 @@
         }
       }
     },
-    "/api/client/leaderboard/configs/{alias}/neighbors": {
+    "/api/v1/client/leaderboard/configs/{alias}/neighbors": {
       "get": {
         "tags": [
           "Leaderboard (Client)"
@@ -17746,7 +17746,7 @@
         }
       }
     },
-    "/api/client/leaderboard/configs/{alias}/snapshots": {
+    "/api/v1/client/leaderboard/configs/{alias}/snapshots": {
       "get": {
         "tags": [
           "Leaderboard (Client)"
@@ -17896,7 +17896,7 @@
         }
       }
     },
-    "/api/client/rank/state": {
+    "/api/v1/client/rank/state": {
       "get": {
         "tags": [
           "Rank (Client)"
@@ -18057,7 +18057,7 @@
         }
       }
     },
-    "/api/client/rank/history": {
+    "/api/v1/client/rank/history": {
       "get": {
         "tags": [
           "Rank (Client)"
@@ -18348,7 +18348,7 @@
         }
       }
     },
-    "/api/client/rank/leaderboard": {
+    "/api/v1/client/rank/leaderboard": {
       "get": {
         "tags": [
           "Rank (Client)"
@@ -18612,7 +18612,7 @@
         }
       }
     },
-    "/api/client/activity/list": {
+    "/api/v1/client/activity/list": {
       "get": {
         "tags": [
           "Activity (Client)"
@@ -18764,7 +18764,7 @@
         }
       }
     },
-    "/api/client/activity/{alias}": {
+    "/api/v1/client/activity/{alias}": {
       "get": {
         "tags": [
           "Activity (Client)"
@@ -18915,7 +18915,7 @@
         }
       }
     },
-    "/api/client/activity/{alias}/join": {
+    "/api/v1/client/activity/{alias}/join": {
       "post": {
         "tags": [
           "Activity (Client)"
@@ -19066,7 +19066,7 @@
         }
       }
     },
-    "/api/client/assist-pool/instances": {
+    "/api/v1/client/assist-pool/instances": {
       "post": {
         "tags": [
           "Assist Pool (Client)"
@@ -19301,7 +19301,7 @@
         }
       }
     },
-    "/api/client/assist-pool/instances/{instanceId}": {
+    "/api/v1/client/assist-pool/instances/{instanceId}": {
       "get": {
         "tags": [
           "Assist Pool (Client)"
@@ -19423,7 +19423,7 @@
         }
       }
     },
-    "/api/client/assist-pool/instances/{instanceId}/contribute": {
+    "/api/v1/client/assist-pool/instances/{instanceId}/contribute": {
       "post": {
         "tags": [
           "Assist Pool (Client)"

@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the dialogue module.
  *
- * Mounted at /api/client/dialogue. Auth pattern:
+ * Mounted at /api/v1/client/dialogue. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,

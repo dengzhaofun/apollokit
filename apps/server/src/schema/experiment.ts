@@ -23,7 +23,7 @@ import { team } from "./auth";
  *
  * - Flow: tenant admin defines an experiment + variants (with traffic
  *   allocation summing to 100), starts it, then game clients call
- *   `POST /api/client/experiment/evaluate` per session. The service layer
+ *   `POST /api/v1/client/experiment/evaluate` per session. The service layer
  *   does deterministic SHA-256 hash bucketing on (experimentId, endUserId),
  *   persists the assignment to `experiment_assignments` via a single
  *   atomic upsert, and emits `experiment.exposure` exactly once per

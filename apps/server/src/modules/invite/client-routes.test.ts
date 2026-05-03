@@ -34,13 +34,13 @@ describe("invite client routes", () => {
   });
 
   test("401 without x-api-key", async () => {
-    const res = await app.request("/api/client/invite/my-code");
+    const res = await app.request("/api/v1/client/invite/my-code");
     expect(res.status).toBe(401);
   });
 
   test("400 on missing x-end-user-id header", async () => {
     const res = await app.request(
-      "/api/client/invite/my-code",
+      "/api/v1/client/invite/my-code",
       { headers: { "x-api-key": publishableKey } }, // no x-end-user-id
     );
     expect(res.status).toBe(400);
@@ -48,7 +48,7 @@ describe("invite client routes", () => {
 
   test("GET /my-code in devMode returns code", async () => {
     const res = await app.request(
-      "/api/client/invite/my-code",
+      "/api/v1/client/invite/my-code",
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "u1" } },
     );
     expect(res.status).toBe(200);
@@ -61,13 +61,13 @@ describe("invite client routes", () => {
   test("POST /bind in devMode returns relationship", async () => {
     // Get an inviter code first
     const codeRes = await app.request(
-      "/api/client/invite/my-code",
+      "/api/v1/client/invite/my-code",
       { headers: { "x-api-key": publishableKey, "x-end-user-id": "inviter-1" } },
     );
     const codeEnv = (await codeRes.json()) as { data: { code: string } };
     const code = codeEnv.data.code;
 
-    const bindRes = await app.request("/api/client/invite/bind", {
+    const bindRes = await app.request("/api/v1/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,
@@ -89,7 +89,7 @@ describe("invite client routes", () => {
   });
 
   test("POST /bind 400 on missing code", async () => {
-    const res = await app.request("/api/client/invite/bind", {
+    const res = await app.request("/api/v1/client/invite/bind", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,

@@ -86,7 +86,7 @@ const EMAIL_LOOKUP_PATHS = new Set([
 // 同样延迟到首次访问。
 function buildEndUserAuth() {
   return betterAuth({
-    basePath: "/api/client/auth",
+    basePath: "/api/v1/client/auth",
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {

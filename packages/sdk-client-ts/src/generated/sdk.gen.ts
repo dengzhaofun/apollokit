@@ -30,7 +30,7 @@ export class AnnouncementClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/announcement/active',
+            url: '/api/v1/client/announcement/active',
             ...options
         });
     }
@@ -46,7 +46,7 @@ export class AnnouncementClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/announcement/{alias}/impression',
+            url: '/api/v1/client/announcement/{alias}/impression',
             ...options
         });
     }
@@ -62,7 +62,7 @@ export class AnnouncementClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/announcement/{alias}/click',
+            url: '/api/v1/client/announcement/{alias}/click',
             ...options
         });
     }
@@ -81,7 +81,7 @@ export class BadgeClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/badge/tree',
+            url: '/api/v1/client/badge/tree',
             ...options
         });
     }
@@ -97,7 +97,7 @@ export class BadgeClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/badge/dismiss',
+            url: '/api/v1/client/badge/dismiss',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export class BadgeClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/badge/reset-session',
+            url: '/api/v1/client/badge/reset-session',
             ...options
         });
     }
@@ -136,7 +136,7 @@ export class BannerClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/banner/groups/{alias}',
+            url: '/api/v1/client/banner/groups/{alias}',
             ...options
         });
     }
@@ -155,7 +155,7 @@ export class BattlePassClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/battle-pass/current',
+            url: '/api/v1/client/battle-pass/current',
             ...options
         });
     }
@@ -171,7 +171,7 @@ export class BattlePassClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/battle-pass/{seasonId}/aggregate',
+            url: '/api/v1/client/battle-pass/{seasonId}/aggregate',
             ...options
         });
     }
@@ -187,7 +187,7 @@ export class BattlePassClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/battle-pass/{seasonId}/claim',
+            url: '/api/v1/client/battle-pass/{seasonId}/claim',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ export class BattlePassClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/battle-pass/{seasonId}/claim-all',
+            url: '/api/v1/client/battle-pass/{seasonId}/claim-all',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -230,7 +230,7 @@ export class CdKeyClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/cdkey/redeem',
+            url: '/api/v1/client/cdkey/redeem',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ export class CheckInClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/check-in/check-ins',
+            url: '/api/v1/client/check-in/check-ins',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -273,7 +273,7 @@ export class CheckInClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/check-in/state',
+            url: '/api/v1/client/check-in/state',
             ...options
         });
     }
@@ -292,7 +292,7 @@ export class OfflineCheckInClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/offline-check-in/campaigns/{key}',
+            url: '/api/v1/client/offline-check-in/campaigns/{key}',
             ...options
         });
     }
@@ -308,7 +308,7 @@ export class OfflineCheckInClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/offline-check-in/campaigns/{key}/me',
+            url: '/api/v1/client/offline-check-in/campaigns/{key}/me',
             ...options
         });
     }
@@ -324,7 +324,7 @@ export class OfflineCheckInClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/offline-check-in/campaigns/{key}/check-in',
+            url: '/api/v1/client/offline-check-in/campaigns/{key}/check-in',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -347,7 +347,7 @@ export class ExperimentClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/experiment/evaluate',
+            url: '/api/v1/client/experiment/evaluate',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -370,7 +370,7 @@ export class CmsClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/cms/by-alias/{typeAlias}/{entryAlias}',
+            url: '/api/v1/client/cms/by-alias/{typeAlias}/{entryAlias}',
             ...options
         });
     }
@@ -386,7 +386,7 @@ export class CmsClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/cms/group/{typeAlias}/{groupKey}',
+            url: '/api/v1/client/cms/group/{typeAlias}/{groupKey}',
             ...options
         });
     }
@@ -402,7 +402,7 @@ export class CmsClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/cms/tag/{tag}',
+            url: '/api/v1/client/cms/tag/{tag}',
             ...options
         });
     }
@@ -418,7 +418,7 @@ export class CmsClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/cms/list/{typeAlias}',
+            url: '/api/v1/client/cms/list/{typeAlias}',
             ...options
         });
     }
@@ -437,7 +437,7 @@ export class CollectionClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/collection/albums',
+            url: '/api/v1/client/collection/albums',
             ...options
         });
     }
@@ -453,7 +453,7 @@ export class CollectionClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/collection/albums/{key}',
+            url: '/api/v1/client/collection/albums/{key}',
             ...options
         });
     }
@@ -469,7 +469,7 @@ export class CollectionClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/collection/albums/{key}/sync',
+            url: '/api/v1/client/collection/albums/{key}/sync',
             ...options
         });
     }
@@ -485,7 +485,7 @@ export class CollectionClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/collection/milestones/{id}/claim',
+            url: '/api/v1/client/collection/milestones/{id}/claim',
             ...options
         });
     }
@@ -504,7 +504,7 @@ export class CurrencyClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/currency/wallets',
+            url: '/api/v1/client/currency/wallets',
             ...options
         });
     }
@@ -520,7 +520,7 @@ export class CurrencyClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/currency/balance/{key}',
+            url: '/api/v1/client/currency/balance/{key}',
             ...options
         });
     }
@@ -539,7 +539,7 @@ export class DialogueClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/dialogue/scripts/{alias}/start',
+            url: '/api/v1/client/dialogue/scripts/{alias}/start',
             ...options
         });
     }
@@ -555,7 +555,7 @@ export class DialogueClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/dialogue/scripts/{alias}/advance',
+            url: '/api/v1/client/dialogue/scripts/{alias}/advance',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -575,7 +575,7 @@ export class DialogueClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/dialogue/scripts/{alias}/reset',
+            url: '/api/v1/client/dialogue/scripts/{alias}/reset',
             ...options
         });
     }
@@ -594,7 +594,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances',
+            url: '/api/v1/client/entity/instances',
             ...options
         });
     }
@@ -610,7 +610,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}',
+            url: '/api/v1/client/entity/instances/{instanceId}',
             ...options
         });
     }
@@ -626,7 +626,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/acquire',
+            url: '/api/v1/client/entity/acquire',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -646,7 +646,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/discard',
+            url: '/api/v1/client/entity/instances/{instanceId}/discard',
             ...options
         });
     }
@@ -662,7 +662,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/lock',
+            url: '/api/v1/client/entity/instances/{instanceId}/lock',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -682,7 +682,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/add-exp',
+            url: '/api/v1/client/entity/instances/{instanceId}/add-exp',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -702,7 +702,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/level-up',
+            url: '/api/v1/client/entity/instances/{instanceId}/level-up',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -722,7 +722,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/rank-up',
+            url: '/api/v1/client/entity/instances/{instanceId}/rank-up',
             ...options
         });
     }
@@ -738,7 +738,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/synthesize',
+            url: '/api/v1/client/entity/instances/{instanceId}/synthesize',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -758,7 +758,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/equip',
+            url: '/api/v1/client/entity/instances/{instanceId}/equip',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -778,7 +778,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/unequip',
+            url: '/api/v1/client/entity/instances/{instanceId}/unequip',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -798,7 +798,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/instances/{instanceId}/change-skin',
+            url: '/api/v1/client/entity/instances/{instanceId}/change-skin',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -818,7 +818,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/formations/{configId}',
+            url: '/api/v1/client/entity/formations/{configId}',
             ...options
         });
     }
@@ -834,7 +834,7 @@ export class EntityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/entity/formations/{configId}/{formationIndex}',
+            url: '/api/v1/client/entity/formations/{configId}/{formationIndex}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -857,7 +857,7 @@ export class ItemClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/item/inventory',
+            url: '/api/v1/client/item/inventory',
             ...options
         });
     }
@@ -873,7 +873,7 @@ export class ItemClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/item/balance/{key}',
+            url: '/api/v1/client/item/balance/{key}',
             ...options
         });
     }
@@ -889,7 +889,7 @@ export class ItemClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/item/use',
+            url: '/api/v1/client/item/use',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -912,7 +912,7 @@ export class ExchangeClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/exchange/execute',
+            url: '/api/v1/client/exchange/execute',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -935,7 +935,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests',
+            url: '/api/v1/client/friend/requests',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -955,7 +955,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests/incoming',
+            url: '/api/v1/client/friend/requests/incoming',
             ...options
         });
     }
@@ -971,7 +971,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests/outgoing',
+            url: '/api/v1/client/friend/requests/outgoing',
             ...options
         });
     }
@@ -987,7 +987,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests/{id}/accept',
+            url: '/api/v1/client/friend/requests/{id}/accept',
             ...options
         });
     }
@@ -1003,7 +1003,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests/{id}/reject',
+            url: '/api/v1/client/friend/requests/{id}/reject',
             ...options
         });
     }
@@ -1019,7 +1019,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/requests/{id}/cancel',
+            url: '/api/v1/client/friend/requests/{id}/cancel',
             ...options
         });
     }
@@ -1035,7 +1035,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/friends',
+            url: '/api/v1/client/friend/friends',
             ...options
         });
     }
@@ -1051,7 +1051,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/friends/{id}',
+            url: '/api/v1/client/friend/friends/{id}',
             ...options
         });
     }
@@ -1067,7 +1067,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/friends/mutual',
+            url: '/api/v1/client/friend/friends/mutual',
             ...options
         });
     }
@@ -1083,7 +1083,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/blocks',
+            url: '/api/v1/client/friend/blocks',
             ...options
         });
     }
@@ -1099,7 +1099,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/blocks',
+            url: '/api/v1/client/friend/blocks',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1119,7 +1119,7 @@ export class FriendClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend/blocks/{blockedUserId}',
+            url: '/api/v1/client/friend/blocks/{blockedUserId}',
             ...options
         });
     }
@@ -1138,7 +1138,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/packages',
+            url: '/api/v1/client/friend-gift/packages',
             ...options
         });
     }
@@ -1154,7 +1154,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/send',
+            url: '/api/v1/client/friend-gift/send',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1174,7 +1174,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/inbox',
+            url: '/api/v1/client/friend-gift/inbox',
             ...options
         });
     }
@@ -1190,7 +1190,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/sent',
+            url: '/api/v1/client/friend-gift/sent',
             ...options
         });
     }
@@ -1206,7 +1206,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/sends/{id}/claim',
+            url: '/api/v1/client/friend-gift/sends/{id}/claim',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1226,7 +1226,7 @@ export class FriendGiftClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/friend-gift/daily-status',
+            url: '/api/v1/client/friend-gift/daily-status',
             ...options
         });
     }
@@ -1242,7 +1242,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/my-code',
+            url: '/api/v1/client/invite/my-code',
             ...options
         });
     }
@@ -1255,7 +1255,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/reset-my-code',
+            url: '/api/v1/client/invite/reset-my-code',
             ...options
         });
     }
@@ -1268,7 +1268,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/summary',
+            url: '/api/v1/client/invite/summary',
             ...options
         });
     }
@@ -1281,7 +1281,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/invitees',
+            url: '/api/v1/client/invite/invitees',
             ...options
         });
     }
@@ -1294,7 +1294,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/bind',
+            url: '/api/v1/client/invite/bind',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1311,7 +1311,7 @@ export class InviteClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/invite/qualify',
+            url: '/api/v1/client/invite/qualify',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1334,7 +1334,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds',
+            url: '/api/v1/client/guild/guilds',
             ...options
         });
     }
@@ -1350,7 +1350,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds',
+            url: '/api/v1/client/guild/guilds',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1370,7 +1370,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}',
+            url: '/api/v1/client/guild/guilds/{id}',
             ...options
         });
     }
@@ -1386,7 +1386,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}',
+            url: '/api/v1/client/guild/guilds/{id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1406,7 +1406,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/my-guild',
+            url: '/api/v1/client/guild/my-guild',
             ...options
         });
     }
@@ -1422,7 +1422,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/join',
+            url: '/api/v1/client/guild/guilds/{id}/join',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1442,7 +1442,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/leave',
+            url: '/api/v1/client/guild/guilds/{id}/leave',
             ...options
         });
     }
@@ -1458,7 +1458,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/disband',
+            url: '/api/v1/client/guild/guilds/{id}/disband',
             ...options
         });
     }
@@ -1474,7 +1474,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/requests',
+            url: '/api/v1/client/guild/guilds/{id}/requests',
             ...options
         });
     }
@@ -1490,7 +1490,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/requests/{id}/accept',
+            url: '/api/v1/client/guild/requests/{id}/accept',
             ...options
         });
     }
@@ -1506,7 +1506,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/requests/{id}/reject',
+            url: '/api/v1/client/guild/requests/{id}/reject',
             ...options
         });
     }
@@ -1522,7 +1522,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/invite',
+            url: '/api/v1/client/guild/guilds/{id}/invite',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1542,7 +1542,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/invitations/{id}/accept',
+            url: '/api/v1/client/guild/invitations/{id}/accept',
             ...options
         });
     }
@@ -1558,7 +1558,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/invitations/{id}/reject',
+            url: '/api/v1/client/guild/invitations/{id}/reject',
             ...options
         });
     }
@@ -1574,7 +1574,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/members/{userId}/promote',
+            url: '/api/v1/client/guild/guilds/{id}/members/{userId}/promote',
             ...options
         });
     }
@@ -1590,7 +1590,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/members/{userId}/demote',
+            url: '/api/v1/client/guild/guilds/{id}/members/{userId}/demote',
             ...options
         });
     }
@@ -1606,7 +1606,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/members/{userId}/kick',
+            url: '/api/v1/client/guild/guilds/{id}/members/{userId}/kick',
             ...options
         });
     }
@@ -1622,7 +1622,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/transfer-leader',
+            url: '/api/v1/client/guild/guilds/{id}/transfer-leader',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1642,7 +1642,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/contribute',
+            url: '/api/v1/client/guild/guilds/{id}/contribute',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1662,7 +1662,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/contributions',
+            url: '/api/v1/client/guild/guilds/{id}/contributions',
             ...options
         });
     }
@@ -1678,7 +1678,7 @@ export class GuildClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/guild/guilds/{id}/members',
+            url: '/api/v1/client/guild/guilds/{id}/members',
             ...options
         });
     }
@@ -1697,7 +1697,7 @@ export class LotteryClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/lottery/pull',
+            url: '/api/v1/client/lottery/pull',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1717,7 +1717,7 @@ export class LotteryClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/lottery/multi-pull',
+            url: '/api/v1/client/lottery/multi-pull',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1737,7 +1737,7 @@ export class LotteryClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/lottery/pools/{poolKey}/state',
+            url: '/api/v1/client/lottery/pools/{poolKey}/state',
             ...options
         });
     }
@@ -1753,7 +1753,7 @@ export class LotteryClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/lottery/pools/{poolKey}/history',
+            url: '/api/v1/client/lottery/pools/{poolKey}/history',
             ...options
         });
     }
@@ -1772,7 +1772,7 @@ export class MailClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/mail/messages',
+            url: '/api/v1/client/mail/messages',
             ...options
         });
     }
@@ -1788,7 +1788,7 @@ export class MailClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/mail/messages/{id}',
+            url: '/api/v1/client/mail/messages/{id}',
             ...options
         });
     }
@@ -1804,7 +1804,7 @@ export class MailClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/mail/messages/{id}/read',
+            url: '/api/v1/client/mail/messages/{id}/read',
             ...options
         });
     }
@@ -1820,7 +1820,7 @@ export class MailClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/mail/messages/{id}/claim',
+            url: '/api/v1/client/mail/messages/{id}/claim',
             ...options
         });
     }
@@ -1839,7 +1839,7 @@ export class ShopClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/shop/purchase',
+            url: '/api/v1/client/shop/purchase',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1859,7 +1859,7 @@ export class ShopClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/shop/claim-stage',
+            url: '/api/v1/client/shop/claim-stage',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1879,7 +1879,7 @@ export class ShopClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/shop/products',
+            url: '/api/v1/client/shop/products',
             ...options
         });
     }
@@ -1898,7 +1898,7 @@ export class TaskClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/task/events',
+            url: '/api/v1/client/task/events',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1918,7 +1918,7 @@ export class TaskClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/task/list',
+            url: '/api/v1/client/task/list',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1938,7 +1938,7 @@ export class TaskClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/task/claim/{taskId}',
+            url: '/api/v1/client/task/claim/{taskId}',
             ...options
         });
     }
@@ -1954,7 +1954,7 @@ export class TaskClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/task/claim-tier',
+            url: '/api/v1/client/task/claim-tier',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1977,7 +1977,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads',
+            url: '/api/v1/client/match-squad/squads',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -1997,7 +1997,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/my-squad',
+            url: '/api/v1/client/match-squad/my-squad',
             ...options
         });
     }
@@ -2013,7 +2013,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}',
+            url: '/api/v1/client/match-squad/squads/{id}',
             ...options
         });
     }
@@ -2029,7 +2029,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/join',
+            url: '/api/v1/client/match-squad/squads/{id}/join',
             ...options
         });
     }
@@ -2045,7 +2045,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/leave',
+            url: '/api/v1/client/match-squad/squads/{id}/leave',
             ...options
         });
     }
@@ -2061,7 +2061,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/dissolve',
+            url: '/api/v1/client/match-squad/squads/{id}/dissolve',
             ...options
         });
     }
@@ -2077,7 +2077,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/kick/{userId}',
+            url: '/api/v1/client/match-squad/squads/{id}/kick/{userId}',
             ...options
         });
     }
@@ -2093,7 +2093,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/transfer-leader',
+            url: '/api/v1/client/match-squad/squads/{id}/transfer-leader',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2113,7 +2113,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/status',
+            url: '/api/v1/client/match-squad/squads/{id}/status',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2133,7 +2133,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/squads/{id}/invite',
+            url: '/api/v1/client/match-squad/squads/{id}/invite',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2153,7 +2153,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/invitations/{id}/accept',
+            url: '/api/v1/client/match-squad/invitations/{id}/accept',
             ...options
         });
     }
@@ -2169,7 +2169,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/invitations/{id}/reject',
+            url: '/api/v1/client/match-squad/invitations/{id}/reject',
             ...options
         });
     }
@@ -2185,7 +2185,7 @@ export class MatchSquadClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/match-squad/quick-match',
+            url: '/api/v1/client/match-squad/quick-match',
             ...options
         });
     }
@@ -2204,7 +2204,7 @@ export class LevelClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/level/configs',
+            url: '/api/v1/client/level/configs',
             ...options
         });
     }
@@ -2220,7 +2220,7 @@ export class LevelClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/level/configs/{key}/overview',
+            url: '/api/v1/client/level/configs/{key}/overview',
             ...options
         });
     }
@@ -2236,7 +2236,7 @@ export class LevelClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/level/levels/{id}/detail',
+            url: '/api/v1/client/level/levels/{id}/detail',
             ...options
         });
     }
@@ -2252,7 +2252,7 @@ export class LevelClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/level/levels/{id}/clear',
+            url: '/api/v1/client/level/levels/{id}/clear',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2272,7 +2272,7 @@ export class LevelClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/level/levels/{id}/claim',
+            url: '/api/v1/client/level/levels/{id}/claim',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2295,7 +2295,7 @@ export class LeaderboardClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/leaderboard/configs/{alias}/top',
+            url: '/api/v1/client/leaderboard/configs/{alias}/top',
             ...options
         });
     }
@@ -2311,7 +2311,7 @@ export class LeaderboardClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/leaderboard/configs/{alias}/neighbors',
+            url: '/api/v1/client/leaderboard/configs/{alias}/neighbors',
             ...options
         });
     }
@@ -2327,7 +2327,7 @@ export class LeaderboardClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/leaderboard/configs/{alias}/snapshots',
+            url: '/api/v1/client/leaderboard/configs/{alias}/snapshots',
             ...options
         });
     }
@@ -2346,7 +2346,7 @@ export class RankClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/rank/state',
+            url: '/api/v1/client/rank/state',
             ...options
         });
     }
@@ -2362,7 +2362,7 @@ export class RankClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/rank/history',
+            url: '/api/v1/client/rank/history',
             ...options
         });
     }
@@ -2378,7 +2378,7 @@ export class RankClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/rank/leaderboard',
+            url: '/api/v1/client/rank/leaderboard',
             ...options
         });
     }
@@ -2397,7 +2397,7 @@ export class ActivityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/activity/list',
+            url: '/api/v1/client/activity/list',
             ...options
         });
     }
@@ -2413,7 +2413,7 @@ export class ActivityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/activity/{alias}',
+            url: '/api/v1/client/activity/{alias}',
             ...options
         });
     }
@@ -2429,7 +2429,7 @@ export class ActivityClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/activity/{alias}/join',
+            url: '/api/v1/client/activity/{alias}/join',
             ...options
         });
     }
@@ -2448,7 +2448,7 @@ export class AssistPoolClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/assist-pool/instances',
+            url: '/api/v1/client/assist-pool/instances',
             ...options
         });
     }
@@ -2464,7 +2464,7 @@ export class AssistPoolClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/assist-pool/instances',
+            url: '/api/v1/client/assist-pool/instances',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -2484,7 +2484,7 @@ export class AssistPoolClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/assist-pool/instances/{instanceId}',
+            url: '/api/v1/client/assist-pool/instances/{instanceId}',
             ...options
         });
     }
@@ -2500,7 +2500,7 @@ export class AssistPoolClientService {
                     type: 'apiKey'
                 }
             ],
-            url: '/api/client/assist-pool/instances/{instanceId}/contribute',
+            url: '/api/v1/client/assist-pool/instances/{instanceId}/contribute',
             ...options
         });
     }

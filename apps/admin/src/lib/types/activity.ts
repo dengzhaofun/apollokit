@@ -176,7 +176,7 @@ export interface ActivityMember {
   updatedAt: string
 }
 
-/** Lightweight row returned by the admin `/api/activity/{key}/members` list. */
+/** Lightweight row returned by the admin `/api/v1/activity/{key}/members` list. */
 export interface ActivityMemberListItem {
   endUserId: string
   status: ActivityMemberStatus

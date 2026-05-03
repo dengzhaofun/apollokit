@@ -1,7 +1,7 @@
 /**
  * Route-layer tests for the C-end client check-in routes.
  *
- * These exercise the HTTP surface under `/api/client/check-in/*`:
+ * These exercise the HTTP surface under `/api/v1/client/check-in/*`:
  * - requireClientCredential middleware (cpk_ validation, 401 rejection)
  * - requireClientUser middleware (header HMAC verification)
  * - Cross-auth rejection (session cookie or admin key on client route → 401)
@@ -65,7 +65,7 @@ async function setupFixture(): Promise<Fixture> {
   const adminUserId = userRows[0]!.id;
 
   // Create a check-in config via admin route
-  const cfgRes = await app.request("/api/check-in/configs", {
+  const cfgRes = await app.request("/api/v1/check-in/configs", {
     method: "POST",
     headers: { "content-type": "application/json", cookie },
     body: JSON.stringify({
@@ -99,7 +99,7 @@ describe("client check-in routes", () => {
   beforeAll(async () => {
     fx = await setupFixture();
     // Fetch configs to find our alias
-    const cfgListRes = await app.request("/api/check-in/configs", {
+    const cfgListRes = await app.request("/api/v1/check-in/configs", {
       headers: { cookie: fx.cookie },
     });
     const listEnv = (await cfgListRes.json()) as {
@@ -119,8 +119,8 @@ describe("client check-in routes", () => {
   // Middleware: requireClientCredential
   // -------------------------------------------------------------------
 
-  test("POST /api/client/check-in/check-ins without x-api-key → 401", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+  test("POST /api/v1/client/check-in/check-ins without x-api-key → 401", async () => {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ configKey: "x" }),
@@ -129,7 +129,7 @@ describe("client check-in routes", () => {
   });
 
   test("session cookie on client route → 401 (no cpk_ header)", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: fx.cookie },
       body: JSON.stringify({ configKey: "x" }),
@@ -138,7 +138,7 @@ describe("client check-in routes", () => {
   });
 
   test("non-cpk_ key on client route → 401", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -154,7 +154,7 @@ describe("client check-in routes", () => {
   // -------------------------------------------------------------------
 
   test("missing x-end-user-id header → 400", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -169,7 +169,7 @@ describe("client check-in routes", () => {
     const endUserId = "client-user-1";
     const hash = await computeHmac(endUserId, fx.secret);
 
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -190,7 +190,7 @@ describe("client check-in routes", () => {
   });
 
   test("valid cpk_ + wrong HMAC header → 401", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -204,7 +204,7 @@ describe("client check-in routes", () => {
   });
 
   test("valid cpk_ + missing HMAC header → 401", async () => {
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -225,7 +225,7 @@ describe("client check-in routes", () => {
     const hash = await computeHmac(endUserId, fx.secret);
 
     const res = await app.request(
-      `/api/client/check-in/state?configKey=${configAlias}`,
+      `/api/v1/client/check-in/state?configKey=${configAlias}`,
       {
         headers: {
           "x-api-key": fx.publishableKey,
@@ -245,7 +245,7 @@ describe("client check-in routes", () => {
 
   test("GET state without HMAC → 401", async () => {
     const res = await app.request(
-      `/api/client/check-in/state?configKey=${configAlias}`,
+      `/api/v1/client/check-in/state?configKey=${configAlias}`,
       {
         headers: {
           "x-api-key": fx.publishableKey,
@@ -266,7 +266,7 @@ describe("client check-in routes", () => {
     const cred = creds.find((c) => c.publishableKey === fx.publishableKey)!;
     await credSvc.updateDevMode(fx.tenantId, cred.id, true);
 
-    const res = await app.request("/api/client/check-in/check-ins", {
+    const res = await app.request("/api/v1/client/check-in/check-ins", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -284,8 +284,8 @@ describe("client check-in routes", () => {
   // Cross-auth: client credential on admin route → 401
   // -------------------------------------------------------------------
 
-  test("cpk_ on admin route /api/check-in/configs → 401", async () => {
-    const res = await app.request("/api/check-in/configs", {
+  test("cpk_ on admin route /api/v1/check-in/configs → 401", async () => {
+    const res = await app.request("/api/v1/check-in/configs", {
       headers: { "x-api-key": fx.publishableKey },
     });
     expect(res.status).toBe(401);

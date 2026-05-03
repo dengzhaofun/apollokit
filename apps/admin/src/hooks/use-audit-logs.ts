@@ -103,7 +103,7 @@ export function useAuditLogs(route: any, filterDefs: FilterDef[]) {
     filterDefs,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<AuditLog>>(
-        `/api/audit-logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/audit-logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -111,14 +111,14 @@ export function useAuditLogs(route: any, filterDefs: FilterDef[]) {
 export function useAuditLogResourceTypes() {
   return useQuery({
     queryKey: [...KEY, "resource-types"],
-    queryFn: () => api.get<{ items: string[] }>(`/api/audit-logs/resource-types`),
+    queryFn: () => api.get<{ items: string[] }>(`/api/v1/audit-logs/resource-types`),
   })
 }
 
 export function useAuditLog(id: string | undefined) {
   return useQuery({
     queryKey: [...KEY, "one", id ?? ""],
-    queryFn: () => api.get<AuditLog>(`/api/audit-logs/${encodeURIComponent(id ?? "")}`),
+    queryFn: () => api.get<AuditLog>(`/api/v1/audit-logs/${encodeURIComponent(id ?? "")}`),
     enabled: !!id,
   })
 }

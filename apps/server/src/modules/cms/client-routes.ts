@@ -1,7 +1,7 @@
 /**
  * Client-facing CMS routes.
  *
- * Mounted at `/api/client/cms`. Auth: `requireClientCredential` only —
+ * Mounted at `/api/v1/client/cms`. Auth: `requireClientCredential` only —
  * a `cpk_…` API key is enough to identify the org. We deliberately skip
  * `requireClientUser` because CMS content is org-scoped, not per-end-user;
  * forcing every reader to have an end-user HMAC is friction without

@@ -1,7 +1,7 @@
 /**
  * 审计日志列表页 —— 跨所有模块的横切视图。
  *
- * 数据走 `useAuditLogs` → server `GET /api/audit-logs`。所有 URL state
+ * 数据走 `useAuditLogs` → server `GET /api/v1/audit-logs`。所有 URL state
  * （cursor / pageSize / search / filter / advanced AST）由 `useListSearch`
  * 接管，刷新 / 分享 / 浏览器后退都自动还原。
  */

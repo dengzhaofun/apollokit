@@ -51,7 +51,7 @@ export type ClientCredentialContext = {
  *
  * - `session` — the player is logged in via the end-user Better Auth
  *   instance; `c.var.endUserId` came from the cookie/bearer session.
- * - `hmac` — the player was synced in via `POST /api/users/sync` (or is
+ * - `hmac` — the player was synced in via `POST /api/v1/users/sync` (or is
  *   still pre-sync) and the game client signs `endUserId` with the
  *   tenant's `csk_`.
  *

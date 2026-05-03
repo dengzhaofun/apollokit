@@ -1,7 +1,7 @@
 /**
  * Admin routes for the offline-check-in module.
  *
- * Mounted at `/api/offline-check-in/*` in src/index.ts. All routes require
+ * Mounted at `/api/v1/offline-check-in/*` in src/index.ts. All routes require
  * an admin session OR an admin API key (`ak_`); end-user (cpk_) routes
  * live in `client-routes.ts`.
  */

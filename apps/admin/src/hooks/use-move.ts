@@ -41,28 +41,28 @@ function makeMoveHook(opts: {
 // ─── Currency ─────────────────────────────────────────────────────────
 
 export const useMoveCurrency = makeMoveHook({
-  endpoint: (key) => `/api/currency/definitions/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/currency/definitions/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["currency"] }),
 })
 
 // ─── Item ─────────────────────────────────────────────────────────────
 
 export const useMoveItemCategory = makeMoveHook({
-  endpoint: (key) => `/api/item/categories/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/item/categories/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["item-categories"] }),
 })
 
 // ─── Storage box ──────────────────────────────────────────────────────
 
 export const useMoveStorageBoxConfig = makeMoveHook({
-  endpoint: (id) => `/api/storage-box/configs/${id}/move`,
+  endpoint: (id) => `/api/v1/storage-box/configs/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["storage-box"] }),
 })
 
 // ─── Friend gift ──────────────────────────────────────────────────────
 
 export const useMoveFriendGiftPackage = makeMoveHook({
-  endpoint: (id) => `/api/friend-gift/packages/${id}/move`,
+  endpoint: (id) => `/api/v1/friend-gift/packages/${id}/move`,
   invalidate: (qc) =>
     qc.invalidateQueries({ queryKey: ["friend-gift-packages"] }),
 })
@@ -70,55 +70,55 @@ export const useMoveFriendGiftPackage = makeMoveHook({
 // ─── Exchange ─────────────────────────────────────────────────────────
 
 export const useMoveExchangeOption = makeMoveHook({
-  endpoint: (id) => `/api/exchange/options/${id}/move`,
+  endpoint: (id) => `/api/v1/exchange/options/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["exchange-options"] }),
 })
 
 // ─── Badge ────────────────────────────────────────────────────────────
 
 export const useMoveBadgeNode = makeMoveHook({
-  endpoint: (id) => `/api/badge/nodes/${id}/move`,
+  endpoint: (id) => `/api/v1/badge/nodes/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["badge"] }),
 })
 
 // ─── Entity ───────────────────────────────────────────────────────────
 
 export const useMoveEntitySchema = makeMoveHook({
-  endpoint: (key) => `/api/entity/schemas/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/entity/schemas/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["entity-schemas"] }),
 })
 
 export const useMoveEntityBlueprint = makeMoveHook({
   endpoint: (key) =>
-    `/api/entity/blueprints/${encodeURIComponent(key)}/move`,
+    `/api/v1/entity/blueprints/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["entity-blueprints"] }),
 })
 
 export const useMoveEntitySkin = makeMoveHook({
-  endpoint: (id) => `/api/entity/skins/${id}/move`,
+  endpoint: (id) => `/api/v1/entity/skins/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["entity-skins"] }),
 })
 
 // ─── Collection ───────────────────────────────────────────────────────
 
 export const useMoveCollectionAlbum = makeMoveHook({
-  endpoint: (key) => `/api/collection/albums/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/collection/albums/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["collection-albums"] }),
 })
 
 export const useMoveCollectionGroup = makeMoveHook({
-  endpoint: (id) => `/api/collection/groups/${id}/move`,
+  endpoint: (id) => `/api/v1/collection/groups/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["collection-groups"] }),
 })
 
 export const useMoveCollectionEntry = makeMoveHook({
-  endpoint: (id) => `/api/collection/entries/${id}/move`,
+  endpoint: (id) => `/api/v1/collection/entries/${id}/move`,
   invalidate: (qc) =>
     qc.invalidateQueries({ queryKey: ["collection-entries"] }),
 })
 
 export const useMoveCollectionMilestone = makeMoveHook({
-  endpoint: (id) => `/api/collection/milestones/${id}/move`,
+  endpoint: (id) => `/api/v1/collection/milestones/${id}/move`,
   invalidate: (qc) =>
     qc.invalidateQueries({ queryKey: ["collection-milestones"] }),
 })
@@ -126,51 +126,51 @@ export const useMoveCollectionMilestone = makeMoveHook({
 // ─── Level ────────────────────────────────────────────────────────────
 
 export const useMoveLevelConfig = makeMoveHook({
-  endpoint: (key) => `/api/level/configs/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/level/configs/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["level-configs"] }),
 })
 
 export const useMoveLevelStage = makeMoveHook({
-  endpoint: (id) => `/api/level/stages/${id}/move`,
+  endpoint: (id) => `/api/v1/level/stages/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["level-stages"] }),
 })
 
 export const useMoveLevel = makeMoveHook({
-  endpoint: (id) => `/api/level/levels/${id}/move`,
+  endpoint: (id) => `/api/v1/level/levels/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["levels"] }),
 })
 
 // ─── Lottery ──────────────────────────────────────────────────────────
 
 export const useMoveLotteryTier = makeMoveHook({
-  endpoint: (id) => `/api/lottery/tiers/${id}/move`,
+  endpoint: (id) => `/api/v1/lottery/tiers/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["lottery-tiers"] }),
 })
 
 export const useMoveLotteryPrize = makeMoveHook({
-  endpoint: (id) => `/api/lottery/prizes/${id}/move`,
+  endpoint: (id) => `/api/v1/lottery/prizes/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["lottery-prizes"] }),
 })
 
 // ─── Shop ─────────────────────────────────────────────────────────────
 
 export const useMoveShopCategory = makeMoveHook({
-  endpoint: (key) => `/api/shop/categories/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/shop/categories/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["shop-categories"] }),
 })
 
 export const useMoveShopTag = makeMoveHook({
-  endpoint: (key) => `/api/shop/tags/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/shop/tags/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["shop-tags"] }),
 })
 
 export const useMoveShopProduct = makeMoveHook({
-  endpoint: (key) => `/api/shop/products/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/shop/products/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["shop-products"] }),
 })
 
 export const useMoveShopGrowthStage = makeMoveHook({
-  endpoint: (id) => `/api/shop/stages/${id}/move`,
+  endpoint: (id) => `/api/v1/shop/stages/${id}/move`,
   invalidate: (qc) =>
     qc.invalidateQueries({ queryKey: ["shop-growth-stages"] }),
 })
@@ -178,11 +178,11 @@ export const useMoveShopGrowthStage = makeMoveHook({
 // ─── Task ─────────────────────────────────────────────────────────────
 
 export const useMoveTaskCategory = makeMoveHook({
-  endpoint: (id) => `/api/task/categories/${id}/move`,
+  endpoint: (id) => `/api/v1/task/categories/${id}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["task-categories"] }),
 })
 
 export const useMoveTaskDefinition = makeMoveHook({
-  endpoint: (key) => `/api/task/definitions/${encodeURIComponent(key)}/move`,
+  endpoint: (key) => `/api/v1/task/definitions/${encodeURIComponent(key)}/move`,
   invalidate: (qc) => qc.invalidateQueries({ queryKey: ["task-definitions"] }),
 })

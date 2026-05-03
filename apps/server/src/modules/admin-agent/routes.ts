@@ -42,7 +42,7 @@ import { isAdminSurface, type ChatRequestBody } from "./types";
 export const adminAgentRouter = new Hono<HonoEnv>();
 adminAgentRouter.use("*", requireAuth);
 
-// /api/ai/admin/mentions/* — type registry + entity search for the @-mention popover.
+// /api/v1/ai/admin/mentions/* — type registry + entity search for the @-mention popover.
 adminAgentRouter.route("/mentions", mentionsRouter);
 
 adminAgentRouter.post("/chat", async (c) => {

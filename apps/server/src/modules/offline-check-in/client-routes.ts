@@ -1,7 +1,7 @@
 /**
  * Client routes for the offline-check-in module.
  *
- * Mounted at `/api/client/offline-check-in/*`. Auth pattern matches the
+ * Mounted at `/api/v1/client/offline-check-in/*`. Auth pattern matches the
  * other client modules (invite / check-in):
  *   requireClientCredential — validates `cpk_…` x-api-key, populates orgId
  *   requireClientUser       — validates x-end-user-id + x-user-hash HMAC

@@ -39,7 +39,7 @@ export function useCheckInConfigs(
     filterDefs: CHECK_IN_CONFIG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CheckInConfig>>(
-        `/api/check-in/configs?${buildQs({
+        `/api/v1/check-in/configs?${buildQs({
           cursor,
           limit,
           q,
@@ -62,7 +62,7 @@ export function useAllCheckInConfigs(
     queryFn: () =>
       api
         .get<Page<CheckInConfig>>(
-          `/api/check-in/configs?${buildQs({
+          `/api/v1/check-in/configs?${buildQs({
             limit: 200,
             activityId,
             includeActivity: includeActivity ? "true" : undefined,
@@ -75,7 +75,7 @@ export function useAllCheckInConfigs(
 export function useCheckInConfig(key: string) {
   return useQuery({
     queryKey: [...CONFIGS_KEY, key],
-    queryFn: () => api.get<CheckInConfig>(`/api/check-in/configs/${key}`),
+    queryFn: () => api.get<CheckInConfig>(`/api/v1/check-in/configs/${key}`),
     enabled: !!key,
   })
 }
@@ -91,7 +91,7 @@ export function useCheckInUserStates(configKey: string, route: any) {
     filterDefs: CHECK_IN_USER_STATE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CheckInUserState>>(
-        `/api/check-in/configs/${configKey}/users?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/check-in/configs/${configKey}/users?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!configKey,
   })
@@ -101,7 +101,7 @@ export function useCreateCheckInConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateConfigInput) =>
-      api.post<CheckInConfig>("/api/check-in/configs", input),
+      api.post<CheckInConfig>("/api/v1/check-in/configs", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -110,7 +110,7 @@ export function useUpdateCheckInConfig() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateConfigInput & { id: string }) =>
-      api.patch<CheckInConfig>(`/api/check-in/configs/${id}`, input),
+      api.patch<CheckInConfig>(`/api/v1/check-in/configs/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
@@ -120,7 +120,7 @@ export function usePerformCheckIn() {
   return useMutation({
     mutationFn: ({ configKey, endUserId }: { configKey: string; endUserId: string }) =>
       api.post<CheckInResult>(
-        `/api/check-in/configs/${configKey}/check-ins`,
+        `/api/v1/check-in/configs/${configKey}/check-ins`,
         { endUserId },
       ),
     onSuccess: (_data, variables) =>
@@ -131,7 +131,7 @@ export function usePerformCheckIn() {
 export function useDeleteCheckInConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/check-in/configs/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/check-in/configs/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }

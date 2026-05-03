@@ -191,17 +191,17 @@ describe("requirePermission — four-role matrix", () => {
   // --- read business module: every role passes ---
 
   for (const role of ["admin", "operator", "viewer", "member"] as const) {
-    test(`${role}: GET /api/check-in/configs → 200 (read allowed)`, async () => {
+    test(`${role}: GET /api/v1/check-in/configs → 200 (read allowed)`, async () => {
       await setSubjectRole(role);
-      const res = await app.request("/api/check-in/configs", {
+      const res = await app.request("/api/v1/check-in/configs", {
         headers: { cookie: subjectCookie },
       });
       expect(res.status).toBe(200);
     });
   }
 
-  test("owner: GET /api/check-in/configs → 200 (read allowed)", async () => {
-    const res = await app.request("/api/check-in/configs", {
+  test("owner: GET /api/v1/check-in/configs → 200 (read allowed)", async () => {
+    const res = await app.request("/api/v1/check-in/configs", {
       headers: { cookie: ownerCookie },
     });
     expect(res.status).toBe(200);
@@ -210,10 +210,10 @@ describe("requirePermission — four-role matrix", () => {
   // --- write business module: viewer denied, others allowed ---
 
   for (const role of ["admin", "operator", "member"] as const) {
-    test(`${role}: POST /api/check-in/configs → 201 (write allowed)`, async () => {
+    test(`${role}: POST /api/v1/check-in/configs → 201 (write allowed)`, async () => {
       await setSubjectRole(role);
       const stamp = Math.random().toString(36).slice(2, 8);
-      const res = await app.request("/api/check-in/configs", {
+      const res = await app.request("/api/v1/check-in/configs", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -230,9 +230,9 @@ describe("requirePermission — four-role matrix", () => {
     });
   }
 
-  test("viewer: POST /api/check-in/configs → 403 (write denied)", async () => {
+  test("viewer: POST /api/v1/check-in/configs → 403 (write denied)", async () => {
     await setSubjectRole("viewer");
-    const res = await app.request("/api/check-in/configs", {
+    const res = await app.request("/api/v1/check-in/configs", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -252,25 +252,25 @@ describe("requirePermission — four-role matrix", () => {
 
   // --- audit-log: only owner/admin can read ---
 
-  test("owner: GET /api/audit-logs → 200", async () => {
-    const res = await app.request("/api/audit-logs", {
+  test("owner: GET /api/v1/audit-logs → 200", async () => {
+    const res = await app.request("/api/v1/audit-logs", {
       headers: { cookie: ownerCookie },
     });
     expect(res.status).toBe(200);
   });
 
-  test("admin: GET /api/audit-logs → 200", async () => {
+  test("admin: GET /api/v1/audit-logs → 200", async () => {
     await setSubjectRole("admin");
-    const res = await app.request("/api/audit-logs", {
+    const res = await app.request("/api/v1/audit-logs", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);
   });
 
   for (const role of ["operator", "viewer", "member"] as const) {
-    test(`${role}: GET /api/audit-logs → 403`, async () => {
+    test(`${role}: GET /api/v1/audit-logs → 403`, async () => {
       await setSubjectRole(role);
-      const res = await app.request("/api/audit-logs", {
+      const res = await app.request("/api/v1/audit-logs", {
         headers: { cookie: subjectCookie },
       });
       expect(res.status).toBe(403);
@@ -279,9 +279,9 @@ describe("requirePermission — four-role matrix", () => {
 
   // --- /me/capabilities: shape sanity check per role ---
 
-  test("operator: GET /api/me/capabilities → bag has checkIn read+write but no auditLog", async () => {
+  test("operator: GET /api/v1/me/capabilities → bag has checkIn read+write but no auditLog", async () => {
     await setSubjectRole("operator");
-    const res = await app.request("/api/me/capabilities", {
+    const res = await app.request("/api/v1/me/capabilities", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);
@@ -295,9 +295,9 @@ describe("requirePermission — four-role matrix", () => {
     expect(body.data.capabilities.auditLog).toBeUndefined();
   });
 
-  test("viewer: GET /api/me/capabilities → bag has read only, no auditLog", async () => {
+  test("viewer: GET /api/v1/me/capabilities → bag has read only, no auditLog", async () => {
     await setSubjectRole("viewer");
-    const res = await app.request("/api/me/capabilities", {
+    const res = await app.request("/api/v1/me/capabilities", {
       headers: { cookie: subjectCookie },
     });
     expect(res.status).toBe(200);

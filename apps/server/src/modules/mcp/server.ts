@@ -16,7 +16,7 @@
  * model exactly; do NOT try to cache the server across requests.
  *
  * **What the server exposes:** every tool registered here is callable
- * by any MCP client connecting to `/api/mcp` with a valid admin API
+ * by any MCP client connecting to `/api/v1/mcp` with a valid admin API
  * key. Tools should be written with the assumption that the caller is
  * an LLM or a small wrapper around one — descriptions matter.
  */

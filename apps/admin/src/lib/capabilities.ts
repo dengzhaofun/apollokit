@@ -1,7 +1,7 @@
 /**
  * Client-side mirror of the server's capability bag.
  *
- * The bag itself is fetched from `/api/me/capabilities` (see
+ * The bag itself is fetched from `/api/v1/me/capabilities` (see
  * `apps/server/src/routes/me.ts`), which returns the resolved
  * (resource → action[]) map for the current user in the active org.
  *
@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import { api } from "./api-client"
 
-/** Shape returned by `/api/me/capabilities`. */
+/** Shape returned by `/api/v1/me/capabilities`. */
 export type CapabilityBag = {
   /** Comma-separated role string from member.role. null for admin-api-key auth. */
   role: string | null
@@ -49,7 +49,7 @@ export function useCapabilities(
 ) {
   return useQuery<CapabilityBag>({
     queryKey: capabilitiesQueryKey(orgId),
-    queryFn: () => api.get<CapabilityBag>("/api/me/capabilities"),
+    queryFn: () => api.get<CapabilityBag>("/api/v1/me/capabilities"),
     enabled: options.enabled ?? Boolean(orgId),
     staleTime: Infinity,
     // Do not retry on 401/403 — those mean "no session" or "wrong org".

@@ -37,7 +37,7 @@ const statsKey = (albumKey: string) =>
 export function useCollectionAlbums() {
   return useQuery({
     queryKey: ALBUMS_KEY,
-    queryFn: () => api.get<AlbumListResponse>("/api/collection/albums"),
+    queryFn: () => api.get<AlbumListResponse>("/api/v1/collection/albums"),
     select: (data) => data.items,
   })
 }
@@ -46,7 +46,7 @@ export function useCollectionAlbum(key: string) {
   return useQuery({
     queryKey: albumKey(key),
     queryFn: () =>
-      api.get<CollectionAlbum>(`/api/collection/albums/${key}`),
+      api.get<CollectionAlbum>(`/api/v1/collection/albums/${key}`),
     enabled: !!key,
   })
 }
@@ -55,7 +55,7 @@ export function useCreateCollectionAlbum() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateAlbumInput) =>
-      api.post<CollectionAlbum>("/api/collection/albums", input),
+      api.post<CollectionAlbum>("/api/v1/collection/albums", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ALBUMS_KEY }),
   })
 }
@@ -64,7 +64,7 @@ export function useUpdateCollectionAlbum() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateAlbumInput }) =>
-      api.patch<CollectionAlbum>(`/api/collection/albums/${id}`, input),
+      api.patch<CollectionAlbum>(`/api/v1/collection/albums/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: ALBUMS_KEY })
       qc.invalidateQueries({ queryKey: albumKey(vars.id) })
@@ -75,7 +75,7 @@ export function useUpdateCollectionAlbum() {
 export function useDeleteCollectionAlbum() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/collection/albums/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/collection/albums/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ALBUMS_KEY }),
   })
 }
@@ -87,7 +87,7 @@ export function useCollectionGroups(albumKeyStr: string) {
     queryKey: groupsKey(albumKeyStr),
     queryFn: () =>
       api.get<GroupListResponse>(
-        `/api/collection/albums/${albumKeyStr}/groups`,
+        `/api/v1/collection/albums/${albumKeyStr}/groups`,
       ),
     select: (data) => data.items,
     enabled: !!albumKeyStr,
@@ -105,7 +105,7 @@ export function useCreateCollectionGroup() {
       input: CreateGroupInput
     }) =>
       api.post<CollectionGroup>(
-        `/api/collection/albums/${albumKey}/groups`,
+        `/api/v1/collection/albums/${albumKey}/groups`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -124,7 +124,7 @@ export function useUpdateCollectionGroup() {
       id: string
       albumKey: string
       input: UpdateGroupInput
-    }) => api.patch<CollectionGroup>(`/api/collection/groups/${id}`, input),
+    }) => api.patch<CollectionGroup>(`/api/v1/collection/groups/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: groupsKey(vars.albumKey) })
     },
@@ -135,7 +135,7 @@ export function useDeleteCollectionGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; albumKey: string }) =>
-      api.delete(`/api/collection/groups/${id}`),
+      api.delete(`/api/v1/collection/groups/${id}`),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: groupsKey(vars.albumKey) })
       qc.invalidateQueries({ queryKey: entriesKey(vars.albumKey) })
@@ -150,7 +150,7 @@ export function useCollectionEntries(albumKeyStr: string) {
     queryKey: entriesKey(albumKeyStr),
     queryFn: () =>
       api.get<EntryListResponse>(
-        `/api/collection/albums/${albumKeyStr}/entries`,
+        `/api/v1/collection/albums/${albumKeyStr}/entries`,
       ),
     select: (data) => data.items,
     enabled: !!albumKeyStr,
@@ -168,7 +168,7 @@ export function useCreateCollectionEntry() {
       input: CreateEntryInput
     }) =>
       api.post<CollectionEntry>(
-        `/api/collection/albums/${albumKey}/entries`,
+        `/api/v1/collection/albums/${albumKey}/entries`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -188,7 +188,7 @@ export function useUpdateCollectionEntry() {
       albumKey: string
       input: UpdateEntryInput
     }) =>
-      api.patch<CollectionEntry>(`/api/collection/entries/${id}`, input),
+      api.patch<CollectionEntry>(`/api/v1/collection/entries/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: entriesKey(vars.albumKey) })
     },
@@ -199,7 +199,7 @@ export function useDeleteCollectionEntry() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; albumKey: string }) =>
-      api.delete(`/api/collection/entries/${id}`),
+      api.delete(`/api/v1/collection/entries/${id}`),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: entriesKey(vars.albumKey) })
     },
@@ -213,7 +213,7 @@ export function useCollectionMilestones(albumKeyStr: string) {
     queryKey: milestonesKey(albumKeyStr),
     queryFn: () =>
       api.get<MilestoneListResponse>(
-        `/api/collection/albums/${albumKeyStr}/milestones`,
+        `/api/v1/collection/albums/${albumKeyStr}/milestones`,
       ),
     select: (data) => data.items,
     enabled: !!albumKeyStr,
@@ -231,7 +231,7 @@ export function useCreateCollectionMilestone() {
       input: CreateMilestoneInput
     }) =>
       api.post<CollectionMilestone>(
-        `/api/collection/albums/${albumKey}/milestones`,
+        `/api/v1/collection/albums/${albumKey}/milestones`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -252,7 +252,7 @@ export function useUpdateCollectionMilestone() {
       input: UpdateMilestoneInput
     }) =>
       api.patch<CollectionMilestone>(
-        `/api/collection/milestones/${id}`,
+        `/api/v1/collection/milestones/${id}`,
         input,
       ),
     onSuccess: (_row, vars) => {
@@ -265,7 +265,7 @@ export function useDeleteCollectionMilestone() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; albumKey: string }) =>
-      api.delete(`/api/collection/milestones/${id}`),
+      api.delete(`/api/v1/collection/milestones/${id}`),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: milestonesKey(vars.albumKey) })
     },
@@ -279,7 +279,7 @@ export function useCollectionStats(albumKeyStr: string) {
     queryKey: statsKey(albumKeyStr),
     queryFn: () =>
       api.get<CollectionStats>(
-        `/api/collection/albums/${albumKeyStr}/stats`,
+        `/api/v1/collection/albums/${albumKeyStr}/stats`,
       ),
     enabled: !!albumKeyStr,
   })
@@ -296,7 +296,7 @@ export function useCollectionRescan() {
       endUserId: string
     }) =>
       api.post<{ unlocked: string[] }>(
-        `/api/collection/albums/${albumKey}/rescan`,
+        `/api/v1/collection/albums/${albumKey}/rescan`,
         { endUserId },
       ),
     onSuccess: (_row, vars) => {

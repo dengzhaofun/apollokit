@@ -1,7 +1,7 @@
 /**
  * MCP HTTP endpoint.
  *
- * Exposes `/api/mcp` as a Streamable HTTP MCP transport (the 2025-03
+ * Exposes `/api/v1/mcp` as a Streamable HTTP MCP transport (the 2025-03
  * spec — single endpoint, request/response per JSON-RPC message, no
  * long-lived SSE). This is the right transport for Cloudflare Workers:
  * stateless, no keep-alive, no per-connection memory.

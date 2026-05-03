@@ -1,7 +1,7 @@
 /**
  * Event catalog admin routes.
  *
- * Mounted at `/api/event-catalog`. Guarded by `requireAdminOrApiKey` —
+ * Mounted at `/api/v1/event-catalog`. Guarded by `requireAdminOrApiKey` —
  * consistent with the task admin surface. Exposes the merged
  * internal-registry + external-DB view, plus a PATCH to upgrade an
  * external event to canonical.

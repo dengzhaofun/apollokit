@@ -39,16 +39,16 @@ interface ListResponse {
 }
 
 const RESOURCE_ENDPOINT: Partial<Record<NodeType, string>> = {
-  check_in: "/api/check-in/configs",
-  task_group: "/api/task/definitions",
-  lottery: "/api/lottery/pools",
-  leaderboard: "/api/leaderboard/configs",
-  banner: "/api/banner/groups",
-  exchange: "/api/shop/products",
-  assist_pool: "/api/assist-pool/configs",
-  entity_blueprint: "/api/entity/blueprints",
-  item_definition: "/api/item/definitions",
-  currency_definition: "/api/currency/definitions",
+  check_in: "/api/v1/check-in/configs",
+  task_group: "/api/v1/task/definitions",
+  lottery: "/api/v1/lottery/pools",
+  leaderboard: "/api/v1/leaderboard/configs",
+  banner: "/api/v1/banner/groups",
+  exchange: "/api/v1/shop/products",
+  assist_pool: "/api/v1/assist-pool/configs",
+  entity_blueprint: "/api/v1/entity/blueprints",
+  item_definition: "/api/v1/item/definitions",
+  currency_definition: "/api/v1/currency/definitions",
 }
 
 interface Props {

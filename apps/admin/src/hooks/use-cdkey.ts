@@ -30,7 +30,7 @@ export function useCdkeyBatches(route: any) {
     filterDefs: CDKEY_BATCH_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyBatch>>(
-        `/api/cdkey/batches?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/cdkey/batches?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
   })
 }
@@ -38,7 +38,7 @@ export function useCdkeyBatches(route: any) {
 export function useCdkeyBatch(key: string) {
   return useQuery({
     queryKey: [...BATCHES_KEY, key],
-    queryFn: () => api.get<CdkeyBatch>(`/api/cdkey/batches/${key}`),
+    queryFn: () => api.get<CdkeyBatch>(`/api/v1/cdkey/batches/${key}`),
     enabled: !!key,
   })
 }
@@ -47,7 +47,7 @@ export function useCreateCdkeyBatch() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateBatchInput) =>
-      api.post<CdkeyBatch>("/api/cdkey/batches", input),
+      api.post<CdkeyBatch>("/api/v1/cdkey/batches", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: BATCHES_KEY }),
   })
 }
@@ -56,7 +56,7 @@ export function useUpdateCdkeyBatch() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ key, ...input }: UpdateBatchInput & { key: string }) =>
-      api.patch<CdkeyBatch>(`/api/cdkey/batches/${key}`, input),
+      api.patch<CdkeyBatch>(`/api/v1/cdkey/batches/${key}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: BATCHES_KEY }),
   })
 }
@@ -64,7 +64,7 @@ export function useUpdateCdkeyBatch() {
 export function useDeleteCdkeyBatch() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (key: string) => api.delete(`/api/cdkey/batches/${key}`),
+    mutationFn: (key: string) => api.delete(`/api/v1/cdkey/batches/${key}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: BATCHES_KEY }),
   })
 }
@@ -94,7 +94,7 @@ export function useCdkeyCodes(batchId: string, route: any) {
     filterDefs: CDKEY_CODE_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyCode>>(
-        `/api/cdkey/batches/${batchId}/codes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/cdkey/batches/${batchId}/codes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!batchId,
   })
@@ -105,7 +105,7 @@ export function useGenerateCdkeyCodes() {
   return useMutation({
     mutationFn: ({ batchId, count }: { batchId: string; count: number }) =>
       api.post<{ generated: number }>(
-        `/api/cdkey/batches/${batchId}/codes/generate`,
+        `/api/v1/cdkey/batches/${batchId}/codes/generate`,
         { count },
       ),
     onSuccess: (_, vars) => {
@@ -119,7 +119,7 @@ export function useRevokeCdkeyCode() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (codeId: string) =>
-      api.patch<CdkeyCode>(`/api/cdkey/codes/${codeId}/revoke`),
+      api.patch<CdkeyCode>(`/api/v1/cdkey/codes/${codeId}/revoke`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cdkey-codes"] }),
   })
 }
@@ -147,7 +147,7 @@ export function useCdkeyLogs(batchId: string, route: any) {
     filterDefs: CDKEY_LOG_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyRedemptionLog>>(
-        `/api/cdkey/batches/${batchId}/logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/cdkey/batches/${batchId}/logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!batchId,
   })

@@ -1,14 +1,14 @@
 /**
  * C-end client routes for the rank module.
  *
- * Mounted at /api/client/rank. These are consumed directly by the tenant's
+ * Mounted at /api/v1/client/rank. These are consumed directly by the tenant's
  * END USERS (game clients), not by their backend server.
  *
  *   requireClientCredential — validates x-api-key (cpk_...)
  *   requireClientUser       — verifies x-end-user-id + x-user-hash HMAC
  *
  * READ-ONLY by design. Match settlement happens server-to-server via the
- * admin `POST /api/rank/settle` endpoint, because letting a game client
+ * admin `POST /api/v1/rank/settle` endpoint, because letting a game client
  * self-report a match result opens an obvious "claim every match as a win"
  * cheat path. The endpoints here only let a player:
  *   - query their own current standing (`/state`)

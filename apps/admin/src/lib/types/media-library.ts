@@ -26,7 +26,7 @@ export interface MediaAsset {
   checksum: string | null
   /**
    * Resolved public URL assembled by the server based on
-   * MEDIA_PUBLIC_URL_BASE. May be a relative path (`/api/media-library/
+   * MEDIA_PUBLIC_URL_BASE. May be a relative path (`/api/v1/media-library/
    * object/...`) when no CDN is configured — those are loaded
    * same-origin (admin forwards `/api/*` to the server worker).
    */

@@ -57,7 +57,7 @@ export function useCurrencies(route: any) {
     filterDefs: CURRENCY_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CurrencyDefinition>>(
-        `/api/currency/definitions?${buildQs({
+        `/api/v1/currency/definitions?${buildQs({
           cursor,
           limit,
           q,
@@ -79,7 +79,7 @@ export function useAllCurrencies(
     queryFn: () =>
       api
         .get<Page<CurrencyDefinition>>(
-          `/api/currency/definitions?${buildQs({
+          `/api/v1/currency/definitions?${buildQs({
             limit: 200,
             activityId: activityId === null ? "" : activityId,
             isActive: isActive == null ? undefined : isActive ? "true" : "false",
@@ -93,7 +93,7 @@ export function useCurrency(key: string) {
   return useQuery({
     queryKey: [...DEFINITIONS_KEY, key],
     queryFn: () =>
-      api.get<CurrencyDefinition>(`/api/currency/definitions/${key}`),
+      api.get<CurrencyDefinition>(`/api/v1/currency/definitions/${key}`),
     enabled: !!key,
   })
 }
@@ -102,7 +102,7 @@ export function useCreateCurrency() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateCurrencyInput) =>
-      api.post<CurrencyDefinition>("/api/currency/definitions", input),
+      api.post<CurrencyDefinition>("/api/v1/currency/definitions", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -111,7 +111,7 @@ export function useUpdateCurrency() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateCurrencyInput & { id: string }) =>
-      api.patch<CurrencyDefinition>(`/api/currency/definitions/${id}`, input),
+      api.patch<CurrencyDefinition>(`/api/v1/currency/definitions/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -119,7 +119,7 @@ export function useUpdateCurrency() {
 export function useDeleteCurrency() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/currency/definitions/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/currency/definitions/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: DEFINITIONS_KEY }),
   })
 }
@@ -131,7 +131,7 @@ export function useUserWallets(endUserId: string) {
     queryKey: [...WALLETS_KEY, endUserId],
     queryFn: () =>
       api.get<{ items: WalletView[] }>(
-        `/api/currency/wallets?endUserId=${encodeURIComponent(endUserId)}`,
+        `/api/v1/currency/wallets?endUserId=${encodeURIComponent(endUserId)}`,
       ),
     select: (data) => data.items,
     enabled: !!endUserId,
@@ -143,7 +143,7 @@ export function useUserBalance(endUserId: string, currencyId: string) {
     queryKey: [...WALLETS_KEY, endUserId, currencyId],
     queryFn: () =>
       api.get<CurrencyBalance>(
-        `/api/currency/wallets/${encodeURIComponent(endUserId)}/${currencyId}`,
+        `/api/v1/currency/wallets/${encodeURIComponent(endUserId)}/${currencyId}`,
       ),
     enabled: !!endUserId && !!currencyId,
   })
@@ -155,7 +155,7 @@ export function useGrantCurrency() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: GrantCurrencyInput) =>
-      api.post<GrantCurrencyResult>("/api/currency/wallets/grant", input),
+      api.post<GrantCurrencyResult>("/api/v1/currency/wallets/grant", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: WALLETS_KEY })
       qc.invalidateQueries({ queryKey: LEDGER_KEY })
@@ -167,7 +167,7 @@ export function useDeductCurrency() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: DeductCurrencyInput) =>
-      api.post<DeductCurrencyResult>("/api/currency/wallets/deduct", input),
+      api.post<DeductCurrencyResult>("/api/v1/currency/wallets/deduct", input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: WALLETS_KEY })
       qc.invalidateQueries({ queryKey: LEDGER_KEY })
@@ -188,6 +188,6 @@ export function useCurrencyLedger(filter: LedgerQuery = {}) {
   const qs = params.toString() ? `?${params.toString()}` : ""
   return useQuery({
     queryKey: [...LEDGER_KEY, qs],
-    queryFn: () => api.get<LedgerPage>(`/api/currency/ledger${qs}`),
+    queryFn: () => api.get<LedgerPage>(`/api/v1/currency/ledger${qs}`),
   })
 }

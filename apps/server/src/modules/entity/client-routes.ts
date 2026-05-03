@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the entity module.
  *
- * Mounted at /api/client/entity. Auth pattern:
+ * Mounted at /api/v1/client/entity. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,

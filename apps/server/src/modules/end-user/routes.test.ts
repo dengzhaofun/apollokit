@@ -96,12 +96,12 @@ describe("end-user admin routes", () => {
   });
 
   test("401 without cookie on GET /", async () => {
-    const res = await app.request("/api/end-user");
+    const res = await app.request("/api/v1/end-user");
     expect(res.status).toBe(401);
   });
 
   test("401 without cookie on POST /sync", async () => {
-    const res = await app.request("/api/end-user/sync", {
+    const res = await app.request("/api/v1/end-user/sync", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email: "x@x.com", name: "x" }),
@@ -110,7 +110,7 @@ describe("end-user admin routes", () => {
   });
 
   test("POST /sync → 201 on create", async () => {
-    const res = await app.request("/api/end-user/sync", {
+    const res = await app.request("/api/v1/end-user/sync", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -126,7 +126,7 @@ describe("end-user admin routes", () => {
   });
 
   test("POST /sync → 200 on merge", async () => {
-    const res = await app.request("/api/end-user/sync", {
+    const res = await app.request("/api/v1/end-user/sync", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({
@@ -141,7 +141,7 @@ describe("end-user admin routes", () => {
   });
 
   test("POST /sync → 400 on invalid body", async () => {
-    const res = await app.request("/api/end-user/sync", {
+    const res = await app.request("/api/v1/end-user/sync", {
       method: "POST",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({ email: "not-an-email", name: "x" }),
@@ -150,7 +150,7 @@ describe("end-user admin routes", () => {
   });
 
   test("GET / → happy path with unscoped email", async () => {
-    const res = await app.request("/api/end-user?limit=50", {
+    const res = await app.request("/api/v1/end-user?limit=50", {
       headers: { cookie: fx.cookie },
     });
     expect(res.status).toBe(200);
@@ -164,19 +164,19 @@ describe("end-user admin routes", () => {
   });
 
   test("GET /:id → 200 for valid, 404 for unknown", async () => {
-    const ok = await app.request(`/api/end-user/${seededUserId}`, {
+    const ok = await app.request(`/api/v1/end-user/${seededUserId}`, {
       headers: { cookie: fx.cookie },
     });
     expect(ok.status).toBe(200);
 
-    const notFound = await app.request("/api/end-user/does-not-exist", {
+    const notFound = await app.request("/api/v1/end-user/does-not-exist", {
       headers: { cookie: fx.cookie },
     });
     expect(notFound.status).toBe(404);
   });
 
   test("PATCH /:id updates name", async () => {
-    const res = await app.request(`/api/end-user/${seededUserId}`, {
+    const res = await app.request(`/api/v1/end-user/${seededUserId}`, {
       method: "PATCH",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({ name: "Patched Name" }),
@@ -187,7 +187,7 @@ describe("end-user admin routes", () => {
   });
 
   test("PATCH /:id → 400 on empty body", async () => {
-    const res = await app.request(`/api/end-user/${seededUserId}`, {
+    const res = await app.request(`/api/v1/end-user/${seededUserId}`, {
       method: "PATCH",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({}),
@@ -197,14 +197,14 @@ describe("end-user admin routes", () => {
 
   test("POST /:id/disable → disabled:true, /enable → disabled:false", async () => {
     const dis = await app.request(
-      `/api/end-user/${seededUserId}/disable`,
+      `/api/v1/end-user/${seededUserId}/disable`,
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(dis.status).toBe(200);
     const disData = await expectOk<{ disabled: boolean }>(dis);
     expect(disData.disabled).toBe(true);
 
-    const en = await app.request(`/api/end-user/${seededUserId}/enable`, {
+    const en = await app.request(`/api/v1/end-user/${seededUserId}/enable`, {
       method: "POST",
       headers: { cookie: fx.cookie },
     });
@@ -215,7 +215,7 @@ describe("end-user admin routes", () => {
 
   test("POST /:id/sign-out-all → 200", async () => {
     const res = await app.request(
-      `/api/end-user/${seededUserId}/sign-out-all`,
+      `/api/v1/end-user/${seededUserId}/sign-out-all`,
       { method: "POST", headers: { cookie: fx.cookie } },
     );
     expect(res.status).toBe(200);
@@ -229,7 +229,7 @@ describe("end-user admin routes", () => {
       email: "delete-me@example.com",
       name: "Delete Me",
     });
-    const del = await app.request(`/api/end-user/${created.euUserId}`, {
+    const del = await app.request(`/api/v1/end-user/${created.euUserId}`, {
       method: "DELETE",
       headers: { cookie: fx.cookie },
     });
@@ -237,7 +237,7 @@ describe("end-user admin routes", () => {
     const delData = await expectOk<null>(del);
     expect(delData).toBeNull();
 
-    const check = await app.request(`/api/end-user/${created.euUserId}`, {
+    const check = await app.request(`/api/v1/end-user/${created.euUserId}`, {
       headers: { cookie: fx.cookie },
     });
     expect(check.status).toBe(404);

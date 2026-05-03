@@ -11,7 +11,7 @@
  *
  * Companion to `require-permission.ts` (team-level / project-scoped).
  * Use `requireOrgPermission` for routes that act on the company itself
- * (e.g. /api/org/billing, /api/org/members) — NOT for routes that
+ * (e.g. /api/v1/org/billing, /api/v1/org/members) — NOT for routes that
  * scope into a single project.
  *
  * Short-circuits on `admin-api-key` auth: api keys are project-scoped

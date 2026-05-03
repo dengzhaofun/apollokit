@@ -14,7 +14,7 @@ import { team } from "./auth";
  * 外部事件 catalog —— 实际定位是"**task 消费的外部事件目录**"。
  *
  * 这张表里的事件生命周期:
- *   1. 游戏服务端通过 `POST /api/client/task/events` 上报
+ *   1. 游戏服务端通过 `POST /api/v1/client/task/events` 上报
  *   2. `taskService.processEvent` 拿 eventData 累加 task 进度
  *   3. 同步写这张表做字段推断(schema 记录给 admin 看),`status='inferred'`
  *   4. admin 可以 PATCH 把描述 / 字段补完,升级为 `status='canonical'`

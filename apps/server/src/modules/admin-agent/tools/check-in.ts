@@ -15,7 +15,7 @@ import { CreateConfigSchema } from "../../check-in/validators";
  * Client-side tool — no `execute`. The model emits the structured input,
  * the frontend shows it in a confirmation card, and the user clicks
  * "Apply" to write it into the TanStack Form. The server NEVER persists
- * the config from here; persistence still goes through `POST /api/check-in/configs`.
+ * the config from here; persistence still goes through `POST /api/v1/check-in/configs`.
  */
 export const applyCheckInConfig = tool({
   description:

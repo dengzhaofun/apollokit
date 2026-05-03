@@ -53,7 +53,7 @@ export function useOfflineCheckInCampaigns(
     filterDefs: OFFLINE_CHECKIN_CAMPAIGN_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<OfflineCheckInCampaign>>(
-        `/api/offline-check-in/campaigns?${buildQs({
+        `/api/v1/offline-check-in/campaigns?${buildQs({
           cursor,
           limit,
           q,
@@ -69,7 +69,7 @@ export function useOfflineCheckInCampaign(key: string) {
   return useQuery({
     queryKey: [...CAMPAIGNS_KEY, key],
     queryFn: () =>
-      api.get<OfflineCheckInCampaign>(`/api/offline-check-in/campaigns/${key}`),
+      api.get<OfflineCheckInCampaign>(`/api/v1/offline-check-in/campaigns/${key}`),
     enabled: !!key,
   })
 }
@@ -79,7 +79,7 @@ export function useCreateOfflineCheckInCampaign() {
   return useMutation({
     mutationFn: (input: CreateCampaignInput) =>
       api.post<OfflineCheckInCampaign>(
-        "/api/offline-check-in/campaigns",
+        "/api/v1/offline-check-in/campaigns",
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: CAMPAIGNS_KEY }),
@@ -91,7 +91,7 @@ export function useUpdateOfflineCheckInCampaign() {
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateCampaignInput & { id: string }) =>
       api.patch<OfflineCheckInCampaign>(
-        `/api/offline-check-in/campaigns/${id}`,
+        `/api/v1/offline-check-in/campaigns/${id}`,
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: CAMPAIGNS_KEY }),
@@ -102,7 +102,7 @@ export function useDeleteOfflineCheckInCampaign() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      api.delete(`/api/offline-check-in/campaigns/${id}`),
+      api.delete(`/api/v1/offline-check-in/campaigns/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: CAMPAIGNS_KEY }),
   })
 }
@@ -118,7 +118,7 @@ export function useOfflineCheckInSpots(campaignKey: string) {
     queryFn: () =>
       api
         .get<{ items: OfflineCheckInSpot[] }>(
-          `/api/offline-check-in/campaigns/${campaignKey}/spots`,
+          `/api/v1/offline-check-in/campaigns/${campaignKey}/spots`,
         )
         .then((r) => r.items),
     enabled: !!campaignKey,
@@ -130,7 +130,7 @@ export function useCreateOfflineCheckInSpot(campaignKey: string) {
   return useMutation({
     mutationFn: (input: CreateSpotInput) =>
       api.post<OfflineCheckInSpot>(
-        `/api/offline-check-in/campaigns/${campaignKey}/spots`,
+        `/api/v1/offline-check-in/campaigns/${campaignKey}/spots`,
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: spotsKey(campaignKey) }),
@@ -142,7 +142,7 @@ export function useUpdateOfflineCheckInSpot(campaignKey: string) {
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateSpotInput & { id: string }) =>
       api.patch<OfflineCheckInSpot>(
-        `/api/offline-check-in/spots/${id}`,
+        `/api/v1/offline-check-in/spots/${id}`,
         input,
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: spotsKey(campaignKey) }),
@@ -152,7 +152,7 @@ export function useUpdateOfflineCheckInSpot(campaignKey: string) {
 export function useDeleteOfflineCheckInSpot(campaignKey: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/offline-check-in/spots/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/offline-check-in/spots/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: spotsKey(campaignKey) }),
   })
 }
@@ -171,7 +171,7 @@ export function useMintQrTokens() {
       ttlSeconds: number
     }) =>
       api.post<MintQrTokensResponse>(
-        `/api/offline-check-in/spots/${spotId}/qr-tokens`,
+        `/api/v1/offline-check-in/spots/${spotId}/qr-tokens`,
         { count, ttlSeconds },
       ),
   })
@@ -181,7 +181,7 @@ export function useRotateManualCode() {
   return useMutation({
     mutationFn: (spotId: string) =>
       api.post<ManualCodeResponse>(
-        `/api/offline-check-in/spots/${spotId}/manual-code:rotate`,
+        `/api/v1/offline-check-in/spots/${spotId}/manual-code:rotate`,
         {},
       ),
   })
@@ -203,7 +203,7 @@ export function useOfflineCheckInProgress(
     filterDefs: [],
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<OfflineCheckInProgress>>(
-        `/api/offline-check-in/campaigns/${campaignKey}/progress?${buildQs({
+        `/api/v1/offline-check-in/campaigns/${campaignKey}/progress?${buildQs({
           cursor,
           limit,
           q,
@@ -230,7 +230,7 @@ export function useAdminPerformOfflineCheckIn(campaignKey: string) {
       deviceFingerprint?: string
     }) =>
       api.post<OfflineCheckInResult>(
-        `/api/offline-check-in/campaigns/${campaignKey}/check-ins`,
+        `/api/v1/offline-check-in/campaigns/${campaignKey}/check-ins`,
         input,
       ),
     onSuccess: () =>

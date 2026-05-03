@@ -1,8 +1,8 @@
 /**
  * Split the full OpenAPI spec into admin and client specs.
  *
- * Admin spec: all paths NOT starting with /api/client/
- * Client spec: only paths starting with /api/client/
+ * Admin spec: all paths NOT starting with /api/v1/client/
+ * Client spec: only paths starting with /api/v1/client/
  *
  * Each output spec includes only the schemas transitively referenced by
  * its paths. `components.securitySchemes` is copied from the source and
@@ -265,7 +265,7 @@ function main(): void {
   // if it does it's filtered out the same way.
   const adminSpec = splitSpec(
     full,
-    (path) => !path.startsWith("/api/client/"),
+    (path) => !path.startsWith("/api/v1/client/"),
     "apollokit Admin API",
     new Set(["AdminApiKey"]),
   );
@@ -273,7 +273,7 @@ function main(): void {
   // Client spec — keep only `ClientCredential`.
   const clientSpec = splitSpec(
     full,
-    (path) => path.startsWith("/api/client/"),
+    (path) => path.startsWith("/api/v1/client/"),
     "apollokit Client API",
     new Set(["ClientCredential"]),
   );

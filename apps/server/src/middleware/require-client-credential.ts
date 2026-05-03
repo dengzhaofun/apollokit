@@ -14,7 +14,7 @@
  * service.verifyRequest() with the full (publishableKey, endUserId, userHash).
  *
  * Mount per-router, not globally (one exception: it's mounted on
- * `/api/client/auth/*` in `src/index.ts` so end-user-auth routes can
+ * `/api/v1/client/auth/*` in `src/index.ts` so end-user-auth routes can
  * resolve the org). Throws `ModuleError` subclasses so the global
  * `app.onError` emits the standard envelope.
  */

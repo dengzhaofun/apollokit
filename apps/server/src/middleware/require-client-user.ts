@@ -5,7 +5,7 @@
  *
  *   Channel A — Managed (Better Auth session)
  *   ------------------------------------------
- *   The player logged in via `/api/client/auth/sign-in/email` and we
+ *   The player logged in via `/api/v1/client/auth/sign-in/email` and we
  *   recognize a session cookie / bearer token from the end-user Better
  *   Auth instance. We pull `c.var.endUserId` from `session.userId`.
  *   The session row also carries `tenantId` (populated in
@@ -19,14 +19,14 @@
  *   passes `x-end-user-id` + `x-user-hash`; we verify HMAC against
  *   the decrypted `csk_`. This is the path for players the tenant
  *   owns in their own user system and either pushed to us via
- *   `POST /api/users/sync` or hasn't synced at all.
+ *   `POST /api/v1/users/sync` or hasn't synced at all.
  *
  * Downstream business handlers see a single contract: `c.var.endUserId`
  * is a non-empty string, `c.var.clientCredential.tenantId` is the
  * tenant. They don't need to care which channel resolved it.
  *
  * Must be mounted AFTER `requireClientCredential` — depends on
- * `c.var.clientCredential`. Auth routes themselves (`/api/client/auth/*`)
+ * `c.var.clientCredential`. Auth routes themselves (`/api/v1/client/auth/*`)
  * do NOT mount this middleware — they're the thing that *produces*
  * the end-user identity.
  *

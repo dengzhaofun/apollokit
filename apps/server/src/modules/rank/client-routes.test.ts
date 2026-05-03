@@ -74,21 +74,21 @@ describe("rank client routes", () => {
 
   test("401 without x-api-key", async () => {
     const res = await app.request(
-      "/api/client/rank/state?tierConfigAlias=client_cfg",
+      "/api/v1/client/rank/state?tierConfigAlias=client_cfg",
     );
     expect(res.status).toBe(401);
   });
 
   test("400 without x-end-user-id header", async () => {
     const res = await app.request(
-      "/api/client/rank/state?tierConfigAlias=client_cfg",
+      "/api/v1/client/rank/state?tierConfigAlias=client_cfg",
       { headers: { "x-api-key": publishableKey } },
     );
     expect(res.status).toBe(400);
   });
 
   test("400 when locator missing (no tierConfigAlias nor seasonId)", async () => {
-    const res = await app.request("/api/client/rank/state", {
+    const res = await app.request("/api/v1/client/rank/state", {
       headers: {
         "x-api-key": publishableKey,
         "x-end-user-id": "player-x",
@@ -99,7 +99,7 @@ describe("rank client routes", () => {
 
   test("GET /state returns player view", async () => {
     const res = await app.request(
-      "/api/client/rank/state?tierConfigAlias=client_cfg",
+      "/api/v1/client/rank/state?tierConfigAlias=client_cfg",
       {
         headers: {
           "x-api-key": publishableKey,
@@ -122,7 +122,7 @@ describe("rank client routes", () => {
 
   test("GET /history returns caller's participant rows", async () => {
     const res = await app.request(
-      `/api/client/rank/history?seasonId=${seasonId}`,
+      `/api/v1/client/rank/history?seasonId=${seasonId}`,
       {
         headers: {
           "x-api-key": publishableKey,
@@ -144,7 +144,7 @@ describe("rank client routes", () => {
 
   test("GET /leaderboard (global, no tierId) returns rankings array", async () => {
     const res = await app.request(
-      `/api/client/rank/leaderboard?seasonId=${seasonId}`,
+      `/api/v1/client/rank/leaderboard?seasonId=${seasonId}`,
       {
         headers: {
           "x-api-key": publishableKey,
@@ -165,7 +165,7 @@ describe("rank client routes", () => {
   });
 
   test("client router does NOT expose POST /settle (cheat-path guard)", async () => {
-    const res = await app.request("/api/client/rank/settle", {
+    const res = await app.request("/api/v1/client/rank/settle", {
       method: "POST",
       headers: {
         "x-api-key": publishableKey,

@@ -2,7 +2,7 @@ import * as React from "react"
 
 import type { MentionType } from "./mention-types"
 
-const TYPES_ENDPOINT = "/api/ai/admin/mentions/types"
+const TYPES_ENDPOINT = "/api/v1/ai/admin/mentions/types"
 
 /**
  * Module-level cache: the registry rarely changes during a tab's

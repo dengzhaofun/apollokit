@@ -45,7 +45,7 @@ export function useBannerGroups(
     filterDefs: BANNER_GROUP_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<BannerGroup>>(
-        `/api/banner/groups?${buildQs({
+        `/api/v1/banner/groups?${buildQs({
           cursor,
           limit,
           q,
@@ -68,7 +68,7 @@ export function useAllBannerGroups(
     queryFn: () =>
       api
         .get<Page<BannerGroup>>(
-          `/api/banner/groups?${buildQs({
+          `/api/v1/banner/groups?${buildQs({
             limit: 200,
             activityId,
             includeActivity: includeActivity ? "true" : undefined,
@@ -81,7 +81,7 @@ export function useAllBannerGroups(
 export function useBannerGroup(id: string) {
   return useQuery({
     queryKey: [...GROUPS_KEY, id],
-    queryFn: () => api.get<BannerGroup>(`/api/banner/groups/${id}`),
+    queryFn: () => api.get<BannerGroup>(`/api/v1/banner/groups/${id}`),
     enabled: !!id,
   })
 }
@@ -90,7 +90,7 @@ export function useCreateBannerGroup() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateBannerGroupInput) =>
-      api.post<BannerGroup>("/api/banner/groups", input),
+      api.post<BannerGroup>("/api/v1/banner/groups", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: GROUPS_KEY }),
   })
 }
@@ -104,7 +104,7 @@ export function useUpdateBannerGroup() {
     }: {
       id: string
       input: UpdateBannerGroupInput
-    }) => api.patch<BannerGroup>(`/api/banner/groups/${id}`, input),
+    }) => api.patch<BannerGroup>(`/api/v1/banner/groups/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: GROUPS_KEY }),
   })
 }
@@ -112,7 +112,7 @@ export function useUpdateBannerGroup() {
 export function useDeleteBannerGroup() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/banner/groups/${id}`),
+    mutationFn: (id: string) => api.delete(`/api/v1/banner/groups/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: GROUPS_KEY }),
   })
 }
@@ -130,7 +130,7 @@ export function useBanners(groupId: string, route: any) {
     filterDefs: BANNER_FILTER_DEFS,
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Banner>>(
-        `/api/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q, adv, ...filters })}`,
+        `/api/v1/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q, adv, ...filters })}`,
       ),
     enabled: !!groupId,
   })
@@ -143,7 +143,7 @@ export function useAllBanners(groupId: string) {
     queryFn: () =>
       api
         .get<Page<Banner>>(
-          `/api/banner/groups/${groupId}/banners?${buildQs({ limit: 200 })}`,
+          `/api/v1/banner/groups/${groupId}/banners?${buildQs({ limit: 200 })}`,
         )
         .then((p) => p.items),
     enabled: !!groupId,
@@ -153,7 +153,7 @@ export function useAllBanners(groupId: string) {
 export function useBanner(id: string) {
   return useQuery({
     queryKey: ["banner", id],
-    queryFn: () => api.get<Banner>(`/api/banner/banners/${id}`),
+    queryFn: () => api.get<Banner>(`/api/v1/banner/banners/${id}`),
     enabled: !!id,
   })
 }
@@ -168,7 +168,7 @@ export function useCreateBanner() {
       groupId: string
       input: CreateBannerInput
     }) =>
-      api.post<Banner>(`/api/banner/groups/${groupId}/banners`, input),
+      api.post<Banner>(`/api/v1/banner/groups/${groupId}/banners`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) })
     },
@@ -185,7 +185,7 @@ export function useUpdateBanner() {
       id: string
       groupId: string
       input: UpdateBannerInput
-    }) => api.patch<Banner>(`/api/banner/banners/${id}`, input),
+    }) => api.patch<Banner>(`/api/v1/banner/banners/${id}`, input),
     onSuccess: (_row, vars) => {
       qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) })
       qc.invalidateQueries({ queryKey: ["banner", vars.id] })
@@ -197,7 +197,7 @@ export function useDeleteBanner() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; groupId: string }) =>
-      api.delete(`/api/banner/banners/${id}`),
+      api.delete(`/api/v1/banner/banners/${id}`),
     onSuccess: (_row, vars) =>
       qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) }),
   })
@@ -214,7 +214,7 @@ export function useReorderBanners() {
       bannerIds: string[]
     }) =>
       api.post<BannerListResponse>(
-        `/api/banner/groups/${groupId}/banners/reorder`,
+        `/api/v1/banner/groups/${groupId}/banners/reorder`,
         { bannerIds },
       ),
     onSuccess: (_row, vars) =>
@@ -234,7 +234,7 @@ export function useMoveBanner() {
       id: string
       groupId: string
       body: MoveBody
-    }) => api.post(`/api/banner/banners/${id}/move`, body),
+    }) => api.post(`/api/v1/banner/banners/${id}/move`, body),
     onSuccess: (_row, vars) =>
       qc.invalidateQueries({ queryKey: bannersKey(vars.groupId) }),
   })

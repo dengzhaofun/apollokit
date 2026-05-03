@@ -26,7 +26,7 @@ function row(orgId: string, overrides: Partial<AuditLogInsert> = {}): AuditLogIn
     resourceLabel: null,
     action: "update",
     method: "PATCH",
-    path: "/api/check-in/configs/abc",
+    path: "/api/v1/check-in/configs/abc",
     status: 200,
     traceId: null,
     ip: null,
@@ -55,7 +55,7 @@ describe("audit-log service — list / get / cursor", () => {
         ts: new Date(base + 1000),
         action: "create",
         method: "POST",
-        path: "/api/cdkey/batches",
+        path: "/api/v1/cdkey/batches",
         resourceType: "cdkey.batch",
         resourceId: "b1",
         resourceLabel: "summer-promo",
@@ -64,7 +64,7 @@ describe("audit-log service — list / get / cursor", () => {
         ts: new Date(base + 2000),
         action: "update",
         method: "PATCH",
-        path: "/api/cdkey/batches/b1",
+        path: "/api/v1/cdkey/batches/b1",
         resourceType: "cdkey.batch",
         resourceId: "b1",
       }),
@@ -75,7 +75,7 @@ describe("audit-log service — list / get / cursor", () => {
         actorLabel: "admin-api-key",
         action: "delete",
         method: "DELETE",
-        path: "/api/shop/items/it1",
+        path: "/api/v1/shop/items/it1",
         resourceType: "module:shop",
         resourceId: "it1",
       }),
@@ -83,14 +83,14 @@ describe("audit-log service — list / get / cursor", () => {
         ts: new Date(base + 4000),
         action: "create",
         method: "POST",
-        path: "/api/check-in/configs",
+        path: "/api/v1/check-in/configs",
         resourceType: "module:check-in",
       }),
       row(orgId, {
         ts: new Date(base + 5000),
         action: "update",
         method: "PUT",
-        path: "/api/check-in/configs/abc",
+        path: "/api/v1/check-in/configs/abc",
       }),
     ]);
 
@@ -110,8 +110,8 @@ describe("audit-log service — list / get / cursor", () => {
     const page = await svc.list(orgId, {});
     expect(page.items).toHaveLength(5);
     // Newest first
-    expect(page.items[0]?.path).toBe("/api/check-in/configs/abc");
-    expect(page.items[4]?.path).toBe("/api/cdkey/batches");
+    expect(page.items[0]?.path).toBe("/api/v1/check-in/configs/abc");
+    expect(page.items[4]?.path).toBe("/api/v1/cdkey/batches");
   });
 
   test("list isolates by organization (no leakage)", async () => {
@@ -123,7 +123,7 @@ describe("audit-log service — list / get / cursor", () => {
   test("filter by actorType=admin-api-key narrows correctly", async () => {
     const page = await svc.list(orgId, { actorType: "admin-api-key" });
     expect(page.items).toHaveLength(1);
-    expect(page.items[0]?.path).toBe("/api/shop/items/it1");
+    expect(page.items[0]?.path).toBe("/api/v1/shop/items/it1");
   });
 
   test("filter by resourceType=cdkey.batch returns only batch rows", async () => {

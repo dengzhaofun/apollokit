@@ -1,7 +1,7 @@
 /**
  * C-end client routes for the invite module.
  *
- * Mounted at /api/client/invite. Auth pattern:
+ * Mounted at /api/v1/client/invite. Auth pattern:
  *
  *   requireClientCredential — validates x-api-key (cpk_...), populates c.var.clientCredential
  *   requireClientUser       — reads x-end-user-id + x-user-hash headers, verifies HMAC,

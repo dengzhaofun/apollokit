@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the rank module.
  *
- * Mounted at /api/rank. Guarded by `requireAdminOrApiKey` so both
+ * Mounted at /api/v1/rank. Guarded by `requireAdminOrApiKey` so both
  * session-cookie-authed dashboard users and server-to-server admin API
  * keys can drive CRUD. `tenantId` comes from
  * `c.var.session.activeTeamId` (synthesized by the guard for the

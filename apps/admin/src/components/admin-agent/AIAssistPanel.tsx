@@ -65,7 +65,7 @@ import {
   trimMessagesForSend,
 } from "./use-persisted-messages"
 
-const ENDPOINT = "/api/ai/admin/chat"
+const ENDPOINT = "/api/v1/ai/admin/chat"
 
 /**
  * Public entry. Thin wrapper that keys the inner panel by (agent,

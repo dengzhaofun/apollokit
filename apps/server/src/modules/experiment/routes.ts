@@ -1,7 +1,7 @@
 /**
  * Admin routes for the experiment module.
  *
- * Mounted at `/api/experiment/*` in src/index.ts. All routes require an
+ * Mounted at `/api/v1/experiment/*` in src/index.ts. All routes require an
  * admin session OR an admin API key (`ak_`); end-user (cpk_) routes
  * live in `client-routes.ts`.
  */

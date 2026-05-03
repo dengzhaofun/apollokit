@@ -101,12 +101,12 @@ describe("invite admin routes", () => {
   });
 
   test("401 without cookie", async () => {
-    const res = await app.request("/api/invite/settings");
+    const res = await app.request("/api/v1/invite/settings");
     expect(res.status).toBe(401);
   });
 
   test("PUT /settings happy path", async () => {
-    const res = await app.request("/api/invite/settings", {
+    const res = await app.request("/api/v1/invite/settings", {
       method: "PUT",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({ enabled: true, codeLength: 8 }),
@@ -118,7 +118,7 @@ describe("invite admin routes", () => {
   });
 
   test("PUT /settings 400 on invalid codeLength", async () => {
-    const res = await app.request("/api/invite/settings", {
+    const res = await app.request("/api/v1/invite/settings", {
       method: "PUT",
       headers: { cookie: fx.cookie, "content-type": "application/json" },
       body: JSON.stringify({ codeLength: 5 }),

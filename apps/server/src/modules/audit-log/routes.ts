@@ -1,5 +1,5 @@
 /**
- * Audit-log admin routes —— 挂在 `/api/audit-logs`。
+ * Audit-log admin routes —— 挂在 `/api/v1/audit-logs`。
  *
  * 鉴权栈：`requireAdminOrApiKey` → `requirePermission("auditLog", "read")`（admin/owner
  * 才能看；operator/viewer 直接 403，与其他业务模块的 `requirePermissionByMethod` 行为不同

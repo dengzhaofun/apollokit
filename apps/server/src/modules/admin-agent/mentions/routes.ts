@@ -1,5 +1,5 @@
 /**
- * Mention routes — two endpoints under `/api/ai/admin/mentions/*`.
+ * Mention routes — two endpoints under `/api/v1/ai/admin/mentions/*`.
  *
  *   GET /types               — registry of mentionable types (for UI tabs)
  *   GET /search              — searches resources, optionally filtered by type

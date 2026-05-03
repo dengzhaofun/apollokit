@@ -219,7 +219,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className="font-sans antialiased [overflow-wrap:anywhere]">
         <RootProvider
           search={{
-            options: { api: '/api/search' },
+            options: { api: '/api/v1/search' },
           }}
           i18n={{
             ...i18nUI.provider(fumadocsLocale),

@@ -3,7 +3,7 @@
  *
  * Read-only — the client never publishes scores. Contributions arrive
  * via domain events (task.claimed, level.cleared, activity.milestone.
- * claimed) or via the admin `POST /api/leaderboard/contribute` path.
+ * claimed) or via the admin `POST /api/v1/leaderboard/contribute` path.
  *
  * Endpoints:
  *   GET /configs/:alias/top         — top N of the current cycle
