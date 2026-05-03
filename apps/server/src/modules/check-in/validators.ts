@@ -345,6 +345,15 @@ export const RewardListResponseSchema = z
   })
   .openapi("CheckInRewardList");
 
+export const ResetUserStateResponseSchema = z
+  .object({
+    reset: z.boolean().openapi({
+      description:
+        "true = user had progress that was deleted; false = user had no progress (no-op).",
+    }),
+  })
+  .openapi("CheckInResetUserStateResult");
+
 export const ConfigListResponseSchema = pageOf(CheckInConfigResponseSchema).openapi(
   "CheckInConfigList",
 );
