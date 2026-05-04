@@ -123,7 +123,7 @@ function GiftPackageCreatePage() {
                 {giftItems.map((item, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
-                      placeholder="Definition ID"
+                      placeholder={m.friend_gift_definition_id_placeholder()}
                       value={item.definitionId}
                       onChange={(e) =>
                         updateItem(index, "definitionId", e.target.value)

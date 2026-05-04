@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { RouteGuard } from "#/components/auth/RouteGuard"
 import { Button } from "#/components/ui/button"
@@ -129,7 +130,7 @@ function ProjectNameCard() {
             id="project-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="My Game"
+            placeholder={m.project_name_placeholder()}
             maxLength={80}
             disabled={!team.data}
           />

@@ -584,7 +584,7 @@ function EndpointFormFields({
           id="webhook-events"
           value={eventTypesRaw}
           onChange={(e) => onEventTypesChange(e.target.value)}
-          placeholder="check_in.completed, badge.*"
+          placeholder={m.webhooks_events_placeholder()}
           rows={2}
         />
         <p className="text-xs text-muted-foreground">

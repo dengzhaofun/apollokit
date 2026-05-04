@@ -100,7 +100,7 @@ function CurrencyListPage() {
                   id="ledger-user"
                   value={ledgerUser}
                   onChange={(e) => setLedgerUser(e.target.value)}
-                  placeholder="user-42"
+                  placeholder={m.currency_user_id_placeholder()}
                 />
               </div>
               <div className="space-y-2">

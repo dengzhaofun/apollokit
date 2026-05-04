@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
 import { Switch } from "#/components/ui/switch"
@@ -65,7 +66,7 @@ export function TierForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="e.g. SSR"
+                placeholder={m.lottery_tier_name_placeholder()}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -91,7 +92,7 @@ export function TierForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(Number(e.target.value))}
-                placeholder="e.g. 6"
+                placeholder={m.lottery_tier_sort_order_placeholder()}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -109,7 +110,7 @@ export function TierForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="e.g. ssr"
+                placeholder={m.lottery_tier_key_placeholder()}
               />
             </div>
           )}
@@ -124,7 +125,7 @@ export function TierForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="e.g. #FFD700"
+                placeholder={m.lottery_tier_color_placeholder()}
               />
             </div>
           )}

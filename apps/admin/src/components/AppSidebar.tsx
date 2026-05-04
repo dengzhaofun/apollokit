@@ -549,7 +549,7 @@ function NavParentItem({
             render={
               <SidebarMenuAction
                 className="data-[state=open]:rotate-90"
-                aria-label="Toggle submenu"
+                aria-label={m.aria_toggle_submenu()}
               >
                 <ChevronRight className="size-4" />
               </SidebarMenuAction>

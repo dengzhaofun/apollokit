@@ -74,7 +74,7 @@ export function BadgeNodeForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="home.mail.inbox"
+                placeholder={m.badge_node_path_placeholder()}
                 disabled={keyLocked}
                 className="font-mono"
               />
@@ -155,7 +155,7 @@ export function BadgeNodeForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="nav.mail"
+                  placeholder={m.badge_node_icon_path_placeholder()}
                 />
               </div>
             )}
@@ -214,7 +214,7 @@ export function BadgeNodeForm({
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="mail.rewards.total"
+                      placeholder={m.badge_template_metric_placeholder()}
                       className="font-mono"
                     />
                   </div>
@@ -234,7 +234,7 @@ export function BadgeNodeForm({
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="mail.inbox."
+                      placeholder={m.badge_template_prefix_placeholder()}
                       className="font-mono"
                     />
                   </div>

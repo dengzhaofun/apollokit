@@ -1,3 +1,4 @@
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import {
@@ -65,7 +66,7 @@ export function LotteryPoolForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. Lucky Wheel"
+              placeholder={m.lottery_pool_name_placeholder()}
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -83,7 +84,7 @@ export function LotteryPoolForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. lucky-wheel (lowercase, digits, hyphens, underscores)"
+              placeholder={m.lottery_pool_key_placeholder()}
             />
           </div>
         )}
@@ -98,7 +99,7 @@ export function LotteryPoolForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="Optional description..."
+              placeholder={m.lottery_pool_description_placeholder()}
               rows={3}
             />
           </div>
@@ -123,7 +124,7 @@ export function LotteryPoolForm({
               onChange={(e) =>
                 field.handleChange(e.target.value ? Number(e.target.value) : null)
               }
-              placeholder="Leave empty for unlimited"
+              placeholder={m.lottery_pool_cap_placeholder()}
             />
           </div>
         )}

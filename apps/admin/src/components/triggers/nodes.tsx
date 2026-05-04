@@ -203,7 +203,7 @@ function EmitEventForm(props: {
         <Input
           className="mt-1 text-xs"
           value={action.eventName}
-          placeholder="e.g. feature.unlocked"
+          placeholder={m.trigger_event_name_placeholder()}
           onChange={(e) =>
             update?.(id, {
               action: { ...action, eventName: e.target.value },
@@ -247,7 +247,7 @@ function UnlockFeatureForm(props: {
         <Input
           className="mt-1 text-xs font-mono"
           value={action.featureKey}
-          placeholder="e.g. map_b, vip_chat"
+          placeholder={m.trigger_features_placeholder()}
           onChange={(e) =>
             update?.(id, {
               action: { ...action, featureKey: e.target.value },

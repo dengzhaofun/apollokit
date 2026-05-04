@@ -218,7 +218,7 @@ export function ScriptEditor({
             id="alias"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
-            placeholder="home-tutorial"
+            placeholder={m.dialogue_scene_key_placeholder()}
           />
           <p className="text-xs text-muted-foreground">
             {m.dialogue_field_alias_hint()}

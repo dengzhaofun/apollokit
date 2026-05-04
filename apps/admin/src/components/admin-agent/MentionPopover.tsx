@@ -1,4 +1,5 @@
 import * as React from "react"
+import * as m from "#/paraglide/messages.js"
 
 import {
   Command,
@@ -115,7 +116,7 @@ export function MentionPopover({
           onValueChange={() => {
             /* read-only — controlled by textarea */
           }}
-          placeholder="搜索..."
+          placeholder={m.admin_agent_search_placeholder()}
           className="sr-only"
         />
         {/* min-h on the list reserves height across the empty / loading /

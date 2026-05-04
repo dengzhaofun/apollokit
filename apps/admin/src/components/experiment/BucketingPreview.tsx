@@ -46,7 +46,7 @@ export function BucketingPreview({ experiment }: Props) {
             id="bucketing-userid"
             value={endUserId}
             onChange={(e) => setEndUserId(e.target.value.trim())}
-            placeholder="user-12345"
+            placeholder={m.experiment_bucketing_user_id_placeholder()}
           />
         </div>
         <Button

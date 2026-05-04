@@ -270,7 +270,7 @@ export function NodeCreatorDialog({
                 <Input
                   value={nodeAlias}
                   onChange={(e) => setNodeAlias(e.target.value.toLowerCase())}
-                  placeholder="custom_node"
+                  placeholder={m.node_creator_custom_node_placeholder()}
                 />
                 <p className="text-xs text-muted-foreground">
                   {m.activity_node_field_alias_help()}

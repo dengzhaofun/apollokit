@@ -392,7 +392,7 @@ function CreateBlueprintMiniDialog({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="optional, lowercase-with-hyphens"
+                placeholder={m.entity_schema_alias_placeholder()}
               />
             </div>
           )}
@@ -407,7 +407,7 @@ function CreateBlueprintMiniDialog({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="optional, e.g. SSR / Legendary"
+                placeholder={m.entity_schema_display_name_placeholder()}
               />
             </div>
           )}

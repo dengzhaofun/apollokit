@@ -262,7 +262,7 @@ function LevelEditForm({
         <Input
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
-          placeholder="easy / normal / hard"
+          placeholder={m.level_difficulty_placeholder()}
         />
       </div>
 

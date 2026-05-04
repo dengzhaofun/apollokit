@@ -1,5 +1,6 @@
 import * as React from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
@@ -8,7 +9,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      aria-label={m.aria_pagination()}
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
@@ -69,7 +70,7 @@ function PaginationPrevious({
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={m.aria_prev_page()}
       size="default"
       className={cn("pl-1.5!", className)}
       {...props}
@@ -87,7 +88,7 @@ function PaginationNext({
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={m.aria_next_page()}
       size="default"
       className={cn("pr-1.5!", className)}
       {...props}

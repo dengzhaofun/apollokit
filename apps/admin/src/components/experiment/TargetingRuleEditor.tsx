@@ -238,7 +238,7 @@ function ConditionRow({
         list={showAttrList}
         value={cond.attribute}
         onChange={(e) => onChange({ attribute: e.target.value.trim() })}
-        placeholder="country"
+        placeholder={m.experiment_targeting_attr_key_placeholder()}
         disabled={disabled}
         className="h-8 w-44 font-mono text-xs"
       />

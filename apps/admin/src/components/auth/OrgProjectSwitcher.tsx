@@ -39,6 +39,7 @@ import {
   type ResolvedOrg,
   type ResolvedTeam,
 } from "#/lib/tenant"
+import * as m from "#/paraglide/messages.js"
 import { cn } from "#/lib/utils"
 
 /**
@@ -138,7 +139,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
       return
     }
     if (!activeOrg) {
-      toast.error("当前组织未就绪,请稍后重试")
+      toast.error(m.org_switcher_error_not_ready())
       return
     }
     setSwitching(true)
@@ -174,10 +175,10 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
       } else {
         await router.invalidate()
       }
-      toast.success(`已切换到 ${team.name}`)
+      toast.success(m.org_switcher_switched_to({ name: team.name }))
       setOpen(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "切换失败")
+      toast.error(err instanceof Error ? err.message : m.org_switcher_switch_failed())
     } finally {
       setSwitching(false)
     }
@@ -204,10 +205,10 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
         // 空 org,去 onboarding 创建项目
         await router.navigate({ to: "/onboarding/create-project" })
       }
-      toast.success(`已切换到 ${org.name}`)
+      toast.success(m.org_switcher_switched_to({ name: org.name }))
       setOpen(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "切换失败")
+      toast.error(err instanceof Error ? err.message : m.org_switcher_switch_failed())
     } finally {
       setSwitching(false)
     }
@@ -267,9 +268,9 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
             tooltip={
               activeOrg && activeTeam
                 ? `${activeOrg.name} · ${activeTeam.name}`
-                : "切换组织 / 项目"
+                : m.org_switcher_tooltip()
             }
-            aria-label="切换组织或项目"
+            aria-label={m.org_switcher_aria_label()}
             className={cn(
               "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
             )}
@@ -285,10 +286,10 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
             {!isIcon && (
               <div className="grid min-w-0 flex-1 text-left leading-tight">
                 <span className="truncate text-xs font-medium text-muted-foreground">
-                  {activeOrg?.name ?? "Organization"}
+                  {activeOrg?.name ?? m.org_switcher_org_fallback()}
                 </span>
                 <span className="truncate text-sm font-semibold">
-                  {activeTeam?.name ?? "Select project"}
+                  {activeTeam?.name ?? m.org_switcher_project_fallback()}
                 </span>
               </div>
             )}
@@ -330,7 +331,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
               await router.navigate({ to: "/settings/organization" })
             }}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-            title="组织设置"
+            title={m.org_switcher_org_settings_title()}
           >
             <Settings2Icon className="size-4" />
           </button>
@@ -341,7 +342,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索项目或组织"
+            placeholder={m.org_switcher_search_placeholder()}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
             autoFocus
           />
@@ -351,15 +352,15 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
           {/* PROJECTS in current org */}
           <div className="px-1.5 py-1.5">
             <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-              {activeOrg?.name ?? "PROJECTS"} · 项目
+              {activeOrg?.name ?? "PROJECTS"} · {m.org_switcher_projects_label()}
             </div>
             {!teams ? (
               <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                Loading…
+                {m.org_switcher_loading()}
               </div>
             ) : filteredTeams.length === 0 ? (
               <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                {query ? "没有匹配的项目" : "该组织下还没有项目"}
+                {query ? m.org_switcher_no_match_projects() : m.org_switcher_no_projects()}
               </div>
             ) : (
               filteredTeams.map((t, idx) => {
@@ -398,7 +399,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground"
             >
               <PlusIcon className="size-3.5" />
-              新建项目
+              {m.org_switcher_create_project()}
             </button>
           </div>
 
@@ -406,11 +407,11 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
           {orgs && orgs.length > 1 ? (
             <div className="border-t px-1.5 py-1.5">
               <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                全部组织
+                {m.org_switcher_all_orgs()}
               </div>
               {filteredOrgs.length === 0 ? (
                 <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                  没有匹配的组织
+                  {m.org_switcher_no_match_orgs()}
                 </div>
               ) : (
                 filteredOrgs.map((o) => {
@@ -457,7 +458,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground"
             >
               <BuildingIcon className="size-3.5" />
-              管理组织 / 邀请成员
+              {m.org_switcher_manage_org()}
             </button>
             <button
               type="button"
@@ -468,7 +469,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground"
             >
               <MailPlusIcon className="size-3.5" />
-              邀请同事加入组织
+              {m.org_switcher_invite_member()}
             </button>
           </div>
         </div>

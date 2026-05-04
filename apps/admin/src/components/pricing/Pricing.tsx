@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Minus, Sparkles } from "lucide-react"
 import { Fragment, useMemo, useState } from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 
 import MarketingShell, {
@@ -8,10 +9,10 @@ import MarketingShell, {
   SectionTitle,
 } from "../landing/MarketingShell"
 import {
-  CURRENCY_HINT,
-  PRICING_FAQ,
-  PRICING_MATRIX,
-  PRICING_TIERS,
+  getCurrencyHint,
+  getPricingFaq,
+  getPricingMatrix,
+  getPricingTiers,
   type MatrixRow,
   type Plan,
 } from "../landing/pricing-plans"
@@ -31,20 +32,22 @@ function PricingHero({
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 ak-grid-bg" aria-hidden />
       <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 md:py-28">
-        <SectionEyebrow>跟着你的成长一起长</SectionEyebrow>
+        <SectionEyebrow>{m.pricing_hero_eyebrow()}</SectionEyebrow>
         <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
-          按{" "}
-          <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-transparent">
-            月活玩家
-          </span>{" "}
-          定价。
+          {m.pricing_hero_h1_mau().split("").length > 0 && (
+            <>
+              按{" "}
+              <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-transparent">
+                {m.pricing_hero_h1_mau()}
+              </span>{" "}
+              {m.pricing_hero_h1_suffix()}
+            </>
+          )}
           <br />
-          原型阶段，永远免费。
+          {m.pricing_hero_h1_free()}
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          不按 DAU，不按机器数，按真实月活与你需要的能力收费。
-          500 MAU 以内 Indie 档永久免费，做原型、内测、毕设 Alpha 够用；
-          商业首发走 Studio 档。版本更新、开新服、节日冲榜带来的流量突刺，账单不会跟着失控。
+          {m.pricing_hero_desc()}
         </p>
 
         <div className="mt-10 inline-flex items-center gap-1 rounded-full border border-border bg-background/60 p-1 text-sm backdrop-blur">
@@ -58,7 +61,7 @@ function PricingHero({
                 : "text-muted-foreground hover:text-foreground")
             }
           >
-            按月付
+            {m.pricing_hero_billing_monthly()}
           </button>
           <button
             type="button"
@@ -70,13 +73,13 @@ function PricingHero({
                 : "text-muted-foreground hover:text-foreground")
             }
           >
-            按年付
+            {m.pricing_hero_billing_annual()}
             <span className="rounded-full bg-[var(--ak-accent-2)] px-1.5 py-0.5 text-[10px] font-black text-background">
               -20%
             </span>
           </button>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">{CURRENCY_HINT}</p>
+        <p className="mt-3 text-xs text-muted-foreground">{getCurrencyHint()}</p>
       </div>
     </section>
   )
@@ -100,7 +103,7 @@ function formatPrice(plan: Plan, billing: "monthly" | "annual") {
   const formatted = discounted.toLocaleString("zh-CN")
   return {
     main: `¥${formatted}`,
-    note: "年付均价 / 月",
+    note: m.pricing_annual_price_note(),
   }
 }
 
@@ -133,7 +136,7 @@ function TierCard({
             aria-hidden
           />
           <span className="absolute -top-2 right-6 rounded-full bg-[var(--ak-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-background">
-            推荐
+            {m.landing_pricing_recommended()}
           </span>
         </>
       )}
@@ -185,11 +188,12 @@ function TierCard({
 }
 
 function TierGrid({ billing }: { billing: "monthly" | "annual" }) {
+  const pricingTiers = getPricingTiers()
   return (
     <section className="relative py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {PRICING_TIERS.map((plan) => (
+          {pricingTiers.map((plan) => (
             <TierCard key={plan.id} plan={plan} billing={billing} />
           ))}
         </div>
@@ -213,9 +217,11 @@ function MatrixCell({ v }: { v: string | boolean }) {
 }
 
 function FeatureMatrix() {
+  const pricingTiers = getPricingTiers()
   const groupedRows = useMemo(() => {
+    const matrix = getPricingMatrix()
     const groups: Record<string, MatrixRow[]> = {}
-    for (const row of PRICING_MATRIX) {
+    for (const row of matrix) {
       groups[row.group] ??= []
       groups[row.group].push(row)
     }
@@ -226,12 +232,12 @@ function FeatureMatrix() {
     <section className="relative py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center">
-          <SectionEyebrow>逐项对比</SectionEyebrow>
+          <SectionEyebrow>{m.pricing_matrix_eyebrow()}</SectionEyebrow>
           <SectionTitle>
-            <span className="mx-auto block">按能力，不按运气。</span>
+            <span className="mx-auto block">{m.pricing_matrix_title()}</span>
           </SectionTitle>
           <p className="mx-auto mt-5 max-w-2xl text-muted-foreground">
-            所有功能清单一览无余——让团队拍板不用猜「这项有没有」。
+            {m.pricing_matrix_desc()}
           </p>
         </div>
 
@@ -241,9 +247,9 @@ function FeatureMatrix() {
               <thead>
                 <tr className="border-b border-border bg-background/50">
                   <th className="sticky left-0 z-10 bg-background/80 px-5 py-4 text-left text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                    功能
+                    {m.pricing_matrix_col_feature()}
                   </th>
-                  {PRICING_TIERS.map((p) => (
+                  {pricingTiers.map((p) => (
                     <th
                       key={p.id}
                       className={
@@ -264,7 +270,7 @@ function FeatureMatrix() {
                   <Fragment key={group}>
                     <tr className="bg-background/30">
                       <td
-                        colSpan={PRICING_TIERS.length + 1}
+                        colSpan={pricingTiers.length + 1}
                         className="px-5 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground"
                       >
                         {group}
@@ -278,7 +284,7 @@ function FeatureMatrix() {
                         <td className="sticky left-0 z-10 bg-card/80 px-5 py-3 font-medium">
                           {row.label}
                         </td>
-                        {PRICING_TIERS.map((plan) => (
+                        {pricingTiers.map((plan) => (
                           <td
                             key={plan.id}
                             className={
@@ -308,18 +314,19 @@ function FeatureMatrix() {
 
 function FAQ() {
   const [open, setOpen] = useState<number | null>(0)
+  const faqItems = getPricingFaq()
   return (
     <section className="relative py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="text-center">
-          <SectionEyebrow>常见问题</SectionEyebrow>
+          <SectionEyebrow>{m.pricing_faq_eyebrow()}</SectionEyebrow>
           <SectionTitle>
-            <span className="mx-auto block">问我们最常被问的那些。</span>
+            <span className="mx-auto block">{m.pricing_faq_title()}</span>
           </SectionTitle>
         </div>
 
         <div className="mt-12 divide-y divide-border rounded-2xl border border-border bg-card/60">
-          {PRICING_FAQ.map((item, i) => {
+          {faqItems.map((item, i) => {
             const isOpen = open === i
             return (
               <div key={item.q}>
@@ -383,18 +390,16 @@ function PricingCTA() {
           />
           <div className="relative">
             <h2 className="text-3xl font-black tracking-tight md:text-4xl">
-              还在纠结？
-              <br />
-              先用 500 MAU 把原型跑起来就好。
+              {m.pricing_cta_h2()}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              零风险、零信用卡、零销售骚扰。等要商业首发了，再升级 Studio 也不迟。
+              {m.pricing_cta_desc()}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button
                 render={
                   <a href="/auth/sign-up">
-                    免费创建账号
+                    {m.pricing_cta_primary()}
                     <ArrowRight className="ml-1 size-4" />
                   </a>
                 }
@@ -402,7 +407,7 @@ function PricingCTA() {
                 className="h-12 px-6 text-base font-semibold"
               />
               <Button
-                render={<a href="mailto:sales@apollokit.dev">联系销售</a>}
+                render={<a href="mailto:sales@apollokit.dev">{m.pricing_cta_secondary()}</a>}
                 variant="outline"
                 size="lg"
                 className="h-12 px-6 text-base"

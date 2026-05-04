@@ -2,6 +2,7 @@ import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "./ui/button"
 import {
   DropdownMenu,
@@ -24,7 +25,7 @@ export default function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" aria-label="Toggle theme">
+          <Button variant="ghost" size="icon" aria-label={m.aria_toggle_theme()}>
             <Icon className="size-4" />
           </Button>
         }

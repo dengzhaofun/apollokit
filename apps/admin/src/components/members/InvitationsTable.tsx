@@ -1,5 +1,6 @@
 import { MailQuestionIcon, MoreHorizontalIcon } from "lucide-react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -136,7 +137,7 @@ export function InvitationsTable({ scope }: Props) {
                             variant="ghost"
                             size="icon-sm"
                             disabled={!isPending}
-                            aria-label="更多操作"
+                            aria-label={m.aria_more_actions()}
                           >
                             <MoreHorizontalIcon className="size-4" />
                           </Button>

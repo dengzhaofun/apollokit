@@ -99,7 +99,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_alias_pattern()}
               value={row.aliasPattern}
-              placeholder="season_coin_{year}_W{week}"
+              placeholder={m.activity_blueprint_key_template_placeholder()}
               onChange={(v) =>
                 setCurrencies(
                   currencies.map((r, i) =>
@@ -122,7 +122,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_icon()}
               value={row.icon ?? ""}
-              placeholder="https://..."
+              placeholder={m.activity_blueprint_image_url_placeholder()}
               onChange={(v) =>
                 setCurrencies(
                   currencies.map((r, i) =>
@@ -163,7 +163,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_alias_pattern()}
               value={row.aliasPattern}
-              placeholder="season_ticket_{year}_W{week}"
+              placeholder={m.activity_blueprint_key_template2_placeholder()}
               onChange={(v) =>
                 setItems(
                   itemDefinitions.map((r, i) =>
@@ -186,7 +186,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_icon()}
               value={row.icon ?? ""}
-              placeholder="https://..."
+              placeholder={m.activity_blueprint_image_url2_placeholder()}
               onChange={(v) =>
                 setItems(
                   itemDefinitions.map((r, i) =>
@@ -238,7 +238,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_schema_alias()}
               value={row.schemaAlias}
-              placeholder="hero"
+              placeholder={m.activity_blueprint_role_placeholder()}
               onChange={(v) =>
                 setEntities(
                   entityBlueprints.map((r, i) =>
@@ -261,7 +261,7 @@ export function ActivityResourceBlueprintsEditor({
             <RowInput
               label={m.activity_template_blueprints_rarity()}
               value={row.rarity ?? ""}
-              placeholder="legendary"
+              placeholder={m.activity_blueprint_rarity_placeholder()}
               onChange={(v) =>
                 setEntities(
                   entityBlueprints.map((r, i) =>
@@ -334,7 +334,7 @@ function BlueprintRow({
         variant="ghost"
         size="icon"
         onClick={onRemove}
-        aria-label="remove"
+        aria-label={m.aria_remove()}
       >
         <Trash2 className="size-4" />
       </Button>

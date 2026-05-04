@@ -60,7 +60,7 @@ export function BadgeInspector() {
               id="endUserId"
               value={endUserId}
               onChange={(e) => setEndUserId(e.target.value)}
-              placeholder="player_42"
+              placeholder={m.badge_inspector_user_id_placeholder()}
             />
           </div>
           <div className="space-y-1 md:col-span-1">
@@ -69,7 +69,7 @@ export function BadgeInspector() {
               id="rootKey"
               value={rootKey}
               onChange={(e) => setRootKey(e.target.value)}
-              placeholder="home"
+              placeholder={m.badge_inspector_path_placeholder()}
               className="font-mono"
             />
           </div>

@@ -194,7 +194,7 @@ function Dashboard() {
                 fallback={
                   <div
                     className="aspect-[4/1] w-full min-h-[240px] animate-pulse rounded-md bg-muted/40"
-                    aria-label="Loading chart"
+                    aria-label={m.aria_loading_chart()}
                   />
                 }
               >
@@ -380,7 +380,7 @@ function RequestsTrendChart() {
     return (
       <div
         className="aspect-[4/1] min-h-[240px] w-full animate-pulse rounded-md bg-muted/40"
-        aria-label="Loading chart"
+        aria-label={m.aria_loading_chart()}
       />
     )
   }

@@ -191,7 +191,7 @@ export function SpotEditor({
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, alias: e.target.value }))
                 }
-                placeholder="main-stage"
+                placeholder={m.offline_checkin_spot_key_placeholder()}
                 disabled={isPending || isEdit}
               />
               <FieldHint>{m.offline_checkin_spot_alias_hint()}</FieldHint>
@@ -309,7 +309,7 @@ export function SpotEditor({
                   collectionEntryAliases: e.target.value,
                 }))
               }
-              placeholder="stamp-a, stamp-b"
+              placeholder={m.offline_checkin_spot_stamps_placeholder()}
               disabled={isPending}
             />
             <FieldHint>

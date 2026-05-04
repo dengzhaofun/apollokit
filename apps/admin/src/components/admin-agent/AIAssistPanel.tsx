@@ -28,6 +28,7 @@ import { Trash2Icon } from "lucide-react"
 import * as React from "react"
 import { toast } from "sonner"
 
+import * as m from "#/paraglide/messages.js"
 import { useCurrentSurface, type AdminSurface } from "#/lib/admin-surface"
 import { cn } from "#/lib/utils"
 
@@ -220,7 +221,7 @@ function AIAssistPanelInner({
   function handleClear() {
     clearMessages(persistKey(agentName, surface))
     setMessages([])
-    toast.success("已清空当前会话")
+    toast.success(m.ai_assist_cleared_toast())
   }
 
   function handleApply(callId: string, input: unknown) {
@@ -238,7 +239,7 @@ function AIAssistPanelInner({
         output: { applied: true },
       })
     }
-    toast.success("已回填表单，请审核后保存")
+    toast.success(m.ai_assist_backfill_toast())
   }
 
   function handleAnswer(callId: string, text: string) {
@@ -351,7 +352,7 @@ function AIAssistPanelInner({
         toolCallId: callId,
         output: { applied: true },
       })
-      toast.success("已应用变更")
+      toast.success(m.ai_assist_applied_toast())
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setPatchCardStates((prev) => ({
@@ -384,7 +385,7 @@ function AIAssistPanelInner({
         output: { applied: false, reason: "user-rejected" },
       })
     }
-    void sendMessage({ text: "这个不太对，请换一种方案重新提议" })
+    void sendMessage({ text: m.ai_assist_reject_message() })
   }
 
   const isStreaming = status === "streaming" || status === "submitted"
@@ -394,7 +395,7 @@ function AIAssistPanelInner({
     <div className="flex h-full flex-col bg-background">
       <div className="flex shrink-0 items-start justify-between gap-2 border-b px-4 py-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-foreground">AI 助手</p>
+          <p className="text-xs font-medium text-foreground">{m.ai_assist_title()}</p>
           <p className="text-[11px] text-muted-foreground">
             {hintForAgent(agentName, !!moduleEntry)}
           </p>
@@ -405,11 +406,11 @@ function AIAssistPanelInner({
             size="sm"
             className="h-7 shrink-0 px-2 text-[11px] text-muted-foreground hover:text-foreground"
             onClick={handleClear}
-            aria-label="清空当前会话"
-            title="清空当前会话"
+            aria-label={m.ai_assist_clear_aria()}
+            title={m.ai_assist_clear_aria()}
           >
             <Trash2Icon className="size-3.5" />
-            清空
+            {m.ai_assist_clear_label()}
           </Button>
         ) : null}
       </div>
@@ -462,11 +463,11 @@ function hintForAgent(
   hasModuleApply: boolean,
 ): string {
   if (agentName === "global-assistant") {
-    return "可以问问题、查配置，或 @-提及资源让 AI 提议修改（你审核确认后写入）。"
+    return m.ai_assist_hint_global()
   }
   return hasModuleApply
-    ? "描述你的需求，AI 会帮你回填表单。审核后再保存。"
-    : "可以问配置查询、模块说明等问题。"
+    ? m.ai_assist_hint_form()
+    : m.ai_assist_hint_list()
 }
 
 function DefaultEmptyState({
@@ -481,7 +482,7 @@ function DefaultEmptyState({
   const suggestions = getSurfaceSuggestions(agentName, surface)
   return (
     <ConversationEmptyState
-      title="试试这样问"
+      title={m.ai_assist_suggestions_title()}
       description={
         <span className="block space-y-1">
           {suggestions.map((s, i) => (
@@ -499,24 +500,28 @@ function getSurfaceSuggestions(
 ): string[] {
   if (agentName === "global-assistant") {
     return [
-      "@7日签到 把它关闭",
-      "列出最近的活动配置",
-      "解释一下 resetMode 的取值",
+      m.ai_assist_suggestion_global_1(),
+      m.ai_assist_suggestion_global_2(),
+      m.ai_assist_suggestion_global_3(),
     ]
   }
   // List/dashboard surfaces → query-mode prompts (no form to fill).
   if (surface === "dashboard" || surface.endsWith(":list")) {
     return [
-      "列出最近的签到配置",
-      "查找 alias 含 daily 的配置",
-      "这个活动的参与情况怎么样",
+      m.ai_assist_suggestion_list_1(),
+      m.ai_assist_suggestion_list_2(),
+      m.ai_assist_suggestion_list_3(),
     ]
   }
   // Form-bearing surfaces → module-specific create/edit prompts.
   if (surface.startsWith("check-in:")) {
-    return ["我要 7 日签到", "按月签到 30 天", "累计签到 100 天奖励"]
+    return [
+      m.ai_assist_suggestion_checkin_1(),
+      m.ai_assist_suggestion_checkin_2(),
+      m.ai_assist_suggestion_checkin_3(),
+    ]
   }
-  return ["描述你想要的配置 ..."]
+  return [m.ai_assist_suggestion_default()]
 }
 
 type ToolPart = {

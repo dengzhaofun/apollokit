@@ -93,7 +93,7 @@ function ExternalEditor({
       <div className="col-span-2 space-y-1">
         <Label className="text-xs">{m.link_url()}</Label>
         <Input
-          placeholder="https://..."
+          placeholder={m.link_action_url_placeholder()}
           value={value.url}
           onChange={(e) => onChange({ ...value, url: e.target.value })}
         />

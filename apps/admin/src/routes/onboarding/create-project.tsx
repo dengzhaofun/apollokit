@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { authClient } from "#/lib/auth-client"
 import { projectUrl } from "#/lib/tenant"
@@ -186,7 +187,7 @@ function CreateProjectClient() {
               <Input
                 id="project-name"
                 autoFocus
-                placeholder="My Game"
+                placeholder={m.project_name_placeholder()}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required

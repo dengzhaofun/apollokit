@@ -322,7 +322,7 @@ function CreateAdminKeyDialog({
               id="admin-key-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Production Server"
+              placeholder={m.api_key_server_name_placeholder()}
             />
           </div>
         </div>
@@ -680,7 +680,7 @@ function CreateClientCredentialDialog({
               id="cred-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Mobile App"
+              placeholder={m.api_key_client_name_placeholder()}
             />
           </div>
         </div>

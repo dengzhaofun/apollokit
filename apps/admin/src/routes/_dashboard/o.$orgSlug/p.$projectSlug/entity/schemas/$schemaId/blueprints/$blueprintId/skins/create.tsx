@@ -137,7 +137,7 @@ function SkinCreatePage() {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="SSR"
+                    placeholder={m.entity_blueprint_skin_rarity_placeholder()}
                   />
                 </div>
               )}

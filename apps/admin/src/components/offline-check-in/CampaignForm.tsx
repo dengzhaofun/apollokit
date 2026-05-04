@@ -107,7 +107,7 @@ export function CampaignForm({ form, isPending, id, onStateChange }: Props) {
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="lowercase-with-dashes"
+              placeholder={m.offline_checkin_campaign_key_placeholder()}
               disabled={isPending}
             />
           </div>
@@ -144,7 +144,7 @@ export function CampaignForm({ form, isPending, id, onStateChange }: Props) {
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="https://..."
+              placeholder={m.offline_checkin_webhook_url_placeholder()}
               disabled={isPending}
             />
           </div>
@@ -365,7 +365,7 @@ export function CampaignForm({ form, isPending, id, onStateChange }: Props) {
               id={field.name}
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="collection_album UUID (optional)"
+              placeholder={m.offline_checkin_album_id_placeholder()}
               disabled={isPending}
             />
             <FieldHint>

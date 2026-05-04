@@ -325,7 +325,7 @@ function ExploreInner() {
                   label={m.analytics_explore_json_path_group_label()}
                   value={jsonPathGroup}
                   onChange={setJsonPathGroup}
-                  placeholder="rarity"
+                  placeholder={m.analytics_property_key_placeholder()}
                   error={
                     jsonPathGroup !== "" && !isValidJsonKey(jsonPathGroup)
                       ? m.analytics_explore_json_invalid()
@@ -337,7 +337,7 @@ function ExploreInner() {
                 label={m.analytics_explore_json_path_filter_label()}
                 value={filters.jsonPath}
                 onChange={(v) => setFilters((f) => ({ ...f, jsonPath: v }))}
-                placeholder="rarity"
+                placeholder={m.analytics_property_key_placeholder()}
                 error={
                   filters.jsonPath !== "" && !jsonPathFilterValid
                     ? m.analytics_explore_json_invalid()
@@ -363,7 +363,7 @@ function ExploreInner() {
                 label={m.analytics_explore_filter_outcome()}
                 value={filters.outcome}
                 onChange={(v) => setFilters((f) => ({ ...f, outcome: v }))}
-                placeholder="ok | error | denied"
+                placeholder={m.analytics_status_values_placeholder()}
               />
               <FilterInput
                 label={m.analytics_explore_filter_end_user_id()}

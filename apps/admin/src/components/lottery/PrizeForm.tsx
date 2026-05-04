@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
@@ -95,7 +96,7 @@ export function PrizeForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="e.g. 100 Diamonds"
+                placeholder={m.lottery_prize_name_placeholder()}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -130,7 +131,7 @@ export function PrizeForm({
                   onValueChange={(v) => field.handleChange(!v || v === "__none__" ? "" : v)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="No tier (flat mode)" />
+                    <SelectValue placeholder={m.lottery_prize_tier_placeholder()} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">No tier (flat mode)</SelectItem>
@@ -159,7 +160,7 @@ export function PrizeForm({
                 onChange={(e) =>
                   field.handleChange(e.target.value ? Number(e.target.value) : null)
                 }
-                placeholder="Unlimited"
+                placeholder={m.lottery_prize_cap_placeholder()}
               />
             </div>
           )}
@@ -176,7 +177,7 @@ export function PrizeForm({
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               rows={2}
-              placeholder="Optional..."
+              placeholder={m.lottery_prize_notes_placeholder()}
             />
           </div>
         )}

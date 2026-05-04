@@ -90,7 +90,7 @@ export function MetricPicker({ experiment, onSave, saving }: Props) {
             list="metric-event-list"
             value={event}
             onChange={(e) => setEvent(e.target.value.trim())}
-            placeholder="tutorial_completed"
+            placeholder={m.experiment_metric_event_placeholder()}
             className="h-8 font-mono text-xs"
           />
           <datalist id="metric-event-list">

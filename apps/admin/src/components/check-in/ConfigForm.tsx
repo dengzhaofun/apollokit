@@ -103,7 +103,7 @@ export function ConfigForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. Daily Check-In"
+              placeholder={m.check_in_name_placeholder()}
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -121,7 +121,7 @@ export function ConfigForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. daily (lowercase, digits, hyphens, underscores)"
+              placeholder={m.check_in_key_placeholder()}
             />
           </div>
         )}
@@ -136,7 +136,7 @@ export function ConfigForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="Optional description..."
+              placeholder={m.check_in_description_placeholder()}
               rows={3}
             />
           </div>
@@ -218,7 +218,7 @@ export function ConfigForm({
               onChange={(e) =>
                 field.handleChange(e.target.value ? Number(e.target.value) : null)
               }
-              placeholder="Optional goal per cycle"
+              placeholder={m.check_in_goal_placeholder()}
             />
           </div>
         )}

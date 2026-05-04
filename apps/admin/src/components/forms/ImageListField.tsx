@@ -74,7 +74,7 @@ export function ImageListField({
               type="button"
               onClick={() => removeAt(idx)}
               className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-              aria-label="Remove"
+              aria-label={m.aria_remove()}
             >
               <X className="size-3" />
             </button>

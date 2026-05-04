@@ -170,7 +170,7 @@ export function VariantEditor({
             id="variant-key"
             value={variantKey}
             onChange={(e) => setVariantKey(e.target.value.trim())}
-            placeholder="treatment"
+            placeholder={m.experiment_variant_key_placeholder()}
             disabled={editingLocked}
             autoComplete="off"
           />

@@ -65,7 +65,7 @@ export function FieldEditor({ value, onChange, disabled }: FieldEditorProps) {
             <Input
               value={row.path}
               onChange={(e) => patch(idx, { path: e.target.value })}
-              placeholder="stats.level"
+              placeholder={m.event_catalog_field_key_placeholder()}
               disabled={disabled}
               className="font-mono"
             />
