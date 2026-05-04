@@ -913,7 +913,7 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
  *   • Language ▶ (English / 中文)
  *   • separator
  *   • Settings → /settings/account
- *   • Sign Out → authClient.signOut() → /auth/sign-in
+ *   • Sign Out → authClient.signOut() → /
  */
 function UserMenuButton({ isIcon }: { isIcon: boolean }) {
   const { theme, setTheme } = useTheme()
@@ -938,7 +938,7 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
 
   const handleSignOut = async () => {
     await authClient.signOut()
-    navigate({ to: "/auth/$authView", params: { authView: "sign-in" } })
+    navigate({ to: "/" })
   }
 
   return (
