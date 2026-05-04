@@ -56,3 +56,26 @@ export interface SyncEndUserResponse {
 export interface SignOutAllResponse {
   revoked: number
 }
+
+export interface EndUserSession {
+  id: string
+  userId: string
+  ipAddress: string | null
+  userAgent: string | null
+  expiresAt: string
+  createdAt: string
+}
+
+export interface EndUserAccount {
+  id: string
+  userId: string
+  providerId: string
+  createdAt: string
+}
+
+export interface EndUserVerification {
+  id: string
+  identifier: string
+  expiresAt: string
+  createdAt: string
+}

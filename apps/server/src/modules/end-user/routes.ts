@@ -2,14 +2,20 @@
  * Admin-facing HTTP routes for the end-user module.
  *
  * Currently exposes:
- *   POST   /sync                — upsert from a tenant-owned identity
- *   GET    /                    — list players in the current org
- *   GET    /:id                 — single player view
- *   PATCH  /:id                 — update name / image / emailVerified
- *   POST   /:id/disable         — soft-ban + revoke all sessions
- *   POST   /:id/enable          — lift the soft-ban
- *   POST   /:id/sign-out-all    — revoke sessions without banning
- *   DELETE /:id                 — hard delete (cascades)
+ *   POST   /sync                     — upsert from a tenant-owned identity
+ *   GET    /                         — list players in the current org
+ *   GET    /:id                      — single player view
+ *   PATCH  /:id                      — update name / image / emailVerified
+ *   POST   /:id/disable              — soft-ban + revoke all sessions
+ *   POST   /:id/enable               — lift the soft-ban
+ *   POST   /:id/sign-out-all         — revoke sessions without banning
+ *   DELETE /:id                      — hard delete (cascades)
+ *   GET    /sessions                 — list all sessions for the org
+ *   GET    /:id/sessions             — list sessions for a single player
+ *   DELETE /:id/sessions/:sessionId  — revoke a specific session
+ *   GET    /accounts                 — list all auth accounts for the org
+ *   GET    /:id/accounts             — list auth accounts for a single player
+ *   GET    /verifications            — list email verifications for the org
  *
  * All routes are behind `requireAdminOrApiKey` — tenant backends hit
  * these with their admin API key, never with the cpk_ publishable key.
@@ -32,6 +38,15 @@ import {
   SyncEndUserResponseSchema,
   SyncEndUserSchema,
   UpdateEndUserSchema,
+  EndUserSessionViewSchema,
+  EndUserSessionIdParamSchema,
+  EndUserSessionListResponseSchema,
+  ListEndUserSessionsQuerySchema,
+  EndUserAccountViewSchema,
+  EndUserAccountListResponseSchema,
+  ListEndUserAccountsQuerySchema,
+  EndUserVerificationListResponseSchema,
+  ListEndUserVerificationsQuerySchema,
 } from "./validators";
 
 const TAG = "End User";
@@ -244,5 +259,168 @@ endUserRouter.openapi(
     const { id } = c.req.valid("param");
     await endUserService.remove(orgId, id);
     return c.json(ok(null), 200);
+  },
+);
+
+const SESSION_TAG = "End User Session";
+const ACCOUNT_TAG = "End User Account";
+const VERIFICATION_TAG = "End User Verification";
+
+// GET /sessions — org-level session list
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/sessions",
+    tags: [SESSION_TAG],
+    summary: "List all active sessions for the current org",
+    request: { query: ListEndUserSessionsQuerySchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(EndUserSessionListResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const q = c.req.valid("query");
+    return c.json(ok(await endUserService.listSessions(orgId, q)), 200);
+  },
+);
+
+// GET /:id/sessions — per-player session list
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/{id}/sessions",
+    tags: [SESSION_TAG],
+    summary: "List sessions for a single end-user",
+    request: { params: EndUserIdParamSchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(EndUserSessionViewSchema.array()),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    return c.json(ok(await endUserService.getUserSessions(orgId, id)), 200);
+  },
+);
+
+// DELETE /:id/sessions/:sessionId — revoke a specific session
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "delete",
+    path: "/{id}/sessions/{sessionId}",
+    tags: [SESSION_TAG],
+    summary: "Revoke a specific session for an end-user",
+    request: { params: EndUserSessionIdParamSchema },
+    responses: {
+      200: {
+        description: "Revoked",
+        content: { "application/json": { schema: NullDataEnvelopeSchema } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id, sessionId } = c.req.valid("param");
+    await endUserService.revokeSession(orgId, id, sessionId);
+    return c.json(ok(null), 200);
+  },
+);
+
+// GET /accounts — org-level account list
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/accounts",
+    tags: [ACCOUNT_TAG],
+    summary: "List all auth accounts for the current org",
+    request: { query: ListEndUserAccountsQuerySchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(EndUserAccountListResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const q = c.req.valid("query");
+    return c.json(ok(await endUserService.listAccounts(orgId, q)), 200);
+  },
+);
+
+// GET /:id/accounts — per-player account list
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/{id}/accounts",
+    tags: [ACCOUNT_TAG],
+    summary: "List auth accounts for a single end-user",
+    request: { params: EndUserIdParamSchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(EndUserAccountViewSchema.array()),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { id } = c.req.valid("param");
+    return c.json(ok(await endUserService.getUserAccounts(orgId, id)), 200);
+  },
+);
+
+// GET /verifications — org-level email verification list
+endUserRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/verifications",
+    tags: [VERIFICATION_TAG],
+    summary: "List email verification records for the current org",
+    request: { query: ListEndUserVerificationsQuerySchema },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(EndUserVerificationListResponseSchema),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const q = c.req.valid("query");
+    return c.json(ok(await endUserService.listVerifications(orgId, q)), 200);
   },
 );

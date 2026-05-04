@@ -1,4 +1,4 @@
-import type { euUser } from "../../schema/end-user-auth";
+import type { euUser, euSession, euAccount, euVerification } from "../../schema/end-user-auth";
 
 export type EndUser = typeof euUser.$inferSelect;
 
@@ -65,4 +65,50 @@ export type UpdateEndUserInput = {
   name?: string;
   image?: string | null;
   emailVerified?: boolean;
+};
+
+export type EndUserSessionView = {
+  id: string;
+  userId: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  expiresAt: string;
+  createdAt: string;
+};
+
+export type EndUserAccountView = {
+  id: string;
+  userId: string;
+  providerId: string;
+  createdAt: string;
+};
+
+export type EndUserVerificationView = {
+  id: string;
+  identifier: string;
+  expiresAt: string;
+  createdAt: string;
+};
+
+export type PageResult<T> = {
+  items: T[];
+  nextCursor: string | null;
+};
+
+export type ListSessionsFilter = {
+  userId?: string;
+  cursor?: string;
+  limit?: number;
+};
+
+export type ListAccountsFilter = {
+  userId?: string;
+  providerId?: string;
+  cursor?: string;
+  limit?: number;
+};
+
+export type ListVerificationsFilter = {
+  cursor?: string;
+  limit?: number;
 };

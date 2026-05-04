@@ -23,7 +23,7 @@
  * take the tenant's values verbatim.
  */
 
-import { and, count, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, like } from "drizzle-orm";
 
 import type { AppDeps } from "../../deps";
 import {
@@ -36,13 +36,21 @@ import {
   euAccount,
   euSession,
   euUser,
+  euVerification,
 } from "../../schema/end-user-auth";
 
-import { EndUserIdentityConflict, EndUserNotFound } from "./errors";
+import { EndUserIdentityConflict, EndUserNotFound, EndUserSessionNotFound } from "./errors";
 import type {
+  EndUserAccountView,
+  EndUserSessionView,
+  EndUserVerificationView,
   EndUserView,
   ListFilter,
   ListResult,
+  ListSessionsFilter,
+  ListAccountsFilter,
+  ListVerificationsFilter,
+  PageResult,
   SyncResult,
   UpdateEndUserInput,
 } from "./types";
@@ -375,6 +383,204 @@ export function createEndUserService(deps: EndUserDeps) {
       const existing = await findById(orgId, id);
       if (!existing) throw new EndUserNotFound(id);
       await db.delete(euUser).where(eq(euUser.id, id));
+    },
+
+    // ─── Session sub-resource ─────────────────────────────────────────
+
+    async listSessions(
+      orgId: string,
+      filter: ListSessionsFilter = {},
+    ): Promise<PageResult<EndUserSessionView>> {
+      const limit = clampLimit(filter.limit);
+      const conditions = [eq(euSession.tenantId, orgId)];
+      if (filter.userId) conditions.push(eq(euSession.userId, filter.userId));
+
+      const rawRows = await db
+        .select()
+        .from(euSession)
+        .where(
+          and(
+            ...conditions,
+            cursorWhere(filter.cursor, euSession.createdAt, euSession.id),
+          ),
+        )
+        .orderBy(desc(euSession.createdAt), desc(euSession.id))
+        .limit(limit + 1);
+
+      const page = buildPage(rawRows, limit);
+      return {
+        items: page.items.map((r) => ({
+          id: r.id,
+          userId: r.userId,
+          ipAddress: r.ipAddress,
+          userAgent: r.userAgent,
+          expiresAt: r.expiresAt.toISOString(),
+          createdAt: r.createdAt.toISOString(),
+        })),
+        nextCursor: page.nextCursor,
+      };
+    },
+
+    async getUserSessions(
+      orgId: string,
+      userId: string,
+    ): Promise<EndUserSessionView[]> {
+      const existing = await findById(orgId, userId);
+      if (!existing) throw new EndUserNotFound(userId);
+
+      const rows = await db
+        .select()
+        .from(euSession)
+        .where(
+          and(eq(euSession.userId, userId), eq(euSession.tenantId, orgId)),
+        )
+        .orderBy(desc(euSession.createdAt));
+
+      return rows.map((r) => ({
+        id: r.id,
+        userId: r.userId,
+        ipAddress: r.ipAddress,
+        userAgent: r.userAgent,
+        expiresAt: r.expiresAt.toISOString(),
+        createdAt: r.createdAt.toISOString(),
+      }));
+    },
+
+    async revokeSession(
+      orgId: string,
+      userId: string,
+      sessionId: string,
+    ): Promise<void> {
+      const existing = await findById(orgId, userId);
+      if (!existing) throw new EndUserNotFound(userId);
+
+      const [deleted] = await db
+        .delete(euSession)
+        .where(
+          and(
+            eq(euSession.id, sessionId),
+            eq(euSession.userId, userId),
+            eq(euSession.tenantId, orgId),
+          ),
+        )
+        .returning({ id: euSession.id });
+
+      if (!deleted) throw new EndUserSessionNotFound(sessionId);
+    },
+
+    // ─── Account sub-resource ─────────────────────────────────────────
+
+    async listAccounts(
+      orgId: string,
+      filter: ListAccountsFilter = {},
+    ): Promise<PageResult<EndUserAccountView>> {
+      const limit = clampLimit(filter.limit);
+      const conditions = [eq(euUser.tenantId, orgId)];
+      if (filter.userId) conditions.push(eq(euAccount.userId, filter.userId));
+      if (filter.providerId)
+        conditions.push(eq(euAccount.providerId, filter.providerId));
+
+      const rawRows = await db
+        .select({
+          id: euAccount.id,
+          userId: euAccount.userId,
+          providerId: euAccount.providerId,
+          createdAt: euAccount.createdAt,
+        })
+        .from(euAccount)
+        .innerJoin(euUser, eq(euAccount.userId, euUser.id))
+        .where(
+          and(
+            ...conditions,
+            cursorWhere(filter.cursor, euAccount.createdAt, euAccount.id),
+          ),
+        )
+        .orderBy(desc(euAccount.createdAt), desc(euAccount.id))
+        .limit(limit + 1);
+
+      const page = buildPage(rawRows, limit);
+      return {
+        items: page.items.map((r) => ({
+          id: r.id,
+          userId: r.userId,
+          providerId: r.providerId,
+          createdAt: r.createdAt.toISOString(),
+        })),
+        nextCursor: page.nextCursor,
+      };
+    },
+
+    async getUserAccounts(
+      orgId: string,
+      userId: string,
+    ): Promise<EndUserAccountView[]> {
+      const existing = await findById(orgId, userId);
+      if (!existing) throw new EndUserNotFound(userId);
+
+      const rows = await db
+        .select({
+          id: euAccount.id,
+          userId: euAccount.userId,
+          providerId: euAccount.providerId,
+          createdAt: euAccount.createdAt,
+        })
+        .from(euAccount)
+        .where(eq(euAccount.userId, userId))
+        .orderBy(desc(euAccount.createdAt));
+
+      return rows.map((r) => ({
+        id: r.id,
+        userId: r.userId,
+        providerId: r.providerId,
+        createdAt: r.createdAt.toISOString(),
+      }));
+    },
+
+    // ─── Verification sub-resource ────────────────────────────────────
+
+    /**
+     * eu_verification has no tenantId column — the `identifier` is the
+     * scoped email `{orgId}__{rawEmail}`, so we filter by prefix.
+     */
+    async listVerifications(
+      orgId: string,
+      filter: ListVerificationsFilter = {},
+    ): Promise<PageResult<EndUserVerificationView>> {
+      const limit = clampLimit(filter.limit);
+      // The identifier column stores scoped emails: `{orgId}__{email}`.
+      const prefix = `${orgId}__`;
+
+      const rawRows = await db
+        .select({
+          id: euVerification.id,
+          identifier: euVerification.identifier,
+          expiresAt: euVerification.expiresAt,
+          createdAt: euVerification.createdAt,
+        })
+        .from(euVerification)
+        .where(
+          and(
+            like(euVerification.identifier, `${prefix}%`),
+            cursorWhere(
+              filter.cursor,
+              euVerification.createdAt,
+              euVerification.id,
+            ),
+          ),
+        )
+        .orderBy(desc(euVerification.createdAt), desc(euVerification.id))
+        .limit(limit + 1);
+
+      const page = buildPage(rawRows, limit);
+      return {
+        items: page.items.map((r) => ({
+          id: r.id,
+          identifier: unscopeEmail(r.identifier),
+          expiresAt: r.expiresAt.toISOString(),
+          createdAt: r.createdAt.toISOString(),
+        })),
+        nextCursor: page.nextCursor,
+      };
     },
   };
 }

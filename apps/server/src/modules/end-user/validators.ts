@@ -113,3 +113,99 @@ export const UpdateEndUserSchema = z
 export const SignOutAllResponseSchema = z
   .object({ revoked: z.number().int() })
   .openapi("SignOutAllResponse");
+
+// ─── Session sub-resource schemas ─────────────────────────────────────────
+
+export const EndUserSessionViewSchema = z
+  .object({
+    id: z.string(),
+    userId: z.string(),
+    ipAddress: z.string().nullable(),
+    userAgent: z.string().nullable(),
+    expiresAt: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi("EndUserSessionView");
+
+export const EndUserSessionIdParamSchema = z
+  .object({
+    id: z.string().min(1).openapi({ example: "u_abcdef" }),
+    sessionId: z.string().min(1).openapi({ example: "sess_xyz" }),
+  })
+  .openapi("EndUserSessionIdParam");
+
+export const ListEndUserSessionsQuerySchema = z
+  .object({
+    userId: z.string().optional().openapi({
+      param: { name: "userId", in: "query" },
+    }),
+    cursor: z.string().optional().openapi({
+      param: { name: "cursor", in: "query" },
+    }),
+    limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+      param: { name: "limit", in: "query" },
+    }),
+  })
+  .openapi("ListEndUserSessionsQuery");
+
+export const EndUserSessionListResponseSchema = pageOf(EndUserSessionViewSchema).openapi(
+  "EndUserSessionListResponse",
+);
+
+// ─── Account sub-resource schemas ─────────────────────────────────────────
+
+export const EndUserAccountViewSchema = z
+  .object({
+    id: z.string(),
+    userId: z.string(),
+    providerId: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi("EndUserAccountView");
+
+export const ListEndUserAccountsQuerySchema = z
+  .object({
+    userId: z.string().optional().openapi({
+      param: { name: "userId", in: "query" },
+    }),
+    providerId: z.string().optional().openapi({
+      param: { name: "providerId", in: "query" },
+    }),
+    cursor: z.string().optional().openapi({
+      param: { name: "cursor", in: "query" },
+    }),
+    limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+      param: { name: "limit", in: "query" },
+    }),
+  })
+  .openapi("ListEndUserAccountsQuery");
+
+export const EndUserAccountListResponseSchema = pageOf(EndUserAccountViewSchema).openapi(
+  "EndUserAccountListResponse",
+);
+
+// ─── Verification sub-resource schemas ────────────────────────────────────
+
+export const EndUserVerificationViewSchema = z
+  .object({
+    id: z.string(),
+    identifier: z.string(),
+    expiresAt: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi("EndUserVerificationView");
+
+export const ListEndUserVerificationsQuerySchema = z
+  .object({
+    cursor: z.string().optional().openapi({
+      param: { name: "cursor", in: "query" },
+    }),
+    limit: z.coerce.number().int().min(1).max(200).optional().openapi({
+      param: { name: "limit", in: "query" },
+    }),
+  })
+  .openapi("ListEndUserVerificationsQuery");
+
+export const EndUserVerificationListResponseSchema = pageOf(EndUserVerificationViewSchema).openapi(
+  "EndUserVerificationListResponse",
+);
