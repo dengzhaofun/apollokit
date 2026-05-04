@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { CharacterForm } from "#/components/character/CharacterForm"
 import { useCharacterForm } from "#/components/character/use-character-form"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,17 +52,18 @@ function CharacterDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/character" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.character_back_to_list()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        <div className="ml-auto">
+      <PageHeader
+        title={character?.name ?? m.character_back_to_list()}
+        actions={<>
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/character" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+                {m.character_back_to_list()}
+              </Link>
+            }
+            variant="ghost" size="sm"
+          />
           <Button
             size="sm"
             variant="outline"
@@ -72,8 +73,8 @@ function CharacterDetailPage() {
             <Trash2 className="size-4" />
             {m.common_delete()}
           </Button>
-        </div>
-      </PageHeaderActions>
+        </>}
+      />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl">

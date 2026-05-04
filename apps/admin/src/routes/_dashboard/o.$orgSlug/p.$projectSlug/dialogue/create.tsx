@@ -9,7 +9,7 @@ import { useCreateDialogueScript } from "#/hooks/use-dialogue"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/dialogue/create")({
   component: DialogueCreatePage,
 })
@@ -20,20 +20,24 @@ function DialogueCreatePage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/dialogue" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.dialogue_back_to_scripts()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={m.common_create()}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/dialogue" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                  {m.dialogue_back_to_scripts()}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-7xl">
           <ScriptEditor
             isPending={mutation.isPending}
@@ -53,7 +57,7 @@ function DialogueCreatePage() {
             }}
           />
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

@@ -26,8 +26,8 @@ import {
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/seasons/")({
   component: RankSeasonsListPage,
   validateSearch: listSearchSchema.passthrough(),
@@ -51,25 +51,28 @@ function RankSeasonsListPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            render={
-              <Link to="/o/$orgSlug/p/$projectSlug/rank" params={{ orgSlug, projectSlug }}>{m.rank_tab_configs()}</Link>
-            }
-            variant="outline" size="sm"
-          />
-          <Button
-            render={
-              <Link to="/o/$orgSlug/p/$projectSlug/rank/seasons/create" params={{ orgSlug, projectSlug }}>
-                <Plus className="size-4" />
-                {m.rank_new_season()}
-              </Link>
-            }
-            size="sm"
-          />
-        </div>
-      </PageHeaderActions>
+      <PageHeader
+        title={m.rank_tab_seasons()}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/rank" params={{ orgSlug, projectSlug }}>{m.rank_tab_configs()}</Link>
+              }
+              variant="outline" size="sm"
+            />
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/rank/seasons/create" params={{ orgSlug, projectSlug }}>
+                  <Plus className="size-4" />
+                  {m.rank_new_season()}
+                </Link>
+              }
+              size="sm"
+            />
+          </>
+        }
+      />
 
       <main className="flex-1 p-6">
         {isPending ? (

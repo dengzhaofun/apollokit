@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { BadgeNodeForm } from "#/components/badge/BadgeNodeForm"
 import { BadgeTemplatePicker } from "#/components/badge/BadgeTemplatePicker"
 import { useBadgeNodeForm } from "#/components/badge/use-node-form"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import {
@@ -36,17 +36,20 @@ function BadgeCreatePage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/badge" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.badge_back_to_list()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-      </PageHeaderActions>
+      <PageHeader
+        title={m.badge_new()}
+        actions={
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/badge" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+                {m.badge_back_to_list()}
+              </Link>
+            }
+            variant="ghost" size="sm"
+          />
+        }
+      />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl">

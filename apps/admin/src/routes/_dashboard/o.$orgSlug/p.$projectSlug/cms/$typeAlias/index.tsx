@@ -4,7 +4,7 @@ import { Plus, Settings } from "lucide-react"
 import { useState } from "react"
 
 import { EntryTable } from "#/components/cms/EntryTable"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -37,33 +37,35 @@ function CmsEntryListPage() {
   const groupOptions = type?.groupOptions ?? null
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            render={
-              <Link to="/o/$orgSlug/p/$projectSlug/cms/types/$alias" params={{ orgSlug, projectSlug, alias: typeAlias }}>
-                <Settings className="size-4" />
-                {m.cms_entry_edit_type()}
-              </Link>
-            }
-            size="sm" variant="outline"
-          />
-          <Can resource="cms" action="write" mode="disable">
+    <PageShell>
+      <PageHeader
+        title={type?.name ?? typeAlias}
+        actions={
+          <>
             <Button
               render={
-                <Link to="/o/$orgSlug/p/$projectSlug/cms/$typeAlias/create" params={{ orgSlug, projectSlug, typeAlias }}>
-                  <Plus className="size-4" />
-                  {m.cms_entry_new()}
+                <Link to="/o/$orgSlug/p/$projectSlug/cms/types/$alias" params={{ orgSlug, projectSlug, alias: typeAlias }}>
+                  <Settings className="size-4" />
+                  {m.cms_entry_edit_type()}
                 </Link>
               }
-              size="sm"
+              size="sm" variant="outline"
             />
-          </Can>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 space-y-4 p-6">
+            <Can resource="cms" action="write" mode="disable">
+              <Button
+                render={
+                  <Link to="/o/$orgSlug/p/$projectSlug/cms/$typeAlias/create" params={{ orgSlug, projectSlug, typeAlias }}>
+                    <Plus className="size-4" />
+                    {m.cms_entry_new()}
+                  </Link>
+                }
+                size="sm"
+              />
+            </Can>
+          </>
+        }
+      />
+      <PageBody className="space-y-4">
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
             <h1 className="text-lg font-semibold">{type?.name ?? typeAlias}</h1>
@@ -136,7 +138,7 @@ function CmsEntryListPage() {
           tag={tag || undefined}
           route={Route}
         />
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

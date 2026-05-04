@@ -26,8 +26,8 @@ import { useCreateLevel, useLevelConfig, useLevelStages } from "#/hooks/use-leve
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 import type { RewardEntry } from "#/lib/types/level"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/level/$configId/levels/create",
 )({
@@ -131,16 +131,19 @@ function LevelCreatePage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-      </PageHeaderActions>
+      <PageHeader
+        title={m.level_new_level()}
+        actions={
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
+                <ArrowLeft className="size-4" />
+              </Link>
+            }
+            variant="ghost" size="icon"
+          />
+        }
+      />
 
       <main className="flex-1 p-6">
         <form

@@ -23,8 +23,8 @@ import {
 } from "#/hooks/use-rank"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/$configId")({
   component: RankConfigDetailPage,
 })
@@ -39,48 +39,51 @@ function RankConfigDetailPage() {
 
   return (
     <>
-      {data ? (
-        <PageHeaderActions>
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button variant="ghost" size="sm" className="text-destructive">
-                  <Trash2 className="size-4" />
-                  {m.rank_delete_config()}
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {m.rank_delete_config_title()}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {m.rank_delete_config_desc()}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    try {
-                      await deleteMutation.mutateAsync(data.id)
-                      toast.success(m.rank_config_deleted())
-                      navigate({ to: "/o/$orgSlug/p/$projectSlug/rank" , params: { orgSlug, projectSlug }})
-                    } catch (err) {
-                      if (err instanceof ApiError)
-                        toast.error(err.body.error)
-                      else toast.error((err as Error).message)
-                    }
-                  }}
-                >
-                  {m.rank_delete_confirm()}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </PageHeaderActions>
-      ) : null}
+      <PageHeader
+        title={data?.name ?? m.rank_loading()}
+        actions={
+          data ? (
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="ghost" size="sm" className="text-destructive">
+                    <Trash2 className="size-4" />
+                    {m.rank_delete_config()}
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {m.rank_delete_config_title()}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {m.rank_delete_config_desc()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        await deleteMutation.mutateAsync(data.id)
+                        toast.success(m.rank_config_deleted())
+                        navigate({ to: "/o/$orgSlug/p/$projectSlug/rank" , params: { orgSlug, projectSlug }})
+                      } catch (err) {
+                        if (err instanceof ApiError)
+                          toast.error(err.body.error)
+                        else toast.error((err as Error).message)
+                      }
+                    }}
+                  >
+                    {m.rank_delete_confirm()}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : undefined
+        }
+      />
 
       <main className="flex-1 p-6">
         {isPending ? (

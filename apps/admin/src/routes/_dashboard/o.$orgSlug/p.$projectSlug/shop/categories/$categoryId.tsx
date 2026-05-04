@@ -15,7 +15,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/shop/categories/$categoryId")(
   {
     component: ShopCategoryEditPage,
@@ -32,33 +32,35 @@ function ShopCategoryEditPage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          {category ? (
-            <ShopDeleteDialog
-              title={m.shop_delete_category_title()}
-              description={m.shop_delete_category_desc()}
-              isPending={deleteMutation.isPending}
-              onConfirm={async () => {
-                try {
-                  await deleteMutation.mutateAsync(category.id)
-                  toast.success(m.shop_category_deleted())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop/categories" , params: { orgSlug, projectSlug }})
-                } catch (err) {
-                  toast.error(
-                    err instanceof ApiError
-                      ? err.body.error
-                      : m.shop_failed_delete_category(),
-                  )
-                }
-              }}
-            />
-          ) : null}
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={category?.name ?? categoryId}
+        actions={
+          <>
+            {category ? (
+              <ShopDeleteDialog
+                title={m.shop_delete_category_title()}
+                description={m.shop_delete_category_desc()}
+                isPending={deleteMutation.isPending}
+                onConfirm={async () => {
+                  try {
+                    await deleteMutation.mutateAsync(category.id)
+                    toast.success(m.shop_category_deleted())
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/shop/categories" , params: { orgSlug, projectSlug }})
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : m.shop_failed_delete_category(),
+                    )
+                  }
+                }}
+              />
+            ) : null}
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-2xl space-y-4">
           <Button
             render={
@@ -113,7 +115,7 @@ function ShopCategoryEditPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

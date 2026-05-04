@@ -24,8 +24,8 @@ import {
 } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId/",
 )({
@@ -58,65 +58,68 @@ function BlueprintDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link
-              to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId"
-              params={{ orgSlug, projectSlug, schemaId }}
-            >
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-        {bp.rarity && <Badge variant="secondary">{bp.rarity}</Badge>}
-        {bp.alias && (
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            {bp.alias}
-          </code>
-        )}
-        <div className="ml-auto flex gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger
+      <PageHeader
+        title={bp.name}
+        actions={
+          <>
+            <Button
               render={
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="size-4" />
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {m.entity_delete_blueprint_title()}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {m.entity_delete_blueprint_desc()}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    try {
-                      await deleteMutation.mutateAsync(bp.id)
-                      toast.success(m.entity_blueprint_deleted())
-                      navigate({
-                        to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
-                        params: { orgSlug, projectSlug, schemaId },
-                      })
-                    } catch (err) {
-                      if (err instanceof ApiError) toast.error(err.body.error)
-                    }
-                  }}
+                <Link
+                  to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId"
+                  params={{ orgSlug, projectSlug, schemaId }}
                 >
-                  {m.common_delete()}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </PageHeaderActions>
+                  <ArrowLeft className="size-4" />
+                </Link>
+              }
+              variant="ghost" size="icon"
+            />
+            {bp.rarity && <Badge variant="secondary">{bp.rarity}</Badge>}
+            {bp.alias && (
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                {bp.alias}
+              </code>
+            )}
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="size-4" />
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {m.entity_delete_blueprint_title()}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {m.entity_delete_blueprint_desc()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        await deleteMutation.mutateAsync(bp.id)
+                        toast.success(m.entity_blueprint_deleted())
+                        navigate({
+                          to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
+                          params: { orgSlug, projectSlug, schemaId },
+                        })
+                      } catch (err) {
+                        if (err instanceof ApiError) toast.error(err.body.error)
+                      }
+                    }}
+                  >
+                    {m.common_delete()}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        }
+      />
 
       <main className="flex-1 p-6 space-y-6">
         {/* Tags */}

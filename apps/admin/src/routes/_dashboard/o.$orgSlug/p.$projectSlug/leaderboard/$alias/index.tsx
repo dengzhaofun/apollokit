@@ -24,8 +24,7 @@ import {
   useUpdateLeaderboardConfig,
 } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
-import { confirm } from "#/components/patterns"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { confirm, PageHeader } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/leaderboard/$alias/")({
   component: LeaderboardDetailPage,
@@ -57,53 +56,55 @@ function LeaderboardDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/leaderboard" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              返回
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-          {config.alias}
-        </code>
-        <Badge
-          variant={config.status === "active" ? "default" : "outline"}
-          className="ml-2"
-        >
-          {config.status}
-        </Badge>
-        <div className="ml-auto">
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={deleteMutation.isPending}
-            onClick={async () => {
-              const ok = await confirm({
-                title: "删除排行榜?",
-                description: `排行榜 "${config.name}" 删除后,所有历史快照和实时数据都会丢失,不可恢复。`,
-                confirmLabel: "删除",
-                danger: true,
-              })
-              if (!ok) return
-              try {
-                await deleteMutation.mutateAsync(config.id)
-                toast.success("已删除")
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" , params: { orgSlug, projectSlug }})
-              } catch (err) {
-                if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error("删除失败")
+      <PageHeader
+        title={config.name}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/leaderboard" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                  返回
+                </Link>
               }
-            }}
-          >
-            <Trash2 className="size-4" />
-            删除
-          </Button>
-        </div>
-      </PageHeaderActions>
+              variant="ghost" size="sm"
+            />
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+              {config.alias}
+            </code>
+            <Badge
+              variant={config.status === "active" ? "default" : "outline"}
+            >
+              {config.status}
+            </Badge>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deleteMutation.isPending}
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "删除排行榜?",
+                  description: `排行榜 "${config.name}" 删除后,所有历史快照和实时数据都会丢失,不可恢复。`,
+                  confirmLabel: "删除",
+                  danger: true,
+                })
+                if (!ok) return
+                try {
+                  await deleteMutation.mutateAsync(config.id)
+                  toast.success("已删除")
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" , params: { orgSlug, projectSlug }})
+                } catch (err) {
+                  if (err instanceof ApiError) toast.error(err.body.error)
+                  else toast.error("删除失败")
+                }
+              }}
+            >
+              <Trash2 className="size-4" />
+              删除
+            </Button>
+          </>
+        }
+      />
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="preview" className="mx-auto max-w-4xl">

@@ -11,8 +11,8 @@ import { Switch } from "#/components/ui/switch"
 import { useCreateEntitySkin } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId/skins/create",
 )({
@@ -61,19 +61,22 @@ function SkinCreatePage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link
-              to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId"
-              params={{ orgSlug, projectSlug, schemaId, blueprintId }}
-            >
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-      </PageHeaderActions>
+      <PageHeader
+        title={m.entity_new_skin()}
+        actions={
+          <Button
+            render={
+              <Link
+                to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId"
+                params={{ orgSlug, projectSlug, schemaId, blueprintId }}
+              >
+                <ArrowLeft className="size-4" />
+              </Link>
+            }
+            variant="ghost" size="icon"
+          />
+        }
+      />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl rounded-xl border bg-card p-6 shadow-sm">

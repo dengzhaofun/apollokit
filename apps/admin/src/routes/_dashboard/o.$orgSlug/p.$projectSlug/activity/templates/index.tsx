@@ -20,8 +20,7 @@ import {
   useInstantiateActivityTemplate,
 } from "#/hooks/use-activity"
 import { ApiError } from "#/lib/api-client"
-import { confirm } from "#/components/patterns"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { confirm, PageHeader, PageBody, PageShell } from "#/components/patterns"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/activity/templates/")({
@@ -35,31 +34,33 @@ function ActivityTemplatesPage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/activity" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.activity_template_back_to_list()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        <div className="ml-auto">
-          <Button
-            render={
-              <Link to="/o/$orgSlug/p/$projectSlug/activity/templates/create" params={{ orgSlug, projectSlug }}>
-                <Plus className="size-4" />
-                {m.activity_template_new()}
-              </Link>
-            }
-            size="sm"
-          />
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={m.activity_action_templates()}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/activity" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                  {m.activity_template_back_to_list()}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/activity/templates/create" params={{ orgSlug, projectSlug }}>
+                  <Plus className="size-4" />
+                  {m.activity_template_new()}
+                </Link>
+              }
+              size="sm"
+            />
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-5xl">
           <div className="rounded-xl border bg-card shadow-sm">
             {isPending ? (
@@ -182,7 +183,7 @@ function ActivityTemplatesPage() {
             )}
           </div>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

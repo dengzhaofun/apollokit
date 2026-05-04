@@ -2,7 +2,7 @@ import { useTenantParams } from "#/hooks/use-tenant-params";
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -24,24 +24,26 @@ function CmsTypesPage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto">
-          <Can resource="cms" action="write" mode="disable">
-            <Button
-              render={
-                <Link to="/o/$orgSlug/p/$projectSlug/cms/types/create" params={{ orgSlug, projectSlug }}>
-                  <Plus className="size-4" />
-                  {m.cms_type_new()}
-                </Link>
-              }
-              size="sm"
-            />
-          </Can>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title="CMS"
+        actions={
+          <>
+            <Can resource="cms" action="write" mode="disable">
+              <Button
+                render={
+                  <Link to="/o/$orgSlug/p/$projectSlug/cms/types/create" params={{ orgSlug, projectSlug }}>
+                    <Plus className="size-4" />
+                    {m.cms_type_new()}
+                  </Link>
+                }
+                size="sm"
+              />
+            </Can>
+          </>
+        }
+      />
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.common_loading()}
@@ -105,7 +107,7 @@ function CmsTypesPage() {
             ))}
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

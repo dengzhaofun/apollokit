@@ -47,8 +47,8 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { LevelStage, UnlockRule } from "#/lib/types/level"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/level/$configId/")({
   component: LevelConfigDetailPage,
 })
@@ -81,34 +81,37 @@ function LevelConfigDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/level" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-        <div className="ml-auto">
-          <CollectionDeleteDialog
-            title={m.level_delete_config()}
-            description={m.level_delete_config_desc()}
-            onConfirm={async () => {
-              try {
-                await deleteConfigMutation.mutateAsync(config.id)
-                toast.success(m.level_config_deleted())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/level" , params: { orgSlug, projectSlug }})
-              } catch (err) {
-                if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error(m.level_failed_delete())
+      <PageHeader
+        title={config.name}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/level" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                </Link>
               }
-            }}
-            isPending={deleteConfigMutation.isPending}
-            triggerLabel={m.level_delete_config()}
-          />
-        </div>
-      </PageHeaderActions>
+              variant="ghost" size="icon"
+            />
+            <CollectionDeleteDialog
+              title={m.level_delete_config()}
+              description={m.level_delete_config_desc()}
+              onConfirm={async () => {
+                try {
+                  await deleteConfigMutation.mutateAsync(config.id)
+                  toast.success(m.level_config_deleted())
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/level" , params: { orgSlug, projectSlug }})
+                } catch (err) {
+                  if (err instanceof ApiError) toast.error(err.body.error)
+                  else toast.error(m.level_failed_delete())
+                }
+              }}
+              isPending={deleteConfigMutation.isPending}
+              triggerLabel={m.level_delete_config()}
+            />
+          </>
+        }
+      />
 
       <main className="flex-1 p-6">
         <Tabs defaultValue="info">

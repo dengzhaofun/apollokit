@@ -5,7 +5,7 @@ import { useState } from "react"
 
 import { Button } from "#/components/ui/button"
 import { Input } from "#/components/ui/input"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/activity/$alias/users/")({
@@ -19,20 +19,24 @@ function ActivityUsersIndexPage() {
   const [endUserId, setEndUserId] = useState("")
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias" params={{ orgSlug, projectSlug, alias }}>
-              <ArrowLeft className="size-4" />
-              {m.activity_users_back_to_detail()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={m.activity_users_search_title()}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias" params={{ orgSlug, projectSlug, alias }}>
+                  <ArrowLeft className="size-4" />
+                  {m.activity_users_back_to_detail()}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-2xl rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold">
             {m.activity_users_search_title()}
@@ -64,7 +68,7 @@ function ActivityUsersIndexPage() {
             {m.activity_users_search_hint()}
           </p>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

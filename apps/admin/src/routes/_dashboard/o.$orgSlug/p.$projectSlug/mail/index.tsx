@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { Can } from "#/components/auth/Can"
@@ -41,16 +41,17 @@ function MailListPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+      <PageHeader
+        title="邮件"
+        actions={
           <Can resource="mail" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               {m.mail_new_message()}
             </Button>
           </Can>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 p-6">
         <MessageTable route={Route} />

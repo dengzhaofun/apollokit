@@ -12,8 +12,8 @@ import { Textarea } from "#/components/ui/textarea"
 import { useCreateLevelConfig } from "#/hooks/use-level"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/level/create")({
   component: LevelCreatePage,
 })
@@ -57,16 +57,19 @@ function LevelCreatePage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/level" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-      </PageHeaderActions>
+      <PageHeader
+        title={m.level_new_config()}
+        actions={
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/level" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+              </Link>
+            }
+            variant="ghost" size="icon"
+          />
+        }
+      />
 
       <main className="flex-1 p-6">
         <form

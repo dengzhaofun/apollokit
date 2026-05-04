@@ -7,7 +7,7 @@ import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
 import { DataTable } from "#/components/data-table/DataTable"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { MatchSquadConfigForm } from "#/components/match-squad/MatchSquadConfigForm"
 import { useMatchSquadConfigForm } from "#/components/match-squad/use-config-form"
 import { Badge } from "#/components/ui/badge"
@@ -104,14 +104,15 @@ function TeamPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+      <PageHeader
+        title="队伍配置"
+        actions={
           <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" />
             {m.team_new_config()}
           </Button>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 p-6">
         <DataTable

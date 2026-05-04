@@ -40,8 +40,7 @@ import {
   openCreateModal,
 } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
-
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 
 const FORM_ID = "entity-blueprint-mini-create-form"
 
@@ -87,58 +86,61 @@ function SchemaDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/entity/schemas" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-        {schema.alias && (
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            {schema.alias}
-          </code>
-        )}
-        <div className="ml-auto flex gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger
+      <PageHeader
+        title={schema.name}
+        actions={
+          <>
+            <Button
               render={
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="size-4" />
-                </Button>
+                <Link to="/o/$orgSlug/p/$projectSlug/entity/schemas" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                </Link>
               }
+              variant="ghost" size="icon"
             />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {m.entity_delete_schema_title()}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {m.entity_delete_schema_desc()}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    try {
-                      await deleteMutation.mutateAsync(schema.id)
-                      toast.success(m.entity_schema_deleted())
-                      navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/schemas" , params: { orgSlug, projectSlug }})
-                    } catch (err) {
-                      if (err instanceof ApiError) toast.error(err.body.error)
-                    }
-                  }}
-                >
-                  {m.common_delete()}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </PageHeaderActions>
+            {schema.alias && (
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                {schema.alias}
+              </code>
+            )}
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="size-4" />
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {m.entity_delete_schema_title()}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {m.entity_delete_schema_desc()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        await deleteMutation.mutateAsync(schema.id)
+                        toast.success(m.entity_schema_deleted())
+                        navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/schemas" , params: { orgSlug, projectSlug }})
+                      } catch (err) {
+                        if (err instanceof ApiError) toast.error(err.body.error)
+                      }
+                    }}
+                  >
+                    {m.common_delete()}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        }
+      />
 
       <main className="flex-1 p-6 space-y-6">
         {/* Schema Info Cards */}

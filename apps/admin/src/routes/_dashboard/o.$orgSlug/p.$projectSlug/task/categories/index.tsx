@@ -4,8 +4,7 @@ import { toast } from "sonner"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { confirm } from "#/components/patterns"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { confirm, PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Input } from "#/components/ui/input"
@@ -54,8 +53,9 @@ function CategoriesPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+      <PageHeader
+        title="任务分类"
+        actions={
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null) }}>
             <DialogTrigger
               render={
@@ -75,8 +75,8 @@ function CategoriesPage() {
               />
             </DialogContent>
           </Dialog>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 space-y-3 p-6">
         <div className="rounded-xl border bg-card shadow-sm">

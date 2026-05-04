@@ -9,7 +9,7 @@ import { useCreateCollectionAlbum } from "#/hooks/use-collection"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/collection/create")({
   component: CollectionCreatePage,
 })
@@ -20,19 +20,23 @@ function CollectionCreatePage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/collection" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={m.common_create()}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/collection" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                </Link>
+              }
+              variant="ghost" size="icon"
+            />
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-3xl rounded-xl border bg-card p-6 shadow-sm">
           <AlbumForm
             submitLabel={m.common_create()}
@@ -55,7 +59,7 @@ function CollectionCreatePage() {
             }}
           />
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

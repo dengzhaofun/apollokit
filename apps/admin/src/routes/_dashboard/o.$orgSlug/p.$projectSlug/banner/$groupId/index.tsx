@@ -37,7 +37,7 @@ import {
 } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 
 const FORM_ID = "banner-item-form"
 
@@ -115,20 +115,21 @@ function BannerGroupDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/banner" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.banner_back_to_groups()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        {group && !group.alias ? (
+      <PageHeader
+        title={group?.name ?? m.banner_back_to_groups()}
+        badge={group && !group.alias ? (
           <Badge variant="outline">{m.banner_draft_badge()}</Badge>
-        ) : null}
-        <div className="ml-auto flex gap-2">
+        ) : undefined}
+        actions={<>
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/banner" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+                {m.banner_back_to_groups()}
+              </Link>
+            }
+            variant="ghost" size="sm"
+          />
           <Button
             render={
               <Link
@@ -154,8 +155,8 @@ function BannerGroupDetailPage() {
             <Plus className="size-4" />
             {m.banner_new_banner()}
           </Button>
-        </div>
-      </PageHeaderActions>
+        </>}
+      />
 
       <main className="flex-1 space-y-4 p-6">
         {group ? (

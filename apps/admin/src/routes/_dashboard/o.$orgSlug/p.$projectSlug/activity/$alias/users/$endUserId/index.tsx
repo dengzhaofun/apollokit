@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { useActivityForUser } from "#/hooks/use-activity"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import * as m from "#/paraglide/messages.js"
 
 export const Route = createFileRoute(
@@ -40,21 +40,25 @@ function ActivityUserDetailPage() {
   const joined = progress != null
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias/users" params={{ orgSlug, projectSlug, alias }}>
-              <ArrowLeft className="size-4" />
-              返回
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        <Badge className="ml-2">{activity.derivedState}</Badge>
-      </PageHeaderActions>
-
-      <main className="flex-1 space-y-4 p-6">
+    <PageShell>
+      <PageHeader
+        title={activity.derivedState}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias/users" params={{ orgSlug, projectSlug, alias }}>
+                  <ArrowLeft className="size-4" />
+                  返回
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+            <Badge>{activity.derivedState}</Badge>
+          </>
+        }
+      />
+      <PageBody className="space-y-4">
         <div className="mx-auto grid max-w-4xl gap-4">
           {/* Overview */}
           <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -168,7 +172,7 @@ function ActivityUserDetailPage() {
             </div>
           ) : null}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

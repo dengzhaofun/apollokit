@@ -1,5 +1,7 @@
+import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { ShieldIcon } from "lucide-react"
+import { Pencil, ShieldIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   ErrorState,
@@ -9,7 +11,24 @@ import {
   PageShell,
 } from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
+import { Button } from "#/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "#/components/ui/dialog"
+import { Input } from "#/components/ui/input"
+import { Label } from "#/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select"
 import {
   Table,
   TableBody,
@@ -18,7 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
-import { useGuildSettings, useGuilds } from "#/hooks/use-guild"
+import { useGuildSettings, useGuilds, useUpsertGuildSettings } from "#/hooks/use-guild"
 import * as m from "#/paraglide/messages.js"
 import { getLocale } from "#/paraglide/runtime.js"
 
@@ -36,6 +55,29 @@ function GuildPage() {
     error: guildsError,
     refetch,
   } = useGuilds()
+  const upsertMutation = useUpsertGuildSettings()
+
+  const [open, setOpen] = useState(false)
+  const [maxMembers, setMaxMembers] = useState(0)
+  const [maxOfficers, setMaxOfficers] = useState(0)
+  const [joinMode, setJoinMode] = useState("request")
+
+  function openEditDialog() {
+    setMaxMembers(settings?.maxMembers ?? 50)
+    setMaxOfficers(settings?.maxOfficers ?? 10)
+    setJoinMode(settings?.joinMode ?? "request")
+    setOpen(true)
+  }
+
+  async function handleSave() {
+    try {
+      await upsertMutation.mutateAsync({ maxMembers, maxOfficers, joinMode })
+      setOpen(false)
+      toast.success(m.guild_settings_updated())
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("保存失败", "Save failed"))
+    }
+  }
 
   return (
     <PageShell>
@@ -46,6 +88,12 @@ function GuildPage() {
           "查看公会数据 + 容量限制配置",
           "Guild data + capacity & join mode settings",
         )}
+        actions={
+          <Button variant="outline" size="sm" onClick={openEditDialog}>
+            <Pencil className="mr-1.5 size-3.5" />
+            {m.common_edit()}
+          </Button>
+        }
       />
 
       <PageBody>
@@ -160,6 +208,57 @@ function GuildPage() {
           )}
         </PageSection>
       </PageBody>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{m.guild_settings()}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="max-members">{m.guild_max_members()}</Label>
+              <Input
+                id="max-members"
+                type="number"
+                min={1}
+                value={maxMembers}
+                onChange={(e) => setMaxMembers(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="max-officers">{m.guild_max_officers()}</Label>
+              <Input
+                id="max-officers"
+                type="number"
+                min={0}
+                value={maxOfficers}
+                onChange={(e) => setMaxOfficers(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>{m.guild_join_mode()}</Label>
+              <Select value={joinMode} onValueChange={setJoinMode}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">{t("开放", "Open")}</SelectItem>
+                  <SelectItem value="request">{t("申请", "Request")}</SelectItem>
+                  <SelectItem value="closed">{t("关闭", "Closed")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {m.common_cancel()}
+            </Button>
+            <Button onClick={handleSave} disabled={upsertMutation.isPending}>
+              {m.common_save()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   )
 }
