@@ -14,9 +14,9 @@ const RoutePathSchema = z
   .string()
   .min(2)
   .max(200)
-  .regex(/^\/[a-zA-Z0-9\-/_]*$/, {
+  .regex(/^\/[a-zA-Z0-9\-/_$]*$/, {
     message:
-      "routePath must start with '/' and contain only [a-zA-Z0-9-/_]",
+      "routePath must start with '/' and contain only [a-zA-Z0-9-/_$]",
   })
   .openapi({
     description: "Sidebar nav route to favorite, e.g. '/shop/categories'.",

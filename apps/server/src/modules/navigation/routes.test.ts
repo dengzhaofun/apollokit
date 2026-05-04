@@ -145,6 +145,17 @@ describe("navigation routes", () => {
     expect(res.status).toBe(400)
   })
 
+  test("POST with TanStack $param routePath → 201", async () => {
+    const res = await app.request("/api/v1/navigation/favorites", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: fx.cookie },
+      body: JSON.stringify({
+        routePath: "/o/$orgSlug/p/$projectSlug/dashboard",
+      }),
+    })
+    expect(res.status).toBe(201)
+  })
+
   test("DELETE unknown routePath → 404", async () => {
     const res = await app.request(
       `/api/v1/navigation/favorites?routePath=${encodeURIComponent("/never-pinned")}`,
