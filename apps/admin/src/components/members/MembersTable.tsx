@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react"
-import { MoreHorizontalIcon, SearchIcon, UsersIcon } from "lucide-react"
+import { DownloadIcon, MoreHorizontalIcon, UsersIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
+import { StatusBadge, type StatusValue } from "#/components/ui/status-badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +28,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import { Input } from "#/components/ui/input"
 import { Skeleton } from "#/components/ui/skeleton"
 import {
   Table,
@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table"
+import { FilterBar } from "#/components/patterns/FilterBar"
 import { authClient } from "#/lib/auth-client"
 import { cn } from "#/lib/utils"
 import {
@@ -79,13 +80,36 @@ const ROLE_BADGE_TONE: Record<string, string> = {
   member: "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300",
 }
 
-/**
- * 复用的成员管理表格 —— scope="org" 渲染组织成员,scope="project"
- * 渲染当前 active project 的成员。两套 RBAC 角色集用 ROLE 常量切。
- *
- * 项目级成员管理依赖自家 server endpoint `/api/v1/team-members`,
- * 还没接入时表格显示空态 + "Coming soon" 文案;PR 4 接入后立刻可用。
- */
+/** 从 role 推断一个占位 status（后端接入真实 presence 后替换） */
+function inferStatus(role: string, createdAt: string | null): StatusValue {
+  if (role === "orgOwner" || role === "owner") return "active"
+  if (createdAt) {
+    const daysSince = (Date.now() - new Date(createdAt).getTime()) / 86_400_000
+    if (daysSince < 7) return "active"
+    if (daysSince < 30) return "away"
+  }
+  return "offline"
+}
+
+function exportCsv(rows: (OrgMemberRow | ProjectMemberRow)[], filename: string) {
+  const headers = ["Name", "Email", "Role", "Joined"]
+  const lines = rows.map((r) => {
+    const u = r.user
+    const name = u?.name?.trim() || u?.email || ""
+    const email = u?.email || ""
+    const joined = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""
+    return [name, email, r.role, joined].map((v) => `"${v}"`).join(",")
+  })
+  const csv = [headers.join(","), ...lines].join("\n")
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function MembersTable({ scope }: Props) {
   const { data: session } = authClient.useSession()
   const orgId = session?.session.activeOrganizationId ?? null
@@ -102,42 +126,78 @@ export function MembersTable({ scope }: Props) {
   )
 
   const [query, setQuery] = useState("")
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter((r) => {
-      const u = r.user
-      return (
-        (u?.name ?? "").toLowerCase().includes(q) ||
-        (u?.email ?? "").toLowerCase().includes(q) ||
-        r.role.toLowerCase().includes(q)
-      )
-    })
-  }, [rows, query])
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
 
   const ROLES = scope === "org" ? ORG_ROLES : PROJECT_ROLES
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return rows.filter((r) => {
+      if (q) {
+        const u = r.user
+        const matches =
+          (u?.name ?? "").toLowerCase().includes(q) ||
+          (u?.email ?? "").toLowerCase().includes(q) ||
+          r.role.toLowerCase().includes(q)
+        if (!matches) return false
+      }
+      if (roleFilter !== "all" && r.role !== roleFilter) return false
+      if (statusFilter !== "all") {
+        const status = inferStatus(r.role, r.createdAt)
+        if (status !== statusFilter) return false
+      }
+      return true
+    })
+  }, [rows, query, roleFilter, statusFilter])
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm">
-          <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索姓名、邮箱、角色"
-            className="pl-8"
-          />
-        </div>
-        <InviteMembersDialog scope={scope} />
-      </div>
+      <FilterBar
+        search={{ value: query, onChange: setQuery, placeholder: "搜索姓名、邮箱、角色…" }}
+        filters={[
+          {
+            key: "role",
+            label: "All Roles",
+            value: roleFilter,
+            onChange: setRoleFilter,
+            options: ROLES.map((r) => ({ value: r.value, label: r.label })),
+          },
+          {
+            key: "status",
+            label: "All Status",
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { value: "active", label: "Active" },
+              { value: "away", label: "Away" },
+              { value: "offline", label: "Offline" },
+              { value: "pending", label: "Pending" },
+            ],
+          },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportCsv(filtered, `members-${scope}.csv`)}
+            >
+              <DownloadIcon className="size-3.5" />
+              Export CSV
+            </Button>
+            <InviteMembersDialog scope={scope} />
+          </div>
+        }
+      />
 
-      <div className="rounded-md border">
+      <div className="rounded-xl border shadow-[0_1px_3px_oklch(0_0_0/0.04)]">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>成员</TableHead>
-              <TableHead className="w-32">角色</TableHead>
+              <TableHead className="w-28">角色</TableHead>
+              <TableHead className="w-32">状态</TableHead>
               <TableHead className="w-32">加入时间</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -154,6 +214,9 @@ export function MembersTable({ scope }: Props) {
                       <Skeleton className="h-5 w-16" />
                     </TableCell>
                     <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
                       <Skeleton className="h-4 w-20" />
                     </TableCell>
                     <TableCell></TableCell>
@@ -162,7 +225,7 @@ export function MembersTable({ scope }: Props) {
               </>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-12 text-center">
+                <TableCell colSpan={5} className="py-12 text-center">
                   <div className="mx-auto flex max-w-xs flex-col items-center gap-2 text-sm text-muted-foreground">
                     <UsersIcon className="size-8 opacity-50" />
                     <p>
@@ -222,6 +285,7 @@ function MemberRow({
   const created = row.createdAt
     ? new Date(row.createdAt).toLocaleDateString()
     : "—"
+  const status = inferStatus(row.role, row.createdAt)
 
   const handleChangeRole = (next: string) => {
     if (next === row.role) return
@@ -234,7 +298,6 @@ function MemberRow({
         },
       )
     } else {
-      // 项目级角色变更走自家 endpoint(PR 4 接入)
       toast.info("项目级角色变更后端接入中")
     }
   }
@@ -286,7 +349,10 @@ function MemberRow({
           {roleLabel(row.role, roles)}
         </Badge>
       </TableCell>
-      <TableCell className="text-muted-foreground">{created}</TableCell>
+      <TableCell>
+        <StatusBadge status={status} />
+      </TableCell>
+      <TableCell className="text-muted-foreground text-sm">{created}</TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -328,8 +394,8 @@ function MemberRow({
               <AlertDialogTitle>移除 {displayName}?</AlertDialogTitle>
               <AlertDialogDescription>
                 {scope === "org"
-                  ? `${displayName} 会失去对该组织所有项目的访问权,但 SSO/SCIM 同步可能会再加回来。`
-                  : `${displayName} 会失去对该项目的访问权,但仍是组织成员。`}
+                  ? `${displayName} 会失去对该组织所有项目的访问权，但 SSO/SCIM 同步可能会再加回来。`
+                  : `${displayName} 会失去对该项目的访问权，但仍是组织成员。`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
