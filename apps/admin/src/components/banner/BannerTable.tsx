@@ -208,7 +208,7 @@ function SortableBannerRow({
       <TableCell className="w-8 cursor-grab align-middle text-muted-foreground hover:text-foreground">
         <button
           type="button"
-          aria-label="Drag to reorder"
+          aria-label={m.aria_drag_reorder()}
           {...attributes}
           {...listeners}
           className="flex h-8 w-8 items-center justify-center"
@@ -270,7 +270,7 @@ function SortableBannerRow({
             size="icon"
             className="size-8"
             disabled={isBusy || isFirst}
-            title="置顶"
+            title={m.sortable_table_move_top()}
             onClick={() => onMove(row.id, { position: "first" })}
           >
             <ArrowUpToLine className="size-3.5" />
@@ -300,7 +300,7 @@ function SortableBannerRow({
             size="icon"
             className="size-8"
             disabled={isBusy || isLast}
-            title="置后"
+            title={m.sortable_table_move_bottom()}
             onClick={() => onMove(row.id, { position: "last" })}
           >
             <ArrowDownToLine className="size-3.5" />

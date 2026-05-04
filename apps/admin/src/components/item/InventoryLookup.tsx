@@ -30,7 +30,7 @@ export function InventoryLookup() {
             id="endUserId"
             value={endUserId}
             onChange={(e) => setEndUserId(e.target.value)}
-            placeholder="e.g. user-42"
+            placeholder={m.inventory_lookup_user_placeholder()}
             onKeyDown={(e) => {
               if (e.key === "Enter" && endUserId.trim()) {
                 setSearchUserId(endUserId.trim())

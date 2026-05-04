@@ -91,7 +91,7 @@ function FormationConfigCreatePage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="Default Formation"
+                      placeholder={m.entity_formation_name_placeholder()}
                     />
                     {field.state.meta.errors.length > 0 && (
                       <p className="text-sm text-destructive">
@@ -111,7 +111,7 @@ function FormationConfigCreatePage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="default"
+                      placeholder={m.entity_formation_key_placeholder()}
                     />
                   </div>
                 )}

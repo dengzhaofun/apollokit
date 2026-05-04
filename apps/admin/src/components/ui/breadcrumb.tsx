@@ -2,13 +2,14 @@ import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 
+import * as m from "#/paraglide/messages.js"
 import { cn } from "#/lib/utils"
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label={m.aria_breadcrumb()}
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}

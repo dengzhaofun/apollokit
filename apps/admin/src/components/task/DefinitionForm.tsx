@@ -158,7 +158,7 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. Win 3 Battles"
+              placeholder={m.task_definition_name_placeholder()}
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -176,7 +176,7 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. win-3-battles (lowercase, digits, hyphens, underscores)"
+              placeholder={m.task_definition_key_placeholder()}
             />
           </div>
         )}
@@ -207,7 +207,7 @@ export function DefinitionForm({
                 onValueChange={(v) => field.handleChange(v ?? "")}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="No category" />
+                  <SelectValue placeholder={m.task_definition_category_placeholder()} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -295,7 +295,7 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. purchase, login, battle_win"
+              placeholder={m.task_definition_event_name_placeholder()}
             />
           </div>
         )}
@@ -314,7 +314,7 @@ export function DefinitionForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="e.g. amount"
+              placeholder={m.task_definition_event_field_placeholder()}
             />
           </div>
         )}
@@ -587,7 +587,7 @@ function TierKeyFields({
           id="tier-alias"
           value={draft.alias}
           onChange={(e) => onChange({ ...draft, alias: e.target.value })}
-          placeholder="tier-1"
+          placeholder={m.task_definition_tier_key_placeholder()}
         />
       </div>
       <div className="space-y-2">

@@ -46,13 +46,14 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 
 import MarketingShell, {
   SectionEyebrow,
   SectionTitle,
 } from "./MarketingShell"
-import { PRICING_TIERS } from "./pricing-plans"
+import { getPricingTiers } from "./pricing-plans"
 
 type ModuleItem = {
   name: string
@@ -68,67 +69,69 @@ type ModuleGroup = {
   items: ModuleItem[]
 }
 
-const MODULE_GROUPS: ModuleGroup[] = [
-  {
-    id: "economy",
-    title: "经济系统",
-    subtitle: "Economy · 道具、货币、交易、库存一张表",
-    accent: "indigo",
-    items: [
-      { name: "物品", icon: Package, desc: "道具定义 / 属性 / 稀有度" },
-      { name: "货币", icon: Coins, desc: "多币种、汇率、流水账" },
-      { name: "实体", icon: Sparkles, desc: "任意可交付资源" },
-      { name: "兑换", icon: ArrowLeftRight, desc: "限购、阶梯、组合包" },
-      { name: "兑换码", icon: Ticket, desc: "CDKEY 生成 / 批量 / 核销" },
-      { name: "商城", icon: ShoppingCart, desc: "SKU / 礼包 / 限时" },
-      { name: "存储箱", icon: PiggyBank, desc: "暂存、领取队列、溢出" },
-      { name: "邮件", icon: Mail, desc: "系统邮件 / 奖励挂件" },
-    ],
-  },
-  {
-    id: "operations",
-    title: "运营活动",
-    subtitle: "LiveOps · 活动、签到、抽奖即配即用",
-    accent: "cyan",
-    items: [
-      { name: "签到", icon: CalendarCheck, desc: "连续 / 累计 / 补签" },
-      { name: "轮播图", icon: GalleryHorizontal, desc: "活动位 / 投放 / 分层" },
-      { name: "公告", icon: Megaphone, desc: "弹窗 / 滚动条 / 定向" },
-      { name: "活动", icon: PartyPopper, desc: "开关、周期、分层奖励" },
-      { name: "抽奖", icon: Dices, desc: "概率表 / 保底 / 防伪" },
-      { name: "赠礼", icon: Gift, desc: "好友系统 / 每日额度" },
-      { name: "任务", icon: ListTodo, desc: "日常、周常、链式" },
-    ],
-  },
-  {
-    id: "content",
-    title: "内容生产",
-    subtitle: "Content · 让策划自己上线内容",
-    accent: "fuchsia",
-    items: [
-      { name: "素材云盘", icon: FolderOpen, desc: "图片 / 音频 / 版本化" },
-      { name: "对话", icon: MessagesSquare, desc: "NPC 分支 / 多语言" },
-      { name: "图鉴", icon: BookOpen, desc: "收集度 / 进度 / 奖励" },
-      { name: "关卡", icon: MapIcon, desc: "章节 / 解锁 / 难度" },
-      { name: "事件中心", icon: Radio, desc: "埋点 / 合同 / 下发" },
-    ],
-  },
-  {
-    id: "social",
-    title: "社交与竞技",
-    subtitle: "Social · 让玩家彼此留住彼此",
-    accent: "emerald",
-    items: [
-      { name: "好友", icon: Users, desc: "关系链 / 申请 / 黑名单" },
-      { name: "邀请", icon: UserPlus, desc: "分享 / 返利 / 归因" },
-      { name: "公会", icon: Shield, desc: "创建 / 权限 / 贡献度" },
-      { name: "组队", icon: Swords, desc: "匹配 / 房间 / 副本" },
-      { name: "排行榜", icon: Trophy, desc: "实时 / 快照 / 分赛季" },
-      { name: "天梯", icon: Medal, desc: "段位 / ELO / 结算" },
-      { name: "终端玩家", icon: Contact, desc: "档案 / 画像 / 封禁" },
-    ],
-  },
-]
+function getModuleGroups(): ModuleGroup[] {
+  return [
+    {
+      id: "economy",
+      title: m.landing_module_economy_title(),
+      subtitle: m.landing_module_economy_subtitle(),
+      accent: "indigo",
+      items: [
+        { name: m.landing_module_item_name(), icon: Package, desc: m.landing_module_item_desc() },
+        { name: m.landing_module_currency_name(), icon: Coins, desc: m.landing_module_currency_desc() },
+        { name: m.landing_module_entity_name(), icon: Sparkles, desc: m.landing_module_entity_desc() },
+        { name: m.landing_module_exchange_name(), icon: ArrowLeftRight, desc: m.landing_module_exchange_desc() },
+        { name: m.landing_module_redeem_name(), icon: Ticket, desc: m.landing_module_redeem_desc() },
+        { name: m.landing_module_shop_name(), icon: ShoppingCart, desc: m.landing_module_shop_desc() },
+        { name: m.landing_module_storage_name(), icon: PiggyBank, desc: m.landing_module_storage_desc() },
+        { name: m.landing_module_mail_name(), icon: Mail, desc: m.landing_module_mail_desc() },
+      ],
+    },
+    {
+      id: "operations",
+      title: m.landing_module_ops_title(),
+      subtitle: m.landing_module_ops_subtitle(),
+      accent: "cyan",
+      items: [
+        { name: m.landing_module_checkin_name(), icon: CalendarCheck, desc: m.landing_module_checkin_desc() },
+        { name: m.landing_module_banner_name(), icon: GalleryHorizontal, desc: m.landing_module_banner_desc() },
+        { name: m.landing_module_announce_name(), icon: Megaphone, desc: m.landing_module_announce_desc() },
+        { name: m.landing_module_event_name(), icon: PartyPopper, desc: m.landing_module_event_desc() },
+        { name: m.landing_module_lottery_name(), icon: Dices, desc: m.landing_module_lottery_desc() },
+        { name: m.landing_module_gift_name(), icon: Gift, desc: m.landing_module_gift_desc() },
+        { name: m.landing_module_task_name(), icon: ListTodo, desc: m.landing_module_task_desc() },
+      ],
+    },
+    {
+      id: "content",
+      title: m.landing_module_content_title(),
+      subtitle: m.landing_module_content_subtitle(),
+      accent: "fuchsia",
+      items: [
+        { name: m.landing_module_asset_name(), icon: FolderOpen, desc: m.landing_module_asset_desc() },
+        { name: m.landing_module_dialogue_name(), icon: MessagesSquare, desc: m.landing_module_dialogue_desc() },
+        { name: m.landing_module_encyclopedia_name(), icon: BookOpen, desc: m.landing_module_encyclopedia_desc() },
+        { name: m.landing_module_level_name(), icon: MapIcon, desc: m.landing_module_level_desc() },
+        { name: m.landing_module_eventcenter_name(), icon: Radio, desc: m.landing_module_eventcenter_desc() },
+      ],
+    },
+    {
+      id: "social",
+      title: m.landing_module_social_title(),
+      subtitle: m.landing_module_social_subtitle(),
+      accent: "emerald",
+      items: [
+        { name: m.landing_module_friends_name(), icon: Users, desc: m.landing_module_friends_desc() },
+        { name: m.landing_module_invite_name(), icon: UserPlus, desc: m.landing_module_invite_desc() },
+        { name: m.landing_module_guild_name(), icon: Shield, desc: m.landing_module_guild_desc() },
+        { name: m.landing_module_team_name(), icon: Swords, desc: m.landing_module_team_desc() },
+        { name: m.landing_module_leaderboard_name(), icon: Trophy, desc: m.landing_module_leaderboard_desc() },
+        { name: m.landing_module_ladder_name(), icon: Medal, desc: m.landing_module_ladder_desc() },
+        { name: m.landing_module_player_name(), icon: Contact, desc: m.landing_module_player_desc() },
+      ],
+    },
+  ]
+}
 
 const HERO_ICONS_INNER: LucideIcon[] = [
   Package,
@@ -302,7 +305,7 @@ function Hero() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
-            通用游戏后端 + AI 副驾驶，一个 SDK 接入就够
+            {m.landing_hero_badge()}
           </div>
 
           <div className="mt-3">
@@ -315,20 +318,18 @@ function Hero() {
                 strokeWidth={2}
               />
               <span>
-                内置 AI Copilot · 覆盖{" "}
-                <span className="font-bold text-foreground">14</span>{" "}
-                个业务模块
+                {m.landing_hero_copilot_badge({ n: 14 })}
               </span>
               <ArrowRight className="size-3 text-[var(--ak-accent-2)] transition-transform group-hover:translate-x-0.5" />
             </a>
           </div>
 
           <h1 className="mt-6 text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
-            把游戏通用后端
+            {m.landing_hero_h1_line1()}
             <br />
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-transparent">
-                抽象成一个 SDK。
+                {m.landing_hero_h1_line2()}
               </span>
               <svg
                 className="absolute -bottom-2 left-0 w-full"
@@ -348,16 +349,14 @@ function Hero() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            ApolloKit 把 <span className="font-semibold text-foreground">30+ 个游戏通用模块</span>{" "}
-            （道具、货币、签到、抽奖、活动、邮件、排行榜、公会、对话……）抽象好了。
-            新项目直接接入 SDK，通用逻辑从此不用再自研。
+            {m.landing_hero_desc({ count: "30" })}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button
               render={
                 <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-                  免费开始构建
+                  {m.landing_hero_cta_primary()}
                   <ArrowRight className="ml-1 size-4" />
                 </Link>
               }
@@ -367,7 +366,7 @@ function Hero() {
             <Button
               render={
                 <a href="#modules">
-                  看看 30+ 模块
+                  {m.landing_hero_cta_modules()}
                   <ArrowRight className="ml-1 size-4" />
                 </a>
               }
@@ -379,7 +378,7 @@ function Hero() {
               render={
                 <a href="#ai-copilot">
                   <Sparkles className="mr-1 size-4 text-[var(--ak-accent-2)]" />
-                  看看 Copilot 演示
+                  {m.landing_hero_cta_copilot()}
                 </a>
               }
               variant="ghost"
@@ -391,10 +390,10 @@ function Hero() {
           {/* Stats strip */}
           <dl className="mt-12 grid max-w-xl grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
             {[
-              { k: "30+", v: "开箱即用模块" },
-              { k: "4", v: "步集成完毕" },
-              { k: "全球", v: "就近响应" },
-              { k: "14", v: "AI 模块覆盖" },
+              { k: "30+", v: m.landing_hero_stat_modules() },
+              { k: "4", v: m.landing_hero_stat_steps() },
+              { k: m.landing_hero_stat_global(), v: m.landing_hero_stat_global_sub() },
+              { k: "14", v: m.landing_hero_stat_ai() },
             ].map((s) => (
               <div key={s.v}>
                 <dt className="text-3xl font-black tracking-tight text-foreground">
@@ -455,47 +454,47 @@ function Capabilities() {
   return (
     <section id="platform" className="relative py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionEyebrow>一个 SDK，接完所有通用逻辑</SectionEyebrow>
+        <SectionEyebrow>{m.landing_capabilities_eyebrow()}</SectionEyebrow>
         <SectionTitle>
-          六大系统，把游戏通用后端抽象成即插即用的模块。
+          {m.landing_capabilities_title()}
         </SectionTitle>
 
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           <CapabilityCard
             icon={Coins}
             tag="economy"
-            title="经济系统"
-            desc="统一的资源账本：物品、货币、实体、仓库互相打通。发奖、扣费、兑换、流水记录，一次调用完成。"
+            title={m.landing_cap_economy_title()}
+            desc={m.landing_cap_economy_desc()}
           />
           <CapabilityCard
             icon={PartyPopper}
             tag="liveops"
-            title="运营能力"
-            desc="签到、Banner、公告、活动、抽奖、任务。排期、分层、限时、组合奖励——现成的规则配好就能用。"
+            title={m.landing_cap_liveops_title()}
+            desc={m.landing_cap_liveops_desc()}
           />
           <CapabilityCard
             icon={BookOpen}
             tag="content"
-            title="游戏内容"
-            desc="剧情对话、图鉴、关卡、素材云盘都是第一公民。多语言、版本化、发布流程一条链路。"
+            title={m.landing_cap_content_title()}
+            desc={m.landing_cap_content_desc()}
           />
           <CapabilityCard
             icon={Users}
             tag="social"
-            title="社交与竞技"
-            desc="好友、公会、组队、排行榜、天梯——关系链与赛季结算内建在平台里，不用再自研。"
+            title={m.landing_cap_social_title()}
+            desc={m.landing_cap_social_desc()}
           />
           <CapabilityCard
             icon={Activity}
             tag="analytics"
-            title="实时分析"
-            desc="经济流动、活动触发自动入仓。秒级出漏斗、留存、回流曲线，活动一开服立刻能复盘 — 不用自己接 BI。"
+            title={m.landing_cap_analytics_title()}
+            desc={m.landing_cap_analytics_desc()}
           />
           <CapabilityCard
             icon={Plug}
             tag="sdk"
-            title="开发者 SDK"
-            desc="一个 API Key，一次集成。客户端调用，后台自动完成发奖、扣费、记录流水，不用自己搭任何服务。"
+            title={m.landing_cap_sdk_title()}
+            desc={m.landing_cap_sdk_desc()}
           />
         </div>
       </div>
@@ -504,25 +503,26 @@ function Capabilities() {
 }
 
 function ModuleMatrix() {
+  const moduleGroups = getModuleGroups()
   return (
     <section id="modules" className="relative py-24">
       <div className="absolute inset-0 ak-dots-bg opacity-60" aria-hidden />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionEyebrow>30+ 模块 · 开箱即用</SectionEyebrow>
+        <SectionEyebrow>{m.landing_modules_eyebrow()}</SectionEyebrow>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionTitle>
-            所有你以为要写 3 个月的模块，
+            {m.landing_modules_title_line1()}
             <br className="hidden md:block" />
-            在 ApolloKit 里都是一个开关。
+            {m.landing_modules_title_line2()}
           </SectionTitle>
           <div className="hidden items-center gap-2 text-sm text-muted-foreground md:flex">
             <LayoutGrid className="size-4" />
-            按需启用 · 一次集成
+            {m.landing_modules_hint()}
           </div>
         </div>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-2">
-          {MODULE_GROUPS.map((group) => (
+          {moduleGroups.map((group) => (
             <div
               key={group.id}
               className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur-sm md:p-7"
@@ -540,11 +540,11 @@ function ModuleMatrix() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {group.items.map((m) => {
-                  const Icon = m.icon
+                {group.items.map((item) => {
+                  const Icon = item.icon
                   return (
                     <div
-                      key={m.name}
+                      key={item.name}
                       className="ak-tile group flex flex-col gap-2 rounded-xl border border-border bg-background/70 p-3 transition-colors hover:border-foreground/30"
                       tabIndex={0}
                     >
@@ -552,10 +552,10 @@ function ModuleMatrix() {
                         <div className="grid size-7 place-items-center rounded-md bg-foreground/5 text-foreground ring-1 ring-inset ring-border">
                           <Icon className="size-4" strokeWidth={1.75} />
                         </div>
-                        <span className="text-sm font-semibold">{m.name}</span>
+                        <span className="text-sm font-semibold">{item.name}</span>
                       </div>
                       <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                        {m.desc}
+                        {item.desc}
                       </p>
                     </div>
                   )
@@ -573,31 +573,31 @@ function Workflow() {
   const steps = [
     {
       k: "01",
-      title: "创建项目",
-      body: "在控制台里开一个项目，拿到专属的 API Key 和后台。整个过程不到 1 分钟。",
+      title: m.landing_workflow_step1_title(),
+      body: m.landing_workflow_step1_body(),
     },
     {
       k: "02",
-      title: "选模块、配规则",
-      body: "勾选这款游戏需要的模块——物品、签到、排行榜、邮件……在控制台里把规则、奖励、周期配好。",
+      title: m.landing_workflow_step2_title(),
+      body: m.landing_workflow_step2_body(),
     },
     {
       k: "03",
-      title: "接入 SDK",
-      body: "客户端集成 ApolloKit SDK。发奖、扣费、领邮件、抽奖都是一次函数调用，参数由 SDK 类型保证。",
+      title: m.landing_workflow_step3_title(),
+      body: m.landing_workflow_step3_body(),
     },
     {
       k: "04",
-      title: "游戏上线",
-      body: "通用后端逻辑交给 ApolloKit，你的团队专注在玩法、美术、剧情上。",
+      title: m.landing_workflow_step4_title(),
+      body: m.landing_workflow_step4_body(),
     },
   ]
 
   return (
     <section id="workflow" className="relative py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionEyebrow>从新项目到游戏上线</SectionEyebrow>
-        <SectionTitle>4 步，让新游戏拥有完整的通用后端。</SectionTitle>
+        <SectionEyebrow>{m.landing_workflow_eyebrow()}</SectionEyebrow>
+        <SectionTitle>{m.landing_workflow_title()}</SectionTitle>
 
         <ol className="relative mt-16 grid gap-6 md:grid-cols-4">
           {/* connective line on md+ */}
@@ -647,23 +647,23 @@ function AICopilot() {
     {
       icon: Layers,
       kicker: "14",
-      title: "模块全覆盖",
-      desc: "活动、签到、邮件、商城、抽奖……Copilot 都懂，不只是个聊天框。",
+      title: m.landing_copilot_feat_coverage_title(),
+      desc: m.landing_copilot_feat_coverage_desc(),
     },
     {
       icon: WandSparkles,
-      title: "智能回填表单",
-      desc: "看得懂你正在编辑哪个页面，把「双 11 周末双倍签」自动拆成字段。",
+      title: m.landing_copilot_feat_autofill_title(),
+      desc: m.landing_copilot_feat_autofill_desc(),
     },
     {
       icon: MessageSquareDashed,
-      title: "跨页带话 · 拖拽侧栏",
-      desc: "从活动跳到邮件，对话不丢；侧栏拖到任何位置，AI 始终在你视线里。",
+      title: m.landing_copilot_feat_persist_title(),
+      desc: m.landing_copilot_feat_persist_desc(),
     },
     {
       icon: BookOpen,
-      title: "文档 Ask-AI · 流式 + 引用",
-      desc: "文档站随时召唤，流式 Markdown 作答，自动附参考链接。",
+      title: m.landing_copilot_feat_docs_title(),
+      desc: m.landing_copilot_feat_docs_desc(),
     },
   ]
 
@@ -681,15 +681,14 @@ function AICopilot() {
       />
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div>
-          <SectionEyebrow>运营人员的 AI 副驾驶</SectionEyebrow>
+          <SectionEyebrow>{m.landing_copilot_eyebrow()}</SectionEyebrow>
           <SectionTitle>
-            30+ 模块复杂吗？
+            {m.landing_copilot_title_line1()}
             <br className="hidden md:block" />
-            让 Copilot 替你点。
+            {m.landing_copilot_title_line2()}
           </SectionTitle>
           <p className="mt-5 max-w-xl text-muted-foreground">
-            ApolloKit Copilot 嵌在控制台每一个页面里——看得懂你正在编辑的活动、抽奖、邮件，
-            能直接回填字段、跨页带话、查文档。运营不用记 14 套规则，写一句话就够。
+            {m.landing_copilot_desc()}
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -743,38 +742,38 @@ function AICopilot() {
 function CopilotMock() {
   return (
     <div className="relative">
-      {/* mini 控制台 */}
+      {/* mini console */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 shadow-[0_30px_80px_-30px_var(--ak-glow-2)] backdrop-blur-sm">
         <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-3">
           <span className="size-3 rounded-full bg-red-400/80" />
           <span className="size-3 rounded-full bg-yellow-400/80" />
           <span className="size-3 rounded-full bg-green-400/80" />
           <span className="ml-3 truncate font-mono text-xs text-muted-foreground">
-            apollokit · 活动 · 编辑
+            {m.landing_copilot_mock_titlebar()}
           </span>
           <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
             <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
-            Copilot · 在线
+            {m.landing_copilot_mock_status()}
           </span>
         </div>
 
         <div className="space-y-3 p-5">
-          <MockField label="活动名称" value="双 11 周末双倍签" />
+          <MockField label={m.landing_copilot_mock_field_name()} value={m.landing_copilot_mock_field_name_value()} />
           <MockField
-            label="活动周期"
-            value="2026-11-08 → 2026-11-10"
+            label={m.landing_copilot_mock_field_cycle()}
+            value={m.landing_copilot_mock_field_cycle_value()}
             aiFilled
           />
           <MockField
-            label="奖励倍数"
-            value="2.0x · 应用于 7 日签到奖励"
+            label={m.landing_copilot_mock_field_multiplier()}
+            value={m.landing_copilot_mock_field_multiplier_value()}
             aiFilled
           />
-          <MockField label="目标分层" value="VIP1+ · 7 日活跃" />
+          <MockField label={m.landing_copilot_mock_field_segment()} value={m.landing_copilot_mock_field_segment_value()} />
         </div>
       </div>
 
-      {/* 连接虚线（sm+） */}
+      {/* connector dashes (sm+) */}
       <svg
         className="pointer-events-none absolute -bottom-2 right-12 hidden h-20 w-28 sm:block"
         viewBox="0 0 112 80"
@@ -792,7 +791,7 @@ function CopilotMock() {
         />
       </svg>
 
-      {/* AI 对话气泡：sm+ 浮在右下，移动端堆在底下 */}
+      {/* AI chat bubble: sm+ floats bottom-right, mobile stacks below */}
       <div className="relative mt-4 sm:absolute sm:-bottom-8 sm:right-[-12px] sm:mt-0 sm:w-[300px]">
         <div className="rounded-2xl border border-border bg-background p-4 shadow-[0_30px_80px_-20px_var(--ak-glow-2)] ring-1 ring-[var(--ak-accent-2)]/30">
           <div className="text-xs leading-relaxed">
@@ -800,7 +799,7 @@ function CopilotMock() {
               you
             </span>
             <p className="mt-1 text-foreground/80">
-              「帮我配双 11 周末双倍签」
+              {m.landing_copilot_mock_user_message()}
             </p>
           </div>
           <div className="mt-3 flex items-start gap-2 border-t border-border/70 pt-3">
@@ -810,10 +809,10 @@ function CopilotMock() {
             />
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground">
-                已生成活动草稿
+                {m.landing_copilot_mock_ai_response()}
               </div>
               <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                ↳ 已填 3 字段 · 引用 docs §4.2 抽奖概率
+                {m.landing_copilot_mock_ai_detail()}
               </div>
             </div>
           </div>
@@ -861,23 +860,23 @@ function AnalyticsPreview() {
   const bullets: Array<{ icon: LucideIcon; t: string; d: string }> = [
     {
       icon: Activity,
-      t: "事件自动入仓",
-      d: "30+ 模块全部自动入仓实时分析引擎，零埋点零 ETL，新模块上线即被捕获。",
+      t: m.landing_analytics_feat_ingest_title(),
+      d: m.landing_analytics_feat_ingest_desc(),
     },
     {
       icon: LineChart,
-      t: "实时漏斗与留存",
-      d: "D1 / D7 / D30 留存按事件秒级计算，活动调一次参数立刻看曲线变化。",
+      t: m.landing_analytics_feat_funnel_title(),
+      d: m.landing_analytics_feat_funnel_desc(),
     },
     {
       icon: PieChart,
-      t: "活动 A/B 立刻复盘",
-      d: "开服当天拉数据看效果。组别、分层、付费层级 — 切片随便组合。",
+      t: m.landing_analytics_feat_ab_title(),
+      d: m.landing_analytics_feat_ab_desc(),
     },
     {
       icon: Zap,
-      t: "数据 API 拉报表",
-      d: "Pipe Token 直接出 JSON / CSV，BI、看板、Slack Bot 一接即查。",
+      t: m.landing_analytics_feat_api_title(),
+      d: m.landing_analytics_feat_api_desc(),
     },
   ]
   return (
@@ -894,15 +893,14 @@ function AnalyticsPreview() {
       />
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div>
-          <SectionEyebrow>数据 · 实时复盘</SectionEyebrow>
+          <SectionEyebrow>{m.landing_analytics_eyebrow()}</SectionEyebrow>
           <SectionTitle>
-            事件自动入仓，
+            {m.landing_analytics_title_line1()}
             <br className="hidden md:block" />
-            复盘秒级出图。
+            {m.landing_analytics_title_line2()}
           </SectionTitle>
           <p className="mt-5 max-w-xl text-muted-foreground">
-            ApolloKit 内置实时分析引擎，发奖、抽奖、活动触发自动入仓。
-            漏斗、留存、回流曲线开服当天就能拉，运营自己看数，不用排期等数据团队。
+            {m.landing_analytics_desc()}
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -931,15 +929,15 @@ function AnalyticsPreview() {
 
 function AnalyticsMock() {
   const kpis = [
-    { k: "DAU", v: "12,481", d: "+8.4%" },
-    { k: "D7 留存", v: "38%", d: "+2.1pt" },
-    { k: "7D ARPU", v: "¥4.2", d: "+12%" },
+    { k: m.landing_analytics_mock_kpi_dau(), v: "12,481", d: "+8.4%" },
+    { k: m.landing_analytics_mock_kpi_retention(), v: "38%", d: "+2.1pt" },
+    { k: m.landing_analytics_mock_kpi_arpu(), v: "¥4.2", d: "+12%" },
   ]
   const funnel = [
-    { name: "注册", pct: 100, count: "32,140" },
-    { name: "完成新手", pct: 76, count: "24,426" },
-    { name: "首充", pct: 18, count: "5,785" },
-    { name: "D7 复访", pct: 38, count: "12,213" },
+    { name: m.landing_analytics_mock_funnel_register(), pct: 100, count: "32,140" },
+    { name: m.landing_analytics_mock_funnel_tutorial(), pct: 76, count: "24,426" },
+    { name: m.landing_analytics_mock_funnel_firstpay(), pct: 18, count: "5,785" },
+    { name: m.landing_analytics_mock_funnel_d7(), pct: 38, count: "12,213" },
   ]
   return (
     <div className="relative">
@@ -949,16 +947,16 @@ function AnalyticsMock() {
           <span className="size-3 rounded-full bg-yellow-400/80" />
           <span className="size-3 rounded-full bg-green-400/80" />
           <span className="ml-3 truncate font-mono text-xs text-muted-foreground">
-            apollokit · 仪表盘 · 概览
+            {m.landing_analytics_mock_titlebar()}
           </span>
           <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background/70 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
             <span className="ak-pulse inline-block size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
-            实时 · 1m
+            {m.landing_analytics_mock_status()}
           </span>
         </div>
 
         <div className="space-y-5 p-5">
-          {/* KPI 卡 */}
+          {/* KPI cards */}
           <div className="grid grid-cols-3 gap-3">
             {kpis.map((k) => (
               <div
@@ -981,15 +979,15 @@ function AnalyticsMock() {
           {/* Sparkline */}
           <div className="rounded-xl border border-border bg-background/60 p-4">
             <div className="mb-2 flex items-baseline justify-between">
-              <div className="text-xs font-semibold">DAU vs 付费 DAU · 14d</div>
+              <div className="text-xs font-semibold">{m.landing_analytics_mock_chart_title()}</div>
               <div className="flex gap-3 font-mono text-[10px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-[var(--ak-accent)]" />
-                  DAU
+                  {m.landing_analytics_mock_chart_legend_dau()}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-[var(--ak-accent-2)]" />
-                  付费
+                  {m.landing_analytics_mock_chart_legend_paying()}
                 </span>
               </div>
             </div>
@@ -999,7 +997,7 @@ function AnalyticsMock() {
               preserveAspectRatio="none"
               aria-hidden
             >
-              {/* 网格底线 */}
+              {/* grid baseline */}
               <line
                 x1="0"
                 y1="60"
@@ -1010,7 +1008,7 @@ function AnalyticsMock() {
                 opacity="0.08"
                 strokeDasharray="2 4"
               />
-              {/* 主曲线（DAU） */}
+              {/* main curve (DAU) */}
               <path
                 d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18"
                 fill="none"
@@ -1019,13 +1017,13 @@ function AnalyticsMock() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {/* DAU 区域填充 */}
+              {/* DAU area fill */}
               <path
                 d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18 L 320 80 L 0 80 Z"
                 fill="var(--ak-accent)"
                 opacity="0.08"
               />
-              {/* 付费曲线 */}
+              {/* paying curve */}
               <path
                 d="M0 70 L 25 68 L 50 65 L 75 62 L 100 60 L 125 56 L 150 58 L 175 52 L 200 50 L 225 48 L 250 44 L 275 42 L 300 38 L 320 40"
                 fill="none"
@@ -1040,9 +1038,9 @@ function AnalyticsMock() {
           {/* Funnel */}
           <div className="rounded-xl border border-border bg-background/60 p-4">
             <div className="mb-3 flex items-baseline justify-between">
-              <div className="text-xs font-semibold">新手漏斗 · 7d</div>
+              <div className="text-xs font-semibold">{m.landing_analytics_mock_funnel_title()}</div>
               <div className="font-mono text-[10px] text-muted-foreground">
-                32,140 注册
+                32,140 {m.landing_analytics_mock_funnel_register()}
               </div>
             </div>
             <div className="space-y-2">
@@ -1078,20 +1076,18 @@ function CodeShowcase() {
     <section id="developer" className="relative py-24">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div>
-          <SectionEyebrow>集成只花一个下午</SectionEyebrow>
-          <SectionTitle>一个 API Key，一套类型安全的 SDK。</SectionTitle>
+          <SectionEyebrow>{m.landing_dev_eyebrow()}</SectionEyebrow>
+          <SectionTitle>{m.landing_dev_title()}</SectionTitle>
           <p className="mt-5 max-w-xl text-muted-foreground">
-            每一个模块都有对应的 SDK 方法，自动同步到你的
-            TypeScript / C# / Go 工程里。发奖、扣费、领邮件、抽奖都是一次函数调用，
-            参数写错了编译器会立刻告诉你。
+            {m.landing_dev_desc()}
           </p>
 
           <ul className="mt-8 space-y-4 text-sm">
             {[
-              { icon: Plug, t: "多语言 SDK", d: "TypeScript / C# / Go / Python 一套接口，保持同步" },
-              { icon: KeyRound, t: "项目级 API Key", d: "按环境、按模块分 scope，细粒度权限" },
-              { icon: Zap, t: "事件推送", d: "入账、出账、活动触发推到你任意服务" },
-              { icon: Globe, t: "全球就近响应", d: "玩家最近节点接收请求，天然低延迟" },
+              { icon: Plug, t: m.landing_dev_feat_sdk_title(), d: m.landing_dev_feat_sdk_desc() },
+              { icon: KeyRound, t: m.landing_dev_feat_apikey_title(), d: m.landing_dev_feat_apikey_desc() },
+              { icon: Zap, t: m.landing_dev_feat_events_title(), d: m.landing_dev_feat_events_desc() },
+              { icon: Globe, t: m.landing_dev_feat_global_title(), d: m.landing_dev_feat_global_desc() },
             ].map(({ icon: Icon, t, d }) => (
               <li key={t} className="flex items-start gap-3">
                 <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5 ring-1 ring-inset ring-border">
@@ -1140,7 +1136,7 @@ function CodeWindow() {
         <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed">
           <code>
             <CodeLine>
-              <CodeComment>{"// 发一封带奖励的系统邮件给玩家"}</CodeComment>
+              <CodeComment>{m.landing_dev_code_comment()}</CodeComment>
             </CodeLine>
             <CodeLine>
               <CodeKW>import</CodeKW>{" "}
@@ -1168,7 +1164,7 @@ function CodeWindow() {
             </CodeLine>
             <CodeLine>
               {"  "}
-              <CodeVar>title</CodeVar>: <CodeStr>&quot;赛季结算奖励&quot;</CodeStr>
+              <CodeVar>title</CodeVar>: <CodeStr>&quot;Season Settlement Reward&quot;</CodeStr>
               ,
             </CodeLine>
             <CodeLine>
@@ -1196,7 +1192,7 @@ function CodeWindow() {
             <CodeLine>{"})"}</CodeLine>
             <CodeLine />
             <CodeLine>
-              <CodeComment>{"// → webhook 同时触发 inventory.granted"}</CodeComment>
+              <CodeComment>{"// → webhook fires inventory.granted"}</CodeComment>
             </CodeLine>
           </code>
         </pre>
@@ -1233,16 +1229,14 @@ function EventsAndWebhooks() {
       <div className="absolute inset-0 ak-dots-bg opacity-50" aria-hidden />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <SectionEyebrow>事件 & Webhook · 平台与你的服务联动</SectionEyebrow>
+          <SectionEyebrow>{m.landing_events_eyebrow()}</SectionEyebrow>
           <SectionTitle>
-            每个动作都是事件 ——
+            {m.landing_events_title_line1()}
             <br className="hidden md:block" />
-            而事件可以跑到任何地方。
+            {m.landing_events_title_line2()}
           </SectionTitle>
           <p className="mx-auto mt-5 max-w-2xl text-muted-foreground">
-            玩家领奖、活动触发、抽奖结算……ApolloKit 把它们抽象成统一事件流。
-            异步队列 fan-out 不阻塞主请求；HMAC 签名 Webhook 推到你的服务；
-            Trigger 引擎让事件互相联动。
+            {m.landing_events_desc()}
           </p>
         </div>
 
@@ -1263,18 +1257,18 @@ function EventFlowDiagram() {
   }> = [
     {
       icon: Webhook,
-      title: "你的服务器",
-      sub: "HTTPS · HMAC 签名 · 自动重试",
+      title: m.landing_events_target_server_title(),
+      sub: m.landing_events_target_server_sub(),
     },
     {
       icon: Zap,
-      title: "Trigger 联动",
-      sub: "事件互触发 · 平台内闭环",
+      title: m.landing_events_target_trigger_title(),
+      sub: m.landing_events_target_trigger_sub(),
     },
     {
       icon: Database,
-      title: "实时数据仓",
-      sub: "秒级查询 · 自助分析",
+      title: m.landing_events_target_warehouse_title(),
+      sub: m.landing_events_target_warehouse_sub(),
     },
   ]
   const otherEvents = [
@@ -1283,13 +1277,13 @@ function EventFlowDiagram() {
     "mission.completed",
     "shop.purchased",
     "guild.joined",
-    "+20 个事件",
+    m.landing_events_other_count(),
   ]
 
   return (
     <div className="relative">
       <div className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm md:p-8">
-        {/* 中央事件 chip */}
+        {/* central event chip */}
         <div className="flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--ak-accent-2)]/60 bg-background px-4 py-2.5 font-mono text-sm font-semibold shadow-[0_10px_30px_-12px_var(--ak-glow-2)]">
             <Radio
@@ -1300,7 +1294,7 @@ function EventFlowDiagram() {
           </div>
         </div>
 
-        {/* 连线 SVG */}
+        {/* connector SVG */}
         <svg
           viewBox="0 0 400 64"
           preserveAspectRatio="none"
@@ -1349,7 +1343,7 @@ function EventFlowDiagram() {
           />
         </svg>
 
-        {/* 三个目标卡 */}
+        {/* three target cards */}
         <div className="grid grid-cols-3 gap-3">
           {targets.map(({ icon: Icon, title, sub }) => (
             <div
@@ -1369,10 +1363,10 @@ function EventFlowDiagram() {
           ))}
         </div>
 
-        {/* 底部其他事件 chips */}
+        {/* other subscribable events chips */}
         <div className="mt-7 border-t border-border/60 pt-4">
           <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            同样可订阅
+            {m.landing_events_also_subscribe()}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {otherEvents.map((name) => (
@@ -1418,7 +1412,7 @@ function WebhookCodeWindow() {
         <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-relaxed">
           <code>
             <CodeLine>
-              <CodeComment>{"// 平台推送 · HMAC 签名 · 失败自动重试"}</CodeComment>
+              <CodeComment>{m.landing_events_webhook_comment()}</CodeComment>
             </CodeLine>
             <CodeLine>
               <CodeVar>X-ApolloKit-Event</CodeVar>:{" "}
@@ -1480,38 +1474,37 @@ function WebhookCodeWindow() {
 function Stack() {
   const items = [
     {
-      k: "全球就近响应",
-      d: "服务自动分发到玩家最近的节点，东京、法兰克福、圣保罗都一样稳。",
+      k: m.landing_stack_global_title(),
+      d: m.landing_stack_global_desc(),
     },
     {
-      k: "零服务器运维",
-      d: "没有机器要扩，没有数据库要调优。后台容量、可用性由平台负责。",
+      k: m.landing_stack_serverless_title(),
+      d: m.landing_stack_serverless_desc(),
     },
     {
-      k: "类型安全 SDK",
-      d: "TypeScript / C# / Go 多语言 SDK。参数写错了编译器就会告诉你。",
+      k: m.landing_stack_sdk_title(),
+      d: m.landing_stack_sdk_desc(),
     },
     {
-      k: "安全身份与权限",
-      d: "账号体系、项目协作、按 Dev/Staging/Prod 隔离的 scope API Key，一套接口跑通三套环境。",
+      k: m.landing_stack_auth_title(),
+      d: m.landing_stack_auth_desc(),
     },
     {
-      k: "AI 原生底座",
-      d: "Vercel AI SDK + OpenRouter 多模型，内置文档 RAG。运营 Copilot、文档 Ask-AI 开箱即用，不用自己接模型。",
+      k: m.landing_stack_ai_title(),
+      d: m.landing_stack_ai_desc(),
     },
     {
-      k: "可审计、可回放",
-      d: "每一笔资源变动、每一次活动触发都有记录，客诉、审计一查便知。",
+      k: m.landing_stack_audit_title(),
+      d: m.landing_stack_audit_desc(),
     },
   ]
   return (
     <section className="relative py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionEyebrow>平台即产品</SectionEyebrow>
-        <SectionTitle>底层那些脏活累活，你不用再操心。</SectionTitle>
+        <SectionEyebrow>{m.landing_stack_eyebrow()}</SectionEyebrow>
+        <SectionTitle>{m.landing_stack_title()}</SectionTitle>
         <p className="mt-5 max-w-2xl text-muted-foreground">
-          ApolloKit 不是又一个需要你自己维护的后台。服务器、数据库、身份、权限、扩缩容、容灾——
-          全部由平台负责。你只需要关心玩法、美术、剧情这些真正让玩家留下来的东西。
+          {m.landing_stack_desc()}
         </p>
 
         <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1561,20 +1554,20 @@ function FinalCTA() {
           />
           <div className="relative">
             <h2 className="text-3xl font-black tracking-tight md:text-5xl">
-              让下一款游戏的后台
+              {m.landing_cta_h2_line1()}
               <br />
               <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-transparent">
-                不再成为瓶颈。
+                {m.landing_cta_h2_line2()}
               </span>
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-              ApolloKit 免费开始使用。注册后立刻拿到一个控制台 + API Key，接入一个新项目只需一个下午。
+              {m.landing_cta_desc()}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button
                 render={
                   <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-                    免费开始构建
+                    {m.landing_cta_primary()}
                     <ArrowRight className="ml-1 size-4" />
                   </Link>
                 }
@@ -1584,7 +1577,7 @@ function FinalCTA() {
               <Button
                 render={
                   <a href="/docs">
-                    读文档
+                    {m.landing_cta_secondary()}
                   </a>
                 }
                 variant="outline"
@@ -1600,31 +1593,31 @@ function FinalCTA() {
 }
 
 function PricingPreview() {
+  const pricingTiers = getPricingTiers()
   return (
     <section id="pricing" className="relative py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <SectionEyebrow>定价 · 跟着你的成长一起长</SectionEyebrow>
+            <SectionEyebrow>{m.landing_pricing_eyebrow()}</SectionEyebrow>
             <SectionTitle>
-              原型 500 MAU 永久免费，商业首发再升级。
+              {m.landing_pricing_title()}
             </SectionTitle>
             <p className="mt-5 max-w-2xl text-muted-foreground">
-              按月活玩家 + 功能分层混合计价，不按 DAU。版本更新、开新服、节日冲榜带来的流量突刺，
-              账单不会跟着抖动。
+              {m.landing_pricing_desc()}
             </p>
           </div>
           <a
             href="/pricing"
             className="group inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:text-[var(--ak-accent-2)]"
           >
-            查看完整定价 & 对比表
+            {m.landing_pricing_see_full()}
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {PRICING_TIERS.map((plan) => (
+          {pricingTiers.map((plan) => (
             <div
               key={plan.id}
               className={
@@ -1636,7 +1629,7 @@ function PricingPreview() {
             >
               {plan.highlighted && (
                 <span className="absolute -top-2 right-6 rounded-full bg-[var(--ak-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-background">
-                  推荐
+                  {m.landing_pricing_recommended()}
                 </span>
               )}
               <div className="flex items-baseline justify-between">

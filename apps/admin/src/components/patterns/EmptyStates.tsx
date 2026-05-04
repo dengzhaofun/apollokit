@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import type { ReactNode } from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import {
   Empty,
@@ -44,19 +45,21 @@ interface BaseProps {
  */
 export function EmptyList({
   className,
-  title = "暂无数据",
-  description = "还没有任何记录,创建一个开始吧",
+  title,
+  description,
   action,
   icon,
 }: BaseProps & { icon?: ReactNode }) {
+  const resolvedTitle = title ?? m.empty_list_title()
+  const resolvedDescription = description ?? m.empty_list_description()
   return (
     <Empty className={cn("border", className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           {icon ?? <InboxIcon className="size-4" />}
         </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        <EmptyTitle>{resolvedTitle}</EmptyTitle>
+        <EmptyDescription>{resolvedDescription}</EmptyDescription>
       </EmptyHeader>
       {action && <EmptyContent>{action}</EmptyContent>}
     </Empty>
@@ -70,33 +73,35 @@ export function EmptyList({
 export function EmptySearch({
   className,
   query,
-  title = "没有匹配的结果",
+  title,
   description,
   onClear,
-  clearLabel = "清除筛选",
+  clearLabel,
 }: Omit<BaseProps, "action"> & {
   query?: string
   onClear?: () => void
   clearLabel?: string
 }) {
+  const resolvedTitle = title ?? m.empty_search_title()
+  const resolvedClearLabel = clearLabel ?? m.empty_search_clear_label()
   return (
     <Empty className={cn("border", className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <SearchXIcon className="size-4" />
         </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyTitle>{resolvedTitle}</EmptyTitle>
         <EmptyDescription>
           {description ??
             (query
-              ? `当前没有匹配 "${query}" 的记录。试试别的关键词或清除筛选。`
-              : "调整一下筛选条件再试。")}
+              ? m.empty_search_with_query({ query })
+              : m.empty_search_no_query())}
         </EmptyDescription>
       </EmptyHeader>
       {onClear && (
         <EmptyContent>
           <Button variant="outline" size="sm" onClick={onClear}>
-            {clearLabel}
+            {resolvedClearLabel}
           </Button>
         </EmptyContent>
       )}
@@ -110,10 +115,10 @@ export function EmptySearch({
  */
 export function ErrorState({
   className,
-  title = "加载失败",
-  description = "请稍后重试。如果一直失败,请联系管理员。",
+  title,
+  description,
   onRetry,
-  retryLabel = "重试",
+  retryLabel,
   /** 真实 Error,折叠展示 message + stack 给开发者排查 */
   error,
 }: BaseProps & {
@@ -121,6 +126,9 @@ export function ErrorState({
   retryLabel?: string
   error?: Error | null | unknown
 }) {
+  const resolvedTitle = title ?? m.error_state_title()
+  const resolvedDescription = description ?? m.error_state_description()
+  const resolvedRetryLabel = retryLabel ?? m.error_state_retry_label()
   return (
     <Empty
       className={cn(
@@ -132,21 +140,21 @@ export function ErrorState({
         <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
           <AlertTriangleIcon className="size-4" />
         </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        <EmptyTitle>{resolvedTitle}</EmptyTitle>
+        <EmptyDescription>{resolvedDescription}</EmptyDescription>
       </EmptyHeader>
       {(onRetry || error != null) && (
         <EmptyContent>
           {onRetry && (
             <Button variant="outline" size="sm" onClick={onRetry}>
               <RefreshCwIcon />
-              {retryLabel}
+              {resolvedRetryLabel}
             </Button>
           )}
           {error instanceof Error && (
             <details className="w-full max-w-sm text-left">
               <summary className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground">
-                技术细节 · Technical details
+                {m.error_state_tech_details()} · Technical details
               </summary>
               <pre className="mt-1 max-h-32 overflow-auto rounded bg-muted/40 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
                 {String(error.message)}
@@ -165,18 +173,20 @@ export function ErrorState({
  */
 export function UnauthorizedState({
   className,
-  title = "无访问权限",
-  description = "你的账号目前没有进入这个页面的权限。请联系管理员授权,或返回主页。",
+  title,
+  description,
   action,
 }: BaseProps) {
+  const resolvedTitle = title ?? m.unauthorized_state_title()
+  const resolvedDescription = description ?? m.unauthorized_state_description()
   return (
     <Empty className={cn("border", className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon" className="bg-warning/10 text-warning">
           <LockIcon className="size-4" />
         </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        <EmptyTitle>{resolvedTitle}</EmptyTitle>
+        <EmptyDescription>{resolvedDescription}</EmptyDescription>
       </EmptyHeader>
       {action && <EmptyContent>{action}</EmptyContent>}
     </Empty>
@@ -188,18 +198,20 @@ export function UnauthorizedState({
  */
 export function ComingSoon({
   className,
-  title = "敬请期待",
-  description = "这个功能正在开发中,会在后续版本上线。",
+  title,
+  description,
   action,
 }: BaseProps) {
+  const resolvedTitle = title ?? m.coming_soon_title()
+  const resolvedDescription = description ?? m.coming_soon_description()
   return (
     <Empty className={cn("border", className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon" className="bg-info/10 text-info">
           <ConstructionIcon className="size-4" />
         </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        <EmptyTitle>{resolvedTitle}</EmptyTitle>
+        <EmptyDescription>{resolvedDescription}</EmptyDescription>
       </EmptyHeader>
       {action && <EmptyContent>{action}</EmptyContent>}
     </Empty>

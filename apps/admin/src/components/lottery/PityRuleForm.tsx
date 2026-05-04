@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
@@ -79,7 +80,7 @@ export function PityRuleForm({
                 disabled={disableGuaranteeTier}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select tier..." />
+                  <SelectValue placeholder={m.lottery_pity_tier_placeholder()} />
                 </SelectTrigger>
                 <SelectContent>
                   {tiers.map((tier) => (
@@ -118,7 +119,7 @@ export function PityRuleForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(Number(e.target.value))}
-                placeholder="e.g. 90"
+                placeholder={m.lottery_pity_hard_cap_placeholder()}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
@@ -145,7 +146,7 @@ export function PityRuleForm({
                 onChange={(e) =>
                   field.handleChange(e.target.value ? Number(e.target.value) : null)
                 }
-                placeholder="e.g. 74"
+                placeholder={m.lottery_pity_soft_start_placeholder()}
               />
             </div>
           )}
@@ -169,7 +170,7 @@ export function PityRuleForm({
                 onChange={(e) =>
                   field.handleChange(e.target.value ? Number(e.target.value) : null)
                 }
-                placeholder="e.g. 60"
+                placeholder={m.lottery_pity_soft_base_placeholder()}
               />
             </div>
           )}

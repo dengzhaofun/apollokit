@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { MailPlusIcon, PlusIcon } from "lucide-react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -121,7 +122,7 @@ export function InviteMembersDialog({ scope }: Props) {
               id="invite-emails"
               value={emailsRaw}
               onChange={(e) => setEmailsRaw(e.target.value)}
-              placeholder="alice@example.com, bob@example.com"
+              placeholder={m.members_invite_emails_placeholder()}
               rows={3}
             />
           </div>

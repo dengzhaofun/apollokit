@@ -25,6 +25,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet"
 import { Button } from "#/components/ui/button"
+import * as m from "#/paraglide/messages.js"
 import { cn } from "#/lib/utils"
 
 import { AIAssistPanel } from "./AIAssistPanel"
@@ -42,7 +43,7 @@ export function GlobalAssistFab() {
       <Button
         type="button"
         size="icon"
-        aria-label="打开 AI 助手"
+        aria-label={m.global_assist_fab_open_aria()}
         onClick={() => setOpen(true)}
         className={cn(
           "fixed bottom-6 right-6 z-40 size-12 rounded-full shadow-lg",
@@ -62,7 +63,7 @@ export function GlobalAssistFab() {
               <SheetTitle
                 render={
                   <span className="font-heading text-base font-medium text-foreground">
-                    AI 助手
+                    {m.global_assist_fab_title()}
                   </span>
                 }
               />
@@ -70,13 +71,13 @@ export function GlobalAssistFab() {
                 size="icon-sm"
                 variant="ghost"
                 onClick={() => setOpen(false)}
-                aria-label="关闭"
+                aria-label={m.global_assist_fab_close_aria()}
               >
                 <XIcon className="size-4" />
               </Button>
             </div>
             <SheetDescription>
-              问问题、查配置，或 @-提及资源让 AI 提议修改（你审核确认后写入）。要回填创建表单去对应模块。
+              {m.global_assist_fab_description()}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-hidden">

@@ -127,7 +127,7 @@ export function UnlockRuleEditor({ value, onChange }: Props) {
                 v === "" ? undefined : Number(v) || undefined,
             })
           }}
-          placeholder="0"
+          placeholder={m.activity_unlock_cooldown_placeholder()}
         />
         <p className="text-xs text-muted-foreground">
           {m.activity_node_unlock_relative_hint()}
@@ -175,7 +175,7 @@ function PrevNodesField({
               type="button"
               onClick={() => removeAt(idx)}
               className="rounded-full p-0.5 hover:bg-muted"
-              aria-label="remove"
+              aria-label={m.aria_remove()}
             >
               <X className="size-3" />
             </button>

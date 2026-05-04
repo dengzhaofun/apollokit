@@ -176,7 +176,7 @@ function FieldRow({
             onChange={(e) =>
               onChange({ name: e.target.value.replace(/[^a-zA-Z0-9_]/g, "") })
             }
-            placeholder="my_field"
+            placeholder={m.cms_schema_field_name_placeholder()}
           />
         </div>
         <div className="flex-1 min-w-[160px] space-y-1">
@@ -345,7 +345,7 @@ function FieldRow({
                     },
                   })
                 }
-                placeholder="blog-post"
+                placeholder={m.cms_schema_type_key_placeholder()}
               />
             </div>
           )}
@@ -442,7 +442,7 @@ function EnumOptionEditor({
           <li key={i} className="flex items-center gap-2">
             <Input
               value={o.value}
-              placeholder="value"
+              placeholder={m.cms_schema_enum_value_placeholder()}
               onChange={(e) =>
                 update(i, {
                   value: e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""),
@@ -451,7 +451,7 @@ function EnumOptionEditor({
             />
             <Input
               value={o.label}
-              placeholder="label"
+              placeholder={m.cms_schema_enum_label_placeholder()}
               onChange={(e) => update(i, { label: e.target.value })}
             />
             <Button

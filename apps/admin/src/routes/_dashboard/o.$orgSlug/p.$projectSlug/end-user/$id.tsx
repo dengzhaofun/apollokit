@@ -229,7 +229,7 @@ function EndUserDetailPage() {
                     id="image"
                     value={image}
                     onChange={(e) => setImage(e.target.value)}
-                    placeholder="https://..."
+                    placeholder={m.end_user_avatar_url_placeholder()}
                   />
                 </div>
                 <div className="flex items-center justify-between rounded-lg border p-3">

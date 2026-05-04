@@ -38,6 +38,7 @@ import {
 } from "lucide-react"
 import { useState, type ReactNode } from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 
 export type MoveBody =
@@ -230,7 +231,7 @@ function SortableRow({
     <li ref={setNodeRef} style={style} className="flex items-center gap-2">
       <button
         type="button"
-        aria-label="Drag to reorder"
+        aria-label={m.aria_drag_reorder()}
         className="cursor-grab text-muted-foreground hover:text-foreground"
         {...attributes}
         {...listeners}
@@ -265,7 +266,7 @@ export function SortableActions({
       <Button
         size="icon"
         variant="ghost"
-        aria-label="Move to top"
+        aria-label={m.sortable_list_move_top()}
         onClick={onMoveTop}
         disabled={disabled}
       >
@@ -274,7 +275,7 @@ export function SortableActions({
       <Button
         size="icon"
         variant="ghost"
-        aria-label="Move up"
+        aria-label={m.sortable_list_move_up()}
         onClick={onMoveUp}
         disabled={disabled}
       >
@@ -283,7 +284,7 @@ export function SortableActions({
       <Button
         size="icon"
         variant="ghost"
-        aria-label="Move down"
+        aria-label={m.sortable_list_move_down()}
         onClick={onMoveDown}
         disabled={disabled}
       >
@@ -292,7 +293,7 @@ export function SortableActions({
       <Button
         size="icon"
         variant="ghost"
-        aria-label="Move to bottom"
+        aria-label={m.sortable_list_move_bottom()}
         onClick={onMoveBottom}
         disabled={disabled}
       >

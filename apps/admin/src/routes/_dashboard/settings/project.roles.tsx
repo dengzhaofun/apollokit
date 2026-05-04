@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
+import * as m from "#/paraglide/messages.js"
 
 import { RouteGuard } from "#/components/auth/RouteGuard"
 import { Button } from "#/components/ui/button"
@@ -377,7 +378,7 @@ function CreateRoleDialog({ onClose }: { onClose: () => void }) {
             id="role-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="community_moderator"
+            placeholder={m.project_role_key_placeholder()}
             className="mt-1"
           />
         </div>

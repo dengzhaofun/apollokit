@@ -54,6 +54,7 @@ import {
 } from "lucide-react"
 import { type ReactNode, createContext, useContext, useMemo } from "react"
 
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { TableCell, TableRow } from "#/components/ui/table"
 
@@ -181,7 +182,7 @@ export function SortableTableRow({
       <TableCell className="w-8 cursor-grab align-middle text-muted-foreground hover:text-foreground">
         <button
           type="button"
-          aria-label="Drag to reorder"
+          aria-label={m.aria_drag_reorder()}
           {...attributes}
           {...listeners}
           className="flex h-8 w-8 items-center justify-center"
@@ -230,7 +231,7 @@ export function RowMoveActions({
         size="icon"
         className="size-8"
         disabled={off || isFirst}
-        title="置顶"
+        title={m.sortable_table_move_top()}
         onClick={() => onMove(id, { position: "first" })}
       >
         <ArrowUpToLine className="size-3.5" />
@@ -241,7 +242,7 @@ export function RowMoveActions({
         size="icon"
         className="size-8"
         disabled={off || isFirst || !prevId}
-        title="上移"
+        title={m.sortable_table_move_up()}
         onClick={() => prevId && onMove(id, { before: prevId })}
       >
         <ArrowUp className="size-4" />
@@ -252,7 +253,7 @@ export function RowMoveActions({
         size="icon"
         className="size-8"
         disabled={off || isLast || !nextId}
-        title="下移"
+        title={m.sortable_table_move_down()}
         onClick={() => nextId && onMove(id, { after: nextId })}
       >
         <ArrowDown className="size-4" />
@@ -263,7 +264,7 @@ export function RowMoveActions({
         size="icon"
         className="size-8"
         disabled={off || isLast}
-        title="置后"
+        title={m.sortable_table_move_bottom()}
         onClick={() => onMove(id, { position: "last" })}
       >
         <ArrowDownToLine className="size-3.5" />

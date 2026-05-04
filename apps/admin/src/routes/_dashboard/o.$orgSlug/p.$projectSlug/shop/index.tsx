@@ -281,7 +281,7 @@ function CreateShopProductMiniDialog({ onClose }: { onClose: () => void }) {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="optional, lowercase-with-hyphens"
+                placeholder={m.shop_alias_placeholder()}
               />
             </div>
           )}

@@ -10,6 +10,7 @@ import type {
 import { useMentionTypes } from "#/components/admin-agent/useMentionTypes"
 import { Button } from "#/components/ui/button"
 import { Textarea } from "#/components/ui/textarea"
+import * as m from "#/paraglide/messages.js"
 import { cn } from "#/lib/utils"
 
 /**
@@ -97,7 +98,7 @@ export function PromptInput({
   onStop,
   disabled,
   isStreaming,
-  placeholder = "描述你想要的配置 ...",
+  placeholder,
   className,
   mentions: controlledMentions,
   onMentionsChange,
@@ -256,7 +257,7 @@ export function PromptInput({
           // Defer close so a popover click registers first.
           setTimeout(() => setTrigger(null), 100)
         }}
-        placeholder={placeholder}
+        placeholder={placeholder ?? m.prompt_input_placeholder()}
         disabled={disabled}
         rows={1}
         className="min-h-[40px] max-h-[120px] resize-none"
@@ -267,7 +268,7 @@ export function PromptInput({
           size="icon"
           variant="secondary"
           onClick={onStop}
-          aria-label="停止生成"
+          aria-label={m.prompt_input_stop_aria()}
         >
           <SquareIcon className="size-4" />
         </Button>
@@ -276,7 +277,7 @@ export function PromptInput({
           type="submit"
           size="icon"
           disabled={disabled || !value.trim()}
-          aria-label="发送"
+          aria-label={m.prompt_input_send_aria()}
         >
           <ArrowUpIcon className="size-4" />
         </Button>

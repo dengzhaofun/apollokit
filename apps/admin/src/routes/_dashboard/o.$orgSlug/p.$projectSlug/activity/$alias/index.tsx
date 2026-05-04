@@ -524,7 +524,7 @@ function NodesPanel({
               onChange={(e) =>
                 setForm((s) => ({ ...s, alias: e.target.value.toLowerCase() }))
               }
-              placeholder="day_tasks"
+              placeholder={m.activity_task_key_placeholder()}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -817,7 +817,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
               onChange={(e) =>
                 setForm((s) => ({ ...s, alias: e.target.value.toLowerCase() }))
               }
-              placeholder="day3_boss"
+              placeholder={m.activity_milestone_key_placeholder()}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -888,7 +888,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                       offsetSeconds: Number(e.target.value),
                     }))
                   }
-                  placeholder="3600"
+                  placeholder={m.activity_task_ttl_placeholder()}
                 />
               </div>
             </>
@@ -901,7 +901,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 onChange={(e) =>
                   setForm((s) => ({ ...s, cronExpr: e.target.value || null }))
                 }
-                placeholder="0 12 * * *"
+                placeholder={m.activity_schedule_cron_placeholder()}
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">

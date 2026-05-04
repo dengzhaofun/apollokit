@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { DownloadIcon, MoreHorizontalIcon, UsersIcon } from "lucide-react"
 import { toast } from "sonner"
+import * as m from "#/paraglide/messages.js"
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar"
 import { Badge } from "#/components/ui/badge"
@@ -357,7 +358,7 @@ function MemberRow({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="ghost" size="icon-sm" aria-label="更多操作">
+              <Button variant="ghost" size="icon-sm" aria-label={m.aria_more_actions()}>
                 <MoreHorizontalIcon className="size-4" />
               </Button>
             }

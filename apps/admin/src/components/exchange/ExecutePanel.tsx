@@ -52,7 +52,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
             id="exec-endUserId"
             value={endUserId}
             onChange={(e) => setEndUserId(e.target.value)}
-            placeholder="e.g. user-42"
+            placeholder={m.exchange_user_id_placeholder()}
           />
         </div>
         <div className="space-y-2">
@@ -61,7 +61,7 @@ export function ExecutePanel({ optionId }: ExecutePanelProps) {
             id="exec-idempotencyKey"
             value={idempotencyKey}
             onChange={(e) => setIdempotencyKey(e.target.value)}
-            placeholder="Optional"
+            placeholder={m.exchange_notes_placeholder()}
           />
         </div>
       </div>

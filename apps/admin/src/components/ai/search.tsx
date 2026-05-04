@@ -30,6 +30,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import * as m from "#/paraglide/messages.js"
 import { cn } from '#/lib/utils';
 import { buttonVariants } from '#/components/ui/button';
 import { useChat, type UseChatHelpers } from '@ai-sdk/react';
@@ -78,7 +79,7 @@ export function AISearchPanelHeader({
 
       <button
         type="button"
-        aria-label="Close"
+        aria-label={m.aria_close()}
         tabIndex={-1}
         className={cn(
           buttonVariants({

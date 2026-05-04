@@ -105,7 +105,7 @@ export function BadgeTemplatePicker({
               required
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="home.mail"
+              placeholder={m.badge_node_path_placeholder()}
               className="font-mono"
             />
           </div>
@@ -142,7 +142,7 @@ export function BadgeTemplatePicker({
                 required
                 value={signalKey}
                 onChange={(e) => setSignalKey(e.target.value)}
-                placeholder="mail.rewards.total"
+                placeholder={m.badge_template_metric_placeholder()}
                 className="font-mono"
               />
             </div>
@@ -158,7 +158,7 @@ export function BadgeTemplatePicker({
                 required
                 value={signalKeyPrefix}
                 onChange={(e) => setSignalKeyPrefix(e.target.value)}
-                placeholder="mail.inbox."
+                placeholder={m.badge_template_prefix_placeholder()}
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">

@@ -17,6 +17,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '../components/ui/empty'
+import * as m from '../paraglide/messages.js'
 import { getLocale } from '../paraglide/runtime.js'
 import { i18n as docsI18n, i18nUI } from '../lib/source'
 import { seo } from '../lib/seo'
@@ -102,7 +103,6 @@ export const Route = createRootRoute({
 })
 
 function NotFoundPage() {
-  const isZh = getLocale() === 'zh'
   const { orgSlug, projectSlug } = useTenantParams()
   return (
     <main className="flex min-h-[80vh] items-center justify-center p-6">
@@ -111,20 +111,14 @@ function NotFoundPage() {
           <EmptyMedia variant="icon">
             <CompassIcon className="size-4" />
           </EmptyMedia>
-          <EmptyTitle>
-            {isZh ? '页面找不到' : 'Page not found'}
-          </EmptyTitle>
-          <EmptyDescription>
-            {isZh
-              ? '这个链接可能已经过期、被移除,或者是地址敲错了。'
-              : 'This link may be expired, removed, or mistyped.'}
-          </EmptyDescription>
+          <EmptyTitle>{m.not_found_title()}</EmptyTitle>
+          <EmptyDescription>{m.not_found_description()}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button
             render={
               <Link to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }}>
-                {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+                {m.not_found_back_dashboard()}
               </Link>
             }
             size="sm"
@@ -143,7 +137,6 @@ function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }
     Sentry.captureException(error)
   }, [error])
 
-  const isZh = getLocale() === 'zh'
   return (
     <main className="flex min-h-[80vh] items-center justify-center p-6">
       <Empty className="max-w-md">
@@ -151,24 +144,18 @@ function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }
           <EmptyMedia variant="icon">
             <AlertTriangleIcon className="size-4" />
           </EmptyMedia>
-          <EmptyTitle>
-            {isZh ? '页面崩了' : 'Something went wrong'}
-          </EmptyTitle>
-          <EmptyDescription>
-            {isZh
-              ? '我们已收到错误报告。可以试着重试,或者回到主页面。'
-              : "We've received the error report. Try again or head back to the dashboard."}
-          </EmptyDescription>
+          <EmptyTitle>{m.error_boundary_title()}</EmptyTitle>
+          <EmptyDescription>{m.error_boundary_description()}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={reset}>
-              {isZh ? '重试' : 'Retry'}
+              {m.error_boundary_retry()}
             </Button>
             <Button
               render={
                 <Link to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }}>
-                  {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
+                  {m.not_found_back_dashboard()}
                 </Link>
               }
               size="sm"

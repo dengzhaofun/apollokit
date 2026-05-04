@@ -261,7 +261,7 @@ function ActivityInner() {
                   onChange={(v) => setDraft((d) => ({ ...d, event: v }))}
                   from={w.from}
                   to={w.to}
-                  placeholder="task.completed"
+                  placeholder={m.analytics_event_name_placeholder()}
                 />
               </div>
               <FilterInput
@@ -304,7 +304,7 @@ function ActivityInner() {
                 label={m.analytics_activity_filter_json_path()}
                 value={draft.jsonPath}
                 onChange={(v) => setDraft((d) => ({ ...d, jsonPath: v }))}
-                placeholder="rarity"
+                placeholder={m.analytics_property_key_placeholder()}
                 error={
                   draft.jsonPath !== "" && !jsonPathOk
                     ? m.analytics_explore_json_invalid()

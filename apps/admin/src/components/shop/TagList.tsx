@@ -218,7 +218,7 @@ function TagEditForm({ tag, onSubmit, isPending }: TagEditFormProps) {
             id="tag-color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            placeholder="#ef4444"
+            placeholder={m.shop_tag_color_placeholder()}
           />
           <input
             type="color"
