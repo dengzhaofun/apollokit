@@ -49,7 +49,7 @@ function EndUsersPage() {
     <PageShell>
       <PageHeader
         icon={<UsersIcon className="size-5" />}
-        title={t("玩家", "End users")}
+        title={t("用户", "Users")}
         description={t(
           "搜索 / 筛选 / 翻页均走服务端，全部状态写入 URL。",
           "Search, filter, and pagination are server-driven; all state lives in the URL.",

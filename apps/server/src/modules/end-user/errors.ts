@@ -26,6 +26,13 @@ export class EndUserNotFound extends ModuleError {
   }
 }
 
+export class EndUserSessionNotFound extends ModuleError {
+  constructor(sessionId: string) {
+    super("end_user.session_not_found", 404, `session not found: ${sessionId}`);
+    this.name = "EndUserSessionNotFound";
+  }
+}
+
 /**
  * Thrown by `session.create.before` in end-user-auth when a disabled
  * player tries to sign in. Admin has soft-banned them via

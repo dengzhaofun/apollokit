@@ -12,6 +12,10 @@ import {
   Coins,
   Contact,
   Dices,
+  KeyRound,
+  MailCheck,
+  MonitorSmartphone,
+  UserCog,
   Drama,
   FolderOpen,
   HeartHandshake,
@@ -161,6 +165,9 @@ type NavRoute =
   | "/o/$orgSlug/p/$projectSlug/leaderboard"
   | "/o/$orgSlug/p/$projectSlug/rank"
   | "/o/$orgSlug/p/$projectSlug/end-user"
+  | "/o/$orgSlug/p/$projectSlug/end-user-session"
+  | "/o/$orgSlug/p/$projectSlug/end-user-account"
+  | "/o/$orgSlug/p/$projectSlug/end-user-verification"
   | "/o/$orgSlug/p/$projectSlug/badge"
   | "/settings"
   | "/o/$orgSlug/p/$projectSlug/cms"
@@ -194,6 +201,7 @@ type NavGroup = {
   key:
     | "overview"
     | "analytics"
+    | "identity"
     | "economy"
     | "operations"
     | "content"
@@ -284,6 +292,9 @@ const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
   "/o/$orgSlug/p/$projectSlug/leaderboard": { resource: "leaderboard" },
   "/o/$orgSlug/p/$projectSlug/rank": { resource: "rank" },
   "/o/$orgSlug/p/$projectSlug/end-user": { resource: "endUser" },
+  "/o/$orgSlug/p/$projectSlug/end-user-session": { resource: "endUser" },
+  "/o/$orgSlug/p/$projectSlug/end-user-account": { resource: "endUser" },
+  "/o/$orgSlug/p/$projectSlug/end-user-verification": { resource: "endUser" },
   // /dashboard, /cms, /settings: no permission entry → always visible
 }
 
@@ -371,6 +382,17 @@ function getNavGroups(): NavGroup[] {
         },
         { title: m.nav_logs, to: "/o/$orgSlug/p/$projectSlug/analytics/logs", icon: ScrollText },
         { title: m.nav_audit_logs, to: "/o/$orgSlug/p/$projectSlug/audit-logs", icon: Shield },
+      ],
+    },
+    {
+      key: "identity",
+      label: m.nav_group_identity,
+      icon: UserCog,
+      items: [
+        { title: m.nav_end_user, to: "/o/$orgSlug/p/$projectSlug/end-user", icon: Contact },
+        { title: m.nav_end_user_session, to: "/o/$orgSlug/p/$projectSlug/end-user-session", icon: MonitorSmartphone },
+        { title: m.nav_end_user_account, to: "/o/$orgSlug/p/$projectSlug/end-user-account", icon: KeyRound },
+        { title: m.nav_end_user_verify, to: "/o/$orgSlug/p/$projectSlug/end-user-verification", icon: MailCheck },
       ],
     },
     {
@@ -467,7 +489,6 @@ function getNavGroups(): NavGroup[] {
         { title: m.nav_team, to: "/o/$orgSlug/p/$projectSlug/match-squad", icon: Swords },
         { title: m.nav_leaderboard, to: "/o/$orgSlug/p/$projectSlug/leaderboard", icon: Trophy },
         { title: m.nav_rank, to: "/o/$orgSlug/p/$projectSlug/rank", icon: Medal },
-        { title: m.nav_end_user, to: "/o/$orgSlug/p/$projectSlug/end-user", icon: Contact },
       ],
     },
     {

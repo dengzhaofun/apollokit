@@ -3,9 +3,7 @@ import { useTenantParams } from "#/hooks/use-tenant-params";
  * End-user detail + actions page.
  *
  * Read-only identity card + narrow edit form (name / image /
- * emailVerified) + danger zone (sign-out-all, disable/enable, delete).
- * All dangerous actions prompt for confirmation via AlertDialog, matching
- * the rank module's pattern.
+ * emailVerified) + auth accounts + active sessions + danger zone.
  */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import {
@@ -13,10 +11,13 @@ import {
   Ban,
   CheckCircle2,
   Crown,
+  KeyRound,
   LinkIcon,
   LogOut,
+  Monitor,
   ShieldBan,
   Trash2,
+  X,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -46,8 +47,13 @@ import {
   useSignOutEndUser,
   useUpdateEndUser,
 } from "#/hooks/use-end-user"
+import { useUserAccounts } from "#/hooks/use-end-user-account"
+import { useUserSessions, useRevokeEndUserSession } from "#/hooks/use-end-user-session"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
+import { getLocale } from "#/paraglide/runtime.js"
+
+const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/end-user/$id")({
   component: EndUserDetailPage,
@@ -74,6 +80,10 @@ function EndUserDetailPage() {
   const signOutMutation = useSignOutEndUser()
   const deleteMutation = useDeleteEndUser()
   const { orgSlug, projectSlug } = useTenantParams()
+
+  const { data: accounts } = useUserAccounts(id)
+  const { data: sessions } = useUserSessions(id)
+  const revokeSessionMutation = useRevokeEndUserSession()
 
   const [name, setName] = useState("")
   const [image, setImage] = useState("")
@@ -259,6 +269,96 @@ function EndUserDetailPage() {
                   </Button>
                 </div>
               </div>
+            </div>
+
+            {/* Auth Accounts */}
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <KeyRound className="size-4 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">
+                  {t("认证方式", "Auth Accounts")}
+                </h2>
+              </div>
+              {!accounts ? (
+                <p className="text-sm text-muted-foreground">{t("加载中…", "Loading…")}</p>
+              ) : accounts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("暂无认证账号", "No auth accounts")}</p>
+              ) : (
+                <div className="grid gap-2">
+                  {accounts.map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="flex items-center justify-between rounded-lg border px-3 py-2"
+                    >
+                      {acc.providerId === "credential" ? (
+                        <Badge variant="secondary" className="gap-1">
+                          <KeyRound className="size-3" />
+                          {t("邮箱密码", "Credential")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1">
+                          <LinkIcon className="size-3" />
+                          {acc.providerId}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {t("绑定于", "Linked")} {new Date(acc.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Active Sessions */}
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <Monitor className="size-4 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">
+                  {t("活跃会话", "Active Sessions")}
+                </h2>
+              </div>
+              {!sessions ? (
+                <p className="text-sm text-muted-foreground">{t("加载中…", "Loading…")}</p>
+              ) : sessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("暂无活跃会话", "No active sessions")}</p>
+              ) : (
+                <div className="grid gap-2">
+                  {sessions.map((sess) => (
+                    <div
+                      key={sess.id}
+                      className="flex items-start justify-between gap-3 rounded-lg border px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs text-muted-foreground">
+                          {sess.ipAddress ?? t("未知 IP", "Unknown IP")}
+                          {sess.userAgent ? ` · ${sess.userAgent}` : ""}
+                        </p>
+                        <p className="text-xs text-muted-foreground tabular-nums">
+                          {t("过期", "Expires")} {new Date(sess.expiresAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 text-destructive hover:text-destructive"
+                        disabled={revokeSessionMutation.isPending}
+                        onClick={async () => {
+                          try {
+                            await revokeSessionMutation.mutateAsync({ userId: id, sessionId: sess.id })
+                            toast.success(t("已撤销会话", "Session revoked"))
+                          } catch (err) {
+                            toast.error(errorMessage(err))
+                          }
+                        }}
+                      >
+                        <X className="size-3.5" />
+                        {t("撤销", "Revoke")}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Danger zone */}
