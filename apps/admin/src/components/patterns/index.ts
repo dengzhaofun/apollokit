@@ -9,8 +9,11 @@
 export { PageShell, PageHeader, PageBody, PageSection } from "./PageShell"
 export type { PageHeaderProps } from "./PageShell"
 
-export { StatCard, StatGrid } from "./StatCard"
-export type { StatCardProps, DeltaInfo } from "./StatCard"
+export { StatCard, StatGrid, DistributionCard, QuickStatRow } from "./StatCard"
+export type { StatCardProps, DeltaInfo, DistributionItem, DistributionCardProps, QuickStat, QuickStatRowProps } from "./StatCard"
+
+export { FilterBar } from "./FilterBar"
+export type { FilterBarProps, FilterConfig, FilterOption } from "./FilterBar"
 
 export {
   EmptyList,

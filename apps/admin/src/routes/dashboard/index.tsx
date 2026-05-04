@@ -12,7 +12,7 @@ import { checkAuthAndGetTenant } from "#/lib/server-auth"
  * SSR: resolves org/project via service binding and issues a 302 before HTML.
  * Client: waits for session + tenant params then navigates.
  */
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/dashboard/")({
   beforeLoad: async () => {
     if (typeof window !== "undefined") return
     const tenant = await checkAuthAndGetTenant()

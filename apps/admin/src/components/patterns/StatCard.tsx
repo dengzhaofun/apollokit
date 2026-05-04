@@ -1,49 +1,35 @@
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
+import { Card, CardContent } from "#/components/ui/card"
+import { StatusBadge, type StatusValue } from "#/components/ui/status-badge"
 import { Skeleton } from "#/components/ui/skeleton"
 import { cn } from "#/lib/utils"
 
 /*
- * 指标卡 —— 替代 dashboard.tsx 里散落的 PlaceholderKpiCard / RequestsKpiCard 等手写卡。
- * 一张卡 = 标签 + 数值 + delta + sparkline,Loading 走 skeleton,Error 走 dashed border
- * 提示但仍然占位(避免布局抖动)。
+ * 指标卡 —— 标签 + 数值 + delta + sparkline，Loading 走 skeleton，Error 走 dashed border
  *
- * 数值默认走 tabular-nums + JetBrains Mono 字体感(继承 var(--font-mono),前提是用
- * 了 .font-mono 工具类)。
+ * icon 现在渲染为彩色方块徽章（brand-soft 底 + brand 色图标），与 FlowAI / Org Overview
+ * 页本地 StatCard 的风格对齐，视觉层次更清晰。
  */
 
 export interface DeltaInfo {
-  /** 变化值,例如 12.4 表示 +12.4% */
   value: number
-  /** delta 标签,如 "vs last week" / "本周新增" */
   label?: ReactNode
-  /**
-   * 视觉意图。default 时:up=绿、down=红。
-   * 但有些指标"下降是好事"(如错误率),用 inverted 让 down=绿、up=红。
-   */
   intent?: "default" | "inverted" | "neutral"
-  /** 显式格式化,默认 +12.4% / -2.1%。覆盖时返回字符串即可。 */
   formatter?: (value: number) => string
 }
 
 export interface StatCardProps {
   label: ReactNode
   value: ReactNode
-  /** label 前的小图标 */
   icon?: LucideIcon
   delta?: DeltaInfo
-  /** sparkline 数据点 —— 任意长度,会等距 fit 到 svg。空数组不渲染。 */
   trend?: number[]
-  /** sparkline 颜色,默认走 brand */
   trendColor?: string
   loading?: boolean
-  /** 加载失败时,值显示 — 并给 dashed border 提示 */
   error?: boolean
   className?: string
-  /**
-   * 可选的右上角 hint(如 i18n badge 或 info tooltip 触发器)
-   */
   hint?: ReactNode
 }
 
@@ -62,20 +48,22 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1.5 rounded-lg border bg-card p-4 transition-colors hover:border-border-strong",
+        "flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-[0_1px_3px_oklch(0_0_0/0.06),0_0_0_1px_oklch(0_0_0/0.07)] dark:shadow-[0_1px_4px_oklch(0_0_0/0.35),0_0_0_1px_oklch(1_0_0/0.08)] transition-colors hover:border-border-strong",
         error && "border-dashed border-border",
         className
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {Icon && <Icon className="size-3.5 shrink-0" aria-hidden />}
-          <span className="truncate">{label}</span>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {Icon && (
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
+              <Icon className="size-4" aria-hidden />
+            </div>
+          )}
+          <span className="truncate text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {label}
+          </span>
         </div>
-        {/*
-         * hint 是右上角小角标(如 "UTC+8" / "Beta"),不是装主描述的位置。
-         * 给 max-w 防过长 hint 把 label 挤到换行 / uppercase letter 竖排。
-         */}
         {hint && (
           <div className="ml-auto max-w-[55%] shrink-0 truncate text-right text-muted-foreground">
             {hint}
@@ -171,7 +159,7 @@ function Sparkline({
 
   return (
     <svg
-      className={cn("mt-2 h-8 w-full", className)}
+      className={cn("mt-1 h-8 w-full", className)}
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
       aria-hidden
@@ -182,7 +170,7 @@ function Sparkline({
 }
 
 /**
- * 4 列(默认)指标卡网格,响应式自动塌缩到 2 列 / 1 列。
+ * 4 列（默认）指标卡网格，响应式自动塌缩到 2 列 / 1 列。
  */
 export function StatGrid({
   children,
@@ -193,9 +181,6 @@ export function StatGrid({
   columns?: 1 | 2 | 3 | 4 | 5
   className?: string
 }) {
-  // 不能用 grid-cols-${var} 动态类(Tailwind JIT 会扫不到),手列出来。
-  // 4/5 列走 xl(>=1280)断点 —— sidebar 占了 ~256px,lg(1024)下内容区只有
-  // ~770px,4 列每张 ~180px 会让 KPI label 换行,体验差。
   const colClass = {
     1: "grid-cols-1",
     2: "grid-cols-1 sm:grid-cols-2",
@@ -206,5 +191,104 @@ export function StatGrid({
 
   return (
     <div className={cn("grid gap-3", colClass, className)}>{children}</div>
+  )
+}
+
+/* ─── DistributionCard ─────────────────────────────────────────────────────── */
+
+export interface DistributionItem {
+  color: StatusValue
+  label: string
+  count: number
+  pct: number
+}
+
+export interface DistributionCardProps {
+  title: ReactNode
+  items: DistributionItem[]
+  loading?: boolean
+  className?: string
+  /** 可选右上角操作（如齿轮图标） */
+  action?: ReactNode
+}
+
+/**
+ * 分布统计卡 —— Member Status / Role Distribution 等场景。
+ * 每行: 彩色圆点 + 标签 + 数量 + 百分比。
+ */
+export function DistributionCard({
+  title,
+  items,
+  loading,
+  className,
+  action,
+}: DistributionCardProps) {
+  return (
+    <Card className={cn("", className)}>
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm font-medium">{title}</span>
+          {action}
+        </div>
+        <div className="flex flex-col gap-2">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))
+            : items.map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-sm">
+                  <StatusBadge status={item.color} label={item.label} className="flex-1 min-w-0" />
+                  <span className="shrink-0 tabular-nums font-medium">
+                    {String(item.count).padStart(2, "0")}
+                  </span>
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                    {item.pct}%
+                  </span>
+                </div>
+              ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ─── QuickStatRow ─────────────────────────────────────────────────────────── */
+
+export interface QuickStat {
+  label: string
+  value: ReactNode
+  loading?: boolean
+}
+
+export interface QuickStatRowProps {
+  stats: QuickStat[]
+  className?: string
+}
+
+/**
+ * 4 格扁平速览统计行 —— 用于列表页顶部（Total / Active / Pending / Seats 等）。
+ * 直接用 Card 容器，视觉上和下方表格形成层次。
+ */
+export function QuickStatRow({ stats, className }: QuickStatRowProps) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-3 sm:grid-cols-4",
+        className
+      )}
+    >
+      {stats.map((stat) => (
+        <Card key={stat.label}>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {stat.label}
+            </p>
+            <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
+              {stat.loading ? <Skeleton className="h-7 w-16" /> : stat.value}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   )
 }
