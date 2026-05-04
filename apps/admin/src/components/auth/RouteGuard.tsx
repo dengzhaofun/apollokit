@@ -29,7 +29,8 @@
  * `requirePermission` middleware on the server.
  */
 
-import { Navigate, useLocation } from "@tanstack/react-router"
+import { useLocation } from "@tanstack/react-router"
+import { Navigate } from "#/components/router-helpers"
 import type { ReactNode } from "react"
 
 import { authClient } from "#/lib/auth-client"

@@ -12,8 +12,7 @@
  * with the experiment_id filter pre-filled. v2 will inline a richer
  * funnel widget once the funnel pipe gains JSON-path filtering.
  */
-
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ArrowRight, Beaker, Calendar, Users } from "lucide-react"
 import { useMemo, useState } from "react"
 import {

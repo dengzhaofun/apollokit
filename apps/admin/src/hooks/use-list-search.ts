@@ -29,10 +29,8 @@
  * from each module's filter shape (and from server-side `defineListFilter`).
  */
 
-import {
-  useNavigate,
-  type AnyRoute,
-} from "@tanstack/react-router"
+import { type AnyRoute } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { useQuery, type QueryKey } from "@tanstack/react-query"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -369,12 +367,11 @@ export function useListSearch<T>({
       lastSyncedQ.current = trimmed
       void navigate({
         to: ".",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        search: ((prev: any) => ({
+        search: (prev: Record<string, unknown>) => ({
           ...prev,
           q: trimmed === "" ? undefined : trimmed,
           cursor: undefined, // q change resets pagination
-        })) as never,
+        }) as never,
         replace: true,
       })
     }, searchDebounceMs)
@@ -438,15 +435,14 @@ export function useListSearch<T>({
     (patch: Record<string, string | number | boolean | undefined>) => {
       void navigate({
         to: ".",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        search: ((prev: any) => {
+        search: (prev: Record<string, unknown>) => {
           const next = { ...prev, ...patch }
           // Drop keys explicitly set to undefined so URL stays clean.
           for (const [k, v] of Object.entries(patch)) {
             if (v === undefined) delete next[k]
           }
           return next
-        }) as never,
+        },
         replace: false,
       })
     },

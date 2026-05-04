@@ -6,8 +6,7 @@
  * marks the column rendered as the card title; meta.isActions marks the
  * row-actions cell rendered as the card's right-rail menu.
  */
-
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react"

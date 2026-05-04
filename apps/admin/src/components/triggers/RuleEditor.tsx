@@ -25,7 +25,7 @@ import {
   type Edge,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { Gift, Lock, Mail, Maximize2, Minimize2, Plus, Zap } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"

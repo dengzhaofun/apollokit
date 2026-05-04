@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -37,7 +37,7 @@ function useColumns(): ColumnDef<Character, unknown>[] {
         cell: (info) => (
           <Link
             to="/character"
-            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
+            search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

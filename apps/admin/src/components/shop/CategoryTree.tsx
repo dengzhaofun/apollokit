@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ChevronRight, FolderOpen, Pencil } from "lucide-react"
 import { toast } from "sonner"
 

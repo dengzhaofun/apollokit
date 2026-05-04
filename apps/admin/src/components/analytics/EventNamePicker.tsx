@@ -9,9 +9,7 @@
  * 多个 Picker 共享同一 listId 时浏览器会去重渲染 —— funnel 页多个 step 行
  * 用同一个 id 即可。
  */
-
-import { Link } from "@tanstack/react-router"
-
+import { Link } from "#/components/router-helpers"
 import { useAnalyticsEventOptions } from "#/hooks/use-analytics-event-options"
 import { Input } from "#/components/ui/input"
 import * as m from "#/paraglide/messages.js"

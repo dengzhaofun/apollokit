@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -38,7 +38,7 @@ function ActionsCell({ category }: { category: ItemCategory }) {
           render={
             <Link
               to="/item/categories"
-              search={(prev) => ({ ...prev, ...openEditModal(category.id) })}
+              search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(category.id) })}
             >
               <Pencil className="size-4" />
               {m.common_edit()}
@@ -70,7 +70,7 @@ function useColumns(): ColumnDef<ItemCategory, unknown>[] {
         cell: (info) => (
           <Link
             to="/item/categories"
-            search={(prev) => ({ ...prev, ...openEditModal(info.row.original.id) })}
+            search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
             {info.getValue()}

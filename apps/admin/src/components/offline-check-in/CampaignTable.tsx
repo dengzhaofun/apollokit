@@ -2,8 +2,7 @@
  * Paginated table of offline-check-in campaigns. Mirrors check-in's
  * `ConfigTable.tsx` — same DataTable wiring and url-driven list-search.
  */
-
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"

@@ -1,7 +1,6 @@
-import { OrganizationSwitcher } from "@daveyplate/better-auth-ui"
-
-import { ProjectSwitcher } from "#/components/auth/ProjectSwitcher"
-import { Link, useLocation, useNavigate } from "@tanstack/react-router"
+import { OrgProjectSwitcher } from "#/components/auth/OrgProjectSwitcher"
+import { useLocation } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import {
@@ -1089,22 +1088,15 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
-        {/* 双层 picker —— 顶层 OrganizationSwitcher 选公司,二层
-            ProjectSwitcher 选项目(=Better Auth team)。日常 99% 用户只看
-            ProjectSwitcher;OrganizationSwitcher 给多公司用户用。 */}
-        <div
-          className={
-            isIcon
-              ? "flex flex-col items-center gap-1 py-1"
-              : "flex flex-col gap-1 px-2 py-1 [&_button]:w-full"
-          }
-        >
-          <OrganizationSwitcher
-            size={isIcon ? "icon" : undefined}
-            hidePersonal
-          />
-          <ProjectSwitcher size={isIcon ? "icon" : undefined} />
-        </div>
+        {/* 合并版 OrgProjectSwitcher —— 单 popover 同时承载组织+项目切换。
+            参考 Linear:org+team 是绑定关系(切 org 必然 team 列表跟着变),
+            用户心智更接近"workspace 切换"。切换不再 reload,走 router.navigate
+            + queryClient.invalidate。 */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <OrgProjectSwitcher isIcon={isIcon} />
+          </SidebarMenuItem>
+        </SidebarMenu>
 
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
 

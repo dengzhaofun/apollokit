@@ -1,10 +1,14 @@
-import { Link, useLocation } from "@tanstack/react-router"
+import { useLocation } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import {
+  AlertTriangle,
   Building2,
   FolderKanban,
   KeyRound,
+  MailPlus,
   ShieldCheck,
   UserCircle,
+  Users,
   Webhook,
   type LucideIcon,
 } from "lucide-react"
@@ -17,11 +21,18 @@ type SettingsNavItem = {
   to:
     | "/settings/account"
     | "/settings/organization"
+    | "/settings/organization/members"
+    | "/settings/organization/invitations"
+    | "/settings/organization/danger"
     | "/settings/project"
+    | "/settings/project/members"
     | "/settings/project/roles"
+    | "/settings/project/danger"
     | "/settings/api-keys"
     | "/settings/webhooks"
   icon: LucideIcon
+  /** 标记为 destructive 的项渲染时染红(危险区)。 */
+  destructive?: boolean
 }
 
 type SettingsNavSection = {
@@ -45,22 +56,36 @@ function getSections(): SettingsNavSection[] {
     },
     {
       key: "organization",
-      // Org-level: billing, members across projects, delete organization.
+      // Org-level: 概览 / 成员 / 邀请 / 危险区。
+      // 当前组织作用域(billing 待实现暂不放)。
       label: () => "Organization",
       items: [
         {
-          title: () => "Organization settings",
+          title: () => "概览",
           to: "/settings/organization",
           icon: Building2,
+        },
+        {
+          title: () => "成员",
+          to: "/settings/organization/members",
+          icon: Users,
+        },
+        {
+          title: () => "邀请",
+          to: "/settings/organization/invitations",
+          icon: MailPlus,
+        },
+        {
+          title: () => "危险区",
+          to: "/settings/organization/danger",
+          icon: AlertTriangle,
+          destructive: true,
         },
       ],
     },
     {
       key: "project",
-      // Project (= Better Auth team) level. Sees the active project's
-      // sub-resources (API keys, webhooks, members of THIS project).
-      // The TeamsCard list view at /settings/project itself shows all
-      // projects the user can access in the active company.
+      // Project (= Better Auth team) level — 概览/成员/角色/API 密钥/Webhooks/危险区。
       label: m.settings_section_project,
       items: [
         {
@@ -69,7 +94,12 @@ function getSections(): SettingsNavSection[] {
           icon: FolderKanban,
         },
         {
-          title: () => "Roles",
+          title: () => "成员",
+          to: "/settings/project/members",
+          icon: Users,
+        },
+        {
+          title: () => "角色",
           to: "/settings/project/roles",
           icon: ShieldCheck,
         },
@@ -82,6 +112,12 @@ function getSections(): SettingsNavSection[] {
           title: m.nav_webhooks,
           to: "/settings/webhooks",
           icon: Webhook,
+        },
+        {
+          title: () => "危险区",
+          to: "/settings/project/danger",
+          icon: AlertTriangle,
+          destructive: true,
         },
       ],
     },
@@ -165,10 +201,17 @@ export function SettingsNav() {
                           isActive
                             ? "bg-accent font-medium text-accent-foreground shadow-[inset_2px_0_0_var(--brand)]"
                             : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                          item.destructive &&
+                            !isActive &&
+                            "text-destructive/80 hover:text-destructive",
                         )}
                       >
                         <item.icon
-                          className={cn("size-4", isActive && "text-brand")}
+                          className={cn(
+                            "size-4",
+                            isActive && "text-brand",
+                            item.destructive && !isActive && "text-destructive/70",
+                          )}
                         />
                         <span>{item.title()}</span>
                       </Link>

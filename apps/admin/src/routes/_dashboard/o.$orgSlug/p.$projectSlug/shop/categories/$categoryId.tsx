@@ -1,0 +1,118 @@
+import { createFileRoute } from "@tanstack/react-router"
+import { Link, useNavigate } from "#/components/router-helpers"
+import { ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
+
+import { CategoryForm } from "#/components/shop/CategoryForm"
+import { ShopDeleteDialog } from "#/components/shop/DeleteDialog"
+import { Button } from "#/components/ui/button"
+import {
+  useDeleteShopCategory,
+  useShopCategories,
+  useShopCategory,
+  useUpdateShopCategory,
+} from "#/hooks/use-shop"
+import { ApiError } from "#/lib/api-client"
+import * as m from "#/paraglide/messages.js"
+
+import { PageHeaderActions } from "#/components/PageHeader"
+export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/shop/categories/$categoryId")(
+  {
+    component: ShopCategoryEditPage,
+  },
+)
+
+function ShopCategoryEditPage() {
+  const { categoryId } = Route.useParams()
+  const navigate = useNavigate()
+  const { data: category, isPending, error } = useShopCategory(categoryId)
+  const { data: categories } = useShopCategories()
+  const updateMutation = useUpdateShopCategory()
+  const deleteMutation = useDeleteShopCategory()
+
+  return (
+    <>
+      <PageHeaderActions>
+        <div className="ml-auto flex items-center gap-2">
+          {category ? (
+            <ShopDeleteDialog
+              title={m.shop_delete_category_title()}
+              description={m.shop_delete_category_desc()}
+              isPending={deleteMutation.isPending}
+              onConfirm={async () => {
+                try {
+                  await deleteMutation.mutateAsync(category.id)
+                  toast.success(m.shop_category_deleted())
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop/categories" })
+                } catch (err) {
+                  toast.error(
+                    err instanceof ApiError
+                      ? err.body.error
+                      : m.shop_failed_delete_category(),
+                  )
+                }
+              }}
+            />
+          ) : null}
+        </div>
+      </PageHeaderActions>
+
+      <main className="flex-1 p-6">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <Button
+            render={
+              <Link to="/shop/categories">
+                <ArrowLeft className="size-4" />
+                {m.shop_back_to_categories()}
+              </Link>
+            }
+            variant="outline" size="sm"
+          />
+
+          {isPending ? (
+            <div className="flex h-40 items-center justify-center text-muted-foreground">
+              {m.common_loading()}
+            </div>
+          ) : error || !category ? (
+            <div className="flex h-40 items-center justify-center text-destructive">
+              {error?.message ?? m.shop_failed_load_categories()}
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <CategoryForm
+                parents={categories ?? []}
+                excludeId={category.id}
+                defaultValues={{
+                  parentId: category.parentId,
+                  alias: category.alias,
+                  name: category.name,
+                  description: category.description,
+                  coverImage: category.coverImage,
+                  icon: category.icon,
+                  isActive: category.isActive,
+                }}
+                isPending={updateMutation.isPending}
+                submitLabel={m.common_save_changes()}
+                onSubmit={async (input) => {
+                  try {
+                    await updateMutation.mutateAsync({
+                      id: category.id,
+                      ...input,
+                    })
+                    toast.success(m.shop_category_updated())
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : m.shop_failed_update_category(),
+                    )
+                  }
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  )
+}

@@ -13,8 +13,7 @@
  *   - red:   p<0.05 AND negative lift (control beats variant)
  *   - gray:  not significant — sample too small or no real difference
  */
-
-import { Link } from "@tanstack/react-router"
+import { Link } from "#/components/router-helpers"
 import { ArrowDown, ArrowRight, ArrowUp, Minus } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"

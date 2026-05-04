@@ -22,7 +22,7 @@
  */
 
 import { useChat } from "@ai-sdk/react"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate } from "#/components/router-helpers"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import { Trash2Icon } from "lucide-react"
 import * as React from "react"

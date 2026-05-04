@@ -87,6 +87,7 @@ import {
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { mcpRouter } from "./modules/mcp";
 import { navigationRouter } from "./modules/navigation";
+import { teamMemberRouter } from "./modules/team-members";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
 import { storageBoxRouter } from "./modules/storage-box";
@@ -307,6 +308,8 @@ app.route("/api/v1/mail", mailRouter);
 // JSON-RPC over HTTP. See `modules/mcp/routes.ts` for the rationale.
 app.route("/api/v1/mcp", mcpRouter);
 app.route("/api/v1/navigation", navigationRouter);
+// 项目级成员管理 — admin 专用,不放到 client 路由组(client 不该改 RBAC)
+app.route("/api/v1/team-members", teamMemberRouter);
 app.route("/api/v1/shop", shopRouter);
 app.route("/api/v1/storage-box", storageBoxRouter);
 app.route("/api/v1/media-library", mediaLibraryRouter);

@@ -1,6 +1,5 @@
 import { AlertTriangle } from "lucide-react"
-import { Link } from "@tanstack/react-router"
-
+import { Link } from "#/components/router-helpers"
 import { Alert, AlertDescription } from "#/components/ui/alert"
 import type { SrmResult } from "#/lib/experiment-stats"
 import * as m from "#/paraglide/messages.js"
