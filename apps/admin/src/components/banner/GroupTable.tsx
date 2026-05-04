@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -12,14 +13,16 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<BannerGroup>()
 
 function useColumns(): ColumnDef<BannerGroup, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/banner/$groupId"
-            params={{ groupId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/banner/$groupId"
+            params={{ orgSlug, projectSlug, groupId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -66,15 +69,14 @@ function useColumns(): ColumnDef<BannerGroup, unknown>[] {
         ),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<BannerGroup, unknown>[]
 }
 
 interface Props {
   activityId?: string
   includeActivity?: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function GroupTable({ route, ...rest }: Props) {

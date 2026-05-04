@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Layers } from "lucide-react"
 import { toast } from "sonner"
 
@@ -26,6 +26,7 @@ function ShopProductEditPage() {
   const { data: product, isPending, error } = useShopProduct(productId)
   const updateMutation = useUpdateShopProduct()
   const deleteMutation = useDeleteShopProduct()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -35,8 +36,8 @@ function ShopProductEditPage() {
             <Button
               render={
                 <Link
-                  to="/shop/$productId/stages"
-                  params={{ productId }}
+                  to="/o/$orgSlug/p/$projectSlug/shop/$productId/stages"
+                  params={{ orgSlug, projectSlug, productId }}
                 >
                   <Layers className="size-4" />
                   {m.shop_manage_stages()}
@@ -54,7 +55,7 @@ function ShopProductEditPage() {
                 try {
                   await deleteMutation.mutateAsync(product.id)
                   toast.success(m.shop_product_deleted())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop" , params: { orgSlug, projectSlug }})
                 } catch (err) {
                   toast.error(
                     err instanceof ApiError
@@ -72,7 +73,7 @@ function ShopProductEditPage() {
         <div className="mx-auto max-w-3xl space-y-4">
           <Button
             render={
-              <Link to="/shop">
+              <Link to="/o/$orgSlug/p/$projectSlug/shop" params={{ orgSlug, projectSlug }}>
                 <ArrowLeft className="size-4" />
                 {m.shop_back_to_products()}
               </Link>

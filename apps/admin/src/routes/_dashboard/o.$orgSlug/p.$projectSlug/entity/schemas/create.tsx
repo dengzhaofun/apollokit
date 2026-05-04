@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -17,13 +17,14 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/enti
 function SchemaCreatePage() {
   const navigate = useNavigate()
   const createMutation = useCreateEntitySchema()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/entity/schemas">
+            <Link to="/o/$orgSlug/p/$projectSlug/entity/schemas" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
             </Link>
           }
@@ -42,7 +43,7 @@ function SchemaCreatePage() {
                 toast.success(m.entity_schema_created())
                 navigate({
                   to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
-                  params: { schemaId: row.id },
+                  params: { orgSlug, projectSlug, schemaId: row.id },
                 })
               } catch (err) {
                 if (err instanceof ApiError) {

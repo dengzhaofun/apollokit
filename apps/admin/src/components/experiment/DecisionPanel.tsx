@@ -1,19 +1,5 @@
-/**
- * Decision Panel — replaces the v1 deep-link-only analytics view.
- *
- * Reads `experiment_metric_breakdown` per variant, then runs the
- * client-side stats lib:
- *   - SRM detection over (observed exposures vs expected from
- *     traffic_allocation × total exposed)
- *   - per-variant Wilson CI on conversion rate
- *   - z-test of each non-control variant vs control
- *
- * Color semantics (per plan v1.5 §2.4):
- *   - green: p<0.05 AND positive lift (recommend ship)
- *   - red:   p<0.05 AND negative lift (control beats variant)
- *   - gray:  not significant — sample too small or no real difference
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowRight, ArrowUp, Minus } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"
@@ -53,6 +39,7 @@ export function DecisionPanel({ experiment, from, to }: Props) {
     windowDays: experiment.metricWindowDays,
     enabled: !!metricEvent && experiment.status !== "draft",
   })
+  const { orgSlug, projectSlug } = useTenantParams()
 
   const rows = useMemo(
     () => breakdown.data?.data ?? [],
@@ -91,7 +78,7 @@ export function DecisionPanel({ experiment, from, to }: Props) {
         <p className="text-xs text-muted-foreground">
           {m.experiment_decision_panel_subtitle()}{" "}
           <Link
-            to="/experiment/about-stats"
+            to="/o/$orgSlug/p/$projectSlug/experiment/about-stats" params={{ orgSlug, projectSlug }}
             className="underline hover:text-foreground"
           >
             {m.experiment_about_stats_link()}
@@ -159,7 +146,7 @@ export function DecisionPanel({ experiment, from, to }: Props) {
           {m.experiment_chart_funnel_link_hint()}
         </p>
         <Link
-          to="/analytics/explore"
+          to="/o/$orgSlug/p/$projectSlug/analytics/explore" params={{ orgSlug, projectSlug }}
           search={
             {
               event: "experiment.exposure",

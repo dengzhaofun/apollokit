@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -27,6 +27,7 @@ export const Route = createFileRoute(
 function StorageBoxConfigDetailPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: config, isPending, error } = useStorageBoxConfig(configId)
@@ -63,7 +64,7 @@ function StorageBoxConfigDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/storage-box">
+                <Link to="/o/$orgSlug/p/$projectSlug/storage-box" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -86,7 +87,7 @@ function StorageBoxConfigDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.storage_box_toast_delete_success())
-                    navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" , params: { orgSlug, projectSlug }})
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

@@ -15,6 +15,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import {
   qs as buildQs,
@@ -42,8 +43,7 @@ export const OFFLINE_CHECKIN_CAMPAIGN_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated campaigns — URL-driven via the standard list-search hook. */
 export function useOfflineCheckInCampaigns(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extra: { status?: string } = {},
 ) {
   const { status } = extra
@@ -194,8 +194,7 @@ const progressKey = (campaignKey: string) =>
 
 export function useOfflineCheckInProgress(
   campaignKey: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
 ) {
   return useListSearch<OfflineCheckInProgress>({
     route,

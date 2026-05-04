@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -14,10 +15,12 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<Character>()
 
 function useColumns(): ColumnDef<Character, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("avatarUrl", {
-        header: () => m.character_col_avatar(),
+
+      header: () => m.character_col_avatar(),
         cell: (info) => {
           const url = info.getValue()
           return url ? (
@@ -36,7 +39,7 @@ function useColumns(): ColumnDef<Character, unknown>[] {
         meta: { primary: true },
         cell: (info) => (
           <Link
-            to="/character"
+            to="/o/$orgSlug/p/$projectSlug/character" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -81,13 +84,12 @@ function useColumns(): ColumnDef<Character, unknown>[] {
         ),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<Character, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function CharacterTable({ route }: Props) {

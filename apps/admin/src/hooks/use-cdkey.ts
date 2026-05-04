@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -22,8 +23,8 @@ const BATCHES_KEY = ["cdkey-batches"] as const
 export const CDKEY_BATCH_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated batches — for the admin BatchTable. URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCdkeyBatches(route: any) {
+ 
+export function useCdkeyBatches(route: AnyRoute) {
   return useListSearch<CdkeyBatch>({
     route,
     queryKey: BATCHES_KEY,
@@ -86,8 +87,8 @@ export const CDKEY_CODE_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated codes under one batch. URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCdkeyCodes(batchId: string, route: any) {
+ 
+export function useCdkeyCodes(batchId: string, route: AnyRoute) {
   return useListSearch<CdkeyCode>({
     route,
     queryKey: ["cdkey-codes", batchId],
@@ -139,8 +140,8 @@ export const CDKEY_LOG_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated redemption logs under one batch. URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCdkeyLogs(batchId: string, route: any) {
+ 
+export function useCdkeyLogs(batchId: string, route: AnyRoute) {
   return useListSearch<CdkeyRedemptionLog>({
     route,
     queryKey: ["cdkey-logs", batchId],

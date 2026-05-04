@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -66,8 +67,8 @@ export const END_USER_FILTER_DEFS: FilterDef[] = [
  * TanStack Router's typed search-param API; pass `Route` from the
  * file route module.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useEndUsers(route: any) {
+ 
+export function useEndUsers(route: AnyRoute) {
   return useListSearch<EndUser>({
     route,
     queryKey: [...END_USERS_KEY, "list"],

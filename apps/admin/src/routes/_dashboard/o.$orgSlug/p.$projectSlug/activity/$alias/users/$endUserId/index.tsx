@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { format, formatDistanceToNow } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 
@@ -18,6 +18,7 @@ export const Route = createFileRoute(
 function ActivityUserDetailPage() {
   const { alias, endUserId } = Route.useParams()
   const { data, isPending, error } = useActivityForUser(alias, endUserId)
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -43,7 +44,7 @@ function ActivityUserDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/activity/$alias/users" params={{ alias }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias/users" params={{ orgSlug, projectSlug, alias }}>
               <ArrowLeft className="size-4" />
               返回
             </Link>

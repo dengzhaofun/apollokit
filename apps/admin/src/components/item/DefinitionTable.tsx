@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -31,7 +32,8 @@ function stackLabel(def: ItemDefinition): string {
 }
 
 function ActionsCell({ def }: { def: ItemDefinition }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -45,7 +47,7 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/item/definitions"
+              to="/o/$orgSlug/p/$projectSlug/item/definitions" params={{ orgSlug, projectSlug }}
               search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(def.id) })}
             >
               <Pencil className="size-4" />
@@ -56,8 +58,8 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/item/definitions/$definitionId"
-              params={{ definitionId: def.id }}
+              to="/o/$orgSlug/p/$projectSlug/item/definitions/$definitionId"
+              params={{ orgSlug, projectSlug, definitionId: def.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -71,13 +73,15 @@ function ActionsCell({ def }: { def: ItemDefinition }) {
 }
 
 function useColumns(): ColumnDef<ItemDefinition, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/item/definitions"
+            to="/o/$orgSlug/p/$projectSlug/item/definitions" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -131,13 +135,12 @@ function useColumns(): ColumnDef<ItemDefinition, unknown>[] {
         cell: (info) => <ActionsCell def={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<ItemDefinition, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function DefinitionTable({ route }: Props) {

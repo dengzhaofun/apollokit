@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 
@@ -58,13 +59,15 @@ function formatWindow(from: string | null, until: string | null): string {
   return `${f} → ${u}`
 }
 
-const columns: ColumnDef<Announcement>[] = [
+function useColumns(): ColumnDef<Announcement>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
+  return [
   {
     accessorKey: "alias",
     header: () => m.announcement_col_alias_title(),
     cell: ({ row }) => (
       <Link
-        to="/announcement"
+        to="/o/$orgSlug/p/$projectSlug/announcement" params={{ orgSlug, projectSlug }}
         search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(row.original.alias) })}
         className="block"
       >
@@ -129,14 +132,15 @@ const columns: ColumnDef<Announcement>[] = [
       </span>
     ),
   },
-]
+  ]
+}
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function AnnouncementTable({ route }: Props) {
+  const columns = useColumns()
   const list = useAnnouncements(route)
   return (
     <DataTable

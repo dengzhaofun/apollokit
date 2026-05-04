@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { useMoveExchangeOption } from "#/hooks/use-move"
-import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useMemo } from "react"
@@ -23,8 +24,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<ExchangeOption>()
 
 function ActionsCell({ option }: { option: ExchangeOption }) {
-
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -38,11 +39,9 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/exchange/$configId/options/$optionId"
-              params={{
-                configId: option.configId,
-                optionId: option.id,
-              }}
+              to="/o/$orgSlug/p/$projectSlug/exchange/$configId/options/$optionId"
+              params={{ orgSlug, projectSlug, configId: option.configId,
+                optionId: option.id, }}
             >
               <Pencil className="size-4" />
               {m.common_edit()}
@@ -52,11 +51,9 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/exchange/$configId/options/$optionId"
-              params={{
-                configId: option.configId,
-                optionId: option.id,
-              }}
+              to="/o/$orgSlug/p/$projectSlug/exchange/$configId/options/$optionId"
+              params={{ orgSlug, projectSlug, configId: option.configId,
+                optionId: option.id, }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -70,17 +67,17 @@ function ActionsCell({ option }: { option: ExchangeOption }) {
 }
 
 function useColumns(): ColumnDef<ExchangeOption, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/exchange/$configId/options/$optionId"
-            params={{
-              configId: info.row.original.configId,
-              optionId: info.row.original.id,
-            }}
+            to="/o/$orgSlug/p/$projectSlug/exchange/$configId/options/$optionId"
+            params={{ orgSlug, projectSlug, configId: info.row.original.configId,
+              optionId: info.row.original.id, }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -127,14 +124,13 @@ function useColumns(): ColumnDef<ExchangeOption, unknown>[] {
         cell: (info) => <ActionsCell option={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<ExchangeOption, unknown>[]
 }
 
 interface Props {
   configKey: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function OptionTable({ configKey, route }: Props) {

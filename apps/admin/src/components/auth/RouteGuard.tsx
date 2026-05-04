@@ -1,3 +1,4 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 /**
  * Route-level permission gate.
  *
@@ -29,8 +30,7 @@
  * `requirePermission` middleware on the server.
  */
 
-import { useLocation } from "@tanstack/react-router"
-import { Navigate } from "#/components/router-helpers"
+import { useLocation, Navigate } from "@tanstack/react-router"
 import type { ReactNode } from "react"
 
 import { authClient } from "#/lib/auth-client"
@@ -64,6 +64,7 @@ export function RouteGuard({
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const orgId = session?.session.activeTeamId ?? null
   const { data: bag, isPending: bagPending } = useCapabilities(orgId)
+  const { orgSlug, projectSlug } = useTenantParams()
 
   // Wait for both session + bag before deciding. Without this the
   // first render briefly thinks the bag is empty and redirects users
@@ -88,5 +89,5 @@ export function RouteGuard({
     )
   }
   // redirect-dashboard (default for sensitive routes)
-  return <Navigate to="/dashboard" replace />
+  return <Navigate to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }} replace />
 }

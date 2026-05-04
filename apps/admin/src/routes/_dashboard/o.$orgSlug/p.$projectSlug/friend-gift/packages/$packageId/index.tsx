@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Trash2, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -32,6 +32,7 @@ interface GiftItemRow {
 function GiftPackageDetailPage() {
   const { packageId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: pkg, isPending, error } = useFriendGiftPackage(packageId)
@@ -109,7 +110,7 @@ function GiftPackageDetailPage() {
     try {
       await deleteMutation.mutateAsync(pkg.id)
       toast.success(m.gift_package_deleted())
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" , params: { orgSlug, projectSlug }})
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)
@@ -147,7 +148,7 @@ function GiftPackageDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/friend-gift">
+                <Link to="/o/$orgSlug/p/$projectSlug/friend-gift" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>

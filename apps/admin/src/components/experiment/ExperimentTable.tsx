@@ -1,12 +1,5 @@
-/**
- * Paginated table of experiments. Mirrors offline-check-in's
- * `CampaignTable.tsx` — same DataTable + url-driven list-search wiring.
- *
- * Mobile cards layout via `mobileLayout="cards"` — column.meta.primary
- * marks the column rendered as the card title; meta.isActions marks the
- * row-actions cell rendered as the card's right-rail menu.
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -38,6 +31,7 @@ function ActionsCell({ experiment }: { experiment: Experiment }) {
   const del = useDeleteExperiment()
   const isDeletable =
     experiment.status === "draft" || experiment.status === "archived"
+  const { orgSlug, projectSlug } = useTenantParams()
 
   async function copyKey(e: React.MouseEvent) {
     e.preventDefault()
@@ -90,8 +84,8 @@ function ActionsCell({ experiment }: { experiment: Experiment }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/experiment/$experimentKey"
-              params={{ experimentKey: experiment.key }}
+              to="/o/$orgSlug/p/$projectSlug/experiment/$experimentKey"
+              params={{ orgSlug, projectSlug, experimentKey: experiment.key }}
             >
               <Pencil className="size-4" />
               {m.common_edit()}
@@ -110,14 +104,16 @@ function ActionsCell({ experiment }: { experiment: Experiment }) {
 }
 
 function useColumns(): ColumnDef<Experiment, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/experiment/$experimentKey"
-            params={{ experimentKey: info.row.original.key }}
+            to="/o/$orgSlug/p/$projectSlug/experiment/$experimentKey"
+            params={{ orgSlug, projectSlug, experimentKey: info.row.original.key }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -178,13 +174,12 @@ function useColumns(): ColumnDef<Experiment, unknown>[] {
         meta: { isActions: true },
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<Experiment, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
   status?: ExperimentStatus | ""
 }
 

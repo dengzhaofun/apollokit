@@ -1,6 +1,6 @@
 import { OrgProjectSwitcher } from "#/components/auth/OrgProjectSwitcher"
-import { useLocation } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { useLocation, Link, useNavigate } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import {
@@ -113,57 +113,57 @@ import * as m from "../paraglide/messages.js"
 import { getLocale, setLocale, type Locale } from "../paraglide/runtime.js"
 
 type NavRoute =
-  | "/dashboard"
-  | "/analytics/users"
-  | "/analytics/modules"
-  | "/analytics/activity"
-  | "/analytics/logs"
-  | "/analytics/explore"
-  | "/analytics/funnel"
-  | "/audit-logs"
-  | "/check-in"
-  | "/offline-check-in"
-  | "/experiment"
-  | "/item"
-  | "/item/definitions"
-  | "/item/categories"
-  | "/item/tools"
-  | "/currency"
-  | "/entity"
-  | "/entity/schemas"
-  | "/entity/formations"
-  | "/exchange"
-  | "/cdkey"
-  | "/shop"
-  | "/shop/categories"
-  | "/shop/tags"
-  | "/storage-box"
-  | "/mail"
-  | "/banner"
-  | "/announcement"
-  | "/activity"
-  | "/lottery"
-  | "/assist-pool"
-  | "/friend-gift"
-  | "/task"
-  | "/task/categories"
-  | "/media-library"
-  | "/character"
-  | "/dialogue"
-  | "/collection"
-  | "/level"
-  | "/event-catalog"
-  | "/triggers"
-  | "/friend"
-  | "/invite"
-  | "/guild"
-  | "/match-squad"
-  | "/leaderboard"
-  | "/rank"
-  | "/end-user"
-  | "/badge"
+  | "/o/$orgSlug/p/$projectSlug/dashboard"
+  | "/o/$orgSlug/p/$projectSlug/analytics/users"
+  | "/o/$orgSlug/p/$projectSlug/analytics/modules"
+  | "/o/$orgSlug/p/$projectSlug/analytics/activity"
+  | "/o/$orgSlug/p/$projectSlug/analytics/logs"
+  | "/o/$orgSlug/p/$projectSlug/analytics/explore"
+  | "/o/$orgSlug/p/$projectSlug/analytics/funnel"
+  | "/o/$orgSlug/p/$projectSlug/audit-logs"
+  | "/o/$orgSlug/p/$projectSlug/check-in"
+  | "/o/$orgSlug/p/$projectSlug/offline-check-in"
+  | "/o/$orgSlug/p/$projectSlug/experiment"
+  | "/o/$orgSlug/p/$projectSlug/item"
+  | "/o/$orgSlug/p/$projectSlug/item/definitions"
+  | "/o/$orgSlug/p/$projectSlug/item/categories"
+  | "/o/$orgSlug/p/$projectSlug/item/tools"
+  | "/o/$orgSlug/p/$projectSlug/currency"
+  | "/o/$orgSlug/p/$projectSlug/entity"
+  | "/o/$orgSlug/p/$projectSlug/entity/schemas"
+  | "/o/$orgSlug/p/$projectSlug/entity/formations"
+  | "/o/$orgSlug/p/$projectSlug/exchange"
+  | "/o/$orgSlug/p/$projectSlug/cdkey"
+  | "/o/$orgSlug/p/$projectSlug/shop"
+  | "/o/$orgSlug/p/$projectSlug/shop/categories"
+  | "/o/$orgSlug/p/$projectSlug/shop/tags"
+  | "/o/$orgSlug/p/$projectSlug/storage-box"
+  | "/o/$orgSlug/p/$projectSlug/mail"
+  | "/o/$orgSlug/p/$projectSlug/banner"
+  | "/o/$orgSlug/p/$projectSlug/announcement"
+  | "/o/$orgSlug/p/$projectSlug/activity"
+  | "/o/$orgSlug/p/$projectSlug/lottery"
+  | "/o/$orgSlug/p/$projectSlug/assist-pool"
+  | "/o/$orgSlug/p/$projectSlug/friend-gift"
+  | "/o/$orgSlug/p/$projectSlug/task"
+  | "/o/$orgSlug/p/$projectSlug/task/categories"
+  | "/o/$orgSlug/p/$projectSlug/media-library"
+  | "/o/$orgSlug/p/$projectSlug/character"
+  | "/o/$orgSlug/p/$projectSlug/dialogue"
+  | "/o/$orgSlug/p/$projectSlug/collection"
+  | "/o/$orgSlug/p/$projectSlug/level"
+  | "/o/$orgSlug/p/$projectSlug/event-catalog"
+  | "/o/$orgSlug/p/$projectSlug/triggers"
+  | "/o/$orgSlug/p/$projectSlug/friend"
+  | "/o/$orgSlug/p/$projectSlug/invite"
+  | "/o/$orgSlug/p/$projectSlug/guild"
+  | "/o/$orgSlug/p/$projectSlug/match-squad"
+  | "/o/$orgSlug/p/$projectSlug/leaderboard"
+  | "/o/$orgSlug/p/$projectSlug/rank"
+  | "/o/$orgSlug/p/$projectSlug/end-user"
+  | "/o/$orgSlug/p/$projectSlug/badge"
   | "/settings"
-  | "/cms"
+  | "/o/$orgSlug/p/$projectSlug/cms"
 
 /**
  * Paraglide message function signature — the generated `m.*` functions
@@ -235,55 +235,55 @@ type RoutePermission = {
   visibility?: Visibility // defaults to "hidden"
 }
 const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
-  "/analytics/users": { resource: "analytics" },
-  "/analytics/modules": { resource: "analytics" },
-  "/analytics/activity": { resource: "analytics" },
-  "/analytics/logs": { resource: "analytics" },
-  "/analytics/explore": { resource: "analytics" },
-  "/analytics/funnel": { resource: "analytics" },
-  "/audit-logs": { resource: "auditLog", visibility: "redirect-dashboard" },
-  "/check-in": { resource: "checkIn" },
-  "/offline-check-in": { resource: "offlineCheckIn" },
-  "/experiment": { resource: "experiment" },
-  "/item": { resource: "item" },
-  "/item/definitions": { resource: "item" },
-  "/item/categories": { resource: "item" },
-  "/item/tools": { resource: "item" },
-  "/currency": { resource: "currency" },
-  "/entity": { resource: "entity" },
-  "/entity/schemas": { resource: "entity" },
-  "/entity/formations": { resource: "entity" },
-  "/exchange": { resource: "exchange" },
-  "/cdkey": { resource: "cdkey" },
-  "/shop": { resource: "shop" },
-  "/shop/categories": { resource: "shop" },
-  "/shop/tags": { resource: "shop" },
-  "/storage-box": { resource: "storageBox" },
-  "/mail": { resource: "mail" },
-  "/banner": { resource: "banner" },
-  "/announcement": { resource: "announcement" },
-  "/activity": { resource: "activity" },
-  "/lottery": { resource: "lottery" },
-  "/assist-pool": { resource: "assistPool" },
-  "/friend-gift": { resource: "friendGift" },
-  "/task": { resource: "task" },
-  "/task/categories": { resource: "task" },
-  "/badge": { resource: "badge" },
-  "/cms": { resource: "cms" },
-  "/media-library": { resource: "mediaLibrary" },
-  "/character": { resource: "character" },
-  "/dialogue": { resource: "dialogue" },
-  "/collection": { resource: "collection" },
-  "/level": { resource: "level" },
-  "/event-catalog": { resource: "eventCatalog" },
-  "/triggers": { resource: "triggers" },
-  "/friend": { resource: "friend" },
-  "/invite": { resource: "invite" },
-  "/guild": { resource: "guild" },
-  "/match-squad": { resource: "team" },
-  "/leaderboard": { resource: "leaderboard" },
-  "/rank": { resource: "rank" },
-  "/end-user": { resource: "endUser" },
+  "/o/$orgSlug/p/$projectSlug/analytics/users": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/modules": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/activity": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/logs": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/explore": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/funnel": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/audit-logs": { resource: "auditLog", visibility: "redirect-dashboard" },
+  "/o/$orgSlug/p/$projectSlug/check-in": { resource: "checkIn" },
+  "/o/$orgSlug/p/$projectSlug/offline-check-in": { resource: "offlineCheckIn" },
+  "/o/$orgSlug/p/$projectSlug/experiment": { resource: "experiment" },
+  "/o/$orgSlug/p/$projectSlug/item": { resource: "item" },
+  "/o/$orgSlug/p/$projectSlug/item/definitions": { resource: "item" },
+  "/o/$orgSlug/p/$projectSlug/item/categories": { resource: "item" },
+  "/o/$orgSlug/p/$projectSlug/item/tools": { resource: "item" },
+  "/o/$orgSlug/p/$projectSlug/currency": { resource: "currency" },
+  "/o/$orgSlug/p/$projectSlug/entity": { resource: "entity" },
+  "/o/$orgSlug/p/$projectSlug/entity/schemas": { resource: "entity" },
+  "/o/$orgSlug/p/$projectSlug/entity/formations": { resource: "entity" },
+  "/o/$orgSlug/p/$projectSlug/exchange": { resource: "exchange" },
+  "/o/$orgSlug/p/$projectSlug/cdkey": { resource: "cdkey" },
+  "/o/$orgSlug/p/$projectSlug/shop": { resource: "shop" },
+  "/o/$orgSlug/p/$projectSlug/shop/categories": { resource: "shop" },
+  "/o/$orgSlug/p/$projectSlug/shop/tags": { resource: "shop" },
+  "/o/$orgSlug/p/$projectSlug/storage-box": { resource: "storageBox" },
+  "/o/$orgSlug/p/$projectSlug/mail": { resource: "mail" },
+  "/o/$orgSlug/p/$projectSlug/banner": { resource: "banner" },
+  "/o/$orgSlug/p/$projectSlug/announcement": { resource: "announcement" },
+  "/o/$orgSlug/p/$projectSlug/activity": { resource: "activity" },
+  "/o/$orgSlug/p/$projectSlug/lottery": { resource: "lottery" },
+  "/o/$orgSlug/p/$projectSlug/assist-pool": { resource: "assistPool" },
+  "/o/$orgSlug/p/$projectSlug/friend-gift": { resource: "friendGift" },
+  "/o/$orgSlug/p/$projectSlug/task": { resource: "task" },
+  "/o/$orgSlug/p/$projectSlug/task/categories": { resource: "task" },
+  "/o/$orgSlug/p/$projectSlug/badge": { resource: "badge" },
+  "/o/$orgSlug/p/$projectSlug/cms": { resource: "cms" },
+  "/o/$orgSlug/p/$projectSlug/media-library": { resource: "mediaLibrary" },
+  "/o/$orgSlug/p/$projectSlug/character": { resource: "character" },
+  "/o/$orgSlug/p/$projectSlug/dialogue": { resource: "dialogue" },
+  "/o/$orgSlug/p/$projectSlug/collection": { resource: "collection" },
+  "/o/$orgSlug/p/$projectSlug/level": { resource: "level" },
+  "/o/$orgSlug/p/$projectSlug/event-catalog": { resource: "eventCatalog" },
+  "/o/$orgSlug/p/$projectSlug/triggers": { resource: "triggers" },
+  "/o/$orgSlug/p/$projectSlug/friend": { resource: "friend" },
+  "/o/$orgSlug/p/$projectSlug/invite": { resource: "invite" },
+  "/o/$orgSlug/p/$projectSlug/guild": { resource: "guild" },
+  "/o/$orgSlug/p/$projectSlug/match-squad": { resource: "team" },
+  "/o/$orgSlug/p/$projectSlug/leaderboard": { resource: "leaderboard" },
+  "/o/$orgSlug/p/$projectSlug/rank": { resource: "rank" },
+  "/o/$orgSlug/p/$projectSlug/end-user": { resource: "endUser" },
   // /dashboard, /cms, /settings: no permission entry → always visible
 }
 
@@ -338,7 +338,7 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_overview,
       icon: LayoutDashboard,
       items: [
-        { title: m.nav_dashboard, to: "/dashboard", icon: LayoutDashboard },
+        { title: m.nav_dashboard, to: "/o/$orgSlug/p/$projectSlug/dashboard", icon: LayoutDashboard },
       ],
     },
     {
@@ -348,29 +348,29 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_analytics,
       icon: PieChart,
       items: [
-        { title: m.nav_user_analytics, to: "/analytics/users", icon: PieChart },
+        { title: m.nav_user_analytics, to: "/o/$orgSlug/p/$projectSlug/analytics/users", icon: PieChart },
         {
           title: m.nav_module_analytics,
-          to: "/analytics/modules",
+          to: "/o/$orgSlug/p/$projectSlug/analytics/modules",
           icon: LineChart,
         },
         {
           title: m.nav_explore_analytics,
-          to: "/analytics/explore",
+          to: "/o/$orgSlug/p/$projectSlug/analytics/explore",
           icon: LineChart,
         },
         {
           title: m.nav_funnel_analytics,
-          to: "/analytics/funnel",
+          to: "/o/$orgSlug/p/$projectSlug/analytics/funnel",
           icon: Workflow,
         },
         {
           title: m.nav_activity_analytics,
-          to: "/analytics/activity",
+          to: "/o/$orgSlug/p/$projectSlug/analytics/activity",
           icon: Activity,
         },
-        { title: m.nav_logs, to: "/analytics/logs", icon: ScrollText },
-        { title: m.nav_audit_logs, to: "/audit-logs", icon: Shield },
+        { title: m.nav_logs, to: "/o/$orgSlug/p/$projectSlug/analytics/logs", icon: ScrollText },
+        { title: m.nav_audit_logs, to: "/o/$orgSlug/p/$projectSlug/audit-logs", icon: Shield },
       ],
     },
     {
@@ -380,38 +380,38 @@ function getNavGroups(): NavGroup[] {
       items: [
         {
           title: m.nav_item,
-          to: "/item",
+          to: "/o/$orgSlug/p/$projectSlug/item",
           icon: Package,
           children: [
-            { title: m.nav_item_definitions, to: "/item/definitions", icon: Package },
-            { title: m.nav_item_categories, to: "/item/categories", icon: FolderOpen },
-            { title: m.nav_item_tools, to: "/item/tools", icon: Wrench },
+            { title: m.nav_item_definitions, to: "/o/$orgSlug/p/$projectSlug/item/definitions", icon: Package },
+            { title: m.nav_item_categories, to: "/o/$orgSlug/p/$projectSlug/item/categories", icon: FolderOpen },
+            { title: m.nav_item_tools, to: "/o/$orgSlug/p/$projectSlug/item/tools", icon: Wrench },
           ],
         },
-        { title: m.nav_currency, to: "/currency", icon: Coins },
+        { title: m.nav_currency, to: "/o/$orgSlug/p/$projectSlug/currency", icon: Coins },
         {
           title: m.nav_entity,
-          to: "/entity",
+          to: "/o/$orgSlug/p/$projectSlug/entity",
           icon: Sparkles,
           children: [
-            { title: m.nav_entity_schemas, to: "/entity/schemas", icon: Layers },
-            { title: m.nav_entity_formations, to: "/entity/formations", icon: Swords },
+            { title: m.nav_entity_schemas, to: "/o/$orgSlug/p/$projectSlug/entity/schemas", icon: Layers },
+            { title: m.nav_entity_formations, to: "/o/$orgSlug/p/$projectSlug/entity/formations", icon: Swords },
           ],
         },
-        { title: m.nav_exchange, to: "/exchange", icon: ArrowLeftRight },
-        { title: m.nav_cdkey, to: "/cdkey", icon: Ticket },
+        { title: m.nav_exchange, to: "/o/$orgSlug/p/$projectSlug/exchange", icon: ArrowLeftRight },
+        { title: m.nav_cdkey, to: "/o/$orgSlug/p/$projectSlug/cdkey", icon: Ticket },
         {
           title: m.nav_shop,
-          to: "/shop",
+          to: "/o/$orgSlug/p/$projectSlug/shop",
           icon: ShoppingCart,
           children: [
-            { title: m.nav_shop_products, to: "/shop", icon: Package },
-            { title: m.nav_shop_categories, to: "/shop/categories", icon: FolderOpen },
-            { title: m.nav_shop_tags, to: "/shop/tags", icon: Tags },
+            { title: m.nav_shop_products, to: "/o/$orgSlug/p/$projectSlug/shop", icon: Package },
+            { title: m.nav_shop_categories, to: "/o/$orgSlug/p/$projectSlug/shop/categories", icon: FolderOpen },
+            { title: m.nav_shop_tags, to: "/o/$orgSlug/p/$projectSlug/shop/tags", icon: Tags },
           ],
         },
-        { title: m.nav_storage_box, to: "/storage-box", icon: PiggyBank },
-        { title: m.nav_mail, to: "/mail", icon: Mail },
+        { title: m.nav_storage_box, to: "/o/$orgSlug/p/$projectSlug/storage-box", icon: PiggyBank },
+        { title: m.nav_mail, to: "/o/$orgSlug/p/$projectSlug/mail", icon: Mail },
       ],
     },
     {
@@ -419,24 +419,24 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_operations,
       icon: Megaphone,
       items: [
-        { title: m.nav_checkin, to: "/check-in", icon: CalendarCheck },
-        { title: m.nav_offline_checkin, to: "/offline-check-in", icon: MapPin },
-        { title: m.nav_banner, to: "/banner", icon: GalleryHorizontal },
-        { title: m.nav_announcement, to: "/announcement", icon: Megaphone },
-        { title: m.nav_activity, to: "/activity", icon: PartyPopper },
-        { title: m.nav_lottery, to: "/lottery", icon: Dices },
-        { title: m.nav_assist_pool, to: "/assist-pool", icon: HeartHandshake },
-        { title: m.nav_gift, to: "/friend-gift", icon: Gift },
+        { title: m.nav_checkin, to: "/o/$orgSlug/p/$projectSlug/check-in", icon: CalendarCheck },
+        { title: m.nav_offline_checkin, to: "/o/$orgSlug/p/$projectSlug/offline-check-in", icon: MapPin },
+        { title: m.nav_banner, to: "/o/$orgSlug/p/$projectSlug/banner", icon: GalleryHorizontal },
+        { title: m.nav_announcement, to: "/o/$orgSlug/p/$projectSlug/announcement", icon: Megaphone },
+        { title: m.nav_activity, to: "/o/$orgSlug/p/$projectSlug/activity", icon: PartyPopper },
+        { title: m.nav_lottery, to: "/o/$orgSlug/p/$projectSlug/lottery", icon: Dices },
+        { title: m.nav_assist_pool, to: "/o/$orgSlug/p/$projectSlug/assist-pool", icon: HeartHandshake },
+        { title: m.nav_gift, to: "/o/$orgSlug/p/$projectSlug/friend-gift", icon: Gift },
         {
           title: m.nav_task,
-          to: "/task",
+          to: "/o/$orgSlug/p/$projectSlug/task",
           icon: ListTodo,
           children: [
-            { title: m.nav_task_list, to: "/task", icon: ListTodo },
-            { title: m.nav_task_categories, to: "/task/categories", icon: FolderOpen },
+            { title: m.nav_task_list, to: "/o/$orgSlug/p/$projectSlug/task", icon: ListTodo },
+            { title: m.nav_task_categories, to: "/o/$orgSlug/p/$projectSlug/task/categories", icon: FolderOpen },
           ],
         },
-        { title: m.nav_badge, to: "/badge", icon: Bell },
+        { title: m.nav_badge, to: "/o/$orgSlug/p/$projectSlug/badge", icon: Bell },
       ],
     },
     {
@@ -448,12 +448,12 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_content,
       icon: BookOpen,
       items: [
-        { title: m.nav_cms, to: "/cms", icon: ScrollText },
-        { title: m.nav_media_library, to: "/media-library", icon: FolderOpen },
-        { title: m.nav_character, to: "/character", icon: Drama },
-        { title: m.nav_dialogue, to: "/dialogue", icon: MessagesSquare },
-        { title: m.nav_collection, to: "/collection", icon: BookOpen },
-        { title: m.nav_level, to: "/level", icon: MapIcon },
+        { title: m.nav_cms, to: "/o/$orgSlug/p/$projectSlug/cms", icon: ScrollText },
+        { title: m.nav_media_library, to: "/o/$orgSlug/p/$projectSlug/media-library", icon: FolderOpen },
+        { title: m.nav_character, to: "/o/$orgSlug/p/$projectSlug/character", icon: Drama },
+        { title: m.nav_dialogue, to: "/o/$orgSlug/p/$projectSlug/dialogue", icon: MessagesSquare },
+        { title: m.nav_collection, to: "/o/$orgSlug/p/$projectSlug/collection", icon: BookOpen },
+        { title: m.nav_level, to: "/o/$orgSlug/p/$projectSlug/level", icon: MapIcon },
       ],
     },
     {
@@ -461,13 +461,13 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_social,
       icon: Trophy,
       items: [
-        { title: m.nav_friend, to: "/friend", icon: Users },
-        { title: m.nav_invite, to: "/invite", icon: UserPlus },
-        { title: m.nav_guild, to: "/guild", icon: Shield },
-        { title: m.nav_team, to: "/match-squad", icon: Swords },
-        { title: m.nav_leaderboard, to: "/leaderboard", icon: Trophy },
-        { title: m.nav_rank, to: "/rank", icon: Medal },
-        { title: m.nav_end_user, to: "/end-user", icon: Contact },
+        { title: m.nav_friend, to: "/o/$orgSlug/p/$projectSlug/friend", icon: Users },
+        { title: m.nav_invite, to: "/o/$orgSlug/p/$projectSlug/invite", icon: UserPlus },
+        { title: m.nav_guild, to: "/o/$orgSlug/p/$projectSlug/guild", icon: Shield },
+        { title: m.nav_team, to: "/o/$orgSlug/p/$projectSlug/match-squad", icon: Swords },
+        { title: m.nav_leaderboard, to: "/o/$orgSlug/p/$projectSlug/leaderboard", icon: Trophy },
+        { title: m.nav_rank, to: "/o/$orgSlug/p/$projectSlug/rank", icon: Medal },
+        { title: m.nav_end_user, to: "/o/$orgSlug/p/$projectSlug/end-user", icon: Contact },
       ],
     },
     {
@@ -478,9 +478,9 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_developer,
       icon: Wrench,
       items: [
-        { title: m.nav_event_catalog, to: "/event-catalog", icon: Radio },
-        { title: m.nav_triggers, to: "/triggers", icon: Zap },
-        { title: m.nav_experiment, to: "/experiment", icon: Beaker },
+        { title: m.nav_event_catalog, to: "/o/$orgSlug/p/$projectSlug/event-catalog", icon: Radio },
+        { title: m.nav_triggers, to: "/o/$orgSlug/p/$projectSlug/triggers", icon: Zap },
+        { title: m.nav_experiment, to: "/o/$orgSlug/p/$projectSlug/experiment", icon: Beaker },
       ],
     },
   ]
@@ -501,6 +501,7 @@ function NavParentItem({
   pathname: string
 }) {
   const [open, setOpen] = useState(isItemActive)
+  const { orgSlug, projectSlug } = useTenantParams()
   useEffect(() => {
     if (isItemActive) setOpen(true)
   }, [isItemActive])
@@ -514,7 +515,7 @@ function NavParentItem({
         <SidebarMenuItem>
           <SidebarMenuButton
             render={
-              <Link to={item.to} onClick={() => setOpen(true)}>
+              <Link to={item.to} params={{ orgSlug, projectSlug }} onClick={() => setOpen(true)}>
                 <item.icon className="size-4" />
                 <span>{item.title()}</span>
               </Link>
@@ -544,7 +545,7 @@ function NavParentItem({
                   >
                     <SidebarMenuSubButton
                       render={
-                        <Link to={child.to}>
+                        <Link to={child.to} params={{ orgSlug, projectSlug }}>
                           <child.icon className="size-4" />
                           <span>{child.title()}</span>
                         </Link>
@@ -584,6 +585,7 @@ function NavGroupSection({
   pathname: string
 }) {
   const [open, setOpen] = useState(isActiveGroup || group.key === "overview")
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <Collapsible
       open={open}
@@ -610,7 +612,7 @@ function NavGroupSection({
                     <SidebarMenuItem key={item.to}>
                       <SidebarMenuButton
                         render={
-                          <Link to={item.to}>
+                          <Link to={item.to} params={{ orgSlug, projectSlug }}>
                             <item.icon className="size-4" />
                             <span>{item.title()}</span>
                           </Link>
@@ -662,6 +664,7 @@ function NavGroupPopover({
   pathname: string
 }) {
   const [open, setOpen] = useState(false)
+  const { orgSlug, projectSlug } = useTenantParams()
   const GroupIcon = group.icon
   return (
     <SidebarMenuItem>
@@ -699,6 +702,7 @@ function NavGroupPopover({
                   <div className="relative">
                     <Link
                       to={item.to}
+                      params={{ orgSlug, projectSlug }}
                       onClick={() => setOpen(false)}
                       className={cn(
                         "flex items-center gap-2 rounded-md px-2 py-1.5 pr-8 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
@@ -721,6 +725,7 @@ function NavGroupPopover({
                       <div key={child.to} className="relative ml-6">
                         <Link
                           to={child.to}
+                          params={{ orgSlug, projectSlug }}
                           onClick={() => setOpen(false)}
                           className={cn(
                             "flex items-center gap-2 rounded-md px-2 py-1 pr-8 text-xs outline-none transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
@@ -781,6 +786,7 @@ function buildNavItemLookup(): Map<string, NavItem> {
 function NavFavoritesGroup({ pathname }: { pathname: string }) {
   const { data: favorites } = useFavorites()
   const lookup = useMemo(buildNavItemLookup, [])
+  const { orgSlug, projectSlug } = useTenantParams()
 
   // Resolve favorites to NavItem; silently skip stale routePaths.
   const resolved = (favorites ?? [])
@@ -801,7 +807,7 @@ function NavFavoritesGroup({ pathname }: { pathname: string }) {
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton
                   render={
-                    <Link to={item.to}>
+                    <Link to={item.to} params={{ orgSlug, projectSlug }}>
                       <item.icon className="size-4" />
                       <span>{item.title()}</span>
                     </Link>
@@ -828,6 +834,7 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
   const { data: favorites } = useFavorites()
   const lookup = useMemo(buildNavItemLookup, [])
   const [open, setOpen] = useState(false)
+  const { orgSlug, projectSlug } = useTenantParams()
 
   const resolved = (favorites ?? [])
     .map((f) => ({ favorite: f, item: lookup.get(f.routePath) }))
@@ -874,6 +881,7 @@ function NavFavoritesPopover({ pathname }: { pathname: string }) {
                 <div key={item.to} className="relative">
                   <Link
                     to={item.to}
+                    params={{ orgSlug, projectSlug }}
                     onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-2 py-1.5 pr-8 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",

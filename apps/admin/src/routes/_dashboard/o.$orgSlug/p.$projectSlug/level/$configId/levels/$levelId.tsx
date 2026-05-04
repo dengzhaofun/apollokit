@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -49,6 +49,7 @@ function LevelDetailPage() {
   const { data: stages = [] } = useLevelStages(configId)
   const updateMutation = useUpdateLevel()
   const deleteMutation = useDeleteLevel()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -70,7 +71,7 @@ function LevelDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/level/$configId" params={{ configId }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
               <ArrowLeft className="size-4" />
             </Link>
           }
@@ -84,7 +85,7 @@ function LevelDetailPage() {
               try {
                 await deleteMutation.mutateAsync({ id: levelId, configId })
                 toast.success(m.level_level_deleted())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/level/$configId", params: { configId } })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/level/$configId", params: { orgSlug, projectSlug, configId } })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.level_failed_delete())
@@ -158,6 +159,7 @@ function LevelEditForm({
   hasStages: boolean
   updateMutation: ReturnType<typeof useUpdateLevel>
 }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const [name, setName] = useState(initial.name)
   const [alias, setAlias] = useState(initial.alias ?? "")
   const [description, setDescription] = useState(initial.description ?? "")
@@ -361,7 +363,7 @@ function LevelEditForm({
       <div className="flex justify-end gap-2">
         <Button
           render={
-            <Link to="/level/$configId" params={{ configId }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
               {m.level_back_to_list()}
             </Link>
           }

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -25,8 +26,7 @@ export const ASSIST_POOL_CONFIG_FILTER_DEFS: FilterDef[] = []
  * / non-activity-bound only.
  */
 export function useAssistPoolConfigs(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery

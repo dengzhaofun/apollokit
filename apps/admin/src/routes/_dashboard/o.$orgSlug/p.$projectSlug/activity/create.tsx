@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/acti
 
 function ActivityCreatePage() {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateActivity()
 
   return (
@@ -25,7 +26,7 @@ function ActivityCreatePage() {
               try {
                 await mutation.mutateAsync(values)
                 toast.success(m.activity_create_success())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/activity" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/activity" , params: { orgSlug, projectSlug }})
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.activity_create_failed())

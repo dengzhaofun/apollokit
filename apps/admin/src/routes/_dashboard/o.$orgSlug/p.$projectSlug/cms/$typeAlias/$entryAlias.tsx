@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Send, Trash2, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -40,6 +40,7 @@ export const Route = createFileRoute(
 function CmsEntryEditPage() {
   const { typeAlias, entryAlias } = Route.useParams()
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const { data: type, isPending: typePending } = useCmsType(typeAlias)
   const {
     data: entry,
@@ -127,7 +128,7 @@ function CmsEntryEditPage() {
                         toast.success(m.cms_entry_deleted())
                         navigate({
                           to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
-                          params: { typeAlias },
+                          params: { orgSlug, projectSlug, typeAlias },
                         })
                       } catch (err) {
                         if (err instanceof ApiError)

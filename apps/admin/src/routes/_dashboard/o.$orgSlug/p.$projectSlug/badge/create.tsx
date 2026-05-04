@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -29,6 +29,7 @@ function BadgeCreatePage() {
   const { data: templates = [] } = useBadgeTemplates()
   const createMutation = useCreateBadgeNode()
   const fromTemplateMutation = useCreateBadgeNodeFromTemplate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [tab, setTab] = useState<"template" | "custom">("template")
 
   const existingKeys = (existing ?? []).map((n) => n.key)
@@ -38,7 +39,7 @@ function BadgeCreatePage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/badge">
+            <Link to="/o/$orgSlug/p/$projectSlug/badge" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.badge_back_to_list()}
             </Link>
@@ -68,7 +69,7 @@ function BadgeCreatePage() {
                     toast.success(m.badge_created())
                     navigate({
                       to: "/o/$orgSlug/p/$projectSlug/badge/$nodeId",
-                      params: { nodeId: row.id },
+                      params: { orgSlug, projectSlug, nodeId: row.id },
                     })
                   } catch (err) {
                     if (err instanceof ApiError) toast.error(err.body.error)
@@ -88,7 +89,7 @@ function BadgeCreatePage() {
                     toast.success(m.badge_created())
                     navigate({
                       to: "/o/$orgSlug/p/$projectSlug/badge/$nodeId",
-                      params: { nodeId: row.id },
+                      params: { orgSlug, projectSlug, nodeId: row.id },
                     })
                   } catch (err) {
                     if (err instanceof ApiError) toast.error(err.body.error)

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"

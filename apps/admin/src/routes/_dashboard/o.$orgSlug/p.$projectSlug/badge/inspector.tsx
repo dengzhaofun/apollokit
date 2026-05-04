@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
 import { BadgeInspector } from "#/components/badge/BadgeInspector"
@@ -12,12 +12,13 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/badg
 })
 
 function BadgeInspectorPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <>
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/badge">
+            <Link to="/o/$orgSlug/p/$projectSlug/badge" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.badge_back_to_list()}
             </Link>

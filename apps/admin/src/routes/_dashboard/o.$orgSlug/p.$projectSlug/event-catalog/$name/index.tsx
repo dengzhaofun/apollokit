@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -30,6 +30,7 @@ function EventCatalogDetailPage() {
   const updateMut = useUpdateEventCatalogEntry()
 
   const readOnly = entry?.source === "internal"
+  const { orgSlug, projectSlug } = useTenantParams()
   const [description, setDescription] = useState("")
   const [fields, setFields] = useState<EventFieldRow[]>([])
 
@@ -66,7 +67,7 @@ function EventCatalogDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/event-catalog">
+            <Link to="/o/$orgSlug/p/$projectSlug/event-catalog" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.common_back()}
             </Link>

@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns"
 
 import { Badge } from "#/components/ui/badge"
@@ -95,6 +96,7 @@ interface EventTableProps {
 }
 
 export function EventTable({ data }: EventTableProps) {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <Table>
       <TableHeader>
@@ -121,8 +123,8 @@ export function EventTable({ data }: EventTableProps) {
               <TableCell>
                 {v.kind === "external-event" ? (
                   <Link
-                    to="/event-catalog/$name"
-                    params={{ name: v.name }}
+                    to="/o/$orgSlug/p/$projectSlug/event-catalog/$name"
+                    params={{ orgSlug, projectSlug, name: v.name }}
                     className="font-mono text-sm hover:underline"
                   >
                     {v.name}

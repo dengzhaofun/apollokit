@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -29,6 +29,7 @@ export const Route = createFileRoute(
 function OptionDetailPage() {
   const { configId, optionId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: options, isPending, error } = useAllExchangeOptions(configId)
@@ -63,7 +64,7 @@ function OptionDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/exchange/$configId" params={{ configId }}>
+                <Link to="/o/$orgSlug/p/$projectSlug/exchange/$configId" params={{ orgSlug, projectSlug, configId }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -89,7 +90,7 @@ function OptionDetailPage() {
                     toast.success(m.exchange_option_deleted())
                     navigate({
                       to: "/o/$orgSlug/p/$projectSlug/exchange/$configId",
-                      params: { configId },
+                      params: { orgSlug, projectSlug, configId },
                     })
                   } catch (err) {
                     toast.error(

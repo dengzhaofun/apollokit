@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -22,7 +23,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<CurrencyDefinition>()
 
 function ActionsCell({ def }: { def: CurrencyDefinition }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -36,7 +38,7 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/currency"
+              to="/o/$orgSlug/p/$projectSlug/currency" params={{ orgSlug, projectSlug }}
               search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(def.id) })}
             >
               <Pencil className="size-4" />
@@ -47,8 +49,8 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/currency/$currencyId"
-              params={{ currencyId: def.id }}
+              to="/o/$orgSlug/p/$projectSlug/currency/$currencyId"
+              params={{ orgSlug, projectSlug, currencyId: def.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -62,13 +64,15 @@ function ActionsCell({ def }: { def: CurrencyDefinition }) {
 }
 
 function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/currency"
+            to="/o/$orgSlug/p/$projectSlug/currency" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -116,13 +120,12 @@ function useColumns(): ColumnDef<CurrencyDefinition, unknown>[] {
         cell: (info) => <ActionsCell def={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<CurrencyDefinition, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function DefinitionTable({ route }: Props) {

@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Gift, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -31,7 +32,8 @@ function getResetModeLabels(): Record<string, string> {
 const columnHelper = createColumnHelper<CheckInConfig>()
 
 function ActionsCell({ config }: { config: CheckInConfig }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -44,7 +46,7 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/check-in/$configId" params={{ configId: config.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/check-in/$configId" params={{ orgSlug, projectSlug, configId: config.id }}>
               <Pencil className="size-4" />
               {m.common_edit()}
             </Link>
@@ -53,8 +55,8 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/check-in/$configId"
-              params={{ configId: config.id }}
+              to="/o/$orgSlug/p/$projectSlug/check-in/$configId"
+              params={{ orgSlug, projectSlug, configId: config.id }}
               hash="rewards"
             >
               <Gift className="size-4" />
@@ -65,8 +67,8 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/check-in/$configId"
-              params={{ configId: config.id }}
+              to="/o/$orgSlug/p/$projectSlug/check-in/$configId"
+              params={{ orgSlug, projectSlug, configId: config.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -80,14 +82,16 @@ function ActionsCell({ config }: { config: CheckInConfig }) {
 }
 
 function useColumns(): ColumnDef<CheckInConfig, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/check-in/$configId"
-            params={{ configId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/check-in/$configId"
+            params={{ orgSlug, projectSlug, configId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -144,7 +148,7 @@ function useColumns(): ColumnDef<CheckInConfig, unknown>[] {
         cell: (info) => <ActionsCell config={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<CheckInConfig, unknown>[]
 }
 
@@ -152,8 +156,7 @@ interface Props {
   /** Pass an activity scope filter — see useCheckInConfigs. */
   activityId?: string
   includeActivity?: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function ConfigTable({ route, ...rest }: Props) {

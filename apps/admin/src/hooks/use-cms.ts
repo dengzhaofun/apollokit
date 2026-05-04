@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -35,8 +36,8 @@ export const CMS_TYPE_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated CMS types — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCmsTypes(route: any) {
+ 
+export function useCmsTypes(route: AnyRoute) {
   return useListSearch<CmsType>({
     route,
     queryKey: TYPES_KEY,
@@ -130,8 +131,7 @@ export const CMS_ENTRY_FILTER_DEFS: FilterDef[] = [
  */
 export function useCmsEntries(
   typeAlias: string | undefined,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { status?: string; groupKey?: string; tag?: string } = {},
 ) {
   const { status, groupKey, tag } = extraQuery

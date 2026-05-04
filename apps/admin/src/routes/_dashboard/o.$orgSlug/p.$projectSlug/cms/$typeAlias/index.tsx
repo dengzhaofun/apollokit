@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus, Settings } from "lucide-react"
 import { useState } from "react"
 
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/cms/
 function CmsEntryListPage() {
   const { typeAlias } = Route.useParams()
   const { data: type } = useCmsType(typeAlias)
+  const { orgSlug, projectSlug } = useTenantParams()
   const [status, setStatus] = useState<CmsEntryStatus | "__all">("__all")
   const [groupKey, setGroupKey] = useState<string>("")
   const [tag, setTag] = useState<string>("")
@@ -41,7 +42,7 @@ function CmsEntryListPage() {
         <div className="ml-auto flex items-center gap-2">
           <Button
             render={
-              <Link to="/cms/types/$alias" params={{ alias: typeAlias }}>
+              <Link to="/o/$orgSlug/p/$projectSlug/cms/types/$alias" params={{ orgSlug, projectSlug, alias: typeAlias }}>
                 <Settings className="size-4" />
                 {m.cms_entry_edit_type()}
               </Link>
@@ -51,7 +52,7 @@ function CmsEntryListPage() {
           <Can resource="cms" action="write" mode="disable">
             <Button
               render={
-                <Link to="/cms/$typeAlias/create" params={{ typeAlias }}>
+                <Link to="/o/$orgSlug/p/$projectSlug/cms/$typeAlias/create" params={{ orgSlug, projectSlug, typeAlias }}>
                   <Plus className="size-4" />
                   {m.cms_entry_new()}
                 </Link>

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -22,6 +22,7 @@ function ShopCategoriesPage() {
   const { data: tree, isPending, error } = useShopCategoryTree()
   const { data: categories } = useShopCategories()
   const createMutation = useCreateShopCategory()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -29,7 +30,7 @@ function ShopCategoriesPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <Button
             render={
-              <Link to="/shop">
+              <Link to="/o/$orgSlug/p/$projectSlug/shop" params={{ orgSlug, projectSlug }}>
                 <ArrowLeft className="size-4" />
                 {m.shop_back_to_products()}
               </Link>

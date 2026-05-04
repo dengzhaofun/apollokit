@@ -20,6 +20,7 @@ import type {
   GrantItemsInput,
   DeductItemsInput,
 } from "#/lib/types/item"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const CATEGORIES_KEY = ["item-categories"] as const
 const DEFINITIONS_KEY = ["item-definitions"] as const
@@ -35,8 +36,8 @@ export const ITEM_CATEGORY_FILTER_DEFS: FilterDef[] = []
  * Pass the route handle so search/cursor/pageSize land in URL search
  * params (refresh-safe, shareable).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useItemCategories(route: any) {
+ 
+export function useItemCategories(route: AnyRoute) {
   return useListSearch<ItemCategory>({
     route,
     queryKey: CATEGORIES_KEY,
@@ -127,8 +128,8 @@ export function buildItemDefinitionFilterDefs(
  * non-activity-bound only — activity-scoped items are managed inside
  * the activity's detail page.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useItemDefinitions(route: any, filterDefs: FilterDef[]) {
+ 
+export function useItemDefinitions(route: AnyRoute, filterDefs: FilterDef[]) {
   return useListSearch<ItemDefinition>({
     route,
     queryKey: DEFINITIONS_KEY,

@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -32,14 +33,16 @@ function statusVariant(s: Status): "default" | "outline" | "secondary" {
 const columnHelper = createColumnHelper<MailMessage>()
 
 function useColumns(): ColumnDef<MailMessage, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("title", {
-        header: () => m.mail_col_title(),
+
+      header: () => m.mail_col_title(),
         cell: (info) => (
           <Link
-            to="/mail/$messageId"
-            params={{ messageId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/mail/$messageId"
+            params={{ orgSlug, projectSlug, messageId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -97,13 +100,12 @@ function useColumns(): ColumnDef<MailMessage, unknown>[] {
         cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd HH:mm"),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<MailMessage, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function MessageTable({ route }: Props) {

@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns"
 
 import {
@@ -37,6 +38,7 @@ interface AlbumTableProps {
 }
 
 export function AlbumTable({ data }: AlbumTableProps) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const moveMutation = useMoveCollectionAlbum()
 
   return (
@@ -71,8 +73,8 @@ export function AlbumTable({ data }: AlbumTableProps) {
               <SortableTableRow key={a.id} id={a.id}>
                 <TableCell>
                   <Link
-                    to="/collection/$albumId"
-                    params={{ albumId: a.id }}
+                    to="/o/$orgSlug/p/$projectSlug/collection/$albumId"
+                    params={{ orgSlug, projectSlug, albumId: a.id }}
                     className="font-medium hover:underline"
                   >
                     {a.name}

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { ArrowLeft, Ban, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -38,6 +38,7 @@ function MailDetailPage() {
   const { data, isPending, error } = useMailMessage(messageId)
   const revokeMutation = useRevokeMailMessage()
   const deleteMutation = useDeleteMailMessage()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -77,7 +78,7 @@ function MailDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/mail">
+                <Link to="/o/$orgSlug/p/$projectSlug/mail" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -161,7 +162,7 @@ function MailDetailPage() {
                         try {
                           await deleteMutation.mutateAsync(detail.id)
                           toast.success(m.mail_deleted())
-                          navigate({ to: "/o/$orgSlug/p/$projectSlug/mail" })
+                          navigate({ to: "/o/$orgSlug/p/$projectSlug/mail" , params: { orgSlug, projectSlug }})
                         } catch (err) {
                           if (err instanceof ApiError) {
                             toast.error(err.body.error)

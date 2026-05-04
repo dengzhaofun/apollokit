@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Medal as MedalIcon, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -36,6 +36,7 @@ function LevelListPage() {
   const { data: items, isPending, error, refetch } = useLevelConfigs()
   const deleteMutation = useDeleteLevelConfig()
   const total = items?.length ?? 0
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -52,7 +53,7 @@ function LevelListPage() {
         actions={
           <Button
             render={
-              <Link to="/level/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/level/create" params={{ orgSlug, projectSlug }}>
                 <Plus />
                 {m.level_new_config()}
               </Link>
@@ -84,7 +85,7 @@ function LevelListPage() {
             action={
               <Button
                 render={
-                  <Link to="/level/create">
+                  <Link to="/o/$orgSlug/p/$projectSlug/level/create" params={{ orgSlug, projectSlug }}>
                     <Plus />
                     {m.level_new_config()}
                   </Link>
@@ -113,8 +114,8 @@ function LevelListPage() {
                   <TableRow key={cfg.id}>
                     <TableCell className="font-medium">
                       <Link
-                        to="/level/$configId"
-                        params={{ configId: cfg.id }}
+                        to="/o/$orgSlug/p/$projectSlug/level/$configId"
+                        params={{ orgSlug, projectSlug, configId: cfg.id }}
                         className="hover:underline"
                       >
                         {cfg.name}
@@ -142,8 +143,8 @@ function LevelListPage() {
                       <Button
                         render={
                           <Link
-                            to="/level/$configId"
-                            params={{ configId: cfg.id }}
+                            to="/o/$orgSlug/p/$projectSlug/level/$configId"
+                            params={{ orgSlug, projectSlug, configId: cfg.id }}
                           >
                             {m.common_edit()}
                           </Link>

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { CalendarRangeIcon, FileStack, Plus, RotateCw } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/acti
 
 function ActivityListPage() {
   const tickMutation = useActivityTickRun()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -29,7 +30,7 @@ function ActivityListPage() {
           <>
             <Button
               render={
-                <Link to="/activity/templates">
+                <Link to="/o/$orgSlug/p/$projectSlug/activity/templates" params={{ orgSlug, projectSlug }}>
                   <FileStack />
                   {m.activity_action_templates()}
                 </Link>
@@ -64,7 +65,7 @@ function ActivityListPage() {
             <Can resource="activity" action="write" mode="disable">
               <Button
                 render={
-                  <Link to="/activity/create">
+                  <Link to="/o/$orgSlug/p/$projectSlug/activity/create" params={{ orgSlug, projectSlug }}>
                     <Plus />
                     {m.activity_action_create()}
                   </Link>

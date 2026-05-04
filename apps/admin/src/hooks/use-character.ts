@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -18,8 +19,8 @@ const CHARACTERS_KEY = ["characters"] as const
 export const CHARACTER_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated characters — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCharacters(route: any) {
+ 
+export function useCharacters(route: AnyRoute) {
   return useListSearch<Character>({
     route,
     queryKey: CHARACTERS_KEY,

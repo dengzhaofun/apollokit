@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -62,6 +62,7 @@ function LevelConfigDetailPage() {
   const { data: levels = [] } = useLevels(configId)
 
   const deleteConfigMutation = useDeleteLevelConfig()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -83,7 +84,7 @@ function LevelConfigDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/level">
+            <Link to="/o/$orgSlug/p/$projectSlug/level" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
             </Link>
           }
@@ -97,7 +98,7 @@ function LevelConfigDetailPage() {
               try {
                 await deleteConfigMutation.mutateAsync(config.id)
                 toast.success(m.level_config_deleted())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/level" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/level" , params: { orgSlug, projectSlug }})
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)
                 else toast.error(m.level_failed_delete())
@@ -479,6 +480,7 @@ function LevelsTab({
   stages: LevelStage[]
   levels: ReturnType<typeof useLevels>["data"] & unknown[]
 }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const [filterStage, setFilterStage] = useState<string>("all")
   const deleteMutation = useDeleteLevel()
 
@@ -512,8 +514,8 @@ function LevelsTab({
         <Button
           render={
             <Link
-              to="/level/$configId/levels/create"
-              params={{ configId }}
+              to="/o/$orgSlug/p/$projectSlug/level/$configId/levels/create"
+              params={{ orgSlug, projectSlug, configId }}
             >
               <Plus className="size-4" /> {m.level_new_level()}
             </Link>
@@ -553,8 +555,8 @@ function LevelsTab({
                 <TableRow key={lvl.id}>
                   <TableCell className="font-medium">
                     <Link
-                      to="/level/$configId/levels/$levelId"
-                      params={{ configId, levelId: lvl.id }}
+                      to="/o/$orgSlug/p/$projectSlug/level/$configId/levels/$levelId"
+                      params={{ orgSlug, projectSlug, configId, levelId: lvl.id }}
                       className="hover:underline"
                     >
                       {lvl.name}
@@ -588,8 +590,8 @@ function LevelsTab({
                     <Button
                       render={
                         <Link
-                          to="/level/$configId/levels/$levelId"
-                          params={{ configId, levelId: lvl.id }}
+                          to="/o/$orgSlug/p/$projectSlug/level/$configId/levels/$levelId"
+                          params={{ orgSlug, projectSlug, configId, levelId: lvl.id }}
                         >
                           <Pencil className="size-4" /> {m.common_edit()}
                         </Link>

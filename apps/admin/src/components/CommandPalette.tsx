@@ -1,4 +1,4 @@
-import { useNavigate } from "#/components/router-helpers"
+import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRightIcon,
   ClockIcon,

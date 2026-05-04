@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -66,6 +66,7 @@ function LevelCreatePage() {
   const { data: config } = useLevelConfig(configId)
   const { data: stages = [] } = useLevelStages(configId)
   const createMutation = useCreateLevel()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   const [name, setName] = useState("")
   const [alias, setAlias] = useState("")
@@ -120,7 +121,7 @@ function LevelCreatePage() {
       toast.success(m.level_level_created())
       navigate({
         to: "/o/$orgSlug/p/$projectSlug/level/$configId/levels/$levelId",
-        params: { configId, levelId: row.id },
+        params: { orgSlug, projectSlug, configId, levelId: row.id },
       })
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
@@ -133,7 +134,7 @@ function LevelCreatePage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/level/$configId" params={{ configId }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
               <ArrowLeft className="size-4" />
             </Link>
           }
@@ -295,7 +296,7 @@ function LevelCreatePage() {
           <div className="flex justify-end gap-2">
             <Button
               render={
-                <Link to="/level/$configId" params={{ configId }}>
+                <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
                   {m.common_cancel()}
                 </Link>
               }

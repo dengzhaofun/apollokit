@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { useMoveTaskDefinition } from "#/hooks/use-move"
-import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil } from "lucide-react"
@@ -26,8 +27,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<TaskDefinition>()
 
 function ActionsCell({ def }: { def: TaskDefinition }) {
-
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -39,7 +40,7 @@ function ActionsCell({ def }: { def: TaskDefinition }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/task/$taskId" params={{ taskId: def.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/task/$taskId" params={{ orgSlug, projectSlug, taskId: def.id }}>
               <Pencil className="mr-2 size-4" />
               {m.common_edit()}
             </Link>
@@ -51,14 +52,16 @@ function ActionsCell({ def }: { def: TaskDefinition }) {
 }
 
 function useColumns(): ColumnDef<TaskDefinition, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/task/$taskId"
-            params={{ taskId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/task/$taskId"
+            params={{ orgSlug, projectSlug, taskId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -113,7 +116,7 @@ function useColumns(): ColumnDef<TaskDefinition, unknown>[] {
         cell: (info) => <ActionsCell def={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<TaskDefinition, unknown>[]
 }
 

@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns"
 
 import { Badge } from "#/components/ui/badge"
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function TierConfigTable({ data }: Props) {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <Table>
       <TableHeader>
@@ -45,8 +47,8 @@ export function TierConfigTable({ data }: Props) {
             <TableRow key={c.id}>
               <TableCell>
                 <Link
-                  to="/rank/$configId"
-                  params={{ configId: c.id }}
+                  to="/o/$orgSlug/p/$projectSlug/rank/$configId"
+                  params={{ orgSlug, projectSlug, configId: c.id }}
                   className="block"
                 >
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">

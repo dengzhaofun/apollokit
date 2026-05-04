@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -35,6 +35,7 @@ const REDIRECT_STORAGE_KEY = "post_login_redirect"
 
 function AcceptInvitationPage() {
   const { id } = Route.useParams()
+    const { orgSlug, projectSlug } = useTenantParams()
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [status, setStatus] = useState<"idle" | "processing" | "done" | "failed">(
@@ -80,13 +81,13 @@ function AcceptInvitationPage() {
         })
         setStatus("done")
         toast.success(m.accept_invitation_success())
-        navigate({ to: "/dashboard" })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard" , params: { orgSlug, projectSlug }})
       })
       .catch(() => {
         setStatus("failed")
         toast.error(m.accept_invitation_failed())
       })
-  }, [id, session, isPending, navigate])
+  }, [id, session, isPending, navigate, orgSlug, projectSlug])
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">

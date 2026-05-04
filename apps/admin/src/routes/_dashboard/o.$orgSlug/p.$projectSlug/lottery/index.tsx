@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { DicesIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
 
@@ -83,6 +83,7 @@ function LotteryListPage() {
 
 function CreateLotteryPoolDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateLotteryPool()
   const [formState, setFormState] = useState({
     canSubmit: false,
@@ -97,7 +98,7 @@ function CreateLotteryPoolDialog({ onClose }: { onClose: () => void }) {
         onClose()
         void navigate({
           to: "/o/$orgSlug/p/$projectSlug/lottery/$poolId",
-          params: { poolId: row.id },
+          params: { orgSlug, projectSlug, poolId: row.id },
         })
       } catch (err) {
         toast.error(

@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -35,6 +35,7 @@ function stackLabel(def: {
 function DefinitionDetailPage() {
   const { definitionId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: definition, isPending, error } = useItemDefinition(definitionId)
@@ -68,7 +69,7 @@ function DefinitionDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/item/definitions">
+                <Link to="/o/$orgSlug/p/$projectSlug/item/definitions" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -92,7 +93,7 @@ function DefinitionDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(definition.id)
                     toast.success(m.item_definition_deleted())
-                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/definitions" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/definitions" , params: { orgSlug, projectSlug }})
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

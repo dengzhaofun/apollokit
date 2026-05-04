@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -57,6 +57,7 @@ function CreateProjectPage() {
 }
 
 function CreateProjectClient() {
+    const { orgSlug, projectSlug } = useTenantParams()
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [name, setName] = useState("")
@@ -73,7 +74,7 @@ function CreateProjectClient() {
       return
     }
     if (session.session.activeTeamId) {
-      navigate({ to: "/dashboard", replace: true })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
       return
     }
     if (autoRan.current) return
@@ -105,7 +106,7 @@ function CreateProjectClient() {
       if (teams.length === 0) {
         // Even more edge: org exists but no team. Skip onboarding form
         // and let the user create one from Settings later.
-        navigate({ to: "/dashboard", replace: true })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
         return
       }
       const firstTeam = teams[0]
@@ -115,7 +116,7 @@ function CreateProjectClient() {
     })().catch(() => {
       setBootstrapping(false)
     })
-  }, [isPending, session, navigate])
+  }, [isPending, session, navigate, orgSlug, projectSlug])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -137,7 +138,7 @@ function CreateProjectClient() {
       }
       await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
       await authClient.getSession({ query: { disableCookieCache: true } })
-      navigate({ to: "/dashboard", replace: true })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to rename project")
       setSubmitting(false)
@@ -150,7 +151,7 @@ function CreateProjectClient() {
     try {
       await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
       await authClient.getSession({ query: { disableCookieCache: true } })
-      navigate({ to: "/dashboard", replace: true })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
     } catch {
       setSubmitting(false)
     }

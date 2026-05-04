@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { LayersIcon, Plus } from "lucide-react"
 
 import { AlbumTable } from "#/components/collection/AlbumTable"
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/coll
 function CollectionListPage() {
   const { data: items, isPending, error, refetch } = useCollectionAlbums()
   const total = items?.length ?? 0
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -40,7 +41,7 @@ function CollectionListPage() {
         actions={
           <Button
             render={
-              <Link to="/collection/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/collection/create" params={{ orgSlug, projectSlug }}>
                 <Plus />
                 {m.collection_new_album()}
               </Link>
@@ -72,7 +73,7 @@ function CollectionListPage() {
             action={
               <Button
                 render={
-                  <Link to="/collection/create">
+                  <Link to="/o/$orgSlug/p/$projectSlug/collection/create" params={{ orgSlug, projectSlug }}>
                     <Plus />
                     {m.collection_new_album()}
                   </Link>

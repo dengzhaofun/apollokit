@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
@@ -14,13 +14,14 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/enti
 })
 
 function EntityFormationsPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <>
       <PageHeaderActions>
         <div className="ml-auto">
           <Button
             render={
-              <Link to="/entity/formations/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/entity/formations/create" params={{ orgSlug, projectSlug }}>
                 <Plus className="size-4" />
                 {m.entity_new_formation()}
               </Link>

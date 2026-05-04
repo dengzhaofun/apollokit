@@ -16,6 +16,7 @@ import type {
   WithdrawInput,
   WithdrawResult,
 } from "#/lib/types/storage-box"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const CONFIGS_KEY = ["storage-box-configs"] as const
 const DEPOSITS_KEY = ["storage-box-deposits"] as const
@@ -25,8 +26,8 @@ const DEPOSITS_KEY = ["storage-box-deposits"] as const
 export const STORAGE_BOX_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated configs — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useStorageBoxConfigs(route: any) {
+ 
+export function useStorageBoxConfigs(route: AnyRoute) {
   return useListSearch<StorageBoxConfig>({
     route,
     queryKey: CONFIGS_KEY,

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { TypeForm } from "#/components/cms/TypeForm"
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/cms/
 
 function CmsTypeCreatePage() {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateCmsType()
 
   return (
@@ -27,7 +28,7 @@ function CmsTypeCreatePage() {
               toast.success(m.cms_type_created())
               navigate({
                 to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
-                params: { typeAlias: row.alias },
+                params: { orgSlug, projectSlug, typeAlias: row.alias },
               })
             } catch (err) {
               if (err instanceof ApiError) toast.error(err.body.error)

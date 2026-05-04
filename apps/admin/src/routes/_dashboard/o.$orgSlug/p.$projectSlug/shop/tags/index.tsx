@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/shop
 function ShopTagsPage() {
   const { data: tags, isPending, error } = useAllShopTags()
   const createMutation = useCreateShopTag()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -23,7 +24,7 @@ function ShopTagsPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <Button
             render={
-              <Link to="/shop">
+              <Link to="/o/$orgSlug/p/$projectSlug/shop" params={{ orgSlug, projectSlug }}>
                 <ArrowLeft className="size-4" />
                 {m.shop_back_to_products()}
               </Link>

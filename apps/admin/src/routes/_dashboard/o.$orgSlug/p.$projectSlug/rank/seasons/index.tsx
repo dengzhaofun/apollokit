@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Flag, Play, Plus } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"
@@ -41,6 +41,7 @@ function RankSeasonsListPage() {
   const { data: tierConfigs } = useRankTierConfigs()
   const activate = useActivateRankSeason()
   const finalize = useFinalizeRankSeason()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   const tierConfigNameById = useMemo(() => {
     const map: Record<string, string> = {}
@@ -54,13 +55,13 @@ function RankSeasonsListPage() {
         <div className="ml-auto flex items-center gap-2">
           <Button
             render={
-              <Link to="/rank">{m.rank_tab_configs()}</Link>
+              <Link to="/o/$orgSlug/p/$projectSlug/rank" params={{ orgSlug, projectSlug }}>{m.rank_tab_configs()}</Link>
             }
             variant="outline" size="sm"
           />
           <Button
             render={
-              <Link to="/rank/seasons/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/rank/seasons/create" params={{ orgSlug, projectSlug }}>
                 <Plus className="size-4" />
                 {m.rank_new_season()}
               </Link>

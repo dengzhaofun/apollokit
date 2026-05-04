@@ -1,3 +1,4 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import {
   ArchiveX,
   ArrowLeft,
@@ -9,8 +10,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -83,6 +83,7 @@ function ExperimentDetailPage() {
   const variantsQuery = useExperimentVariants(experimentKey)
   const transition = useTransitionExperiment()
   const updateExp = useUpdateExperiment()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [draftTargeting, setDraftTargeting] =
     useState<ExperimentTargetingRules | undefined>(undefined)
 
@@ -176,7 +177,7 @@ function ExperimentDetailPage() {
       <DetailHeader
         icon={
           <Link
-            to="/experiment"
+            to="/o/$orgSlug/p/$projectSlug/experiment" params={{ orgSlug, projectSlug }}
             className="flex size-full items-center justify-center hover:opacity-80"
           >
             <ArrowLeft className="size-5" />
@@ -350,6 +351,7 @@ function ActionsBar({
   experiment: Experiment
   variants: import("#/lib/types/experiment").ExperimentVariant[]
 }) {
+    const { orgSlug, projectSlug } = useTenantParams()
   const transition = useTransitionExperiment()
   const del = useDeleteExperiment()
   const navigate = useNavigate()
@@ -424,7 +426,7 @@ function ActionsBar({
     if (!ok) return
     try {
       await del.mutateAsync(experiment.id)
-      void navigate({ to: "/o/$orgSlug/p/$projectSlug/experiment" })
+      void navigate({ to: "/o/$orgSlug/p/$projectSlug/experiment" , params: { orgSlug, projectSlug }})
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.body.message : m.experiment_failed_generic(),

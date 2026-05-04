@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import { Button } from "#/components/ui/button"
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/stor
 })
 
 function StorageBoxListPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <>
       <main className="flex-1 p-6">
@@ -26,7 +27,7 @@ function StorageBoxListPage() {
             </TabsList>
             <Button
               render={
-                <Link to="/storage-box/configs/create">
+                <Link to="/o/$orgSlug/p/$projectSlug/storage-box/configs/create" params={{ orgSlug, projectSlug }}>
                   <Plus className="size-4" />
                   {m.storage_box_action_create()}
                 </Link>

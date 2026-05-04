@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -18,8 +19,8 @@ const SCRIPTS_KEY = ["dialogue-scripts"] as const
 export const DIALOGUE_SCRIPT_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated dialogue scripts — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useDialogueScripts(route: any) {
+ 
+export function useDialogueScripts(route: AnyRoute) {
   return useListSearch<DialogueScript>({
     route,
     queryKey: SCRIPTS_KEY,

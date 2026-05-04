@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/exch
 function ExchangeConfigDetailPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: config, isPending, error } = useExchangeConfig(configId)
@@ -60,7 +61,7 @@ function ExchangeConfigDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/exchange">
+                <Link to="/o/$orgSlug/p/$projectSlug/exchange" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -84,7 +85,7 @@ function ExchangeConfigDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.exchange_config_deleted())
-                    navigate({ to: "/o/$orgSlug/p/$projectSlug/exchange" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/exchange" , params: { orgSlug, projectSlug }})
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError
@@ -174,8 +175,8 @@ function ExchangeConfigDetailPage() {
               <Button
                 render={
                   <Link
-                    to="/exchange/$configId/options/create"
-                    params={{ configId }}
+                    to="/o/$orgSlug/p/$projectSlug/exchange/$configId/options/create"
+                    params={{ orgSlug, projectSlug, configId }}
                   >
                     <Plus className="size-4" />
                     {m.exchange_new_option()}

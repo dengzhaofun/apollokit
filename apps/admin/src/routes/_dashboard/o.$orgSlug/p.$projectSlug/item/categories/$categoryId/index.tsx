@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -26,6 +26,7 @@ export const Route = createFileRoute(
 function CategoryDetailPage() {
   const { categoryId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: category, isPending, error } = useItemCategory(categoryId)
@@ -59,7 +60,7 @@ function CategoryDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/item/categories">
+                <Link to="/o/$orgSlug/p/$projectSlug/item/categories" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -83,7 +84,7 @@ function CategoryDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(category.id)
                     toast.success(m.item_category_deleted())
-                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/categories" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/item/categories" , params: { orgSlug, projectSlug }})
                   } catch (err) {
                     toast.error(
                       err instanceof ApiError

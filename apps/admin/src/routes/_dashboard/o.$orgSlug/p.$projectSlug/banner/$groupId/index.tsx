@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -56,6 +56,7 @@ function BannerGroupDetailPage() {
   const moveMutation = useMoveBanner()
   const deleteBannerMutation = useDeleteBanner()
   const deleteGroupMutation = useDeleteBannerGroup()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [groupDeleteOpen, setGroupDeleteOpen] = useState(false)
   const [bannerDeleteId, setBannerDeleteId] = useState<string | null>(null)
 
@@ -105,7 +106,7 @@ function BannerGroupDetailPage() {
     try {
       await deleteGroupMutation.mutateAsync(groupId)
       toast.success(m.banner_group_deleted())
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/banner" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/banner" , params: { orgSlug, projectSlug }})
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.banner_failed_delete_group())
@@ -117,7 +118,7 @@ function BannerGroupDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/banner">
+            <Link to="/o/$orgSlug/p/$projectSlug/banner" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.banner_back_to_groups()}
             </Link>
@@ -131,8 +132,8 @@ function BannerGroupDetailPage() {
           <Button
             render={
               <Link
-                to="/banner/$groupId/edit"
-                params={{ groupId }}
+                to="/o/$orgSlug/p/$projectSlug/banner/$groupId/edit"
+                params={{ orgSlug, projectSlug, groupId }}
               >
                 <Pencil className="size-4" />
                 {m.banner_edit_group()}

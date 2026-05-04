@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { ChevronRight, FolderOpen, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
@@ -39,6 +40,7 @@ function CategoryNode({
   depth: number
 }) {
   const deleteMutation = useDeleteShopCategory()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <li>
@@ -64,8 +66,8 @@ function CategoryNode({
           <Button
             render={
               <Link
-                to="/shop/categories/$categoryId"
-                params={{ categoryId: node.id }}
+                to="/o/$orgSlug/p/$projectSlug/shop/categories/$categoryId"
+                params={{ orgSlug, projectSlug, categoryId: node.id }}
               >
                 <Pencil className="size-3.5" />
               </Link>

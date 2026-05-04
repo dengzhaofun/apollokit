@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -111,8 +112,8 @@ export const RANK_SEASON_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated rank seasons — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useRankSeasons(route: any) {
+ 
+export function useRankSeasons(route: AnyRoute) {
   return useListSearch<RankSeason>({
     route,
     queryKey: SEASONS_KEY,

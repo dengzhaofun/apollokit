@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useMemo, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
@@ -39,14 +39,16 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/cdke
 const columnHelper = createColumnHelper<CdkeyBatch>()
 
 function useColumns(): ColumnDef<CdkeyBatch, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/cdkey/$batchId"
-            params={{ batchId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/cdkey/$batchId"
+            params={{ orgSlug, projectSlug, batchId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -99,7 +101,7 @@ function useColumns(): ColumnDef<CdkeyBatch, unknown>[] {
         cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<CdkeyBatch, unknown>[]
 }
 
@@ -162,6 +164,7 @@ function CdkeyListPage() {
 
 function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateCdkeyBatch()
   const [formState, setFormState] = useState({
     canSubmit: false,
@@ -176,7 +179,7 @@ function CreateBatchDrawer({ onClose }: { onClose: () => void }) {
         onClose()
         void navigate({
           to: "/o/$orgSlug/p/$projectSlug/cdkey/$batchId",
-          params: { batchId: created.id },
+          params: { orgSlug, projectSlug, batchId: created.id },
         })
       } catch (err) {
         toast.error(

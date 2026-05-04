@@ -1,8 +1,5 @@
-/**
- * Entry list — paginated table over /api/v1/cms/types/{typeAlias}/entries.
- * Status / group / tag filters are passed in by the parent route page.
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { useMemo } from "react"
 
@@ -24,14 +21,16 @@ const STATUS_VARIANT: Record<
 const columnHelper = createColumnHelper<CmsEntry>()
 
 function useColumns(typeAlias: string): ColumnDef<CmsEntry, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("alias", {
-        header: () => m.common_alias(),
+
+      header: () => m.common_alias(),
         cell: (info) => (
           <Link
-            to="/cms/$typeAlias/$entryAlias"
-            params={{ typeAlias, entryAlias: info.getValue() }}
+            to="/o/$orgSlug/p/$projectSlug/cms/$typeAlias/$entryAlias"
+            params={{ orgSlug, projectSlug, typeAlias, entryAlias: info.getValue() }}
             className="font-medium underline-offset-4 hover:underline"
           >
             {info.getValue()}
@@ -78,7 +77,7 @@ function useColumns(typeAlias: string): ColumnDef<CmsEntry, unknown>[] {
         ),
       }),
     ],
-    [typeAlias],
+    [typeAlias, orgSlug, projectSlug],
   ) as ColumnDef<CmsEntry, unknown>[]
 }
 
@@ -87,8 +86,7 @@ interface Props {
   status?: CmsEntryStatus
   groupKey?: string
   tag?: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function EntryTable({ typeAlias, status, groupKey, tag, route }: Props) {

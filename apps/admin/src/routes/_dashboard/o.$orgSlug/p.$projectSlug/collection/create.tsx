@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -17,13 +17,14 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/coll
 function CollectionCreatePage() {
   const navigate = useNavigate()
   const createMutation = useCreateCollectionAlbum()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/collection">
+            <Link to="/o/$orgSlug/p/$projectSlug/collection" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
             </Link>
           }
@@ -42,7 +43,7 @@ function CollectionCreatePage() {
                 toast.success(m.collection_album_created())
                 navigate({
                   to: "/o/$orgSlug/p/$projectSlug/collection/$albumId",
-                  params: { albumId: row.id },
+                  params: { orgSlug, projectSlug, albumId: row.id },
                 })
               } catch (err) {
                 if (err instanceof ApiError) {

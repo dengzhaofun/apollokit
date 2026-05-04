@@ -1,10 +1,9 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Pencil, ArrowLeft, Play } from "lucide-react"
 import { toast } from "sonner"
-import { Link } from "#/components/router-helpers"
 import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -51,6 +50,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/chec
 function CheckInDetailPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const RESET_MODE_LABEL = getResetModeLabels()
@@ -88,7 +88,7 @@ function CheckInDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/check-in">
+                <Link to="/o/$orgSlug/p/$projectSlug/check-in" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -111,7 +111,7 @@ function CheckInDetailPage() {
                   try {
                     await deleteMutation.mutateAsync(config.id)
                     toast.success(m.checkin_config_deleted())
-                    navigate({ to: "/o/$orgSlug/p/$projectSlug/check-in" })
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/check-in" , params: { orgSlug, projectSlug }})
                   } catch (err) {
                     if (err instanceof ApiError) {
                       toast.error(err.body.error)
@@ -212,8 +212,8 @@ function CheckInDetailPage() {
             <Button
               render={
                 <Link
-                  to="/check-in/$configId/preview"
-                  params={{ configId }}
+                  to="/o/$orgSlug/p/$projectSlug/check-in/$configId/preview"
+                  params={{ orgSlug, projectSlug, configId }}
                 >
                   <Play className="size-4" />
                   {m.checkin_preview_test()}

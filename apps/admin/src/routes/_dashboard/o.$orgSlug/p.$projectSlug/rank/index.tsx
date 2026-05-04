@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { CalendarClock, Plus, SwordsIcon } from "lucide-react"
 
 import {
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank
 function RankConfigsPage() {
   const { data: configs, isPending, error, refetch } = useRankTierConfigs()
   const total = configs?.length ?? 0
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -41,7 +42,7 @@ function RankConfigsPage() {
           <>
             <Button
               render={
-                <Link to="/rank/seasons">
+                <Link to="/o/$orgSlug/p/$projectSlug/rank/seasons" params={{ orgSlug, projectSlug }}>
                   <CalendarClock />
                   {m.rank_tab_seasons()}
                 </Link>
@@ -50,7 +51,7 @@ function RankConfigsPage() {
             />
             <Button
               render={
-                <Link to="/rank/create">
+                <Link to="/o/$orgSlug/p/$projectSlug/rank/create" params={{ orgSlug, projectSlug }}>
                   <Plus />
                   {m.rank_new_config()}
                 </Link>
@@ -83,7 +84,7 @@ function RankConfigsPage() {
             action={
               <Button
                 render={
-                  <Link to="/rank/create">
+                  <Link to="/o/$orgSlug/p/$projectSlug/rank/create" params={{ orgSlug, projectSlug }}>
                     <Plus />
                     {m.rank_new_config()}
                   </Link>

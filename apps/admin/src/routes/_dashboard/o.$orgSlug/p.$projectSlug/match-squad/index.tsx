@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params"
 import { useMemo, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -39,14 +39,16 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/matc
 const columnHelper = createColumnHelper<MatchSquadConfig>()
 
 function useColumns(): ColumnDef<MatchSquadConfig, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         meta: { primary: true },
         cell: (info) => (
           <Link
-            to="/match-squad"
+            to="/o/$orgSlug/p/$projectSlug/match-squad" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -80,7 +82,7 @@ function useColumns(): ColumnDef<MatchSquadConfig, unknown>[] {
         cell: (info) => new Date(info.getValue()).toLocaleDateString(),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<MatchSquadConfig, unknown>[]
 }
 

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -106,8 +107,8 @@ export function useDeleteShopCategory() {
 export const SHOP_TAG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated tags — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useShopTags(route: any) {
+ 
+export function useShopTags(route: AnyRoute) {
   return useListSearch<ShopTag>({
     route,
     queryKey: TAGS_KEY,
@@ -172,8 +173,7 @@ export const SHOP_PRODUCT_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated products — URL-driven. */
 export function useShopProducts(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: ShopProductFilterRest = {},
 ) {
   return useListSearch<ShopProduct>({

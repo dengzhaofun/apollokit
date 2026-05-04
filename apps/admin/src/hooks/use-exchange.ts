@@ -17,6 +17,7 @@ import type {
   UpdateOptionInput,
   ExecuteExchangeInput,
 } from "#/lib/types/exchange"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const CONFIGS_KEY = ["exchange-configs"] as const
 
@@ -25,8 +26,8 @@ const CONFIGS_KEY = ["exchange-configs"] as const
 export const EXCHANGE_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated configs — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useExchangeConfigs(route: any) {
+ 
+export function useExchangeConfigs(route: AnyRoute) {
   return useListSearch<ExchangeConfig>({
     route,
     queryKey: CONFIGS_KEY,
@@ -88,8 +89,8 @@ export function useDeleteExchangeConfig() {
 export const EXCHANGE_OPTION_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated options under one config — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useExchangeOptions(configKey: string, route: any) {
+ 
+export function useExchangeOptions(configKey: string, route: AnyRoute) {
   return useListSearch<ExchangeOption>({
     route,
     queryKey: ["exchange-options", configKey],

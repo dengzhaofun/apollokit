@@ -1,3 +1,4 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 /**
  * "About these statistics" — plain-language pedagogical page linked
  * from every (?) tooltip in the decision panel + SRM warning.
@@ -12,8 +13,7 @@
  * for the curious.
  */
 
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft, BookOpen } from "lucide-react"
 
 import { PageBody, PageHeader, PageShell } from "#/components/patterns"
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/expe
 })
 
 function AboutStatsPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <PageShell>
       <PageHeader
@@ -36,7 +37,7 @@ function AboutStatsPage() {
             variant="outline"
             size="sm"
             render={
-              <Link to="/experiment">
+              <Link to="/o/$orgSlug/p/$projectSlug/experiment" params={{ orgSlug, projectSlug }}>
                 <ArrowLeft className="size-4" />
                 {m.common_back()}
               </Link>

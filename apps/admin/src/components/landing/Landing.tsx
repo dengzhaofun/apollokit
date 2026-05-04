@@ -1,4 +1,4 @@
-import { Link } from "#/components/router-helpers"
+import { Link } from "@tanstack/react-router";
 import {
   Activity,
   ArrowRight,

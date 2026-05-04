@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { FlaskConical, Plus } from "lucide-react"
 
 import { BadgeNodeTable } from "#/components/badge/BadgeNodeTable"
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/badg
 
 function BadgeListPage() {
   const { data: items, isPending, error } = useBadgeNodes()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -21,7 +22,7 @@ function BadgeListPage() {
         <div className="ml-auto flex gap-2">
           <Button
             render={
-              <Link to="/badge/inspector">
+              <Link to="/o/$orgSlug/p/$projectSlug/badge/inspector" params={{ orgSlug, projectSlug }}>
                 <FlaskConical className="size-4" />
                 {m.badge_inspector_title()}
               </Link>
@@ -30,7 +31,7 @@ function BadgeListPage() {
           />
           <Button
             render={
-              <Link to="/badge/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/badge/create" params={{ orgSlug, projectSlug }}>
                 <Plus className="size-4" />
                 {m.badge_new()}
               </Link>

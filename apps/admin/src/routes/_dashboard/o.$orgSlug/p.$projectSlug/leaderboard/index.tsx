@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus, RotateCw, TrophyIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/lead
 
 function LeaderboardListPage() {
   const settleMutation = useRunLeaderboardSettle()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -62,7 +63,7 @@ function LeaderboardListPage() {
             </Button>
             <Button
               render={
-                <Link to="/leaderboard/create">
+                <Link to="/o/$orgSlug/p/$projectSlug/leaderboard/create" params={{ orgSlug, projectSlug }}>
                   <Plus />
                   {t("新建榜单", "New leaderboard")}
                 </Link>

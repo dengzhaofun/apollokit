@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank
 function RankConfigDetailPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const { data, isPending, error } = useRankTierConfig(configId)
   const updateMutation = useUpdateRankTierConfig()
   const deleteMutation = useDeleteRankTierConfig()
@@ -65,7 +66,7 @@ function RankConfigDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(data.id)
                       toast.success(m.rank_config_deleted())
-                      navigate({ to: "/o/$orgSlug/p/$projectSlug/rank" })
+                      navigate({ to: "/o/$orgSlug/p/$projectSlug/rank" , params: { orgSlug, projectSlug }})
                     } catch (err) {
                       if (err instanceof ApiError)
                         toast.error(err.body.error)

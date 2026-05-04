@@ -1,5 +1,4 @@
-import { useLocation } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useLocation, Link } from "@tanstack/react-router"
 import {
   AlertTriangle,
   Building2,

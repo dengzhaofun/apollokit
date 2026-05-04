@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { SeasonForm } from "#/components/rank/SeasonForm"
@@ -41,6 +41,7 @@ function RankSeasonCreatePage() {
  */
 function CreateSeasonPanel({ tierConfigs }: { tierConfigs: RankTierConfig[] }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateRankSeason()
   const form = useSeasonForm({
     tierConfigs,
@@ -50,7 +51,7 @@ function CreateSeasonPanel({ tierConfigs }: { tierConfigs: RankTierConfig[] }) {
         toast.success(m.rank_season_created())
         navigate({
           to: "/o/$orgSlug/p/$projectSlug/rank/seasons/$seasonId",
-          params: { seasonId: row.id },
+          params: { orgSlug, projectSlug, seasonId: row.id },
         })
       } catch (err) {
         if (err instanceof ApiError) toast.error(err.body.error)

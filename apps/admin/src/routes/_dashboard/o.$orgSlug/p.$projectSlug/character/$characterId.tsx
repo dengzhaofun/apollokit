@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -36,13 +36,14 @@ function CharacterDetailPage() {
   const { data: character, isPending } = useCharacter(characterId)
   const updateMutation = useUpdateCharacter()
   const deleteMutation = useDeleteCharacter()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   async function handleDelete() {
     try {
       await deleteMutation.mutateAsync(characterId)
       toast.success(m.character_deleted())
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/character" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/character" , params: { orgSlug, projectSlug }})
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.character_failed_delete())
@@ -54,7 +55,7 @@ function CharacterDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/character">
+            <Link to="/o/$orgSlug/p/$projectSlug/character" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.character_back_to_list()}
             </Link>

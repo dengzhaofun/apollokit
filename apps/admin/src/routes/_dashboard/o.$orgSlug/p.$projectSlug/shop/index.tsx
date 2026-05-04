@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useForm } from "@tanstack/react-form"
 import { Folder, Plus, ShoppingCartIcon, Tag } from "lucide-react"
 import { useState } from "react"
@@ -61,6 +61,7 @@ const ALL = "__all__"
 function ShopProductsPage() {
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { orgSlug, projectSlug } = useTenantParams()
 
   function closeModal() {
     void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, ...closedModal }) })
@@ -90,7 +91,7 @@ function ShopProductsPage() {
           <>
             <Button
               render={
-                <Link to="/shop/categories">
+                <Link to="/o/$orgSlug/p/$projectSlug/shop/categories" params={{ orgSlug, projectSlug }}>
                   <Folder />
                   {m.shop_categories()}
                 </Link>
@@ -99,7 +100,7 @@ function ShopProductsPage() {
             />
             <Button
               render={
-                <Link to="/shop/tags">
+                <Link to="/o/$orgSlug/p/$projectSlug/shop/tags" params={{ orgSlug, projectSlug }}>
                   <Tag />
                   {m.shop_tags()}
                 </Link>
@@ -170,6 +171,7 @@ function ShopProductsPage() {
 
 function CreateShopProductMiniDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateShopProduct()
   const [formState, setFormState] = useState<FormBridgeState>({
     canSubmit: false,
@@ -197,7 +199,7 @@ function CreateShopProductMiniDialog({ onClose }: { onClose: () => void }) {
         onClose()
         void navigate({
           to: "/o/$orgSlug/p/$projectSlug/shop/$productId",
-          params: { productId: row.id },
+          params: { orgSlug, projectSlug, productId: row.id },
         })
       } catch (err) {
         toast.error(

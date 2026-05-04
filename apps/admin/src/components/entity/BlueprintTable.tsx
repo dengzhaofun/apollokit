@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns"
 
 import {
@@ -25,6 +26,7 @@ interface BlueprintTableProps {
 }
 
 export function BlueprintTable({ data, schemaId }: BlueprintTableProps) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const moveMutation = useMoveEntityBlueprint()
 
   return (
@@ -61,8 +63,8 @@ export function BlueprintTable({ data, schemaId }: BlueprintTableProps) {
               <SortableTableRow key={bp.id} id={bp.id}>
                 <TableCell>
                   <Link
-                    to="/entity/schemas/$schemaId/blueprints/$blueprintId"
-                    params={{ schemaId, blueprintId: bp.id }}
+                    to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId"
+                    params={{ orgSlug, projectSlug, schemaId, blueprintId: bp.id }}
                     className="font-medium hover:underline"
                   >
                     {bp.name}

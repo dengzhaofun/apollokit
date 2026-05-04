@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -23,7 +24,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<ExchangeConfig>()
 
 function ActionsCell({ config }: { config: ExchangeConfig }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -36,7 +38,7 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/exchange/$configId" params={{ configId: config.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/exchange/$configId" params={{ orgSlug, projectSlug, configId: config.id }}>
               <Pencil className="size-4" />
               {m.common_edit()}
             </Link>
@@ -45,8 +47,8 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/exchange/$configId"
-              params={{ configId: config.id }}
+              to="/o/$orgSlug/p/$projectSlug/exchange/$configId"
+              params={{ orgSlug, projectSlug, configId: config.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -60,14 +62,16 @@ function ActionsCell({ config }: { config: ExchangeConfig }) {
 }
 
 function useColumns(): ColumnDef<ExchangeConfig, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/exchange/$configId"
-            params={{ configId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/exchange/$configId"
+            params={{ orgSlug, projectSlug, configId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -103,13 +107,12 @@ function useColumns(): ColumnDef<ExchangeConfig, unknown>[] {
         cell: (info) => <ActionsCell config={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<ExchangeConfig, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function ExchangeConfigTable({ route }: Props) {

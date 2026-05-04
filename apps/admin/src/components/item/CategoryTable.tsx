@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -22,8 +23,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<ItemCategory>()
 
 function ActionsCell({ category }: { category: ItemCategory }) {
-
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -37,7 +38,7 @@ function ActionsCell({ category }: { category: ItemCategory }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/item/categories"
+              to="/o/$orgSlug/p/$projectSlug/item/categories" params={{ orgSlug, projectSlug }}
               search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(category.id) })}
             >
               <Pencil className="size-4" />
@@ -48,8 +49,8 @@ function ActionsCell({ category }: { category: ItemCategory }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/item/categories/$categoryId"
-              params={{ categoryId: category.id }}
+              to="/o/$orgSlug/p/$projectSlug/item/categories/$categoryId"
+              params={{ orgSlug, projectSlug, categoryId: category.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -63,13 +64,15 @@ function ActionsCell({ category }: { category: ItemCategory }) {
 }
 
 function useColumns(): ColumnDef<ItemCategory, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/item/categories"
+            to="/o/$orgSlug/p/$projectSlug/item/categories" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -106,13 +109,12 @@ function useColumns(): ColumnDef<ItemCategory, unknown>[] {
         cell: (info) => <ActionsCell category={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<ItemCategory, unknown>[]
 }
 
 interface CategoryTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function CategoryTable({ route }: CategoryTableProps) {
