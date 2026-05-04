@@ -15,7 +15,7 @@
  * also can't usefully describe JSON-RPC method dispatch via tool name,
  * so we deliberately keep this endpoint out of `openapi.json`.
  *
- * **Auth:** `requireAdminOrApiKey` runs per-router (not global) — same
+ * **Auth:** `requireTenantSessionOrApiKey` runs per-router (not global) — same
  * pattern as every other admin-side router. Both Better Auth session
  * (so an operator can hit this endpoint from inside the admin UI for
  * testing) and `ak_…` admin API keys are accepted. The MCP spec's own
@@ -32,12 +32,12 @@ import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 
 import type { HonoEnv } from "../../env";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { createMcpServer } from "./server";
 
 export const mcpRouter = new Hono<HonoEnv>();
 
-mcpRouter.use("*", requireAdminOrApiKey);
+mcpRouter.use("*", requireTenantSessionOrApiKey);
 
 mcpRouter.all("/", async (c) => {
   const transport = new StreamableHTTPTransport();

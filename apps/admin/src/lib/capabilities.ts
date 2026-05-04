@@ -27,6 +27,12 @@ export type CapabilityBag = {
   role: string | null
   /** Map of resource name → array of granted action names. May contain "manage". */
   capabilities: Record<string, string[]>
+  /**
+   * True iff the current user has the platform-level `admin` role added by
+   * Better Auth's admin plugin (NOT the same as tenant-level org/team
+   * admin). Drives visibility of the `/admin/*` operator surface.
+   */
+  isPlatformAdmin: boolean
 }
 
 /** TanStack Query key. Bumped when the active org changes. */

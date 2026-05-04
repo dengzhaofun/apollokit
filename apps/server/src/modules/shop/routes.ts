@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the shop module.
  *
- * Protected by `requireAdminOrApiKey`. Routes follow the same serialize →
+ * Protected by `requireTenantSessionOrApiKey`. Routes follow the same serialize →
  * OpenAPI-declared → body shape pattern as `exchange/routes.ts`.
  */
 
@@ -11,7 +11,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { shopService } from "./index";
@@ -211,7 +211,7 @@ function serializeUserProduct(row: UserProductView) {
 
 export const shopRouter = createAdminRouter();
 
-shopRouter.use("*", requireAdminOrApiKey);
+shopRouter.use("*", requireTenantSessionOrApiKey);
 shopRouter.use("*", requirePermissionByMethod("shop"));
 
 // ─── Categories ──────────────────────────────────────────────────

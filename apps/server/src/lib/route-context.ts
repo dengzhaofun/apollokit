@@ -2,7 +2,7 @@
  * Typed accessors for `c.var.*` fields populated by the auth middleware
  * stack. These exist so handlers don't repeat `c.var.X!` non-null
  * assertions at every call site — the auth middleware (`requireAuth`,
- * `requireAdminOrApiKey`, `requireClientCredential`, `requireClientUser`)
+ * `requireTenantSessionOrApiKey`, `requireClientCredential`, `requireClientUser`)
  * is the contract that guarantees the underlying field is populated.
  *
  * The non-null assertions here are load-bearing only at the type level.
@@ -17,7 +17,7 @@ import type { HonoEnv } from "../env";
 
 /**
  * Active tenant (project / Better Auth team) id for an authenticated
- * admin request. Guaranteed by `requireAuth` / `requireAdminOrApiKey`.
+ * admin request. Guaranteed by `requireAuth` / `requireTenantSessionOrApiKey`.
  *
  * Kept named `getOrgId` for backward-compat with call sites; the
  * returned value is `activeTeamId` (the project id), not the org id.

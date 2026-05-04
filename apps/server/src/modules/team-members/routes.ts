@@ -2,7 +2,7 @@
  * 项目级成员管理 admin 路由 —— `/api/v1/team-members/*`。
  *
  * 这些路由站在"组织级管理面"上(列出/变更/移除项目成员),所以鉴权用
- * `requireAdminOrApiKey` + `requireOrgPermission("orgMember", ...)`。
+ * `requireTenantSessionOrApiKey` + `requireOrgPermission("orgMember", ...)`。
  *
  * 操作的是 team_member 表(Better Auth 内置),Better Auth client SDK
  * 不暴露 listTeamMembers,所以 admin 前端直接 fetch 这些 endpoint。
@@ -15,7 +15,7 @@ import {
   ok,
 } from "../../lib/response"
 import { getOrgScopedCompanyId } from "../../lib/route-context"
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key"
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key"
 import { requireOrgPermission } from "../../middleware/require-org-permission"
 
 import { teamMemberService } from "./index"
@@ -44,7 +44,7 @@ function serialize(row: TeamMemberWithUser) {
 
 export const teamMemberRouter = createAdminRouter()
 
-teamMemberRouter.use("*", requireAdminOrApiKey)
+teamMemberRouter.use("*", requireTenantSessionOrApiKey)
 
 // 写操作集中网关:invite / remove(变更角色复用 invite 权限)
 const writeGuard = requireOrgPermission("orgMember", "invite")

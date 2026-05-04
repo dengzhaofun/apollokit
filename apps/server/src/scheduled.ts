@@ -24,6 +24,7 @@ import { withDbContext } from "./db";
 import { requestContext } from "./lib/request-context";
 import { activityService } from "./modules/activity";
 import { assistPoolService } from "./modules/assist-pool";
+import { billingService } from "./modules/billing";
 import { leaderboardService } from "./modules/leaderboard";
 import { webhooksService } from "./modules/webhooks";
 import { logger } from "./lib/logger";
@@ -77,6 +78,31 @@ export async function scheduled(
           webhooksService.cleanupOldDeliveries(),
         ),
       );
+      // Hourly: scan teams crossing 80/100/150% of plan quota and
+      // fire one alert email per (team, year_month, threshold).
+      // Idempotent — `mau_alert` unique key dedupes within a month.
+      if (now.getUTCMinutes() === 0) {
+        ctx.waitUntil(
+          runTask("billing.runMauAlerts", () =>
+            billingService.runMauAlerts({ now }),
+          ),
+        );
+      }
+      // First 5 minutes of UTC day-1: snapshot last month's MAU
+      // for invoicing. The 5-minute window absorbs occasional
+      // missed ticks; the unique key on `mau_snapshot` makes
+      // re-runs no-ops.
+      if (
+        now.getUTCDate() === 1 &&
+        now.getUTCHours() === 0 &&
+        now.getUTCMinutes() < 5
+      ) {
+        ctx.waitUntil(
+          runTask("billing.runMonthlyMauSnapshot", () =>
+            billingService.runMonthlyMauSnapshot({ now }),
+          ),
+        );
+      }
     }),
   );
 }

@@ -1,7 +1,7 @@
 /**
  * Route-layer tests for mail.
  *
- * Covers the HTTP edges: `requireAdminOrApiKey` 401, zod validation → 400,
+ * Covers the HTTP edges: `requireTenantSessionOrApiKey` 401, zod validation → 400,
  * router `onError` mapping of `ModuleError` to the declared status codes,
  * and one happy-path create-list cycle. Deeper business logic lives in
  * `service.test.ts`.

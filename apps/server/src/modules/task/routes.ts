@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the task module.
  *
- * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
+ * Guarded by `requireTenantSessionOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_).
  */
 
@@ -13,7 +13,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import type { TaskNavigation, TaskRewardTier } from "../../schema/task";
@@ -145,7 +145,7 @@ function serializeDefinition(row: {
 
 export const taskRouter = createAdminRouter();
 
-taskRouter.use("*", requireAdminOrApiKey);
+taskRouter.use("*", requireTenantSessionOrApiKey);
 taskRouter.use("*", requirePermissionByMethod("task"));
 
 // ─── Categories ─────────────────────────────────────────────────

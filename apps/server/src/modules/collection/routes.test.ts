@@ -3,7 +3,7 @@
  *
  * These drive the real Hono app through `app.request()` in-process, to
  * catch HTTP-surface regressions the service tests can't see:
- *   - requireAdminOrApiKey 401 when no cookie
+ *   - requireTenantSessionOrApiKey 401 when no cookie
  *   - Zod validation mapping to 400
  *   - ModuleError subclasses mapped to typed JSON responses via onError
  *   - Path prefixes actually connected

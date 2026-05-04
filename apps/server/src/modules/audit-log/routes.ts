@@ -1,7 +1,7 @@
 /**
  * Audit-log admin routes —— 挂在 `/api/v1/audit-logs`。
  *
- * 鉴权栈：`requireAdminOrApiKey` → `requirePermission("auditLog", "read")`（admin/owner
+ * 鉴权栈：`requireTenantSessionOrApiKey` → `requirePermission("auditLog", "read")`（admin/owner
  * 才能看；operator/viewer 直接 403，与其他业务模块的 `requirePermissionByMethod` 行为不同
  * 因为审计是敏感读）。
  *
@@ -11,7 +11,7 @@
 
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermission } from "../../middleware/require-permission";
 
 import { auditLogService } from "./index";
@@ -27,7 +27,7 @@ const TAG = "Audit Log";
 
 export const auditLogRouter = createAdminRouter();
 
-auditLogRouter.use("*", requireAdminOrApiKey);
+auditLogRouter.use("*", requireTenantSessionOrApiKey);
 auditLogRouter.use("*", requirePermission("auditLog", "read"));
 
 auditLogRouter.openapi(

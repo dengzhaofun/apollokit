@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the announcement module.
  *
- * Guarded by `requireAdminOrApiKey`. Structure mirrors the banner router —
+ * Guarded by `requireTenantSessionOrApiKey`. Structure mirrors the banner router —
  * serialize → call service → onError maps ModuleError to JSON.
  */
 
@@ -10,7 +10,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { announcementService } from "./index";
 import type {
@@ -53,7 +53,7 @@ function serialize(row: Announcement) {
 
 export const announcementRouter = createAdminRouter();
 
-announcementRouter.use("*", requireAdminOrApiKey);
+announcementRouter.use("*", requireTenantSessionOrApiKey);
 announcementRouter.use("*", requirePermissionByMethod("announcement"));
 
 announcementRouter.openapi(

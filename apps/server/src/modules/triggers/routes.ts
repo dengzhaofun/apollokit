@@ -24,7 +24,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { triggerExecutions } from "../../schema/triggers";
 
@@ -91,7 +91,7 @@ function serializeExecution(row: TriggerExecutionRow) {
 
 export const triggersRouter = createAdminRouter();
 
-triggersRouter.use("*", requireAdminOrApiKey);
+triggersRouter.use("*", requireTenantSessionOrApiKey);
 triggersRouter.use("*", requirePermissionByMethod("triggers"));
 
 // ─── GET /rules ────────────────────────────────────────────────────────

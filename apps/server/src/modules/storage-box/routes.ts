@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the storage-box module.
  *
- * All endpoints are guarded by requireAdminOrApiKey and scoped to the
+ * All endpoints are guarded by requireTenantSessionOrApiKey and scoped to the
  * caller's active organization. End-user-initiated deposit/withdraw
  * flows are invoked by the admin (or an API key) on behalf of a given
  * `endUserId`. A public player-facing router is out of scope for MVP
@@ -14,7 +14,7 @@ import { MoveBodySchema } from "../../lib/fractional-order";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { storageBoxService } from "./index";
 import { projectInterest } from "./interest";
@@ -114,7 +114,7 @@ function viewFromDepositAndConfig(
 
 export const storageBoxRouter = createAdminRouter();
 
-storageBoxRouter.use("*", requireAdminOrApiKey);
+storageBoxRouter.use("*", requireTenantSessionOrApiKey);
 storageBoxRouter.use("*", requirePermissionByMethod("storageBox"));
 
 // ─── Config routes ──────────────────────────────────────────────────

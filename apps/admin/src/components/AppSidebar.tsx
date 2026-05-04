@@ -956,6 +956,10 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
   const navigate = useNavigate()
   const { data: session } = authClient.useSession()
   const user = session?.user
+  // 平台管理员入口仅在 user.role === 'admin' 时出现。capabilities 已经
+  // 被 AppSidebar 主体取过,这里复用同一个 query 的缓存(同 queryKey)。
+  const orgId = session?.session.activeTeamId ?? null
+  const { data: capabilities } = useCapabilities(orgId)
   const displayName = user?.name?.trim() || user?.email || ""
   const initials =
     (user?.name?.trim() || user?.email || "?")
@@ -1069,6 +1073,16 @@ function UserMenuButton({ isIcon }: { isIcon: boolean }) {
             </Link>
           }
         />
+        {capabilities?.isPlatformAdmin ? (
+          <DropdownMenuItem
+            render={
+              <Link to="/admin/mau">
+                <Shield className="size-4" />
+                <span>{m.user_menu_platform_admin()}</span>
+              </Link>
+            }
+          />
+        ) : null}
         <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
           <LogOut className="size-4" />
           <span>{m.user_menu_sign_out()}</span>

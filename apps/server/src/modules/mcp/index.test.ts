@@ -10,7 +10,7 @@
  *      dependencies. This is the load-bearing test.
  *
  *   2. **HTTP edge guard**: hits `/api/v1/mcp` via `app.request` to
- *      verify `requireAdminOrApiKey` rejects unauthenticated
+ *      verify `requireTenantSessionOrApiKey` rejects unauthenticated
  *      requests. We don't replay the full JSON-RPC handshake here —
  *      the in-memory test already covers protocol correctness, and
  *      reproducing Streamable HTTP's SSE response in vitest is

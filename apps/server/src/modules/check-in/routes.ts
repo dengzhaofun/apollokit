@@ -5,7 +5,7 @@
  * Zod-validated inputs into service calls and maps typed errors onto HTTP
  * responses. No business logic lives here.
  *
- * Every route is guarded by `requireAdminOrApiKey` — accepts either a
+ * Every route is guarded by `requireTenantSessionOrApiKey` — accepts either a
  * valid Better Auth session or an admin API key (ak_). Downstream handlers
  * can safely read `getOrgId(c)` without null checks.
  *
@@ -20,7 +20,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { checkInService } from "./index";
 import {
@@ -117,7 +117,7 @@ function serializeState(row: {
 
 export const checkInRouter = createAdminRouter();
 
-checkInRouter.use("*", requireAdminOrApiKey);
+checkInRouter.use("*", requireTenantSessionOrApiKey);
 checkInRouter.use("*", requirePermissionByMethod("checkIn"));
 
 // POST /check-in/configs — create

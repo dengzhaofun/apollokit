@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the battle-pass (纪行) module.
  *
- * 所有路由走 `requireAdminOrApiKey`，下游可安全读
+ * 所有路由走 `requireTenantSessionOrApiKey`，下游可安全读
  * `getOrgId(c)`。
  *
  * C-end 玩家路由在 `client-routes.ts`。
@@ -15,7 +15,7 @@ import {
   ok,
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { battlePassService } from "./index";
 import type { BattlePassConfig } from "./types";
@@ -59,7 +59,7 @@ function serializeConfig(row: BattlePassConfig) {
 
 export const battlePassRouter = createAdminRouter();
 
-battlePassRouter.use("*", requireAdminOrApiKey);
+battlePassRouter.use("*", requireTenantSessionOrApiKey);
 battlePassRouter.use("*", requirePermissionByMethod("battlePass"));
 
 // POST /configs

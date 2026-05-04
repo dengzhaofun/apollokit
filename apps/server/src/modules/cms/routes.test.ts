@@ -2,7 +2,7 @@
  * Route-layer smoke tests for the CMS admin routes.
  *
  * Goals:
- *   - `requireAdminOrApiKey` 401 without a session cookie
+ *   - `requireTenantSessionOrApiKey` 401 without a session cookie
  *   - Path prefix `/api/v1/cms` is mounted
  *   - Zod validation → 400 with `code: "validation_error"`
  *   - Module errors translated to typed envelope (alias conflict 409)

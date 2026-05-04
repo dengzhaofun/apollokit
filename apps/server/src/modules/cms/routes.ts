@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the CMS module.
  *
  * Mounted at `/api/v1/cms`. Auth pattern matches every other admin module:
- * `requireAdminOrApiKey` (Better Auth session OR `ak_` API key) →
+ * `requireTenantSessionOrApiKey` (Better Auth session OR `ak_` API key) →
  * `requirePermissionByMethod("cms")` (org-scoped role check). Handlers read the active
  * org from the session.
  *
@@ -22,7 +22,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { cmsService } from "./index";
 import type { CmsEntry, CmsSchemaDef, CmsType } from "./types";
@@ -83,7 +83,7 @@ function serializeEntry(row: CmsEntry) {
 
 export const cmsRouter = createAdminRouter();
 
-cmsRouter.use("*", requireAdminOrApiKey);
+cmsRouter.use("*", requireTenantSessionOrApiKey);
 cmsRouter.use("*", requirePermissionByMethod("cms"));
 
 // ─── Type routes ─────────────────────────────────────────────────

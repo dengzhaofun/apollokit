@@ -15,7 +15,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type {
   LeaderboardConfig,
@@ -67,7 +67,7 @@ function serializeConfig(row: LeaderboardConfig) {
 
 export const leaderboardRouter = createAdminRouter();
 
-leaderboardRouter.use("*", requireAdminOrApiKey);
+leaderboardRouter.use("*", requireTenantSessionOrApiKey);
 leaderboardRouter.use("*", requirePermissionByMethod("leaderboard"));
 
 // POST /leaderboard/configs

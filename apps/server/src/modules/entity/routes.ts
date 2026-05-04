@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the entity module.
  *
- * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
+ * Guarded by `requireTenantSessionOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_). All handlers resolve the
  * organization from `getOrgId(c)`.
  *
@@ -15,7 +15,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { entityService } from "./index";
 import type {
@@ -144,7 +144,7 @@ function serializeFormationConfig(row: EntityFormationConfig) {
 
 export const entityRouter = createAdminRouter();
 
-entityRouter.use("*", requireAdminOrApiKey);
+entityRouter.use("*", requireTenantSessionOrApiKey);
 entityRouter.use("*", requirePermissionByMethod("entity"));
 
 // ═══════════════════════════════════════════════════════════════

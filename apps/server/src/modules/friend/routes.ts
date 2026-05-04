@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the friend module.
  *
- * Guarded by `requireAdminOrApiKey`. Exposes settings CRUD and admin
+ * Guarded by `requireTenantSessionOrApiKey`. Exposes settings CRUD and admin
  * relationship browsing/deletion.
  */
 
@@ -9,7 +9,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { FriendSettingsNotFound, ModuleError } from "./errors";
 import { friendService } from "./index";
@@ -65,7 +65,7 @@ function serializeRelationship(row: {
 
 export const friendRouter = createAdminRouter();
 
-friendRouter.use("*", requireAdminOrApiKey);
+friendRouter.use("*", requireTenantSessionOrApiKey);
 friendRouter.use("*", requirePermissionByMethod("friend"));
 
 // GET /friend/settings

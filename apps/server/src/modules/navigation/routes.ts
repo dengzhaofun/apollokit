@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the navigation module.
  *
  * Covers per-user, per-org sidebar nav favorites. Authenticated via
- * the standard admin auth (`requireAdminOrApiKey`) — but NOT
+ * the standard admin auth (`requireTenantSessionOrApiKey`) — but NOT
  * `requirePermissionByMethod`: every project member should be able to manage
  * their own favorites regardless of role.
  *
@@ -20,7 +20,7 @@ import {
   ok,
 } from "../../lib/response"
 import { getOrgId } from "../../lib/route-context";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key"
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key"
 import { NavigationApiKeyNotSupported } from "./errors"
 import { navigationService } from "./index"
 import type { NavigationFavorite } from "./types"
@@ -52,7 +52,7 @@ function requireSessionUserId(userId: string | undefined): string {
 
 export const navigationRouter = createAdminRouter()
 
-navigationRouter.use("*", requireAdminOrApiKey)
+navigationRouter.use("*", requireTenantSessionOrApiKey)
 
 navigationRouter.openapi(
   createAdminRoute({
