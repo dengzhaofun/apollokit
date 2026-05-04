@@ -269,6 +269,7 @@ app.use("*", auditLog);
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
 app.route("/health", health);
+app.route("/api/health", health); // also accessible via admin service-binding proxy
 
 // Admin routes — session or admin API key
 //
