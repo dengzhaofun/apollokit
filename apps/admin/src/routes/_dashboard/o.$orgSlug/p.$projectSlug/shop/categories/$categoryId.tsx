@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -29,6 +29,7 @@ function ShopCategoryEditPage() {
   const { data: categories } = useShopCategories()
   const updateMutation = useUpdateShopCategory()
   const deleteMutation = useDeleteShopCategory()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -43,7 +44,7 @@ function ShopCategoryEditPage() {
                 try {
                   await deleteMutation.mutateAsync(category.id)
                   toast.success(m.shop_category_deleted())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop/categories" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop/categories" , params: { orgSlug, projectSlug }})
                 } catch (err) {
                   toast.error(
                     err instanceof ApiError
@@ -61,7 +62,7 @@ function ShopCategoryEditPage() {
         <div className="mx-auto max-w-2xl space-y-4">
           <Button
             render={
-              <Link to="/shop/categories">
+              <Link to="/o/$orgSlug/p/$projectSlug/shop/categories" params={{ orgSlug, projectSlug }}>
                 <ArrowLeft className="size-4" />
                 {m.shop_back_to_categories()}
               </Link>

@@ -1,15 +1,5 @@
-/**
- * 数据分析三页面共用的事件名输入控件。
- *
- * 用 native `<datalist>` + `<Input list>` 实现自动补全 —— 输入即筛选,
- * 跨平台键盘交互由浏览器原生处理,移动端友好。候选源由 useAnalyticsEventOptions
- * 合并 Tinybird `tenant_event_names`(实际上报)+ event-catalog?capability=analytics
- * (平台目录),所以 empty state 也能给用户看到平台支持的事件。
- *
- * 多个 Picker 共享同一 listId 时浏览器会去重渲染 —— funnel 页多个 step 行
- * 用同一个 id 即可。
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { useAnalyticsEventOptions } from "#/hooks/use-analytics-event-options"
 import { Input } from "#/components/ui/input"
 import * as m from "#/paraglide/messages.js"
@@ -37,6 +27,7 @@ export function EventNamePicker({
   className,
 }: EventNamePickerProps) {
   const { options } = useAnalyticsEventOptions({ from, to })
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <div className="flex flex-col gap-1">
@@ -58,7 +49,7 @@ export function EventNamePicker({
       </datalist>
       {showCatalogLink ? (
         <Link
-          to="/event-catalog"
+          to="/o/$orgSlug/p/$projectSlug/event-catalog" params={{ orgSlug, projectSlug }}
           className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
         >
           {m.analytics_event_picker_browse_catalog()}

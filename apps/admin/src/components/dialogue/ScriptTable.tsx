@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -15,14 +16,16 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<DialogueScript>()
 
 function useColumns(): ColumnDef<DialogueScript, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.dialogue_col_name(),
+
+      header: () => m.dialogue_col_name(),
         cell: (info) => (
           <Link
-            to="/dialogue/$scriptId"
-            params={{ scriptId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/dialogue/$scriptId"
+            params={{ orgSlug, projectSlug, scriptId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -72,13 +75,12 @@ function useColumns(): ColumnDef<DialogueScript, unknown>[] {
         ),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<DialogueScript, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function ScriptTable({ route }: Props) {

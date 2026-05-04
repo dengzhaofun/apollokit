@@ -20,6 +20,7 @@ import type {
   CreateFormationConfigInput,
   UpdateFormationConfigInput,
 } from "#/lib/types/entity"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const SCHEMAS_KEY = ["entity-schemas"] as const
 const BLUEPRINTS_KEY = ["entity-blueprints"] as const
@@ -31,8 +32,8 @@ const FORMATION_CONFIGS_KEY = ["entity-formation-configs"] as const
 export const ENTITY_SCHEMA_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated entity schemas — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useEntitySchemas(route: any) {
+ 
+export function useEntitySchemas(route: AnyRoute) {
   return useListSearch<EntitySchema>({
     route,
     queryKey: SCHEMAS_KEY,
@@ -99,8 +100,7 @@ export const ENTITY_BLUEPRINT_FILTER_DEFS: FilterDef[] = []
  * `activityId` to scope to that activity.
  */
 export function useEntityBlueprints(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { schemaId?: string; activityId?: string } = {},
 ) {
   const { schemaId, activityId } = extraQuery
@@ -230,8 +230,8 @@ export function useDeleteEntitySkin() {
 export const ENTITY_FORMATION_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated formation configs — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useEntityFormationConfigs(route: any) {
+ 
+export function useEntityFormationConfigs(route: AnyRoute) {
   return useListSearch<EntityFormationConfig>({
     route,
     queryKey: FORMATION_CONFIGS_KEY,

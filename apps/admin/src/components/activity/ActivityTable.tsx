@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -30,14 +31,16 @@ const STATE_LABELS: Record<ActivityState, () => string> = {
 const columnHelper = createColumnHelper<Activity>()
 
 function useColumns(): ColumnDef<Activity, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/activity/$alias"
-            params={{ alias: info.row.original.alias }}
+            to="/o/$orgSlug/p/$projectSlug/activity/$alias"
+            params={{ orgSlug, projectSlug, alias: info.row.original.alias }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -90,13 +93,12 @@ function useColumns(): ColumnDef<Activity, unknown>[] {
         ),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<Activity, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function ActivityTable({ route }: Props) {

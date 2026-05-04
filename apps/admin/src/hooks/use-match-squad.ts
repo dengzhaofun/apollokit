@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -20,8 +21,8 @@ const TEAMS_KEY = ["teams"] as const
 export const TEAM_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated team configs — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useMatchSquadConfigs(route: any) {
+ 
+export function useMatchSquadConfigs(route: AnyRoute) {
   return useListSearch<MatchSquadConfig>({
     route,
     queryKey: CONFIGS_KEY,
@@ -100,8 +101,7 @@ export const TEAM_FILTER_DEFS: FilterDef[] = [
  * needing the parent to encode the configKey itself.
  */
 export function useTeams(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { configKey?: string } = {},
 ) {
   const { configKey } = extraQuery

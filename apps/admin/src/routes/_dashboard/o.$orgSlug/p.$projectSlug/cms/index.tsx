@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import { PageHeaderActions } from "#/components/PageHeader"
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/cms/
 
 function CmsTypesPage() {
   const { data: types, isPending, error } = useAllCmsTypes()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -29,7 +30,7 @@ function CmsTypesPage() {
           <Can resource="cms" action="write" mode="disable">
             <Button
               render={
-                <Link to="/cms/types/create">
+                <Link to="/o/$orgSlug/p/$projectSlug/cms/types/create" params={{ orgSlug, projectSlug }}>
                   <Plus className="size-4" />
                   {m.cms_type_new()}
                 </Link>
@@ -55,7 +56,7 @@ function CmsTypesPage() {
             <Can resource="cms" action="write" mode="disable">
               <Button
                 render={
-                  <Link to="/cms/types/create">
+                  <Link to="/o/$orgSlug/p/$projectSlug/cms/types/create" params={{ orgSlug, projectSlug }}>
                     <Plus className="size-4" />
                     {m.cms_type_new()}
                   </Link>
@@ -69,8 +70,8 @@ function CmsTypesPage() {
             {types.map((t) => (
               <Link
                 key={t.id}
-                to="/cms/$typeAlias"
-                params={{ typeAlias: t.alias }}
+                to="/o/$orgSlug/p/$projectSlug/cms/$typeAlias"
+                params={{ orgSlug, projectSlug, typeAlias: t.alias }}
               >
                 <Card className="transition-colors hover:bg-muted/40">
                   <CardHeader>

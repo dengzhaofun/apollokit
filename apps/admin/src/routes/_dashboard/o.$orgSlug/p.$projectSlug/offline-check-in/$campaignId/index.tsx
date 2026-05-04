@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useEffect, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -66,6 +66,7 @@ function OfflineCheckInDetailPage() {
   const { campaignId } = Route.useParams()
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   const { data: campaign, isPending, error } = useOfflineCheckInCampaign(campaignId)
@@ -159,7 +160,7 @@ function OfflineCheckInDetailPage() {
             </Badge>
             <Button
               render={
-                <Link to="/offline-check-in">
+                <Link to="/o/$orgSlug/p/$projectSlug/offline-check-in" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -282,7 +283,7 @@ function OfflineCheckInDetailPage() {
                   .mutateAsync(campaign.id)
                   .then(() => {
                     toast.success(m.offline_checkin_campaign_deleted())
-                    void navigate({ to: "/o/$orgSlug/p/$projectSlug/offline-check-in" })
+                    void navigate({ to: "/o/$orgSlug/p/$projectSlug/offline-check-in" , params: { orgSlug, projectSlug }})
                   })
                   .catch((err) => {
                     toast.error(

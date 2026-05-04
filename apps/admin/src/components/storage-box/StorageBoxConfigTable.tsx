@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { useMoveStorageBoxConfig } from "#/hooks/use-move"
-import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -24,8 +25,8 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<StorageBoxConfig>()
 
 function ActionsCell({ config }: { config: StorageBoxConfig }) {
-
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -38,7 +39,7 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/storage-box/configs/$configId" params={{ configId: config.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/storage-box/configs/$configId" params={{ orgSlug, projectSlug, configId: config.id }}>
               <Pencil className="size-4" />
               {m.common_edit()}
             </Link>
@@ -47,8 +48,8 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/storage-box/configs/$configId"
-              params={{ configId: config.id }}
+              to="/o/$orgSlug/p/$projectSlug/storage-box/configs/$configId"
+              params={{ orgSlug, projectSlug, configId: config.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -62,14 +63,16 @@ function ActionsCell({ config }: { config: StorageBoxConfig }) {
 }
 
 function useColumns(): ColumnDef<StorageBoxConfig, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/storage-box/configs/$configId"
-            params={{ configId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/storage-box/configs/$configId"
+            params={{ orgSlug, projectSlug, configId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -141,13 +144,12 @@ function useColumns(): ColumnDef<StorageBoxConfig, unknown>[] {
         cell: (info) => <ActionsCell config={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<StorageBoxConfig, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function StorageBoxConfigTable({ route }: Props) {

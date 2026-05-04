@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -54,8 +55,8 @@ export const ACTIVITY_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated activities — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useActivities(route: any) {
+ 
+export function useActivities(route: AnyRoute) {
   return useListSearch<Activity>({
     route,
     queryKey: KEY,

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -46,7 +46,7 @@ function SkinCreatePage() {
         toast.success(m.entity_skin_created())
         navigate({
           to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId",
-          params: { schemaId, blueprintId },
+          params: { orgSlug, projectSlug, schemaId, blueprintId },
         })
       } catch (err) {
         if (err instanceof ApiError) {
@@ -57,6 +57,7 @@ function SkinCreatePage() {
       }
     },
   })
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -64,8 +65,8 @@ function SkinCreatePage() {
         <Button
           render={
             <Link
-              to="/entity/schemas/$schemaId/blueprints/$blueprintId"
-              params={{ schemaId, blueprintId }}
+              to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId"
+              params={{ orgSlug, projectSlug, schemaId, blueprintId }}
             >
               <ArrowLeft className="size-4" />
             </Link>

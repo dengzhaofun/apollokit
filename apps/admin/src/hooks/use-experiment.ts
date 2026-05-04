@@ -17,6 +17,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import {
   qs as buildQs,
@@ -61,8 +62,7 @@ export const EXPERIMENT_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated experiments — URL-driven via the standard list-search hook. */
 export function useExperiments(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extra: { status?: ExperimentStatus | "" } = {},
 ) {
   const { status } = extra
@@ -236,8 +236,7 @@ export function useSetPrimaryMetric(experimentKey: string) {
 
 export function useExperimentAssignments(
   experimentKey: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
 ) {
   return useListSearch<ExperimentAssignment>({
     route,

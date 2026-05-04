@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns"
 
 import { Badge } from "#/components/ui/badge"
@@ -40,6 +41,7 @@ const STATUS_VARIANT: Record<
 }
 
 export function SeasonTable({ data, tierConfigNameById, rightCell }: Props) {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <Table>
       <TableHeader>
@@ -71,8 +73,8 @@ export function SeasonTable({ data, tierConfigNameById, rightCell }: Props) {
             <TableRow key={s.id}>
               <TableCell>
                 <Link
-                  to="/rank/seasons/$seasonId"
-                  params={{ seasonId: s.id }}
+                  to="/o/$orgSlug/p/$projectSlug/rank/seasons/$seasonId"
+                  params={{ orgSlug, projectSlug, seasonId: s.id }}
                   className="block"
                 >
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">

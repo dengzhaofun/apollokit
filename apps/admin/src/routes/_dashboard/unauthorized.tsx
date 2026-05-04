@@ -1,3 +1,4 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 /**
  * Unauthorized landing page — shown when a user lands on a route they
  * lack permission for. Renders inside the dashboard layout so the
@@ -16,8 +17,7 @@
  * "operator hit a billing URL" type cases — explicit feedback + an
  * obvious way back.
  */
-import { createFileRoute, useSearch } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { createFileRoute, useSearch, Link } from "@tanstack/react-router"
 import { ShieldOffIcon } from "lucide-react"
 import { z } from "zod"
 
@@ -48,6 +48,7 @@ export const Route = createFileRoute("/_dashboard/unauthorized")({
 function UnauthorizedPage() {
   const { from, resource } = useSearch({ from: "/_dashboard/unauthorized" })
   const isZh = getLocale() === "zh"
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <PageShell>
@@ -73,7 +74,7 @@ function UnauthorizedPage() {
           <EmptyContent>
             <Button
               render={
-                <Link to="/dashboard">
+                <Link to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }}>
                   {isZh ? "回到 Dashboard" : "Back to Dashboard"}
                 </Link>
               }

@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useEffect } from 'react'
-import { HeadContent, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
-import { Link } from '#/components/router-helpers'
+import { HeadContent, Scripts, createRootRoute, useRouterState, Link } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { RootProvider } from 'fumadocs-ui/provider/tanstack'
@@ -103,6 +103,7 @@ export const Route = createRootRoute({
 
 function NotFoundPage() {
   const isZh = getLocale() === 'zh'
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <main className="flex min-h-[80vh] items-center justify-center p-6">
       <Empty className="max-w-md">
@@ -122,7 +123,7 @@ function NotFoundPage() {
         <EmptyContent>
           <Button
             render={
-              <Link to="/dashboard">
+              <Link to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }}>
                 {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
               </Link>
             }
@@ -135,6 +136,7 @@ function NotFoundPage() {
 }
 
 function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   // 上报放 effect 里跑,避免 SSR 阶段重复上报(captureException 在 SSR 上下文
   // 里没有 Sentry browser SDK,纯 no-op,但 effect 让语义更明确)。
   useEffect(() => {
@@ -165,7 +167,7 @@ function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }
             </Button>
             <Button
               render={
-                <Link to="/dashboard">
+                <Link to="/o/$orgSlug/p/$projectSlug/dashboard" params={{ orgSlug, projectSlug }}>
                   {isZh ? '回到 Dashboard' : 'Back to Dashboard'}
                 </Link>
               }

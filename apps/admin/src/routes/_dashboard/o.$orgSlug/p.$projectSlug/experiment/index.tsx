@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Beaker, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -125,6 +125,7 @@ function ExperimentListPage() {
 
 function CreateExperimentDrawer({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateExperiment()
   const [formState, setFormState] = useState<ExperimentFormBridgeState>({
     canSubmit: false,
@@ -167,7 +168,7 @@ function CreateExperimentDrawer({ onClose }: { onClose: () => void }) {
             onClose()
             void navigate({
               to: "/o/$orgSlug/p/$projectSlug/experiment/$experimentKey",
-              params: { experimentKey: row.key },
+              params: { orgSlug, projectSlug, experimentKey: row.key },
             })
           } catch (err) {
             toast.error(

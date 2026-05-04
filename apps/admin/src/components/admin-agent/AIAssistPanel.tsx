@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 /**
  * Generic AI assist panel — used by every Drawer/Page that hosts AI
  * help, **and** by the global FAB.
@@ -22,7 +23,6 @@
  */
 
 import { useChat } from "@ai-sdk/react"
-import { useNavigate } from "#/components/router-helpers"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import { Trash2Icon } from "lucide-react"
 import * as React from "react"

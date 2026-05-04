@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
@@ -16,6 +16,7 @@ export const Route = createFileRoute(
 function CreateOptionPage() {
   const { configId } = Route.useParams()
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const createMutation = useCreateExchangeOption()
 
   return (
@@ -34,7 +35,7 @@ function CreateOptionPage() {
                 toast.success(m.exchange_option_created())
                 navigate({
                   to: "/o/$orgSlug/p/$projectSlug/exchange/$configId",
-                  params: { configId },
+                  params: { orgSlug, projectSlug, configId },
                 })
               } catch (err) {
                 if (err instanceof ApiError) {

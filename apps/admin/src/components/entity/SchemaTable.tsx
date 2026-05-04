@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { useMoveEntitySchema } from "#/hooks/use-move"
-import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
@@ -16,14 +17,16 @@ import * as m from "#/paraglide/messages.js"
 const columnHelper = createColumnHelper<EntitySchema>()
 
 function useColumns(): ColumnDef<EntitySchema, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/entity/schemas/$schemaId"
-            params={{ schemaId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId"
+            params={{ orgSlug, projectSlug, schemaId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -89,13 +92,12 @@ function useColumns(): ColumnDef<EntitySchema, unknown>[] {
         ),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<EntitySchema, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function SchemaTable({ route }: Props) {

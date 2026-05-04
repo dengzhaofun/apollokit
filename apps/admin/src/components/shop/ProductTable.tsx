@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { useMoveShopProduct } from "#/hooks/use-move"
-import { Link } from "#/components/router-helpers"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -32,9 +33,9 @@ import { TagBadge } from "./TagBadge"
 const columnHelper = createColumnHelper<ShopProduct>()
 
 function ActionsCell({ product }: { product: ShopProduct }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const deleteMutation = useDeleteShopProduct()
-
-  return (
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -47,7 +48,7 @@ function ActionsCell({ product }: { product: ShopProduct }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/shop/$productId" params={{ productId: product.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/shop/$productId" params={{ orgSlug, projectSlug, productId: product.id }}>
               <Pencil className="size-4" />
               {m.common_edit()}
             </Link>
@@ -76,14 +77,16 @@ function ActionsCell({ product }: { product: ShopProduct }) {
 }
 
 function useColumns(): ColumnDef<ShopProduct, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/shop/$productId"
-            params={{ productId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/shop/$productId"
+            params={{ orgSlug, projectSlug, productId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -155,7 +158,7 @@ function useColumns(): ColumnDef<ShopProduct, unknown>[] {
         cell: (info) => <ActionsCell product={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<ShopProduct, unknown>[]
 }
 
@@ -165,8 +168,7 @@ export interface ProductTableProps {
   tagId?: string
   /** Activity-scope passthrough — see ActivityScopeFilter. */
   activityFilter?: Pick<ShopListProductsQuery, "activityId" | "includeActivity">
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function ProductTable({

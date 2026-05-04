@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table"
 import { format } from "date-fns"
 
@@ -19,13 +20,15 @@ import * as m from "#/paraglide/messages.js"
 
 const columnHelper = createColumnHelper<LeaderboardConfig>()
 
-const columns = [
+function useColumns() {
+  const { orgSlug, projectSlug } = useTenantParams()
+  return [
   columnHelper.accessor("name", {
     header: () => m.common_name(),
     cell: (info) => (
       <Link
-        to="/leaderboard/$alias"
-        params={{ alias: info.row.original.alias }}
+        to="/o/$orgSlug/p/$projectSlug/leaderboard/$alias"
+        params={{ orgSlug, projectSlug, alias: info.row.original.alias }}
         className="font-medium hover:underline"
       >
         {info.getValue()}
@@ -74,14 +77,15 @@ const columns = [
     header: () => m.common_created(),
     cell: (info) => format(new Date(info.getValue()), "yyyy-MM-dd"),
   }),
-]
+  ]
+}
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function LeaderboardConfigTable({ route }: Props) {
+  const columns = useColumns()
   const list = useLeaderboardConfigs(route)
   return (
     <DataTable

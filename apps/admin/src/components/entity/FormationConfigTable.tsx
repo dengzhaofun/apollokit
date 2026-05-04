@@ -1,6 +1,7 @@
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { useMemo } from "react"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import { Badge } from "#/components/ui/badge"
@@ -55,8 +56,7 @@ function useColumns(): ColumnDef<EntityFormationConfig, unknown>[] {
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function FormationConfigTable({ route }: Props) {

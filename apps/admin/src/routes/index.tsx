@@ -1,5 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 
 import Landing from "#/components/landing/Landing"
@@ -72,7 +71,7 @@ function SignedInBouncerClient() {
     // 等 tenant slug 解析完成才跳转,否则 wrapper 会把 /dashboard
     // 拼成 /o//p//dashboard 导致 notFound。
     if (!orgSlug || !projectSlug) return
-    navigate({ to: "/dashboard", replace: true })
+    navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
   }, [isPending, session, orgSlug, projectSlug, navigate])
 
   return null

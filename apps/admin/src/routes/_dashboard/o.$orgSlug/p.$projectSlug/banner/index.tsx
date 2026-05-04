@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { GalleryHorizontalIcon, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -95,6 +95,7 @@ interface DialogShellProps {
 
 function CreateBannerGroupDialog({ onClose }: DialogShellProps) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateBannerGroup()
   const [formState, setFormState] = useState({
     canSubmit: false,
@@ -109,7 +110,7 @@ function CreateBannerGroupDialog({ onClose }: DialogShellProps) {
         onClose()
         void navigate({
           to: "/o/$orgSlug/p/$projectSlug/banner/$groupId",
-          params: { groupId: row.id },
+          params: { orgSlug, projectSlug, groupId: row.id },
         })
       } catch (err) {
         toast.error(

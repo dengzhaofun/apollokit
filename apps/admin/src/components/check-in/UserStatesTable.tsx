@@ -3,6 +3,7 @@ import { format } from "date-fns"
 import { RotateCcw } from "lucide-react"
 import { useMemo } from "react"
 import { toast } from "sonner"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import {
@@ -122,8 +123,7 @@ function useColumns(configKey: string): ColumnDef<CheckInUserState, unknown>[] {
 
 interface Props {
   configKey: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function UserStatesTable({ configKey, route }: Props) {

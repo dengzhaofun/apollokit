@@ -1,18 +1,5 @@
-/**
- * Data tab for an experiment detail page.
- *
- * Direct-reads from Tinybird via the existing
- * `useTenantEventTimeseries` hook (event = "experiment.exposure",
- * filter on `event_data.experiment_id`, groupBy `event_data.variant_key`).
- * Zero new pipes — leverages exactly the JSON-path filter / groupBy
- * branch the self-serve analytics page already uses.
- *
- * For deeper analysis (per-variant funnel comparison, custom
- * conversion-event picker), we surface a deep-link to /analytics/explore
- * with the experiment_id filter pre-filled. v2 will inline a richer
- * funnel widget once the funnel pipe gains JSON-path filtering.
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, Beaker, Calendar, Users } from "lucide-react"
 import { useMemo, useState } from "react"
 import {
@@ -60,6 +47,7 @@ interface Props {
 }
 
 export function AnalyticsPanel({ experiment }: Props) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const [windowKey, setWindowKey] = useState<"24h" | "7d" | "30d">("7d")
 
   const window = WINDOWS.find((w) => w.value === windowKey)!
@@ -257,7 +245,7 @@ export function AnalyticsPanel({ experiment }: Props) {
             {m.experiment_chart_funnel_link_hint()}
           </p>
           <Link
-            to="/analytics/explore"
+            to="/o/$orgSlug/p/$projectSlug/analytics/explore" params={{ orgSlug, projectSlug }}
             search={exploreHref as Record<string, unknown>}
             className="mt-1 inline-flex items-center gap-1 text-brand hover:underline"
           >

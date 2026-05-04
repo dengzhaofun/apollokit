@@ -8,6 +8,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { useMemo, useState } from "react"
 import { Bot, KeyRound, ShieldAlert, User as UserIcon } from "lucide-react"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { Badge } from "#/components/ui/badge"
 import { DataTable } from "#/components/data-table/DataTable"
@@ -88,8 +89,7 @@ function StatusBadge({ status }: { status: number }) {
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
   toolbar?: React.ReactNode
 }
 

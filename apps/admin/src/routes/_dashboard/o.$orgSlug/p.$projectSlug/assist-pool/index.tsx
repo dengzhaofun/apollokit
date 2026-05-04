@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params"
 import { useMemo, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { HeartHandshakeIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -55,13 +55,15 @@ function formatPolicy(p: AssistContributionPolicy): string {
 const columnHelper = createColumnHelper<AssistPoolConfig>()
 
 function useColumns(): ColumnDef<AssistPoolConfig, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.assistpool_col_name(),
+
+      header: () => m.assistpool_col_name(),
         cell: (info) => (
           <Link
-            to="/assist-pool"
+            to="/o/$orgSlug/p/$projectSlug/assist-pool" params={{ orgSlug, projectSlug }}
             search={(prev: Record<string, unknown>) => ({ ...prev, ...openEditModal(info.row.original.id) })}
             className="font-medium hover:underline"
           >
@@ -91,7 +93,7 @@ function useColumns(): ColumnDef<AssistPoolConfig, unknown>[] {
         cell: (info) => (info.getValue() ? m.assistpool_yes() : m.assistpool_no()),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<AssistPoolConfig, unknown>[]
 }
 

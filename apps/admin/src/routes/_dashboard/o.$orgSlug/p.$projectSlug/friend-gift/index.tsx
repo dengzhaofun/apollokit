@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { Plus } from "lucide-react"
 import { useMemo } from "react"
@@ -24,15 +24,17 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/frie
 const columnHelper = createColumnHelper<FriendGiftPackage>()
 
 function useColumns(): ColumnDef<FriendGiftPackage, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         meta: { primary: true },
         cell: (info) => (
           <Link
-            to="/friend-gift/packages/$packageId"
-            params={{ packageId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/friend-gift/packages/$packageId"
+            params={{ orgSlug, projectSlug, packageId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -65,16 +67,16 @@ function useColumns(): ColumnDef<FriendGiftPackage, unknown>[] {
         cell: (info) => new Date(info.getValue()).toLocaleDateString(),
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<FriendGiftPackage, unknown>[]
 }
 
 function FriendGiftPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   const { data: settings, isPending: settingsLoading } = useFriendGiftSettings()
   const list = useFriendGiftPackages(Route)
   const columns = useColumns()
-
-  return (
+      return (
     <>
       <main className="flex-1 space-y-6 p-6">
         {/* Settings card */}
@@ -115,7 +117,7 @@ function FriendGiftPage() {
           <h2 className="text-sm font-semibold">{m.gift_packages()}</h2>
           <Button
             render={
-              <Link to="/friend-gift/packages/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/friend-gift/packages/create" params={{ orgSlug, projectSlug }}>
                 <Plus className="size-4" />
                 {m.gift_new_package()}
               </Link>

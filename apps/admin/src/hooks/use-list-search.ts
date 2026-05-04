@@ -29,8 +29,7 @@
  * from each module's filter shape (and from server-side `defineListFilter`).
  */
 
-import { type AnyRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { type AnyRoute, useNavigate } from "@tanstack/react-router"
 import { useQuery, type QueryKey } from "@tanstack/react-query"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 

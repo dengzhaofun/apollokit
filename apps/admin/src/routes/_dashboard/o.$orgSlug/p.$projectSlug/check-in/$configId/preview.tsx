@@ -1,9 +1,9 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { Play, ArrowLeft, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
-import { Link } from "#/components/router-helpers"
 import * as m from "#/paraglide/messages.js"
 import { PageHeaderActions } from "#/components/PageHeader"
 import { Button } from "#/components/ui/button"
@@ -270,11 +270,12 @@ function getResetModeLabels(): Record<string, string> {
 }
 
 function Header({ configId }: { configId: string }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <PageHeaderActions>
       <Button
         render={
-          <Link to="/check-in/$configId" params={{ configId }}>
+          <Link to="/o/$orgSlug/p/$projectSlug/check-in/$configId" params={{ orgSlug, projectSlug, configId }}>
             <ArrowLeft className="size-4" />
           </Link>
         }

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -36,6 +36,7 @@ function BadgeDetailPage() {
   const { data: nodes, isPending } = useBadgeNodes()
   const updateMutation = useUpdateBadgeNode()
   const deleteMutation = useDeleteBadgeNode()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const node = nodes?.find((n) => n.id === nodeId)
@@ -45,7 +46,7 @@ function BadgeDetailPage() {
     try {
       await deleteMutation.mutateAsync(nodeId)
       toast.success(m.badge_deleted())
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/badge" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/badge" , params: { orgSlug, projectSlug }})
     } catch (err) {
       if (err instanceof ApiError) toast.error(err.body.error)
       else toast.error(m.badge_failed_delete())
@@ -57,7 +58,7 @@ function BadgeDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/badge">
+            <Link to="/o/$orgSlug/p/$projectSlug/badge" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.badge_back_to_list()}
             </Link>

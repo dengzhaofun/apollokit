@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -18,8 +19,8 @@ const MESSAGES_KEY = ["mail-messages"] as const
 export const MAIL_MESSAGE_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated mail messages — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useMailMessages(route: any) {
+ 
+export function useMailMessages(route: AnyRoute) {
   return useListSearch<MailMessage>({
     route,
     queryKey: MESSAGES_KEY,

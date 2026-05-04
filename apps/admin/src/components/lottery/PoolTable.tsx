@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -22,7 +23,8 @@ import type { LotteryPool } from "#/lib/types/lottery"
 const columnHelper = createColumnHelper<LotteryPool>()
 
 function ActionsCell({ pool }: { pool: LotteryPool }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -35,7 +37,7 @@ function ActionsCell({ pool }: { pool: LotteryPool }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           render={
-            <Link to="/lottery/$poolId" params={{ poolId: pool.id }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/lottery/$poolId" params={{ orgSlug, projectSlug, poolId: pool.id }}>
               <Pencil className="size-4" />
               Edit
             </Link>
@@ -44,8 +46,8 @@ function ActionsCell({ pool }: { pool: LotteryPool }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/lottery/$poolId"
-              params={{ poolId: pool.id }}
+              to="/o/$orgSlug/p/$projectSlug/lottery/$poolId"
+              params={{ orgSlug, projectSlug, poolId: pool.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -59,14 +61,16 @@ function ActionsCell({ pool }: { pool: LotteryPool }) {
 }
 
 function useColumns(): ColumnDef<LotteryPool, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: "Name",
+
+      header: "Name",
         cell: (info) => (
           <Link
-            to="/lottery/$poolId"
-            params={{ poolId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/lottery/$poolId"
+            params={{ orgSlug, projectSlug, poolId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -122,15 +126,14 @@ function useColumns(): ColumnDef<LotteryPool, unknown>[] {
         cell: (info) => <ActionsCell pool={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<LotteryPool, unknown>[]
 }
 
 interface Props {
   activityId?: string
   includeActivity?: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function LotteryPoolTable({ route, ...rest }: Props) {

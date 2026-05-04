@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -38,6 +38,7 @@ function BlueprintDetailPage() {
   const { data: bp, isPending, error } = useEntityBlueprint(blueprintId)
   const { data: skins } = useEntitySkins(blueprintId)
   const deleteMutation = useDeleteEntityBlueprint()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -61,8 +62,8 @@ function BlueprintDetailPage() {
         <Button
           render={
             <Link
-              to="/entity/schemas/$schemaId"
-              params={{ schemaId }}
+              to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId"
+              params={{ orgSlug, projectSlug, schemaId }}
             >
               <ArrowLeft className="size-4" />
             </Link>
@@ -102,7 +103,7 @@ function BlueprintDetailPage() {
                       toast.success(m.entity_blueprint_deleted())
                       navigate({
                         to: "/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId",
-                        params: { schemaId },
+                        params: { orgSlug, projectSlug, schemaId },
                       })
                     } catch (err) {
                       if (err instanceof ApiError) toast.error(err.body.error)
@@ -176,8 +177,8 @@ function BlueprintDetailPage() {
             <Button
               render={
                 <Link
-                  to="/entity/schemas/$schemaId/blueprints/$blueprintId/skins/create"
-                  params={{ schemaId, blueprintId: bp.id }}
+                  to="/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId/skins/create"
+                  params={{ orgSlug, projectSlug, schemaId, blueprintId: bp.id }}
                 >
                   <Plus className="size-4" />
                   {m.entity_new_skin()}

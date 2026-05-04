@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/curr
 function CurrencyDetailPage() {
   const { currencyId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -68,7 +69,7 @@ function CurrencyDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               render={
-                <Link to="/currency">
+                <Link to="/o/$orgSlug/p/$projectSlug/currency" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft className="size-4" />
                   {m.common_back()}
                 </Link>
@@ -185,7 +186,7 @@ function CurrencyDetailPage() {
                 try {
                   await deleteMutation.mutateAsync(currency.id)
                   toast.success(m.currency_deleted())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/currency" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/currency" , params: { orgSlug, projectSlug }})
                 } catch (err) {
                   if (err instanceof ApiError) {
                     toast.error(err.body.error)

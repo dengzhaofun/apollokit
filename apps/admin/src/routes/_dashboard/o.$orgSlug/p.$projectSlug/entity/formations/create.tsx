@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -41,7 +41,7 @@ function FormationConfigCreatePage() {
           allowDuplicateBlueprints: value.allowDuplicateBlueprints,
         })
         toast.success(m.entity_formation_created())
-        navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/formations" })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/entity/formations" , params: { orgSlug, projectSlug }})
       } catch (err) {
         if (err instanceof ApiError) {
           toast.error(err.body.error)
@@ -51,13 +51,14 @@ function FormationConfigCreatePage() {
       }
     },
   })
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/entity/formations">
+            <Link to="/o/$orgSlug/p/$projectSlug/entity/formations" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
             </Link>
           }

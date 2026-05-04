@@ -1,8 +1,5 @@
-/**
- * Paginated table of offline-check-in campaigns. Mirrors check-in's
- * `ConfigTable.tsx` — same DataTable wiring and url-driven list-search.
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
@@ -43,7 +40,8 @@ function modeLabels(): Record<string, string> {
 const columnHelper = createColumnHelper<OfflineCheckInCampaign>()
 
 function ActionsCell({ campaign }: { campaign: OfflineCheckInCampaign }) {
-  return (
+  const { orgSlug, projectSlug } = useTenantParams()
+      return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -57,8 +55,8 @@ function ActionsCell({ campaign }: { campaign: OfflineCheckInCampaign }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/offline-check-in/$campaignId"
-              params={{ campaignId: campaign.id }}
+              to="/o/$orgSlug/p/$projectSlug/offline-check-in/$campaignId"
+              params={{ orgSlug, projectSlug, campaignId: campaign.id }}
             >
               <Pencil className="size-4" />
               {m.common_edit()}
@@ -68,8 +66,8 @@ function ActionsCell({ campaign }: { campaign: OfflineCheckInCampaign }) {
         <DropdownMenuItem
           render={
             <Link
-              to="/offline-check-in/$campaignId"
-              params={{ campaignId: campaign.id }}
+              to="/o/$orgSlug/p/$projectSlug/offline-check-in/$campaignId"
+              params={{ orgSlug, projectSlug, campaignId: campaign.id }}
               search={{ delete: true }}
             >
               <Trash2 className="size-4" />
@@ -83,14 +81,16 @@ function ActionsCell({ campaign }: { campaign: OfflineCheckInCampaign }) {
 }
 
 function useColumns(): ColumnDef<OfflineCheckInCampaign, unknown>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
   return useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => m.common_name(),
+
+      header: () => m.common_name(),
         cell: (info) => (
           <Link
-            to="/offline-check-in/$campaignId"
-            params={{ campaignId: info.row.original.id }}
+            to="/o/$orgSlug/p/$projectSlug/offline-check-in/$campaignId"
+            params={{ orgSlug, projectSlug, campaignId: info.row.original.id }}
             className="font-medium hover:underline"
           >
             {info.getValue()}
@@ -156,13 +156,12 @@ function useColumns(): ColumnDef<OfflineCheckInCampaign, unknown>[] {
         cell: (info) => <ActionsCell campaign={info.row.original} />,
       }),
     ],
-    [],
+    [orgSlug, projectSlug],
   ) as ColumnDef<OfflineCheckInCampaign, unknown>[]
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
 }
 
 export function CampaignTable({ route }: Props) {

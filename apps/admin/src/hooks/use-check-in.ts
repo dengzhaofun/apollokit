@@ -13,6 +13,7 @@ import type {
   CreateConfigInput,
   UpdateConfigInput,
 } from "#/lib/types/check-in"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const CONFIGS_KEY = ["check-in-configs"] as const
 
@@ -24,8 +25,7 @@ export const CHECK_IN_CONFIG_FILTER_DEFS: FilterDef[] = []
  * `activityId` to scope to that activity.
  */
 export function useCheckInConfigs(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
@@ -83,8 +83,8 @@ export function useCheckInConfig(key: string) {
 export const CHECK_IN_USER_STATE_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated user states under a check-in config — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCheckInUserStates(configKey: string, route: any) {
+ 
+export function useCheckInUserStates(configKey: string, route: AnyRoute) {
   return useListSearch<CheckInUserState>({
     route,
     queryKey: ["check-in-user-states", configKey],

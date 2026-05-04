@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { format } from "date-fns"
 import { ArrowLeft, Plus, Rocket, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -32,13 +32,14 @@ function ActivityTemplatesPage() {
   const { data: templates, isPending, error } = useActivityTemplates()
   const deleteMutation = useDeleteActivityTemplate()
   const instantiateMutation = useInstantiateActivityTemplate()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/activity">
+            <Link to="/o/$orgSlug/p/$projectSlug/activity" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.activity_template_back_to_list()}
             </Link>
@@ -48,7 +49,7 @@ function ActivityTemplatesPage() {
         <div className="ml-auto">
           <Button
             render={
-              <Link to="/activity/templates/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/activity/templates/create" params={{ orgSlug, projectSlug }}>
                 <Plus className="size-4" />
                 {m.activity_template_new()}
               </Link>

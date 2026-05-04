@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -50,8 +51,8 @@ export const ANNOUNCEMENT_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** URL-driven announcements list — wired into <DataTable />. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useAnnouncements(route: any) {
+ 
+export function useAnnouncements(route: AnyRoute) {
   return useListSearch<Announcement>({
     route,
     queryKey: KEY,

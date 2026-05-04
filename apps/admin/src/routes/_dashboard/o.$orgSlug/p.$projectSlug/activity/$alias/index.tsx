@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import {
   ArrowLeft,
@@ -92,6 +92,7 @@ function ActivityDetailPage() {
   const updateMutation = useUpdateActivity()
   const deleteMutation = useDeleteActivity()
   const lifecycleMutation = useActivityLifecycle()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   if (isPending) {
     return (
@@ -196,7 +197,7 @@ function ActivityDetailPage() {
           <>
             <Button
               render={
-                <Link to="/activity">
+                <Link to="/o/$orgSlug/p/$projectSlug/activity" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft />
                   {m.common_back()}
                 </Link>
@@ -205,7 +206,7 @@ function ActivityDetailPage() {
             />
             <Button
               render={
-                <Link to="/activity/$alias/users" params={{ alias }}>
+                <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias/users" params={{ orgSlug, projectSlug, alias }}>
                   <UserSearch />
                   {m.activity_detail_view_by_user()}
                 </Link>
@@ -228,7 +229,7 @@ function ActivityDetailPage() {
                 try {
                   await deleteMutation.mutateAsync(activity.id)
                   toast.success(m.activity_detail_delete_success())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/activity" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/activity" , params: { orgSlug, projectSlug }})
                 } catch (err) {
                   if (err instanceof ApiError) toast.error(err.body.error)
                   else toast.error(m.activity_detail_delete_failed())

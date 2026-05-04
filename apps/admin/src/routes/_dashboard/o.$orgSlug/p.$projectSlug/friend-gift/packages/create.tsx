@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -26,6 +26,7 @@ interface GiftItemRow {
 
 function GiftPackageCreatePage() {
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const createMutation = useCreateFriendGiftPackage()
 
   const [name, setName] = useState("")
@@ -67,7 +68,7 @@ function GiftPackageCreatePage() {
         isActive,
       })
       toast.success(m.gift_package_created())
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })
+      navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" , params: { orgSlug, projectSlug }})
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.body.error)
@@ -184,7 +185,7 @@ function GiftPackageCreatePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift" })}
+                onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/friend-gift", params: { orgSlug, projectSlug } })}
               >
                 {m.common_cancel()}
               </Button>

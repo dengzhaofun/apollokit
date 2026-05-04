@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { MessagesSquareIcon, Plus } from "lucide-react"
 
 import { ScriptTable } from "#/components/dialogue/ScriptTable"
@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/dial
 })
 
 function DialogueListPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <PageShell>
       <PageHeader
@@ -26,7 +27,7 @@ function DialogueListPage() {
         actions={
           <Button
             render={
-              <Link to="/dialogue/create">
+              <Link to="/o/$orgSlug/p/$projectSlug/dialogue/create" params={{ orgSlug, projectSlug }}>
                 <Plus />
                 {m.dialogue_new_script()}
               </Link>

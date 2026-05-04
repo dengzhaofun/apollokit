@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { TierConfigForm } from "#/components/rank/TierConfigForm"
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank
 
 function RankCreatePage() {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateRankTierConfig()
 
   return (
@@ -28,7 +29,7 @@ function RankCreatePage() {
                 toast.success(m.rank_config_created())
                 navigate({
                   to: "/o/$orgSlug/p/$projectSlug/rank/$configId",
-                  params: { configId: row.id },
+                  params: { orgSlug, projectSlug, configId: row.id },
                 })
               } catch (err) {
                 if (err instanceof ApiError) toast.error(err.body.error)

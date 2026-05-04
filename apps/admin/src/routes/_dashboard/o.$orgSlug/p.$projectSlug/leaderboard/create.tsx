@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { LeaderboardConfigForm } from "#/components/leaderboard/ConfigForm"
@@ -13,13 +13,14 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/lead
 
 function LeaderboardCreatePage() {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateLeaderboardConfig()
   const form = useLeaderboardForm({
     onSubmit: async (values) => {
       try {
         await mutation.mutateAsync(values)
         toast.success("排行榜创建成功")
-        navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/leaderboard" , params: { orgSlug, projectSlug }})
       } catch (err) {
         if (err instanceof ApiError) toast.error(err.body.error)
         else toast.error("创建失败")

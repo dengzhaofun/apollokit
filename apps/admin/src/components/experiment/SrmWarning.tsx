@@ -1,5 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react"
-import { Link } from "#/components/router-helpers"
 import { Alert, AlertDescription } from "#/components/ui/alert"
 import type { SrmResult } from "#/lib/experiment-stats"
 import * as m from "#/paraglide/messages.js"
@@ -22,6 +23,7 @@ const MIN_SAMPLE_FOR_SRM = 1000
  * mismatch slip past for one more day.
  */
 export function SrmWarning({ result, totalSample }: Props) {
+  const { orgSlug, projectSlug } = useTenantParams()
   if (!result.mismatch) return null
   if (totalSample < MIN_SAMPLE_FOR_SRM) return null
 
@@ -39,7 +41,7 @@ export function SrmWarning({ result, totalSample }: Props) {
         <p className="mt-1 text-xs">
           {m.experiment_srm_action()}{" "}
           <Link
-            to="/experiment/about-stats"
+            to="/o/$orgSlug/p/$projectSlug/experiment/about-stats" params={{ orgSlug, projectSlug }}
             className="font-medium underline"
           >
             {m.experiment_about_stats_link()}

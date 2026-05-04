@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -23,6 +23,7 @@ function ShopStagesPage() {
   const { data: product } = useShopProduct(productId)
   const { data: stages, isPending, error } = useShopStages(productId)
   const createMutation = useCreateShopStage()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <>
@@ -30,7 +31,7 @@ function ShopStagesPage() {
         <div className="mx-auto max-w-4xl space-y-6">
           <Button
             render={
-              <Link to="/shop/$productId" params={{ productId }}>
+              <Link to="/o/$orgSlug/p/$projectSlug/shop/$productId" params={{ orgSlug, projectSlug, productId }}>
                 <ArrowLeft className="size-4" />
                 {m.common_back()}
               </Link>

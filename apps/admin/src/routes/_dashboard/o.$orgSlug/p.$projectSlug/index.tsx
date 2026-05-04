@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ActivityIcon,
   ArrowRightIcon,
@@ -30,6 +29,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/")({
 })
 
 function ProjectOverviewPage() {
+
   const { orgSlug, projectSlug } = Route.useParams()
   const orgQuery = useQuery({
     queryKey: ["org-by-slug", orgSlug] as const,
@@ -146,7 +146,7 @@ function ProjectOverviewPage() {
               size="sm"
               className="mt-2 -ml-2"
               render={
-                <Link to="/audit-logs">
+                <Link to="/o/$orgSlug/p/$projectSlug/audit-logs" params={{ orgSlug, projectSlug }}>
                   <span>查看全部审计日志</span>
                   <ArrowRightIcon className="size-4" />
                 </Link>

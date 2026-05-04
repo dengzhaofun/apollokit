@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { ListTodoIcon, Plus, Tags } from "lucide-react"
 import { useState } from "react"
 
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/task
 })
 
 function TaskListPage() {
+  const { orgSlug, projectSlug } = useTenantParams()
   const [scope, setScope] = useState<ActivityScope>({ kind: "standalone" })
   const filter = scopeToFilter(scope)
   // Categories drive the tab strip; needs all categories at once.
@@ -41,7 +42,7 @@ function TaskListPage() {
             <ActivityScopeFilter value={scope} onChange={setScope} />
             <Button
               render={
-                <Link to="/task/categories">
+                <Link to="/o/$orgSlug/p/$projectSlug/task/categories" params={{ orgSlug, projectSlug }}>
                   <Tags />
                   {t("分类", "Categories")}
                 </Link>
@@ -50,7 +51,7 @@ function TaskListPage() {
             />
             <Button
               render={
-                <Link to="/task/create">
+                <Link to="/o/$orgSlug/p/$projectSlug/task/create" params={{ orgSlug, projectSlug }}>
                   <Plus />
                   {t("新建任务", "New task")}
                 </Link>

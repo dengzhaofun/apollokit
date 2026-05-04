@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -40,8 +41,8 @@ export function useUpsertFriendGiftSettings() {
 }
 
 /** URL-driven friend-gift packages — for the admin packages table. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useFriendGiftPackages(route: any) {
+ 
+export function useFriendGiftPackages(route: AnyRoute) {
   return useListSearch<FriendGiftPackage>({
     route,
     queryKey: PACKAGES_KEY,
@@ -108,8 +109,8 @@ export function useDeleteFriendGiftPackage() {
 }
 
 /** URL-driven friend-gift sends — admin audit log. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useFriendGiftSends(route: any) {
+ 
+export function useFriendGiftSends(route: AnyRoute) {
   return useListSearch<FriendGiftSend>({
     route,
     queryKey: SENDS_KEY,

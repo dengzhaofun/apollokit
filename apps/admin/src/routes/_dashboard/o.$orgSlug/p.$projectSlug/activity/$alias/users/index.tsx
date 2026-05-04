@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Search } from "lucide-react"
 import { useState } from "react"
 
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/acti
 function ActivityUsersIndexPage() {
   const { alias } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [endUserId, setEndUserId] = useState("")
 
   return (
@@ -22,7 +23,7 @@ function ActivityUsersIndexPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/activity/$alias" params={{ alias }}>
+            <Link to="/o/$orgSlug/p/$projectSlug/activity/$alias" params={{ orgSlug, projectSlug, alias }}>
               <ArrowLeft className="size-4" />
               {m.activity_users_back_to_detail()}
             </Link>
@@ -44,7 +45,7 @@ function ActivityUsersIndexPage() {
               if (!id) return
               navigate({
                 to: "/o/$orgSlug/p/$projectSlug/activity/$alias/users/$endUserId",
-                params: { alias, endUserId: id },
+                params: { orgSlug, projectSlug, alias, endUserId: id },
               })
             }}
           >

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { StorageBoxConfigForm } from "#/components/storage-box/StorageBoxConfigForm"
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/stor
 
 function StorageBoxCreatePage() {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const createMutation = useCreateStorageBoxConfig()
 
   return (
@@ -26,7 +27,7 @@ function StorageBoxCreatePage() {
               try {
                 await createMutation.mutateAsync(values)
                 toast.success(m.storage_box_toast_create_success())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" })
+                navigate({ to: "/o/$orgSlug/p/$projectSlug/storage-box" , params: { orgSlug, projectSlug }})
               } catch (err) {
                 toast.error(
                   err instanceof ApiError

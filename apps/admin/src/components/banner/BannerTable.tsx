@@ -1,3 +1,5 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import {
   DndContext,
   KeyboardSensor,
@@ -16,7 +18,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Link } from "#/components/router-helpers"
 import {
   ArrowDown,
   ArrowDownToLine,
@@ -200,6 +201,7 @@ function SortableBannerRow({
   // Look up neighbours by index for the ▲▼ buttons.
   const isFirst = index === 0
   const isLast = index === total - 1
+  const { orgSlug, projectSlug } = useTenantParams()
 
   return (
     <TableRow ref={setNodeRef} style={style}>
@@ -306,8 +308,8 @@ function SortableBannerRow({
           <Button
             render={
               <Link
-                to="/banner/$groupId"
-                params={{ groupId }}
+                to="/o/$orgSlug/p/$projectSlug/banner/$groupId"
+                params={{ orgSlug, projectSlug, groupId }}
                 search={(prev: Record<string, unknown>) => ({
                   ...prev,
                   ...openEditChildModal("banner", row.id),

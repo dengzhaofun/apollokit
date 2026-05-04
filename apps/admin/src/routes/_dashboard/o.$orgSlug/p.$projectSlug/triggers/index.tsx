@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import { PageHeaderActions } from "#/components/PageHeader"
@@ -51,13 +51,14 @@ function statusVariant(
 
 function TriggersListPage() {
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const { data: rules, isPending, error } = useTriggerRules()
   const archive = useArchiveTriggerRule()
 
   return (
     <main className="flex-1 space-y-4 p-6">
       <PageHeaderActions>
-        <Button onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/new" })}>
+        <Button onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/new", params: { orgSlug, projectSlug } })}>
           <Plus className="mr-1 h-4 w-4" />
           {m.triggers_new_rule()}
         </Button>
@@ -97,8 +98,8 @@ function TriggersListPage() {
                 <TableRow key={rule.id}>
                   <TableCell className="font-medium">
                     <Link
-                      to="/triggers/$id"
-                      params={{ id: rule.id }}
+                      to="/o/$orgSlug/p/$projectSlug/triggers/$id"
+                      params={{ orgSlug, projectSlug, id: rule.id }}
                       className="hover:underline"
                     >
                       {rule.name}
@@ -128,7 +129,7 @@ function TriggersListPage() {
                       size="sm"
                       variant="ghost"
                       render={
-                        <Link to="/triggers/$id" params={{ id: rule.id }}>
+                        <Link to="/o/$orgSlug/p/$projectSlug/triggers/$id" params={{ orgSlug, projectSlug, id: rule.id }}>
                           {m.triggers_action_edit()}
                         </Link>
                       }

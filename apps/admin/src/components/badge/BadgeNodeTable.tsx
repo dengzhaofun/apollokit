@@ -1,4 +1,5 @@
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react"
 import { useMemo } from "react"
 
@@ -79,6 +80,7 @@ function flattenTree(nodes: BadgeNode[]): TreeRow[] {
 }
 
 export function BadgeNodeTable({ data }: Props) {
+  const { orgSlug, projectSlug } = useTenantParams()
   const moveMutation = useMoveBadgeNode()
   const rows = useMemo(() => flattenTree(data), [data])
   const isMobile = useIsMobile()
@@ -159,8 +161,8 @@ export function BadgeNodeTable({ data }: Props) {
                       <ChevronRight className="size-3 text-muted-foreground" />
                     ) : null}
                     <Link
-                      to="/badge/$nodeId"
-                      params={{ nodeId: row.id }}
+                      to="/o/$orgSlug/p/$projectSlug/badge/$nodeId"
+                      params={{ orgSlug, projectSlug, nodeId: row.id }}
                       className="font-mono text-sm hover:underline"
                     >
                       {row.key}
@@ -226,6 +228,7 @@ export function BadgeNodeTable({ data }: Props) {
 }
 
 function BadgeNodeCard({ row }: { row: TreeRow }) {
+  const { orgSlug, projectSlug } = useTenantParams()
   return (
     <div
       className="space-y-2 p-3"
@@ -237,8 +240,8 @@ function BadgeNodeCard({ row }: { row: TreeRow }) {
             <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
           ) : null}
           <Link
-            to="/badge/$nodeId"
-            params={{ nodeId: row.id }}
+            to="/o/$orgSlug/p/$projectSlug/badge/$nodeId"
+            params={{ orgSlug, projectSlug, nodeId: row.id }}
             className="truncate font-mono text-sm hover:underline"
           >
             {row.key}

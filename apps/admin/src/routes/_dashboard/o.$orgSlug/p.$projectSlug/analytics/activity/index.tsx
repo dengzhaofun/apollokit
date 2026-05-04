@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import {
   Activity,
   ChevronDown,
@@ -122,6 +122,7 @@ const EMPTY_FILTERS: Filters = {
 
 function ActivityInner() {
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [windowOption, setWindowOption] = useState<WindowOption>("24h")
   const w = useWindow(windowOption)
 
@@ -213,6 +214,7 @@ function ActivityInner() {
     void navigate({
       to: "/o/$orgSlug/p/$projectSlug/analytics/explore",
       search: { event, groupBy: "json", jsonPathGroup: path } as never,
+      params: { orgSlug, projectSlug },
     })
   }
 

@@ -1,6 +1,6 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate, Link } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { format } from "date-fns"
 import {
   ArrowLeft,
@@ -61,6 +61,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/lott
 function LotteryPoolDetailPage() {
   const { poolId } = Route.useParams()
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [editing, setEditing] = useState(false)
 
   // Pool
@@ -156,7 +157,7 @@ function LotteryPoolDetailPage() {
           <>
             <Button
               render={
-                <Link to="/lottery">
+                <Link to="/o/$orgSlug/p/$projectSlug/lottery" params={{ orgSlug, projectSlug }}>
                   <ArrowLeft />
                   {t("返回", "Back")}
                 </Link>
@@ -182,7 +183,7 @@ function LotteryPoolDetailPage() {
                 try {
                   await deletePool.mutateAsync(pool.id)
                   toast.success(t("已删除", "Pool deleted"))
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/lottery" })
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/lottery" , params: { orgSlug, projectSlug }})
                 } catch (err) {
                   toast.error(
                     err instanceof ApiError

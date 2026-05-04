@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { CalendarCheckIcon, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -92,6 +92,7 @@ function CheckInListPage() {
 
 function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
+    const { orgSlug, projectSlug } = useTenantParams()
   const mutation = useCreateCheckInConfig()
   const [formState, setFormState] = useState({
     canSubmit: false,
@@ -109,7 +110,7 @@ function CreateCheckInDrawer({ onClose }: { onClose: () => void }) {
         onClose()
         void navigate({
           to: "/o/$orgSlug/p/$projectSlug/check-in/$configId",
-          params: { configId: row.id },
+          params: { orgSlug, projectSlug, configId: row.id },
           hash: "rewards",
         })
       } catch (err) {

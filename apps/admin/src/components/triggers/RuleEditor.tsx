@@ -1,3 +1,5 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { useNavigate } from "@tanstack/react-router";
 /**
  * Trigger 规则编辑器主组件 —— 同时被 /triggers/new 和 /triggers/$id 复用。
  *
@@ -25,7 +27,6 @@ import {
   type Edge,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { useNavigate } from "#/components/router-helpers"
 import { Gift, Lock, Mail, Maximize2, Minimize2, Plus, Zap } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -85,6 +86,7 @@ export type RuleEditorProps = {
 export function RuleEditor({ rule }: RuleEditorProps) {
   const isNew = !rule
   const navigate = useNavigate()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   // ── form state ───────────────────────────────────────────────────
   const [name, setName] = useState(rule?.name ?? "")
@@ -259,7 +261,7 @@ export function RuleEditor({ rule }: RuleEditorProps) {
       if (isNew) {
         const created = await create.mutateAsync(payload)
         toast.success(m.triggers_editor_save_success())
-        navigate({ to: "/triggers/$id", params: { id: created.id } })
+        navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/$id", params: { orgSlug, projectSlug, id: created.id } })
       } else {
         await update.mutateAsync({
           id: rule.id,
@@ -280,7 +282,8 @@ export function RuleEditor({ rule }: RuleEditorProps) {
   return (
     <main className="flex-1 flex flex-col p-6 gap-4 min-h-0">
       <PageHeaderActions>
-        <Button variant="ghost" onClick={() => navigate({ to: "/triggers" })}>
+        <Button variant="ghost" onClick={() => navigate({ 
+to: "/o/$orgSlug/p/$projectSlug/triggers" , params: { orgSlug, projectSlug }})}>
           {m.triggers_editor_back()}
         </Button>
         <Button onClick={handleSave} disabled={create.isPending || update.isPending}>

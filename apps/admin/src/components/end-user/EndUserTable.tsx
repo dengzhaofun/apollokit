@@ -1,19 +1,5 @@
-/**
- * Self-contained end-user list table — server-side cursor pagination
- * driven by `useEndUsers(route)`, which reads/writes URL search params.
- *
- * The table consumes:
- *   - `tableProps` for pagination + search wiring
- *   - `filters / filterValues / setFilter / resetFilters` for the
- *     faceted filter toolbar
- *   - `mode / setMode / advanced / setAdvanced` for advanced query
- *     builder mode
- *
- * All of those are produced by the hook from a single declarative
- * spec (`END_USER_FILTER_DEFS`) — no per-page state, no manual prop
- * forwarding.
- */
-import { Link } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params"
+import { Link, type AnyRoute} from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table"
 import { Ban, CheckCircle2, Crown, LinkIcon } from "lucide-react"
 
@@ -28,14 +14,16 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
-const columns: ColumnDef<EndUser>[] = [
+function useColumns(): ColumnDef<EndUser>[] {
+  const { orgSlug, projectSlug } = useTenantParams()
+  return [
   {
     accessorKey: "name",
     header: () => m.end_user_col_name(),
     cell: ({ row }) => (
       <Link
-        to="/end-user/$id"
-        params={{ id: row.original.id }}
+        to="/o/$orgSlug/p/$projectSlug/end-user/$id"
+        params={{ orgSlug, projectSlug, id: row.original.id }}
         className="font-medium hover:underline"
       >
         {row.original.name}
@@ -109,15 +97,16 @@ const columns: ColumnDef<EndUser>[] = [
       </span>
     ),
   },
-]
+  ]
+}
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any
+  route: AnyRoute
   toolbar?: React.ReactNode
 }
 
 export function EndUserTable({ route, toolbar }: Props) {
+  const columns = useColumns()
   const list = useEndUsers(route)
   return (
     <DataTable

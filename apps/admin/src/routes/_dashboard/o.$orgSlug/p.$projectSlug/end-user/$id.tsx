@@ -1,3 +1,4 @@
+import { useTenantParams } from "#/hooks/use-tenant-params";
 /**
  * End-user detail + actions page.
  *
@@ -6,8 +7,7 @@
  * All dangerous actions prompt for confirmation via AlertDialog, matching
  * the rank module's pattern.
  */
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import {
   ArrowLeft,
   Ban,
@@ -73,6 +73,7 @@ function EndUserDetailPage() {
   const enableMutation = useEnableEndUser()
   const signOutMutation = useSignOutEndUser()
   const deleteMutation = useDeleteEndUser()
+  const { orgSlug, projectSlug } = useTenantParams()
 
   const [name, setName] = useState("")
   const [image, setImage] = useState("")
@@ -90,7 +91,7 @@ function EndUserDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/end-user">
+            <Link to="/o/$orgSlug/p/$projectSlug/end-user" params={{ orgSlug, projectSlug }}>
               <ArrowLeft className="size-4" />
               {m.end_user_detail_back()}
             </Link>
@@ -114,7 +115,7 @@ function EndUserDetailPage() {
             </p>
             <Button
               render={
-                <Link to="/end-user">{m.end_user_detail_back()}</Link>
+                <Link to="/o/$orgSlug/p/$projectSlug/end-user" params={{ orgSlug, projectSlug }}>{m.end_user_detail_back()}</Link>
               }
               variant="outline" size="sm" className="mt-4"
             />
@@ -411,7 +412,7 @@ function EndUserDetailPage() {
                           try {
                             await deleteMutation.mutateAsync(data.id)
                             toast.success(m.end_user_detail_toast_deleted())
-                            navigate({ to: "/o/$orgSlug/p/$projectSlug/end-user" })
+                            navigate({ to: "/o/$orgSlug/p/$projectSlug/end-user" , params: { orgSlug, projectSlug }})
                           } catch (err) {
                             toast.error(errorMessage(err))
                           }

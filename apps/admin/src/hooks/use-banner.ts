@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -30,8 +31,7 @@ export const BANNER_GROUP_FILTER_DEFS: FilterDef[] = []
  * non-activity-bound only.
  */
 export function useBannerGroups(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
@@ -122,8 +122,8 @@ export function useDeleteBannerGroup() {
 export const BANNER_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated banners under a group — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useBanners(groupId: string, route: any) {
+ 
+export function useBanners(groupId: string, route: AnyRoute) {
   return useListSearch<Banner>({
     route,
     queryKey: bannersKey(groupId),

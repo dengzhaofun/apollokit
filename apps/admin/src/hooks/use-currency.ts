@@ -19,6 +19,7 @@ import type {
   UpdateCurrencyInput,
   WalletView,
 } from "#/lib/types/currency"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const DEFINITIONS_KEY = ["currency-definitions"] as const
 const WALLETS_KEY = ["currency-wallets"] as const
@@ -49,8 +50,8 @@ export const CURRENCY_FILTER_DEFS: FilterDef[] = [
  * separating "global catalog" from "activity inner loop" prevents the
  * two workflows from leaking into each other.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useCurrencies(route: any) {
+ 
+export function useCurrencies(route: AnyRoute) {
   return useListSearch<CurrencyDefinition>({
     route,
     queryKey: DEFINITIONS_KEY,

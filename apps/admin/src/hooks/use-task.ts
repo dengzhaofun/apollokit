@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -47,8 +48,8 @@ export const TASK_CATEGORY_FILTER_DEFS: FilterDef[] = [
 ]
 
 /** Paginated task categories — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useTaskCategories(route: any) {
+ 
+export function useTaskCategories(route: AnyRoute) {
   return useListSearch<TaskCategory>({
     route,
     queryKey: CATEGORIES_KEY,
@@ -178,8 +179,7 @@ export const TASK_DEFINITION_FILTER_DEFS: FilterDef[] = [
  * the activity's detail page.
  */
 export function useTaskDefinitions(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { categoryId?: string; activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { categoryId, activityId, includeActivity } = extraQuery

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Link, useNavigate } from "#/components/router-helpers"
+import { useTenantParams } from "#/hooks/use-tenant-params";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ChevronLeft, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -37,6 +37,7 @@ function AnnouncementDetailPage() {
   const { data, isPending, error } = useAnnouncement(alias)
   const updateMutation = useUpdateAnnouncement()
   const deleteMutation = useDeleteAnnouncement()
+  const { orgSlug, projectSlug } = useTenantParams()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   return (
@@ -44,7 +45,7 @@ function AnnouncementDetailPage() {
       <PageHeaderActions>
         <Button
           render={
-            <Link to="/announcement">
+            <Link to="/o/$orgSlug/p/$projectSlug/announcement" params={{ orgSlug, projectSlug }}>
               <ChevronLeft className="size-4" />
               {m.announcement_back_to_list()}
             </Link>
@@ -79,7 +80,7 @@ function AnnouncementDetailPage() {
                     try {
                       await deleteMutation.mutateAsync(alias)
                       toast.success(m.announcement_deleted())
-                      navigate({ to: "/o/$orgSlug/p/$projectSlug/announcement" })
+                      navigate({ to: "/o/$orgSlug/p/$projectSlug/announcement" , params: { orgSlug, projectSlug }})
                     } catch (err) {
                       if (err instanceof ApiError) toast.error(err.body.error)
                       else toast.error(m.announcement_failed_delete())

@@ -3,6 +3,7 @@
  * URL key 与 enum 取值对齐。**只读**：没有 mutation hook。
  */
 import { useQuery } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -95,8 +96,8 @@ export function withResourceTypeOptions(
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useAuditLogs(route: any, filterDefs: FilterDef[]) {
+ 
+export function useAuditLogs(route: AnyRoute, filterDefs: FilterDef[]) {
   return useListSearch<AuditLog>({
     route,
     queryKey: [...KEY, "list"],

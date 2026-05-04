@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -23,8 +24,8 @@ const deliveriesKey = (endpointId: string) =>
 export const WEBHOOK_ENDPOINT_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated webhook endpoints — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useWebhookEndpoints(route: any) {
+ 
+export function useWebhookEndpoints(route: AnyRoute) {
   return useListSearch<WebhookEndpoint>({
     route,
     queryKey: ENDPOINTS_KEY,

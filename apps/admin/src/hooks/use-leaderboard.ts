@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { AnyRoute } from "@tanstack/react-router"
 
 import { api } from "#/lib/api-client"
 import {
@@ -20,8 +21,8 @@ const CONFIGS_KEY = ["leaderboard-configs"] as const
 export const LEADERBOARD_CONFIG_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated leaderboard configs — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useLeaderboardConfigs(route: any) {
+ 
+export function useLeaderboardConfigs(route: AnyRoute) {
   return useListSearch<LeaderboardConfig>({
     route,
     queryKey: CONFIGS_KEY,

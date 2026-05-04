@@ -25,6 +25,7 @@ import type {
   MultiPullInput,
   PullResult,
 } from "#/lib/types/lottery"
+import type { AnyRoute } from "@tanstack/react-router"
 
 const POOLS_KEY = ["lottery-pools"] as const
 
@@ -40,8 +41,7 @@ export const LOTTERY_POOL_FILTER_DEFS: FilterDef[] = []
  * explicit `activityId` to scope to that activity.
  */
 export function useLotteryPools(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  route: any,
+  route: AnyRoute,
   extraQuery: { activityId?: string; includeActivity?: boolean } = {},
 ) {
   const { activityId, includeActivity } = extraQuery
@@ -127,8 +127,8 @@ export function useDeleteLotteryPool() {
 export const LOTTERY_TIER_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated tiers under one pool — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useLotteryTiers(poolKey: string, route: any) {
+ 
+export function useLotteryTiers(poolKey: string, route: AnyRoute) {
   return useListSearch<LotteryTier>({
     route,
     queryKey: ["lottery-tiers", poolKey],
@@ -196,8 +196,8 @@ export function useDeleteLotteryTier() {
 export const LOTTERY_PRIZE_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated prizes under one pool — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useLotteryPrizes(poolKey: string, route: any) {
+ 
+export function useLotteryPrizes(poolKey: string, route: AnyRoute) {
   return useListSearch<LotteryPrize>({
     route,
     queryKey: ["lottery-prizes", poolKey],
@@ -270,8 +270,8 @@ export function useDeleteLotteryPrize() {
 export const LOTTERY_PITY_RULE_FILTER_DEFS: FilterDef[] = []
 
 /** Paginated pity rules under one pool — URL-driven. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useLotteryPityRules(poolKey: string, route: any) {
+ 
+export function useLotteryPityRules(poolKey: string, route: AnyRoute) {
   return useListSearch<LotteryPityRule>({
     route,
     queryKey: ["lottery-pity-rules", poolKey],
