@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { useNavigate } from "#/components/router-helpers"
 import { useEffect, useState } from "react"
 
@@ -6,8 +6,24 @@ import Landing from "#/components/landing/Landing"
 import { authClient } from "#/lib/auth-client"
 import { useTenantParams } from "#/hooks/use-tenant-params"
 import { seo } from "#/lib/seo"
+import { checkAuthAndGetTenant } from "#/lib/server-auth"
 
 export const Route = createFileRoute("/")({
+  // SSR-only: if the user already has a valid session, redirect to the
+  // dashboard before any HTML is sent — eliminates the 1-2 s client-side
+  // wait caused by the mounted guard + useSession + org-list fetch chain.
+  // Client-side navigation to "/" is handled by SignedInBouncer below.
+  beforeLoad: async () => {
+    if (typeof window !== "undefined") return
+    const tenant = await checkAuthAndGetTenant()
+    if (tenant) {
+      throw redirect({
+        to: "/o/$orgSlug/p/$projectSlug/dashboard",
+        params: tenant,
+        replace: true,
+      })
+    }
+  },
   head: () =>
     seo({
       title: "游戏团队的一站式运营后台",
