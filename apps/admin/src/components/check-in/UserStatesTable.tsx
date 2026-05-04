@@ -1,18 +1,74 @@
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
+import { RotateCcw } from "lucide-react"
 import { useMemo } from "react"
+import { toast } from "sonner"
 
 import { DataTable } from "#/components/data-table/DataTable"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "#/components/ui/alert-dialog"
+import { Button } from "#/components/ui/button"
+import {
   CHECK_IN_USER_STATE_FILTER_DEFS,
   useCheckInUserStates,
+  useResetCheckInUserState,
 } from "#/hooks/use-check-in"
 import type { CheckInUserState } from "#/lib/types/check-in"
 import * as m from "#/paraglide/messages.js"
 
 const columnHelper = createColumnHelper<CheckInUserState>()
 
-function useColumns(): ColumnDef<CheckInUserState, unknown>[] {
+function ResetCell({ configKey, endUserId }: { configKey: string; endUserId: string }) {
+  const reset = useResetCheckInUserState(configKey)
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-destructive">
+            <RotateCcw className="size-3.5" />
+          </Button>
+        }
+      />
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{m.checkin_reset_progress_confirm_title()}</AlertDialogTitle>
+          <AlertDialogDescription>
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{endUserId}</code>
+            <br />
+            <br />
+            {m.checkin_reset_progress_confirm_desc()}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={reset.isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => {
+              reset.mutate(endUserId, {
+                onSuccess: () => toast.success(m.checkin_reset_progress_success()),
+                onError: () => toast.error(m.checkin_reset_progress_failed()),
+              })
+            }}
+          >
+            {reset.isPending ? m.checkin_resetting() : m.checkin_reset_progress()}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+function useColumns(configKey: string): ColumnDef<CheckInUserState, unknown>[] {
   return useMemo(
     () => [
       columnHelper.accessor("endUserId", {
@@ -52,8 +108,15 @@ function useColumns(): ColumnDef<CheckInUserState, unknown>[] {
           )
         },
       }),
+      columnHelper.display({
+        id: "actions",
+        header: "",
+        cell: (info) => (
+          <ResetCell configKey={configKey} endUserId={info.row.original.endUserId} />
+        ),
+      }),
     ],
-    [],
+    [configKey],
   ) as ColumnDef<CheckInUserState, unknown>[]
 }
 
@@ -65,7 +128,7 @@ interface Props {
 
 export function UserStatesTable({ configKey, route }: Props) {
   const list = useCheckInUserStates(configKey, route)
-  const columns = useColumns()
+  const columns = useColumns(configKey)
   return (
     <DataTable
       columns={columns}

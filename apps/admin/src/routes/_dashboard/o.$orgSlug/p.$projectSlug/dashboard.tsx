@@ -3,6 +3,7 @@ import {
   ActivityIcon,
   AlertTriangle,
   BarChart3Icon,
+  Beaker,
   CalendarRangeIcon,
   CheckCircle2,
   CircleDashed,
@@ -46,6 +47,7 @@ import {
   StatCard,
   StatGrid,
 } from "#/components/patterns"
+import { useExperimentStats } from "#/hooks/use-experiment"
 import {
   TENANT_PIPES,
   useTenantRequestOverview,
@@ -121,6 +123,7 @@ const MODULE_HEALTH: ModuleHealthCard[] = [
   { name: "活动容器", metric: "—", metricLabel: "进行中 / 完成率" },
   { name: "商城", metric: "—", metricLabel: "今日 GMV" },
   { name: "任务", metric: "—", metricLabel: "日完成率" },
+  { name: "A/B 实验", metric: "—", metricLabel: "运行中" },
 ]
 
 function Dashboard() {
@@ -204,21 +207,37 @@ function Dashboard() {
         {/* Tinybird 连接状态 */}
         <TinybirdStatusCard />
 
-        {/* 模块健康 —— 仍是 placeholder,但不再用 dashed-border 单 dash 数字的"已废弃"观感 */}
+        {/* 模块健康 —— A/B 实验卡已接入真实数据;其余仍是 placeholder */}
         <PageSection
           title={m.dashboard_module_health_title()}
           description={m.dashboard_module_health_subtitle()}
         >
-          <StatGrid columns={5}>
-            {MODULE_HEALTH.map((mod) => (
-              <StatCard
-                key={mod.name}
-                icon={getModuleIcon(mod.name)}
-                label={mod.name}
-                value={mod.metric}
-                error
-              />
-            ))}
+          <StatGrid columns={3}>
+            {MODULE_HEALTH.map((mod) =>
+              mod.name === "A/B 实验" ? (
+                <ClientOnly
+                  key={mod.name}
+                  fallback={
+                    <StatCard
+                      icon={Beaker}
+                      label={mod.name}
+                      value="—"
+                      error
+                    />
+                  }
+                >
+                  <ExperimentHealthCard />
+                </ClientOnly>
+              ) : (
+                <StatCard
+                  key={mod.name}
+                  icon={getModuleIcon(mod.name)}
+                  label={mod.name}
+                  value={mod.metric}
+                  error
+                />
+              ),
+            )}
           </StatGrid>
           <p className="mt-2 text-xs text-muted-foreground">
             {mod_health_footnote()}
@@ -436,6 +455,20 @@ function getModuleIcon(name: string): LucideIcon {
   if (name.includes("签到")) return ActivityIcon
   if (name.includes("Battle-Pass") || name.includes("战令")) return TrendingUp
   return Gauge
+}
+
+function ExperimentHealthCard() {
+  const { data, isLoading, isError } = useExperimentStats()
+  return (
+    <StatCard
+      icon={Beaker}
+      label="A/B 实验"
+      value={isLoading || isError ? "—" : String(data?.running ?? 0)}
+      hint={t("运行中", "Running")}
+      loading={isLoading}
+      error={isError}
+    />
+  )
 }
 
 function ClientOnly({

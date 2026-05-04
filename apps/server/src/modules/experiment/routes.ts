@@ -111,6 +111,36 @@ export const experimentRouter = createAdminRouter();
 experimentRouter.use("*", requireAdminOrApiKey);
 experimentRouter.use("*", requirePermissionByMethod("experiment"));
 
+// ─── Stats ──────────────────────────────────────────────────────
+
+const ExperimentStatsSchema = z.object({
+  draft: z.number(),
+  running: z.number(),
+  paused: z.number(),
+  archived: z.number(),
+});
+
+experimentRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/experiments:stats",
+    tags: [TAG],
+    summary: "Count experiments by status",
+    responses: {
+      200: {
+        description: "OK",
+        content: { "application/json": { schema: envelopeOf(ExperimentStatsSchema) } },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const stats = await experimentService.getExperimentStats(orgId);
+    return c.json(ok(stats), 200);
+  },
+);
+
 // ─── Experiment CRUD ────────────────────────────────────────────
 
 experimentRouter.openapi(

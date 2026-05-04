@@ -135,3 +135,15 @@ export function useDeleteCheckInConfig() {
     onSuccess: () => qc.invalidateQueries({ queryKey: CONFIGS_KEY }),
   })
 }
+
+export function useResetCheckInUserState(configKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (endUserId: string) =>
+      api.delete(
+        `/api/v1/check-in/configs/${configKey}/users/${encodeURIComponent(endUserId)}/state`,
+      ),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["check-in-user-states", configKey] }),
+  })
+}
