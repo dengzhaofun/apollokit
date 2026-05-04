@@ -112,7 +112,7 @@ function ProjectScopeLayoutClient() {
   if (resolved.state === "loading") {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="size-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
       </div>
     )
   }

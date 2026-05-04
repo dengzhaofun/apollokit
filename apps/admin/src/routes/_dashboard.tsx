@@ -42,7 +42,7 @@ function DashboardLayout() {
   if (!mounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="size-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
       </div>
     )
   }
@@ -72,7 +72,7 @@ function DashboardLayoutClient() {
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="size-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
       </div>
     )
   }

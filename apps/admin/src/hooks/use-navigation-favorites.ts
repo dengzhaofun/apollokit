@@ -3,12 +3,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 import { api } from "#/lib/api-client"
 import type {
   NavigationFavorite,
   NavigationFavoriteList,
 } from "#/lib/types/navigation"
+import * as m from "../paraglide/messages.js"
 
 const FAVORITES_KEY = ["navigation", "favorites"] as const
 
@@ -81,8 +83,13 @@ export function useToggleFavorite() {
       }
       return { prev }
     },
-    onError: (_err, _vars, ctx) => {
+    onError: (_err, vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(FAVORITES_KEY, ctx.prev)
+      toast.error(
+        vars.currentlyFavorited
+          ? m.nav_favorite_remove_error()
+          : m.nav_favorite_add_error(),
+      )
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: FAVORITES_KEY })

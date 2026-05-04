@@ -55,27 +55,25 @@ function getSections(): SettingsNavSection[] {
     },
     {
       key: "organization",
-      // Org-level: 概览 / 成员 / 邀请 / 危险区。
-      // 当前组织作用域(billing 待实现暂不放)。
-      label: () => "Organization",
+      label: m.settings_section_organization,
       items: [
         {
-          title: () => "概览",
+          title: m.settings_org_overview,
           to: "/settings/organization",
           icon: Building2,
         },
         {
-          title: () => "成员",
+          title: m.settings_members,
           to: "/settings/organization/members",
           icon: Users,
         },
         {
-          title: () => "邀请",
+          title: m.settings_invitations,
           to: "/settings/organization/invitations",
           icon: MailPlus,
         },
         {
-          title: () => "危险区",
+          title: m.settings_danger_zone,
           to: "/settings/organization/danger",
           icon: AlertTriangle,
           destructive: true,
@@ -84,7 +82,6 @@ function getSections(): SettingsNavSection[] {
     },
     {
       key: "project",
-      // Project (= Better Auth team) level — 概览/成员/角色/API 密钥/Webhooks/危险区。
       label: m.settings_section_project,
       items: [
         {
@@ -93,12 +90,12 @@ function getSections(): SettingsNavSection[] {
           icon: FolderKanban,
         },
         {
-          title: () => "成员",
+          title: m.settings_members,
           to: "/settings/project/members",
           icon: Users,
         },
         {
-          title: () => "角色",
+          title: m.settings_roles,
           to: "/settings/project/roles",
           icon: ShieldCheck,
         },
@@ -113,7 +110,7 @@ function getSections(): SettingsNavSection[] {
           icon: Webhook,
         },
         {
-          title: () => "危险区",
+          title: m.settings_danger_zone,
           to: "/settings/project/danger",
           icon: AlertTriangle,
           destructive: true,

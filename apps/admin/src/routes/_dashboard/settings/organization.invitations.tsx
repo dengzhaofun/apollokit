@@ -4,6 +4,7 @@ import { RouteGuard } from "#/components/auth/RouteGuard"
 import { InvitationsTable } from "#/components/members/InvitationsTable"
 import { SettingsPageHeader } from "#/components/settings/SettingsPageHeader"
 import { seo } from "#/lib/seo"
+import * as m from "#/paraglide/messages.js"
 
 /**
  * 组织 → 邀请 (`/settings/organization/invitations`)。
@@ -25,8 +26,8 @@ function OrgInvitationsPage() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <SettingsPageHeader
-          title="组织邀请"
-          description="待接受、已过期、已撤销的组织邀请。"
+          title={m.settings_invitations()}
+          description={m.settings_org_invitations_description()}
         />
         <InvitationsTable scope="org" />
       </div>

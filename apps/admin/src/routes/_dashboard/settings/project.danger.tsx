@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { RouteGuard } from "#/components/auth/RouteGuard"
 import { SettingsPageHeader } from "#/components/settings/SettingsPageHeader"
+import * as m from "#/paraglide/messages.js"
 import { Button } from "#/components/ui/button"
 import {
   Card,
@@ -50,8 +51,8 @@ function ProjectDangerPage() {
     >
       <div className="mx-auto w-full max-w-3xl">
         <SettingsPageHeader
-          title="项目危险区"
-          description="不可逆操作。请确认你真的清楚自己在做什么。"
+          title={m.settings_project_danger()}
+          description={m.settings_danger_zone_description()}
         />
         <DeleteProjectCard />
       </div>
