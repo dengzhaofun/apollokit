@@ -84,7 +84,7 @@ export default defineConfig(({ command }) => ({
       org: 'dzfun',
       project: 'apollokit-admin',
       authToken: process.env.SENTRY_AUTH_TOKEN,
-      disable: !process.env.SENTRY_AUTH_TOKEN,
+      disable: !process.env.SENTRY_AUTH_TOKEN || process.env.CI !== 'true',
       sourcemaps: {
         // 上传完就删,不带进 worker bundle 部署体积
         filesToDeleteAfterUpload: ['./dist/**/*.map'],
