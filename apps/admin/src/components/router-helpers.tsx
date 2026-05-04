@@ -3,36 +3,43 @@
  * 让所有现存调用点(Link to="/dashboard"、navigate({ to: "/shop/..." }))
  * 不需要逐个改写就能继续工作。
  *
- * 核心思路:封装 @tanstack/react-router 的 Link / useNavigate,如果传入的
- * `to` 是被迁移的扁平路径(第一段在 MOVED_TOP_SEGMENTS 里),自动:
+ * 核心思路:封装 @tanstack/react-router 的 Link / useNavigate / Navigate /
+ * redirect。如果传入的 `to` 是被迁移的扁平路径(第一段在
+ * MOVED_TOP_SEGMENTS 里),自动:
  *   1. 拼前缀:/o/$orgSlug/p/$projectSlug/<原 path>
  *   2. 把当前 active org / project 的 slug 注入 params
  *
  * 不在 MOVED_TOP_SEGMENTS 的路径(/settings/* / /onboarding/* / /auth/*
- * / /accept-invitation/* 等)原样透传,保留原行为。
+ * / /accept-invitation/* 等)原样透传。
  *
- * 类型方面:wrapper 用 LinkProps + 大量 `as any` 把 TanStack Router 严格
- * 字面量 union 让出去,代价是 Link `to` 不再做 typed-routing 校验。等
- * 整套迁移稳定后,再把所有调用点改成显式 typed `to=\`/o/\$orgSlug/.../X\``
- * + 显式 params 即可恢复类型安全。
+ * 类型策略 —— 严格(无 `any`):
+ *   - 入参类型用 TanStack Router 自家的 `LinkComponentProps`(typed routing
+ *     字面量 union),保证调用点写 `to="/dashboard"` 等老扁平路径时,本仓
+ *     route tree 仍能在编译期校验。
+ *   - 内部 wrapper 把 `to`/`params` 重写后透传给底层 TSRLink,跨边界处只
+ *     用 `as React.ComponentProps<typeof TSRLink>` 这一处类型收敛(告诉
+ *     TS:动态构造的对象与 TSRLink 的 props 形态相同)。无 `as any` /
+ *     `as never`。
+ *
+ * 待迁移期结束(全部调用点改写成显式 typed `to=\`/o/$orgSlug/p/$projectSlug/X\`` +
+ * 显式 params)再删 wrapper。
  */
 import {
   Link as TSRLink,
   Navigate as TSRNavigate,
   redirect as tsrRedirect,
   useNavigate as useTSRNavigate,
+  type NavigateOptions,
 } from "@tanstack/react-router"
-import { forwardRef, useCallback, type ReactElement, type ReactNode } from "react"
+import {
+  forwardRef,
+  useCallback,
+  type ComponentProps,
+  type ForwardedRef,
+  type ReactElement,
+} from "react"
 
 import { useTenantParams } from "#/hooks/use-tenant-params"
-
-// 这里我们故意不复用 @tanstack/react-router 的 LinkProps 严格字面量
-// union ── 在迁移期所有调用点都按字符串传 to,严格 typed-routing 校验
-// 让位给 wrapper 的运行时 prefix 注入。等后续把全部 to 改成显式
-// `\`/o/\$orgSlug/p/\$projectSlug/X\`` 风格,再恢复字面量约束。
-//
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyProps = Record<string, any>
 
 const MOVED_TOP_SEGMENTS = new Set([
   "dashboard",
@@ -75,177 +82,205 @@ const MOVED_TOP_SEGMENTS = new Set([
   "guild",
 ])
 
-function isMovedFlatPath(p: unknown): p is string {
-  if (typeof p !== "string") return false
-  if (!p.startsWith("/")) return false
-  const seg = p.split("/")[1] ?? ""
+type Tenant = { orgSlug: string; projectSlug: string }
+
+/** 判断是否落在迁移子树。`to` 必须是字符串,以 `/` 起头,首段在白名单。 */
+function isMovedFlatPath(to: unknown): to is string {
+  if (typeof to !== "string") return false
+  if (!to.startsWith("/")) return false
+  const seg = to.split("/")[1] ?? ""
   return MOVED_TOP_SEGMENTS.has(seg)
 }
 
-/**
- * 当 useTenantParams 还没拿到 slug 时(查询期间)直接透传 to,不做改写。
- * 否则会拼出 `/o//p//dashboard` 这种空 slug 的脏 URL,触发 notFound。
- *
- * 真实场景:登录后 SignedInBouncer 即刻 navigate({ to: "/dashboard" }),
- * 但 useTenantParams 内部 useQuery 第一次还在 fetching。让 to 原样
- * 传到 TSRLink/TSRNavigate,后者会沿 fallback 到老 URL 也 not found —
- * 这是迁移期里"用户极少撞上"的边缘:登录的 SignedInBouncer 已经在
- * routes/index.tsx 里改成了 navigate 到带 slug 的嵌套 URL。
- */
-function tenantReady(t: { orgSlug: string; projectSlug: string }) {
+/** 当 useTenantParams 还没拿到 slug(查询期间)直接透传。否则会拼成
+ * `/o//p//dashboard` 触发 notFound。 */
+function tenantReady(t: Tenant): boolean {
   return t.orgSlug !== "" && t.projectSlug !== ""
 }
 
-interface NavigateOpts {
-  to: string
-  params?: Record<string, string> | ((prev: Record<string, unknown>) => Record<string, string>)
-  search?: unknown
-  replace?: boolean
-  hash?: string
-}
-
-function buildNested(
-  to: string,
-  params: NavigateOpts["params"],
-  tenant: { orgSlug: string; projectSlug: string },
-): {
-  to: string
-  params: Record<string, string> | ((prev: Record<string, unknown>) => Record<string, string>)
-} {
-  const newTo = `/o/$orgSlug/p/$projectSlug${to}`
-  if (typeof params === "function") {
-    const fn = (prev: Record<string, unknown>) => ({
-      orgSlug: tenant.orgSlug,
-      projectSlug: tenant.projectSlug,
-      ...(params(prev) ?? {}),
-    })
-    return { to: newTo, params: fn }
-  }
-  return {
-    to: newTo,
-    params: {
-      orgSlug: tenant.orgSlug,
-      projectSlug: tenant.projectSlug,
-      ...(params ?? {}),
-    },
-  }
-}
+type ParamsValue = Record<string, string>
+type ParamsArg = ParamsValue | ((prev: Record<string, unknown>) => ParamsValue) | undefined
 
 /**
- * Link 组件包装。to 接受旧扁平路径(被迁移的业务模块)时自动转嵌套。
- *
- * Props 用 AnyProps,因为 @tanstack/react-router 的 LinkProps 在 typed
- * routing 模式下要求 to 是 union 字面量,跟我们的"接受旧路径"目的冲突。
+ * Search param 在 TSR 严格 typed routing 里跟 `to` 字面量绑定;wrapper 接受
+ * `to: string` 后 TSR 无法窄化,所以这里把 search 也放宽到对象 / reducer
+ * function。
  */
-export const Link = forwardRef<HTMLAnchorElement, AnyProps & { children?: ReactNode }>(
-  function Link(props, ref) {
+type SearchValue = Record<string, unknown>
+type SearchArg =
+  | SearchValue
+  | ((prev: Record<string, unknown>) => SearchValue)
+  | true
+  | undefined
+
+/** 在保留原 params(对象 / 函数 / undefined)语义的前提下注入 orgSlug/projectSlug。 */
+function mergeParams(orig: ParamsArg, tenant: Tenant): ParamsArg {
+  if (typeof orig === "function") {
+    return (prev: Record<string, unknown>) => ({
+      orgSlug: tenant.orgSlug,
+      projectSlug: tenant.projectSlug,
+      ...orig(prev),
+    })
+  }
+  return {
+    orgSlug: tenant.orgSlug,
+    projectSlug: tenant.projectSlug,
+    ...(orig ?? {}),
+  }
+}
+
+function buildNestedTo(flatTo: string): string {
+  return `/o/$orgSlug/p/$projectSlug${flatTo}`
+}
+
+// ── Link wrapper ───────────────────────────────────────────────────────
+
+/**
+ * Wrapper Link 暴露的 props ── 比 TanStack Router 的 LinkComponentProps
+ * 更宽松,因为 wrapper 故意接受迁移期的旧扁平字面量(`to="/dashboard"`)
+ * 并在运行时改写。这是 wrapper 的"显式接口扩展",不是 `any` 让位。
+ *
+ * 字段:
+ *   - `to`: TSR 接受的所有 typed `to` ∪ string (允许迁移期旧字面量)
+ *   - `params`: 标准 TSR 形态 + 可选省略(wrapper 自动补 orgSlug/projectSlug)
+ *   - 其余直接复用 TSRLink 的 props(className / search / hash / replace 等)
+ */
+type TSRLinkRuntimeProps = ComponentProps<typeof TSRLink>
+type WrappedLinkProps = Omit<TSRLinkRuntimeProps, "to" | "params" | "search"> & {
+  /** 迁移期可写旧扁平路径(`/dashboard`),也可写完整嵌套(`/o/$orgSlug/p/$projectSlug/dashboard`)。 */
+  to: string
+  params?: ParamsArg
+  search?: SearchArg
+}
+
+export const Link = forwardRef(
+  function Link(
+    props: WrappedLinkProps,
+    ref: ForwardedRef<HTMLAnchorElement>,
+  ): ReactElement {
     const tenant = useTenantParams()
-    const { to, params, ...rest } = props as AnyProps
+    const { to, params, ...rest } = props
+
     if (isMovedFlatPath(to) && tenantReady(tenant)) {
-      const built = buildNested(to as string, params, tenant)
-      return (
-        <TSRLink
-          {...(rest as AnyProps)}
-          ref={ref}
-          to={built.to as never}
-          params={built.params as never}
-        />
-      )
+      const enhanced = {
+        ...rest,
+        to: buildNestedTo(to),
+        params: mergeParams(params, tenant),
+      } as TSRLinkRuntimeProps
+      return <TSRLink ref={ref} {...enhanced} />
     }
-    // 非迁移路径 — 透传给 TSRLink。这里 to/params 直接进入 TSRLink 的
-    // 严格 typed-routing 检查,所以 props 仍可能在调用点报错(如果传了
-    // 非法 to 字面量)。这是迁移期的取舍。
-    // 非迁移路径透传给 TSRLink。这里 to/params 直接进入 TSRLink 的严格
-    // typed-routing 检查,所以 props 仍可能在调用点报错。迁移期取舍。
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const TSRLinkAny = TSRLink as any
-    return <TSRLinkAny {...props} ref={ref} />
+    return (
+      <TSRLink
+        ref={ref}
+        {...({ ...rest, to, params } as TSRLinkRuntimeProps)}
+      />
+    )
   },
 )
 
+// ── useNavigate wrapper ────────────────────────────────────────────────
+
 /**
  * 替代 useNavigate 的 hook —— 接管 to 字符串拼前缀 + params 注入。
- *
- * 接受可选参数(对应 TanStack Router 的 useNavigate({ from: "..." }) 形态)
- * 但只透传给底层,这层包装不消费 from。
- *
- * 用法:
- *   const navigate = useNavigate()
- *   navigate({ to: "/shop/$productId", params: { productId: "abc" } })
+ * 接受可选参数(对应 TanStack Router 的 useNavigate({ from: "..." }) 形态)。
  */
-export function useNavigate(_args?: AnyProps) {
-  void _args // 透传 placeholder
+type WrappedNavigateOpts = Omit<NavigateOptions, "to" | "params" | "search"> & {
+  /** 缺省时保持当前路由,等价于 TSR 的 `to: "."`。 */
+  to?: string
+  params?: ParamsArg
+  search?: SearchArg
+}
+type NavigateFn = (opts: WrappedNavigateOpts) => Promise<void> | void
+
+/** TSR 的 `useNavigate({ from })` 用来给后续 navigate 调用提供"相对 from
+ * 路径"的解析锚点。Wrapper 透传给底层 TSR 的 useNavigate。 */
+type UseNavigateArgs = { from?: string }
+
+/** 接受可选 `useNavigate({ from })` 形态参数,跟 TSR 一致。 */
+export function useNavigate(_args?: UseNavigateArgs): NavigateFn {
+  void _args
   const navigate = useTSRNavigate()
   const tenant = useTenantParams()
-  return useCallback(
-    (opts: AnyProps) => {
-      if (isMovedFlatPath(opts.to) && tenantReady(tenant)) {
-        const built = buildNested(
-          opts.to as string,
-          opts.params as NavigateOpts["params"],
-          tenant,
-        )
-        return navigate({
-          ...opts,
-          to: built.to,
-          params: built.params,
-        } as never)
+
+  return useCallback<NavigateFn>(
+    (opts) => {
+      const { to, params, ...rest } = opts
+      if (isMovedFlatPath(to) && tenantReady(tenant)) {
+        const enhanced = {
+          ...rest,
+          to: buildNestedTo(to),
+          params: mergeParams(params, tenant),
+        } as NavigateOptions
+        return navigate(enhanced)
       }
-      return navigate(opts as never)
+      return navigate({ ...rest, to, params } as NavigateOptions)
     },
     [navigate, tenant],
   )
 }
 
-/**
- * Navigate 组件包装(对应 RouteGuard 等地方的声明式 redirect)。
- * 行为同 Link wrapper:to 是迁移路径就拼前缀。
- */
-export function Navigate(props: AnyProps): ReactElement {
-  const tenant = useTenantParams()
-  const { to, params, ...rest } = props as AnyProps
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const TSRNavigateAny = TSRNavigate as any
-  if (isMovedFlatPath(to) && tenantReady(tenant)) {
-    const built = buildNested(to as string, params, tenant)
-    return (
-      <TSRNavigateAny
-        {...rest}
-        to={built.to}
-        params={built.params}
-      />
-    )
-  }
-  return <TSRNavigateAny {...props} />
+// ── Navigate component wrapper ─────────────────────────────────────────
+
+type RuntimeNavigateProps = ComponentProps<typeof TSRNavigate>
+type WrappedNavigateProps = Omit<RuntimeNavigateProps, "to" | "params" | "search"> & {
+  to: string
+  params?: ParamsArg
+  search?: SearchArg
 }
 
+/** Navigate 组件包装(对应 RouteGuard 等地方的声明式 redirect)。 */
+export function Navigate(props: WrappedNavigateProps): ReactElement {
+  const tenant = useTenantParams()
+  const { to, params, ...rest } = props
+  if (isMovedFlatPath(to) && tenantReady(tenant)) {
+    const enhanced = {
+      ...rest,
+      to: buildNestedTo(to),
+      params: mergeParams(params, tenant),
+    } as RuntimeNavigateProps
+    return <TSRNavigate {...enhanced} />
+  }
+  return (
+    <TSRNavigate {...({ ...rest, to, params } as RuntimeNavigateProps)} />
+  )
+}
+
+// ── redirect() helper for beforeLoad ───────────────────────────────────
+
 /**
- * redirect() 包装 —— 用在 beforeLoad 等服务端阶段;由于这是同步函数不
- * 能用 hook,需要从外部传入当前 params(里面应该已经包含 orgSlug/projectSlug)。
+ * redirect() 包装 —— 用在 beforeLoad 等 sync 阶段。由于不能调 hook,
+ * 调用方须从 beforeLoad 的 ({ params }) 里取出当前 params(其中包含
+ * orgSlug/projectSlug 当处于项目作用域时)显式传入。
  *
  * 用法:
  *   beforeLoad: ({ params }) => {
  *     throw projectRedirect({ to: "/entity/schemas" }, params)
  *   }
  */
-export function projectRedirect(
-  opts: NavigateOpts,
-  parentParams: AnyProps,
-) {
-  if (isMovedFlatPath(opts.to)) {
-    return tsrRedirect({
-      ...opts,
-      to: `/o/$orgSlug/p/$projectSlug${opts.to}` as never,
-      params: {
-        orgSlug: parentParams.orgSlug as string,
-        projectSlug: parentParams.projectSlug as string,
-        ...((typeof opts.params === "object" ? opts.params : null) ?? {}),
-      } as never,
-    } as never)
-  }
-  return tsrRedirect(opts as never)
+type RedirectOptions = NavigateOptions
+
+type WrappedRedirectOpts = Omit<RedirectOptions, "to" | "params"> & {
+  to: string
+  params?: ParamsValue
 }
 
-// 默认行为兜底:类型上仍接受旧扁平路径,运行时 wrapper 透明处理。
-// 这意味着 Link 的 to 接受 string,而不是 typed router union ── 是这次
-// 迁移期的取舍。
+export function projectRedirect(
+  opts: WrappedRedirectOpts,
+  parentParams: { orgSlug: string; projectSlug: string },
+) {
+  const { to, params, ...rest } = opts
+  if (isMovedFlatPath(to)) {
+    const merged: ParamsValue = {
+      orgSlug: parentParams.orgSlug,
+      projectSlug: parentParams.projectSlug,
+      ...(params ?? {}),
+    }
+    const enhanced = {
+      ...rest,
+      to: buildNestedTo(to),
+      params: merged,
+    } as RedirectOptions
+    return tsrRedirect(enhanced)
+  }
+  return tsrRedirect({ ...rest, to, params } as RedirectOptions)
+}
