@@ -6,6 +6,8 @@ const HealthResponse = z
   .object({
     status: z.literal("ok"),
     requestId: z.string(),
+    version: z.string(),
+    deployedAt: z.string().nullable(),
   })
   .openapi("HealthResponse");
 
@@ -27,5 +29,10 @@ const route = createPublicRoute({
 });
 
 export const health = createPublicRouter().openapi(route, (c) => {
-  return c.json({ status: "ok" as const, requestId: c.get("requestId") });
+  return c.json({
+    status: "ok" as const,
+    requestId: c.get("requestId"),
+    version: c.env.APP_VERSION,
+    deployedAt: c.env.CF_VERSION_METADATA?.timestamp ?? null,
+  });
 });
