@@ -126,7 +126,7 @@
   //   `wrangler dev` call the real Email Service; without it the mailer
   //   falls back to a console log (see src/lib/mailer.ts).
   "vars": {
-    "APP_VERSION": "0.1.4",
+    "APP_VERSION": "0.1.5",
     "ADMIN_URL": "https://apollokit-admin.limitless-ai.workers.dev",
     "INVITE_FROM_ADDRESS": "invites@example.com",
     "SENTRY_ENVIRONMENT": "production"
