@@ -1,9 +1,9 @@
-import { useTenantParams } from "#/hooks/use-tenant-params";
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { authClient } from "#/lib/auth-client"
+import { projectUrl } from "#/lib/tenant"
 import { seo } from "#/lib/seo"
 import { Button } from "#/components/ui/button"
 import {
@@ -57,13 +57,13 @@ function CreateProjectPage() {
 }
 
 function CreateProjectClient() {
-    const { orgSlug, projectSlug } = useTenantParams()
   const { data: session, isPending } = authClient.useSession()
   const navigate = useNavigate()
   const [name, setName] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
   const [defaultTeamId, setDefaultTeamId] = useState<string | null>(null)
+  const [bootstrapOrgSlug, setBootstrapOrgSlug] = useState<string | null>(null)
   // StrictMode double-invoke guard for the auto-setActive path.
   const autoRan = useRef(false)
 
@@ -74,7 +74,8 @@ function CreateProjectClient() {
       return
     }
     if (session.session.activeTeamId) {
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
+      // Already onboarded — go to root and let _dashboard routing redirect.
+      navigate({ to: "/" })
       return
     }
     if (autoRan.current) return
@@ -91,6 +92,7 @@ function CreateProjectClient() {
       // Set the auto-created org as active and prep the rename form
       // against the auto-created "Default project".
       const orgId = orgs[0].id
+      const orgSlug = orgs[0].slug
       await authClient.organization.setActive({ organizationId: orgId })
       await authClient.getSession({ query: { disableCookieCache: true } })
 
@@ -106,21 +108,22 @@ function CreateProjectClient() {
       if (teams.length === 0) {
         // Even more edge: org exists but no team. Skip onboarding form
         // and let the user create one from Settings later.
-        navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
+        navigate({ to: "/" })
         return
       }
       const firstTeam = teams[0]
       setDefaultTeamId(firstTeam.id)
+      setBootstrapOrgSlug(orgSlug)
       setName(firstTeam.name === "Default project" ? "" : firstTeam.name)
       setBootstrapping(false)
     })().catch(() => {
       setBootstrapping(false)
     })
-  }, [isPending, session, navigate, orgSlug, projectSlug])
+  }, [isPending, session, navigate])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || submitting || !defaultTeamId) return
+    if (!name.trim() || submitting || !defaultTeamId || !bootstrapOrgSlug) return
     setSubmitting(true)
     try {
       type UpdateTeamArgs = { teamId: string; data: { name: string } }
@@ -138,7 +141,7 @@ function CreateProjectClient() {
       }
       await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
       await authClient.getSession({ query: { disableCookieCache: true } })
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
+      navigate({ to: projectUrl(bootstrapOrgSlug, defaultTeamId) + "/dashboard", replace: true })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to rename project")
       setSubmitting(false)
@@ -146,12 +149,12 @@ function CreateProjectClient() {
   }
 
   async function handleSkip() {
-    if (!defaultTeamId || submitting) return
+    if (!defaultTeamId || !bootstrapOrgSlug || submitting) return
     setSubmitting(true)
     try {
       await authClient.organization.setActiveTeam({ teamId: defaultTeamId })
       await authClient.getSession({ query: { disableCookieCache: true } })
-      navigate({ to: "/o/$orgSlug/p/$projectSlug/dashboard", replace: true , params: { orgSlug, projectSlug }})
+      navigate({ to: projectUrl(bootstrapOrgSlug, defaultTeamId) + "/dashboard", replace: true })
     } catch {
       setSubmitting(false)
     }
