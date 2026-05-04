@@ -111,6 +111,7 @@ import {
   type CapabilityBag,
 } from "#/lib/capabilities"
 import { cn } from "#/lib/utils"
+import { useQuery } from "@tanstack/react-query"
 import { useCommandPalette } from "./command-palette-context"
 import { FavoriteStarButton } from "./FavoriteStarButton"
 import * as m from "../paraglide/messages.js"
@@ -1214,9 +1215,60 @@ export function AppSidebar() {
               <UserMenuButton isIcon={isIcon} />
             </div>
           </SidebarMenuItem>
+          {!isIcon && (
+            <SidebarMenuItem>
+              <VersionFooter />
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  )
+}
+
+function VersionFooter() {
+  const { data } = useQuery({
+    queryKey: ["health"],
+    queryFn: () =>
+      fetch("/api/health")
+        .then((r) => r.json())
+        .catch(() => null) as Promise<{
+          version: string
+          deployedAt: string | null
+        } | null>,
+    staleTime: Infinity,
+    retry: false,
+  })
+
+  const adminVer = `v${__APP_VERSION__}`
+  const serverVer = data ? `v${data.version}` : null
+  const mismatch = serverVer !== null && serverVer !== adminVer
+  const serverDate = data?.deployedAt
+    ? data.deployedAt.slice(0, 10)
+    : null
+
+  return (
+    <div className="px-2 py-1 font-mono text-[10px] leading-tight">
+      {!mismatch ? (
+        <div className="flex items-center gap-1 text-muted-foreground/40">
+          <span className="select-all">{adminVer}</span>
+          {serverDate && (
+            <span className="text-muted-foreground/25">· {serverDate}</span>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1 text-muted-foreground/40">
+            <span className="text-muted-foreground/25">admin</span>
+            <span className="select-all">{adminVer}</span>
+          </div>
+          <div className="flex items-center gap-1 text-amber-500/60">
+            <span className="text-amber-500/40">server</span>
+            <span className="select-all">{serverVer}</span>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

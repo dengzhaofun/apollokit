@@ -4,6 +4,10 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+const appVersion: string = JSON.parse(
+  readFileSync(resolve(__dirname, '../../package.json'), 'utf8')
+).version ?? '0.0.0'
+
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
 import viteReact from '@vitejs/plugin-react'
@@ -55,6 +59,9 @@ loadDevVars()
 // 没问题,不要在 dev-time 路径上引 `cloudflare:*` 内置模块——`src/server.ts`
 // 已经只在 build 后的 Worker bundle 里被调用,dev 不执行它)。
 export default defineConfig(({ command }) => ({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   build: {
     // 生成 .map 但不在 bundle 末尾留 //# sourceMappingURL 引用,避免线上
     // 暴露源码;Sentry 的 vite plugin 会把 .map 单独上传给 Sentry。

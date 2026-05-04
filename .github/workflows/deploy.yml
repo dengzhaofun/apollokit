@@ -1,0 +1,78 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Queue deploys; never cancel mid-flight to avoid partial deployments
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Skip the version-bump commit to avoid infinite loops
+    if: "!contains(github.event.head_commit.message, 'chore: bump version')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compute next version
+        id: ver
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          NEXT=$(node -e "const [a,b,c]='$CURRENT'.split('.');console.log([a,b,+c+1].join('.'))")
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version files
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${{ steps.ver.outputs.next }}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          sed -i 's/"APP_VERSION": "[^"]*"/"APP_VERSION": "${{ steps.ver.outputs.next }}"/' \
+            apps/server/wrangler.jsonc
+
+      - name: Build & deploy admin
+        run: pnpm --filter=admin run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          CI: "true"
+
+      - name: Deploy server
+        run: pnpm --filter=server run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Tag & push version commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json apps/server/wrangler.jsonc
+          git commit -m "chore: bump version to v${{ steps.ver.outputs.next }}"
+          git tag "v${{ steps.ver.outputs.next }}"
+          git push
+          git push --tags
