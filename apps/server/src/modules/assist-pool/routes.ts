@@ -5,14 +5,14 @@
  * Zod-validated I/O into service calls and maps typed errors onto
  * HTTP responses. No business logic here.
  *
- * Guard: `requireAdminOrApiKey` — Better Auth session OR admin API key.
+ * Guard: `requireTenantSessionOrApiKey` — Better Auth session OR admin API key.
  */
 
 import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { assistPoolService } from "./index";
 import type {
@@ -99,7 +99,7 @@ function serializeContribution(row: AssistPoolContribution) {
 
 export const assistPoolRouter = createAdminRouter();
 
-assistPoolRouter.use("*", requireAdminOrApiKey);
+assistPoolRouter.use("*", requireTenantSessionOrApiKey);
 assistPoolRouter.use("*", requirePermissionByMethod("assistPool"));
 
 // POST /configs

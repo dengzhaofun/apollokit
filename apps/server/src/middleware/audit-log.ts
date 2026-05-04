@@ -95,7 +95,7 @@ export const auditLog = createMiddleware<HonoEnv>(async (c, next) => {
             type: "admin-api-key" as const,
             id: null,
             // v1 还没把 api key id 落到 c.var；先记一个占位 label，
-            // v2 在 require-admin-or-api-key 里塞 c.var.apiKeyId 后再补。
+            // v2 在 require-tenant-session-or-api-key 里塞 c.var.apiKeyId 后再补。
             label: "admin-api-key",
           }
         : {

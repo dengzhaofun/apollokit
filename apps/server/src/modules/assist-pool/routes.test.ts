@@ -2,7 +2,7 @@
  * Route-layer tests for the assist-pool module.
  *
  * Covers the HTTP surface that service-layer tests can't see:
- *   - `requireAdminOrApiKey` → 401 without a cookie
+ *   - `requireTenantSessionOrApiKey` → 401 without a cookie
  *   - Zod input validation → 400
  *   - `ModuleError` → router `onError` status mapping
  *   - Path prefix (`/api/v1/assist-pool`) + happy-path end-to-end

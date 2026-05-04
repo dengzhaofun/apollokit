@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the collection module.
  *
- * Guarded by `requireAdminOrApiKey` — accepts either a Better Auth
+ * Guarded by `requireTenantSessionOrApiKey` — accepts either a Better Auth
  * session cookie or an admin API key (ak_). All handlers resolve the
  * organization from `getOrgId(c)`.
  *
@@ -15,7 +15,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { collectionService } from "./index";
@@ -191,7 +191,7 @@ function serializeMilestone(row: {
 
 export const collectionRouter = createAdminRouter();
 
-collectionRouter.use("*", requireAdminOrApiKey);
+collectionRouter.use("*", requireTenantSessionOrApiKey);
 collectionRouter.use("*", requirePermissionByMethod("collection"));
 
 // ─── Albums ──────────────────────────────────────────────────────

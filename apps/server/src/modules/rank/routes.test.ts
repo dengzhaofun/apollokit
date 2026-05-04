@@ -1,7 +1,7 @@
 /**
  * Route-layer tests for rank admin router.
  *
- * Thin — only HTTP edges: requireAdminOrApiKey 401, Zod 400, happy paths
+ * Thin — only HTTP edges: requireTenantSessionOrApiKey 401, Zod 400, happy paths
  * for /tier-configs create + /settle ingest + /seasons/activate. Full
  * business logic coverage is in service.test.ts.
  */

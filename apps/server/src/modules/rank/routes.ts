@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the rank module.
  *
- * Mounted at /api/v1/rank. Guarded by `requireAdminOrApiKey` so both
+ * Mounted at /api/v1/rank. Guarded by `requireTenantSessionOrApiKey` so both
  * session-cookie-authed dashboard users and server-to-server admin API
  * keys can drive CRUD. `tenantId` comes from
  * `c.var.session.activeTeamId` (synthesized by the guard for the
@@ -19,7 +19,7 @@ import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { rankService } from "./index";
 import type {
@@ -146,7 +146,7 @@ function serializeParticipant(row: RankMatchParticipant) {
 
 export const rankRouter = createAdminRouter();
 
-rankRouter.use("*", requireAdminOrApiKey);
+rankRouter.use("*", requireTenantSessionOrApiKey);
 rankRouter.use("*", requirePermissionByMethod("rank"));
 
 // ─── Settle match (server-to-server ingest) ─────────────────────

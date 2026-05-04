@@ -10,7 +10,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { lotteryService } from "./index";
@@ -229,7 +229,7 @@ function serializePullLog(row: {
 
 export const lotteryRouter = createAdminRouter();
 
-lotteryRouter.use("*", requireAdminOrApiKey);
+lotteryRouter.use("*", requireTenantSessionOrApiKey);
 lotteryRouter.use("*", requirePermissionByMethod("lottery"));
 
 // ─── Pool routes ──────────────────────────────────────────────

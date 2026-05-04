@@ -10,7 +10,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { itemService } from "./index";
 import {
@@ -105,7 +105,7 @@ function serializeDefinition(row: {
 
 export const itemRouter = createAdminRouter();
 
-itemRouter.use("*", requireAdminOrApiKey);
+itemRouter.use("*", requireTenantSessionOrApiKey);
 itemRouter.use("*", requirePermissionByMethod("item"));
 
 // ─── Category routes ──────────────────────────────────────────────

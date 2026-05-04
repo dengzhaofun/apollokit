@@ -29,7 +29,7 @@ import { auth } from "../auth";
 import type { HonoEnv } from "../env";
 import { UnauthorizedError } from "./auth-errors";
 
-export const requireAdminOrApiKey = createMiddleware<HonoEnv>(
+export const requireTenantSessionOrApiKey = createMiddleware<HonoEnv>(
   async (c, next) => {
     // Path 0: already authenticated by an upstream middleware
     // (e.g. `requirePublicApiKey` on `/api/v1/projects/:projectId/*`).
@@ -41,7 +41,7 @@ export const requireAdminOrApiKey = createMiddleware<HonoEnv>(
     // Path 1: session auth (resolved by global session middleware).
     // require-auth.ts already guards activeTeamId for routes that mount
     // it; here we still accept session-only requests so endpoints that
-    // need only requireAdminOrApiKey (without the stricter requireAuth)
+    // need only requireTenantSessionOrApiKey (without the stricter requireAuth)
     // keep working.
     if (c.var.user && c.var.session?.activeTeamId) {
       return next();

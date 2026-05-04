@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the dialogue module.
  *
- * Guarded by `requireAdminOrApiKey`. Pure CRUD over dialogue_scripts —
+ * Guarded by `requireTenantSessionOrApiKey`. Pure CRUD over dialogue_scripts —
  * player progress is managed via the client router, not here.
  */
 
@@ -10,7 +10,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { dialogueService } from "./index";
 import type { DialogueScript } from "./types";
@@ -44,7 +44,7 @@ function serializeScript(row: DialogueScript) {
 
 export const dialogueRouter = createAdminRouter();
 
-dialogueRouter.use("*", requireAdminOrApiKey);
+dialogueRouter.use("*", requireTenantSessionOrApiKey);
 dialogueRouter.use("*", requirePermissionByMethod("dialogue"));
 
 dialogueRouter.openapi(

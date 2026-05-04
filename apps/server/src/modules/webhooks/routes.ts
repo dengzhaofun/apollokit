@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the webhooks module.
  *
- * Every route is guarded by `requireAdminOrApiKey` (session cookie OR
+ * Every route is guarded by `requireTenantSessionOrApiKey` (session cookie OR
  * admin `ak_` API key). Secrets are returned in plaintext ONLY from
  * POST `/endpoints` and POST `/endpoints/{id}/rotate-secret`.
  */
@@ -15,7 +15,7 @@ import {
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { webhooksService } from "./index";
 import type {
@@ -84,7 +84,7 @@ function serializeDelivery(row: WebhooksDelivery) {
 
 export const webhooksRouter = createAdminRouter();
 
-webhooksRouter.use("*", requireAdminOrApiKey);
+webhooksRouter.use("*", requireTenantSessionOrApiKey);
 webhooksRouter.use("*", requirePermissionByMethod("webhooks"));
 
 // POST /endpoints — create (returns plaintext secret once)

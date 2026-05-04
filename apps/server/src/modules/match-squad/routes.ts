@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the match-squad module.
  *
- * Guarded by `requireAdminOrApiKey`. Exposes config CRUD, squad listing,
+ * Guarded by `requireTenantSessionOrApiKey`. Exposes config CRUD, squad listing,
  * and admin-level squad dissolution.
  */
 
@@ -10,7 +10,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { matchSquadService } from "./index";
 import {
@@ -101,7 +101,7 @@ function serializeSquad(row: {
 
 export const matchSquadRouter = createAdminRouter();
 
-matchSquadRouter.use("*", requireAdminOrApiKey);
+matchSquadRouter.use("*", requireTenantSessionOrApiKey);
 matchSquadRouter.use("*", requirePermissionByMethod("matchSquad"));
 
 // ─── Config CRUD ─────────────────────────────────────────────────

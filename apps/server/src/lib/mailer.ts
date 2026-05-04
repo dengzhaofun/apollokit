@@ -53,6 +53,16 @@ export type ResetPasswordEmailPayload = {
   resetUrl: string;
 };
 
+export type MauAlertEmailPayload = {
+  to: string;
+  teamName: string;
+  yearMonth: string;
+  threshold: number;
+  mau: number;
+  quota: number;
+  dashboardUrl: string;
+};
+
 type RenderedEmail = { subject: string; text: string; html: string };
 
 /**
@@ -196,5 +206,55 @@ export async function sendPasswordResetEmail(
     p.to,
     renderResetPasswordEmail(p),
     `[mailer:dev] Password-reset for ${p.to} → ${p.resetUrl}`,
+  );
+}
+
+function renderMauAlertEmail(p: MauAlertEmailPayload): RenderedEmail {
+  // Threshold tier dictates the headline tone — 80% is "heads up",
+  // 100% is "you've hit your plan", 150% is "you're 50% over".
+  const tier =
+    p.threshold >= 150
+      ? `is now ${p.threshold}% over plan`
+      : p.threshold >= 100
+        ? `has reached your plan limit`
+        : `is approaching your plan limit (${p.threshold}%)`;
+  const subject = `[apollokit] ${p.teamName} ${tier}`;
+  const text =
+    `Hi,\n\n` +
+    `Monthly active users for "${p.teamName}" ${tier} for ${p.yearMonth}.\n\n` +
+    `  MAU so far this month: ${p.mau.toLocaleString()}\n` +
+    `  Plan quota:            ${p.quota.toLocaleString()}\n\n` +
+    `Service is not interrupted — usage above quota will appear as ` +
+    `overage on your next invoice. Review your plan at:\n${p.dashboardUrl}\n`;
+  const html = `<!doctype html>
+<html><body style="font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #111; line-height: 1.5;">
+  <p>Monthly active users for <strong>${escapeHtml(p.teamName)}</strong> ${escapeHtml(tier)} for <strong>${escapeHtml(p.yearMonth)}</strong>.</p>
+  <table style="border-collapse: collapse; margin: 16px 0;">
+    <tr><td style="padding:4px 16px 4px 0;">MAU so far this month</td><td style="padding:4px 0;text-align:right;font-weight:600;">${p.mau.toLocaleString()}</td></tr>
+    <tr><td style="padding:4px 16px 4px 0;">Plan quota</td><td style="padding:4px 0;text-align:right;">${p.quota.toLocaleString()}</td></tr>
+  </table>
+  <p>Service is not interrupted — usage above quota will appear as overage on your next invoice.</p>
+  <p>
+    <a href="${encodeURI(p.dashboardUrl)}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;border-radius:6px;text-decoration:none;">
+      Review plan
+    </a>
+  </p>
+</body></html>`;
+  return { subject, text, html };
+}
+
+/**
+ * Send a threshold-crossing alert when a team's MAU passes a plan
+ * tier (80 / 100 / 150 %). Called by the hourly billing-monitor
+ * cron — dedup per (team, year_month, threshold) is enforced
+ * upstream by the `mau_alert` insert.
+ */
+export async function sendMauAlertEmail(
+  p: MauAlertEmailPayload,
+): Promise<void> {
+  await deliver(
+    p.to,
+    renderMauAlertEmail(p),
+    `[mailer:dev] MAU alert for ${p.to} (${p.teamName}, ${p.threshold}% of plan, mau=${p.mau}/${p.quota})`,
   );
 }

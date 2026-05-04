@@ -1,7 +1,7 @@
 /**
  * Event catalog admin routes.
  *
- * Mounted at `/api/v1/event-catalog`. Guarded by `requireAdminOrApiKey` —
+ * Mounted at `/api/v1/event-catalog`. Guarded by `requireTenantSessionOrApiKey` —
  * consistent with the task admin surface. Exposes the merged
  * internal-registry + external-DB view, plus a PATCH to upgrade an
  * external event to canonical.
@@ -11,7 +11,7 @@ import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 
 import { eventCatalogService } from "./index";
@@ -27,7 +27,7 @@ const TAG = "Event Catalog";
 
 export const eventCatalogRouter = createAdminRouter();
 
-eventCatalogRouter.use("*", requireAdminOrApiKey);
+eventCatalogRouter.use("*", requireTenantSessionOrApiKey);
 eventCatalogRouter.use("*", requirePermissionByMethod("eventCatalog"));
 
 eventCatalogRouter.openapi(

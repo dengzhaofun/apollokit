@@ -9,7 +9,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import type { RewardEntry } from "../../lib/rewards";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { exchangeService } from "./index";
 import {
@@ -96,7 +96,7 @@ function serializeOption(row: {
 
 export const exchangeRouter = createAdminRouter();
 
-exchangeRouter.use("*", requireAdminOrApiKey);
+exchangeRouter.use("*", requireTenantSessionOrApiKey);
 exchangeRouter.use("*", requirePermissionByMethod("exchange"));
 
 // ─── Config routes ────────────────────────────────────────────────

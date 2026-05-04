@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the media library module.
  *
  * Mounted under `/api/v1/media-library` and guarded by
- * `requireAdminOrApiKey`. One exception: the `/object/:key` fallback
+ * `requireTenantSessionOrApiKey`. One exception: the `/object/:key` fallback
  * proxy is registered without the guard so browsers can load images via
  * `<img src=...>` when `MEDIA_PUBLIC_URL_BASE` is not configured.
  */
@@ -13,7 +13,7 @@ import { getOrgId } from "../../lib/route-context";
 
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { mediaLibraryService } from "./index";
 import type { MediaAsset, MediaFolder } from "./types";
@@ -96,7 +96,7 @@ mediaLibraryRouter.get("/object/*", async (c) => {
 
 // ─── Guarded admin routes ──────────────────────────────────────
 
-mediaLibraryRouter.use("*", requireAdminOrApiKey);
+mediaLibraryRouter.use("*", requireTenantSessionOrApiKey);
 mediaLibraryRouter.use("*", requirePermissionByMethod("mediaLibrary"));
 
 // ─── Folders ───────────────────────────────────────────────────

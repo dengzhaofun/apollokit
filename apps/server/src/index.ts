@@ -17,6 +17,7 @@ import { logger } from "./lib/logger";
 import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { getClientOrgId } from "./lib/route-context";
 import { auditLog } from "./middleware/audit-log";
+import { mauTracker } from "./middleware/mau-tracker";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { sentryContext } from "./middleware/sentry-context";
@@ -24,6 +25,8 @@ import { session } from "./middleware/session";
 import { adminAgentRouter } from "./modules/admin-agent";
 import { analyticsRouter } from "./modules/analytics";
 import { auditLogRouter } from "./modules/audit-log";
+import { billingRouter } from "./modules/billing";
+import { platformAdminRouter } from "./modules/platform-admin";
 import {
   announcementRouter,
   announcementClientRouter,
@@ -265,6 +268,12 @@ app.use("*", requestLog);
 // (uses traceId). Self-skips reads, /api/auth/*, /api/v1/client/*, and
 // /api/v1/audit-logs/* (own router, defensive).
 app.use("*", auditLog);
+// MAU billing tracker. Must run AFTER `requireClientUser` (mounted inside
+// each client router) so `c.var.endUserId` is populated; reading it after
+// `await next()` works because each client router runs its own middleware
+// chain inside the global handler. Self-skips when there's no end-user
+// identity, no team, or the response is 5xx.
+app.use("*", mauTracker);
 
 // Business routes
 app.get("/", (c) => c.text("Hello apollokit 👋"));
@@ -282,6 +291,10 @@ app.route("/api/v1/announcement", announcementRouter);
 app.route("/api/v1/audit-logs", auditLogRouter);
 app.route("/api/v1/badge", badgeRouter);
 app.route("/api/v1/banner", bannerRouter);
+app.route("/api/v1/billing", billingRouter);
+// Platform-operator surface — cross-tenant queries gated by
+// `requirePlatformAdmin` (see middleware/require-platform-admin.ts).
+app.route("/api/v1/platform", platformAdminRouter);
 app.route("/api/v1/battle-pass", battlePassRouter);
 app.route("/api/v1/cdkey", cdkeyRouter);
 app.route("/api/v1/character", characterRouter);
@@ -329,7 +342,7 @@ app.route("/api/v1/triggers", triggersRouter);
 // 给集成方 / SDK 调用 —— `x-api-key` 鉴权 + URL 显式带 projectId。
 // `requirePublicApiKey` middleware 校验 key 的 metadata.teamId 与 URL
 // 的 projectId 匹配,然后合成 session(activeTeamId=projectId)交给同一组
-// 业务 router。每个 module 的 router 内部 `requireAdminOrApiKey` 看到
+// 业务 router。每个 module 的 router 内部 `requireTenantSessionOrApiKey` 看到
 // authMethod=admin-api-key + activeTeamId 已设,直接 short-circuit 不
 // 重复校验。一份业务逻辑两条入口路径(admin 隐式 / public 显式)。
 {

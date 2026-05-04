@@ -2,7 +2,7 @@
  * Admin-facing HTTP routes for the currency module.
  *
  * Covers: definition CRUD, wallet query, manual grant/deduct, ledger query.
- * Auth: mounted with `requireAdminOrApiKey` — same as the item module.
+ * Auth: mounted with `requireTenantSessionOrApiKey` — same as the item module.
  */
 
 import type { HonoEnv } from "../../env";
@@ -10,7 +10,7 @@ import { MoveBodySchema } from "../../lib/fractional-order";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { currencyService } from "./index";
 import {
@@ -98,7 +98,7 @@ function serializeLedgerEntry(row: {
 
 export const currencyRouter = createAdminRouter();
 
-currencyRouter.use("*", requireAdminOrApiKey);
+currencyRouter.use("*", requireTenantSessionOrApiKey);
 currencyRouter.use("*", requirePermissionByMethod("currency"));
 
 // ─── Definition CRUD ─────────────────────────────────────────────

@@ -8,6 +8,20 @@
       "when": 1777780944911,
       "tag": "20260503040224_wooden_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777929549647,
+      "tag": "20260504211909_fat_toad_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777931978295,
+      "tag": "20260504215938_unknown_galactus",
+      "breakpoints": true
     }
   ]
 }

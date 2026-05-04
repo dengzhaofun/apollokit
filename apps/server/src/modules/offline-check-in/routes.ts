@@ -17,7 +17,7 @@ import {
   ok,
 } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { offlineCheckInService } from "./index";
 import {
@@ -116,7 +116,7 @@ function serializeProgress(row: OfflineCheckInUserProgressRow) {
 
 export const offlineCheckInRouter = createAdminRouter();
 
-offlineCheckInRouter.use("*", requireAdminOrApiKey);
+offlineCheckInRouter.use("*", requireTenantSessionOrApiKey);
 offlineCheckInRouter.use("*", requirePermissionByMethod("offlineCheckIn"));
 
 // ─── Campaign CRUD ──────────────────────────────────────────────

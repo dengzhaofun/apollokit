@@ -103,7 +103,7 @@ export function createPublicRouter() {
 // We declare exactly two security schemes for the public OpenAPI doc:
 // `AdminApiKey` for `/api/<module>/*` and `ClientCredential` for
 // `/api/v1/client/<module>/*`. The admin auth middleware
-// (`require-admin-or-api-key.ts`) ALSO accepts a Better Auth session
+// (`require-tenant-session-or-api-key.ts`) ALSO accepts a Better Auth session
 // cookie — that path is what the in-product admin dashboard frontend
 // uses, and it works without OpenAPI declaring it. We deliberately do
 // NOT advertise the Session scheme here:

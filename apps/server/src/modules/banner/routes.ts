@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the banner module.
  *
- * Guarded by `requireAdminOrApiKey`. Structure mirrors mail/shop admin
+ * Guarded by `requireTenantSessionOrApiKey`. Structure mirrors mail/shop admin
  * routers — serialize → call service → onError maps ModuleError to JSON.
  */
 
@@ -13,7 +13,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
 import { ModuleError } from "../../lib/errors";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { LinkAction } from "../link/types";
 import { bannerService } from "./index";
@@ -80,7 +80,7 @@ function serializeBanner(row: Banner) {
 
 export const bannerRouter = createAdminRouter();
 
-bannerRouter.use("*", requireAdminOrApiKey);
+bannerRouter.use("*", requireTenantSessionOrApiKey);
 bannerRouter.use("*", requirePermissionByMethod("banner"));
 
 // ─── Groups ────────────────────────────────────────────────────

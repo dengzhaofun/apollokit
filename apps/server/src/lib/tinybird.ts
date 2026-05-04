@@ -775,6 +775,55 @@ export type TenantEventTimeseriesFastOutput = InferOutputRow<
   typeof tenantEventTimeseriesFast
 >;
 
+/**
+ * MAU reconcile path. Counts unique `end_user_id`s active for an
+ * organization in a given month, optionally bucketed per `path`
+ * prefix to spot which surfaces drove the activity. NOT used on
+ * the hot path — `mau_active_player` (Postgres) is the source of
+ * truth for billing. This pipe exists for two reasons:
+ *
+ *   - Reconciliation: ops can compare the Tinybird-derived count
+ *     against the PG count to spot tracker failures.
+ *   - Backfill: if `mau_active_player` is corrupted or wiped, this
+ *     is the canonical recovery query.
+ *
+ * Reads from `events` (broadest signal — any time we ingest an
+ * event tagged with `end_user_id`, that counts as activity). The
+ * end-user id stamping happens at the writer boundary already
+ * (see `request-log.ts` and analytics subscribers).
+ */
+export const tenantMauBreakdown = defineEndpoint("tenant_mau_breakdown", {
+  description:
+    "Per-org unique end_user_ids in [date_from, date_to). Reconcile / backfill path for MAU billing.",
+  params: {
+    org_id: p.string(),
+    date_from: p.dateTime(),
+    date_to: p.dateTime(),
+  },
+  nodes: [
+    node({
+      name: "endpoint",
+      sql: `
+        SELECT
+          uniqExact(end_user_id) AS mau,
+          count()                AS total_events
+        FROM events
+        WHERE org_id = {{String(org_id, '', required=True)}}
+          AND end_user_id != ''
+          AND timestamp >= parseDateTimeBestEffort({{String(date_from, '1970-01-01T00:00:00Z', required=True)}})
+          AND timestamp <  parseDateTimeBestEffort({{String(date_to,   '2099-12-31T23:59:59Z', required=True)}})
+      `,
+    }),
+  ],
+  output: {
+    mau: t.uint64(),
+    total_events: t.uint64(),
+  },
+});
+
+export type TenantMauBreakdownParams = InferParams<typeof tenantMauBreakdown>;
+export type TenantMauBreakdownOutput = InferOutputRow<typeof tenantMauBreakdown>;
+
 // ============================================================================
 // Client factory
 // ============================================================================
@@ -795,6 +844,7 @@ export const tinybirdResources = {
     tenantEventStream,
     eventsToHourlyAgg,
     experimentMetricBreakdown,
+    tenantMauBreakdown,
   },
 } as const;
 

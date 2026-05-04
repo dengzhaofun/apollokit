@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the friend gift module.
  *
- * Every route is guarded by `requireAdminOrApiKey`. Downstream handlers
+ * Every route is guarded by `requireTenantSessionOrApiKey`. Downstream handlers
  * read `getOrgId(c)` uniformly.
  */
 
@@ -11,7 +11,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { FriendGiftSettingsNotFound, ModuleError } from "./errors";
 import { friendGiftService } from "./index";
@@ -116,7 +116,7 @@ function serializeSend(row: {
 
 export const friendGiftRouter = createAdminRouter();
 
-friendGiftRouter.use("*", requireAdminOrApiKey);
+friendGiftRouter.use("*", requireTenantSessionOrApiKey);
 friendGiftRouter.use("*", requirePermissionByMethod("friendGift"));
 
 // ─── Settings ────────────────────────────────────────────────────

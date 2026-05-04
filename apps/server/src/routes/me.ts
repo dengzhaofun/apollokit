@@ -27,7 +27,8 @@ import { db } from "../db";
 import type { HonoEnv } from "../env";
 import { createAdminRouter, createAdminRoute } from "../lib/openapi";
 import { commonErrorResponses, envelopeOf, ok } from "../lib/response";
-import { requireAdminOrApiKey } from "../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../middleware/require-tenant-session-or-api-key";
+import { isPlatformAdmin } from "../middleware/require-platform-admin";
 import { member, teamMember } from "../schema";
 import { z } from "@hono/zod-openapi";
 
@@ -47,7 +48,7 @@ const ORG_LEVEL_KEYS = [
 const TAG = "Me";
 
 export const meRouter = createAdminRouter();
-meRouter.use("*", requireAdminOrApiKey);
+meRouter.use("*", requireTenantSessionOrApiKey);
 
 const CapabilityBagSchema = z
   .object({
@@ -63,6 +64,10 @@ const CapabilityBagSchema = z
           "Map of resource name → array of granted action names (excluding 'manage' which is implicit when present).",
         example: { activity: ["read", "write"], cdkey: ["read"] },
       }),
+    isPlatformAdmin: z.boolean().openapi({
+      description:
+        "True iff the current user has the platform-level `admin` role (Better Auth admin plugin's user.role). Drives visibility of the /admin/* surface in the SPA.",
+    }),
   })
   .openapi("CapabilityBag");
 
@@ -168,12 +173,16 @@ meRouter.openapi(
     // admin-api-key bypass: API keys are pre-scoped to a project and
     // implicitly trusted as full-manage. Return the union of all
     // resource:[manage] grants so the SDK / SPA flow still works.
+    // API keys are tenant-scoped, so isPlatformAdmin is always false
+    // on this path — platform staff use a session cookie, not a key.
     if (c.var.authMethod === "admin-api-key") {
       const allManage: Record<string, string[]> = {};
       for (const resource of BUSINESS_RESOURCES) {
         allManage[resource] = ["manage"];
       }
-      return c.json(ok({ role: null, capabilities: allManage }));
+      return c.json(
+        ok({ role: null, capabilities: allManage, isPlatformAdmin: false }),
+      );
     }
 
     const userId = c.var.user!.id;
@@ -187,12 +196,14 @@ meRouter.openapi(
     const orgRoleString = await getActiveOrgRole(userId, orgId);
     const teamBag = computeCapabilities(teamRoleString, BUSINESS_RESOURCES);
     const orgBag = computeCapabilities(orgRoleString, ORG_LEVEL_KEYS);
+    const platformRole = (c.var.user as { role?: string }).role ?? null;
     return c.json(
       ok({
         // Surface the team-level role (the daily one). Org-level role is
         // already inferable from the org-level capabilities.
         role: teamRoleString,
         capabilities: { ...teamBag, ...orgBag },
+        isPlatformAdmin: isPlatformAdmin(platformRole),
       }),
     );
   },

@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for client credential management.
  *
- * Protected by `requireAdminOrApiKey` — accessible via session or admin
+ * Protected by `requireTenantSessionOrApiKey` — accessible via session or admin
  * API key. These routes manage the publishable/secret key pairs that
  * C-end clients use for HMAC-authenticated requests.
  *
@@ -13,7 +13,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { clientCredentialService } from "./index";
 import {
@@ -56,7 +56,7 @@ function serialize(row: {
 
 export const clientCredentialRouter = createAdminRouter();
 
-clientCredentialRouter.use("*", requireAdminOrApiKey);
+clientCredentialRouter.use("*", requireTenantSessionOrApiKey);
 clientCredentialRouter.use("*", requirePermissionByMethod("clientCredentials"));
 
 // POST /client-credentials — create

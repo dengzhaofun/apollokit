@@ -21,6 +21,15 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   normalizedEmail: text("normalized_email").unique(),
+  // ⚠ Better Auth `admin` plugin columns — platform-level role (NOT to be
+  // confused with member.role / teamMember.role which are tenant-scoped).
+  // Bootstrap a platform admin via:
+  //   UPDATE "user" SET role = 'admin' WHERE email = '<your-email>';
+  // Day-to-day role changes happen via authClient.admin.setRole().
+  role: text("role").default("user").notNull(),
+  banned: boolean("banned").default(false).notNull(),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
 
 export const session = pgTable(
@@ -40,6 +49,11 @@ export const session = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     activeOrganizationId: text("active_organization_id"),
     activeTeamId: text("active_team_id"),
+    // Better Auth `admin` plugin: when an admin impersonates a user,
+    // the synthetic session row carries the impersonating admin's
+    // user.id here so audit hooks + UI can show the "you are
+    // impersonating" banner. Plain sessions leave it null.
+    impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );

@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import {
+  admin,
   haveIBeenPwned,
   lastLoginMethod,
   oneTap,
@@ -250,6 +251,22 @@ function buildAdminAuth() {
           references: "organization",
         },
       ]),
+      // Platform-level admin (NOT to be confused with the per-tenant
+      // org/team roles registered in `./auth/ac.ts`). Adds:
+      //   - user.role / banned / banReason / banExpires columns
+      //   - session.impersonatedBy column
+      //   - /api/auth/admin/* endpoints (listUsers / setRole /
+      //     banUser / impersonateUser / stopImpersonation / ...)
+      //
+      // Bootstrap is manual SQL — see schema/auth.ts header comment.
+      // We don't pass `adminUserIds` because the user.role path is the
+      // long-term mechanism and env-based id allowlist would just be a
+      // second source of truth to keep in sync.
+      admin({
+        adminRoles: ["admin"],
+        impersonationSessionDuration: 60 * 60, // 1h — short on purpose
+        defaultBanReason: "Terms of service violation",
+      }),
       // Block compromised passwords against haveibeenpwned (k-anonymous).
       haveIBeenPwned(),
       // Cookie-only (storeInDatabase defaults false) —— daveyplate AuthView
@@ -271,7 +288,7 @@ function buildAdminAuth() {
       // dev / staging 自查,prod 关掉 default reference UI(JSON 端点仍可
       // 取,因为 Better Auth 自身/admin agent 可能消费它);如果要在 prod
       // 也看 UI,可以另外在 `src/index.ts` 给 `/api/auth/reference` 套
-      // `requireAdminOrApiKey` 门禁,这里不强加。
+      // `requireTenantSessionOrApiKey` 门禁,这里不强加。
       //
       // 不要把生成的 spec 合并到 SDK 管线 —— 我们的 SDK 是 hey-api 从
       // openapi.json 生成,auth 路由有意不进 SDK(前端走 better-auth/client,
@@ -423,6 +440,36 @@ function buildAdminAuth() {
             resourceLabel: updated.name ?? null,
             action: "auth:api_key_update",
             path: "/api/auth/api-key/update",
+          });
+          return;
+        }
+
+        // ── admin plugin: impersonation ─────────────────────────────
+        // Both endpoints are sensitive (a platform admin assumes a
+        // tenant user's identity). We record the actor (the admin),
+        // the target (resourceId), and the moment so support sessions
+        // are auditable both for compliance and self-debugging.
+        if (path === "/admin/impersonate-user") {
+          const body = (ctx.body ?? {}) as { userId?: string };
+          if (!body.userId) return;
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:user",
+            resourceId: body.userId,
+            resourceLabel: null,
+            action: "auth:impersonate_start",
+            path: "/api/auth/admin/impersonate-user",
+          });
+          return;
+        }
+        if (path === "/admin/stop-impersonation") {
+          await insertAuditRow({
+            ...baseRow,
+            resourceType: "auth:session",
+            resourceId: null,
+            resourceLabel: null,
+            action: "auth:impersonate_stop",
+            path: "/api/auth/admin/stop-impersonation",
           });
           return;
         }

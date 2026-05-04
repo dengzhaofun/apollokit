@@ -7,7 +7,7 @@ import { PaginationQuerySchema } from "../../lib/pagination";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type { RewardEntry } from "../../lib/rewards";
 import { cdkeyService } from "./index";
@@ -93,7 +93,7 @@ function serializeLog(row: CdkeyRedemptionLog) {
 
 export const cdkeyRouter = createAdminRouter();
 
-cdkeyRouter.use("*", requireAdminOrApiKey);
+cdkeyRouter.use("*", requireTenantSessionOrApiKey);
 cdkeyRouter.use("*", requirePermissionByMethod("cdkey"));
 
 // ─── Batch CRUD ────────────────────────────────────────────────────

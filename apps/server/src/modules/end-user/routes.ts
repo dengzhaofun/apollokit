@@ -17,7 +17,7 @@
  *   GET    /:id/accounts             — list auth accounts for a single player
  *   GET    /verifications            — list email verifications for the org
  *
- * All routes are behind `requireAdminOrApiKey` — tenant backends hit
+ * All routes are behind `requireTenantSessionOrApiKey` — tenant backends hit
  * these with their admin API key, never with the cpk_ publishable key.
  */
 
@@ -25,7 +25,7 @@ import type { HonoEnv } from "../../env";
 import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 
 import { endUserService } from "./index";
@@ -53,7 +53,7 @@ const TAG = "End User";
 
 export const endUserRouter = createAdminRouter();
 
-endUserRouter.use("*", requireAdminOrApiKey);
+endUserRouter.use("*", requireTenantSessionOrApiKey);
 endUserRouter.use("*", requirePermissionByMethod("endUser"));
 
 // POST /sync — upsert from tenant identity

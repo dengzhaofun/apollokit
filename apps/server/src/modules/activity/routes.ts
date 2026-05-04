@@ -14,7 +14,7 @@ import { NullDataEnvelopeSchema, commonErrorResponses, envelopeOf, ok } from "..
 import { getOrgId } from "../../lib/route-context";
 import type { HonoEnv } from "../../env";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import type {
   ActivityConfig,
@@ -115,7 +115,7 @@ function serializeJoinResult(row: ActivityMemberRow) {
 
 export const activityRouter = createAdminRouter();
 
-activityRouter.use("*", requireAdminOrApiKey);
+activityRouter.use("*", requireTenantSessionOrApiKey);
 activityRouter.use("*", requirePermissionByMethod("activity"));
 
 // ─── Activity CRUD ──────────────────────────────────────────────

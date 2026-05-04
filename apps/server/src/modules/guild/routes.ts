@@ -1,7 +1,7 @@
 /**
  * Admin-facing HTTP routes for the guild module.
  *
- * Every route is guarded by `requireAdminOrApiKey`. Downstream handlers
+ * Every route is guarded by `requireTenantSessionOrApiKey`. Downstream handlers
  * read `getOrgId(c)` without null checks.
  */
 
@@ -9,7 +9,7 @@ import type { HonoEnv } from "../../env";
 import { commonErrorResponses, envelopeOf, ok } from "../../lib/response";
 import { getOrgId } from "../../lib/route-context";
 import { createAdminRouter, createAdminRoute } from "../../lib/openapi";
-import { requireAdminOrApiKey } from "../../middleware/require-admin-or-api-key";
+import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { guildService } from "./index";
 import {
@@ -179,7 +179,7 @@ function serializeContributionLog(row: {
 
 export const guildRouter = createAdminRouter();
 
-guildRouter.use("*", requireAdminOrApiKey);
+guildRouter.use("*", requireTenantSessionOrApiKey);
 guildRouter.use("*", requirePermissionByMethod("guild"));
 
 // ─── Settings ────────────────────────────────────────────────────
