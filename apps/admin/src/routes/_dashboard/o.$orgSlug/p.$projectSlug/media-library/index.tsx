@@ -4,7 +4,7 @@ import { useState } from "react"
 import { AssetGrid } from "#/components/media-library/AssetGrid"
 import { FolderTree } from "#/components/media-library/FolderTree"
 import { UploadButton } from "#/components/media-library/UploadButton"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/media-library/")({
   component: MediaLibraryPage,
@@ -17,11 +17,10 @@ function MediaLibraryPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
-          <UploadButton folderId={selectedFolderId} />
-        </div>
-      </PageHeaderActions>
+      <PageHeader
+        title="媒体库"
+        actions={<UploadButton folderId={selectedFolderId} />}
+      />
 
       <main className="flex flex-1 overflow-hidden">
         <aside className="w-64 shrink-0 overflow-y-auto border-r bg-card">

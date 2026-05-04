@@ -10,7 +10,7 @@ import * as m from "#/paraglide/messages.js"
 import { CdkeyBatchForm } from "#/components/cdkey/BatchForm"
 import { useBatchForm } from "#/components/cdkey/use-batch-form"
 import { DataTable } from "#/components/data-table/DataTable"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
@@ -122,16 +122,17 @@ function CdkeyListPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+      <PageHeader
+        title="激活码"
+        actions={
           <Can resource="cdkey" action="write" mode="disable">
             <Button size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               {m.cdkey_new_batch()}
             </Button>
           </Can>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 p-6">
         <DataTable

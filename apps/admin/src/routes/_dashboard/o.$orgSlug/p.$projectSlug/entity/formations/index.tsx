@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormationConfigTable } from "#/components/entity/FormationConfigTable"
 import { listSearchSchema } from "#/lib/list-search"
@@ -17,8 +17,9 @@ function EntityFormationsPage() {
   const { orgSlug, projectSlug } = useTenantParams()
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto">
+      <PageHeader
+        title={m.entity_formations()}
+        actions={
           <Button
             render={
               <Link to="/o/$orgSlug/p/$projectSlug/entity/formations/create" params={{ orgSlug, projectSlug }}>
@@ -28,8 +29,8 @@ function EntityFormationsPage() {
             }
             size="sm"
           />
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 p-6">
         <FormationConfigTable route={Route} />

@@ -2,7 +2,7 @@ import { useTenantParams } from "#/hooks/use-tenant-params"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -56,14 +56,18 @@ function TriggersListPage() {
   const archive = useArchiveTriggerRule()
 
   return (
-    <main className="flex-1 space-y-4 p-6">
-      <PageHeaderActions>
-        <Button onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/new", params: { orgSlug, projectSlug } })}>
-          <Plus className="mr-1 h-4 w-4" />
-          {m.triggers_new_rule()}
-        </Button>
-      </PageHeaderActions>
+    <>
+      <PageHeader
+        title="触发器"
+        actions={
+          <Button onClick={() => navigate({ to: "/o/$orgSlug/p/$projectSlug/triggers/new", params: { orgSlug, projectSlug } })}>
+            <Plus className="mr-1 h-4 w-4" />
+            {m.triggers_new_rule()}
+          </Button>
+        }
+      />
 
+      <main className="flex-1 space-y-4 p-6">
       <p className="max-w-3xl text-sm text-muted-foreground">
         {m.triggers_description()}
       </p>
@@ -173,5 +177,6 @@ function TriggersListPage() {
         </div>
       )}
     </main>
+    </>
   )
 }

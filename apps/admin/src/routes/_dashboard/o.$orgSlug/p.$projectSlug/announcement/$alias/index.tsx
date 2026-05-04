@@ -26,7 +26,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/announcement/$alias/")({
   component: AnnouncementDetailPage,
 })
@@ -41,61 +41,63 @@ function AnnouncementDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/announcement" params={{ orgSlug, projectSlug }}>
-              <ChevronLeft className="size-4" />
-              {m.announcement_back_to_list()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        <div className="ml-auto">
-          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-            <AlertDialogTrigger
+    <PageShell>
+      <PageHeader
+        title={m.announcement_back_to_list()}
+        actions={
+          <>
+            <Button
               render={
-                <Button size="sm" variant="destructive">
-                  <Trash2 className="size-4" />
-                  {m.announcement_delete_button()}
-                </Button>
+                <Link to="/o/$orgSlug/p/$projectSlug/announcement" params={{ orgSlug, projectSlug }}>
+                  <ChevronLeft className="size-4" />
+                  {m.announcement_back_to_list()}
+                </Link>
               }
+              variant="ghost" size="sm"
             />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {m.announcement_delete_confirm_title()}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {m.announcement_delete_confirm_desc()}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>
-                  {m.announcement_cancel()}
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={async () => {
-                    try {
-                      await deleteMutation.mutateAsync(alias)
-                      toast.success(m.announcement_deleted())
-                      navigate({ to: "/o/$orgSlug/p/$projectSlug/announcement" , params: { orgSlug, projectSlug }})
-                    } catch (err) {
-                      if (err instanceof ApiError) toast.error(err.body.error)
-                      else toast.error(m.announcement_failed_delete())
-                    }
-                  }}
-                >
-                  {m.announcement_delete_confirm_action()}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogTrigger
+                render={
+                  <Button size="sm" variant="destructive">
+                    <Trash2 className="size-4" />
+                    {m.announcement_delete_button()}
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {m.announcement_delete_confirm_title()}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {m.announcement_delete_confirm_desc()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {m.announcement_cancel()}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        await deleteMutation.mutateAsync(alias)
+                        toast.success(m.announcement_deleted())
+                        navigate({ to: "/o/$orgSlug/p/$projectSlug/announcement" , params: { orgSlug, projectSlug }})
+                      } catch (err) {
+                        if (err instanceof ApiError) toast.error(err.body.error)
+                        else toast.error(m.announcement_failed_delete())
+                      }
+                    }}
+                  >
+                    {m.announcement_delete_confirm_action()}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        }
+      />
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.announcement_loading()}
@@ -125,8 +127,8 @@ function AnnouncementDetailPage() {
             />
           </div>
         ) : null}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { Play, ArrowLeft, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import {
@@ -56,33 +56,33 @@ function CheckInPreviewPage() {
 
   if (isPending) {
     return (
-      <>
+      <PageShell>
         <Header configId="" />
-        <main className="flex h-40 items-center justify-center text-muted-foreground">
+        <PageBody className="flex h-40 items-center justify-center text-muted-foreground">
           {m.common_loading()}
-        </main>
-      </>
+        </PageBody>
+      </PageShell>
     )
   }
 
   if (error || !config) {
     return (
-      <>
+      <PageShell>
         <Header configId="" />
-        <main className="flex h-40 items-center justify-center text-destructive">
+        <PageBody className="flex h-40 items-center justify-center text-destructive">
           {error?.message ?? "Config not found"}
-        </main>
-      </>
+        </PageBody>
+      </PageShell>
     )
   }
 
   const latestResult = results[0] ?? null
 
   return (
-    <>
+    <PageShell>
       <Header configId={configId} />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Config summary bar */}
           <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card px-4 py-3 shadow-sm">
@@ -256,8 +256,8 @@ function CheckInPreviewPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 
@@ -272,16 +272,21 @@ function getResetModeLabels(): Record<string, string> {
 function Header({ configId }: { configId: string }) {
   const { orgSlug, projectSlug } = useTenantParams()
   return (
-    <PageHeaderActions>
-      <Button
-        render={
-          <Link to="/o/$orgSlug/p/$projectSlug/check-in/$configId" params={{ orgSlug, projectSlug, configId }}>
-            <ArrowLeft className="size-4" />
-          </Link>
-        }
-        variant="ghost" size="sm" className="-ml-2"
-      />
-    </PageHeaderActions>
+    <PageHeader
+      title={m.checkin_check_in()}
+      actions={
+        <>
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/check-in/$configId" params={{ orgSlug, projectSlug, configId }}>
+                <ArrowLeft className="size-4" />
+              </Link>
+            }
+            variant="ghost" size="sm" className="-ml-2"
+          />
+        </>
+      }
+    />
   )
 }
 

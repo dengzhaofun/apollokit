@@ -31,7 +31,6 @@ import { Gift, Lock, Mail, Maximize2, Minimize2, Plus, Zap } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 import { nodeTypes } from "#/components/triggers/nodes"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -281,15 +280,15 @@ export function RuleEditor({ rule }: RuleEditorProps) {
 
   return (
     <main className="flex-1 flex flex-col p-6 gap-4 min-h-0">
-      <PageHeaderActions>
-        <Button variant="ghost" onClick={() => navigate({ 
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" onClick={() => navigate({
 to: "/o/$orgSlug/p/$projectSlug/triggers" , params: { orgSlug, projectSlug }})}>
           {m.triggers_editor_back()}
         </Button>
         <Button onClick={handleSave} disabled={create.isPending || update.isPending}>
           {m.triggers_editor_save()}
         </Button>
-      </PageHeaderActions>
+      </div>
 
       <Card>
         <CardHeader>

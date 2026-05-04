@@ -15,7 +15,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/shop/$productId/")({
   component: ShopProductEditPage,
 })
@@ -29,47 +29,49 @@ function ShopProductEditPage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          {product?.productType === "growth_pack" ? (
-            <Button
-              render={
-                <Link
-                  to="/o/$orgSlug/p/$projectSlug/shop/$productId/stages"
-                  params={{ orgSlug, projectSlug, productId }}
-                >
-                  <Layers className="size-4" />
-                  {m.shop_manage_stages()}
-                </Link>
-              }
-              variant="outline" size="sm"
-            />
-          ) : null}
-          {product ? (
-            <ShopDeleteDialog
-              title={m.shop_delete_product_title()}
-              description={m.shop_delete_product_desc()}
-              isPending={deleteMutation.isPending}
-              onConfirm={async () => {
-                try {
-                  await deleteMutation.mutateAsync(product.id)
-                  toast.success(m.shop_product_deleted())
-                  navigate({ to: "/o/$orgSlug/p/$projectSlug/shop" , params: { orgSlug, projectSlug }})
-                } catch (err) {
-                  toast.error(
-                    err instanceof ApiError
-                      ? err.body.error
-                      : m.shop_failed_delete_product(),
-                  )
+    <PageShell>
+      <PageHeader
+        title={product?.name ?? productId}
+        actions={
+          <>
+            {product?.productType === "growth_pack" ? (
+              <Button
+                render={
+                  <Link
+                    to="/o/$orgSlug/p/$projectSlug/shop/$productId/stages"
+                    params={{ orgSlug, projectSlug, productId }}
+                  >
+                    <Layers className="size-4" />
+                    {m.shop_manage_stages()}
+                  </Link>
                 }
-              }}
-            />
-          ) : null}
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+                variant="outline" size="sm"
+              />
+            ) : null}
+            {product ? (
+              <ShopDeleteDialog
+                title={m.shop_delete_product_title()}
+                description={m.shop_delete_product_desc()}
+                isPending={deleteMutation.isPending}
+                onConfirm={async () => {
+                  try {
+                    await deleteMutation.mutateAsync(product.id)
+                    toast.success(m.shop_product_deleted())
+                    navigate({ to: "/o/$orgSlug/p/$projectSlug/shop" , params: { orgSlug, projectSlug }})
+                  } catch (err) {
+                    toast.error(
+                      err instanceof ApiError
+                        ? err.body.error
+                        : m.shop_failed_delete_product(),
+                    )
+                  }
+                }}
+              />
+            ) : null}
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-3xl space-y-4">
           <Button
             render={
@@ -113,8 +115,8 @@ function ShopProductEditPage() {
             </div>
           )}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

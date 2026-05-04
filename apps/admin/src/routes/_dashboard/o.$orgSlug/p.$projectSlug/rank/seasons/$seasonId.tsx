@@ -34,8 +34,8 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { RankSeasonStatus } from "#/lib/types/rank"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/seasons/$seasonId")({
   component: RankSeasonDetailPage,
 })
@@ -70,70 +70,73 @@ function RankSeasonDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          {season?.status === "upcoming" ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={activate.isPending}
-              onClick={async () => {
-                try {
-                  await activate.mutateAsync(season.id)
-                  toast.success(m.rank_season_activated())
-                } catch (err) {
-                  if (err instanceof ApiError) toast.error(err.body.error)
-                  else toast.error((err as Error).message)
-                }
-              }}
-            >
-              <Play className="size-3.5" />
-              {m.rank_season_activate()}
-            </Button>
-          ) : null}
-          {season?.status === "active" ? (
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    <Flag className="size-3.5" />
-                    {m.rank_season_finalize()}
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {m.rank_season_finalize_title()}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {m.rank_season_finalize_desc()}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      try {
-                        const r = await finalize.mutateAsync(season.id)
-                        toast.success(
-                          m.rank_season_finalized({ count: r.snapshotCount }),
-                        )
-                      } catch (err) {
-                        if (err instanceof ApiError)
-                          toast.error(err.body.error)
-                        else toast.error((err as Error).message)
-                      }
-                    }}
-                  >
-                    {m.rank_season_finalize_confirm()}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
-        </div>
-      </PageHeaderActions>
+      <PageHeader
+        title={season?.name ?? m.rank_loading()}
+        actions={
+          <>
+            {season?.status === "upcoming" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={activate.isPending}
+                onClick={async () => {
+                  try {
+                    await activate.mutateAsync(season.id)
+                    toast.success(m.rank_season_activated())
+                  } catch (err) {
+                    if (err instanceof ApiError) toast.error(err.body.error)
+                    else toast.error((err as Error).message)
+                  }
+                }}
+              >
+                <Play className="size-3.5" />
+                {m.rank_season_activate()}
+              </Button>
+            ) : null}
+            {season?.status === "active" ? (
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="outline" size="sm">
+                      <Flag className="size-3.5" />
+                      {m.rank_season_finalize()}
+                    </Button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {m.rank_season_finalize_title()}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {m.rank_season_finalize_desc()}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{m.rank_cancel()}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          const r = await finalize.mutateAsync(season.id)
+                          toast.success(
+                            m.rank_season_finalized({ count: r.snapshotCount }),
+                          )
+                        } catch (err) {
+                          if (err instanceof ApiError)
+                            toast.error(err.body.error)
+                          else toast.error((err as Error).message)
+                        }
+                      }}
+                    >
+                      {m.rank_season_finalize_confirm()}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : null}
+          </>
+        }
+      />
 
       <main className="flex-1 space-y-6 p-6">
         {isPending ? (

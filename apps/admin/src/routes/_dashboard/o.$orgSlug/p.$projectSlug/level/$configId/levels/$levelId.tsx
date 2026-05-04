@@ -33,8 +33,8 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 import type { RewardEntry, StarRewardTier } from "#/lib/types/level"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/level/$configId/levels/$levelId",
 )({
@@ -68,33 +68,36 @@ function LevelDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-        <div className="ml-auto">
-          <CollectionDeleteDialog
-            title={m.level_edit_level()}
-            description={m.level_delete_level_desc()}
-            onConfirm={async () => {
-              try {
-                await deleteMutation.mutateAsync({ id: levelId, configId })
-                toast.success(m.level_level_deleted())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/level/$configId", params: { orgSlug, projectSlug, configId } })
-              } catch (err) {
-                if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error(m.level_failed_delete())
+      <PageHeader
+        title={level.name}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/level/$configId" params={{ orgSlug, projectSlug, configId }}>
+                  <ArrowLeft className="size-4" />
+                </Link>
               }
-            }}
-            isPending={deleteMutation.isPending}
-          />
-        </div>
-      </PageHeaderActions>
+              variant="ghost" size="icon"
+            />
+            <CollectionDeleteDialog
+              title={m.level_edit_level()}
+              description={m.level_delete_level_desc()}
+              onConfirm={async () => {
+                try {
+                  await deleteMutation.mutateAsync({ id: levelId, configId })
+                  toast.success(m.level_level_deleted())
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/level/$configId", params: { orgSlug, projectSlug, configId } })
+                } catch (err) {
+                  if (err instanceof ApiError) toast.error(err.body.error)
+                  else toast.error(m.level_failed_delete())
+                }
+              }}
+              isPending={deleteMutation.isPending}
+            />
+          </>
+        }
+      />
 
       <main className="flex-1 p-6">
         <LevelEditForm

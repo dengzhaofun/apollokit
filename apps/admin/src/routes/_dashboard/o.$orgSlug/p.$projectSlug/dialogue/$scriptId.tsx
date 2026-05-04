@@ -25,7 +25,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/dialogue/$scriptId")({
   component: DialogueDetailPage,
 })
@@ -51,34 +51,36 @@ function DialogueDetailPage() {
   }
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/dialogue" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.dialogue_back_to_scripts()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-        {script && !script.alias ? (
-          <Badge variant="outline">{m.dialogue_draft_badge()}</Badge>
-        ) : null}
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="size-4" />
-            {m.common_delete()}
-          </Button>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={script?.alias ?? scriptId}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/dialogue" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                  {m.dialogue_back_to_scripts()}
+                </Link>
+              }
+              variant="ghost" size="sm"
+            />
+            {script && !script.alias ? (
+              <Badge variant="outline">{m.dialogue_draft_badge()}</Badge>
+            ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" />
+              {m.common_delete()}
+            </Button>
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-7xl">
           {isPending || !script ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">
@@ -104,7 +106,7 @@ function DialogueDetailPage() {
             />
           )}
         </div>
-      </main>
+      </PageBody>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
@@ -127,6 +129,6 @@ function DialogueDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageShell>
   )
 }

@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { FlaskConical, Plus } from "lucide-react"
 
 import { BadgeNodeTable } from "#/components/badge/BadgeNodeTable"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { useBadgeNodes } from "#/hooks/use-badge"
 import * as m from "#/paraglide/messages.js"
@@ -18,8 +18,9 @@ function BadgeListPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <div className="ml-auto flex gap-2">
+      <PageHeader
+        title="徽章"
+        actions={<>
           <Button
             render={
               <Link to="/o/$orgSlug/p/$projectSlug/badge/inspector" params={{ orgSlug, projectSlug }}>
@@ -38,8 +39,8 @@ function BadgeListPage() {
             }
             size="sm"
           />
-        </div>
-      </PageHeaderActions>
+        </>}
+      />
 
       <main className="flex-1 p-6">
         {isPending ? (

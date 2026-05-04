@@ -4,7 +4,7 @@ import { Send, Trash2, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EntryForm } from "#/components/cms/EntryForm"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import { Can } from "#/components/auth/Can"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
@@ -56,96 +56,98 @@ function CmsEntryEditPage() {
     !!type && !!entry && entry.schemaVersion !== type.schemaVersion
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto flex items-center gap-2">
-          {entry ? (
-            <Badge variant={entry.status === "published" ? "default" : "outline"}>
-              {entry.status}
-            </Badge>
-          ) : null}
-          {entry ? (
-            <Can resource="cms" action="write" mode="disable">
-              {entry.status === "published" ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      await unpublish.mutateAsync(entryAlias)
-                      toast.success(m.cms_entry_unpublished())
-                    } catch (err) {
-                      if (err instanceof ApiError) toast.error(err.body.error)
-                    }
-                  }}
-                >
-                  <Undo2 className="size-4" />
-                  {m.cms_entry_unpublish()}
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      await publish.mutateAsync(entryAlias)
-                      toast.success(m.cms_entry_published())
-                    } catch (err) {
-                      if (err instanceof ApiError) toast.error(err.body.error)
-                    }
-                  }}
-                >
-                  <Send className="size-4" />
-                  {m.cms_entry_publish()}
-                </Button>
-              )}
-            </Can>
-          ) : null}
-          <Can resource="cms" action="write" mode="disable">
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="size-4 text-destructive" />
-                    {m.common_delete()}
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {m.cms_entry_delete_confirm_title()}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {m.cms_entry_delete_confirm_desc()}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                  <AlertDialogAction
+    <PageShell>
+      <PageHeader
+        title={entryAlias}
+        actions={
+          <>
+            {entry ? (
+              <Badge variant={entry.status === "published" ? "default" : "outline"}>
+                {entry.status}
+              </Badge>
+            ) : null}
+            {entry ? (
+              <Can resource="cms" action="write" mode="disable">
+                {entry.status === "published" ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={async () => {
                       try {
-                        await del.mutateAsync(entryAlias)
-                        toast.success(m.cms_entry_deleted())
-                        navigate({
-                          to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
-                          params: { orgSlug, projectSlug, typeAlias },
-                        })
+                        await unpublish.mutateAsync(entryAlias)
+                        toast.success(m.cms_entry_unpublished())
                       } catch (err) {
-                        if (err instanceof ApiError)
-                          toast.error(err.body.error)
+                        if (err instanceof ApiError) toast.error(err.body.error)
                       }
                     }}
                   >
-                    {m.common_delete()}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </Can>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 space-y-3 p-6">
+                    <Undo2 className="size-4" />
+                    {m.cms_entry_unpublish()}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await publish.mutateAsync(entryAlias)
+                        toast.success(m.cms_entry_published())
+                      } catch (err) {
+                        if (err instanceof ApiError) toast.error(err.body.error)
+                      }
+                    }}
+                  >
+                    <Send className="size-4" />
+                    {m.cms_entry_publish()}
+                  </Button>
+                )}
+              </Can>
+            ) : null}
+            <Can resource="cms" action="write" mode="disable">
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="outline" size="sm">
+                      <Trash2 className="size-4 text-destructive" />
+                      {m.common_delete()}
+                    </Button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {m.cms_entry_delete_confirm_title()}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {m.cms_entry_delete_confirm_desc()}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          await del.mutateAsync(entryAlias)
+                          toast.success(m.cms_entry_deleted())
+                          navigate({
+                            to: "/o/$orgSlug/p/$projectSlug/cms/$typeAlias",
+                            params: { orgSlug, projectSlug, typeAlias },
+                          })
+                        } catch (err) {
+                          if (err instanceof ApiError)
+                            toast.error(err.body.error)
+                        }
+                      }}
+                    >
+                      {m.common_delete()}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </Can>
+          </>
+        }
+      />
+      <PageBody className="space-y-3">
         {schemaDrift ? (
           <p className="mx-auto max-w-4xl rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
             {m.cms_entry_schema_drift({
@@ -186,7 +188,7 @@ function CmsEntryEditPage() {
             />
           )}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

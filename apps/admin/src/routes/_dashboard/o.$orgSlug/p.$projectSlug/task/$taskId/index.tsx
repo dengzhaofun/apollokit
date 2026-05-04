@@ -3,8 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { confirm } from "#/components/patterns"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { confirm, PageHeader } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
@@ -50,13 +49,14 @@ function TaskDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        {definition.visibility === "assigned" && (
-          <Badge variant="outline" className="ml-2">
+      <PageHeader
+        title={definition.name}
+        badge={definition.visibility === "assigned" ? (
+          <Badge variant="outline">
             {m.task_visibility_assigned_badge()}
           </Badge>
-        )}
-        <div className="ml-auto">
+        ) : undefined}
+        actions={
           <Button
             variant="destructive"
             size="sm"
@@ -84,8 +84,8 @@ function TaskDetailPage() {
           >
             {m.common_delete()}
           </Button>
-        </div>
-      </PageHeaderActions>
+        }
+      />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl">

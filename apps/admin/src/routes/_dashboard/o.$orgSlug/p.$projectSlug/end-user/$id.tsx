@@ -22,7 +22,7 @@ import {
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader } from "#/components/patterns"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,17 +98,20 @@ function EndUserDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/end-user" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.end_user_detail_back()}
-            </Link>
-          }
-          variant="ghost" size="sm"
-        />
-      </PageHeaderActions>
+      <PageHeader
+        title="用户详情"
+        actions={
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/end-user" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+                {m.end_user_detail_back()}
+              </Link>
+            }
+            variant="ghost" size="sm"
+          />
+        }
+      />
 
       <main className="flex-1 p-6">
         {isPending ? (

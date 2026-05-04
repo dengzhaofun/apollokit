@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { TypeForm } from "#/components/cms/TypeForm"
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 import { Can } from "#/components/auth/Can"
 import { Button } from "#/components/ui/button"
 import {
@@ -39,52 +39,54 @@ function CmsTypeEditPage() {
   const del = useDeleteCmsType()
 
   return (
-    <>
-      <PageHeaderActions>
-        <div className="ml-auto">
-          <Can resource="cms" action="write" mode="disable">
-            <AlertDialog>
-              <AlertDialogTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="size-4 text-destructive" />
-                    {m.common_delete()}
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {m.cms_type_delete_confirm_title()}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {m.cms_type_delete_confirm_desc()}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      try {
-                        await del.mutateAsync(alias)
-                        toast.success(m.cms_type_deleted())
-                        navigate({ to: "/o/$orgSlug/p/$projectSlug/cms" , params: { orgSlug, projectSlug }})
-                      } catch (err) {
-                        if (err instanceof ApiError)
-                          toast.error(err.body.error)
-                      }
-                    }}
-                  >
-                    {m.common_delete()}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </Can>
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+    <PageShell>
+      <PageHeader
+        title={alias}
+        actions={
+          <>
+            <Can resource="cms" action="write" mode="disable">
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button variant="outline" size="sm">
+                      <Trash2 className="size-4 text-destructive" />
+                      {m.common_delete()}
+                    </Button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {m.cms_type_delete_confirm_title()}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {m.cms_type_delete_confirm_desc()}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          await del.mutateAsync(alias)
+                          toast.success(m.cms_type_deleted())
+                          navigate({ to: "/o/$orgSlug/p/$projectSlug/cms" , params: { orgSlug, projectSlug }})
+                        } catch (err) {
+                          if (err instanceof ApiError)
+                            toast.error(err.body.error)
+                        }
+                      }}
+                    >
+                      {m.common_delete()}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </Can>
+          </>
+        }
+      />
+      <PageBody>
         <div className="mx-auto max-w-4xl rounded-xl border bg-card p-6 shadow-sm">
           {isPending ? (
             <div className="text-sm text-muted-foreground">
@@ -120,7 +122,7 @@ function CmsTypeEditPage() {
             />
           )}
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

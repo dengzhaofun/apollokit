@@ -18,8 +18,8 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { EventFieldRow } from "#/lib/types/event-catalog"
 import * as m from "#/paraglide/messages.js"
+import { PageHeader } from "#/components/patterns"
 
-import { PageHeaderActions } from "#/components/PageHeader"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/event-catalog/$name/")({
   component: EventCatalogDetailPage,
 })
@@ -64,19 +64,21 @@ function EventCatalogDetailPage() {
 
   return (
     <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/event-catalog" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-              {m.common_back()}
-            </Link>
-          }
-          variant="ghost"
-          size="sm"
-        />
-        <h1 className="text-sm font-semibold font-mono">{name}</h1>
-      </PageHeaderActions>
+      <PageHeader
+        title={<span className="font-mono">{name}</span>}
+        actions={
+          <Button
+            render={
+              <Link to="/o/$orgSlug/p/$projectSlug/event-catalog" params={{ orgSlug, projectSlug }}>
+                <ArrowLeft className="size-4" />
+                {m.common_back()}
+              </Link>
+            }
+            variant="ghost"
+            size="sm"
+          />
+        }
+      />
 
       <main className="flex-1 space-y-6 p-6">
         {isPending ? (

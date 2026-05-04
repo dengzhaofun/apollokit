@@ -59,7 +59,7 @@ import type {
 import type { ItemDefinition } from "#/lib/types/item"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeaderActions } from "#/components/PageHeader"
+import { PageHeader, PageBody, PageShell } from "#/components/patterns"
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/collection/$albumId/")({
   component: CollectionAlbumDetailPage,
 })
@@ -105,37 +105,39 @@ function CollectionAlbumDetailPage() {
   }
 
   return (
-    <>
-      <PageHeaderActions>
-        <Button
-          render={
-            <Link to="/o/$orgSlug/p/$projectSlug/collection" params={{ orgSlug, projectSlug }}>
-              <ArrowLeft className="size-4" />
-            </Link>
-          }
-          variant="ghost" size="icon"
-        />
-        <div className="ml-auto">
-          <CollectionDeleteDialog
-            title={m.collection_delete_album()}
-            description={m.collection_delete_album_desc()}
-            onConfirm={async () => {
-              try {
-                await deleteAlbumMutation.mutateAsync(album.id)
-                toast.success(m.collection_album_deleted())
-                navigate({ to: "/o/$orgSlug/p/$projectSlug/collection" , params: { orgSlug, projectSlug }})
-              } catch (err) {
-                if (err instanceof ApiError) toast.error(err.body.error)
-                else toast.error(m.collection_failed_delete())
+    <PageShell>
+      <PageHeader
+        title={album.name}
+        actions={
+          <>
+            <Button
+              render={
+                <Link to="/o/$orgSlug/p/$projectSlug/collection" params={{ orgSlug, projectSlug }}>
+                  <ArrowLeft className="size-4" />
+                </Link>
               }
-            }}
-            isPending={deleteAlbumMutation.isPending}
-            triggerLabel={m.collection_delete_album()}
-          />
-        </div>
-      </PageHeaderActions>
-
-      <main className="flex-1 p-6">
+              variant="ghost" size="icon"
+            />
+            <CollectionDeleteDialog
+              title={m.collection_delete_album()}
+              description={m.collection_delete_album_desc()}
+              onConfirm={async () => {
+                try {
+                  await deleteAlbumMutation.mutateAsync(album.id)
+                  toast.success(m.collection_album_deleted())
+                  navigate({ to: "/o/$orgSlug/p/$projectSlug/collection" , params: { orgSlug, projectSlug }})
+                } catch (err) {
+                  if (err instanceof ApiError) toast.error(err.body.error)
+                  else toast.error(m.collection_failed_delete())
+                }
+              }}
+              isPending={deleteAlbumMutation.isPending}
+              triggerLabel={m.collection_delete_album()}
+            />
+          </>
+        }
+      />
+      <PageBody>
         <Tabs defaultValue="info">
           <TabsList>
             <TabsTrigger value="info">{m.collection_tab_info()}</TabsTrigger>
@@ -181,8 +183,8 @@ function CollectionAlbumDetailPage() {
             <StatsTab albumKey={album.id} />
           </TabsContent>
         </Tabs>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 
