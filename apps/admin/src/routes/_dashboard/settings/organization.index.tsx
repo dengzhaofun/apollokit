@@ -8,6 +8,7 @@ import { RouteGuard } from "#/components/auth/RouteGuard"
 import { SettingsPageHeader } from "#/components/settings/SettingsPageHeader"
 import { authClient } from "#/lib/auth-client"
 import { seo } from "#/lib/seo"
+import * as m from "#/paraglide/messages.js"
 
 /**
  * 组织 → 概览页 (`/settings/organization`)。
@@ -34,8 +35,8 @@ function OrganizationSettingsPage() {
     >
       <div className="mx-auto w-full max-w-3xl">
         <SettingsPageHeader
-          title="组织概览"
-          description="管理组织名称、Logo、URL slug。成员、邀请、危险操作分别在左侧二级导航的对应子页。"
+          title={m.settings_org_overview()}
+          description={m.settings_org_overview_description()}
         />
         <div className="space-y-6">
           <OrganizationSettingsCards />

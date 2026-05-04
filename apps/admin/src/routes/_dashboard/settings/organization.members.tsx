@@ -4,6 +4,7 @@ import { RouteGuard } from "#/components/auth/RouteGuard"
 import { MembersTable } from "#/components/members/MembersTable"
 import { SettingsPageHeader } from "#/components/settings/SettingsPageHeader"
 import { seo } from "#/lib/seo"
+import * as m from "#/paraglide/messages.js"
 
 /**
  * 组织 → 成员 (`/settings/organization/members`)。
@@ -27,8 +28,8 @@ function OrgMembersPage() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <SettingsPageHeader
-          title="组织成员"
-          description="管理该组织内所有成员。成员可在多个项目中担任不同角色。邀请新成员请到 邀请 子页。"
+          title={m.settings_members()}
+          description={m.settings_org_members_description()}
         />
         <MembersTable scope="org" />
       </div>

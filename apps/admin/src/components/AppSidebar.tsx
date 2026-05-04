@@ -642,14 +642,9 @@ function NavGroupSection({
                         isActive={isItemActive}
                         tooltip={item.title()}
                       />
-                      <SidebarMenuAction
-                        render={
-                          <FavoriteStarButton
-                            routePath={item.to}
-                            className="data-[favorited=true]:opacity-100"
-                          />
-                        }
-                        showOnHover
+                      <FavoriteStarButton
+                        routePath={item.to}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover/menu-item:opacity-100 focus-visible:opacity-100 data-[favorited=true]:opacity-100"
                       />
                     </SidebarMenuItem>
                   )
@@ -837,7 +832,10 @@ function NavFavoritesGroup({ pathname }: { pathname: string }) {
                   isActive={isActive}
                   tooltip={item.title()}
                 />
-                <SidebarMenuAction render={<FavoriteStarButton routePath={item.to} />} />
+                <FavoriteStarButton
+                  routePath={item.to}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2"
+                />
               </SidebarMenuItem>
             )
           })}

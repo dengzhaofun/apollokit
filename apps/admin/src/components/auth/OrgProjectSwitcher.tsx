@@ -13,6 +13,17 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar"
+import { Button } from "#/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "#/components/ui/dialog"
+import { Input } from "#/components/ui/input"
+import { Label } from "#/components/ui/label"
 import {
   Popover,
   PopoverContent,
@@ -63,6 +74,9 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [switching, setSwitching] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newProjectName, setNewProjectName] = useState("")
+  const [creating, setCreating] = useState(false)
 
   const activeOrgId = session?.session.activeOrganizationId ?? null
   const activeTeamId = session?.session.activeTeamId ?? null
@@ -199,9 +213,44 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
     }
   }
 
-  const goCreateProject = async () => {
+  const goCreateProject = () => {
     setOpen(false)
-    await router.navigate({ to: "/onboarding/create-project" })
+    setNewProjectName("")
+    setCreateOpen(true)
+  }
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const name = newProjectName.trim()
+    if (!name || creating || !activeOrgId || !activeOrg) return
+    setCreating(true)
+    try {
+      type CreateTeamArgs = { name: string; organizationId: string }
+      type CreateTeamResult = {
+        data?: { id: string; name: string } | null
+        error?: { message?: string } | null
+      }
+      const result = await (
+        authClient.organization as unknown as {
+          createTeam: (args: CreateTeamArgs) => Promise<CreateTeamResult>
+        }
+      ).createTeam({ name, organizationId: activeOrgId })
+      if (result.error || !result.data) {
+        toast.error(result.error?.message ?? "创建项目失败")
+        return
+      }
+      const newTeamId = result.data.id
+      await authClient.organization.setActiveTeam({ teamId: newTeamId })
+      invalidateTenantCache()
+      await queryClient.invalidateQueries()
+      setCreateOpen(false)
+      await router.navigate({ to: projectUrl(activeOrg.slug, newTeamId) })
+      toast.success(`项目 "${result.data.name}" 已创建`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "创建项目失败")
+    } finally {
+      setCreating(false)
+    }
   }
 
   if (!activeOrgId) return null
@@ -209,6 +258,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
   const orgInitial = (activeOrg?.name ?? "?").slice(0, 1).toUpperCase()
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
@@ -413,7 +463,7 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
               type="button"
               onClick={async () => {
                 setOpen(false)
-                await router.navigate({ to: "/settings/organization" })
+                await router.navigate({ to: "/settings/organization/members" })
               }}
               className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground"
             >
@@ -424,6 +474,51 @@ export function OrgProjectSwitcher({ isIcon = false }: Props) {
         </div>
       </PopoverContent>
     </Popover>
+
+    {/* 新建项目 Dialog */}
+    <Dialog open={createOpen} onOpenChange={(v) => { if (!creating) setCreateOpen(v) }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>新建项目</DialogTitle>
+          <DialogDescription>
+            在当前组织下创建一个新项目，创建后将自动切换至该项目。
+          </DialogDescription>
+        </DialogHeader>
+        <form id="create-project-form" onSubmit={handleCreateProject}>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="new-project-name">项目名称</Label>
+            <Input
+              id="new-project-name"
+              autoFocus
+              placeholder="My Game"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              maxLength={80}
+              disabled={creating}
+              autoComplete="off"
+            />
+          </div>
+        </form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={creating}
+            onClick={() => setCreateOpen(false)}
+          >
+            取消
+          </Button>
+          <Button
+            type="submit"
+            form="create-project-form"
+            disabled={creating || !newProjectName.trim()}
+          >
+            {creating ? "创建中…" : "创建"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   )
 }
 

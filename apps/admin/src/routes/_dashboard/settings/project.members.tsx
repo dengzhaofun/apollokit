@@ -4,6 +4,7 @@ import { RouteGuard } from "#/components/auth/RouteGuard"
 import { MembersTable } from "#/components/members/MembersTable"
 import { SettingsPageHeader } from "#/components/settings/SettingsPageHeader"
 import { seo } from "#/lib/seo"
+import * as m from "#/paraglide/messages.js"
 
 /**
  * 项目 → 成员 (`/settings/project/members`)。
@@ -36,8 +37,8 @@ function ProjectMembersPage() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <SettingsPageHeader
-          title="项目成员"
-          description="管理当前项目内的成员与角色。成员必须先是该组织的成员才能加入项目。"
+          title={m.settings_members()}
+          description={m.settings_project_members_description()}
         />
         <MembersTable scope="project" />
       </div>
