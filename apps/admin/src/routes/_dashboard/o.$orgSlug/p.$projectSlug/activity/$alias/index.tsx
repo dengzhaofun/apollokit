@@ -870,11 +870,11 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="visible_at">visible_at</SelectItem>
-                    <SelectItem value="start_at">start_at</SelectItem>
-                    <SelectItem value="end_at">end_at</SelectItem>
-                    <SelectItem value="reward_end_at">reward_end_at</SelectItem>
-                    <SelectItem value="hidden_at">hidden_at</SelectItem>
+                    <SelectItem value="visible_at">{m.activity_schedules_offset_from_visible_at()}</SelectItem>
+                    <SelectItem value="start_at">{m.activity_schedules_offset_from_start_at()}</SelectItem>
+                    <SelectItem value="end_at">{m.activity_schedules_offset_from_end_at()}</SelectItem>
+                    <SelectItem value="reward_end_at">{m.activity_schedules_offset_from_reward_end_at()}</SelectItem>
+                    <SelectItem value="hidden_at">{m.activity_schedules_offset_from_hidden_at()}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -912,7 +912,7 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
             </div>
           ) : null}
           <div className="flex flex-col gap-1.5">
-            <Label>action</Label>
+            <Label>{m.activity_schedules_field_action()}</Label>
             <Select
               value={form.actionType}
               onValueChange={(v) =>
@@ -923,9 +923,9 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="emit_bus_event">emit_bus_event</SelectItem>
-                <SelectItem value="grant_reward">grant_reward</SelectItem>
-                <SelectItem value="broadcast_mail">broadcast_mail</SelectItem>
+                <SelectItem value="emit_bus_event">{m.activity_schedules_action_emit_bus_event()}</SelectItem>
+                <SelectItem value="grant_reward">{m.activity_schedules_action_grant_reward()}</SelectItem>
+                <SelectItem value="broadcast_mail">{m.activity_schedules_action_broadcast_mail()}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1079,10 +1079,10 @@ function MembersPanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{m.activity_members_status_all()}</SelectItem>
-            <SelectItem value="joined">joined</SelectItem>
-            <SelectItem value="completed">completed</SelectItem>
-            <SelectItem value="left">left</SelectItem>
-            <SelectItem value="dropped">dropped</SelectItem>
+            <SelectItem value="joined">{m.activity_members_status_joined()}</SelectItem>
+            <SelectItem value="completed">{m.activity_members_status_completed()}</SelectItem>
+            <SelectItem value="left">{m.activity_members_status_left()}</SelectItem>
+            <SelectItem value="dropped">{m.activity_members_status_dropped()}</SelectItem>
           </SelectContent>
         </Select>
         <span className="ml-auto text-xs text-muted-foreground">
