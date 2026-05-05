@@ -152,12 +152,54 @@ export function createAdminAgentService(d: AdminAgentDeps) {
       // converts them to model messages internally, runs the agent's
       // `.stream()`, and returns a streaming `Response`. The route
       // handler returns this Response directly.
+      //
+      // For the `pages-builder` agent we also persist the conversation
+      // to `page_project_conversations` on stream completion so reopening
+      // the project restores the chat history (page_project_conversations
+      // → useChat initialMessages — see admin /pages/$projectId.tsx).
+      // appendConversationMessage is idempotent on (projectId, messageId);
+      // we upsert the full messages array on every turn so the persisted
+      // copy stays in sync without us having to track a "what's new" set.
       return createAgentUIStreamResponse({
         agent,
         uiMessages: messages,
+        onFinish: async ({ messages: finalMessages }) => {
+          if (agentName !== "pages-builder") return;
+          const projectId = execCtx.pageProjectId;
+          if (!projectId) return;
+          await persistPagesBuilderConversation({
+            tenantId: execCtx.tenantId,
+            projectId,
+            messages: finalMessages,
+          });
+        },
       });
     },
   };
+}
+
+async function persistPagesBuilderConversation(args: {
+  tenantId: string;
+  projectId: string;
+  messages: readonly UIMessage[];
+}): Promise<void> {
+  const { pageService } = await import("../page");
+  for (const m of args.messages) {
+    // Only persist user + assistant turns. ai-sdk UIMessage roles never
+    // include "tool" (tool calls live inside assistant message parts) —
+    // skip "system" defensively.
+    if (m.role !== "user" && m.role !== "assistant") continue;
+    try {
+      await pageService.appendConversationMessage(args.tenantId, args.projectId, {
+        messageId: m.id,
+        role: m.role,
+        content: m as unknown as Record<string, unknown>,
+      });
+    } catch {
+      // Persistence is best-effort. Never propagate to the stream —
+      // a DB hiccup must not turn into a 500 on the client's chat.
+    }
+  }
 }
 
 /**

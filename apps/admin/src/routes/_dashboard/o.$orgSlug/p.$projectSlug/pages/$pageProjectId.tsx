@@ -28,9 +28,14 @@ import {
   usePublishVersion,
   useRollbackVersion,
 } from "#/hooks/use-pages";
+import type { UIMessage } from "ai";
+
 import { ApiError } from "#/lib/api-client";
 import { previewBaseUrl } from "#/lib/pages-url";
-import type { PageProjectVersion } from "#/lib/types/page";
+import type {
+  PageConversationMessage,
+  PageProjectVersion,
+} from "#/lib/types/page";
 import { getLocale } from "#/paraglide/runtime.js";
 
 const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en);
@@ -235,18 +240,9 @@ function PageProjectWorkspace() {
           <div className="h-full flex flex-col bg-background">
             <PagesBuilderChat
               projectId={projectId}
-              initialMessages={
-                conversation.data?.items.map((m) => ({
-                  id: m.messageId,
-                  role: m.role === "tool" ? "assistant" : m.role,
-                  parts:
-                    typeof m.content === "object" &&
-                    m.content !== null &&
-                    "parts" in m.content
-                      ? ((m.content as { parts: unknown }).parts as never)
-                      : [{ type: "text", text: "" }],
-                })) ?? []
-              }
+              initialMessages={hydrateConversationMessages(
+                conversation.data?.items ?? [],
+              )}
             />
           </div>
         </ResizablePanel>
@@ -281,5 +277,31 @@ function PageProjectWorkspace() {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Restore persisted conversation rows back into ai-sdk `UIMessage`
+ * shape for `useChat`'s `initialMessages`. The server stored the full
+ * UIMessage object inside `content` jsonb (see service.streamChat's
+ * onFinish hook), so on restore we mostly just spread `content` —
+ * but we filter out malformed rows defensively so a single bad row
+ * doesn't break the chat reload.
+ */
+function hydrateConversationMessages(
+  rows: readonly PageConversationMessage[],
+): UIMessage[] {
+  const out: UIMessage[] = [];
+  for (const row of rows) {
+    const c = row.content as unknown;
+    if (!c || typeof c !== "object") continue;
+    const obj = c as Record<string, unknown>;
+    if (!Array.isArray(obj.parts)) continue;
+    out.push({
+      id: typeof obj.id === "string" ? obj.id : row.messageId,
+      role: row.role === "tool" ? "assistant" : (row.role as UIMessage["role"]),
+      parts: obj.parts as UIMessage["parts"],
+    });
+  }
+  return out;
 }
 
