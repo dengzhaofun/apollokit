@@ -26,7 +26,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import { listSearchSchema } from "#/lib/list-search"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/seasons/")({
   component: RankSeasonsListPage,
@@ -50,7 +50,7 @@ function RankSeasonsListPage() {
   }, [tierConfigs])
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.rank_tab_seasons()}
         actions={
@@ -74,7 +74,7 @@ function RankSeasonsListPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.rank_loading()}
@@ -163,7 +163,7 @@ function RankSeasonsListPage() {
             />
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

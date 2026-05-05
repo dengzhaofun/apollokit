@@ -18,7 +18,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { EventFieldRow } from "#/lib/types/event-catalog"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/event-catalog/$name/")({
   component: EventCatalogDetailPage,
@@ -63,7 +63,7 @@ function EventCatalogDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={<span className="font-mono">{name}</span>}
         actions={
@@ -80,7 +80,7 @@ function EventCatalogDetailPage() {
         }
       />
 
-      <main className="flex-1 space-y-6 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.common_loading()}
@@ -208,8 +208,8 @@ function EventCatalogDetailPage() {
             )}
           </>
         ) : null}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

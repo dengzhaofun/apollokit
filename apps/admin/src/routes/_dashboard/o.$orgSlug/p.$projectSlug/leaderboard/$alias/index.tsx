@@ -24,7 +24,7 @@ import {
   useUpdateLeaderboardConfig,
 } from "#/hooks/use-leaderboard"
 import { ApiError } from "#/lib/api-client"
-import { confirm, PageHeader } from "#/components/patterns"
+import { confirm, PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/leaderboard/$alias/")({
   component: LeaderboardDetailPage,
@@ -55,7 +55,7 @@ function LeaderboardDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={config.name}
         actions={
@@ -106,7 +106,7 @@ function LeaderboardDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <Tabs defaultValue="preview" className="mx-auto max-w-4xl">
           <TabsList>
             <TabsTrigger value="preview">实时预览</TabsTrigger>
@@ -190,8 +190,8 @@ function LeaderboardDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

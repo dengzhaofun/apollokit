@@ -37,7 +37,7 @@ import {
 } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
 
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 const FORM_ID = "banner-item-form"
 
@@ -114,7 +114,7 @@ function BannerGroupDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={group?.name ?? m.banner_back_to_groups()}
         badge={group && !group.alias ? (
@@ -158,7 +158,7 @@ function BannerGroupDetailPage() {
         </>}
       />
 
-      <main className="flex-1 space-y-4 p-6">
+      <PageBody>
         {group ? (
           <div className="rounded-xl border bg-card p-4 text-sm shadow-sm">
             <div className="flex flex-wrap gap-4">
@@ -224,7 +224,7 @@ function BannerGroupDetailPage() {
             />
           )}
         </div>
-      </main>
+      </PageBody>
 
       <AlertDialog
         open={bannerDeleteId !== null}
@@ -283,7 +283,7 @@ function BannerGroupDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageShell>
   )
 }
 
