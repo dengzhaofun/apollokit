@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 
+const TIMEZONES = Intl.supportedValuesOf("timeZone")
+
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -259,11 +261,21 @@ export function ActivityForm({
             {(field) => (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={field.name}>{m.activity_field_timezone_label()}</Label>
-                <Input
-                  id={field.name}
+                <Select
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                  onValueChange={(v) => field.handleChange(v ?? "")}
+                >
+                  <SelectTrigger id={field.name} className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </form.Field>

@@ -1,3 +1,5 @@
+const TIMEZONES = Intl.supportedValuesOf("timeZone")
+
 import { Button } from "#/components/ui/button"
 import { FieldHint } from "#/components/ui/field-hint"
 import { Input } from "#/components/ui/input"
@@ -218,11 +220,21 @@ export function LeaderboardConfigForm({
           {(field) => (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={field.name}>{m.leaderboard_field_timezone()}</Label>
-              <Input
-                id={field.name}
+              <Select
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
+                onValueChange={(v) => field.handleChange(v ?? "")}
+              >
+                <SelectTrigger id={field.name} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEZONES.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </form.Field>
