@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { SchemaTable } from "#/components/entity/SchemaTable"
 import { listSearchSchema } from "#/lib/list-search"
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/enti
 function EntitySchemasPage() {
   const { orgSlug, projectSlug } = useTenantParams()
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.entity_schemas()}
         actions={
@@ -32,9 +32,9 @@ function EntitySchemasPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <SchemaTable route={Route} />
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

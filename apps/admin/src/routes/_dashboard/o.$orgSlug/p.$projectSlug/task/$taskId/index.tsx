@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { confirm, PageHeader } from "#/components/patterns"
+import { confirm, PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
@@ -48,7 +48,7 @@ function TaskDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={definition.name}
         badge={definition.visibility === "assigned" ? (
@@ -87,7 +87,7 @@ function TaskDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl">
           <Tabs defaultValue="config">
             <TabsList>
@@ -130,7 +130,7 @@ function TaskDetailPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

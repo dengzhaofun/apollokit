@@ -33,7 +33,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
 import type { RewardEntry, StarRewardTier } from "#/lib/types/level"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/level/$configId/levels/$levelId",
@@ -67,7 +67,7 @@ function LevelDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={level.name}
         actions={
@@ -99,7 +99,7 @@ function LevelDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <LevelEditForm
           configId={configId}
           levelId={levelId}
@@ -108,8 +108,8 @@ function LevelDetailPage() {
           hasStages={config?.hasStages ?? false}
           updateMutation={updateMutation}
         />
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

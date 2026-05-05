@@ -40,7 +40,7 @@ import {
   openCreateModal,
 } from "#/lib/modal-search"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 const FORM_ID = "entity-blueprint-mini-create-form"
 
@@ -85,7 +85,7 @@ function SchemaDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={schema.name}
         actions={
@@ -142,7 +142,7 @@ function SchemaDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6 space-y-6">
+      <PageBody>
         {/* Schema Info Cards */}
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-lg border p-4">
@@ -265,12 +265,12 @@ function SchemaDetailPage() {
             <BlueprintTable data={blueprints ?? []} schemaId={schema.id} />
           </div>
         </div>
-      </main>
+      </PageBody>
 
       {search.modal === "create" ? (
         <CreateBlueprintMiniDialog schemaId={schema.id} onClose={closeModal} />
       ) : null}
-    </>
+    </PageShell>
   )
 }
 

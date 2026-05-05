@@ -11,7 +11,7 @@ import { Switch } from "#/components/ui/switch"
 import { useCreateEntityFormationConfig } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/entity/formations/create",
@@ -54,7 +54,7 @@ function FormationConfigCreatePage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.entity_new_formation()}
         actions={
@@ -69,7 +69,7 @@ function FormationConfigCreatePage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-2xl rounded-xl border bg-card p-6 shadow-sm">
           <form
             onSubmit={(e) => {
@@ -183,7 +183,7 @@ function FormationConfigCreatePage() {
             </form.Subscribe>
           </form>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

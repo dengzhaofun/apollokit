@@ -34,7 +34,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { RankSeasonStatus } from "#/lib/types/rank"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/seasons/$seasonId")({
   component: RankSeasonDetailPage,
@@ -69,7 +69,7 @@ function RankSeasonDetailPage() {
   const finalize = useFinalizeRankSeason()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={season?.name ?? m.rank_loading()}
         actions={
@@ -138,7 +138,7 @@ function RankSeasonDetailPage() {
         }
       />
 
-      <main className="flex-1 space-y-6 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.rank_loading()}
@@ -337,7 +337,7 @@ function RankSeasonDetailPage() {
             </section>
           </>
         ) : null}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

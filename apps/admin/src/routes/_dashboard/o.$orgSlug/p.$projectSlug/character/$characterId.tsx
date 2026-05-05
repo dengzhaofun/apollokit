@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { CharacterForm } from "#/components/character/CharacterForm"
 import { useCharacterForm } from "#/components/character/use-character-form"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +51,7 @@ function CharacterDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={character?.name ?? m.character_back_to_list()}
         actions={<>
@@ -76,7 +76,7 @@ function CharacterDetailPage() {
         </>}
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl">
           {isPending || !character ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">
@@ -101,7 +101,7 @@ function CharacterDetailPage() {
             />
           )}
         </div>
-      </main>
+      </PageBody>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
@@ -122,7 +122,7 @@ function CharacterDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageShell>
   )
 }
 

@@ -24,7 +24,7 @@ import {
 } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute(
   "/_dashboard/o/$orgSlug/p/$projectSlug/entity/schemas/$schemaId/blueprints/$blueprintId/",
@@ -57,7 +57,7 @@ function BlueprintDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={bp.name}
         actions={
@@ -121,7 +121,7 @@ function BlueprintDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6 space-y-6">
+      <PageBody>
         {/* Tags */}
         {Object.keys(bp.tags).length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -194,7 +194,7 @@ function BlueprintDetailPage() {
             <SkinTable data={skins ?? []} />
           </div>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

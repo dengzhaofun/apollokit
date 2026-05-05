@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { ExchangeConfigTable } from "#/components/exchange/ConfigTable"
 import { listSearchSchema } from "#/lib/list-search"
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/exch
 function ExchangeListPage() {
   const { orgSlug, projectSlug } = useTenantParams()
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="兑换"
         actions={
@@ -32,9 +32,9 @@ function ExchangeListPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <ExchangeConfigTable route={Route} />
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

@@ -23,7 +23,7 @@ import {
 } from "#/hooks/use-rank"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/rank/$configId")({
   component: RankConfigDetailPage,
@@ -38,7 +38,7 @@ function RankConfigDetailPage() {
   const deleteMutation = useDeleteRankTierConfig()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={data?.name ?? m.rank_loading()}
         actions={
@@ -85,7 +85,7 @@ function RankConfigDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.rank_loading()}
@@ -115,7 +115,7 @@ function RankConfigDetailPage() {
             />
           </div>
         ) : null}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

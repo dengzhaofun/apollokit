@@ -22,7 +22,7 @@ import {
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,7 +97,7 @@ function EndUserDetailPage() {
   }, [data])
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="用户详情"
         actions={
@@ -113,7 +113,7 @@ function EndUserDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.end_user_loading()}
@@ -530,7 +530,7 @@ function EndUserDetailPage() {
             </div>
           </div>
         ) : null}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

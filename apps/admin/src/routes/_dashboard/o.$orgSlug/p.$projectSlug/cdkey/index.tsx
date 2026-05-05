@@ -10,7 +10,7 @@ import * as m from "#/paraglide/messages.js"
 import { CdkeyBatchForm } from "#/components/cdkey/BatchForm"
 import { useBatchForm } from "#/components/cdkey/use-batch-form"
 import { DataTable } from "#/components/data-table/DataTable"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
@@ -121,7 +121,7 @@ function CdkeyListPage() {
   const columns = useColumns()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="激活码"
         actions={
@@ -134,7 +134,7 @@ function CdkeyListPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <DataTable
           columns={columns}
           mobileLayout="cards"
@@ -156,10 +156,10 @@ function CdkeyListPage() {
           onAdvancedQueryChange={list.setAdvanced}
           {...list.tableProps}
         />
-      </main>
+      </PageBody>
 
       {modal === "create" ? <CreateBatchDrawer onClose={closeModal} /> : null}
-    </>
+    </PageShell>
   )
 }
 
