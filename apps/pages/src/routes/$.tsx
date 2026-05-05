@@ -7,24 +7,37 @@ import { NotFoundStub } from "../lib/not-found";
 import { resolveRequestPage, type PageResolution } from "../lib/page-loader";
 
 /**
- * Server-only resolver for non-root paths. createServerFn keeps
- * `getRequest` (server-only) out of the client bundle.
+ * Server-only resolver for any non-root path. Handles two URL shapes:
+ *
+ *   - subdomain mode: `<slug>.pages.apollokit.dev/<page-path>` →
+ *     splatPath is `/<page-path>`, slug comes from host.
+ *   - path mode: `apollokit-pages.<acct>.workers.dev/<slug>/<page-path>`
+ *     → splatPath is `/<slug>/<page-path>`, slug comes from path's
+ *     first segment, page-path is what's left.
+ *
+ * `resolveRequestPage` handles the disambiguation; this route just
+ * forwards.
  */
 const resolveSplatPage = createServerFn({ method: "GET" })
   .inputValidator((data: { pathname: string }) => data)
   .handler(async ({ data }): Promise<PageResolution> => {
     const req = getRequest();
-    return resolveRequestPage(req, data.pathname);
+    let env: Record<string, unknown> = {};
+    try {
+      const cf = (await import("cloudflare:workers")) as unknown as {
+        env: Record<string, unknown>;
+      };
+      env = cf.env;
+    } catch {
+      env = {};
+    }
+    return resolveRequestPage(req, data.pathname, {
+      KV: env.KV as never,
+      API: env.API as never,
+      PAGES_BASE_DOMAIN: (env.PAGES_BASE_DOMAIN as string | undefined) ?? "pages.apollokit.dev",
+    });
   });
 
-/**
- * Catch-all for non-root paths within a project subdomain.
- * `/checkin`, `/shop`, `/about`, `/foo/bar/baz` — all matched here and
- * resolved against `PageNode.path` in the project's published schema.
- *
- * Distinct from `/__preview/...` (separate file) because previews go
- * through a token-validated path that bypasses slug resolution.
- */
 export const Route = createFileRoute("/$")({
   loader: async ({ params }) => {
     const splat = params._splat ?? "";

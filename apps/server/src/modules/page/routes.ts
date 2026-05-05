@@ -40,7 +40,7 @@ import { getOrgId } from "../../lib/route-context";
 import { createAdminRoute, createAdminRouter } from "../../lib/openapi";
 import { requirePermissionByMethod } from "../../middleware/require-permission";
 import { requireTenantSessionOrApiKey } from "../../middleware/require-tenant-session-or-api-key";
-import { pageService } from "./index";
+import { invalidateRuntimeCache, pageService } from "./index";
 import type {
   PageAuthMode,
   PageConversationRole,
@@ -569,6 +569,12 @@ pageRouter.openapi(
     const { projectId } = c.req.valid("param");
     const { versionId } = c.req.valid("json");
     const row = await pageService.publishVersion(orgId, projectId, versionId);
+    // Bust the runtime KV cache so the pages worker sees the new
+    // schema on the very next request rather than waiting on the 60s
+    // TTL. Best-effort — failure here doesn't fail the publish call.
+    c.executionCtx.waitUntil(
+      invalidateRuntimeCache(row.slug).catch(() => undefined),
+    );
     return c.json(ok(serializeProject(row)), 200);
   },
 );
@@ -612,6 +618,14 @@ pageRouter.openapi(
       input,
       c.var.user?.id ?? null,
     );
+    // Only bust the runtime cache if the rollback actually re-published
+    // (publishImmediately=true). Otherwise the published pointer is
+    // unchanged and the cached payload is still correct.
+    if (project) {
+      c.executionCtx.waitUntil(
+        invalidateRuntimeCache(project.slug).catch(() => undefined),
+      );
+    }
     return c.json(
       ok({
         ...serializeVersion(version),

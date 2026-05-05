@@ -91,7 +91,11 @@ import {
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { mcpRouter } from "./modules/mcp";
 import { navigationRouter } from "./modules/navigation";
-import { pageRouter, pageClientRouter } from "./modules/page";
+import {
+  pageClientRouter,
+  pageRouter,
+  pageRuntimeRouter,
+} from "./modules/page";
 import { teamMemberRouter } from "./modules/team-members";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
@@ -330,6 +334,12 @@ app.route("/api/v1/mail", mailRouter);
 app.route("/api/v1/mcp", mcpRouter);
 app.route("/api/v1/navigation", navigationRouter);
 app.route("/api/v1/page", pageRouter);
+// Public runtime endpoint for the apollokit-pages worker SSR loader.
+// Reached via service binding (worker-to-worker), no admin auth.
+// **Sibling path** `/api/v1/page-runtime/*` rather than nested under
+// `/api/v1/page/*` — pageRouter's `requireTenantSessionOrApiKey` would
+// otherwise 401 the unauthenticated runtime call.
+app.route("/api/v1/page-runtime", pageRuntimeRouter);
 // 项目级成员管理 — admin 专用,不放到 client 路由组(client 不该改 RBAC)
 app.route("/api/v1/team-members", teamMemberRouter);
 app.route("/api/v1/shop", shopRouter);

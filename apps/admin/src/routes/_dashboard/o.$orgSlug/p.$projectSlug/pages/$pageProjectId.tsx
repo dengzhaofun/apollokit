@@ -29,6 +29,7 @@ import {
   useRollbackVersion,
 } from "#/hooks/use-pages";
 import { ApiError } from "#/lib/api-client";
+import { previewBaseUrl } from "#/lib/pages-url";
 import type { PageProjectVersion } from "#/lib/types/page";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -85,10 +86,8 @@ function PageProjectWorkspace() {
           versionId: previewVersionId,
         });
         if (cancelled) return;
-        const base = readPagesBase();
-        const url = base
-          ? `https://pages.${base}/preview/${encodeURIComponent(projectId)}?v=${encodeURIComponent(res.versionId)}&t=${encodeURIComponent(res.token)}`
-          : `http://pages.localhost:3001/preview/${encodeURIComponent(projectId)}?v=${encodeURIComponent(res.versionId)}&t=${encodeURIComponent(res.token)}`;
+        const base = previewBaseUrl();
+        const url = `${base}/preview/${encodeURIComponent(projectId)}?v=${encodeURIComponent(res.versionId)}&t=${encodeURIComponent(res.token)}`;
         setPreviewUrl(url);
         setIframeKey((k) => k + 1);
       } catch (err) {
@@ -284,8 +283,3 @@ function PageProjectWorkspace() {
   );
 }
 
-function readPagesBase(): string | null {
-  const v = (import.meta as unknown as { env?: Record<string, string> }).env
-    ?.VITE_PAGES_BASE_DOMAIN;
-  return typeof v === "string" && v.length > 0 ? v : null;
-}

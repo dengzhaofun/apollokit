@@ -3,58 +3,54 @@ import type { PageProjectSchema } from "@repo/page-blocks/schema";
 import { DEMO_PROJECT_FIXTURE } from "./fixtures";
 
 /**
- * Result of resolving a host (or explicit slug) to a published page
- * project. `null` means the slug doesn't exist or has no published
- * version yet — caller renders a 404 stub.
- *
- * PR 3 only ever returns the demo fixture or null. PR 4/5 wires
- * real data loading via the API service binding + KV cache.
+ * Resolved project payload returned by `loadProjectBySlug`.
+ * `null` from the loader means "no published page at this slug" —
+ * the caller renders a 404 stub.
  */
 export interface LoadedProject {
   slug: string;
   schema: PageProjectSchema;
   versionId: string;
-  /** Whether the schema came from KV (vs a fresh DB fetch). */
   fromCache: boolean;
 }
 
 const PAGES_BASE_DOMAIN_DEFAULT = "pages.apollokit.dev";
+const KV_TTL_SECONDS = 60;
+
+// ─── Slug resolution ──────────────────────────────────────────────
 
 /**
- * Extract the project slug from a host header.
+ * Try to resolve a slug from the **host** header (subdomain mode).
  *
- * Production: `<slug>.pages.apollokit.dev` → `<slug>`.
- * Local dev: `<slug>.localhost:3001` or `<slug>.lvh.me:3001` → `<slug>`.
- *   (Chrome accepts cookies on `*.localhost`, which is enough for
- *    cross-subdomain dev. Set `127.0.0.1 demo.localhost` in /etc/hosts
- *    if your platform doesn't auto-resolve it.)
+ * Production target: `<slug>.pages.apollokit.dev`. Currently disabled
+ * because Cloudflare's universal SSL only covers 1-level wildcard
+ * (`*.apollokit.dev`); 2-level wildcards (`*.pages.apollokit.dev`)
+ * need Advanced Certificate Manager which we deferred. Until ACM is
+ * in place, this function returns null in production and the caller
+ * falls back to `resolveSlugFromPath`.
  *
- * Apex / unknown hosts return null — those should hit a marketing /
- * landing target managed elsewhere, not pages worker output.
+ * Dev still works on `<slug>.localhost` / `<slug>.lvh.me` because
+ * Chrome accepts cookies on those without a real cert.
  */
 export function resolveSlugFromHost(
   host: string,
   baseDomain: string = PAGES_BASE_DOMAIN_DEFAULT,
 ): string | null {
   const lower = host.toLowerCase();
-  // Strip port for dev (e.g. "demo.localhost:3001").
   const hostNoPort = lower.split(":")[0] ?? "";
 
-  // Production wildcard.
+  // Production wildcard subdomain (only meaningful once ACM is set up).
   const prodSuffix = `.${baseDomain}`;
   if (hostNoPort.endsWith(prodSuffix)) {
     const slug = hostNoPort.slice(0, -prodSuffix.length);
     return slug || null;
   }
 
-  // Local dev — `<slug>.localhost`.
+  // Local dev — `<slug>.localhost` / `<slug>.lvh.me`.
   if (hostNoPort.endsWith(".localhost")) {
     const slug = hostNoPort.slice(0, -".localhost".length);
     return slug || null;
   }
-
-  // Local dev — `<slug>.lvh.me` (a public DNS that resolves all
-  // subdomains to 127.0.0.1; saves editing /etc/hosts).
   if (hostNoPort.endsWith(".lvh.me")) {
     const slug = hostNoPort.slice(0, -".lvh.me".length);
     return slug || null;
@@ -64,15 +60,86 @@ export function resolveSlugFromHost(
 }
 
 /**
- * Load a project by slug. PR 3: fixture only — `demo` returns the
- * canned schema, anything else returns null.
+ * Path-mode slug resolution: `<base>/<slug>/<rest>` → slug=`<slug>`,
+ * pagePath=`/<rest>`. Used when host doesn't match a subdomain
+ * pattern (i.e. the worker is being reached via its default
+ * `apollokit-pages.<account>.workers.dev` URL).
  *
- * The signature already accepts the bindings env so PR 4 just needs to
- * fill in the body — no caller changes.
+ * `pagePath` is what the renderer compares against `PageNode.path`
+ * — defaults to `/` when there's nothing after the slug.
+ *
+ * Reserved first segments (`preview`, `__preview`, `sitemap.xml`,
+ * `robots.txt`) return null so other route files take precedence.
+ */
+const RESERVED_PATH_PREFIXES = new Set([
+  "preview",
+  "__preview",
+  "_preview",
+  "sitemap.xml",
+  "robots.txt",
+  "favicon.ico",
+  "_health",
+  "__health",
+  "api",
+]);
+
+export function resolveSlugFromPath(
+  pathname: string,
+): { slug: string; pagePath: string } | null {
+  const trimmed = pathname.replace(/^\/+/, "");
+  if (!trimmed) return null;
+  const slashIdx = trimmed.indexOf("/");
+  const head = slashIdx >= 0 ? trimmed.slice(0, slashIdx) : trimmed;
+  const tail = slashIdx >= 0 ? trimmed.slice(slashIdx) : "";
+  if (!head || RESERVED_PATH_PREFIXES.has(head)) return null;
+  // Slug shape (matches server validator): 3-63 chars, lower
+  // alphanum + single hyphens, no leading/trailing/double hyphen.
+  if (!/^[a-z0-9](?:[a-z0-9]|-(?!-))*[a-z0-9]$/.test(head)) return null;
+  return { slug: head, pagePath: tail || "/" };
+}
+
+// ─── DB-backed loader ─────────────────────────────────────────────
+
+interface RuntimeApiBinding {
+  fetch: (req: Request) => Promise<Response>;
+}
+
+interface ServerRuntimePayload {
+  project: {
+    id: string;
+    slug: string;
+    name: string;
+    authMode: string;
+    status: string;
+    publishedVersionId: string | null;
+    settings: Record<string, unknown>;
+  };
+  publishedVersion: {
+    id: string;
+    versionNumber: number;
+    schema: Record<string, unknown>;
+  } | null;
+}
+
+/**
+ * Load a project by slug.
+ *
+ * Order of resolution:
+ *   1. Demo fixture (`slug === "demo"`) — always wins; lets the
+ *      worker render something even when the API binding / KV are
+ *      misconfigured.
+ *   2. KV cache (`pages:slug:<slug>`, 60s TTL).
+ *   3. Service binding to apollokit-server's
+ *      `/api/v1/page-runtime/by-slug/<slug>` public endpoint.
+ *   4. null — page not found / not published.
+ *
+ * The `env` object is whatever the SSR caller can reach via
+ * `cloudflare:workers`. In dev / vitest both `KV` and `API` will
+ * usually be undefined; the loader degrades gracefully.
  */
 export async function loadProjectBySlug(
   slug: string,
-  _env: { KV?: KVNamespace; API?: { fetch: typeof fetch } } = {},
+  env: { KV?: KVNamespace; API?: RuntimeApiBinding } = {},
 ): Promise<LoadedProject | null> {
   if (slug === "demo") {
     return {
@@ -82,5 +149,66 @@ export async function loadProjectBySlug(
       fromCache: false,
     };
   }
-  return null;
+
+  // (2) KV fast-path
+  const kvKey = `pages:slug:${slug}`;
+  if (env.KV) {
+    const cached = await env.KV.get<ServerRuntimePayload>(kvKey, "json");
+    if (cached?.publishedVersion) {
+      return {
+        slug,
+        schema: cached.publishedVersion.schema as unknown as PageProjectSchema,
+        versionId: cached.publishedVersion.id,
+        fromCache: true,
+      };
+    }
+  }
+
+  // (3) Service binding fetch
+  if (!env.API) return null;
+
+  let res: Response;
+  try {
+    // The path is absolute; service binding fetch ignores host.
+    res = await env.API.fetch(
+      new Request(
+        `https://internal/api/v1/page-runtime/by-slug/${encodeURIComponent(slug)}`,
+        { method: "GET" },
+      ),
+    );
+  } catch {
+    return null;
+  }
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+
+  const envelope = (await res.json()) as {
+    code: string;
+    data: ServerRuntimePayload | null;
+  };
+  if (envelope.code !== "ok" || !envelope.data || !envelope.data.publishedVersion) {
+    return null;
+  }
+  const payload = envelope.data;
+
+  // (3a) Best-effort KV write. Server-side already does this on the
+  // /by-slug/ route, but writing on the pages worker side too means a
+  // cache hit on the pages worker's KV the next time around even when
+  // the server worker's binding is in a different region.
+  if (env.KV) {
+    try {
+      await env.KV.put(kvKey, JSON.stringify(payload), {
+        expirationTtl: KV_TTL_SECONDS,
+      });
+    } catch {
+      /* swallow — cache fill is opportunistic */
+    }
+  }
+
+  return {
+    slug,
+    schema: payload.publishedVersion!.schema as unknown as PageProjectSchema,
+    versionId: payload.publishedVersion!.id,
+    fromCache: false,
+  };
 }

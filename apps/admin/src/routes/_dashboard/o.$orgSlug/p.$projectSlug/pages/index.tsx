@@ -34,6 +34,7 @@ import {
   usePageTemplates,
 } from "#/hooks/use-pages";
 import { ApiError } from "#/lib/api-client";
+import { pageProjectUrl, previewSlugUrl } from "#/lib/pages-url";
 import type {
   PageAuthMode,
   PageProject,
@@ -136,7 +137,9 @@ function ProjectCard({
   project: PageProject;
   href: string;
 }) {
-  const previewBase = readPagesBase();
+  const liveUrl = project.publishedVersionId
+    ? pageProjectUrl(project.slug)
+    : null;
   return (
     <li className="rounded-lg border bg-card p-4 transition hover:border-foreground/20">
       <div className="flex items-start justify-between gap-2">
@@ -170,15 +173,15 @@ function ProjectCard({
           </span>
         )}
       </div>
-      {project.publishedVersionId && previewBase ? (
+      {liveUrl ? (
         <a
-          href={`https://${project.slug}.${previewBase}/`}
+          href={liveUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground truncate"
         >
-          {project.slug}.{previewBase}
-          <ExternalLink className="size-3" />
+          <span className="truncate">{liveUrl.replace(/^https?:\/\//, "")}</span>
+          <ExternalLink className="size-3 shrink-0" />
         </a>
       ) : null}
     </li>
@@ -189,15 +192,6 @@ function statusVariant(status: string): "default" | "secondary" | "outline" {
   if (status === "published") return "default";
   if (status === "archived") return "outline";
   return "secondary";
-}
-
-function readPagesBase(): string | null {
-  // Vite-injected env. Empty in dev — we don't know the base.
-  // Setting `VITE_PAGES_BASE_DOMAIN=pages.apollokit.dev` in
-  // .env.production / wrangler vars exposes the live URL on each card.
-  const v = (import.meta as unknown as { env?: Record<string, string> }).env
-    ?.VITE_PAGES_BASE_DOMAIN;
-  return typeof v === "string" && v.length > 0 ? v : null;
 }
 
 // ─── Create dialog (minimal MVP — template picker is stretched to PR-8 follow-up) ──
@@ -306,13 +300,8 @@ function CreateProjectDialog({
               maxLength={63}
               pattern="[a-z0-9](?:[a-z0-9]|-(?!-))*[a-z0-9]"
             />
-            <p className="text-xs text-muted-foreground">
-              {readPagesBase()
-                ? `${slug || "your-slug"}.${readPagesBase()}`
-                : t(
-                    "上线后页面会托管在 <slug>.pages.apollokit.dev",
-                    "Hosted at <slug>.pages.apollokit.dev once deployed",
-                  )}
+            <p className="text-xs text-muted-foreground truncate">
+              {previewSlugUrl(slug).replace(/^https?:\/\//, "")}
             </p>
           </div>
           <div className="grid gap-2">

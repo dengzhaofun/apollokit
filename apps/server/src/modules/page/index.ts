@@ -19,6 +19,10 @@ export const pageService = createPageService(deps);
 export { pageRouter } from "./routes";
 export { pageClientRouter } from "./client-routes";
 export {
+  invalidateRuntimeCache,
+  pageRuntimeRouter,
+} from "./runtime-routes";
+export {
   PageBoundModuleViolation,
   PageInvalidSchema,
   PagePreviewTokenInvalid,
