@@ -2,8 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Github } from "lucide-react"
 
 import { ConsentSettingsButton } from "#/components/consent/ConsentLayer"
+import { LanguageSwitcher } from "#/components/LanguageSwitcher"
 import ThemeToggle from "#/components/ThemeToggle"
 import { Button } from "#/components/ui/button"
+import * as m from "#/paraglide/messages.js"
 import { getLocale } from "#/paraglide/runtime.js"
 
 const t = (zh: string, en: string) => (getLocale() === "zh" ? zh : en)
@@ -35,14 +37,16 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
 /*  Nav + Footer                                                              */
 /* -------------------------------------------------------------------------- */
 
-const NAV_LINKS: Array<{ label: string; href: string; type: "anchor" | "route" }> = [
-  { label: "平台", href: "/#platform", type: "anchor" },
-  { label: "模块", href: "/#modules", type: "anchor" },
-  { label: "工作流", href: "/#workflow", type: "anchor" },
-  { label: "开发者", href: "/#developer", type: "anchor" },
-  { label: "定价", href: "/pricing", type: "route" },
-  { label: "文档", href: "/docs", type: "route" },
-]
+function getNavLinks() {
+  return [
+    { label: m.nav_platform(), href: "/#platform", type: "anchor" as const },
+    { label: m.nav_modules(), href: "/#modules", type: "anchor" as const },
+    { label: m.nav_workflow(), href: "/#workflow", type: "anchor" as const },
+    { label: m.nav_developer(), href: "/#developer", type: "anchor" as const },
+    { label: m.nav_pricing(), href: "/pricing", type: "route" as const },
+    { label: m.nav_docs(), href: "/docs", type: "route" as const },
+  ]
+}
 
 function TopNav() {
   return (
@@ -55,18 +59,19 @@ function TopNav() {
           <span>ApolloKit</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          {NAV_LINKS.map((l) => (
+          {getNavLinks().map((l) => (
             <a key={l.href} href={l.href} className="hover:text-foreground">
               {l.label}
             </a>
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           <Button
             render={
               <Link to="/auth/$authView" params={{ authView: "sign-in" }}>
-                登录
+                {m.auth_sign_in()}
               </Link>
             }
             variant="ghost"
@@ -76,7 +81,7 @@ function TopNav() {
           <Button
             render={
               <Link to="/auth/$authView" params={{ authView: "sign-up" }}>
-                免费开始
+                {m.auth_sign_up_cta()}
                 <ArrowRight className="ml-1 size-3.5" />
               </Link>
             }

@@ -3245,5 +3245,13 @@
   "aria_more_actions": "More actions",
   "aria_loading_chart": "Loading chart",
   "members_more_actions": "More actions",
-  "invitations_more_actions": "More actions"
+  "invitations_more_actions": "More actions",
+  "nav_platform": "Platform",
+  "nav_modules": "Modules",
+  "nav_workflow": "Workflow",
+  "nav_developer": "Developer",
+  "nav_pricing": "Pricing",
+  "nav_docs": "Docs",
+  "auth_sign_in": "Sign in",
+  "auth_sign_up_cta": "Get started"
 }
