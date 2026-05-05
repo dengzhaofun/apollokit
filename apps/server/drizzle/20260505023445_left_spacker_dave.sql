@@ -1,0 +1,1 @@
+ALTER TABLE "client_credentials" ADD COLUMN "kind" text DEFAULT 'standard' NOT NULL;

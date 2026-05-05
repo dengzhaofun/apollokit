@@ -31,6 +31,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@openrouter/ai-sdk-provider": "^2.8.1",
     "@repo/admin-agent-ui": "workspace:*",
+    "@repo/page-blocks": "workspace:*",
     "@scalar/hono-api-reference": "^0.10.11",
     "@sentry/cloudflare": "^10.50.0",
     "@tinybirdco/sdk": "^0.0.66",

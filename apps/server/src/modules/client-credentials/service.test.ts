@@ -185,4 +185,94 @@ describe("client-credentials service", () => {
     expect(result.valid).toBe(true);
   });
 
+  // ─── anonymous kind ─────────────────────────────────────────────
+
+  test("create defaults kind to 'standard' when not specified", async () => {
+    const cred = await svc.create(orgId, { name: "test-default-kind" });
+    expect(cred.kind).toBe("standard");
+  });
+
+  test("create with kind='anonymous' returns an anonymous cred", async () => {
+    const cred = await svc.create(orgId, {
+      name: "test-anon-create",
+      kind: "anonymous",
+    });
+    expect(cred.kind).toBe("anonymous");
+    // secret is still emitted on creation for uniformity (revocation +
+    // rotation work the same way) but never required at verify time.
+    expect(cred.secret).toMatch(/^csk_/);
+    expect(cred.publishableKey).toMatch(/^cpk_/);
+  });
+
+  test("verifyRequest on anonymous cred passes with NO userHash", async () => {
+    const cred = await svc.create(orgId, {
+      name: "test-anon-verify-no-hash",
+      kind: "anonymous",
+    });
+    const result = await svc.verifyRequest(
+      cred.publishableKey,
+      "device-uuid-1",
+      undefined,
+    );
+    expect(result.valid).toBe(true);
+    expect(result.kind).toBe("anonymous");
+    expect(result.devMode).toBe(false);
+    expect(result.tenantId).toBe(orgId);
+    expect(result.credentialId).toBe(cred.id);
+  });
+
+  test("verifyRequest on anonymous cred ignores even an invalid userHash", async () => {
+    const cred = await svc.create(orgId, {
+      name: "test-anon-verify-junk-hash",
+      kind: "anonymous",
+    });
+    // anonymous trust is project-bound, not user-bound — junk hash
+    // means nothing because we never check it.
+    const result = await svc.verifyRequest(
+      cred.publishableKey,
+      "device-uuid-2",
+      "this-is-not-a-real-hash",
+    );
+    expect(result.valid).toBe(true);
+    expect(result.kind).toBe("anonymous");
+  });
+
+  test("verifyRequest on anonymous cred still fails when revoked", async () => {
+    const cred = await svc.create(orgId, {
+      name: "test-anon-revoke",
+      kind: "anonymous",
+    });
+    await svc.revoke(orgId, cred.id);
+    await expect(
+      svc.verifyRequest(cred.publishableKey, "device-x", undefined),
+    ).rejects.toThrow(CredentialDisabled);
+  });
+
+  test("standard cred (default) without userHash still throws InvalidHmac", async () => {
+    const cred = await svc.create(orgId, {
+      name: "test-standard-needs-hash",
+      // kind omitted → default standard
+    });
+    await expect(
+      svc.verifyRequest(cred.publishableKey, "user-x", undefined),
+    ).rejects.toThrow(InvalidHmac);
+  });
+
+  test("list and get include kind for both standard and anonymous", async () => {
+    const std = await svc.create(orgId, { name: "list-std" });
+    const anon = await svc.create(orgId, {
+      name: "list-anon",
+      kind: "anonymous",
+    });
+    const list = await svc.list(orgId);
+    const stdRow = list.find((c) => c.id === std.id);
+    const anonRow = list.find((c) => c.id === anon.id);
+    expect(stdRow?.kind).toBe("standard");
+    expect(anonRow?.kind).toBe("anonymous");
+
+    const fetchedStd = await svc.get(orgId, std.id);
+    const fetchedAnon = await svc.get(orgId, anon.id);
+    expect(fetchedStd.kind).toBe("standard");
+    expect(fetchedAnon.kind).toBe("anonymous");
+  });
 });

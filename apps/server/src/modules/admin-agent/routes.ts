@@ -73,7 +73,22 @@ adminAgentRouter.post("/chat", async (c) => {
     return c.json({ error: "no_active_organization" }, 400);
   }
 
+  // pages-builder requires a project binding — without one, the system
+  // prompt has nothing to anchor on and the proposeDraft tool can't
+  // pick a target. Other agents ignore pageProjectId.
+  if (
+    body.agentName === "pages-builder" &&
+    typeof body.context.pageProjectId !== "string"
+  ) {
+    return c.json({ error: "pages_builder_missing_project_id" }, 400);
+  }
+
   // streamChat returns a `Response` already (createAgentUIStreamResponse
   // is HTTP-aware). No need to wrap or call .toUIMessageStreamResponse().
-  return adminAgentService.streamChat(body, { tenantId });
+  return adminAgentService.streamChat(body, {
+    tenantId,
+    userId: c.var.user?.id ?? null,
+    pageProjectId: body.context.pageProjectId,
+    pageConversationMessageId: body.context.pageConversationMessageId,
+  });
 });

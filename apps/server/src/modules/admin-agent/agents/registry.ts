@@ -12,6 +12,7 @@
 
 import { createFormFillAgent } from "./form-fill";
 import { createGlobalAssistantAgent } from "./global-assistant";
+import { createPagesBuilderAgent } from "./pages-builder";
 import type { AdminAgentName, AgentDefinition } from "./types";
 import type { ChatExecutionContext } from "../types";
 
@@ -24,6 +25,8 @@ export function createAgentForRequest(
       return createFormFillAgent(execCtx);
     case "global-assistant":
       return createGlobalAssistantAgent(execCtx);
+    case "pages-builder":
+      return createPagesBuilderAgent(execCtx);
     default: {
       // Exhaustive — TS will flag any new AdminAgentName that isn't
       // wired here.

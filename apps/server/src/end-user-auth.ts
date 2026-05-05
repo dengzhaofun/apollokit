@@ -99,20 +99,69 @@ function buildEndUserAuth() {
     }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    trustedOrigins: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:3002",
-      "http://localhost:3003",
-      "http://localhost:3004",
-      "http://localhost:3005",
-      "http://localhost:3006",
-      "http://localhost:3007",
-      "http://localhost:3008",
-      "http://localhost:3009",
-      "http://localhost:3010",
-      "https://apollokit-admin.limitless-ai.workers.dev",
-    ],
+    // Function form so we can recognise wildcard pages subdomains —
+    // `<slug>.pages.apollokit.dev` produces a fresh origin per project.
+    // Better Auth 1.4+ accepts `(req) => Promise<string[]>` and merges
+    // its return into the static list (see node_modules better-auth/
+    // dist/api/middlewares/origin-check.mjs#validateOrigin).
+    trustedOrigins: (req) => {
+      const origin = req?.headers?.get("origin") ?? "";
+      const dynamic: string[] = [];
+      // *.pages.apollokit.dev — apollokit-pages worker subdomains
+      if (/^https:\/\/[a-z0-9-]+\.pages\.apollokit\.dev$/.test(origin)) {
+        dynamic.push(origin);
+      }
+      // <slug>.localhost / <slug>.lvh.me — local dev for the pages worker
+      if (
+        /^http:\/\/(?:[a-z0-9-]+\.)?(?:localhost|lvh\.me|127\.0\.0\.1)(?::\d+)?$/.test(
+          origin,
+        )
+      ) {
+        dynamic.push(origin);
+      }
+      const fixed = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
+        "http://localhost:3006",
+        "http://localhost:3007",
+        "http://localhost:3008",
+        "http://localhost:3009",
+        "http://localhost:3010",
+        "https://apollokit-admin.limitless-ai.workers.dev",
+      ];
+      return [...fixed, ...dynamic];
+    },
+    advanced: {
+      // Cross-subdomain cookie sharing for the pages worker. End-user
+      // sessions persist across `<slug>.pages.apollokit.dev` so the
+      // same player can move between project subdomains without
+      // re-authenticating. Admin (apollokit-admin.<account>.workers.dev)
+      // is on a different apex zone, so its cookie domain is unaffected.
+      //
+      // PAGES_COOKIE_DOMAIN is empty in dev (chrome accepts cookies on
+      // bare `localhost` regardless), `.pages.apollokit.dev` in prod.
+      crossSubDomainCookies:
+        (env.PAGES_COOKIE_DOMAIN as string | undefined)
+          ? {
+              enabled: true,
+              domain: env.PAGES_COOKIE_DOMAIN,
+            }
+          : undefined,
+      defaultCookieAttributes:
+        (env.PAGES_COOKIE_DOMAIN as string | undefined)
+          ? {
+              sameSite: "lax",
+              secure: true,
+              httpOnly: true,
+              domain: env.PAGES_COOKIE_DOMAIN,
+              path: "/",
+            }
+          : undefined,
+    },
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,

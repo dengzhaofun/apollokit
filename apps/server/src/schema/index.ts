@@ -44,3 +44,4 @@ export * from "./triggers";
 export * from "./feature-unlocks";
 export * from "./mau";
 export * from "./billing";
+export * from "./page";

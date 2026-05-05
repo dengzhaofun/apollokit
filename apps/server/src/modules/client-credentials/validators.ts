@@ -1,8 +1,17 @@
 import { z } from "@hono/zod-openapi";
 
+import { CLIENT_CREDENTIAL_KINDS } from "./types";
+
 // ---------------------------------------------------------------------------
 // Request schemas
 // ---------------------------------------------------------------------------
+
+export const CredentialKindSchema = z
+  .enum(CLIENT_CREDENTIAL_KINDS)
+  .openapi({
+    description:
+      "'standard' — full HMAC flow; 'anonymous' — accepts any `x-end-user-id` (used by apollokit-pages anonymous projects).",
+  });
 
 export const CreateCredentialSchema = z
   .object({
@@ -11,6 +20,7 @@ export const CreateCredentialSchema = z
       example: "2027-01-01T00:00:00.000Z",
     }),
     metadata: z.record(z.string(), z.unknown()).optional(),
+    kind: CredentialKindSchema.optional().default("standard"),
   })
   .openapi("CreateCredential");
 
@@ -36,6 +46,7 @@ export const CredentialResponseSchema = z
     tenantId: z.string(),
     name: z.string(),
     publishableKey: z.string(),
+    kind: CredentialKindSchema,
     devMode: z.boolean(),
     enabled: z.boolean(),
     expiresAt: z.string().nullable(),
@@ -51,9 +62,11 @@ export const CredentialCreatedResponseSchema = z
     name: z.string(),
     publishableKey: z.string().openapi({ example: "cpk_abc123..." }),
     secret: z.string().openapi({
-      description: "Shown only once. Store securely.",
+      description:
+        "Shown only once. Store securely. For 'anonymous' kind credentials this is still emitted but never required at verify time.",
       example: "csk_abc123...",
     }),
+    kind: CredentialKindSchema,
     devMode: z.boolean(),
     enabled: z.boolean(),
     expiresAt: z.string().nullable(),

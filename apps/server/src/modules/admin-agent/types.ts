@@ -116,6 +116,20 @@ export type ChatRequestBody = {
      * with the corresponding apply tool. Optional & backwards-compat.
      */
     mentions?: MentionRef[];
+    /**
+     * For the `pages-builder` agent only: the page project this turn
+     * is editing. Threaded into `ChatExecutionContext.pageProjectId`
+     * so the agent's tools (proposePageDraft / publishVersion / …)
+     * scope every operation to this one project without trusting the
+     * model to put the right id in each tool call. Other agents ignore.
+     */
+    pageProjectId?: string;
+    /**
+     * Stable id of the current `assistant` UI message; used by the
+     * pages-builder agent to attribute proposed versions back to the
+     * conversation row (`page_project_versions.conversationMessageId`).
+     */
+    pageConversationMessageId?: string;
   };
 };
 
@@ -126,4 +140,8 @@ export type ChatRequestBody = {
  */
 export type ChatExecutionContext = {
   tenantId: string;
+  userId?: string | null;
+  /** pages-builder only — see ChatRequestBody.context.pageProjectId. */
+  pageProjectId?: string;
+  pageConversationMessageId?: string;
 };

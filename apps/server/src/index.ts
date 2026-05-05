@@ -18,6 +18,7 @@ import { INTERNAL_ERROR_CODE, NOT_FOUND_CODE, fail } from "./lib/response";
 import { getClientOrgId } from "./lib/route-context";
 import { auditLog } from "./middleware/audit-log";
 import { mauTracker } from "./middleware/mau-tracker";
+import { clientCors } from "./middleware/client-cors";
 import { requireClientCredential } from "./middleware/require-client-credential";
 import { requestLog } from "./middleware/request-log";
 import { sentryContext } from "./middleware/sentry-context";
@@ -90,6 +91,7 @@ import {
 import { mailRouter, mailClientRouter } from "./modules/mail";
 import { mcpRouter } from "./modules/mcp";
 import { navigationRouter } from "./modules/navigation";
+import { pageRouter, pageClientRouter } from "./modules/page";
 import { teamMemberRouter } from "./modules/team-members";
 import { shopRouter, shopClientRouter } from "./modules/shop";
 import { mediaLibraryRouter } from "./modules/media-library";
@@ -223,6 +225,12 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 // Any other route in this file that forwards requests to
 // `endUserAuth.handler` without going through this middleware MUST
 // also strip the header.
+// CORS for every `/api/v1/client/*` route — must run BEFORE any
+// `requireClientCredential` mount so the browser preflight (OPTIONS,
+// no auth headers) gets a 204 with Allow-Origin instead of being
+// short-circuited by the auth gate. apollokit-pages worker (PR 3+)
+// fetches client APIs cross-origin from `<slug>.pages.apollokit.dev`.
+app.use("/api/v1/client/*", clientCors);
 app.use("/api/v1/client/auth/*", requireClientCredential);
 app.on(["POST", "GET"], "/api/v1/client/auth/*", (c) => {
   const orgId = getClientOrgId(c);
@@ -321,6 +329,7 @@ app.route("/api/v1/mail", mailRouter);
 // JSON-RPC over HTTP. See `modules/mcp/routes.ts` for the rationale.
 app.route("/api/v1/mcp", mcpRouter);
 app.route("/api/v1/navigation", navigationRouter);
+app.route("/api/v1/page", pageRouter);
 // 项目级成员管理 — admin 专用,不放到 client 路由组(client 不该改 RBAC)
 app.route("/api/v1/team-members", teamMemberRouter);
 app.route("/api/v1/shop", shopRouter);
@@ -381,6 +390,7 @@ app.route("/api/v1/triggers", triggersRouter);
   v1.route("/projects/:projectId/lottery", lotteryRouter);
   v1.route("/projects/:projectId/mail", mailRouter);
   v1.route("/projects/:projectId/navigation", navigationRouter);
+  v1.route("/projects/:projectId/page", pageRouter);
   v1.route("/projects/:projectId/shop", shopRouter);
   v1.route("/projects/:projectId/storage-box", storageBoxRouter);
   v1.route("/projects/:projectId/media-library", mediaLibraryRouter);
@@ -420,6 +430,7 @@ app.route("/api/v1/client/invite", inviteClientRouter);
 app.route("/api/v1/client/guild", guildClientRouter);
 app.route("/api/v1/client/lottery", lotteryClientRouter);
 app.route("/api/v1/client/mail", mailClientRouter);
+app.route("/api/v1/client/page", pageClientRouter);
 app.route("/api/v1/client/shop", shopClientRouter);
 app.route("/api/v1/client/task", taskClientRouter);
 app.route("/api/v1/client/match-squad", matchSquadClientRouter);

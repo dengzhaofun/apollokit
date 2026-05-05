@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "server", "dev"],
       "port": 8787
+    },
+    {
+      "name": "pages",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "pages", "dev"],
+      "port": 3001
     }
   ]
 }

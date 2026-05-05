@@ -100,6 +100,7 @@ export const statement = {
   mediaLibrary: ["read", "write", "manage"],
   navigation: ["read", "write", "manage"],
   offlineCheckIn: ["read", "write", "manage"],
+  page: ["read", "write", "publish", "manage"],
   rank: ["read", "write", "manage"],
   shop: ["read", "write", "manage"],
   storageBox: ["read", "write", "manage"],
