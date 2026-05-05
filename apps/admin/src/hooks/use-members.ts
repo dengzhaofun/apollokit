@@ -30,6 +30,7 @@ export type OrgInvitationRow = {
   organizationId: string
   email: string
   role: string | null
+  teamId: string | null
   status: string
   expiresAt: string | null
   inviterId: string | null
@@ -173,6 +174,47 @@ export function useCancelInvitation() {
         }
       ).cancelInvitation({ invitationId: args.invitationId })
       if (error) throw new Error(error.message ?? "撤销失败")
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["org-invitations"] })
+    },
+  })
+}
+
+export function useResendInvitation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: {
+      invitation: OrgInvitationRow
+      organizationId: string
+    }) => {
+      const { invitation, organizationId } = args
+      // Better Auth has no native resend — cancel then re-invite with the same params.
+      const { error: cancelErr } = await (
+        authClient.organization as unknown as {
+          cancelInvitation: (a: {
+            invitationId: string
+          }) => Promise<{ error?: { message?: string } | null }>
+        }
+      ).cancelInvitation({ invitationId: invitation.id })
+      if (cancelErr) throw new Error(cancelErr.message ?? "撤销失败")
+
+      const { error: inviteErr } = await (
+        authClient.organization as unknown as {
+          inviteMember: (a: {
+            email: string
+            role: string
+            organizationId: string
+            teamId?: string
+          }) => Promise<{ error?: { message?: string } | null }>
+        }
+      ).inviteMember({
+        email: invitation.email,
+        role: invitation.role ?? "member",
+        organizationId,
+        ...(invitation.teamId ? { teamId: invitation.teamId } : {}),
+      })
+      if (inviteErr) throw new Error(inviteErr.message ?? "重发失败")
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["org-invitations"] })
