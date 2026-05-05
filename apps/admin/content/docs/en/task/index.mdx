@@ -1,0 +1,64 @@
+---
+title: Overview
+description: Event-driven task progress tracking and rewards — daily tasks, achievements, tiered reward ladders
+icon: ListTodo
+---
+
+The task system automatically converts "player did something" into "task progress updates + reward grants." Business code just reports events; the task system decides which tasks are completed and what rewards to deliver. Covers daily tasks, weekly tasks, achievements, event tasks, and more.
+
+## What problem does it solve?
+
+Every game's task system looks roughly the same:
+
+- Front end reports "killed a boss"
+- Backend queries all related tasks, checks which conditions are met
+- Met conditions update progress; completed tasks grant rewards
+- Some tasks reset daily, some never reset
+- Some tasks have ladders: 30 completions for tier 1, 100 for tier 2
+
+This logic is rebuilt in every game, nearly identically, every time. The task system turns it into **configuration**: define task name, event to listen for, target value, and reward — the rest happens automatically.
+
+## Typical use cases
+
+**Scenario 1: Daily tasks**
+"Kill 10 monsters today," "Log in," "Spend X currency." Reset daily, grant on completion. Players have a batch of small tasks driving daily return.
+
+**Scenario 2: Achievements**
+"Kill 1,000 monsters cumulative," "First group session," "Complete 50 dungeons." Never reset, tiered ladder (500/1,000/5,000 each granting a tier). Achievements motivate long-term players.
+
+**Scenario 3: Event tasks**
+"Complete 3 dungeons during the event," "Invite 1 friend to join." Deactivated after the event; progress preserved. Completion triggers activity points, feeding milestone rewards.
+
+**Scenario 4: Onboarding tasks**
+"Complete the tutorial," "Join a guild for the first time," "Make your first recharge." One-time; permanently marked complete once done.
+
+## Core capabilities
+
+- **Event-driven**: business code reports any structured event; the task system automatically matches and updates progress
+- **Field filters**: tasks can specify conditions (e.g. "only counts if bossId=dragon"); configured in the dashboard without code changes
+- **Tiered reward ladders**: a single task can have multiple thresholds, each claimable independently
+- **Reset cadence**: daily / weekly / never — configured per task type
+- **Category management**: daily, weekly, achievement, event — easy front-end grouping
+- **Activity points forwarding**: task completion auto-forwards to activity point totals
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Task systems drive player behavior and extend session length — a core retention mechanism |
+| Product managers | Flexible task configuration; each campaign can have a distinct task structure |
+| Operations team | Configure tasks and rewards in the dashboard; track completion rates for optimization |
+| Engineering team | Integrate the event-reporting API; all task logic managed through configuration thereafter |
+
+## Related modules
+
+- **[Activity](../activity)**: task completion forwarded as activity points
+- **[Items](../item)** / **[Currency](../currency)**: actual reward delivery
+- **[Webhooks](../webhooks)**: `task.completed` events can trigger external systems
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, event-driven progress, tiered rewards, API parameters" />
+  <Card href="../api/task" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

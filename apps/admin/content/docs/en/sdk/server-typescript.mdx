@@ -1,0 +1,237 @@
+---
+title: '@apollokit/server (TypeScript)'
+description: Server-to-server TypeScript SDK — Node / Bun / Workers / any TS process that can run fetch
+icon: ServerCog
+---
+
+`@apollokit/server` is the TypeScript SDK for admin routes (`/api/<module>/*`), running in your **trusted server process** — backend APIs, ops scripts, cron jobs, data exports, internal tools. Auth uses an `ak_`-prefixed admin API key with **org-level access**.
+
+<Callout type="warn" title="Security — never run in client code">
+
+`ak_` is an org-level secret. If it leaks into a game client / H5 bundle / public repo, an attacker can forge any ops operation.
+
+If your code will be bundled into a player-controlled process (Unity / browser / mini-program / Electron), use [`@apollokit/client`](/docs/en/sdk/client-typescript) instead.
+
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+
+### Install
+
+```bash title="terminal"
+pnpm add @apollokit/server
+# or: npm i / yarn add / bun add
+```
+
+</Step>
+
+<Step>
+
+### Issue an admin API key
+
+Open `/api-keys` in the dashboard, click "New" → name it → copy the returned `ak_…`. **Shown only once** — store it in a secret manager immediately.
+
+No UI access? Use the Better Auth endpoint:
+
+```bash title="curl"
+curl -X POST 'https://api.example.com/api/auth/api-key' \
+  -H 'Cookie: <session-cookie>' \
+  -H 'Content-Type: application/json' \
+  -d '{ "configId": "admin", "name": "ops-cron" }'
+```
+
+</Step>
+
+<Step>
+
+### Initialize the client
+
+```ts title="src/apollokit.ts"
+import { createServerClient } from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.APOLLOKIT_ADMIN_KEY!, // "ak_..."
+})
+```
+
+`createServerClient` configures a process-wide shared fetch client. Call it once at startup — every SDK function automatically carries `x-api-key: ak_…`.
+
+</Step>
+
+<Step>
+
+### Call an endpoint
+
+```ts title="src/list-announcements.ts"
+import {
+  createServerClient,
+  announcementAdminGetRoot,
+} from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.APOLLOKIT_ADMIN_KEY!,
+})
+
+const { data } = await announcementAdminGetRoot({ throwOnError: true })
+//      ^?
+const items = data[200].data.items
+console.log(`Announcements: ${items.length}`)
+```
+
+`throwOnError: true` causes 4xx/5xx to throw. On success, `data[200]` is the envelope; `data[200].data` is the typed business payload.
+
+</Step>
+
+</Steps>
+
+## Configuration
+
+`createServerClient` accepts two fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `baseUrl` | `string` | Server base URL (e.g. `https://api.example.com`) |
+| `apiKey` | `string` | Admin API key (`ak_…` prefix). From dashboard `/api-keys` or `POST /api/auth/api-key` (`configId=admin`). Org-level full access. |
+
+For per-tenant client isolation (multi-tenant proxy), see [Multiple clients](#multiple-clients-multi-tenant-proxy) below.
+
+## Response envelope
+
+Every business endpoint returns a standard envelope:
+
+```jsonc
+{ "code": "ok", "data": <payload>, "message": "", "requestId": "..." }
+```
+
+hey-api indexes by status code, so the envelope is accessed via `data[200]`:
+
+```ts
+import {
+  createServerClient,
+  checkInGetConfigs,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+const { data } = await checkInGetConfigs({ throwOnError: true })
+const envelope = data[200]
+//    ^?
+const configs = envelope.data
+console.log({
+  count: configs.items.length,
+  requestId: envelope.requestId, // paste into the trace panel for full chain
+})
+```
+
+## Error handling
+
+Non-ok responses throw `ApolloKitApiError` when `throwOnError: true`:
+
+```ts
+import {
+  ApolloKitApiError,
+  checkInGetConfigs,
+  createServerClient,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+try {
+  await checkInGetConfigs({ throwOnError: true })
+} catch (err) {
+  if (err instanceof ApolloKitApiError) {
+    // err.code      → "check_in.config_not_found", "validation_error", ...
+    // err.status    → HTTP status code
+    // err.requestId → trace panel for the full chain
+    console.error(`[${err.status}] ${err.code}: ${err.message}`)
+  }
+  throw err
+}
+```
+
+<Callout type="info" title="requestId for end-to-end tracing">
+
+`ApolloKitApiError.requestId` matches `http_requests.trace_id` in Tinybird on the server side. Include it when filing a bug — it pinpoints the full log, upstream/downstream chain, and timing for that request.
+
+</Callout>
+
+Error code namespaces mirror the server module errors. Full list in `apps/server/src/modules/<module>/errors.ts`.
+
+You can also skip `throwOnError` and check manually:
+
+```ts
+import {
+  ApolloKitApiError,
+  isErrorEnvelope,
+  checkInGetConfigs,
+  createServerClient,
+} from '@apollokit/server'
+
+createServerClient({ baseUrl: 'https://api.example.com', apiKey: 'ak_demo' })
+
+const { data, error, response } = await checkInGetConfigs({})
+
+if (error && isErrorEnvelope(error)) {
+  throw new ApolloKitApiError(error, response.status)
+}
+if (data && data[200]?.code === 'ok') {
+  console.log(`configs: ${data[200].data.items.length}`)
+}
+```
+
+## Multiple clients (multi-tenant proxy)
+
+The default exported `client` is a process-level singleton — right for single-tenant use. If one Node process needs to switch apollokit orgs per inbound request, create independent clients:
+
+```ts
+import { createClient } from '@hey-api/client-fetch'
+import { announcementAdminGetRoot } from '@apollokit/server'
+
+function clientForTenant(apiKey: string) {
+  const c = createClient({ baseUrl: 'https://api.example.com' })
+  c.interceptors.request.use((req) => {
+    req.headers.set('x-api-key', apiKey)
+    return req
+  })
+  return c
+}
+
+// Per inbound request: get the tenant's ak_ and pass it via client option
+const result = await announcementAdminGetRoot({
+  client: clientForTenant('ak_…'),
+  throwOnError: true,
+})
+```
+
+## Upgrading / regenerating
+
+`@apollokit/server`'s `src/generated/` contains the SDK types and functions, committed alongside the server's `/openapi.json`. After changing server routes, refresh the full chain:
+
+```bash title="terminal"
+# 1) Start wrangler dev (one terminal)
+pnpm --filter=server dev
+
+# 2) Another terminal: dump → split → SDK gen → inject samples → admin docs
+pnpm sdks:generate
+```
+
+Pipeline details at [`sdks:generate` pipeline](/docs/en/sdk).
+
+## Comparison with client SDK
+
+| | `@apollokit/server` | `@apollokit/client` |
+|---|---|---|
+| **Package** | `@apollokit/server` | `@apollokit/client` |
+| **Auth header** | `x-api-key: ak_…` | `x-api-key: cpk_…` + `x-end-user-id` + `x-user-hash` |
+| **Route prefix** | `/api/*` | `/api/client/*` |
+| **End-user awareness** | None — operates on the whole org | Required — endUserId-scoped isolation |
+| **Typical use** | Node/Bun backend, cron, CLI, data export | Game client, mini-program, browser H5 |
+| **Bundle size concern** | Not important | Critical — no runtime retry/HMAC framework bundled |
+
+Not sure which fits? → Back to [SDK Overview](/docs/en/sdk) for the decision tree.

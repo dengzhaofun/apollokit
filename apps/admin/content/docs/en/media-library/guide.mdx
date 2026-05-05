@@ -1,0 +1,61 @@
+---
+title: Developer Guide
+description: Folder tree, R2/S3 assets, upload flow, public proxy
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The media library is the dashboard's built-in general-purpose asset repository for images, audio, and JSON config files. Storage is Cloudflare R2 (or S3-compatible), uploads use presigned URLs, max 10 MB per file.
+
+## Data model
+
+- **media_folders**: folder tree (with parent/child relationships and path cache).
+- **media_assets**: individual asset — name, object key, size, MIME type, checksum, folderId.
+
+## Admin API
+
+```http
+POST   /api/media-library/folders          body: { name, parentId? }
+GET    /api/media-library/folders/{id}/children
+PATCH  /api/media-library/folders/{id}
+DELETE /api/media-library/folders/{id}
+
+POST   /api/media-library/upload/presign   body: { filename, mimeType, size, folderId }
+                                             → { uploadUrl, objectKey, assetId }
+POST   /api/media-library/upload/complete  body: { assetId, checksum }
+GET    /api/media-library/assets
+DELETE /api/media-library/assets/{id}
+```
+
+## Public proxy
+
+```http
+GET /api/media-library/object/{objectKey}    public-read, 5-minute cache
+```
+
+Lets game clients access assets directly via `apollokit-server/api/media-library/object/<key>` without generating a presigned URL each time.
+
+## Business rules
+
+- **Two-step upload**: frontend calls `presign` → receives direct upload URL → PUTs directly to R2 → calls `complete` with checksum → server validates and marks active.
+- **Per-org namespace**: `objectKey` is always prefixed with `<orgId>/...` — tenants are physically isolated.
+- **10 MB limit**: `MAX_UPLOAD_SIZE` is config-controlled; exceeding it causes `presign` to reject immediately.
+- **Delete semantics**: `DELETE` removes both the DB record and R2 object. On failure, uses a compensation pattern ("delete R2 first, then DB, retry on failure") since neon-http has no transactions.
+
+## Composing with other modules
+
+- [banner](../banner): banner image URLs point here.
+- [entity](../entity): entity icons and model assets.
+- [mail](../mail): inline images in mail.
+- [collection](../collection): collection entry illustrations.
+
+## Events
+
+`media-library.uploaded` / `media-library.deleted`.
+
+---
+
+<Cards>
+  <Card href="../../api/media-library/admin" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

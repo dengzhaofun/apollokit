@@ -1,0 +1,61 @@
+---
+title: Developer Guide
+description: Stage chapters, star ratings, unlock rules, completion rewards
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The level module implements a structured "chapter → level → star rating" system: levels have unlock rules, completions earn stars, full stars yield bonus rewards.
+
+## Data model
+
+- **level_configs** (one per org): top-level parameters for a level system (default max stars, global unlock strategy).
+- **level_stages**: chapters (Chapter 1, Chapter 2...) with icons, descriptions, and unlock conditions.
+- **levels**: individual levels within a chapter — max stars, per-star rewards, unlock rule (auto / level_clear / stars_total / stage_clear).
+- **level_user_progress**: per-player × per-level progress — cleared / starsEarned / lastClearedAt.
+
+## Admin API
+
+```http
+POST   /api/level/configs
+POST   /api/level/stages
+POST   /api/level/stages/{id}/levels
+PATCH  /api/level/levels/{id}
+DELETE /api/level/levels/{id}
+```
+
+## Client API
+
+```http
+POST /api/level/end-user/progress          body: { levelId, stars }    report completion
+GET  /api/level/end-user/stages            chapters + levels + progress in one call
+POST /api/level/end-user/claim-star-reward body: { levelId, starIndex }
+```
+
+## Business rules
+
+- **Unlock rules (discriminated union)**:
+  - `auto`: always open.
+  - `level_clear`: requires passing a specific levelId first.
+  - `stars`: requires accumulating N total stars.
+  - `stage_clear`: requires all levels in the previous chapter to be cleared.
+- **Star locking**: once a level is 3-starred, replaying for 2 stars doesn't decrease the record — `MAX` semantics.
+- **Reward claiming**: each star's reward is independent; `claim-star-reward` is idempotent on `(userId, levelId, starIndex)` — no double-grant on repeat claims.
+
+## Composing with other modules
+
+- [item](../item): completion and full-star rewards.
+- [entity](../entity): level completion unlocks new entity blueprints.
+- [leaderboard](../leaderboard): "total stars across all chapters" ranking.
+- [task](../task): "clear N levels" as a task definition.
+
+## Events
+
+`level.cleared` / `level.stars_earned` / `level.unlocked`.
+
+---
+
+<Cards>
+  <Card href="../../api/level/level_get_configs" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

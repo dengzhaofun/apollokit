@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Branching storylines, player choices, per-node rewards — configuration-driven dialogue trees, no hardcoding
+icon: MessageSquare
+---
+
+The dialogue module provides "dialogue tree orchestration + runtime progression": designers configure nodes and options in the dashboard, players make choices in the client and follow branches, and each node can carry rewards. The entire dialogue tree is data, not code.
+
+## What problem does it solve?
+
+When game dialogue is hardcoded in the client:
+
+- Changing a single line of copy requires a release
+- Branch state management (where is the player in the story, which rewards have they claimed) must be custom-built
+- Option prerequisites (must reach a certain level to unlock this choice) get duplicated everywhere
+
+The dialogue module stores the full story tree on the server. Player progress syncs in real time. Designers can edit copy and node structure in the dashboard at any time, without a release.
+
+## Typical use cases
+
+**Scenario 1: Main story progression**
+The main storyline has 100 dialogue nodes. Each time the player enters dialogue, they receive the current node text and available options. Choosing advances to the next node, which may auto-grant items or currency.
+
+**Scenario 2: Branching choices affecting outcomes**
+Option prerequisites require the player to hold a specific item or have completed a task. Different choices lead to different nodes and ultimately different endings.
+
+**Scenario 3: Daily NPC conversation**
+Talk to a specific NPC once per day to collect a reward. The dialogue tree is simple (1 node), `autoClaim` is on, reward is granted on node entry — no second confirmation from the player.
+
+**Scenario 4: Event onboarding dialogue**
+At event start, pop up a guided dialogue explaining the rules. Archive the dialogue tree when the event ends, without affecting other story content.
+
+## Core capabilities
+
+- **Node tree configuration**: graphical node, option, and routing configuration in the dashboard
+- **Branch conditions**: options can have prerequisites (level, item ownership, task status) — unmet conditions make the option unavailable
+- **Node rewards**: automatic item/currency reward on node entry — idempotent to prevent double-grants
+- **Progress persistence**: player dialogue progress is persisted server-side and synced across devices
+- **Reset mechanism**: supports resetting progress (without clearing historical reward records)
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Story content decoupled from game logic — designers iterate independently without engineering |
+| Product managers | Complex branching structures with flexible option conditions and per-node rewards |
+| Designers / ops | Edit dialogue trees directly in the dashboard — changes take effect immediately, no release needed |
+| Engineering team | Implement the standard "ask the server for the next node" interaction pattern |
+
+## Related modules
+
+- **[Items](../item)**: node rewards delivered via the item module
+- **[Level](../level)**: option conditions can reference the player's level progress
+- **[Link](../link)**: option actions use the unified link value object to express jump targets
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, node structure, API parameters" />
+  <Card href="../api/dialogue" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

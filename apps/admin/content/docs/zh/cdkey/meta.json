@@ -1,0 +1,5 @@
+{
+  "title": "兑换码",
+  "icon": "Ticket",
+  "pages": ["index", "guide"]
+}

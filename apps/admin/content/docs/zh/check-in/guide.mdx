@@ -1,0 +1,267 @@
+---
+title: 开发指南
+description: 每日签到、连续签到追踪、周期重置与签到奖励配置
+icon: Code
+---
+
+> 本页面面向研发团队。产品背景与使用场景请见[产品说明](./index)。
+
+签到模块管理用户每日签到行为，支持连续签到追踪、按周/月周期重置、以及按天配置奖励物品。
+
+## 快速开始
+
+最常用的 endpoint:玩家发起签到 — `POST /api/client/check-in/check-ins`。前提是管理端已经创建好一个签到配置（详见下方 [核心概念](#核心概念)）；假设别名是 `daily`，玩家 id 是 `player_42`。
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, checkInClientPostCheckIns } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…', // 受信进程才传;浏览器 / 小程序场景见 SDK 文档
+})
+
+// SDK 自动用 csk_ 签发 x-user-hash,只传 endUserId
+const { data } = await checkInClientPostCheckIns({
+  headers: { 'x-end-user-id': 'player_42' },
+  body: { configKey: 'daily' },
+  throwOnError: true,
+})
+
+console.log(data[200].data.state.currentStreak) // 连续签到天数
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+# USER_HASH 是 HMAC-SHA256(endUserId, csk_) hex,服务端代签
+curl -X POST https://api.example.com/api/client/check-in/check-ins \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH" \
+  -H "Content-Type: application/json" \
+  -d '{"configKey":"daily"}'
+```
+
+</Tab>
+
+</Tabs>
+
+完整 endpoint 列表见 [API Reference](../../api/check-in)；SDK 接入细节见 [`@apollokit/client`](../sdk/client-typescript)。
+
+## 核心概念
+
+### 签到配置 (CheckInConfig)
+
+每个签到配置定义一套签到规则：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | 配置名称 |
+| `alias` | string? | 项目内唯一别名，可用于替代 UUID 查询 |
+| `resetMode` | enum | 重置模式：`none`（永不重置）、`week`（按周）、`month`（按月） |
+| `weekStartsOn` | 0-6 | 周起始日（0=周日），仅 `resetMode=week` 时有效 |
+| `target` | number? | 周期内目标天数（周模式 1-7，月模式 1-31） |
+| `timezone` | string | 时区（默认 UTC），影响"今天"的判定 |
+| `isActive` | boolean | 是否启用 |
+| `metadata` | object? | 自定义扩展数据 |
+
+### 用户签到状态 (CheckInUserState)
+
+每个 `(configId, endUserId)` 对应一条状态记录：
+
+| 字段 | 说明 |
+|------|------|
+| `totalDays` | 累计签到总天数 |
+| `currentStreak` | 当前连续签到天数 |
+| `longestStreak` | 历史最长连续签到天数 |
+| `currentCycleKey` | 当前周期标识（如 `week-2026-15`、`month-2026-04`） |
+| `currentCycleDays` | 当前周期内已签到天数 |
+| `lastCheckInDate` | 最后签到日期 |
+
+### 签到奖励 (CheckInReward)
+
+为配置的特定天数绑定奖励物品：
+
+| 字段 | 说明 |
+|------|------|
+| `dayNumber` | 周期内第几天签到时发放 |
+| `rewardItems` | 奖励物品列表 `[{definitionId, quantity}]` |
+| `metadata` | 自定义扩展数据 |
+
+签到成功后，如果当前周期天数命中某个 `dayNumber`，系统自动通过物品模块发放奖励。
+
+---
+
+## 管理端 API
+
+### 创建签到配置
+
+```http
+POST /api/check-in/configs
+Authorization: Bearer ak_...
+Content-Type: application/json
+
+{
+  "name": "每日签到",
+  "alias": "daily",
+  "resetMode": "week",
+  "weekStartsOn": 1,
+  "target": 7,
+  "timezone": "Asia/Shanghai",
+  "isActive": true
+}
+```
+
+### 查询签到配置
+
+```http
+GET /api/check-in/configs              # 列出所有配置
+GET /api/check-in/configs/{key}        # 按 UUID 或 alias 查询
+```
+
+`key` 参数同时支持 UUID 和 alias。
+
+### 更新签到配置
+
+```http
+PATCH /api/check-in/configs/{id}
+Content-Type: application/json
+
+{
+  "name": "新名称",
+  "target": 5,
+  "isActive": false
+}
+```
+
+> `resetMode` 创建后不可修改。
+
+### 删除签到配置
+
+```http
+DELETE /api/check-in/configs/{id}
+```
+
+### 管理奖励
+
+```http
+POST /api/check-in/configs/{key}/rewards     # 创建奖励
+GET  /api/check-in/configs/{key}/rewards     # 列出奖励
+PATCH  /api/check-in/rewards/{rewardId}      # 更新奖励
+DELETE /api/check-in/rewards/{rewardId}      # 删除奖励
+```
+
+创建奖励示例：
+
+```json
+{
+  "dayNumber": 3,
+  "rewardItems": [
+    { "definitionId": "gold-uuid", "quantity": 100 },
+    { "definitionId": "gem-uuid", "quantity": 5 }
+  ]
+}
+```
+
+### 管理端执行签到
+
+```http
+POST /api/check-in/configs/{key}/check-ins
+Content-Type: application/json
+
+{
+  "endUserId": "user-42"
+}
+```
+
+### 查询用户状态
+
+```http
+GET /api/check-in/configs/{key}/users/{endUserId}/state
+GET /api/check-in/configs/{key}/users     # 列出配置下所有用户状态
+```
+
+---
+
+## 客户端 API
+
+### 执行签到
+
+```http
+POST /api/client/check-in/check-ins
+x-api-key: cpk_...
+Content-Type: application/json
+
+{
+  "configKey": "daily",
+  "endUserId": "user-42",
+  "userHash": "hmac_hex_string"
+}
+```
+
+**响应**:
+
+```json
+{
+  "alreadyCheckedIn": false,
+  "justCompleted": false,
+  "state": {
+    "totalDays": 15,
+    "currentStreak": 3,
+    "longestStreak": 10,
+    "currentCycleKey": "week-2026-15",
+    "currentCycleDays": 3,
+    "lastCheckInDate": "2026-04-13"
+  },
+  "target": 7,
+  "isCompleted": false,
+  "remaining": 4,
+  "rewards": [
+    { "definitionId": "gold-uuid", "quantity": 100 }
+  ]
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `alreadyCheckedIn` | 今天是否已签到（重复签到不报错，返回 `true`） |
+| `justCompleted` | 本次签到是否刚好完成周期目标 |
+| `isCompleted` | 当前周期是否已完成 |
+| `remaining` | 当前周期还需签到天数 |
+| `rewards` | 本次签到获得的奖励（已自动发放到背包） |
+
+### 查询签到状态
+
+```http
+GET /api/client/check-in/users/{endUserId}/state?configKey=daily
+x-api-key: cpk_...
+x-user-hash: hmac_hex_string
+```
+
+---
+
+## 数据流示例
+
+```
+1. 管理员创建签到配置 (resetMode=week, target=7)
+2. 管理员为 day 1, 3, 5, 7 分别配置奖励
+3. 终端用户调用 POST /api/client/check-in/check-ins
+4. 服务端检查今天是否已签到，未签到则：
+   ├─ 更新 currentStreak、currentCycleDays
+   ├─ 如果 currentCycleDays 命中 dayNumber 3 → 发放 day 3 奖励
+   └─ 奖励通过 itemService.grantItems() 写入用户背包
+5. 返回签到结果，包含奖励信息
+```
+
+---
+
+<Cards>
+  <Card href="../../api/check-in/check_in_get_configs" title="API 参考" description="完整端点列表与请求/响应格式" />
+</Cards>

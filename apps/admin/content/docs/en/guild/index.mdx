@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Guild creation, member management, levels and experience, contribution tracking — the core module for persistent player social organizations
+icon: Shield
+---
+
+The guild module implements "lobby-style persistent social organizations" in games: players can create or join guilds, with tiered roles (leader / officer / member), guild leveling and capacity expansion, join approval workflows, and contribution tracking.
+
+## What problem does it solve?
+
+Guilds are one of the most effective mechanisms for mid-to-long-term retention, but building a complete guild system is substantial work:
+
+- Member permission tiers (leader / officer / member), each with different allowed actions
+- Guild levels and experience: kills, donations, and activity completion all contribute exp — contributions must be atomically recorded
+- Join modes: open / request-approval / invite-only, switchable per situation
+- Leadership succession when the guild leader leaves, and disbanding rules
+
+The guild module encapsulates all of this. Configure the rules, call the API.
+
+## Typical use cases
+
+**Scenario 1: Basic guild system**
+Players create a guild, write a description, choose a join mode. Others search and apply; the leader approves and they become members.
+
+**Scenario 2: Guild leveling and capacity expansion**
+Higher guild level = more member capacity. Members complete daily quests to contribute exp; when the guild levels up, the capacity limit expands for all members.
+
+**Scenario 3: Guild-exclusive activities**
+An event is only available to guild members. The guild module provides a membership check API; the activity module uses it as an entry gate.
+
+**Scenario 4: Contribution leaderboard**
+Show the top contributors within the guild to motivate active participation. Contribution records have a full atomic log — fully auditable.
+
+## Core capabilities
+
+- **Role tiers**: leader / officer / member with distinct permissions
+- **Join modes**: open, request-approval, and invite-only — switchable on demand
+- **Leveling system**: guilds have levels and experience; leveling up expands member capacity
+- **Contribution logging**: every contribution is atomically recorded with a full history log
+- **Transfer and succession**: leaders can transfer leadership; auto-succession triggers on departure
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Guilds are the core mid-to-long-term retention mechanism — guild members churn significantly less |
+| Product managers | Flexible configuration of guild size, leveling rules, and join modes to fit different game genres |
+| Operations team | View guild lists, member composition, and contribution data — useful for event design |
+| Engineering team | One-time API integration — concurrent writes are safe (contribution + level-up atomicity is module-guaranteed) |
+
+## Related modules
+
+- **[Leaderboard](../leaderboard)**: guild contribution rankings with `scope=guild`
+- **[Activity](../activity)**: guild-exclusive activities using guild membership as the entry condition
+- **[Mail](../mail)**: broadcast announcements or rewards to all guild members using the member list as recipients
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, permission rules, API parameters" />
+  <Card href="../api/guild" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

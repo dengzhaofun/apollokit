@@ -1,0 +1,61 @@
+---
+title: Developer Guide
+description: Multi-dimensional score rankings, cycle settlement, snapshot retention
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The leaderboard module abstracts "rank players by a metric" into a general-purpose component: custom metrics, configurable aggregation (sum / max / latest), switchable cycles (daily / weekly / monthly / all-time), multi-scope boards (global / guild / team / friend), with automatic cycle settlement and snapshot retention.
+
+## Data model
+
+- **leaderboard_configs**: a board's metadata — metric name, cycle key, aggregation mode, max display count.
+- **leaderboard_entries**: current cycle + player + config score; `(orgId, configId, cycleKey, endUserId)` unique.
+- **leaderboard_snapshots**: read-only snapshots taken when a cycle ends; historical season queries go here.
+
+## Admin API
+
+```http
+POST   /api/leaderboard/configs
+GET    /api/leaderboard/configs
+PATCH  /api/leaderboard/configs/{id}
+DELETE /api/leaderboard/configs/{id}
+
+POST   /api/leaderboard/contribute
+POST   /api/leaderboard/settle
+```
+
+## Client API
+
+```http
+GET /api/leaderboard/end-user/entries?configId=&cycleKey=&scope=
+GET /api/leaderboard/end-user/my-rank?configId=&cycleKey=
+```
+
+## Business rules
+
+- **Fan-out scoring**: one `contribute(metric, value, endUserId)` call hits **all** configs matching that metric — global + guild + friend boards all updated in one call.
+- **Idempotency**: callers provide `idempotencyKey`; duplicate submissions with the same key count as one.
+- **Cycle advancement**: `cycleKey` (e.g. `2026-W17`) is computed from config cycle type + now; the first cross-cycle contribute automatically rolls the previous cycle's entries into a snapshot.
+- **Aggregation semantics**:
+  - `sum`: accumulate (spend amount board)
+  - `max`: highest value (peak damage board)
+  - `latest`: most recent value (level board)
+
+## Composing with other modules
+
+- [task](../task): submit scores on task completion for a "weekly task score board."
+- [activity](../activity): activity-scoped board using activity id as `cycleKey`.
+- [guild](../guild): guild-scoped board with `scope=guild`.
+- [rank](../rank): for competitive matchmaking, use rank — it has full Elo / tier / season mechanics.
+
+## Events
+
+`leaderboard.contributed` / `leaderboard.settled` — both available via [webhooks](../webhooks).
+
+---
+
+<Cards>
+  <Card href="../../api/leaderboard/leaderboard_get_configs" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

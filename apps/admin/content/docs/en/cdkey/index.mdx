@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Bulk-generate and manage redemption codes — channel packs, streamer codes, ad campaigns, single or multi-use
+icon: Ticket
+---
+
+The CDKEY module lets you "generate a batch of codes, and let players enter them to claim rewards." Partnership gift codes, streamer exclusive codes, ad campaign activation codes — all managed under a single batch, with configurable per-code limits, per-user caps, validity windows, and reward payloads.
+
+## What problem does it solve?
+
+Redemption codes are a high-frequency need in game promotion and operations:
+
+- Channel partners need gift codes — anywhere from hundreds to millions
+- Streamer promotions need exclusive codes that prevent one person from redeeming multiple times
+- Campaign giveaways need limited codes with server-wide redemption caps
+- Abuse prevention, "already used" checks, expiry, redemption auditing — every detail must be handled
+
+In-house redemption systems consistently underestimate the complexity and encounter incidents like duplicate rewards and over-redemption at launch. The CDKEY module provides a **battle-tested standard implementation**: from code generation to redemption to auditing, all in one flow.
+
+## Typical use cases
+
+**Scenario 1: Streamer / KOL promotional codes**
+Partner with a streamer, generate 10,000 universal codes — each redeemable unlimited times, but each player can only use one per batch. Server-wide total cap: 100,000. Claim progress visible in real time in the dashboard.
+
+**Scenario 2: Channel gift codes**
+Partner with an app store channel, generate 50,000 one-time codes (each code redeemable exactly once), distributed to new users. Codes can be exported as CSV for the partner.
+
+**Scenario 3: Player compensation**
+A technical incident affected specific players — issue each affected player a unique code (alternatively use mail, but codes feel more ceremonial).
+
+**Scenario 4: E-commerce cross-promotion**
+Game items purchased on external platforms include a redemption code. Players enter it in-game to claim rewards. Codes expire after 90 days.
+
+## Core capabilities
+
+- **Batch management**: each batch has independent rules; multiple batches can run concurrently
+- **Flexible limits**: per-code redemption cap + per-user cap per batch + total batch cap
+- **Time windows**: configurable start and expiry times; expired codes are automatically blocked
+- **Reward delivery**: rewards sent via mail attachment on successful redemption — visible to players and auditable
+- **Per-code revocation**: revoke individual codes instantly, without affecting others
+- **Full audit log**: every redemption records user, time, and result; queryable by batch
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Code volume and redemption counts are precisely controlled — no over-issuance incidents |
+| Product managers | Flexible code rules covering channel, streamer, and e-commerce scenarios |
+| Operations team | Generate, export, track progress, and revoke problem codes — fully self-service from the dashboard |
+| Engineering team | Integrate the redemption API once; all future code campaigns are managed through configuration |
+
+## Related modules
+
+- **[Mail](../mail)**: rewards are delivered via mail attachments after successful redemption
+- **[Items](../item)** / **[Currency](../currency)**: the actual reward types in mail attachments
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Batch configuration, code generation rules, redemption flow, API parameters" />
+  <Card href="../api/cdkey" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

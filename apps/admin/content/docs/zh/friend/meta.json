@@ -1,0 +1,5 @@
+{
+  "title": "好友",
+  "icon": "Users",
+  "pages": ["index", "guide"]
+}

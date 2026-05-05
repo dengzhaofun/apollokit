@@ -1,0 +1,57 @@
+---
+title: 开发指南
+description: 竞技匹配结算、Elo 分、段位升降、赛季
+icon: Code
+---
+
+> 本页面面向研发团队。产品背景与使用场景请见[产品说明](./index)。
+
+天梯模块面向「有对局、要排位」的竞技玩法：每场比赛上报结果，服务端维护玩家的 Elo / 胜率 / 段位，跨赛季重置，支持段位保护与连胜奖励。
+
+## 数据模型
+
+- **rank_tier_configs**：段位定义模板——多少段、每段多少小段、升降规则。
+- **rank_tiers**：具象段位节点（青铜 I / II / III / 白银 ...）。
+- **rank_seasons**：赛季窗口 + 当季使用哪套 tier_config。
+- **rank_player_states**：玩家当前分、段位、连胜数、保护盾。
+- **rank_matches + rank_match_participants**：每场比赛原始记录与参与者结果。
+
+## 管理端 API
+
+```http
+POST   /api/rank/tier-configs
+POST   /api/rank/seasons                   开/关赛季
+POST   /api/rank/settle                    结算一场比赛（多参与者）
+GET    /api/rank/matches
+```
+
+## 客户端 API
+
+```http
+GET /api/rank/end-user/{userId}/season/{seasonId}    当前赛季信息
+GET /api/rank/end-user/{userId}/history
+```
+
+## 业务规则
+
+- **结算幂等**：`settle` 必须带 `externalMatchId`，同 `(orgId, externalMatchId)` 的重复提交不会重复记分。
+- **Elo / Glicko2**：config 里选择评分算法。结算时一次性算所有参与者新分，单条原子语句写入。
+- **段位升降**：分超过 tier 阈值 → 升段；掉到下限 → 降段，但**保护盾**（连胜/新晋段）可免一次降段。
+- **连胜奖励**：连胜 N 场额外加分，或首胜奖（每日一次）。
+- **赛季结束**：结束时对 `rank_player_states` 快照，按规则压段后进入新赛季。
+
+## 与其他模块组合
+
+- [排行榜](../leaderboard)：rank 本身是天梯逻辑，想做「本赛季胜场榜」再建一个 leaderboard config。
+- [邮件](../mail)：赛季结算奖励用邮件发。
+- [物品系统](../item) / [货币](../currency)：段位奖励发道具。
+
+## 事件
+
+`rank.match_settled` / `rank.tier_changed` / `rank.season_ended`。
+
+---
+
+<Cards>
+  <Card href="../../api/rank/admin" title="API 参考" description="完整端点列表与请求/响应格式" />
+</Cards>

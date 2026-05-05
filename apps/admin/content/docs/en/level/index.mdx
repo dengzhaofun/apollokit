@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Stage chapters, star ratings, unlock rules, completion rewards — unified progress management for linear content
+icon: Mountain
+---
+
+The level module implements a structured "chapter → level → star rating" system: levels have unlock rules, completion earns stars, full stars yield bonus rewards, and all progress is persisted server-side — no dependency on client-side local saves.
+
+## What problem does it solve?
+
+Most games have linear content progression, but building the level system yourself runs into:
+
+- Varied unlock conditions (pass the previous level / accumulate stars / complete a chapter) — each requiring special handling
+- Is the star rating additive or max? (Player replays and gets 2 stars when they previously had 3 — should it drop?)
+- Idempotency of reward claiming — the same star's reward must not be claimable twice
+
+The level module standardizes these rules. Designers configure in the dashboard; the client only needs to report completion results.
+
+## Typical use cases
+
+**Scenario 1: Linear chapter progression**
+10 chapters, 100 total levels. Chapter 2's first level is locked until Chapter 1 is fully completed. Players must unlock in order; the server automatically validates unlock eligibility.
+
+**Scenario 2: Star-based bonus rewards**
+Up to 3 stars per level. 1-star earns the base reward; 3-star earns additional rare items. Rewards are claimable independently — players can 1-star the level now and come back to grind 3 stars later.
+
+**Scenario 3: Varied unlock conditions**
+A secret level requires 200 total stars across the map; another requires clearing a specific prerequisite level. Multiple unlock rule types supported through configuration.
+
+**Scenario 4: Event-exclusive levels**
+Limited-time levels available only during an event. Automatically archived when the event ends, without affecting main-story level progress.
+
+## Core capabilities
+
+- **Chapter management**: multi-chapter structure with independent unlock conditions per chapter
+- **Flexible unlock rules**: auto-open / pass specific level / accumulate stars / complete chapter — all configuration-driven
+- **Star system**: up to N stars per level (configurable); stars take the historical maximum, never decrease on replay
+- **Per-star rewards**: each star independently configured and independently claimable — idempotent
+- **Server-side saves**: all progress persisted server-side and synced across devices — no local saves required
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Centralized linear content progress management — prevents save-loss complaints |
+| Product managers | Flexible unlock conditions and reward structures for complex level designs |
+| Designers / ops | Configure level properties and rewards directly in the dashboard — immediate effect |
+| Engineering team | Just report completion results — unlock validation and reward delivery are handled by the module |
+
+## Related modules
+
+- **[Items](../item)**: completion rewards delivered via the item module
+- **[Entity](../entity)**: level completion can unlock new entity blueprints (heroes, monsters, etc.)
+- **[Leaderboard](../leaderboard)**: total stars ranking, fastest completion time ranking
+- **[Task System](../task)**: "clear N levels" and "collect 100 stars" as task targets
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, unlock rules, API parameters" />
+  <Card href="../api/level" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

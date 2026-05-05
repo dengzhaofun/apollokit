@@ -1,0 +1,59 @@
+---
+title: Overview
+description: Structured live-ops campaign framework — state machine, points, milestones, nodes covering the full activity lifecycle
+icon: CalendarDays
+---
+
+The activity module is the **orchestration engine** for live-ops campaigns. Whether it's "login bonus," "cumulative check-in grand prize," or "complete tasks for points to exchange rewards," a single activity can manage it all. Activities have a state machine (draft → live → archived), can attach sub-mechanics as nodes, can be time-triggered, and support per-player points and milestone rewards.
+
+## What problem does it solve?
+
+Every time a campaign runs, engineering rewrites: activity on/off logic, player participation state, point calculation, reward claiming… And 80% of the code is identical across campaigns — only 20% is unique configuration.
+
+The activity module extracts that 80%: **an activity is a state machine + a points/milestone system**. Differentiated mechanics are added as child nodes rather than rewriting the activity framework each time.
+
+## Typical use cases
+
+**Scenario 1: Cumulative check-in event**
+"11.11 Event: check in for 7 days, win a limited skin." Create an activity, attach a check-in node, configure a 7-day milestone reward (limited skin). Set a time trigger — the activity auto-archives on expiry. No new engineering code needed.
+
+**Scenario 2: Points exchange event**
+"Limited-time points shop: complete tasks to earn points, exchange for rewards." The activity manages points; each completed task calls `add-points`; players burn accumulated points in the exchange module — activity and exchange work together.
+
+**Scenario 3: Multi-node event**
+"Newcomer gift bundle: first login + complete tutorial + first recharge." Each is a child node; completing all triggers a large milestone reward. Multi-node structure lets complex campaigns decompose cleanly without if-else logic sprawl.
+
+**Scenario 4: Season event**
+Monthly season activity, archived at month's end, new one created next month. Historical season data is preserved — past participation records are queryable.
+
+## Core capabilities
+
+- **State machine**: draft (ops-only) → live (player-visible + playable) → archived (invisible, data retained)
+- **Child nodes**: attach check-in, tasks, lottery as sub-mechanics under one activity
+- **Time-triggered transitions**: auto-start, phase-switch, and settlement without manual ops action
+- **Player points**: each player has activity-scoped points; stackable and queryable
+- **Milestones**: threshold-crossed → reward unlocked; player claims; multiple tiers supported
+- **Player-view API**: one call returns a player's complete state in an activity (joined, points, milestone states)
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Campaigns launch quickly without waiting for dev cycles — faster ops cadence |
+| Product managers | Unified activity framework — all live-ops mechanics fit the same model, easy to plan and review |
+| Operations team | Configure activities, attach nodes, monitor participation and point distribution |
+| Engineering team | No framework code written per campaign; integrate once, reuse forever |
+
+## Related modules
+
+- **[Check-in](../check-in)** / **[Lottery](../lottery)**: attachable as activity child nodes
+- **[Task](../task)**: task progress forwarded as activity points
+- **[Shop](../shop)**: activity-exclusive items guard by activity alias; auto-unpublish on archive
+- **[Items](../item)** / **[Currency](../currency)** / **[Mail](../mail)**: actual delivery channels for milestone rewards
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, state machine, points and milestone APIs" />
+  <Card href="../api/activity" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

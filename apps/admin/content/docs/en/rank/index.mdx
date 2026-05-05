@@ -1,0 +1,64 @@
+---
+title: Overview
+description: Competitive match settlement, Elo rating, tier progression, seasons — a complete ranked mode system for match-based games
+icon: Medal
+---
+
+The rank module is built for "match-based games that need ranked play": report match results, and the server automatically updates Elo scores and tiers, with tier protection, win-streak bonuses, and season resets.
+
+## What problem does it solve?
+
+Competitive ranking is the core mechanic in match-based games, but building a complete ranked system is substantial work:
+
+- Implementing and tuning Elo / Glicko2 rating algorithms
+- Mapping rating scores to tier thresholds; handling tier-up / tier-down edge cases
+- Win-streak bonuses and tier protection shields to reduce churn
+- Season-end rank compression logic and reward delivery
+- Settlement idempotency: the same match result should only be counted once
+
+The rank module encapsulates all of this. Business code just reports "who won, who lost" — rating changes and tier updates happen automatically.
+
+## Typical use cases
+
+**Scenario 1: 1v1 competitive match**
+Player enters the matchmaking pool. After the match, business code reports the result. The rank module updates both players' Elo scores, triggers tier changes, and returns the new tier and score delta.
+
+**Scenario 2: 5v5 team ranked**
+All participants' results are reported in a single call. The server batch-calculates each player's new score, guaranteeing atomic settlement for the entire match.
+
+**Scenario 3: Season mechanics**
+Reset rankings every quarter. At season end, apply rank compression (high-tier players drop to mid-tier so the next season starts fresh), then deliver rewards to players who reached specific tiers.
+
+**Scenario 4: Tier protection**
+Newly promoted players receive a protection shield — first loss doesn't drop their tier. Gives players time to adjust to the new tier, reducing churn caused by immediate demotion.
+
+## Core capabilities
+
+- **Rating algorithms**: Elo and Glicko2 built-in and selectable; parameters are configurable
+- **Tier system**: customizable tier structure (number of tiers, number of sub-tiers, score ranges)
+- **Protection mechanics**: win-streak bonus points; tier protection shields block demotion
+- **Season management**: open and close seasons; auto-generates tier snapshots on season end
+- **Settlement idempotency**: deduplicated by `externalMatchId` — same match only counts once
+- **Full match history**: every match's raw record is stored and queryable
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Competitive ranking is the core retention mechanism for hardcore players; season structure drives sustained engagement |
+| Product managers | Flexible tier configuration and season rules — quickly respond to balance adjustment needs |
+| Operations team | View tier distribution, season data, and design season reward strategies |
+| Engineering team | Just report match results — rating calculation and tier changes are fully handled by the module |
+
+## Related modules
+
+- **[Leaderboard](../leaderboard)**: the rank module handles full Elo/tier mechanics; for a "wins this season" board, add a separate leaderboard config
+- **[Mail](../mail)**: season rewards delivered via mail to qualifying players
+- **[Items](../item)** / **[Currency](../currency)**: actual delivery of tier reward items
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, rating algorithm, tier rules, API parameters" />
+  <Card href="../api/rank" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Bidirectional friend relationships, requests, and blocking — the foundation layer for player social graphs
+icon: Users
+---
+
+The friend module provides a complete in-game social relationship system: sending friend requests, accepting/declining, removing friends, and blocking players. Friend relationships are bidirectional; blocks are one-directional. All limits are configurable per project.
+
+## What problem does it solve?
+
+Without a friend system, players are strangers to each other. But building your own friend system means handling a lot of edge cases:
+
+- How to keep bidirectional relationships consistent (A removes B → B's side must also update)
+- What a blocked player can and can't see; whether they can still send friend requests
+- How many friends per player, and how many pending requests are allowed
+- Whether unanswered requests should expire automatically
+
+The friend module encapsulates all of these rules. Integrate once, tune behavior via configuration.
+
+## Typical use cases
+
+**Scenario 1: Classic friend system**
+Players send requests to each other; after acceptance they're mutual friends who can see online status, team up, and send gifts.
+
+**Scenario 2: Blocking and muting**
+A player blocks someone — that person's friend requests no longer appear, interactions are restricted, and the block is invisible to the blocked party.
+
+**Scenario 3: Adjusting friend limits over time**
+Early testing might cap friends at 50; post-launch you expand to 200. Change it in the config — no code changes needed.
+
+**Scenario 4: Social-graph-dependent features**
+Friend relationships act as a prerequisite for other modules: friend gifting, friend-scoped leaderboards, friends-only match history — all built on the friend module's relationship data.
+
+## Core capabilities
+
+- **Bidirectional relationship management**: requests, accept, decline, cancel, remove — all maintain strict bilateral consistency
+- **One-directional blocking**: block a player without their knowledge; asymmetric visibility rules are configurable
+- **Configurable limits**: max friends, max blocked, max pending requests per player — set per project
+- **Request auto-expiry**: unanswered requests automatically expire after a configured TTL
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | The friend system underpins retention and social virality — integrate once, no repeated development |
+| Product managers | Flexible configuration of limits and expiry rules to fit different product phases |
+| Operations team | View player social graphs; assist with social disputes |
+| Engineering team | Call standard APIs — bidirectional consistency and concurrency safety are handled by the module |
+
+## Related modules
+
+- **[Friend Gifts](../friend-gift)**: daily gift exchange between friends, built on top of friend relationships
+- **[Invite](../invite)**: successful referrals can optionally auto-add the new player as a friend
+- **[Leaderboard](../leaderboard)**: friend-scoped rankings with `scope=friend` show only friend standings
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, business rules, API parameters" />
+  <Card href="../api/friend" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

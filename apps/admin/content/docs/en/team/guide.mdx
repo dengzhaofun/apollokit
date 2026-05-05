@@ -1,0 +1,63 @@
+---
+title: Developer Guide
+description: Temporary teams, quick matching, leader disbanding
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The team module handles short-lifecycle squads for single game sessions: create, invite, start game, dissolve. This is distinct from the guild's persistent organization.
+
+## Data model
+
+- **team_configs** (one row per org): team size, invite TTL, quick match pool params, `autoDissolveOnLeaderLeave` and other policies.
+- **team_teams**: one team instance, includes status (open / closed / in_game / dissolved) and version (for concurrency conflict detection).
+- **team_members**: member records with role (leader / member) and join timestamp.
+- **team_invitations**: pending invitation state machine.
+
+## Admin API
+
+```http
+PUT  /api/team/configs
+GET  /api/team/configs
+```
+
+## Client API
+
+```http
+POST /api/team/end-user/create
+POST /api/team/end-user/{id}/invite        body: { inviteeId }
+POST /api/team/end-user/invitations/{id}/accept
+POST /api/team/end-user/invitations/{id}/reject
+
+POST /api/team/end-user/{id}/leave
+POST /api/team/end-user/{id}/kick
+POST /api/team/end-user/{id}/close
+POST /api/team/end-user/{id}/start-game
+POST /api/team/end-user/{id}/dissolve
+
+POST /api/team/end-user/quick-match
+```
+
+## Business rules
+
+- **Version field**: every write includes `version`; conflicts return `CONFLICT`, preventing dirty writes from concurrent modifications.
+- **Leader departure policy**: `autoDissolveOnLeaderLeave=true` auto-dissolves; otherwise, the earliest-joined member is automatically promoted.
+- **Invite expiry**: pending invites auto-expire past TTL (cron every minute).
+- **Start game**: after `start-game`, status=in_game — invite and kick are no longer available; business code typically uses this state as the signal to begin combat.
+
+## Composing with other modules
+
+- [guild](../guild): filter guild members first for in-guild quick match.
+- [leaderboard](../leaderboard): `scope=team` rankings (team kill counts, etc.).
+- [rank](../rank): form a fixed team before entering ranked matchmaking.
+
+## Events
+
+`team.created` / `team.joined` / `team.left` / `team.started_game` / `team.dissolved`.
+
+---
+
+<Cards>
+  <Card href="../../api/team/team_get_configs" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

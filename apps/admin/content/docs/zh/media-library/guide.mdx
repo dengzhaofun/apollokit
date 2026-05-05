@@ -1,0 +1,61 @@
+---
+title: 开发指南
+description: 文件夹树 + R2/S3 资源 · 上传 · 公共代理
+icon: Code
+---
+
+> 本页面面向研发团队。产品背景与使用场景请见[产品说明](./index)。
+
+素材云盘是管理台自带的「给策划传图片、传音频、传 JSON 配置文件」的通用资源库。存储层是 Cloudflare R2（或兼容 S3 的服务），上传流程用 presigned URL，最大单文件 10 MB。
+
+## 数据模型
+
+- **media_folders**：文件夹树（含父子、路径缓存）。
+- **media_assets**：单个资源——名称、对象 key、大小、MIME、checksum、folderId。
+
+## 管理端 API
+
+```http
+POST   /api/media-library/folders          body: { name, parentId? }
+GET    /api/media-library/folders/{id}/children
+PATCH  /api/media-library/folders/{id}
+DELETE /api/media-library/folders/{id}
+
+POST   /api/media-library/upload/presign   body: { filename, mimeType, size, folderId }
+                                             → { uploadUrl, objectKey, assetId }
+POST   /api/media-library/upload/complete  body: { assetId, checksum }
+GET    /api/media-library/assets
+DELETE /api/media-library/assets/{id}
+```
+
+## 公共代理
+
+```http
+GET /api/media-library/object/{objectKey}    public-read，5 分钟 cache
+```
+
+让玩家客户端可以直接用 `apollokit-server/api/media-library/object/<key>` 访问资源，不需要每次 presign。
+
+## 业务规则
+
+- **两步上传**：前端调 `presign` 拿到直传 URL → 直接 PUT 到 R2 → 回调 `complete` 附 checksum → 服务器校验并标 active。
+- **per-org 命名空间**：`objectKey` 前缀总是 `<orgId>/...`，不同租户的资源物理隔离。
+- **10 MB 上限**：`MAX_UPLOAD_SIZE` 由 config 控制，超限 `presign` 直接拒。
+- **删除语义**：`DELETE` 同时删 DB 记录与 R2 对象；失败要保证数据库事务回滚（neon-http 没有事务，这里用「先删 R2 再删 DB，失败重试」的补偿模式）。
+
+## 与其他模块组合
+
+- [轮播](../banner)：banner 的图片 URL 指向这里。
+- [实体](../entity)：entity 的 icon / 模型资源。
+- [邮件](../mail)：邮件附带图片。
+- [图鉴](../collection)：图鉴条目的插图。
+
+## 事件
+
+`media-library.uploaded` / `media-library.deleted`。
+
+---
+
+<Cards>
+  <Card href="../../api/media-library/admin" title="API 参考" description="完整端点列表与请求/响应格式" />
+</Cards>

@@ -1,0 +1,57 @@
+---
+title: Developer Guide
+description: Competitive match settlement, Elo rating, tier progression, seasons
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The rank module is built for match-based competitive play: report match results, and the server maintains each player's Elo score, tier, and season state, with tier protection and win-streak bonuses.
+
+## Data model
+
+- **rank_tier_configs**: tier definition template — number of tiers, sub-tiers per tier, progression rules.
+- **rank_tiers**: concrete tier nodes (Bronze I / II / III / Silver ...).
+- **rank_seasons**: season window + which tier_config is active this season.
+- **rank_player_states**: player's current score, tier, win streak, protection shield.
+- **rank_matches + rank_match_participants**: raw match records and per-participant results.
+
+## Admin API
+
+```http
+POST   /api/rank/tier-configs
+POST   /api/rank/seasons
+POST   /api/rank/settle                    settle a match (multiple participants)
+GET    /api/rank/matches
+```
+
+## Client API
+
+```http
+GET /api/rank/end-user/{userId}/season/{seasonId}
+GET /api/rank/end-user/{userId}/history
+```
+
+## Business rules
+
+- **Settlement idempotency**: `settle` requires `externalMatchId`; duplicate submissions for the same `(orgId, externalMatchId)` are no-ops.
+- **Elo / Glicko2**: choose the rating algorithm in the config. Settlement computes all participants' new scores in a single atomic write.
+- **Tier progression**: score exceeds tier threshold → promote; drops below lower bound → demote, unless a **protection shield** (win streak / newly promoted) blocks this demotion.
+- **Win-streak bonus**: extra points after N consecutive wins, or a first-win-of-the-day bonus.
+- **Season end**: snapshot `rank_player_states`, apply rank compression rules, then open the new season.
+
+## Composing with other modules
+
+- [leaderboard](../leaderboard): rank handles competitive tier logic; for a "wins this season" board, add a separate leaderboard config.
+- [mail](../mail): deliver season rewards via mail.
+- [item](../item) / [currency](../currency): actual delivery of tier reward items.
+
+## Events
+
+`rank.match_settled` / `rank.tier_changed` / `rank.season_ended`.
+
+---
+
+<Cards>
+  <Card href="../../api/rank/admin" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

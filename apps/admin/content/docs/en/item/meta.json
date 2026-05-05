@@ -1,0 +1,5 @@
+{
+  "title": "Items",
+  "icon": "Box",
+  "pages": ["index", "guide"]
+}

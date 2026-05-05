@@ -1,0 +1,104 @@
+---
+title: Developer Guide
+description: Task categories, definitions, event-driven progress, tiered rewards
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The task module turns any quantifiable player action (kill count, cumulative logins, spend count, share count…) into a configurable reward pipeline. Core mental model: **business code only reports events; the task module decides who completed what**.
+
+## Data model
+
+- **category**: daily / weekly / achievement / event tasks, etc. Used for front-end grouping.
+- **definition**: all rules for one task — event name, field filters, target value, reset cadence, rewards, tiered ladder.
+- **assignment**: definition + endUserId pair — "this player is working on this task." Can be assigned manually or defaulted to all players.
+- **progress**: per-player × per-task progress value, auto-accumulated from events.
+
+## Admin API
+
+```http
+# categories
+POST   /api/task/categories
+GET    /api/task/categories
+GET    /api/task/categories/{id}
+PATCH  /api/task/categories/{id}
+DELETE /api/task/categories/{id}
+
+# definitions
+POST   /api/task/definitions
+GET    /api/task/definitions
+GET    /api/task/definitions/{key}
+PATCH  /api/task/definitions/{key}
+DELETE /api/task/definitions/{key}     cascades progress
+
+# assignments
+POST   /api/task/definitions/{key}/assignments
+DELETE /api/task/definitions/{key}/assignments/{endUserId}
+GET    /api/task/definitions/{key}/assignments
+GET    /api/task/assignments                        cross-task customer service view
+```
+
+## Client API
+
+```http
+POST /api/client/task/events          report a business event (drives progress)
+POST /api/client/task/list            list tasks + progress
+POST /api/client/task/claim/{taskId}  claim reward for a completed task
+POST /api/client/task/claim-tier      claim a specific tier of a tiered reward
+```
+
+## Event-driven progress
+
+This is the key mechanism:
+
+1. Business code calls `/api/client/task/events` when a player does something:
+   ```json
+   { "name": "kill_boss", "value": 1, "meta": { "bossId": "dragon" } }
+   ```
+2. The task module finds all definitions where `eventName == 'kill_boss'`, applies each definition's `filter` (e.g. `meta.bossId == 'dragon'`) to decide whether to accumulate progress for this player on this task.
+3. When progress reaches `target`, `completedAt` is written and the player can claim their reward.
+
+Filters use structured field matching (`filter-fields.ts`), not string matching — definitions are readable, and ops can configure complex conditions in the dashboard.
+
+## Tiered rewards (claim-tier)
+
+A single task can have multiple thresholds:
+
+```
+30 completions → claim tier 1 (100 gold)
+100 completions → claim tier 2 (500 gold + bronze chest)
+500 completions → claim tier 3 (5,000 gold + gold chest)
+```
+
+Each tier is claimable independently. The front end shows "claimable" when progress reaches a threshold.
+
+## Activity integration
+
+`event-forwarder.ts` forwards task completion events to the [activity](../activity) points system:
+
+- Task completed → activity points += N → milestone unlocks
+
+This wires tasks and activity points together without duplicating logic in business code.
+
+## Events (for webhooks)
+
+- `task.progress`: fires on every progress update (high frequency — consider whether to subscribe)
+- `task.completed`: task completed
+- `task.claimed`: reward claimed
+
+The event schema is declared in `apps/server/src/modules/task/index.ts` (`organizationId`, `endUserId`, `taskId`, `taskAlias`, `progressValue`, `completedAt`).
+
+## Reset cadence
+
+- `daily`: resets at UTC midnight (or configured local-timezone midnight)
+- `weekly`: resets every Monday
+- `none`: never resets (achievements)
+
+Reset clears only `progressValue`, not claim state. If you want daily rewards claimable again each day, also enable "reset claim state" on the definition.
+
+---
+
+<Cards>
+  <Card href="../../api/task/assignments" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,63 @@
+---
+title: Overview
+description: Event catalog, subscriptions, signature validation, retries — push ApolloKit's internal events to your downstream systems
+icon: Webhook
+---
+
+ApolloKit abstracts all business actions (check-in completed, redemption done, task achieved, lottery result…) into normalized events managed centrally through an event bus. Events are written to an internal audit log and can be pushed to your downstream systems via Webhook — making ApolloKit the event bus for your entire ops stack.
+
+## What problem does it solve?
+
+Game ops systems tend to be siloes:
+
+- Player completes a task → want to sync to a third-party CRM / push platform → requires writing custom integration code in the business layer
+- Activity milestone claimed → want to trigger external analytics → another point solution
+- As more modules are added, "event → external system" integration code grows linearly in maintenance cost
+
+The event bus decouples "producing events" from "consuming events": ApolloKit produces standardized events; your external systems subscribe via Webhook; integration code is written once on the external side.
+
+## Typical use cases
+
+**Scenario 1: Player behavior sync to CRM**
+When `task.completed` fires, push the player id and task info to an external CRM. The CRM updates player tags and triggers the next push campaign.
+
+**Scenario 2: Activity settlement triggering external rewards**
+`activity.milestone_claimed` is pushed to an in-house settlement system. The settlement system uses the event data to deliver physical rewards or redemption codes to the player.
+
+**Scenario 3: Real-time monitoring and alerting**
+Subscribe to `lottery.drawn` events. If SSR pull rate drops below expected in a time window, trigger an alert to the ops team to investigate the probability configuration.
+
+**Scenario 4: Data analytics pipeline**
+All events are pushed to a data warehouse ingestion endpoint. Combined with the analytics module, this builds a complete BI data flow.
+
+## Core capabilities
+
+- **Unified event catalog**: all module events visible in one place, with field schemas and last-seen timestamps
+- **Webhook subscriptions**: configure a receiving endpoint for specific event names (or prefix matches)
+- **Signature validation**: every delivery includes an HMAC signature; receivers can verify authenticity to prevent forgery
+- **Idempotent IDs**: every event has a unique id; retries may deliver the same event multiple times — receivers should deduplicate
+- **Exponential backoff retries**: automatic retry on failure, up to 8 attempts over 24 hours
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | ApolloKit can serve as the event bus for the entire ops stack, reducing silos |
+| Product managers | Understand what events the platform produces to plan downstream integrations |
+| Operations team | Drive external tools via events without engineering involvement each time |
+| Engineering team | Subscribe once — all events go through the same Webhook receiver logic |
+
+## Related modules
+
+Every feature module produces events; specific event names are documented in each module's guide. Common event consumption patterns:
+
+- **[Analytics](../analytics)**: events feed the analytics engine for real-time dashboards
+- **[Task System](../task)**: `task.completed` is one of the most commonly subscribed events
+- **[Activity](../activity)**: milestone claim events drive external settlement systems
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Event catalog, Webhook subscriptions, signature validation, retry mechanics" />
+  <Card href="../api/webhooks" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

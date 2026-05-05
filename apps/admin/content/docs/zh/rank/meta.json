@@ -1,0 +1,5 @@
+{
+  "title": "天梯",
+  "icon": "Medal",
+  "pages": ["index", "guide"]
+}

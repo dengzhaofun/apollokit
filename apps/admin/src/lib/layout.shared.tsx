@@ -11,9 +11,9 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
  */
 type Locale = 'zh' | 'en';
 
-const TOP_LINK_LABELS: Record<Locale, { home: string; dashboard: string }> = {
-  zh: { home: '首页', dashboard: '控制台' },
-  en: { home: 'Home', dashboard: 'Dashboard' },
+const TOP_LINK_LABELS: Record<Locale, { home: string; dashboard: string; featureMap: string }> = {
+  zh: { home: '首页', dashboard: '控制台', featureMap: '功能全景' },
+  en: { home: 'Home', dashboard: 'Dashboard', featureMap: 'Features' },
 };
 
 export function getBaseOptions(locale: Locale = 'zh'): BaseLayoutProps {
@@ -27,6 +27,7 @@ export function getBaseOptions(locale: Locale = 'zh'): BaseLayoutProps {
     links: [
       { text: labels.home, url: '/' },
       { text: labels.dashboard, url: '/dashboard' },
+      { text: labels.featureMap, url: `/docs/${locale}/feature-map` },
       // OpenAPI 入口跟随当前 locale,英文站不会被甩到中文目录。
       { text: 'OpenAPI', url: `/docs/${locale}/api` },
     ],

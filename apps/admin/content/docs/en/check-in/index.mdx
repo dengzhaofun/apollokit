@@ -1,0 +1,60 @@
+---
+title: Overview
+description: Daily check-in, streak tracking, cycle rewards — the classic daily return driver
+icon: CalendarCheck
+---
+
+The check-in system gives players a daily reason to open the game. It supports weekly/monthly cycle resets, streak tracking, and per-day reward configuration. Set it up once and it runs on autopilot — no engineering maintenance needed.
+
+## What problem does it solve?
+
+"Daily check-in" is something every game builds and every team rebuilds from scratch:
+
+- Only one check-in per day — no error on repeat, just returns "already checked in"
+- 7-day streak gives a bonus; breaking the streak resets the counter
+- Monday–Sunday is one cycle; a new week starts fresh
+- Different rewards on different days (Day 1: 100 gold, Day 7: 500 gems)
+
+These rules aren't complex individually, but every detail needs handling — and every new campaign means rebuilding it. The check-in module makes all of this **configuration**: define rules and rewards, players call the API, rewards are granted automatically.
+
+## Typical use cases
+
+**Scenario 1: Weekly check-in event**
+Reset every Monday. Claim 7-day full-attendance prize. Daily rewards escalate: Days 1–6 give small gold amounts, Day 7 gives a rare item. Players must stay consistent to earn everything — effective at driving daily return.
+
+**Scenario 2: Monthly seasonal check-in**
+During a festival, add a separate check-in config (independent of the daily one). Check in N days to unlock limited rewards. Deactivate the config when the event ends; historical data is preserved.
+
+**Scenario 3: Activity points integration**
+Check-in feeds an activity: each day checked in adds activity points; milestone crossed → big reward. The check-in module handles only the check-in; point forwarding is done via event-driven integration.
+
+## Core capabilities
+
+- **Three reset modes**: never reset (achievement-style) / weekly reset / monthly reset
+- **Streak tracking**: current streak, historical longest streak
+- **Per-day rewards**: configure different rewards per day in the cycle, auto-granted to inventory
+- **Multiple configs**: daily and event check-ins run concurrently without interference
+- **Timezone support**: "today" is evaluated in the project's timezone for global players
+- **Repeat-check-in protection**: calling the API twice returns "already checked in", no error, no duplicate reward
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Daily return drives retention; check-in is the lowest-cost daily active user driver |
+| Product managers | Configure check-in rules and rewards, launch new check-in events without dev specs |
+| Operations team | Configure rewards and view daily check-in counts in the dashboard |
+| Engineering team | Integrate once; all future check-in campaigns handled through configuration |
+
+## Related modules
+
+- **[Items](../item)**: check-in rewards are granted through the item module
+- **[Activity](../activity)**: check-in can be an activity node, converting check-ins to activity points
+- **[Task](../task)**: check-in events can trigger task progress
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Core concepts, API parameters, data flow" />
+  <Card href="../api/check-in" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

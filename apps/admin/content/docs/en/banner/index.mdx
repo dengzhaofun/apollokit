@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Home / lobby banner slots, groups, ordering, and routing — let visual highlights shift automatically with your ops calendar
+icon: Images
+---
+
+The banner module manages the "banner image slots" in your game's lobby, login screen, and other scenes. Different scenes get separate groups, banners within each group rotate by weight, and time windows auto-publish and auto-unpublish — all self-service for ops, no code changes.
+
+## What problem does it solve?
+
+The visual hero area of your game is prime real estate, but managing it is painful:
+
+- When a new event launches, developers have to hardcode the image or update a config file manually
+- When an event ends, ops has to remind engineering to take the banner down — and it's often forgotten
+- Multiple concurrent banners require coordination on ordering and scheduling through informal channels
+
+The banner module gives ops **full self-service**: upload images in the dashboard, set time windows, configure weights — banners appear on schedule and disappear when events end, automatically.
+
+## Typical use cases
+
+**Scenario 1: Event pre-launch banner**
+A 11.11 teaser banner in the lobby header, `startAt = 11/04 00:00`, `endAt = 11/11 24:00` — no one needs to manually unpublish at midnight.
+
+**Scenario 2: Multi-scene banner slots**
+Login page has its own group, lobby header has its own group, the activity center entry has another. Each group is configured independently, with no interference.
+
+**Scenario 3: Multi-banner weighted rotation**
+Three concurrent banners — new patch announcement, paid promotion, crossover event. Weight controls relative frequency without scheduling shifts manually.
+
+**Scenario 4: Targeted banners**
+High-level players see a "veteran player exclusive bundle" banner; new players see an "onboarding guide" banner — same slot, different content for different audiences.
+
+## Core capabilities
+
+- **Group management**: each scene's banner slot is a separate group; clients fetch by group alias
+- **Time windows**: per-banner start/end times with auto-publish and auto-unpublish
+- **Weight ordering**: weight drives rotation order; manual fixed ordering also supported
+- **CTA routing**: each banner can link to in-game deep links or external URLs
+- **Targeting**: filter by player level, tags, activity participation, and more
+- **Impression / click tracking**: measure real CTR per slot for data-driven decisions
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Prime visual real estate managed by ops without engineering involvement |
+| Product managers | Precise control over each scene's visual focus, with targeting support |
+| Operations team | Fully self-service: upload, schedule, weight, publish, view data |
+| Engineering team | Fetch a group by alias — all content managed through configuration from that point |
+
+## Related modules
+
+- **[Announcement](../announcement)**: banners are the "poster" (image-primary); announcements are the "details page" (text-primary). Common pairing: banner draws the click → CTA → announcement body → button in the body jumps to the actual activity
+- **[Shop](../shop)**: the shop front screen is typically a banner carousel + recommendation list
+- **[Activity](../activity)**: activity-specific banners auto-retire via time windows when the event ends
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, group ordering, API parameters" />
+  <Card href="../api/banner" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

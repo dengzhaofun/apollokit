@@ -1,0 +1,64 @@
+---
+title: Overview
+description: Invite codes, referral relationships, qualification gating, and rewards — low-cost viral acquisition through referral programs
+icon: UserPlus
+---
+
+The invite module implements "refer a friend, earn rewards": each player gets a unique invite code; when a new player registers with the code, both sides are linked in a referral relationship. When the new player meets a qualification condition (first purchase, reaching level N), the referrer can claim their reward.
+
+## What problem does it solve?
+
+Referrals are one of the lowest-cost acquisition channels, but building your own system requires handling a lot of details:
+
+- Invite code generation and uniqueness guarantees
+- A new player can only be referred by one existing player (prevent duplicate binding)
+- When and how qualification conditions trigger
+- Idempotent reward claiming (prevent double-claiming)
+- Self-referral prevention
+
+The invite module encapsulates all of this. The only business-side requirement: call one endpoint to mark "qualification reached" when the new player meets the criteria.
+
+## Typical use cases
+
+**Scenario 1: First purchase unlocks referrer reward**
+After the new player makes their first purchase, the referrer can claim a reward. Business code calls "mark qualified" on payment success; the referrer sees a claimable reward in their invite page.
+
+**Scenario 2: Level threshold unlocks referrer reward**
+The referral relationship activates when the new player reaches level 10. Good for designs where rewards only trigger after the new player is genuinely engaged.
+
+**Scenario 3: "Invite N friends" as a task**
+"Invite 5 friends to register" configured as a task. The task system and invite module interoperate — when a new player binds, the referrer's task progress advances automatically.
+
+**Scenario 4: Event-exclusive invite codes**
+Generate limited invite codes for an event period; mark them invalid when the event ends, without affecting permanent codes.
+
+## Core capabilities
+
+- **Unique invite codes**: each player has a persistent code; voluntary rotation immediately invalidates the old one
+- **Single binding**: a new player can only bind one referrer; redeeming the same code twice doesn't re-bind
+- **Qualification gating**: new player meets the condition → business marks "qualified" → referrer can claim
+- **Idempotent claiming**: same referral relationship can only be claimed once, concurrency-safe
+- **Self-referral prevention**: players cannot redeem their own invite code
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Referrals are the lowest-cost acquisition channel; an effective invite program meaningfully reduces CAC |
+| Product managers | Flexible qualification conditions and reward types — easily adjust strategy across phases |
+| Operations team | View referral relationship data and analyze which channels bring higher-quality new players |
+| Engineering team | Low integration cost: just call one mark-qualified endpoint when the condition is met |
+
+## Related modules
+
+- **[Friend](../friend)**: optionally auto-add referrer and invitee as friends after binding
+- **[Items](../item)** / **[Currency](../currency)**: referral rewards delivered via item or currency modules
+- **[Task System](../task)**: configure "invite N players" as a task — binding events drive task progress
+- **[Mail](../mail)**: notify referrers by mail when their invitee qualifies, prompting them to claim
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, business rules, API parameters" />
+  <Card href="../api/invite" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

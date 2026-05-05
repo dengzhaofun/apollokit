@@ -1,0 +1,5 @@
+{
+  "title": "Shop",
+  "icon": "ShoppingBag",
+  "pages": ["index", "guide"]
+}

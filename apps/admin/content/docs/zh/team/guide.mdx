@@ -1,0 +1,63 @@
+---
+title: 开发指南
+description: 临时队伍、快速匹配、队长解散
+icon: Code
+---
+
+> 本页面面向研发团队。产品背景与使用场景请见[产品说明](./index)。
+
+组队模块负责「玩一局临时组一下」这类短生命周期的小队伍：创建、邀人、进游戏、散队，和公会的「长期组织」是两码事。
+
+## 数据模型
+
+- **team_configs**（每 org 一行）：队伍大小、邀请 TTL、快速匹配池参数、`autoDissolveOnLeaderLeave` 等策略。
+- **team_teams**：一个队伍实例，含 status（open / closed / in_game / dissolved）、version（用于并发冲突检测）。
+- **team_members**：队员记录，含 role（leader / member）、加入时间。
+- **team_invitations**：pending 的邀请流转。
+
+## 管理端 API
+
+```http
+PUT  /api/team/configs
+GET  /api/team/configs
+```
+
+## 客户端 API
+
+```http
+POST /api/team/end-user/create
+POST /api/team/end-user/{id}/invite        body: { inviteeId }
+POST /api/team/end-user/invitations/{id}/accept
+POST /api/team/end-user/invitations/{id}/reject
+
+POST /api/team/end-user/{id}/leave
+POST /api/team/end-user/{id}/kick
+POST /api/team/end-user/{id}/close
+POST /api/team/end-user/{id}/start-game
+POST /api/team/end-user/{id}/dissolve
+
+POST /api/team/end-user/quick-match
+```
+
+## 业务规则
+
+- **版本字段**：每次写操作带 `version`，冲突时返回 `CONFLICT`，避免两个队员同时修改导致脏写。
+- **leader 离队策略**：`autoDissolveOnLeaderLeave=true` 时队伍自动解散；否则自动选最先加入的队员继位。
+- **邀请过期**：pending 邀请超过 TTL 自动转 expired（每分钟 cron）。
+- **进入游戏**：`start-game` 后 status=in_game，再也不能邀 / 踢；通常业务方用这个状态作为进入战斗的信号。
+
+## 与其他模块组合
+
+- [公会](../guild)：公会内快速组队（先过滤 guild 成员再匹配）。
+- [排行榜](../leaderboard)：`scope=team` 的榜（比如队伍击杀数）。
+- [天梯](../rank)：天梯匹配之前先组队，组好了再进匹配池。
+
+## 事件
+
+`team.created` / `team.joined` / `team.left` / `team.started_game` / `team.dissolved`。
+
+---
+
+<Cards>
+  <Card href="../../api/team/team_get_configs" title="API 参考" description="完整端点列表与请求/响应格式" />
+</Cards>

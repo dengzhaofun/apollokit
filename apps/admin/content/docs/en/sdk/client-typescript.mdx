@@ -1,0 +1,243 @@
+---
+title: '@apollokit/client (TypeScript)'
+description: End-user TypeScript SDK — browser H5 / mini-programs / Electron / Node player proxy
+icon: Smartphone
+---
+
+`@apollokit/client` is the TypeScript SDK for client routes (`/api/client/<module>/*`), running in **end-user-facing processes** — browser H5, mini-programs, Electron, Cocos Creator H5, or a Node proxy acting on behalf of a player. Auth uses a `cpk_`-prefixed publishable key plus a per-user HMAC signature.
+
+<Callout type="info" title="Key difference from the server SDK">
+
+`@apollokit/client` must **scope every call to an endUserId** — the SDK has no concept of "who the current user is." The caller passes `x-end-user-id` in every request's headers. `x-user-hash` (HMAC) is the credential for that endUserId — either pre-signed by your backend, or computed live in a trusted process using `csk_`. See [Deployment modes](#deployment-modes) below.
+
+</Callout>
+
+## Three request headers
+
+Every client API request carries three headers:
+
+| Header | Purpose | Who sets it |
+|---|---|---|
+| `x-api-key: cpk_…` | Identifies the apollokit org | `createClient({ publishableKey })` — injected automatically |
+| `x-end-user-id: <id>` | Identifies the player | **The caller** — passed in the `headers` option per request |
+| `x-user-hash: <hex>` | HMAC-SHA256(endUserId, csk_), proving this endUserId cleared your auth | Same — caller provides it (pre-signed or SDK-computed) |
+
+The server verifies `x-user-hash` by re-computing HMAC with the decrypted `csk_` it holds and comparing. **`csk_` is server-only** — never bundle it into client code.
+
+## Deployment modes
+
+### Mode A: Browser / mini-program (no secret)
+
+The game frontend cannot hold `csk_` (bundling it exposes it). Flow:
+
+<Steps>
+
+<Step>
+**Player logs into your backend** (via your own auth, unrelated to apollokit). Your backend confirms the user is valid and has an `endUserId` (the player's id in your system).
+</Step>
+
+<Step>
+**Backend computes HMAC with `csk_`** → returns `userHash` and `endUserId` to the frontend:
+
+```ts
+// Your backend (Node / Workers / Go / Python ...)
+import { signEndUser } from '@apollokit/client'
+
+app.post('/auth/apollokit-creds', async (req, res) => {
+  const endUserId = req.session.userId // your own session
+  const userHash = await signEndUser(endUserId, process.env.APOLLOKIT_CSK!)
+  res.json({ endUserId, userHash })
+})
+```
+
+</Step>
+
+<Step>
+**Frontend calls apollokit with the received `userHash`**:
+
+```ts
+import { createClient, badgeClientGetTree } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…', // public — safe to bundle into H5
+  // secret is not passed — browser can't hold csk_
+})
+
+// endUserId and userHash come from your backend's /auth/apollokit-creds
+const { endUserId, userHash } = await fetch('/auth/apollokit-creds').then((r) => r.json())
+
+const { data } = await badgeClientGetTree({
+  headers: {
+    'x-end-user-id': endUserId,
+    'x-user-hash': userHash,
+  },
+  throwOnError: true,
+})
+console.log(data[200].data.nodes)
+```
+
+</Step>
+
+</Steps>
+
+### Mode B: Trusted Node proxy (has secret)
+
+If you're writing a player proxy / SSR / Bun script — your process runs on your server and can read `csk_` from env vars. Provide it to `createClient` and the SDK's async interceptor **signs every request automatically**. Callers only pass `x-end-user-id`:
+
+```ts
+import { createClient, badgeClientGetTree } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: process.env.APOLLOKIT_CPK!, // "cpk_..."
+  secret: process.env.APOLLOKIT_CSK!,         // "csk_..." — trusted process only
+})
+
+// Only pass x-end-user-id — the interceptor sees secret is set and no x-user-hash,
+// computes HMAC-SHA256(endUserId, csk_), and injects x-user-hash automatically.
+const { data } = await badgeClientGetTree({
+  headers: { 'x-end-user-id': 'player_42' },
+  throwOnError: true,
+})
+console.log(data[200].data.nodes)
+```
+
+<Callout type="info" title="Overriding the auto-signature (testing / tenant switching)">
+
+The interceptor only injects when `x-user-hash` is **absent**. If you explicitly pass `x-user-hash` (e.g. testing with a stub hash, switching tenants, or you have a pre-signed hash from elsewhere), the SDK won't overwrite it. The `signEndUser(endUserId, secret)` utility is still exported if you need it directly.
+
+</Callout>
+
+<Callout type="warn" title="Never commit csk_">
+
+`csk_` is a server-only private key — same sensitivity as `ak_`. Always use a secret manager / `.dev.vars` / Cloudflare secrets. **Never commit it to git.**
+
+Client credential pairs (`cpk_` + `csk_`) are generated in the dashboard at `/client-credentials`. They cannot be recovered — if lost, rotate.
+
+</Callout>
+
+## HMAC flow
+
+```
+ Game Frontend          Your Backend            apollokit Server
+ (browser / mini-app)   (holds csk_)             (holds cpk_ + csk_)
+       │                     │                         │
+       │  1. Player logs in  │                         │
+       │     (your session)  │                         │
+       │ ──────────────────► │                         │
+       │                     │                         │
+       │                     │ 2. HMAC-SHA256          │
+       │                     │    (endUserId, csk_)    │
+       │                     │                         │
+       │   3. { endUserId,   │                         │
+       │      userHash }     │                         │
+       │ ◄────────────────── │                         │
+       │                     │                         │
+       │  4. GET /api/client/badge/tree                 │
+       │     x-api-key:     cpk_…                       │
+       │     x-end-user-id: <endUserId>                 │
+       │     x-user-hash:   <userHash>                  │
+       │ ─────────────────────────────────────────────► │
+       │                                                │
+       │                                                │ 5. Lookup org by cpk_ / decrypt csk_
+       │                                                │ 6. Re-compute HMAC
+       │                                                │ 7. Compare with caller's hash
+       │                                                │
+       │              ┌─ match ──► 200 { code: ok, data }│
+       │ ◄────────────┤                                 │
+       │              └─ mismatch ► 401 invalid_credential│
+       │                                                │
+```
+
+Implementation details:
+
+- Algorithm: **HMAC-SHA256**, hex-encoded lowercase output
+- Key: decrypted raw bytes of `csk_…` (server stores AES-256-GCM encrypted, decrypts at runtime)
+- Data: `endUserId` UTF-8 bytes
+- SDK uses Web Crypto API ([apps/server/src/lib/crypto.ts](https://github.com/dengzhaofun/apollokit/blob/main/apps/server/src/lib/crypto.ts) is the reference implementation) — same code runs in browsers, Node 18+, Deno, Cloudflare Workers, and Cocos Creator WebGL
+
+## Configuration
+
+| Field | Type | Description |
+|---|---|---|
+| `baseUrl` | `string` | Server base URL (e.g. `https://api.example.com`) |
+| `publishableKey` | `string` | Client publishable key (`cpk_` prefix). Public — safe to bundle into H5 / mini-programs. |
+| `secret?` | `string` | Client secret (`csk_` prefix). **Trusted server processes only.** If provided, the SDK auto-computes HMAC per request. **Never bundle into a browser.** |
+
+## End-user auth (Better Auth Email)
+
+If you want apollokit's built-in "game-side Better Auth" to manage player accounts (MVP supports email + password), use the built-in auth helpers:
+
+```ts
+import {
+  createClient,
+  signUpEmail,
+  signInEmail,
+  signOut,
+  getSession,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+})
+
+// Sign up
+const result = await signUpEmail({
+  email: 'player@example.com',
+  password: 'secret123',
+  name: 'Player',
+})
+// result.user / result.token (returned in non-browser envs)
+
+// Sign in (browser uses cookie; Node/Unity uses token)
+await signInEmail({ email: 'player@example.com', password: 'secret123' })
+
+// Get current session
+const session = await getSession()
+
+// Sign out
+await signOut()
+```
+
+Note: end-user email is stored server-side as `{orgId}__{rawEmail}` for tenant isolation. The SDK strips the prefix automatically — `user.email` is always the player's original address.
+
+## Error handling
+
+Same `ApolloKitApiError` pattern as the server SDK:
+
+```ts
+import {
+  ApolloKitApiError,
+  isErrorEnvelope,
+  badgeClientGetTree,
+  createClient,
+} from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_demo',
+})
+
+const { data, error, response } = await badgeClientGetTree({
+  headers: { 'x-end-user-id': 'player_42', 'x-user-hash': '…' },
+})
+
+if (error && isErrorEnvelope(error)) {
+  throw new ApolloKitApiError(error, response.status)
+}
+if (data && data[200]?.code === 'ok') {
+  console.log(data[200].data.nodes)
+}
+```
+
+Error code namespaces mirror server module errors (client and admin routes share the same ModuleError system).
+
+## Comparison with server SDK
+
+Back to [SDK Overview](/docs/en/sdk) for the full comparison table. Short version:
+
+- **Bundle size**: client SDK targets browsers / mini-programs where size matters — no retry / error-recovery framework, callers own that logic
+- **endUserId scoping**: required for every client call; server SDK has no concept of endUserId
+- **Unity / C# plan**: same protocol, separate package — see [SDK Overview](/docs/en/sdk)

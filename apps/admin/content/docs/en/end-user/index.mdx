@@ -1,0 +1,58 @@
+---
+title: Overview
+description: Player metadata profile — not authentication, just a unified source for "what is this player's display name"
+icon: User
+---
+
+The end-user module is "player profile metadata storage" and nothing more. It is not a login system — ApolloKit is completely transparent about player identity. `endUserId` comes from your own game account system.
+
+## What problem does it solve?
+
+All of ApolloKit's player-facing modules need an `endUserId`. But display contexts (guild member lists, friend lists, leaderboards) need more than just an id — they need a display name and avatar. If every module stores its own copy, data inconsistency follows.
+
+The end-user module provides a unified source of display information, and also serves as the cascade delete anchor: deleting a player automatically cleans up all that player's data across all modules (check-in, inventory, friends, leaderboard entries…) via `CASCADE`.
+
+<Callout type="warn">
+  `endUserId` is an opaque string. ApolloKit doesn't validate its format and doesn't care how the player logged in. This id comes from your game account system — not ApolloKit's SaaS admin identity.
+</Callout>
+
+## Typical use cases
+
+**Scenario 1: Display name and avatar**
+Guild member lists and leaderboards need to show player names and avatars. The profile is the single source of truth — no module needs its own copy of display information.
+
+**Scenario 2: Account deletion**
+A player requests account deletion. Deleting the end-user profile triggers CASCADE to remove all that player's data across every module — satisfying GDPR and similar deletion requirements.
+
+**Scenario 3: Custom extension data**
+Game-specific data that needs to be associated with the `endUserId` (game server, VIP level, linked email) goes in the `metadata` JSONB field. ApolloKit stores it without interpreting it.
+
+**Scenario 4: Test environment cleanup**
+Create test players for integration tests. After tests complete, delete the end-user profiles — all associated data is removed along with them, leaving the environment clean.
+
+## Core capabilities
+
+- **Unified display info**: display name and avatar URL shared across all module presentation layers
+- **Free-form metadata**: JSONB field for any business extension data
+- **Cascade deletion**: deleting a profile triggers CASCADE cleanup of all module data
+- **ID pass-through**: `endUserId` format is not validated — compatible with any game account system
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Unified player data entry — deletion requests can be handled in one operation, meeting compliance requirements |
+| Product managers | Understanding the platform's player model boundary: ApolloKit manages ops data, not login |
+| Operations team | View and edit player profiles in the dashboard — complete data view when handling support tickets |
+| Engineering team | One integration — other modules pass your system's uid directly as `endUserId` |
+
+## Related modules
+
+All player-facing modules depend on `endUserId` but do not require the profile to exist. The profile is optional data that provides "a name and avatar for the presentation layer."
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, cascade deletion, API parameters" />
+  <Card href="../api/end-user" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

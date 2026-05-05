@@ -1,0 +1,59 @@
+---
+title: Overview
+description: A unified "jump action" value object — so every "tap to go somewhere" scenario shares one type definition
+icon: Link
+---
+
+The link module is a **pure value object**: it defines the type structure and validation rules for "an executable jump action." It is embedded in banner, dialogue, announcement, mail, and other modules. It stores no data and exposes no HTTP endpoints of its own.
+
+## What problem does it solve?
+
+Games have many "tap to navigate somewhere" scenarios: a banner click goes to an event, a CTA in an announcement goes to the shop, a dialogue option jumps to a story branch. When each module defines its own navigation structure:
+
+- Three modules, three field formats — the client needs three separate handling paths
+- Adding a new navigation target type (e.g. "go to friend list") requires changes in three modules
+- String-typed route keys have no type checking — a typo silently fails
+
+The link module provides a single `LinkAction` type shared across all embedding points. The client writes one exhaustive switch and handles all cases.
+
+## Supported jump types
+
+| Type | Description |
+|------|-------------|
+| `none` | No navigation — display only (no CTA) |
+| `external` | External link (full URL) |
+| `internal` | In-game route (a registered route key from the registry) |
+
+`internal` route keys must be pre-registered in `link-registry.ts` with their parameter shape declared. An unregistered key is rejected at validation time.
+
+## Typical embedding points
+
+| Location | Purpose |
+|------|---------|
+| [Banner](../banner) `action` | Where the player navigates when tapping a banner |
+| [Announcement](../announcement) `cta` | The announcement's call-to-action button |
+| [Dialogue](../dialogue) option action | Navigation target for a dialogue option |
+| [Mail](../mail) attachment button | Jump button inside a mail message |
+
+## Why this is its own module
+
+- **Change once, update everywhere**: adding an internal route only modifies `link-registry.ts`; all embedding points automatically validate against the updated registry
+- **Type safety**: client and server share the `LinkAction` type; the client can exhaustively switch on all variants
+- **No drift**: each module doesn't define its own navigation format, eliminating field-name inconsistencies
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Product managers | A unified catalog of all navigable destinations in the platform — useful when planning CTAs |
+| Engineering team | Adding a new navigation target type is a one-line registry change; client handling is written once |
+
+## No API
+
+This module exposes no HTTP endpoints. To add an internal route, add one constant to `link-registry.ts`, then implement the corresponding navigation behavior in the client.
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="LinkAction type definition, route registry, integration" />
+</Cards>

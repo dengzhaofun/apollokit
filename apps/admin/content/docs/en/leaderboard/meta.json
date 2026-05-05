@@ -1,0 +1,5 @@
+{
+  "title": "Leaderboard",
+  "icon": "Trophy",
+  "pages": ["index", "guide"]
+}

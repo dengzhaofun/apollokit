@@ -1,0 +1,91 @@
+---
+title: Developer Guide
+description: Activity lifecycle, nodes, scheduling, points, and milestones
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The activity module provides a complete framework for "structured ops event orchestration": each activity is a state machine that can attach child nodes, time triggers, player points, and tiered rewards (milestones).
+
+## Data model
+
+- **activity**: alias, time window, status (draft / published / archived), metadata.
+- **node**: a child mechanic attached to the activity (mini-task, mini-challenge) — each node has its own type and parameters.
+- **schedule**: cron-based or absolute-time trigger that advances the activity state machine (start, phase change, end, settlement).
+- **participant**: a player's state after joining — contains activity-scoped points and claimed milestones.
+- **milestone**: unlocks when a point threshold is reached; rewards can be items, currency, or other.
+
+## Admin API
+
+```http
+POST   /api/activity                       create (draft)
+GET    /api/activity
+GET    /api/activity/{key}                 by id or alias
+PATCH  /api/activity/{id}
+DELETE /api/activity/{id}
+POST   /api/activity/{key}/publish         body: { status: 'published'|'archived' }
+
+POST   /api/activity/{key}/nodes           attach child node
+GET    /api/activity/{key}/nodes
+PATCH  /api/activity/nodes/{id}
+DELETE /api/activity/nodes/{id}
+
+POST   /api/activity/{key}/schedules       attach time trigger
+GET    /api/activity/{key}/schedules
+DELETE /api/activity/schedules/{id}
+
+POST   /api/activity/{key}/join            join on behalf of player
+POST   /api/activity/{key}/add-points      adjust points
+POST   /api/activity/{key}/claim-milestone claim milestone
+GET    /api/activity/{key}/view/{endUserId}  player-perspective view
+```
+
+## State machine
+
+```
+draft  ─ publish ─▶  published
+  ▲                      │
+  └──── unpublish ◀──────┘
+                         │ archive
+                         ▼
+                     archived
+```
+
+- `draft`: visible in dashboard only; players can't see it.
+- `published`: visible to players + playable within the time window.
+- `archived`: hidden from players; historical data preserved.
+
+A cron runs every minute, scanning activities and advancing states per schedule.
+
+## Points and milestones
+
+Player does something ("task completed / paid / defeated boss") → event fires → business code or [task](../task) calls `add-points` → activity-scoped points accumulate → milestone unlocks when threshold is reached. Milestones don't auto-grant; the player must call `claim-milestone` (or the front end calls it automatically). Rewards are delivered via [item](../item) / [currency](../currency) / [mail](../mail).
+
+## Composing with other modules
+
+- [check-in](../check-in) as a node: check in for one day → activity points +10.
+- [lottery](../lottery) as a node: spend activity points for draws.
+- [task](../task) `event-forwarder` converts task progress directly into activity points.
+- [shop](../shop) "activity-exclusive products" guard on activity alias — unavailable when activity isn't running.
+
+## Player view: `/view/{endUserId}`
+
+Fetches everything about a player's current state in this activity in one call: joined? current points? each milestone's status? which nodes are available? — reduces front-end round trips.
+
+## Events
+
+Activity state changes emit:
+
+- `activity.published / unpublished / archived`
+- `activity.joined`
+- `activity.points_added`
+- `activity.milestone_claimed`
+
+All go through the event bus; subscribe via [webhooks](../webhooks).
+
+---
+
+<Cards>
+  <Card href="../../api/activity/activity_get_root" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

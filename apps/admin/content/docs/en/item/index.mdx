@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Define virtual items, manage player inventories, and track every resource change
+icon: Box
+---
+
+The item module is the platform's **resource foundation** — every virtual thing you can grant to a player (coins, consumables, skins, badges) is managed here. Check-in rewards, exchanges, and lottery payouts all flow through the item module to complete the actual delivery.
+
+## What problem does it solve?
+
+In most game backends, item data ends up fragmented — check-in rewards hardcoded in one table, lottery prizes in another, admin deductions through a third path. The result:
+
+- Checking a player's balance for a specific item requires joining five tables
+- Adding a new item type means changing code in multiple modules
+- When a wrong reward is sent, there's no unified audit trail
+
+The item module solves all three: **single source of truth + unified grant channel + complete audit chain**.
+
+## Typical use cases
+
+**Scenario 1: Operations grants**
+After a seasonal event, the ops team selects a user group in the dashboard and bulk-grants a "holiday gift box" in one click. The item module logs every transaction, searchable by source and time.
+
+**Scenario 2: Multi-module integration**
+Day-7 check-in reward: 100 gold + 1 chest. The check-in module calls the item grant API; the item module handles persistence and logging. Check-in doesn't need to know anything about inventory implementation.
+
+**Scenario 3: Unique items (achievement badges)**
+Set `holdLimit=1` on a badge definition. Re-granting the badge to the same player is auto-truncated — no stacking, no errors.
+
+**Scenario 4: Stack limits (chests)**
+Each slot holds up to 99; the module auto-splits when full. The frontend renders the InventoryView directly without implementing split-stack logic.
+
+## Core capabilities
+
+- **Item categories**: Logical grouping (currency, consumables, materials) for display and filtering
+- **Stacking rules**: Unlimited stacking, bounded stacking, or non-stackable — three modes
+- **Hold limits**: `holdLimit` caps per-user quantity; ideal for unique items
+- **Batch grant / deduct**: Grant multiple item types in one request; idempotency keys prevent duplicates
+- **Balance query**: Query holdings by alias (e.g. `gold`) or UUID
+- **Audit log**: Every change records source, delta, before/after quantities — fully traceable by support
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Every resource change is logged; risk control and audit have a foundation |
+| Product managers | New item types added via dashboard config, no code changes needed |
+| Operations team | Grant rewards, check balances, export grant logs from the dashboard |
+| Engineering team | One API for all item operations; no need to build per-reward tables |
+
+## Related modules
+
+- **[Check-in](../check-in)** / **[Lottery](../lottery)** / **[Exchange](../exchange)**: Call item module when granting rewards
+- **[Currency](../currency)**: Currency is a specialized item form; large-value flows use the currency module
+- **[Mail](../mail)**: Mail attachments are delivered through the item module when claimed
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Core concepts, API parameters, code examples" />
+  <Card href="../api/item" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

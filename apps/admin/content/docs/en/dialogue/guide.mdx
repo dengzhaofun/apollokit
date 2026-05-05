@@ -1,0 +1,54 @@
+---
+title: Developer Guide
+description: Branching storylines, player choices, per-node rewards
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The dialogue module provides dialogue tree orchestration + runtime progression: designers configure nodes and options in the dashboard, players choose branches in the client, and each node can carry rewards.
+
+## Data model
+
+- **dialogue_scripts**: complete data for one dialogue tree — name, start node, all nodes (with text, options list, reward config).
+- **dialogue_progress**: per-player × per-script progression state, including `currentNodeId` / `visitedNodeIds` / `claimedRewards`.
+
+## Admin API
+
+```http
+POST   /api/dialogue/scripts
+GET    /api/dialogue/scripts
+PATCH  /api/dialogue/scripts/{id}
+DELETE /api/dialogue/scripts/{id}
+```
+
+## Client API
+
+```http
+POST /api/dialogue/end-user/{userId}/start        body: { scriptId }      start or reset
+POST /api/dialogue/end-user/{userId}/choose       body: { optionId }      choose a branch
+GET  /api/dialogue/end-user/{userId}/progress/{scriptId}
+```
+
+## Business rules
+
+- **Tree structure**: each node has text + N options; an option can point to a next nodeId or carry an action (external link, trigger another script, end).
+- **Node entry rewards**: if node.onEnter.reward is configured, the reward is granted on entry; `ON CONFLICT` in `item_grant_logs` guarantees the same (user, script, node) only grants once.
+- **Option conditions**: options can specify a `condition` (player level / has unlocked an entry / holds an item) — unsatisfied conditions grey out the option.
+- **Reset**: calling `start` again on the same script returns to the start node; prior reward records are preserved (prevents regrant).
+
+## Composing with other modules
+
+- [item](../item): node rewards via the item service.
+- [level](../level): option conditions can reference player progress in the level module.
+- [link](../link): option actions expressed using the link value object.
+
+## Events
+
+`dialogue.started` / `dialogue.node_entered` / `dialogue.reward_granted` / `dialogue.finished`.
+
+---
+
+<Cards>
+  <Card href="../../api/dialogue/admin" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>
