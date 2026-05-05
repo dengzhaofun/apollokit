@@ -83,6 +83,24 @@ export function useToggleFavorite() {
       }
       return { prev }
     },
+    onSuccess: (result) => {
+      // Replace the optimistic placeholder with the real row returned by the
+      // server so IDs / sortOrder are authoritative before any background sync.
+      if ("added" in result && result.added) {
+        const current =
+          qc.getQueryData<NavigationFavoriteList>(FAVORITES_KEY)
+        if (current) {
+          qc.setQueryData<NavigationFavoriteList>(FAVORITES_KEY, {
+            items: current.items.map((i) =>
+              i.id.startsWith("optimistic-") &&
+              i.routePath === result.added.routePath
+                ? result.added
+                : i,
+            ),
+          })
+        }
+      }
+    },
     onError: (_err, vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(FAVORITES_KEY, ctx.prev)
       toast.error(
@@ -92,7 +110,11 @@ export function useToggleFavorite() {
       )
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: FAVORITES_KEY })
+      // Mark stale but skip the immediate background refetch — an instant
+      // re-fetch can race with read-replica lag and return stale empty data,
+      // flashing the sidebar blank. The query will re-sync on the next
+      // window-focus or navigation event by which time replicas are consistent.
+      qc.invalidateQueries({ queryKey: FAVORITES_KEY, refetchType: "none" })
     },
   })
 }
