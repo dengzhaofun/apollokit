@@ -1,5 +1,6 @@
 import { useTenantParams } from "#/hooks/use-tenant-params";
 import { useEffect } from 'react'
+import type { ComponentPropsWithRef } from 'react'
 import { HeadContent, Scripts, createRootRoute, useRouterState, Link } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
@@ -193,7 +194,27 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   //  2. 避开 i18n context / useRouterState 在新旧 locale 之间的短暂抖动。
   //  3. 如果不在 docs 路径上(理论上不会走到,LanguageSelect 只在 DocsLayout
   //     里出现),降级成原地刷新。
-  const onLocaleChange = (next: string) => {
+  // TanStack Router cannot resolve relative `to` paths (e.g. `./quickstart`)
+// from a splat route (/docs/$): it outputs the current URL unchanged instead
+// of the intended /docs/zh/quickstart. This wrapper resolves relative hrefs
+// against the current pathname before handing off to TanStack Router.
+function FumadocsLink({ href, prefetch, ...props }: ComponentPropsWithRef<'a'> & { prefetch?: boolean }) {
+  const currentPathname = useRouterState({ select: (s) => s.location.pathname })
+  let resolvedHref = href ?? '#'
+  if (href && (href.startsWith('./') || href.startsWith('../'))) {
+    const base = currentPathname.endsWith('/') ? currentPathname : currentPathname + '/'
+    resolvedHref = new URL(href, `https://x${base}`).pathname
+  }
+  return (
+    <Link
+      to={resolvedHref}
+      preload={prefetch ? 'intent' : false}
+      {...(props as object)}
+    />
+  )
+}
+
+const onLocaleChange = (next: string) => {
     const target = buildLocaleUrl(pathname, next)
     if (target !== pathname) {
       window.location.assign(target)
@@ -208,6 +229,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere]">
         <RootProvider
+          components={{ Link: FumadocsLink }}
           search={{
             options: { api: '/api/v1/search' },
           }}
