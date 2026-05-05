@@ -47,7 +47,7 @@ import {
 import { ApiError } from "#/lib/api-client"
 import type { LevelStage, UnlockRule } from "#/lib/types/level"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/level/$configId/")({
   component: LevelConfigDetailPage,
@@ -80,7 +80,7 @@ function LevelConfigDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={config.name}
         actions={
@@ -113,7 +113,7 @@ function LevelConfigDetailPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <Tabs defaultValue="info">
           <TabsList>
             <TabsTrigger value="info">{m.level_tab_info()}</TabsTrigger>
@@ -145,8 +145,8 @@ function LevelConfigDetailPage() {
             />
           </TabsContent>
         </Tabs>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 
