@@ -755,6 +755,72 @@ activityRouter.openapi(
 
 // ─── Analytics ──────────────────────────────────────────────────
 
+// Cross-activity summary table — drives the "/analytics/activities" page.
+// Registered BEFORE `/{key}/analytics/*` so the static "analytics" segment
+// can never be mis-parsed as a `{key}` path parameter.
+activityRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/analytics/summary",
+    tags: [TAG],
+    summary:
+      "Cross-activity summary (participants / completion / rewards) for the analytics activities page.",
+    request: {
+      query: z.object({
+        status: z
+          .enum(["draft", "scheduled", "teasing", "active", "ended", "archived"])
+          .optional(),
+        limit: z.coerce.number().int().min(1).max(200).optional(),
+      }),
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(
+              z
+                .object({
+                  items: z.array(
+                    z.object({
+                      activityId: z.string(),
+                      alias: z.string(),
+                      name: z.string(),
+                      status: z.string(),
+                      kind: z.string(),
+                      participants: z.number().int(),
+                      completed: z.number().int(),
+                      dropped: z.number().int(),
+                      completionRate: z.number(),
+                      totalPointsGranted: z.number(),
+                      totalRewardsGranted: z.number().int(),
+                      active24h: z.number().nullable(),
+                      startAt: z.string().nullable(),
+                      endAt: z.string().nullable(),
+                      createdAt: z.string(),
+                    }),
+                  ),
+                  total: z.number().int(),
+                })
+                .openapi("ActivitiesAnalyticsSummary"),
+            ),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { status, limit } = c.req.valid("query");
+    const result = await activityService.listActivitiesAnalyticsSummary(orgId, {
+      status,
+      limit,
+    });
+    return c.json(ok(result), 200);
+  },
+);
+
 activityRouter.openapi(
   createAdminRoute({
     method: "get",
@@ -793,6 +859,145 @@ activityRouter.openapi(
     const orgId = getOrgId(c);
     const { key } = c.req.valid("param");
     const result = await activityService.getActivityAnalytics({
+      tenantId: orgId,
+      activityIdOrAlias: key,
+    });
+    return c.json(ok(result), 200);
+  },
+);
+
+// 360° activity overview — what the admin "活动数据中心" panel pulls in
+// one round-trip. The legacy `/{key}/analytics` above is kept for the
+// admin-agent tool surface and any prior SDK consumers; new admin UI
+// reads from this endpoint.
+activityRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/{key}/analytics/overview",
+    tags: [TAG],
+    summary:
+      "360° activity overview (acquisition / output / economy) for the admin data center panel.",
+    request: {
+      params: KeyParam,
+      query: z.object({
+        from: z.string().datetime().optional(),
+        to: z.string().datetime().optional(),
+      }),
+    },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(
+              z
+                .object({
+                  acquisition: z.object({
+                    totalParticipants: z.number().int(),
+                    currentActive: z.number().int(),
+                    completionRate: z.number(),
+                    dropRate: z.number(),
+                    joinedSeries: z.array(
+                      z.object({
+                        day: z.string(),
+                        count: z.number().int(),
+                      }),
+                    ),
+                  }),
+                  output: z.object({
+                    totalPoints: z.number(),
+                    avgPoints: z.number(),
+                    p50Points: z.number(),
+                    maxPoints: z.number(),
+                    completionDist: z.array(
+                      z.object({
+                        status: z.string(),
+                        count: z.number().int(),
+                      }),
+                    ),
+                    pointsBuckets: z.array(
+                      z.object({
+                        bucket: z.string(),
+                        count: z.number().int(),
+                      }),
+                    ),
+                  }),
+                  economy: z.object({
+                    totalRewardsGranted: z.number().int(),
+                    byRewardKey: z.array(
+                      z.object({
+                        key: z.string(),
+                        count: z.number().int(),
+                      }),
+                    ),
+                  }),
+                })
+                .openapi("ActivityAnalyticsOverview"),
+            ),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const { from, to } = c.req.valid("query");
+    const result = await activityService.getActivityAnalyticsOverview({
+      tenantId: orgId,
+      activityIdOrAlias: key,
+      from: from ? new Date(from) : undefined,
+      to: to ? new Date(to) : undefined,
+    });
+    return c.json(ok(result), 200);
+  },
+);
+
+// Per-node operational health for the activity 360° "Operational"
+// section. Pure PG read; live activity (uniqueUsers / errorRate) is
+// out of v1 scope and returns null.
+activityRouter.openapi(
+  createAdminRoute({
+    method: "get",
+    path: "/{key}/analytics/nodes",
+    tags: [TAG],
+    summary: "Per-node operational health for an activity (config + completion counts).",
+    request: { params: KeyParam },
+    responses: {
+      200: {
+        description: "OK",
+        content: {
+          "application/json": {
+            schema: envelopeOf(
+              z
+                .object({
+                  items: z.array(
+                    z.object({
+                      nodeId: z.string(),
+                      alias: z.string().nullable(),
+                      nodeType: z.string(),
+                      refId: z.string().nullable(),
+                      enabled: z.boolean(),
+                      resourceActive: z.boolean(),
+                      effectiveEnabled: z.boolean(),
+                      completionCount: z.number().int().nullable(),
+                      errorRate: z.number().nullable(),
+                    }),
+                  ),
+                })
+                .openapi("ActivityAnalyticsNodes"),
+            ),
+          },
+        },
+      },
+      ...commonErrorResponses,
+    },
+  }),
+  async (c) => {
+    const orgId = getOrgId(c);
+    const { key } = c.req.valid("param");
+    const result = await activityService.getActivityAnalyticsNodes({
       tenantId: orgId,
       activityIdOrAlias: key,
     });

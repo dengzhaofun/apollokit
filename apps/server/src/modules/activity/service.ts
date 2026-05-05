@@ -433,6 +433,132 @@ export function createActivityService(
       return buildPage(rows, limit);
     },
 
+    /**
+     * Cross-activity summary for the admin "跨活动榜" page (`/analytics/activities`).
+     * Joins `activity_configs` with member / reward aggregates in a single
+     * round-trip. `active24h` is reserved for v2 — populating it requires
+     * Tinybird fan-out keyed by `activity_id` JSON path, which we deliberately
+     * skip in v1 (the data quality depends on every emit site stamping
+     * `event_data.activity_id`, which isn't a v1 commitment).
+     */
+    async listActivitiesAnalyticsSummary(
+      tenantId: string,
+      filter: { status?: ActivityState; limit?: number } = {},
+    ): Promise<{
+      items: Array<{
+        activityId: string;
+        alias: string;
+        name: string;
+        status: string;
+        kind: string;
+        participants: number;
+        completed: number;
+        dropped: number;
+        completionRate: number;
+        totalPointsGranted: number;
+        totalRewardsGranted: number;
+        active24h: number | null;
+        startAt: string | null;
+        endAt: string | null;
+        createdAt: string;
+      }>;
+      total: number;
+    }> {
+      const limit = Math.min(Math.max(1, filter.limit ?? 50), 200);
+      const statusFilter = filter.status ?? null;
+
+      const rowsRaw = await db.execute(sql<{
+        activity_id: string;
+        alias: string;
+        name: string;
+        status: string;
+        kind: string;
+        start_at: string | null;
+        end_at: string | null;
+        created_at: string;
+        participants: number;
+        completed: number;
+        dropped: number;
+        total_points: string;
+        total_rewards: number;
+      }>`
+        SELECT
+          ac.id           AS activity_id,
+          ac.alias        AS alias,
+          ac.name         AS name,
+          ac.status       AS status,
+          ac.kind         AS kind,
+          ac.start_at     AS start_at,
+          ac.end_at       AS end_at,
+          ac.created_at   AS created_at,
+          COALESCE(m.participants, 0)::int AS participants,
+          COALESCE(m.completed, 0)::int    AS completed,
+          COALESCE(m.dropped, 0)::int      AS dropped,
+          COALESCE(m.total_points, 0)::text AS total_points,
+          COALESCE(r.total_rewards, 0)::int AS total_rewards
+        FROM activity_configs ac
+        LEFT JOIN (
+          SELECT
+            activity_id,
+            COUNT(*)::int AS participants,
+            COUNT(*) FILTER (WHERE status = 'completed')::int AS completed,
+            COUNT(*) FILTER (WHERE status = 'dropped')::int   AS dropped,
+            COALESCE(SUM(activity_points), 0) AS total_points
+          FROM activity_members
+          GROUP BY activity_id
+        ) m ON m.activity_id = ac.id
+        LEFT JOIN (
+          SELECT activity_id, COUNT(*)::int AS total_rewards
+          FROM activity_user_rewards
+          GROUP BY activity_id
+        ) r ON r.activity_id = ac.id
+        WHERE ac.tenant_id = ${tenantId}
+          ${statusFilter ? sql`AND ac.status = ${statusFilter}` : sql``}
+        ORDER BY ac.created_at DESC
+        LIMIT ${limit}
+      `);
+
+      const rows = rowsRaw.rows as Array<{
+        activity_id: string;
+        alias: string;
+        name: string;
+        status: string;
+        kind: string;
+        start_at: string | null;
+        end_at: string | null;
+        created_at: string;
+        participants: number;
+        completed: number;
+        dropped: number;
+        total_points: string;
+        total_rewards: number;
+      }>;
+
+      const items = rows.map((r) => {
+        const participants = Number(r.participants);
+        const completed = Number(r.completed);
+        return {
+          activityId: r.activity_id,
+          alias: r.alias,
+          name: r.name,
+          status: r.status,
+          kind: r.kind,
+          participants,
+          completed,
+          dropped: Number(r.dropped),
+          completionRate: participants ? completed / participants : 0,
+          totalPointsGranted: Number(r.total_points) || 0,
+          totalRewardsGranted: Number(r.total_rewards),
+          active24h: null,
+          startAt: r.start_at,
+          endAt: r.end_at,
+          createdAt: r.created_at,
+        };
+      });
+
+      return { items, total: items.length };
+    },
+
     // ─── Lifecycle transitions ───────────────────────────────────
 
     /**
@@ -1206,6 +1332,369 @@ export function createActivityService(
         p50Points,
         pointsBuckets,
       };
+    },
+
+    /**
+     * 360° activity overview — one round-trip aggregate that powers
+     * the admin "活动数据中心" panel. Three sections:
+     *
+     *   acquisition — joined / active / completion / drop / new-per-day
+     *   output      — points stats + buckets + status histogram
+     *   economy     — reward grant counts, grouped by `reward_key` prefix
+     *                 (`schedule:*` / `node:*` / global) so operators can
+     *                 see where rewards came from
+     *
+     * `from` / `to` are optional. When omitted we use the activity's
+     * full lifetime (visibleAt → now) — joinedSeries / rewards filter
+     * by them; aggregate "totals" are *all-time* by design (the cards
+     * answer "how is this activity doing in total" not "in the
+     * window"). Use {} to get full history.
+     */
+    async getActivityAnalyticsOverview(params: {
+      tenantId: string;
+      activityIdOrAlias: string;
+      from?: Date;
+      to?: Date;
+    }): Promise<{
+      acquisition: {
+        totalParticipants: number;
+        currentActive: number;
+        completionRate: number;
+        dropRate: number;
+        joinedSeries: Array<{ day: string; count: number }>;
+      };
+      output: {
+        totalPoints: number;
+        avgPoints: number;
+        p50Points: number;
+        maxPoints: number;
+        completionDist: Array<{ status: string; count: number }>;
+        pointsBuckets: Array<{ bucket: string; count: number }>;
+      };
+      economy: {
+        totalRewardsGranted: number;
+        byRewardKey: Array<{ key: string; count: number }>;
+      };
+    }> {
+      const activity = await loadByKey(
+        params.tenantId,
+        params.activityIdOrAlias,
+      );
+
+      // Default time window: visibleAt → now. Falling back to startAt
+      // / createdAt if visibleAt is null (template-instantiated rows
+      // sometimes are). For the joinedSeries chart this only changes
+      // the X axis range; totals are unaffected.
+      const from =
+        params.from ??
+        activity.visibleAt ??
+        activity.startAt ??
+        activity.createdAt ??
+        new Date(0);
+      const to = params.to ?? new Date();
+
+      const [
+        statusRowsRaw,
+        pointStatsRaw,
+        pointsBucketsRaw,
+        joinedSeriesRaw,
+        rewardsTotalRaw,
+        rewardsByKeyRaw,
+      ] = await Promise.all([
+        // status histogram → drives totalParticipants / currentActive /
+        // completion + drop rates + completionDist
+        db.execute(sql<{
+          status: string;
+          cnt: number;
+        }>`
+          SELECT status, COUNT(*)::int AS cnt
+          FROM activity_members
+          WHERE activity_id = ${activity.id}
+          GROUP BY status
+        `),
+        // central tendency on points
+        db.execute(sql<{
+          total: string | null;
+          avg: string | null;
+          max: string | null;
+          p50: string | null;
+        }>`
+          SELECT
+            COALESCE(SUM(activity_points), 0)::text AS total,
+            AVG(activity_points)::text AS avg,
+            MAX(activity_points)::text AS max,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY activity_points)::text AS p50
+          FROM activity_members
+          WHERE activity_id = ${activity.id}
+        `),
+        // points histogram (kept identical to legacy getActivityAnalytics
+        // so admin can drop-in replace, and so SDK consumers calling the
+        // old endpoint see the same buckets when they migrate)
+        db.execute(sql<{ bucket: string; cnt: number }>`
+          SELECT
+            CASE
+              WHEN activity_points = 0 THEN '0'
+              WHEN activity_points < 100 THEN '1-99'
+              WHEN activity_points < 500 THEN '100-499'
+              WHEN activity_points < 1000 THEN '500-999'
+              WHEN activity_points < 5000 THEN '1000-4999'
+              ELSE '5000+'
+            END AS bucket,
+            COUNT(*)::int AS cnt
+          FROM activity_members
+          WHERE activity_id = ${activity.id}
+          GROUP BY 1
+          ORDER BY 1
+        `),
+        // joinedSeries — daily new-participant count within [from, to]
+        db.execute(sql<{ day: string; cnt: number }>`
+          SELECT
+            to_char(date_trunc('day', joined_at), 'YYYY-MM-DD') AS day,
+            COUNT(*)::int AS cnt
+          FROM activity_members
+          WHERE activity_id = ${activity.id}
+            AND joined_at >= ${from}
+            AND joined_at <= ${to}
+          GROUP BY 1
+          ORDER BY 1
+        `),
+        db.execute(sql<{ cnt: number }>`
+          SELECT COUNT(*)::int AS cnt
+          FROM activity_user_rewards
+          WHERE activity_id = ${activity.id}
+        `),
+        // reward_key has the form "schedule:<id>" / "node:<id>" /
+        // "global_complete" — split on the first ':' to keep cardinality
+        // bounded (otherwise per-node FK would explode the dim).
+        db.execute(sql<{ key: string; cnt: number }>`
+          SELECT
+            split_part(reward_key, ':', 1) AS key,
+            COUNT(*)::int AS cnt
+          FROM activity_user_rewards
+          WHERE activity_id = ${activity.id}
+          GROUP BY 1
+          ORDER BY cnt DESC
+          LIMIT 50
+        `),
+      ]);
+
+      const statusRows = statusRowsRaw.rows as Array<{
+        status: string;
+        cnt: number;
+      }>;
+      let totalParticipants = 0;
+      let completed = 0;
+      let dropped = 0;
+      let currentActive = 0;
+      const completionDist: Array<{ status: string; count: number }> = [];
+      for (const r of statusRows) {
+        const cnt = Number(r.cnt);
+        totalParticipants += cnt;
+        completionDist.push({ status: r.status, count: cnt });
+        if (r.status === "completed") completed = cnt;
+        else if (r.status === "dropped") dropped = cnt;
+        else if (r.status === "joined") currentActive = cnt;
+      }
+
+      const stats = pointStatsRaw.rows[0] as
+        | {
+            total: string | null;
+            avg: string | null;
+            max: string | null;
+            p50: string | null;
+          }
+        | undefined;
+
+      const pointsBuckets = (
+        pointsBucketsRaw.rows as Array<{ bucket: string; cnt: number }>
+      ).map((r) => ({ bucket: r.bucket, count: Number(r.cnt) }));
+
+      const joinedSeries = (
+        joinedSeriesRaw.rows as Array<{ day: string; cnt: number }>
+      ).map((r) => ({ day: r.day, count: Number(r.cnt) }));
+
+      const totalRewardsGranted = Number(
+        (rewardsTotalRaw.rows[0] as { cnt: number } | undefined)?.cnt ?? 0,
+      );
+
+      const byRewardKey = (
+        rewardsByKeyRaw.rows as Array<{ key: string; cnt: number }>
+      ).map((r) => ({ key: r.key, count: Number(r.cnt) }));
+
+      return {
+        acquisition: {
+          totalParticipants,
+          currentActive,
+          completionRate: totalParticipants
+            ? completed / totalParticipants
+            : 0,
+          dropRate: totalParticipants ? dropped / totalParticipants : 0,
+          joinedSeries,
+        },
+        output: {
+          totalPoints: Number(stats?.total ?? 0) || 0,
+          avgPoints: Number(stats?.avg ?? 0) || 0,
+          p50Points: Number(stats?.p50 ?? 0) || 0,
+          maxPoints: Number(stats?.max ?? 0) || 0,
+          completionDist,
+          pointsBuckets,
+        },
+        economy: {
+          totalRewardsGranted,
+          byRewardKey,
+        },
+      };
+    },
+
+    /**
+     * Per-node operational health for the activity 360° "Operational"
+     * section. Pure PG read — Tinybird-derived live metrics
+     * (uniqueUsers / errorRate) are out of v1 scope.
+     *
+     * For each node we return:
+     *   - configuration flags (enabled, resourceActive,
+     *     effectiveEnabled = both)
+     *   - completionCount where the underlying subsystem has a usable
+     *     count (task_group via task_user_progress.claimed_at,
+     *     leaderboard_configs via leaderboard_snapshots, check_in via
+     *     check_in_logs). Other nodeTypes return null and the UI shows
+     *     "—".
+     */
+    async getActivityAnalyticsNodes(params: {
+      tenantId: string;
+      activityIdOrAlias: string;
+    }): Promise<{
+      items: Array<{
+        nodeId: string;
+        alias: string | null;
+        nodeType: string;
+        refId: string | null;
+        enabled: boolean;
+        resourceActive: boolean;
+        effectiveEnabled: boolean;
+        completionCount: number | null;
+        errorRate: number | null;
+      }>;
+    }> {
+      const activity = await loadByKey(
+        params.tenantId,
+        params.activityIdOrAlias,
+      );
+
+      // 1. Pull all nodes (ordered by order_index)
+      const nodesRaw = await db.execute(sql<{
+        id: string;
+        alias: string | null;
+        node_type: string;
+        ref_id: string | null;
+        enabled: boolean;
+      }>`
+        SELECT id, alias, node_type, ref_id, enabled
+        FROM activity_nodes
+        WHERE activity_id = ${activity.id}
+        ORDER BY order_index
+      `);
+      const nodes = nodesRaw.rows as Array<{
+        id: string;
+        alias: string | null;
+        node_type: string;
+        ref_id: string | null;
+        enabled: boolean;
+      }>;
+
+      // 2. For nodes with refIds, fan out to the relevant subsystem
+      //    table to read `enabled` (treated as resourceActive). We
+      //    batch lookups per nodeType instead of one query per node.
+      const taskRefIds = nodes
+        .filter((n) => n.node_type === "task_group" && n.ref_id)
+        .map((n) => n.ref_id as string);
+      const leaderboardRefIds = nodes
+        .filter((n) => n.node_type === "leaderboard" && n.ref_id)
+        .map((n) => n.ref_id as string);
+      const checkInRefIds = nodes
+        .filter((n) => n.node_type === "check_in" && n.ref_id)
+        .map((n) => n.ref_id as string);
+
+      const [taskCompletionRaw, leaderboardActiveRaw, checkInCompletionRaw] =
+        await Promise.all([
+          taskRefIds.length
+            ? db.execute(sql<{ task_id: string; cnt: number }>`
+                SELECT task_id, COUNT(*)::int AS cnt
+                FROM task_user_progress
+                WHERE task_id IN (${sql.join(
+                  taskRefIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )})
+                  AND claimed_at IS NOT NULL
+                GROUP BY task_id
+              `)
+            : Promise.resolve({ rows: [] as Array<{ task_id: string; cnt: number }> }),
+          leaderboardRefIds.length
+            ? db.execute(sql<{ id: string; enabled: boolean }>`
+                SELECT id, enabled
+                FROM leaderboard_configs
+                WHERE id IN (${sql.join(
+                  leaderboardRefIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )})
+              `)
+            : Promise.resolve({ rows: [] as Array<{ id: string; enabled: boolean }> }),
+          checkInRefIds.length
+            ? db.execute(sql<{ config_id: string; cnt: number }>`
+                SELECT config_id, COUNT(*)::int AS cnt
+                FROM check_in_user_states
+                WHERE config_id IN (${sql.join(
+                  checkInRefIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )})
+                  AND total_days > 0
+                GROUP BY config_id
+              `)
+            : Promise.resolve({ rows: [] as Array<{ config_id: string; cnt: number }> }),
+        ]);
+
+      const taskCompletion = new Map<string, number>(
+        (taskCompletionRaw.rows as Array<{ task_id: string; cnt: number }>).map(
+          (r) => [r.task_id, Number(r.cnt)],
+        ),
+      );
+      const leaderboardActive = new Map<string, boolean>(
+        (
+          leaderboardActiveRaw.rows as Array<{ id: string; enabled: boolean }>
+        ).map((r) => [r.id, r.enabled]),
+      );
+      const checkInCompletion = new Map<string, number>(
+        (
+          checkInCompletionRaw.rows as Array<{ config_id: string; cnt: number }>
+        ).map((r) => [r.config_id, Number(r.cnt)]),
+      );
+
+      const items = nodes.map((n) => {
+        let resourceActive = true;
+        let completionCount: number | null = null;
+        if (n.node_type === "leaderboard" && n.ref_id) {
+          resourceActive = leaderboardActive.get(n.ref_id) ?? false;
+        }
+        if (n.node_type === "task_group" && n.ref_id) {
+          completionCount = taskCompletion.get(n.ref_id) ?? 0;
+        } else if (n.node_type === "check_in" && n.ref_id) {
+          completionCount = checkInCompletion.get(n.ref_id) ?? 0;
+        }
+        return {
+          nodeId: n.id,
+          alias: n.alias,
+          nodeType: n.node_type,
+          refId: n.ref_id,
+          enabled: n.enabled,
+          resourceActive,
+          effectiveEnabled: n.enabled && resourceActive,
+          completionCount,
+          // Tinybird-derived signal — not in v1 scope.
+          errorRate: null,
+        };
+      });
+
+      return { items };
     },
 
     // ─── Templates ──────────────────────────────────────────────

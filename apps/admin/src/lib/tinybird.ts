@@ -36,6 +36,9 @@ export const TENANT_PIPES = [
   "tenant_event_funnel",
   "tenant_event_stream",
   "experiment_metric_breakdown",
+  "tenant_dau_timeseries",
+  "tenant_event_user_distribution",
+  "tenant_user_active_days_distribution",
 ] as const
 
 export type TenantPipeName = (typeof TENANT_PIPES)[number]
@@ -618,5 +621,94 @@ export function useExperimentMetricBreakdown(args: {
         jsonOk &&
         (args.enabled ?? true),
     },
+  )
+}
+
+// ============================================================================
+// v1 数据中心新增 hooks — DAU 时序 / 事件用户分布 / 月活跃天数分布
+// ============================================================================
+
+/** `tenant_dau_timeseries` row — 项目维度的活跃用户数（HLL uniqMerge）. */
+export interface TenantDauTimeseriesRow {
+  bucket: string
+  dau: number
+}
+
+/**
+ * 项目维度 DAU / 时活时序（不限定 event）。走 events_hourly_agg 物化视图,
+ * uniqMerge HLL state, 30d 窗口 1d 桶 < 500ms。bucketSeconds 默认 86400(日);
+ * 可传 3600 切到小时。次小时粒度走不通,调用方需要自行约束。
+ */
+export function useTenantDauTimeseries(args: {
+  from: Date | string
+  to: Date | string
+  bucketSeconds?: number
+  enabled?: boolean
+}) {
+  const toIso = (v: Date | string) =>
+    typeof v === "string" ? v : v.toISOString()
+  return useTinybirdQuery<TenantDauTimeseriesRow>(
+    "tenant_dau_timeseries",
+    {
+      date_from: toIso(args.from),
+      date_to: toIso(args.to),
+      bucket_seconds: args.bucketSeconds ?? 86400,
+    },
+    { enabled: args.enabled },
+  )
+}
+
+/** `tenant_event_user_distribution` row — Top 事件按 distinct_users 排序. */
+export interface TenantEventUserDistributionRow {
+  event: string
+  distinct_users: number
+  event_count: number
+}
+
+/**
+ * 项目维度"用户最活跃事件 Top N"。Distinct users 走 HLL uniqMerge,
+ * event_count 走 sum。default top=20,默认按 distinct_users 倒序。
+ */
+export function useTenantEventUserDistribution(args: {
+  from: Date | string
+  to: Date | string
+  top?: number
+  enabled?: boolean
+}) {
+  const toIso = (v: Date | string) =>
+    typeof v === "string" ? v : v.toISOString()
+  return useTinybirdQuery<TenantEventUserDistributionRow>(
+    "tenant_event_user_distribution",
+    {
+      date_from: toIso(args.from),
+      date_to: toIso(args.to),
+      top: args.top ?? 20,
+    },
+    { enabled: args.enabled },
+  )
+}
+
+/** `tenant_user_active_days_distribution` row — 月内按"活跃天数桶"划分用户数. */
+export interface TenantUserActiveDaysDistributionRow {
+  bucket: string
+  users: number
+  /** 排序辅助列(1-5),前端可不展示直接消费 sort_key 做稳定排序. */
+  sort_key: number
+}
+
+/**
+ * 月内活跃天数桶分布（"YYYY-MM"）。走 raw events,
+ * 内层按 endUser 算 uniq(toDate(timestamp))，外层按 [1d / 2-3d / 4-7d / 8-15d / 16-30d] 桶聚合。
+ */
+export function useTenantUserActiveDaysDistribution(args: {
+  /** "YYYY-MM" 格式,例如 "2026-05". */
+  yearMonth: string
+  enabled?: boolean
+}) {
+  const valid = /^\d{4}-(0[1-9]|1[0-2])$/.test(args.yearMonth)
+  return useTinybirdQuery<TenantUserActiveDaysDistributionRow>(
+    "tenant_user_active_days_distribution",
+    { year_month: args.yearMonth },
+    { enabled: valid && (args.enabled ?? true) },
   )
 }

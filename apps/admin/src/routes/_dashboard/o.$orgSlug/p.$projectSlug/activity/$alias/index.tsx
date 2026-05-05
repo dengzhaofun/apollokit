@@ -15,6 +15,7 @@ import { toast } from "sonner"
 
 import { ActivityForm } from "#/components/activity/ActivityForm"
 import { ActivityPhaseBadge } from "#/components/activity/ActivityPhaseBadge"
+import { ActivityAnalyticsPanel } from "#/components/analytics/ActivityAnalyticsPanel"
 import { RefIdPicker } from "#/components/activity/RefIdPicker"
 import {
   STATE_LABELS,
@@ -46,7 +47,6 @@ import {
 } from "#/components/ui/tabs"
 import {
   useActivity,
-  useActivityAnalytics,
   useActivityForUser,
   useActivityLifecycle,
   useActivityMembers,
@@ -301,7 +301,7 @@ function ActivityDetailPage() {
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-4">
-            <AnalyticsPanel activityKey={alias} />
+            <ActivityAnalyticsPanel activityKey={alias} />
           </TabsContent>
         </Tabs>
       </PageBody>
@@ -1038,82 +1038,6 @@ function SchedulesPanel({ activityKey }: { activityKey: string }) {
           </ul>
         )}
       </div>
-    </div>
-  )
-}
-
-function AnalyticsPanel({ activityKey }: { activityKey: string }) {
-  const { data, isPending, error } = useActivityAnalytics(activityKey)
-
-  if (isPending)
-    return (
-      <div className="rounded-xl border bg-card p-6 text-muted-foreground shadow-sm">
-        {m.common_loading()}
-      </div>
-    )
-  if (error)
-    return (
-      <div className="rounded-xl border bg-card p-6 text-destructive shadow-sm">
-        {m.common_failed_to_load({
-          resource: m.activity_tab_analytics(),
-          error: error.message,
-        })}
-      </div>
-    )
-  if (!data) return null
-
-  const totalBuckets = data.pointsBuckets.reduce((s, b) => s + b.count, 0) || 1
-  return (
-    <div className="grid gap-4">
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label={m.activity_analytics_participants()} value={data.participants.toLocaleString()} />
-        <StatCard label={m.activity_analytics_completed()} value={data.completed.toLocaleString()} />
-        <StatCard label={m.activity_analytics_dropped()} value={data.dropped.toLocaleString()} />
-        <StatCard
-          label={m.activity_analytics_avg_points()}
-          value={Math.round(data.avgPoints).toLocaleString()}
-        />
-        <StatCard label={m.activity_analytics_p50_points()} value={data.p50Points.toLocaleString()} />
-        <StatCard label={m.activity_analytics_max_points()} value={data.maxPoints.toLocaleString()} />
-      </div>
-
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">{m.activity_analytics_points_distribution()}</h3>
-        {data.pointsBuckets.length === 0 ? (
-          <div className="text-muted-foreground">{m.activity_analytics_no_data()}</div>
-        ) : (
-          <div className="space-y-2">
-            {data.pointsBuckets.map((b) => (
-              <div key={b.bucket} className="flex items-center gap-3 text-sm">
-                <code className="w-24 rounded bg-muted px-1.5 py-0.5 text-xs">
-                  {b.bucket}
-                </code>
-                <div className="relative h-5 flex-1 rounded bg-muted">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded bg-primary"
-                    style={{
-                      width: `${Math.max(1, (b.count / totalBuckets) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <span className="w-16 text-right font-mono">
-                  {b.count.toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-    </div>
-  )
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
     </div>
   )
 }

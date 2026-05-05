@@ -66,8 +66,8 @@ import * as m from "#/paraglide/messages.js"
 
 const OUTCOME_OPTIONS = ["ok", "error", "denied"] as const
 
-export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/analytics/activity/")({
-  component: ActivityPage,
+export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/analytics/events/")({
+  component: EventsPage,
 })
 
 type WindowOption = "24h" | "7d" | "30d"
@@ -85,13 +85,13 @@ function useWindow(option: WindowOption) {
   }, [option])
 }
 
-function ActivityPage() {
+function EventsPage() {
   return (
     <PageShell>
       <PageHeader
         icon={<Activity className="size-5" />}
-        title={m.analytics_activity_title()}
-        description={m.analytics_activity_subtitle()}
+        title={m.analytics_events_title()}
+        description={m.analytics_events_subtitle()}
       />
       <PageBody>
         <ClientOnly fallback={<SkeletonBlock tall />}>
@@ -253,7 +253,7 @@ function ActivityInner() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">
-                  {m.analytics_activity_filter_event()}
+                  {m.analytics_events_filter_event()}
                 </label>
                 <EventNamePicker
                   listId="activity-event-names"
@@ -265,13 +265,13 @@ function ActivityInner() {
                 />
               </div>
               <FilterInput
-                label={m.analytics_activity_filter_source()}
+                label={m.analytics_events_filter_source()}
                 value={draft.source}
                 onChange={(v) => setDraft((d) => ({ ...d, source: v }))}
               />
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">
-                  {m.analytics_activity_filter_outcome()}
+                  {m.analytics_events_filter_outcome()}
                 </label>
                 <Select
                   value={draft.outcome === "" ? "__all__" : draft.outcome}
@@ -285,7 +285,7 @@ function ActivityInner() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">
-                      {m.analytics_activity_outcome_all()}
+                      {m.analytics_events_outcome_all()}
                     </SelectItem>
                     {OUTCOME_OPTIONS.map((o) => (
                       <SelectItem key={o} value={o} className="font-mono">
@@ -296,12 +296,12 @@ function ActivityInner() {
                 </Select>
               </div>
               <FilterInput
-                label={m.analytics_activity_filter_end_user_id()}
+                label={m.analytics_events_filter_end_user_id()}
                 value={draft.endUserId}
                 onChange={(v) => setDraft((d) => ({ ...d, endUserId: v }))}
               />
               <FilterInput
-                label={m.analytics_activity_filter_json_path()}
+                label={m.analytics_events_filter_json_path()}
                 value={draft.jsonPath}
                 onChange={(v) => setDraft((d) => ({ ...d, jsonPath: v }))}
                 placeholder={m.analytics_property_key_placeholder()}
@@ -312,7 +312,7 @@ function ActivityInner() {
                 }
               />
               <FilterInput
-                label={m.analytics_activity_filter_json_value()}
+                label={m.analytics_events_filter_json_value()}
                 value={draft.jsonValue}
                 onChange={(v) => setDraft((d) => ({ ...d, jsonValue: v }))}
                 disabled={draft.jsonPath === ""}
@@ -355,9 +355,9 @@ function ActivityInner() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              {m.analytics_activity_title()}
+              {m.analytics_events_title()}
             </CardTitle>
-            <CardDescription>{m.analytics_activity_subtitle()}</CardDescription>
+            <CardDescription>{m.analytics_events_subtitle()}</CardDescription>
           </CardHeader>
           <CardContent>
             {isError ? (
@@ -368,7 +368,7 @@ function ActivityInner() {
               <SkeletonBlock />
             ) : allRows.length === 0 ? (
               <div className="flex h-40 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
-                {m.analytics_activity_empty()}
+                {m.analytics_events_empty()}
               </div>
             ) : (
               <div className="rounded-md border">
@@ -376,15 +376,15 @@ function ActivityInner() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8" />
-                      <TableHead>{m.analytics_activity_col_time()}</TableHead>
-                      <TableHead>{m.analytics_activity_col_event()}</TableHead>
-                      <TableHead>{m.analytics_activity_col_source()}</TableHead>
-                      <TableHead>{m.analytics_activity_col_outcome()}</TableHead>
+                      <TableHead>{m.analytics_events_col_time()}</TableHead>
+                      <TableHead>{m.analytics_events_col_event()}</TableHead>
+                      <TableHead>{m.analytics_events_col_source()}</TableHead>
+                      <TableHead>{m.analytics_events_col_outcome()}</TableHead>
                       <TableHead className="text-right">
-                        {m.analytics_activity_col_amount()}
+                        {m.analytics_events_col_amount()}
                       </TableHead>
-                      <TableHead>{m.analytics_activity_col_user()}</TableHead>
-                      <TableHead>{m.analytics_activity_col_trace()}</TableHead>
+                      <TableHead>{m.analytics_events_col_user()}</TableHead>
+                      <TableHead>{m.analytics_events_col_trace()}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -417,11 +417,11 @@ function ActivityInner() {
                   disabled={isLoading}
                 >
                   <ChevronDown className="size-4" />
-                  {m.analytics_activity_load_more()}
+                  {m.analytics_events_load_more()}
                 </Button>
               ) : allRows.length > 0 ? (
                 <span className="text-xs text-muted-foreground">
-                  {m.analytics_activity_no_more()}
+                  {m.analytics_events_no_more()}
                 </span>
               ) : null}
             </div>
@@ -590,7 +590,7 @@ function JsonExpansion({
                       onClick={() => onFilterByJson(key, String(value))}
                     >
                       <Filter className="size-3" />
-                      {m.analytics_activity_use_field_filter()}
+                      {m.analytics_events_use_field_filter()}
                     </Button>
                     <Button
                       type="button"
@@ -600,7 +600,7 @@ function JsonExpansion({
                       onClick={() => onOpenInExplore(event, key)}
                     >
                       <ExternalLink className="size-3" />
-                      {m.analytics_activity_open_in_explore()}
+                      {m.analytics_events_open_in_explore()}
                     </Button>
                   </span>
                 ) : (
