@@ -246,11 +246,11 @@ export function ActivityForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="generic">{m.activity_kind_generic()}</SelectItem>
-                    <SelectItem value="check_in_only">check_in_only</SelectItem>
-                    <SelectItem value="board_game">board_game</SelectItem>
-                    <SelectItem value="gacha">gacha</SelectItem>
-                    <SelectItem value="season_pass">season_pass</SelectItem>
-                    <SelectItem value="custom">custom</SelectItem>
+                    <SelectItem value="check_in_only">{m.activity_kind_check_in_only()}</SelectItem>
+                    <SelectItem value="board_game">{m.activity_kind_board_game()}</SelectItem>
+                    <SelectItem value="gacha">{m.activity_kind_gacha()}</SelectItem>
+                    <SelectItem value="season_pass">{m.activity_kind_season_pass()}</SelectItem>
+                    <SelectItem value="custom">{m.activity_kind_custom()}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

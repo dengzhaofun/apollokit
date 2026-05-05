@@ -39,6 +39,29 @@ type Props = {
 
 const NO_PARENT = "__none__"
 
+const DISPLAY_TYPE_LABELS: Record<string, () => string> = {
+  dot: m.badge_display_type_dot,
+  number: m.badge_display_type_number,
+  new: m.badge_display_type_new,
+  hot: m.badge_display_type_hot,
+  exclamation: m.badge_display_type_exclamation,
+  gift: m.badge_display_type_gift,
+}
+const AGGREGATION_LABELS: Record<string, () => string> = {
+  sum: m.badge_aggregation_sum,
+  any: m.badge_aggregation_any,
+  max: m.badge_aggregation_max,
+  none: m.badge_aggregation_none,
+}
+const DISMISS_MODE_LABELS: Record<string, () => string> = {
+  auto: m.badge_dismiss_mode_auto,
+  manual: m.badge_dismiss_mode_manual,
+  version: m.badge_dismiss_mode_version,
+  daily: m.badge_dismiss_mode_daily,
+  session: m.badge_dismiss_mode_session,
+  cooldown: m.badge_dismiss_mode_cooldown,
+}
+
 export function BadgeNodeForm({
   form,
   keyLocked,
@@ -136,7 +159,7 @@ export function BadgeNodeForm({
                             count={t === "number" ? 3 : 1}
                             forceVisible
                           />
-                          {t}
+                          {DISPLAY_TYPE_LABELS[t]?.() ?? t}
                         </span>
                       </SelectItem>
                     ))}
@@ -258,7 +281,7 @@ export function BadgeNodeForm({
                 <SelectContent>
                   {BADGE_AGGREGATIONS.map((a) => (
                     <SelectItem key={a} value={a}>
-                      {a}
+                      {AGGREGATION_LABELS[a]?.() ?? a}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -294,7 +317,7 @@ export function BadgeNodeForm({
                 <SelectContent>
                   {BADGE_DISMISS_MODES.map((dm) => (
                     <SelectItem key={dm} value={dm}>
-                      {dm}
+                      {DISMISS_MODE_LABELS[dm]?.() ?? dm}
                     </SelectItem>
                   ))}
                 </SelectContent>
