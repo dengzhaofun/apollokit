@@ -33,6 +33,7 @@ function serialize(row: {
   tenantId: string;
   name: string;
   publishableKey: string;
+  kind: string;
   devMode: boolean;
   enabled: boolean;
   expiresAt: Date | null;
@@ -45,6 +46,7 @@ function serialize(row: {
     tenantId: row.tenantId,
     name: row.name,
     publishableKey: row.publishableKey,
+    kind: row.kind as "standard" | "anonymous",
     devMode: row.devMode,
     enabled: row.enabled,
     expiresAt: row.expiresAt?.toISOString() ?? null,
@@ -92,6 +94,7 @@ clientCredentialRouter.openapi(
         name: result.name,
         publishableKey: result.publishableKey,
         secret: result.secret,
+        kind: result.kind as "standard" | "anonymous",
         devMode: result.devMode,
         enabled: result.enabled,
         expiresAt: result.expiresAt?.toISOString() ?? null,

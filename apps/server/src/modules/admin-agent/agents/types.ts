@@ -29,9 +29,13 @@ import type { MentionSnapshot } from "../mentions/types";
 import type { AdminSurface, ChatExecutionContext } from "../types";
 
 /** Identifier the frontend sends in `ChatRequestBody.agentName`. */
-export type AdminAgentName = "form-fill" | "global-assistant";
+export type AdminAgentName = "form-fill" | "global-assistant" | "pages-builder";
 
-export const ADMIN_AGENT_NAMES = ["form-fill", "global-assistant"] as const;
+export const ADMIN_AGENT_NAMES = [
+  "form-fill",
+  "global-assistant",
+  "pages-builder",
+] as const;
 
 export function isAdminAgentName(s: unknown): s is AdminAgentName {
   return typeof s === "string" && (ADMIN_AGENT_NAMES as readonly string[]).includes(s);

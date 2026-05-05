@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // apollokit-pages — shared runtime worker that renders every operator-built
+  // landing page. Reads the published PageProjectSchema from the server worker
+  // (via the API service binding) and SSRs it through @repo/page-blocks.
+  //
+  // Public host pattern: `<projectSlug>.pages.apollokit.dev/...`. The
+  // wildcard route lives below; DNS for `*.pages.apollokit.dev` must
+  // CNAME to this worker (see plan §4).
+  "name": "apollokit-pages",
+  // Match the rest of the repo. compatibility_date pins the workerd
+  // runtime semantics — bump only after testing both server + admin.
+  "compatibility_date": "2026-04-11",
+  "compatibility_flags": ["nodejs_compat"],
+  // TanStack Start ships its own SSR entry; we don't write a custom server.ts.
+  "main": "@tanstack/react-start/server-entry",
+  // Worker version id available at runtime as `env.CF_VERSION_METADATA.id`
+  // — used for Sentry release tagging when we wire it.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "placement": { "mode": "smart" },
+  // Service binding to the apollokit-server worker. SSR loaders call
+  // `/api/v1/page/projects/by-slug/...` and `/api/v1/client/<module>/...`
+  // through this binding, avoiding the public CORS / cookie problem
+  // entirely. Same pattern as admin.
+  "services": [
+    { "binding": "API", "service": "apollokit-server" }
+  ],
+  // KV cache for published page schemas (`pages:slug:<slug>` keys, 60s
+  // TTL, invalidated by server's publishVersion). namespace is the
+  // account-level `apollokit-kv` shared with admin / server.
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "d831a09e6e004eea9e334e2b5c4a4d2b",
+      "preview_id": "74ebf75cb80347e89e1800ba23e0e19e"
+    }
+  ],
+  "vars": {
+    "PAGES_BASE_DOMAIN": "pages.apollokit.dev",
+    "SENTRY_ENVIRONMENT": "production"
+  }
+  // routes: enabled in PR-3-followup once `apollokit.dev` zone has
+  // wildcard cert (Advanced Certificate Manager). Until then we deploy
+  // to `apollokit-pages.<account>.workers.dev` and the admin preview
+  // iframe hits that host directly.
+  //   "routes": [
+  //     { "pattern": "*pages.apollokit.dev/*", "zone_name": "apollokit.dev" }
+  //   ]
+}

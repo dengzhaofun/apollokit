@@ -22,6 +22,20 @@
       "when": 1777931978295,
       "tag": "20260504215938_unknown_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777944225276,
+      "tag": "20260505012345_nervous_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777948485729,
+      "tag": "20260505023445_left_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

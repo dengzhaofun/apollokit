@@ -30,7 +30,7 @@ import {
   CredentialExpired,
   InvalidHmac,
 } from "./errors";
-import type { VerifyResult } from "./types";
+import type { ClientCredentialKind, VerifyResult } from "./types";
 
 type ClientCredentialDeps = Pick<AppDeps, "db"> & {
   appSecret: string;
@@ -42,10 +42,16 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
   return {
     async create(
       orgId: string,
-      input: { name: string; expiresAt?: string; metadata?: Record<string, unknown> },
+      input: {
+        name: string;
+        expiresAt?: string;
+        metadata?: Record<string, unknown>;
+        kind?: ClientCredentialKind;
+      },
     ) {
       const pair = generateKeyPair();
       const encryptedSecret = await encrypt(pair.secret, appSecret);
+      const kind: ClientCredentialKind = input.kind ?? "standard";
 
       const [row] = await db
         .insert(clientCredentials)
@@ -54,6 +60,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
           name: input.name,
           publishableKey: pair.publishableKey,
           encryptedSecret,
+          kind,
           expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
           metadata: input.metadata ?? null,
         })
@@ -72,6 +79,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
           tenantId: clientCredentials.tenantId,
           name: clientCredentials.name,
           publishableKey: clientCredentials.publishableKey,
+          kind: clientCredentials.kind,
           devMode: clientCredentials.devMode,
           enabled: clientCredentials.enabled,
           expiresAt: clientCredentials.expiresAt,
@@ -92,6 +100,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
             tenantId: clientCredentials.tenantId,
             name: clientCredentials.name,
             publishableKey: clientCredentials.publishableKey,
+            kind: clientCredentials.kind,
             devMode: clientCredentials.devMode,
             enabled: clientCredentials.enabled,
             expiresAt: clientCredentials.expiresAt,
@@ -185,11 +194,25 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
     },
 
     /**
-     * Verify a client request by checking the publishable key, then
-     * decrypting the secret and comparing the HMAC.
+     * Verify a client request by checking the publishable key, then —
+     * for `standard` kind only — decrypting the secret and comparing
+     * the HMAC.
      *
      * Returns the org ID and credential metadata on success, or throws
      * on any failure (disabled, expired, bad HMAC).
+     *
+     * For `anonymous` kind credentials we skip HMAC entirely:
+     *   - Issued only for apollokit-pages projects whose authMode is
+     *     'anonymous'. The pages worker writes a stable device-cookie
+     *     UUID and forwards it as `x-end-user-id`. Trust comes from
+     *     the cpk_ + the cred being scoped to one project; there is
+     *     no shared secret with the device.
+     *   - The encryptedSecret column is still populated so revocation /
+     *     rotation work uniformly across kinds, but it is never read
+     *     on this path.
+     *
+     * `devMode` continues to short-circuit HMAC for either kind, kept
+     * for the dev convenience use case orthogonal to anonymous.
      */
     async verifyRequest(
       publishableKey: string,
@@ -207,6 +230,22 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         throw new CredentialExpired(publishableKey);
       }
 
+      const kind = (cred.kind as ClientCredentialKind) ?? "standard";
+
+      // Anonymous: any non-empty endUserId passes. Caller (middleware)
+      // is expected to enforce length + sanity bounds. Returning
+      // devMode=false (semantic: the credential is anonymous, not "dev
+      // mode") keeps existing callers' devMode checks working.
+      if (kind === "anonymous") {
+        return {
+          valid: true,
+          tenantId: cred.tenantId,
+          credentialId: cred.id,
+          devMode: false,
+          kind,
+        };
+      }
+
       // In dev mode, skip HMAC verification
       if (cred.devMode) {
         return {
@@ -214,6 +253,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
           tenantId: cred.tenantId,
           credentialId: cred.id,
           devMode: true,
+          kind,
         };
       }
 
@@ -233,6 +273,7 @@ export function createClientCredentialService(deps: ClientCredentialDeps) {
         tenantId: cred.tenantId,
         credentialId: cred.id,
         devMode: false,
+        kind,
       };
     },
 

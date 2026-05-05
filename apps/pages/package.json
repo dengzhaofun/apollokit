@@ -1,0 +1,50 @@
+{
+  "name": "pages",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "vite dev --port 3001",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/vite-plugin": "^1.35.0",
+    "@repo/page-blocks": "workspace:*",
+    "@tailwindcss/vite": "^4.2.4",
+    "@tanstack/react-devtools": "^0.10.2",
+    "@tanstack/react-router": "^1.169.1",
+    "@tanstack/react-router-devtools": "^1.166.13",
+    "@tanstack/react-start": "^1.167.57",
+    "@tanstack/router-plugin": "^1.167.31",
+    "hono": "^4.10.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "^4.2.4",
+    "zod": "^4.4.1"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:^",
+    "@tanstack/devtools-vite": "^0.6.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.19.17",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "eslint": "^9.39.4",
+    "jsdom": "^28.1.0",
+    "typescript": "5.9.2",
+    "vite": "^7.3.2",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.87.0"
+  }
+}
