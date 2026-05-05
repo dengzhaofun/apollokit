@@ -1,0 +1,202 @@
+---
+title: Operator Quick Start
+description: What you can do without writing code — dashboard self-serve workflows, typical ops scenarios, and the engineering handoff boundary
+icon: UserCog
+---
+
+This page is for **operations teams and product managers**. It covers what you can accomplish independently in the ApolloKit dashboard — no tickets to engineering, no waiting on a sprint.
+
+<Callout type="info" title="One Prerequisite">
+Engineering needs to complete a one-time SDK integration. After that, all configuration changes you make in the dashboard take effect for players in real time — no engineering involvement required.
+</Callout>
+
+---
+
+## What You Can Do Independently
+
+- ✅ Create and modify live-ops campaigns (check-in, lottery, tasks, activities)
+- ✅ Send system mail with in-game rewards to players
+- ✅ Generate and manage redemption code batches
+- ✅ Configure leaderboards, rank divisions, and guild rules
+- ✅ Publish announcement popups and carousel banners
+- ✅ Manage shop inventory and purchase limits
+- ✅ Use AI agents to complete all of the above faster
+
+---
+
+## Common Ops Workflows
+
+### 1. Launch a Check-in Campaign
+
+<Steps>
+<Step>
+
+**Open the Check-in Module**
+
+Dashboard left nav → "Check-in" → "New Configuration"
+
+</Step>
+<Step>
+
+**Describe the Campaign to AI**
+
+In the right-side AI panel, type something like: "7-day consecutive check-in: 50 coins days 1–3, 100 coins days 4–6, 300 coins plus a gift box item on day 7."
+
+The AI fills in all the parameters automatically.
+
+</Step>
+<Step>
+
+**Review and Adjust**
+
+Preview the AI-generated config. If a reward on a specific day looks off, edit the form directly or continue the conversation: "Change day 5 to 150 coins."
+
+</Step>
+<Step>
+
+**Save and Publish**
+
+Click Save. The campaign goes live immediately. Engineering does nothing.
+
+</Step>
+</Steps>
+
+---
+
+### 2. Send a Server-wide System Mail with Reward Attachments
+
+<Steps>
+<Step>
+
+**Open the Mail Module**
+
+Dashboard → "Mail" → "New Mail"
+
+</Step>
+<Step>
+
+**Write the Mail**
+
+Fill in the subject and body, or let AI draft it: "Write a warm Golden Week thank-you message telling players they've received 200 coins as a compensation reward."
+
+</Step>
+<Step>
+
+**Add Reward Attachments**
+
+Click "Add Attachment," select the currency or items, and set the quantity. You can attach multiple reward types in one mail.
+
+</Step>
+<Step>
+
+**Send**
+
+Choose the delivery scope (all players or a specific group) and confirm. Players see the mail in their in-game inbox when they log in and claim it manually.
+
+</Step>
+</Steps>
+
+---
+
+### 3. Generate Redemption Codes for KOL Distribution
+
+<Steps>
+<Step>
+
+**Open the Redemption Code Module**
+
+Dashboard → "Redemption Codes" → "New Batch"
+
+</Step>
+<Step>
+
+**Configure the Code Rules**
+
+Set: uses per code (usually 1), uses per player (usually 1), total batch size, expiry date.
+
+Or tell the AI: "Generate 1000 single-use codes, one per player, expiring in 10 days, redeems for 500 coins."
+
+</Step>
+<Step>
+
+**Generate and Export**
+
+Confirm the config and click Generate. Once the batch is ready, export as CSV and distribute to your KOLs or campaign channels.
+
+</Step>
+</Steps>
+
+---
+
+### 4. Set Up a New Season Leaderboard
+
+<Steps>
+<Step>
+
+**Open the Leaderboard Module**
+
+Dashboard → "Leaderboard" → "New Leaderboard"
+
+</Step>
+<Step>
+
+**Describe the Rules to AI**
+
+"Create a new season combat power leaderboard, ranked by score descending, top 100 on the board, auto-reset every Sunday at midnight."
+
+The AI sets the ranking dimension, reset schedule, and entry cap automatically.
+
+</Step>
+<Step>
+
+**Confirm the Reset Schedule**
+
+Check that the timezone and reset time are correct; adjust if needed.
+
+</Step>
+<Step>
+
+**Activate the Leaderboard**
+
+Save and the leaderboard is live. Players' clients can query it immediately via API.
+
+</Step>
+</Steps>
+
+---
+
+## The Engineering Handoff Boundary
+
+<Callout type="info" title="Integrate once, self-serve forever">
+Engineering integrates the SDK once. Every configuration change you make in the dashboard afterward propagates to players in real time — with no engineering action required.
+</Callout>
+
+| Who | Does What | How Often |
+|-----|-----------|-----------|
+| **Engineering** | SDK integration, API calls, client-side display logic | Once (or when adding new features) |
+| **Operations** | Configure campaigns, grant rewards, manage code batches, publish announcements | Every campaign cycle |
+| **Product Manager** | Design mechanics, review config parameters | As needed |
+
+---
+
+## FAQ
+
+**What if I configure something incorrectly?**
+
+All configurations are editable after saving. If a campaign is already live, edits take effect immediately — review parameters carefully before launch, and prefer making changes during low-traffic periods.
+
+**When does a configuration take effect?**
+
+Saving applies the config immediately, unless you set an explicit start time on the campaign. Check-in, lottery, and activity configs all support time-windowed start/end dates that activate automatically.
+
+**How do I look up player data?**
+
+The dashboard provides basic per-module queries — for example, checking a player's check-in history, inventory items, or currency balance. Deeper analytics require engineering to wire up the Analytics API to your own data platform.
+
+**How accurate is the AI form-fill?**
+
+The AI does its best to interpret your description and fill the right fields, but always review key values (reward quantities, time ranges, limits) before saving. Every AI-filled field remains fully editable.
+
+**What requires engineering involvement?**
+
+If you need something outside the dashboard — a new reward type, an external system integration, custom player segmentation — you'll need to work with engineering. Use the [Webhook Events](./webhooks) mechanism to push ApolloKit events into your internal systems, which reduces point-to-point development dependencies.

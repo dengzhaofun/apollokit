@@ -1,8 +1,14 @@
 {
-  "title": "ApolloKit 开发者文档",
+  "title": "ApolloKit 文档",
   "root": true,
   "pages": [
     "index",
+    "---产品概览---",
+    "product-overview",
+    "why-apollokit",
+    "feature-map",
+    "ai-features",
+    "for-operators",
     "---入门---",
     "quickstart",
     "authentication",

@@ -1,8 +1,14 @@
 {
-  "title": "ApolloKit Developer Docs",
+  "title": "ApolloKit Docs",
   "root": true,
   "pages": [
     "index",
+    "---Product Overview---",
+    "product-overview",
+    "why-apollokit",
+    "feature-map",
+    "ai-features",
+    "for-operators",
     "---Getting Started---",
     "quickstart",
     "authentication",
