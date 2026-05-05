@@ -1,0 +1,5 @@
+{
+  "title": "存储箱",
+  "icon": "Archive",
+  "pages": ["index", "guide"]
+}

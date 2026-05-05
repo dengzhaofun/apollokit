@@ -1,0 +1,60 @@
+---
+title: Overview
+description: Define and manage in-game tokens — gold, gems, season coins — with unified ledger and full transaction history
+icon: Coins
+---
+
+The currency module is the **foundational ledger** of your entire economy. Every token players can earn or spend — whether called gold, gems, or stamina — is tracked here. Shop purchases, exchange settlements, mail rewards — they all record to this single ledger.
+
+## What problem does it solve?
+
+Without a unified currency module, a typical game backend has gold, gems, stamina, and season coins scattered across different tables, each managed by separate modules. The result:
+
+- A player disputes their balance — support has to check four different places
+- Adding a new "event points" currency requires code changes in multiple modules
+- Bot exploitation is suspected — no centralized transaction log to investigate
+
+The currency module consolidates everything: **define all currencies in one place, record all changes in one ledger**.
+
+## Typical use cases
+
+**Scenario 1: Multiple currencies coexisting**
+An RPG has "gold" (daily currency), "gems" (premium currency), and "season points" (limited-time). All three are independently tracked, displayed separately in the player's wallet, and don't interfere with each other.
+
+**Scenario 2: Grants and deductions**
+Day-7 check-in reward: 500 gold — the check-in module calls the currency grant API, automatically generating a ledger entry with source `check_in`. Ops can filter the ledger by source during post-event analysis to clearly see "this gold came from check-in, not shop purchases."
+
+**Scenario 3: Risk and audit**
+A player is found holding an abnormally large balance. Pull their wallet ledger directly: every source, timestamp, and amount is visible, making it easy to identify which module caused the issue.
+
+## Core capabilities
+
+- **Multi-currency support**: define unlimited currencies per project, each independently tracked
+- **Lazy wallet creation**: player wallets are created on first grant — no pre-built empty rows
+- **Full ledger**: every grant/deduct auto-appends a record with source, related ID, and delta
+- **Concurrency-safe**: upsert semantics under the hood — concurrent grants never overwrite each other
+- **Read-only client**: clients can only query balances; grants and deductions originate from the server only, preventing front-end tampering
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Every unit of virtual currency is traceable; risk control has a foundation |
+| Product managers | New currency types added in the dashboard — no code changes |
+| Operations team | Filter the ledger by source and time to review each campaign's currency output |
+| Engineering team | One grant/deduct API for all currencies — no need to maintain multiple ledger tables |
+
+## Related modules
+
+- **[Shop](../shop)**: deducts currency on purchase, grants currency as product output
+- **[Exchange](../exchange)**: currency-denominated exchange rates
+- **[CDKEY](../cdkey)**: redemption rewards can directly grant currency
+- **[Mail](../mail)**: "1000 gold" mail attachment is a single grant call
+- **[Storage Box](../storage-box)**: deposits and withdrawals flow through the wallet
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, API parameters, gotchas" />
+  <Card href="../api/currency" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

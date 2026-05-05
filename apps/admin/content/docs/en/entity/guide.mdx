@@ -1,0 +1,57 @@
+---
+title: Developer Guide
+description: Universal data model for characters, monsters, equipment — schema, blueprints, skins, formations
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The entity module is a universal modeling layer for game unit data. Characters, monsters, and equipment with attributes, levels, skins, and formations are all abstracted as entities — schema defines the attribute shape, blueprint provides the concrete template, skins layer on bonuses, formation constrains the roster.
+
+## Data model
+
+- **entity_schemas**: attribute fields (HP / ATK / DEF ...), tags (e.g. `flying`, `undead`), resource slots. A schema is "the shape of this kind of unit."
+- **entity_blueprints**: concrete templates — a `pikachu` blueprint references the `creature` schema and fills in field values.
+- **entity_blueprint_skins**: skins attached to blueprints with stackable attribute bonuses.
+- **entity_instances**: actual player-owned entity instances (with level, formation status, etc.).
+- **entity_formations**: formation config — N slots, what types each slot accepts, whether duplicates are allowed.
+
+## Admin API
+
+```http
+POST   /api/entity/schemas
+POST   /api/entity/blueprints
+POST   /api/entity/blueprints/{id}/skins
+POST   /api/entity/formations
+```
+
+## Client API
+
+```http
+POST /api/entity/end-user/acquire          body: { blueprintId }
+POST /api/entity/end-user/equip-skin       body: { instanceId, skinId }
+POST /api/entity/end-user/formation/save   body: { formationId, slots }
+GET  /api/entity/end-user/instances
+```
+
+## Business rules
+
+- **Inheritance**: blueprint attributes = schema defaults + blueprint overrides; instance attributes = blueprint + level bonus + current skin bonus. Layered calculation — no JOIN in the database.
+- **Formation validation**: `formation/save` checks that each slot's entity type matches and duplicate limits aren't exceeded.
+- **Deletion restriction**: blueprints with active instances cannot be hard-deleted; only archived.
+
+## Composing with other modules
+
+- [level](../level): entity level curves can be managed by the level module, or use entity's internal exp field.
+- [item](../item): acquiring an entity = granting an item; the item post-processor calls `entity/end-user/acquire`.
+- [collection](../collection): new blueprint instance → unlock collection entry.
+
+## Events
+
+`entity.acquired` / `entity.skin_equipped` / `entity.formation_saved`.
+
+---
+
+<Cards>
+  <Card href="../../api/entity/blueprints" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

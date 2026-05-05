@@ -1,0 +1,5 @@
+{
+  "title": "邀请",
+  "icon": "UserPlus",
+  "pages": ["index", "guide"]
+}

@@ -1,0 +1,122 @@
+---
+title: Developer Guide
+description: Home / lobby announcements, targeting, display formats, and click tracking
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The announcement module displays "storefront-style" long-form content to players — maintenance notices, major version summaries, event teasers, CTA jumps. Complements [mail](../mail) (inbox-style, with attachments).
+
+## Quick start
+
+Most common endpoint: fetch announcements visible to the current player — `GET /api/client/announcement/active`. Returns announcements filtered by targeting rules and time window.
+
+<Tabs groupId="language" items={['TypeScript', 'curl']} persist>
+
+<Tab value="TypeScript">
+
+```ts
+import { createClient, announcementClientGetActive } from '@apollokit/client'
+
+createClient({
+  baseUrl: 'https://api.example.com',
+  publishableKey: 'cpk_…',
+  secret: 'csk_…',
+})
+
+const { data } = await announcementClientGetActive({
+  headers: { 'x-end-user-id': 'player_42' },
+  throwOnError: true,
+})
+
+for (const a of data[200].data.items) {
+  console.log(a.title, a.body)
+}
+```
+
+</Tab>
+
+<Tab value="curl">
+
+```bash
+curl https://api.example.com/api/client/announcement/active \
+  -H "x-api-key: cpk_…" \
+  -H "x-end-user-id: player_42" \
+  -H "x-user-hash: $USER_HASH"
+```
+
+</Tab>
+
+</Tabs>
+
+Full details on announcement creation, targeting rules, CTAs, and tracking are in the sections below. For SDK integration, see [`@apollokit/client`](../sdk/client-typescript).
+
+## Data model
+
+- **announcement**: title, body (Markdown / rich text), CTA (button label + destination), display format (popup / list), targeting conditions, time window.
+
+## Admin API
+
+```http
+GET    /api/announcement
+POST   /api/announcement
+GET    /api/announcement/{alias}
+PATCH  /api/announcement/{alias}
+DELETE /api/announcement/{alias}
+```
+
+## Client API
+
+```http
+GET  /api/client/announcement/active                 all announcements visible to this player
+POST /api/client/announcement/{alias}/impression     impression tracking (idempotent)
+POST /api/client/announcement/{alias}/click          CTA click tracking
+```
+
+## Display formats
+
+`kind` field:
+
+- `popup`: shown as a modal on first login or lobby return. Player can dismiss for the session or permanently.
+- `list`: shown as a lobby announcement list entry. Player taps to expand.
+
+Common pattern: start as `popup` for 1–2 days, then switch to `list` — demotes from intrusive to lookup-able.
+
+## Targeting
+
+Control which players see an announcement by attaching conditions:
+
+- Level range, account creation date, specific tags
+- Whether the player has completed a task / joined an activity
+- Country / language (read from end-user extension fields)
+
+Players who don't match the conditions won't see the announcement in `/active`.
+
+## Events (tracking)
+
+The module declares these events (see `modules/announcement/index.ts`):
+
+- `announcement.published`
+- `announcement.unpublished`
+- `announcement.expired`
+- `announcement.impression` (player viewed)
+- `announcement.click` (player clicked CTA)
+
+impression / click events include `endUserId`, `announcementId`, `alias`, `ctaUrl`. Wire to [webhooks](../webhooks) for analytics or pipe to your own data platform for conversion rate measurement.
+
+## Relationship to other modules
+
+- [banner](../banner): announcements are **not** the rotating image carousel — that's the banner module. The two are often used together: banner attracts the click → CTA → announcement body → button in the body jumps to the actual activity.
+- [mail](../mail): announcements have no attachments. Use mail when you need to deliver rewards to players who see a notice.
+- [activity](../activity): use announcements during the pre-launch phase; switch to mail or popup-style notifications once the activity goes live.
+
+## Editing and preview
+
+The dashboard provides a rich-text editor with live preview. Always save as a draft first and confirm copy is correct before publishing.
+
+---
+
+<Cards>
+  <Card href="../../api/announcement/admin" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Daily friend-to-friend gifting, daily caps, gift package configuration — low-cost daily interaction stickiness between players
+icon: Gift
+---
+
+The friend gift module implements "daily friendship point exchange between friends": admins pre-configure gift package types, players send within daily limits, and recipients claim with one tap to receive their rewards.
+
+## What problem does it solve?
+
+Friend relationships in games quickly become empty numbers without an interaction vehicle. Friend gifting is one of the lowest-cost social stickiness mechanisms available:
+
+- Players have a daily reason to open the game (claim gifts, send to friends)
+- Gifting costs are in-game currency — no real money, low ops risk
+- But implementing it yourself means handling: daily counters, gift state machines, atomic reward grants on claim, expiry cleanup...
+
+The friend gift module encapsulates all of this. Configure the package contents and the API is ready to use.
+
+## Typical use cases
+
+**Scenario 1: Daily friendship point exchange**
+Friends can send each other one friendship point package per day. Points accumulate for item redemption. Players log in daily first to claim gifts and send to friends — a reliable daily active user driver.
+
+**Scenario 2: Gifting streaks**
+Configure "7 consecutive days of gifting = double rewards," incentivizing 7-day streaks. Combine with check-in to create a compound retention mechanism.
+
+**Scenario 3: Season-exclusive gift packages**
+Add a temporary gift package during an event containing season-exclusive items; remove the package when the event ends — no code changes needed.
+
+**Scenario 4: Gift expiry nudges**
+Unclaimed gifts auto-expire after the TTL. The expiry event can trigger a push notification reminding players to claim before it disappears.
+
+## Core capabilities
+
+- **Package configuration**: manage gift package templates in the dashboard (contents, cooldown) — add or remove anytime
+- **Daily caps**: separate caps for sender and receiver, each enforced independently
+- **Gift state machine**: pending → claimed / expired / cancelled with full audit
+- **Auto-expiry**: unclaimed gifts expire automatically after the configured TTL
+- **Atomic claim**: claim atomically reads package contents, calls the item service to grant, and marks the gift as claimed
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Improve daily active users and friend interaction frequency at low cost |
+| Product managers | Flexible package content and daily cap configuration to quickly adjust retention strategy |
+| Operations team | Push specific activity items through gift package configuration — no engineering required |
+| Engineering team | One-time API integration — no need to handle counters or concurrency safety yourself |
+
+## Related modules
+
+- **[Friend](../friend)**: gifting requires a mutual friend relationship (configurable)
+- **[Items](../item)**: package contents are delivered to the player's inventory via the item module
+- **[Mail](../mail)**: when a player is offline, unclaimed gifts can optionally be re-delivered via mail
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, state machine, API parameters" />
+  <Card href="../api/friend-gift" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

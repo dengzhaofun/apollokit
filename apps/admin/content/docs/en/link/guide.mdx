@@ -1,0 +1,43 @@
+---
+title: Developer Guide
+description: A unified "jump action" value object — no storage, no routes
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The link module is a **pure value object** — not a table, no HTTP endpoints. It defines the type and validation rules for "an executable jump action" and is embedded by banner, dialogue, mail, announcement, and other modules.
+
+## Core type
+
+```ts
+type LinkAction =
+  | { kind: 'none' }                                       // no navigation
+  | { kind: 'external'; url: string }                      // external link
+  | { kind: 'internal'; route: string; params?: object }   // in-game route
+```
+
+## Internal route registry
+
+`internal` route values are not arbitrary strings — they must be pre-registered in `link-registry.ts` with a declared parameter shape. An unregistered route is rejected at validation time.
+
+This makes the "jump target" contract checkable at compile time and ensures the client can exhaustively switch over all variants.
+
+## Typical embedding points
+
+| Location | Purpose |
+|---|---|
+| [Banner](../banner) `action` | Where the player navigates on banner tap |
+| [Dialogue](../dialogue) option.action | Navigation target for a dialogue option |
+| [Mail](../mail) attachment | Jump button inside a mail message |
+| [Announcement](../announcement) cta | Call-to-action button on an announcement |
+
+## Why this is its own module
+
+- **Change once, update everywhere**: adding an internal route only modifies the registry once; all embedding points automatically validate against the update.
+- **No drift**: each module defining its own jump format leads to three slightly-different structures that the client can't handle uniformly.
+- **Type safety**: the entire client/server codebase shares the `LinkAction` type; clients can exhaustively match on banner/dialogue actions.
+
+## No API
+
+This module exposes no HTTP endpoints. To add an internal route, add one constant to `link-registry.ts`, then implement the corresponding navigation in the client.

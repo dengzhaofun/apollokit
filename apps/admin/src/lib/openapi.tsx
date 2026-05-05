@@ -21,9 +21,21 @@ import {
 } from "fumadocs-openapi/ui/create-client";
 import type { OperationItem, WebhookItem } from "fumadocs-openapi/ui";
 
-import schema from "../../../server/openapi.json";
+import rawSchema from "../../../server/openapi.json";
 
 export const SCHEMA_KEY = "apollokit";
+
+// The server's OpenAPI spec uses /api/v1/... paths, but the generated MDX
+// files reference /api/... (without /v1). Strip the /v1 prefix so lookups match.
+const schema = {
+  ...rawSchema,
+  paths: Object.fromEntries(
+    Object.entries(rawSchema.paths ?? {}).map(([path, value]) => [
+      path.replace(/^\/api\/v1\//, "/api/"),
+      value,
+    ]),
+  ),
+};
 
 // fumadocs-core v15+ replaced the zero-arg `createShikiFactory()` with a
 // config-taking variant. We use the pre-built `defaultShikiFactory` (JS

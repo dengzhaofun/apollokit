@@ -1,0 +1,116 @@
+---
+title: Developer Guide
+description: Endpoint configuration, per-client setup steps, troubleshooting
+icon: Code
+---
+
+> This page is for engineering teams. For product background and use cases, see [Product Overview](./index).
+
+ApolloKit exposes a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/api/mcp` so any MCP-compatible LLM client (Claude.ai, Cursor, Claude Code, your own agent) can talk to your project conversationally. Phase 1 is read-only: the agent can **read** docs, players, audit logs, and metrics — it cannot write.
+
+## What you can do with it
+
+- **Live ops**: ask Claude.ai things like "how much did player abc spend this month", "compare new signups week-over-week", "who edited the lottery config in the last hour" — without opening the admin dashboard.
+- **Customer support**: a player reports "didn't get my check-in reward" → ask Claude to pull the audit log + player profile → it summarizes the cause for you.
+- **Integration development**: in Cursor while writing integration code, ask "what's ApolloKit's cdkey schema" → the doc markdown lands directly in the LLM's context for your code session.
+- **Auto-generated reports**: Claude calls `query_analytics`, formats the result as markdown — a weekly report in 5 minutes.
+- **Third-party AI tools**: other people's ops bots / Discord bots / BI dashboards plug straight into MCP, no SDK code needed.
+
+## Setup
+
+### 1. Get an apiKey
+
+Reuse your existing admin API key (`ak_…` prefix). Generate one or pick an existing one in admin → Settings → API Keys. MCP auth uses this key directly; scope is automatically tied to your org.
+
+> **Security note**: this apiKey effectively grants an LLM access to all data in that org. Phase 1 is read-only, so a leaked key cannot corrupt data — but you should still:
+> - use separate keys for dev and prod
+> - issue a dedicated key for LLM use, don't reuse keys you give to other automation
+> - revoke immediately when no longer needed
+
+### 2. Endpoint
+
+```
+URL:       https://<your-apollokit>/api/mcp
+Method:    POST
+Auth:      x-api-key: ak_…
+Transport: Streamable HTTP (MCP 2025-03 spec)
+```
+
+### 3. Claude.ai configuration
+
+In Claude.ai's Connectors / Custom MCP settings:
+
+```json
+{
+  "name": "ApolloKit",
+  "transport": {
+    "type": "http",
+    "url": "https://<your-apollokit>/api/mcp",
+    "headers": {
+      "x-api-key": "ak_…"
+    }
+  }
+}
+```
+
+### 4. Cursor / Claude Code
+
+`.cursor/mcp.json` or `~/.claude/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "apollokit": {
+      "url": "https://<your-apollokit>/api/mcp",
+      "headers": {
+        "x-api-key": "ak_…"
+      }
+    }
+  }
+}
+```
+
+## Available tools
+
+Phase 1 (read-only) ships 4 tools:
+
+| Name | Inputs | Purpose |
+|---|---|---|
+| `echo` | `message` | Loopback for verifying connection + auth |
+| `search_docs` | `query`, `locale?`, `limit?` | Full-text search over ApolloKit docs (en + zh) |
+| `read_doc` | `path` | Fetch the full markdown of one doc page; path looks like `en/check-in` |
+| `list_doc_modules` | — | List every documented module, grouped by category (Economy / Live Ops / Social / Content / System / Integration) |
+
+> 4 read-only data tools (player lookup, audit logs, analytics) ship in Phase 2.
+> Write tools (grant currency, send mail, redeem cdkey, etc.) ship in Phase 3.
+
+## Verifying connectivity
+
+Easiest is the `echo` tool. After configuring, ask Claude.ai:
+
+> Use ApolloKit's echo tool to return "hello"
+
+If you get back `hello`, the connection works. Then try:
+
+> List the feature modules ApolloKit supports
+
+It'll call `list_doc_modules` and return 6 sections covering 30 modules.
+
+## Troubleshooting
+
+| Symptom | Cause |
+|---|---|
+| `401 Unauthorized` | apiKey missing, wrong, or revoked |
+| `406 Not Acceptable` | Client didn't send `Accept: application/json, text/event-stream`. Most MCP clients handle this automatically; rolling your own fetch requires it |
+| `415 Unsupported Media Type` | `Content-Type` is not `application/json` |
+| `search_docs` returns `search failed: HTTP 5xx` | Docs site (admin worker) unreachable. In dev, make sure `pnpm dev` is running both admin and server |
+| Claude calls a tool but doesn't render structured output | Some older clients only read `content[].text`; modern ones use `structuredContent`. Both are returned |
+
+## Relationship to the SDK
+
+MCP doesn't replace the SDK — they're **complementary**:
+
+- **SDK** ([server SDK](../sdk/server-typescript), [client SDK](../sdk/client-typescript)): for engineers writing integration code
+- **MCP**: for LLMs / AI agents acting conversationally
+
+You can run both against the same ApolloKit project; they don't interact.

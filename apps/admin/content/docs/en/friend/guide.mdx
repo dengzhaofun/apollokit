@@ -1,0 +1,63 @@
+---
+title: Developer Guide
+description: Bidirectional friend relationships, requests, and blocking
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The friend module provides a complete social relationship system: add friend / receive request / decline / block. Relationships are bidirectional; blocks are one-directional. All limits are configurable per tenant.
+
+## Data model
+
+- **friend_settings** (one row per org): `maxFriends` / `maxBlocked` / `maxRequests`, request expiry policy.
+- **friend_relationships**: confirmed bidirectional friend relationships.
+- **friend_requests**: pending / accepted / rejected / expired state machine.
+- **friend_blocks**: one-directional blocklist.
+
+## Admin API
+
+```http
+PUT /api/friend/settings
+GET /api/friend/settings
+```
+
+## Client API
+
+```http
+POST /api/friend/end-user/request
+POST /api/friend/end-user/request/{id}/accept
+POST /api/friend/end-user/request/{id}/reject
+POST /api/friend/end-user/request/{id}/cancel
+DELETE /api/friend/end-user/{friendId}
+
+POST /api/friend/end-user/block
+DELETE /api/friend/end-user/block/{userId}
+
+GET /api/friend/end-user/list
+GET /api/friend/end-user/requests
+GET /api/friend/end-user/blocks
+```
+
+## Business rules
+
+- **Bidirectional**: on accept, two mirror records are written to `friend_relationships` — either side hits on query; both deleted on remove.
+- **Blocking**: one-directional. A blocks B → A no longer sees B's requests; B still sees A (asymmetric visibility configurable in settings).
+- **Limits**: friend / blocked / pending request counts each enforced by settings; exceeding returns `LIMIT_EXCEEDED`.
+- **Request expiry**: requests auto-expire to `expired` status after the settings `requestTtl`.
+
+## Composing with other modules
+
+- [friend-gift](../friend-gift): daily gifting between friends.
+- [invite](../invite): optionally auto-friend after invite registration.
+- [leaderboard](../leaderboard): `scope=friend` for friend-only rankings.
+
+## Events
+
+`friend.requested` / `friend.accepted` / `friend.removed` / `friend.blocked`.
+
+---
+
+<Cards>
+  <Card href="../../api/friend/friend_get_settings" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

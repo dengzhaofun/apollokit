@@ -1,0 +1,60 @@
+---
+title: Overview
+description: Collection albums, entry unlocking, tiered milestone rewards — making "collect them all" a long-term player goal
+icon: Library
+---
+
+The collection module implements "Pokédex / weapon compendium / monster encyclopedia" style unlock-progress gameplay: admins configure an album, players unlock entries through various activities, and milestone thresholds automatically trigger rewards.
+
+## What problem does it solve?
+
+"Collect everything" is one of the strongest long-term retention hooks in games, but the system has to be rebuilt every time:
+
+- How to track each player's unlock state for each entry (high data volume)
+- Does the milestone fire on "complete the whole album" or "any 5 categories"?
+- Should players actively claim rewards, or should they auto-grant? How to prevent duplicates?
+
+The collection module encapsulates all of these rules. Configure an album and it's ready to use.
+
+## Typical use cases
+
+**Scenario 1: Weapon compendium**
+100 weapons — picking up a weapon for the first time unlocks its entry. Collect 10 for a small reward, 50 for a large reward, all 100 for the ultimate skin.
+
+**Scenario 2: Monster encyclopedia**
+Defeating a monster for the first time unlocks its entry. Grouped by region — collecting all monsters in a region triggers a region milestone reward.
+
+**Scenario 3: Event-limited album**
+A special collection album only available during an event. Archived when the event ends. Players collect as much as possible during the event window, with the final snapshot preserved.
+
+**Scenario 4: Achievement-driven collection**
+"First group session," "first purchase," "first 3-star clear" — one-time achievements managed uniformly through a collection album, rather than scattered across individual modules.
+
+## Core capabilities
+
+- **Group management**: entries within an album can be categorized; milestones can target the full album or specific groups
+- **Multiple milestone triggers**: full album progress / group progress / specific entry unlock — flexibly configured
+- **Auto-grant**: milestones support `autoClaim` — rewards are delivered automatically on unlock, no player action needed
+- **Idempotent unlocking**: unlocking the same entry multiple times only records once — safe to retry
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Collection systems are one of the lowest-cost long-term retention mechanisms |
+| Product managers | Flexible collection rules and milestone rewards scaled to any content volume |
+| Operations team | View completion rate data — useful for planning future content |
+| Engineering team | Call one unlock endpoint when the player gets new content; everything else is automatic |
+
+## Related modules
+
+- **[Items](../item)**: milestone rewards are delivered via the item module
+- **[Activity](../activity)**: event-exclusive albums tied to the activity lifecycle
+- **[Mail](../mail)**: when `autoClaim` is on, rewards land via mail
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, milestone rules, API parameters" />
+  <Card href="../api/collection" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Temporary teams, quick matching, leader disbanding — lightweight squad management for individual game sessions
+icon: UsersRound
+---
+
+The team module handles short-lifecycle squads for "playing one session together": create a team, invite members, start the game, dissolve. This is a different concept from the guild's "persistent organization."
+
+## What problem does it solve?
+
+In multiplayer games, players need to form a squad before entering matchmaking or an instanced dungeon. Building your own team system means handling:
+
+- Concurrent invites causing overcapacity (two players invited simultaneously; after one joins, the other would push it over the limit)
+- Who takes over when the leader leaves; when to auto-dissolve
+- Team state management (recruiting / full / in-game) to prevent duplicate starts
+- How to quickly route solo players into the same team during quick match
+
+The team module encapsulates all of this logic — business code just needs to handle the "start game" action.
+
+## Typical use cases
+
+**Scenario 1: Multiplayer dungeon squad**
+Player creates a 4-person team, shares an invite link with friends. Friends accept and join. When all 4 are ready, the leader taps "start game" — team status becomes in_game, the dungeon begins.
+
+**Scenario 2: Quick match**
+Players who don't want to manually form a team tap "quick match." The system automatically places them into an open team or creates a new one while waiting for others.
+
+**Scenario 3: Leadership succession**
+The leader goes offline unexpectedly. With `autoDissolveOnLeaderLeave=false`, the system automatically promotes the member who joined earliest to leader — the team continues.
+
+**Scenario 4: Ranked mode team queue**
+Before entering ranked matchmaking, players form a fixed team using the team module. The full team enters the matchmaking pool together, with shared match weight.
+
+## Core capabilities
+
+- **Temporary team management**: create, invite, accept/decline, kick, dissolve — full lifecycle API
+- **State management**: open (recruiting) / closed (full) / in_game / dissolved
+- **Concurrency safety**: version field prevents overcapacity under concurrent writes; conflicts returned to caller for retry
+- **Leader policy**: on leader departure — configurable auto-dissolve or auto-succession to earliest member
+- **Quick match**: optional mode that automatically routes solo players into suitable teams
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Multiplayer experience is a core differentiator; the team module lowers the implementation barrier |
+| Product managers | Flexible configuration of team size, invite TTL, and matching strategies |
+| Operations team | View active team counts to track multiplayer content engagement |
+| Engineering team | Standard API — concurrency safety is module-guaranteed, no need to implement version locking yourself |
+
+## Related modules
+
+- **[Guild](../guild)**: guild members can be prioritized for team formation before quick match
+- **[Rank](../rank)**: form a fixed team before entering ranked matchmaking, then queue as a full team
+- **[Leaderboard](../leaderboard)**: team-dimension rankings (team kill counts, dungeon completion speed)
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, state machine, API parameters" />
+  <Card href="../api/team" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,5 @@
+{
+  "title": "物品系统",
+  "icon": "Box",
+  "pages": ["index", "guide"]
+}

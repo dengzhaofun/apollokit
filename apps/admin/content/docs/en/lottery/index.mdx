@@ -1,0 +1,63 @@
+---
+title: Overview
+description: Pools, tiers, pity, single and multi pulls — covers all random reward scenarios from roulette wheels to loot boxes to gacha
+icon: Dices
+---
+
+The lottery module provides a complete implementation of "spend consumables for random rewards." Roulette wheels, loot boxes, gacha pulls — all configurable through pool, tier, probability, and pity rule settings, with no need to rewrite random logic each time.
+
+## What problem does it solve?
+
+Lottery is one of the most complex reward mechanics in games:
+
+- Multiple prize tiers (SSR/SR/R) with different probabilities; prizes within each tier have weights
+- Pity mechanics: N consecutive pulls without a rare → the N+1th pull is guaranteed (essential for gacha)
+- Each pull must atomically deduct cost, log the result, and grant the prize
+- Pull history must be queryable to resolve "I had no pity" disputes
+
+These mechanics aren't hard to write, but getting them right requires many details: server-side randomness (prevent client cheating), concurrent-safe pity counters, idempotent reward grants. The lottery module provides a **battle-tested implementation** you configure and use directly.
+
+## Typical use cases
+
+**Scenario 1: Character / weapon gacha**
+SSR tier 1%, SR tier 10%, R tier 89%. Configure pity: 89 consecutive pulls without SSR → the 90th must be SSR. Multi-pulls can be discounted (10-pull = 9-pull price).
+
+**Scenario 2: Loot boxes**
+Flat prize pool: each item has a direct probability, no tiers, no pity. Players spend event items to open boxes, winning a random prize.
+
+**Scenario 3: Activity-exclusive spin wheel**
+Seasonal limited-time wheel, open only during the event — attached as a child node of an activity. Closes when the activity ends. Players spend activity points instead of universal currency.
+
+**Scenario 4: Full-attendance random pool**
+7-day check-in grants one draw from a "rare item pool." The consumable is a virtual "draw ticket," not currency.
+
+## Core capabilities
+
+- **Tiers + prizes**: multi-tier support (SSR/SR/R), weighted random within each tier; also supports flat (no-tier) mode
+- **Pity rules**: configurable threshold and guaranteed tier; cumulative counter auto-tracked, fires at threshold
+- **Server-side randomness**: uses `crypto.getRandomValues` — client cannot predict outcomes
+- **Single / multi pull**: multi-pull discount configuration supported
+- **Full audit trail**: every pull records tier, prize, pity counter, and cost; full history queryable
+- **Activity integration**: attachable as an activity child node with activity points as currency
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Pity mechanics give players deterministic expectations, reducing churn; audit records prevent disputes |
+| Product managers | Configure any random mechanic variant without per-type development |
+| Operations team | Configure pools in the dashboard; view actual prize rates and pity trigger statistics |
+| Engineering team | Call the lottery API — no need to implement random algorithms, pity counters, or concurrency safety |
+
+## Related modules
+
+- **[Currency](../currency)**: pull cost deducted from the currency wallet
+- **[Items](../item)**: prizes granted through the item module
+- **[Activity](../activity)**: lottery attachable as activity child node, using activity points
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, randomness algorithm, pity rules, API parameters" />
+  <Card href="../api/lottery" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

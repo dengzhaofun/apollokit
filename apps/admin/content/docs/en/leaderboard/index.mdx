@@ -1,0 +1,63 @@
+---
+title: Overview
+description: Multi-dimensional score rankings, cycle settlement, snapshot retention — making competition a retention driver
+icon: Trophy
+---
+
+The leaderboard module abstracts "rank players by a metric" into a general-purpose component: custom metrics, multiple aggregation modes, automatic cycle settlement with snapshot retention, and support for global / guild / friend / activity-scoped rankings.
+
+## What problem does it solve?
+
+Leaderboards are the most common competitive mechanism in games, but every implementation starts from scratch:
+
+- How to handle concurrent score submissions (two players post high scores simultaneously — how does the database stay correct?)
+- Should historical records be preserved after cycle settlement?
+- Are friend rankings and global rankings the same data, or stored separately?
+- How to transition smoothly at cycle reset without disrupting active gameplay
+
+The leaderboard module encapsulates these common problems. Business code just "submits a score" — the rest is automatic.
+
+## Typical use cases
+
+**Scenario 1: Weekly cumulative damage ranking**
+After each battle, business code reports the damage dealt. The leaderboard aggregates by `sum` and shows cumulative weekly damage rank. Monday auto-settles last week's snapshot and a new week begins.
+
+**Scenario 2: Guild contribution leaderboard**
+Rank guild members by contribution value, visible only to that guild's members with `scope=guild`. Motivates active participation in guild activities.
+
+**Scenario 3: Friend score competition**
+Which of my friends has the highest score this week? `scope=friend` only surfaces friend rankings — a "friend competition" feature that drives social interaction.
+
+**Scenario 4: Historical season lookup**
+After a season ends, players can view the final ranking snapshot for any past season. Data is permanently retained, serving as the basis for season reward delivery.
+
+## Core capabilities
+
+- **Custom metrics**: any business metric can have a leaderboard — not limited to specific modules
+- **Multiple aggregation modes**: sum (accumulate) / max (highest) / latest (most recent) — covers different ranking semantics
+- **Multi-scope rankings**: global, guild, friend, and activity — one score submission automatically updates all applicable boards
+- **Cycle management**: daily / weekly / monthly / all-time — auto-generates settlement snapshots on cycle end
+- **Idempotent submissions**: callers provide an idempotency key to prevent double-counting
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Leaderboards are a core mechanism for driving competition and extending session length |
+| Product managers | Rapidly build rankings across any dimension — event-exclusive boards, seasonal boards, and more |
+| Operations team | View real-time ranking data, design differentiated rewards, configure settlement times |
+| Engineering team | One integration serves multiple boards; concurrency safety is module-guaranteed |
+
+## Related modules
+
+- **[Task System](../task)**: submit scores to leaderboards on task completion — "weekly task score ranking"
+- **[Activity](../activity)**: activity-exclusive leaderboard using activity id as the cycle key
+- **[Guild](../guild)**: guild contribution leaderboard with `scope=guild`
+- **[Rank](../rank)**: for competitive matchmaking, use the rank module — it has Elo / tiers / season mechanics; leaderboards suit non-matchmaking score comparisons
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, aggregation rules, API parameters" />
+  <Card href="../api/leaderboard" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

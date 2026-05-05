@@ -1,0 +1,68 @@
+---
+title: 产品文档
+description: 把 ApolloKit 接入 Claude.ai / Cursor / 自家 AI agent——配一个 URL + apiKey，让 LLM 直接对话式访问你的项目
+icon: Bot
+---
+
+ApolloKit 在 `/api/mcp` 暴露 [Model Context Protocol](https://modelcontextprotocol.io) 端点，让 Claude.ai、Cursor、Claude Code 等 MCP 兼容客户端直接对话式访问你的项目。第一版纯只读：agent 可以**读**文档、玩家、审计日志、数据指标，不能写。
+
+## 解决什么问题
+
+运营和客服团队每天要在管理台做大量重复的信息查询：
+
+- 「这个玩家上周充值了多少？」→ 登录管理台 → 找玩家 → 点充值记录
+- 「上周新增玩家对比前周？」→ 打开数据页面 → 找指标 → 截图
+- 「刚才谁改了抽奖概率配置？」→ 找审计日志 → 按时间筛选
+
+这些查询模式可以用对话替代：直接问 LLM，LLM 调 MCP 工具拉数据，结构化回答。省去了登录、导航、筛选的所有步骤。
+
+## 典型使用场景
+
+**场景 1：运营实时查询**
+在 Claude.ai 直接问「玩家 abc 这个月签到了几天」，Claude 调 MCP 工具查数据，秒级返回——不用打开管理台。
+
+**场景 2：客诉辅助归因**
+玩家投诉「签到没给奖励」，让 Claude 拉该玩家的签到记录和奖励发放日志，自动归因「已签到但配置的 day3 奖励为空」。
+
+**场景 3：开发者文档查询**
+在 Cursor 写集成代码时问「ApolloKit 的 cdkey 兑换 API 参数是什么」，文档原文直接进 LLM 上下文，边查边写。
+
+**场景 4：第三方 AI 工具集成**
+运营 bot、Discord bot、BI 看板接 MCP，不用写 SDK 集成代码，直接用协议层交互。
+
+## 快速接入
+
+1. 在管理台生成或复用一把 admin API key（`ak_…` 前缀）
+2. 在 Claude.ai / Cursor 的 MCP 设置里添加：
+
+```json
+{
+  "url": "https://<your-apollokit>/api/mcp",
+  "headers": { "x-api-key": "ak_…" }
+}
+```
+
+3. 用 `echo` tool 验证连通性
+
+详细配置步骤见[开发指南](./guide)。
+
+## 第一版可用 tool
+
+| 名称 | 用途 |
+|------|------|
+| `echo` | 连通性测试 |
+| `search_docs` | 全文搜索 ApolloKit 文档（中英双语） |
+| `read_doc` | 读取一篇文档的完整 markdown |
+| `list_doc_modules` | 列出所有功能模块 |
+
+> 玩家查询、审计日志、数据指标等只读 tool 在 Phase 2 上线；写操作类 tool 在 Phase 3 上线。
+
+## 与 SDK 的关系
+
+MCP 不是 SDK 的替代品，而是互补：SDK 给程序员用（写代码集成），MCP 给 LLM/AI agent 用（对话式访问）。同一个 ApolloKit 项目可以同时跑 SDK 集成 + MCP 集成。
+
+---
+
+<Cards>
+  <Card href="./guide" title="开发指南" description="端点配置、各客户端接入步骤、故障排查" />
+</Cards>

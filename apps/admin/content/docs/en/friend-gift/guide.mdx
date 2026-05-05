@@ -1,0 +1,62 @@
+---
+title: Developer Guide
+description: Daily friend-to-friend gifting, daily caps, gift package configuration
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The friend gift module implements daily friendship point exchange between friends: admins pre-configure gift package types, players send within daily limits, and recipients claim with one tap.
+
+## Data model
+
+- **friend_gift_settings** (one row per org): daily send / claim limits, expiry TTL, timezone.
+- **friend_gift_packages**: sendable package templates — name, contents, cooldown.
+- **friend_gift_sends**: one send record (sender → receiver + package + status).
+- **friend_gift_daily_states**: per-player daily send / claim counters, keyed by `(endUserId, date)`.
+
+## Admin API
+
+```http
+PUT  /api/friend-gift/settings
+POST /api/friend-gift/packages
+GET  /api/friend-gift/packages
+PATCH /api/friend-gift/packages/{id}
+DELETE /api/friend-gift/packages/{id}
+```
+
+## Client API
+
+```http
+POST /api/friend-gift/end-user/send        body: { receiverId, packageId }
+POST /api/friend-gift/end-user/claim/{sendId}
+POST /api/friend-gift/end-user/cancel/{sendId}
+
+GET  /api/friend-gift/end-user/inbox
+GET  /api/friend-gift/end-user/outbox
+GET  /api/friend-gift/end-user/daily-state
+```
+
+## Business rules
+
+- **Bilateral daily caps**: sender has "max N sends per day / 1 per recipient per day"; receiver has "max M claims per day." Either limit exceeded → rejected.
+- **State machine**: `pending` → `claimed` / `expired` (TTL elapsed without claim) / `cancelled` (sender revoked).
+- **Auto-expiry**: a cron runs every minute, moving expired pending gifts to `expired`.
+- **Atomic claim**: `claim` atomically reads package contents, calls [item](../item) service to grant, and marks the send as claimed.
+- **Timezone**: "per day" boundaries use the settings timezone, not UTC.
+
+## Composing with other modules
+
+- [friend](../friend): gifting can require a mutual friend relationship (configurable in settings).
+- [item](../item): package contents are granted via the item service.
+- [mail](../mail): optionally convert unclaimed gifts to mail when the recipient is offline.
+
+## Events
+
+`friend-gift.sent` / `friend-gift.claimed` / `friend-gift.expired`.
+
+---
+
+<Cards>
+  <Card href="../../api/friend-gift/friend_gift_get_settings" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

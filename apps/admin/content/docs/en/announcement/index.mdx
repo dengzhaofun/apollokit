@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Popup and list announcements — show players important messages, event teasers, and maintenance notices, with targeted delivery
+icon: Megaphone
+---
+
+The announcement module lets you show players "storefront-style" important information — maintenance notices, version updates, event launch announcements. Supports popup (strong prompt on first login) and list (always queryable) formats, targeted delivery by player attributes, and impression/click tracking.
+
+## What problem does it solve?
+
+Game ops involves a constant stream of information players need to see, but the channels are fragmented:
+
+- Server maintenance needs a popup — developers hardcode the timing in the app
+- New event teasers need to be handled in multiple places and remembered to remove
+- Onboarding guidance meant for new players also shows to veterans — bad experience
+
+The announcement module centralizes all of this: **create announcements in the dashboard, client pulls and displays, with targeting conditions and time windows — no code changes**.
+
+## Typical use cases
+
+**Scenario 1: Server maintenance notice**
+"Server maintenance tonight 22:00–24:00, unable to login during this period." Create a popup announcement, strong-prompt all players on login, unpublish when maintenance ends. Entirely self-service for ops — no engineering needed.
+
+**Scenario 2: Event teaser**
+"The 11.11 event is coming — go live November 11 at midnight!" Create 7 days early with a display window. Auto-shows at the right time; switch to list format after launch (demoting from loud to lookup-able).
+
+**Scenario 3: Targeted new player guidance**
+"First time playing? Tap to see the beginner tutorial." Only shown to accounts created within the last 7 days — veterans aren't bothered. Precisely controlled via targeting conditions.
+
+**Scenario 4: Patch notes**
+Publish a list announcement for each major update, summarizing changes. Players check it anytime from the lobby announcement list — no intrusive popup needed.
+
+## Core capabilities
+
+- **Two display formats**: popup (strong prompt, fires on first login) + list entry (accessible on demand)
+- **Targeted delivery**: filter by level range, account age, tags, activity participation status, and more
+- **Time windows**: configurable start/end display times — auto-publish and auto-unpublish
+- **CTA jump**: attach a button linking to an activity, product, or external URL
+- **Impression/click tracking**: see how many players saw and clicked the announcement
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Unified management entry for all ops messaging — no need to find engineering each time |
+| Product managers | Flexible display conditions for precise audience targeting |
+| Operations team | Fully self-service in the dashboard: create, preview, publish, unpublish, view data |
+| Engineering team | Integrate once; all announcement content managed through configuration |
+
+## Related modules
+
+- **[Banner](../banner)**: announcements are the "details page" (text-primary); banners are the "marquee poster" (image-primary) — typically used together
+- **[Mail](../mail)**: announcements have no attachments; use mail for reward delivery
+- **[Activity](../activity)**: tease with announcements pre-launch; notify players of participation status via mail once live
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, display formats, targeting rules, API parameters" />
+  <Card href="../api/announcement" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Universal data model for characters, monsters, equipment — schema, blueprints, skins, formations
+icon: Boxes
+---
+
+The entity module is a "universal modeling layer for game unit data": characters, monsters, and equipment that have attributes, level up, support skins, and participate in formations are all abstracted as entities. Schema defines the attribute structure, blueprint defines the specific template, skins layer on attribute bonuses, and formations constrain roster rules.
+
+## What problem does it solve?
+
+Common content management problems in games:
+
+- Characters, monsters, and equipment each define their own attribute structures — not reusable, high maintenance cost
+- Do skins just change art, or do they carry attribute bonuses? Should multiple skins stack?
+- Formation slot type restrictions and duplicate unit rules must be reimplemented on both client and server
+
+The entity module provides a universal modeling layer: one schema can serve multiple unit types. Attributes are computed in layers (blueprint → level bonus → skin bonus). Formation validation is centralized on the server.
+
+## Typical use cases
+
+**Scenario 1: Hero character system**
+Define a `hero` schema (HP, ATK, DEF, SPEED fields). Each hero is a blueprint. When a player gets a hero, an instance is created. Level-up changes the instance's level field; attributes are derived via layered calculation in real time.
+
+**Scenario 2: Equipment and skins**
+Multiple skins attached to a weapon blueprint, each with different attribute bonuses. When the player switches skins, the weapon's effective attributes update immediately.
+
+**Scenario 3: Formation composition**
+Define a 5-unit formation where the 2 front slots only accept "warrior" or "tank" types, and the 3 back slots accept any type. Formation saves are validated server-side — non-compliant configurations are rejected.
+
+**Scenario 4: Monster data management**
+All enemy units in levels are managed under a `monster` schema. Designers adjust attributes in the dashboard; the client pulls updated data without a release.
+
+## Core capabilities
+
+- **Schema definition**: declare attribute structure (HP/ATK/tags) — one schema serves multiple unit types
+- **Blueprint templates**: concrete unit templates referencing a schema with specific attribute values
+- **Skin system**: skins attach to blueprints with stackable attribute bonuses
+- **Instance management**: actual player-owned units (with level, status, equipped skin)
+- **Formation validation**: slot type constraints and duplicate unit rules enforced server-side
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Unified content management — designers adjust values directly in the dashboard |
+| Product managers | Universal modeling layer reduces cost of introducing new unit types |
+| Designers / ops | Adjust blueprint attributes in the dashboard without code changes |
+| Engineering team | One set of APIs for all unit types — no separate CRUD per type |
+
+## Related modules
+
+- **[Level](../level)**: level completion can unlock new entity blueprints
+- **[Items](../item)**: acquiring an entity = granting an item; the item post-processor calls the entity module to create the instance
+- **[Collection](../collection)**: acquiring a new blueprint instance → unlocks the collection entry
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, layered attributes, API parameters" />
+  <Card href="../api/entity" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

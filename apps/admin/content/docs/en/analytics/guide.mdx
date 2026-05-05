@@ -1,0 +1,49 @@
+---
+title: Developer Guide
+description: Tinybird integration, scoped JWT issuance
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The analytics module is ApolloKit's integration layer with [Tinybird](https://tinybird.co/). ApolloKit doesn't build its own OLAP. Event data goes downstream via [webhooks](../webhooks) (or pushed directly to the Tinybird Events API). This module's job is to **issue scoped tokens so the dashboard can query Tinybird directly**, without routing through a backend API.
+
+## Data model
+
+This module has no tables of its own — all configuration is in `wrangler.jsonc` environment variables (`TINYBIRD_ADMIN_TOKEN`, `TINYBIRD_PIPE_PREFIX`, etc.). Multi-tenant isolation is enforced by the `org_id` scope in the token.
+
+## Admin API
+
+```http
+POST /api/analytics/token                  body: { ttlSeconds? }
+                                            → { token, expiresAt }
+```
+
+- Default TTL: **600 seconds** (10 minutes).
+- The returned token can only query this org's data — Tinybird pipes use `{{ String(org_id, required=True) }}` to lock the scope; the frontend cannot bypass it.
+
+No client API — end users don't directly query analytics data.
+
+## Business rules
+
+- **Non-repudiation**: org_id is written into the token server-side at issuance — the client cannot modify it (HMAC-SHA256 signed).
+- **Short TTL**: don't extend the TTL. If a long dashboard session is needed, the frontend periodically refreshes the token.
+- **No event loss**: ApolloKit server events are written to the Postgres `event_history` table first, then asynchronously pushed to Tinybird. If Tinybird is temporarily unreachable, events are not lost.
+
+## Frontend usage
+
+```ts
+// Ask ApolloKit for a token first
+const { token } = await fetch('/api/analytics/token', { method: 'POST' }).then(r => r.json())
+
+// Then query Tinybird directly with the token
+const res = await fetch('https://api.tinybird.co/v0/pipes/daily_active_users.json', {
+  headers: { Authorization: `Bearer ${token}` },
+})
+```
+
+---
+
+<Cards>
+  <Card href="../../api/analytics/analytics_post_token" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

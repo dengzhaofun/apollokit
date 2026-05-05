@@ -1,0 +1,68 @@
+---
+title: Overview
+description: Connect ApolloKit to Claude.ai / Cursor / your own AI agent — one URL plus an apiKey for conversational access to your project
+icon: Bot
+---
+
+ApolloKit exposes a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/api/mcp` so MCP-compatible clients like Claude.ai, Cursor, and Claude Code can talk to your project conversationally. Phase 1 is read-only: the agent can **read** docs, players, audit logs, and metrics — it cannot write.
+
+## What problem does it solve?
+
+Ops and support teams spend significant time on repetitive information lookups in the dashboard:
+
+- "How much did this player spend last week?" → log in → find player → click billing history
+- "New user count vs last week?" → open analytics → find the metric → screenshot
+- "Who changed the lottery probability config just now?" → find audit log → filter by time
+
+These query patterns can be replaced by conversation: ask the LLM directly, the LLM calls MCP tools to fetch data, and gets a structured answer — skipping login, navigation, and filtering entirely.
+
+## Typical use cases
+
+**Scenario 1: Live ops queries**
+Ask Claude.ai "how many days did player abc check in this month" — Claude calls the MCP tool, returns data in seconds. No dashboard needed.
+
+**Scenario 2: Support ticket attribution**
+Player reports "didn't get check-in reward." Ask Claude to pull that player's check-in history and reward grant log, and automatically attribute: "checked in but the day-3 reward config is empty."
+
+**Scenario 3: Developer doc lookup**
+While writing integration code in Cursor, ask "what are the cdkey redemption API parameters" — the doc markdown lands directly in the LLM's context for your coding session.
+
+**Scenario 4: Third-party AI tool integration**
+Ops bots, Discord bots, and BI dashboards plug straight into MCP without writing SDK integration code — just use the protocol layer.
+
+## Quick setup
+
+1. Generate or reuse an admin API key (`ak_…` prefix) from the dashboard
+2. Add to Claude.ai / Cursor MCP settings:
+
+```json
+{
+  "url": "https://<your-apollokit>/api/mcp",
+  "headers": { "x-api-key": "ak_…" }
+}
+```
+
+3. Verify connectivity with the `echo` tool
+
+See the [Developer Guide](./guide) for detailed configuration steps.
+
+## Phase 1 available tools
+
+| Name | Purpose |
+|------|---------|
+| `echo` | Connectivity test |
+| `search_docs` | Full-text search across ApolloKit docs (Chinese and English) |
+| `read_doc` | Read a full document as markdown |
+| `list_doc_modules` | List all feature modules |
+
+> Player query, audit log, and analytics read tools are coming in Phase 2; write operation tools in Phase 3.
+
+## Relationship to the SDK
+
+MCP doesn't replace the SDK — they're complementary. The SDK is for developers (writing integration code); MCP is for LLMs/AI agents (conversational access). The same ApolloKit project can run SDK integration and MCP integration simultaneously.
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Endpoint configuration, per-client setup steps, troubleshooting" />
+</Cards>

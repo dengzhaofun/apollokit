@@ -1,0 +1,5 @@
+{
+  "title": "兑换系统",
+  "icon": "ArrowLeftRight",
+  "pages": ["index", "guide"]
+}

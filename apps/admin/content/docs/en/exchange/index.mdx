@@ -1,0 +1,59 @@
+---
+title: Overview
+description: Let players trade points or items for rewards, with quantity limits, per-user caps, and idempotency protection
+icon: ArrowLeftRight
+---
+
+The exchange module provides a general-purpose "spend A to get B" mechanic. Whether it's "100 points for a chest", "event tokens for a rare skin", or "surplus items for universal currency" — all of this is achievable through exchange options configuration, with no code required.
+
+## What problem does it solve?
+
+Almost every operational event includes an exchange component. Common pain points:
+
+- Every event requires the engineering team to build a custom exchange endpoint
+- Limited-quantity exchanges (e.g. 1,000 server-wide) are hard to make concurrency-safe
+- Per-user cap logic has to be written from scratch every time
+- No idempotency protection — network retries cause duplicate reward grants
+
+The exchange module standardizes all of this: **configurable exchange rules + dual-layer limits + idempotency keys** — ops configure the options, engineering integrates once, no re-development needed.
+
+## Typical use cases
+
+**Scenario 1: Points marketplace**
+During an event, players accumulate points. At the event's end, a "Points Shop" opens. Each option specifies a point cost and corresponding reward, with a per-user cap of 3 and a global cap of 5,000. Limits are enforced automatically — no custom logic needed.
+
+**Scenario 2: Limited seasonal packs**
+Spring Festival event: "100 event coins → rare skin", server-wide limit of 1,000, first-come first-served. The platform atomically deducts event coins and increments the global counter — no oversupply possible.
+
+**Scenario 3: Surplus item conversion**
+Spare consumables can be traded back for universal currency, unlimited per user but one-at-a-time to prevent bulk dumping.
+
+## Core capabilities
+
+- **Exchange configs**: group multiple options under one event config for easy management
+- **Dual-layer limits**: per-user cap + global cap, independently controlled
+- **Atomic execution**: cost deduction and reward grant happen in a single transaction — no partial execution
+- **Idempotency protection**: pass an idempotency key; repeated requests don't repeat execution
+- **Real-time state**: query how many times a user has executed a specific option
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Limited-quantity campaigns have precise inventory control — no oversupply losses |
+| Product managers | No need to write specs and wait for dev; configure exchange rules directly |
+| Operations team | Real-time visibility into global execution counts and campaign progress |
+| Engineering team | Integrate once; all future exchange mechanics are configuration-driven |
+
+## Related modules
+
+- **[Items](../item)**: costs and rewards flow through the item module's grant/deduct APIs
+- **[Activity](../activity)**: activity points can serve as exchange costs, closing the activity economy loop
+- **[Currency](../currency)**: costs and rewards also support currency types
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Core concepts, execution flow, API parameters" />
+  <Card href="../api/exchange" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

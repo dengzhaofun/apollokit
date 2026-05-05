@@ -1,0 +1,62 @@
+---
+title: Overview
+description: Folder tree, image/audio/config file uploads, public proxy — a self-service asset management space for designers and ops
+icon: FolderOpen
+---
+
+The media library is the dashboard's built-in general-purpose asset repository: ops can upload images, audio, and JSON config files, organize them in a folder tree, and other modules (banner, mail, entity, etc.) can reference assets by URL directly — no engineering involvement needed for each upload.
+
+## What problem does it solve?
+
+Game operations involve frequent asset changes:
+
+- Event banner images change every event, but uploading requires finding engineering or going through a CDN backend
+- Entity icons, item art, and dialogue backgrounds are scattered in different places with no unified management entry
+- Asset changes require a release or involving engineering — ops has zero self-service
+
+The media library lets ops upload and manage all assets directly in the dashboard. Other modules reference them by URL. Engineering integrates once and is done.
+
+## Typical use cases
+
+**Scenario 1: Event banner asset management**
+Ops uploads the new event poster to the "events / banner assets" folder, copies the URL, and fills it into the banner configuration — no engineering involvement at any step.
+
+**Scenario 2: Entity and item icons**
+A new hero is added to the game. The designer uploads the hero portrait to the "entity / heroes" folder and sets the image URL in the blueprint config for display.
+
+**Scenario 3: JSON config files**
+Balance adjustment data is uploaded as JSON to the media library. The game client periodically fetches the latest version without requiring a release.
+
+**Scenario 4: In-mail images**
+Ops sends a game mail with embedded images. Upload the image to the media library, then reference the URL in the mail body to display it inline.
+
+## Core capabilities
+
+- **Folder tree management**: multi-level folder structure, organized by use case
+- **Direct-to-R2/S3 upload**: client PUTs directly to object storage — no business server in the upload path, large-file-friendly
+- **Public proxy endpoint**: unified proxy URL for client access with built-in CDN caching
+- **Tenant isolation**: assets from different projects are physically isolated and invisible to each other
+- **Size limit**: max 10 MB per file, configurable as needed
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Ops team asset management is fully self-service — reduces engineering dependencies |
+| Operations team | Upload → copy URL → paste into config — end-to-end self-service |
+| Designers | Centralized asset management — no more "where did that image go?" |
+| Engineering team | Integrate the upload flow once; all future asset changes require no involvement |
+
+## Related modules
+
+- **[Banner](../banner)**: banner image URLs reference the media library directly
+- **[Entity](../entity)**: entity icons and model assets stored in the media library
+- **[Mail](../mail)**: inline images in mail bodies reference media library URLs
+- **[Collection](../collection)**: collection entry illustrations stored in the media library
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Upload flow, folder API, public proxy" />
+  <Card href="../api/media-library" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

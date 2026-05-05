@@ -1,0 +1,63 @@
+---
+title: Overview
+description: In-game store system — product configuration, categories, purchase flow, growth packs, and battle passes
+icon: ShoppingBag
+---
+
+The shop module is the standardized pipeline for players to spend currency on items. From simple direct-purchase packs to complex battle passes and growth funds — all configurable through product settings. Supports time windows, purchase limits, multi-level categories, tag filtering, and staged reward delivery.
+
+## What problem does it solve?
+
+Building a store from scratch is a repetitive task every game team faces:
+
+- Every new pack requires engineering to write purchase endpoints, deduction logic, and reward logic
+- Purchase limits (first purchase only) require custom state tracking
+- Battle pass / growth fund staged claim logic is complex and error-prone
+- Time-based availability, inventory, purchase history — every detail needs separate handling
+
+The shop module turns all of this into **configuration**: ops fill in product details in the dashboard, engineering integrates the purchase API once, and all future products require no code changes.
+
+## Typical use cases
+
+**Scenario 1: Direct purchase pack**
+Holiday pack: $6.99, includes 100 gems + 3 chests. Configure the product, set the price and output — players can purchase immediately. Limit to 1 per user via `perUserLimit: 1`.
+
+**Scenario 2: First-purchase bonus**
+New users enjoy double rewards on their first purchase. Set `perUserLimit: 1` + special reward — the platform automatically checks if it's the player's first purchase, no custom dev needed.
+
+**Scenario 3: Battle pass / growth fund**
+Players buy the battle pass once, unlocking 10 reward stages claimed progressively. The product is bound to multiple stages, each with unlock conditions (reach a level, complete a task).
+
+**Scenario 4: Daily deals**
+Time-limited discounts that refresh daily, one per player per day. Controlled via time windows + daily per-user limits — no manual ops intervention.
+
+## Core capabilities
+
+- **Categories and tags**: tree-structured categories + multi-tag support for front-end filtering and ops management
+- **Flexible pricing**: any currency denomination, combo output (multiple items + currency)
+- **Time windows**: products auto-publish and unpublish per configured schedule, no manual action
+- **Dual purchase limits**: per-user cap + global inventory, independently controlled
+- **Growth packs / battle passes**: one-time purchase + staged claims with per-stage unlock conditions
+- **Purchase state query**: player-facing API shows `canPurchase` status for each product (purchased / sold out / not yet available)
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Store is a core monetization path; config-driven means faster new product launches |
+| Product managers | Configure any product type (direct, battle pass, first-purchase) without writing dev specs |
+| Operations team | Launch products, set prices and time windows from the dashboard; real-time purchase metrics |
+| Engineering team | Integrate the purchase API once — all future products are managed through configuration |
+
+## Related modules
+
+- **[Currency](../currency)**: shop purchases deduct from the currency wallet
+- **[Items](../item)**: shop outputs deliver items to the player's inventory
+- **[Activity](../activity)**: activity-exclusive products can bind to an activity alias and auto-unpublish when the activity ends
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, purchase flow, API parameters" />
+  <Card href="../api/shop" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

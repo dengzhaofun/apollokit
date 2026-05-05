@@ -1,0 +1,108 @@
+---
+title: Developer Guide
+description: Pools, tiers, prizes, pity, single and multi pulls
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The lottery module covers all random reward scenarios from roulette wheels to loot boxes to gacha. The design separates **tiers** from **prizes** and supports pity mechanics alongside multiple gameplay variants.
+
+## Data model
+
+```
+pool
+├─ tier (SSR / SR / R)
+│   ├─ prize (a weapon, a character card)
+│   └─ prize
+├─ tier
+│   ├─ prize
+└─ pity_rule
+```
+
+Or flat mode (no tiers):
+
+```
+pool
+├─ prize (probability attached directly to the prize)
+└─ prize
+```
+
+- **pool**: metadata — currency, single-pull price, multi-pull price, pity enabled, duplicate prize strategy.
+- **tier**: probability group; each tier has a unified probability.
+- **prize**: specific reward (item / currency) + quantity + weight within the tier.
+- **pity_rule**: e.g. 89 consecutive pulls without SSR → the 90th pull is guaranteed SSR.
+
+## Admin API
+
+```http
+# pools
+POST   /api/lottery/pools
+GET    /api/lottery/pools
+GET    /api/lottery/pools/{key}
+PATCH  /api/lottery/pools/{id}
+DELETE /api/lottery/pools/{id}
+
+# tiers (optional)
+POST   /api/lottery/pools/{poolKey}/tiers
+GET    /api/lottery/pools/{poolKey}/tiers
+PATCH  /api/lottery/tiers/{tierId}
+DELETE /api/lottery/tiers/{tierId}
+
+# prizes (under a tier, or directly under the pool for flat mode)
+POST   /api/lottery/pools/{poolKey}/tiers/{tierId}/prizes
+POST   /api/lottery/pools/{poolKey}/prizes
+GET    /api/lottery/pools/{poolKey}/prizes
+PATCH  /api/lottery/prizes/{prizeId}
+DELETE /api/lottery/prizes/{prizeId}
+
+# pity rules
+POST   /api/lottery/pools/{poolKey}/pity-rules
+GET    /api/lottery/pools/{poolKey}/pity-rules
+PATCH  /api/lottery/pity-rules/{ruleId}
+DELETE /api/lottery/pity-rules/{ruleId}
+
+# execute (admin on behalf of player)
+POST   /api/lottery/pools/{poolKey}/pull
+POST   /api/lottery/pools/{poolKey}/multi-pull
+```
+
+## Client API
+
+```http
+POST /api/client/lottery/{poolKey}/pull
+POST /api/client/lottery/{poolKey}/multi-pull
+GET  /api/client/lottery/{poolKey}/state/me         current pity counter and state
+```
+
+## Randomness algorithm
+
+See `modules/lottery/rng.ts`. Core details:
+
+- Every pull uses `crypto.getRandomValues` server-side for entropy
+- With tiers: first select a tier by tier probability, then select a specific prize by prize weight within that tier
+- Pity: increment counter on each pull; when the threshold is reached, the next pull is forced to the guaranteed tier
+
+The random seed is never exposed — players cannot predict or replay outcomes.
+
+## Events and audit trail
+
+Every pull writes:
+
+- A `lottery.pulled` event (contains poolKey, prize, tier, pityCounter, cost)
+- The corresponding currency / item grant ledger entry
+
+Ops can filter all pull records by pool in the dashboard to resolve "I had no pity" disputes.
+
+## Combining with other modules
+
+- Cost: pulls deduct [currency](../currency); multi-pull discount is configurable.
+- Reward: the prize's reward field goes through [item](../item) grant / [currency](../currency) grant / [mail](../mail).
+- Activity: attach as an [activity](../activity) node to create an activity-exclusive pool.
+- Cross-activity pity: `pityCounter` can be scoped to a single pool or to an entire activity.
+
+---
+
+<Cards>
+  <Card href="../../api/lottery/client" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

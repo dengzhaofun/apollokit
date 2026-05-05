@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Let players deposit currency into a box that accrues interest — time-deposit savings, multiplier events, long-term retention mechanics
+icon: Archive
+---
+
+The Storage Box module is a **currency deposit + interest settlement** system. Players deposit in-game currency into a "box" that accrues interest per the box's configured rate. On maturity (or early withdrawal), principal and interest are settled and returned to the player's wallet.
+
+This isn't a temporary item stash — it's a rule-based "savings mechanic" designed specifically for long-term retention campaigns.
+
+## What problem does it solve?
+
+"Deposit currency, get more back later" is a classic retention mechanic in games, but it has a few implementation challenges:
+
+- Interest logic is complex (periodic rates, early-withdrawal penalties, tiered rates)
+- Settlement must be atomic — preventing "withdrawn but not credited" under concurrency
+- Real-time projected interest previews must stay consistent with actual settlement
+- Multiple box configs running simultaneously (different rates, different periods)
+
+The Storage Box module standardizes all of this: configure the box parameters, players deposit, the platform handles interest accrual and atomic settlement.
+
+## Typical use cases
+
+**Scenario 1: Time-deposit savings event**
+"Deposit for 30 days, get 1.3× principal back." Ops configures a box (30-day period, 30% return rate), players deposit any amount of gold, and claim 1.3× after 30 days. Early withdrawal returns only the principal (no interest, or with a penalty).
+
+**Scenario 2: New Year double-return event**
+"Deposit gems during New Year's, get 2× back in 3 days." Limited-time availability — the box closes after the event; existing deposits settle per their rules.
+
+**Scenario 3: Risk investment mechanic**
+"Bet event": players deposit a fixed amount of currency; after 7 days, the platform returns a "random multiplier" (0.5× ~ 3×). Higher perceived risk adds excitement and engagement.
+
+## Core capabilities
+
+- **Flexible rates**: annualized or periodic rates, tiered rate configurations supported
+- **Early withdrawal rules**: configurable penalty (partial interest loss) or outright lock during the period
+- **Real-time preview**: player queries instantly compute "how much would I get if I withdrew right now" — transparent display
+- **Atomic settlement**: withdrawal is a single SQL transaction — principal and interest credited simultaneously, no concurrency risk
+- **Multiple concurrent boxes**: different rates and periods can run simultaneously; players deposit into each independently
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Diversified retention tools; time-deposit events measurably extend active player cycles |
+| Product managers | Flexible rate and rule configuration for rapidly testing different retention mechanics |
+| Operations team | Dashboard visibility into deposit volumes and maturity distribution for settlement forecasting |
+| Engineering team | Simple integration — no need to implement interest formulas or atomic settlement logic |
+
+## Related modules
+
+- **[Currency](../currency)**: deposits and withdrawals flow through the currency wallet
+- **[Shop](../shop)**: design a "purchase deposit voucher" product that auto-triggers a deposit
+- **[Mail](../mail)** / **[Announcement](../announcement)**: remind players about upcoming maturity before it arrives
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Interest calculation, atomic settlement, API parameters" />
+  <Card href="../api/storage-box" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

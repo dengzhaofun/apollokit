@@ -1,0 +1,58 @@
+---
+title: Overview
+description: Tinybird integration, scoped JWT issuance — let the dashboard query the analytics engine directly, no intermediary
+icon: BarChart3
+---
+
+The analytics module is ApolloKit's integration layer with the analytics engine (Tinybird). ApolloKit's event data is produced via the event bus; the analytics module **issues scoped tokens that let tenants query their analytics data directly** — dashboard views can pull metrics from the analytics engine without going through a backend API.
+
+## What problem does it solve?
+
+Game operations need data, but traditional data architectures have delays:
+
+- Tracking events land in the data warehouse → ETL runs → reports are generated; hours can pass between event and visibility
+- Dashboard views need their own backend API as an intermediary
+- In multi-tenant scenarios, each tenant must only see their own data — cross-tenant access is a security risk
+
+The analytics module solves these problems with scoped tokens: the frontend queries the analytics engine directly with a token that has org_id locked in — cross-tenant access is physically impossible.
+
+## Typical use cases
+
+**Scenario 1: Real-time DAU dashboard**
+The dashboard home shows today's DAU, comparison to yesterday, and weekly trend. The dashboard calls the Tinybird pipe directly with the analytics token — data is real-time, no ETL wait.
+
+**Scenario 2: Event conversion analysis**
+During an event, monitor announcement impressions, CTA click rate, and participation count in real time — helps ops decide whether to push additional notifications.
+
+**Scenario 3: Task completion rate monitoring**
+After launching a new task system, watch which tasks have completion rates that are too low (possibly too hard) or too high (possibly too easy), and quickly adjust rewards.
+
+**Scenario 4: Season data reporting**
+At season end, generate a season report from the dashboard: new users, active users, spend, tier distribution — data comes directly from the analytics engine, no custom API needed.
+
+## Core capabilities
+
+- **Scoped JWT issuance**: token embeds org_id; Tinybird pipes are locked to the parameter — cross-tenant access is physically impossible
+- **Short TTL**: defaults to 10 minutes; the frontend periodically refreshes to maintain longer sessions
+- **No intermediary**: frontend calls the analytics engine directly — minimum latency
+- **No self-built OLAP**: ApolloKit doesn't build its own analytics engine; plug-in integration, backend-switchable
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Real-time data dashboards — decisions backed by data |
+| Product managers | Rapidly validate the data impact of new features without waiting for daily reports |
+| Operations team | View live data while events are running; adjust strategy in time |
+| Engineering team | Integrate token issuance once — dashboard queries bypass the business backend |
+
+## Related modules
+
+- **[Webhooks & Events](../webhooks)**: all tracking events are produced via the event bus; analytics dashboards consume these events
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Token issuance, Tinybird integration, frontend usage" />
+  <Card href="../api/analytics" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

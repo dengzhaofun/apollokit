@@ -1,0 +1,61 @@
+---
+title: Overview
+description: Send system messages and reward attachments to players — supports broadcast, targeted delivery, revoke, and expiry control
+icon: Mail
+---
+
+The mail module lets you send players "system messages with attachments." Check-in rewards, event prizes, incident compensation, ops announcements — any scenario where players need to receive something in their inbox and actively claim it belongs here.
+
+## What problem does it solve?
+
+Player communication in games has two main forms: announcements (passive viewing) and mail (active inbox). Mail's unique value is:
+
+- **Carries attachments**: physical rewards (items, currency) are attached to the message and credited when the player claims them
+- **Persistent inbox**: players can review past messages — unlike pop-ups that disappear
+- **Revocable**: mis-sent rewards can be recalled before players claim them, reducing ops mistakes
+
+Without a unified mail module, compensation logic ends up fragmented — sometimes items go directly to inventory, sometimes via announcements, with no consistent read/claim state tracking for support.
+
+## Typical use cases
+
+**Scenario 1: Event reward delivery**
+After an event ends, ops selects the winners list and batch-sends mail with item and currency attachments. Players see the inbox notification when they log in, click to claim, and the system idempotently delivers the rewards.
+
+**Scenario 2: Incident compensation**
+A server issue causes disconnections for some players. Ops sends a broadcast mail (visible to all) with a compensation pack attached, valid for 7 days. Real-time claim rate is visible in the dashboard.
+
+**Scenario 3: Revoking a mis-sent mail**
+Ops discovers a mail had the wrong reward config (10× too many). Revoke it before mass claiming — soft delete makes it immediately invisible to players, while existing claims are unaffected.
+
+**Scenario 4: Targeted player support**
+Support sends a compensation mail to a single player with customized attachment content and a personal note — done directly from the dashboard, no engineering involvement.
+
+## Core capabilities
+
+- **Three delivery modes**: broadcast (all players) / specified user list / single user
+- **Attachment support**: items and currency in combination, atomically granted on claim
+- **Claim idempotency**: repeated claim requests don't grant rewards twice
+- **Revoke and expiry**: soft revoke (data preserved) or hard delete, with configurable expiry time
+- **Read/claim state**: shown to players in-game; claim statistics visible to ops
+
+## Who is it for?
+
+| Role | What they get |
+|------|--------------|
+| Decision-makers | Compensation and prize delivery are traceable — reduces ops error risk |
+| Product managers | Flexible delivery strategies covering all ops scenarios |
+| Operations team | Send, revoke, and track claim rates from the dashboard — no engineering needed |
+| Engineering team | One unified mail + attachment API replaces scattered "direct to inventory" logic |
+
+## Related modules
+
+- **[Items](../item)** / **[Currency](../currency)**: attachments are actually granted through these modules
+- **[Announcement](../announcement)**: announcements are storefront pop-ups without attachments; mail is an inbox with attachments
+- **[CDKEY](../cdkey)**: CDKEY redemption delivers rewards via mail attachments
+
+---
+
+<Cards>
+  <Card href="./guide" title="Developer Guide" description="Data model, delivery strategies, API parameters" />
+  <Card href="../api/mail" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

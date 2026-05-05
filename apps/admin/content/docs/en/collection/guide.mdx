@@ -1,0 +1,61 @@
+---
+title: Developer Guide
+description: Collection albums, entry unlocking, tiered milestone rewards
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The collection module implements "Pokédex / weapon compendium / monster encyclopedia" style collect-to-unlock gameplay: configure an album, players unlock entries through various activities, milestones fire at thresholds.
+
+## Data model
+
+- **collection_albums**: album metadata — alias, group definitions, total entry count.
+- **collection_entries**: entries in the album (each card / monster), with an unlock condition key.
+- **collection_milestones**: milestones — scope is `entry` / `group` / `album`; reaching the threshold triggers rewards.
+- **collection_user_entries**: per-player × per-entry unlock state.
+
+## Admin API
+
+```http
+POST   /api/collection/albums
+GET    /api/collection/albums
+PATCH  /api/collection/albums/{key}
+DELETE /api/collection/albums/{key}
+POST   /api/collection/albums/{key}/entries
+POST   /api/collection/albums/{key}/milestones
+```
+
+## Client API
+
+```http
+POST /api/collection/end-user/{userId}/album/{key}/unlock      body: { entryKey }
+POST /api/collection/end-user/{userId}/album/{key}/claim       body: { milestoneKey }
+GET  /api/collection/end-user/{userId}/album/{key}
+```
+
+## Business rules
+
+- **Idempotent unlock**: duplicate unlocks for the same `(userId, entryKey)` only count once — `ON CONFLICT DO NOTHING`.
+- **Milestone scope**:
+  - `entry`: a specific entry is unlocked (e.g. "unlock Legendary Pokémon" triggers reward).
+  - `group`: X entries unlocked in a group.
+  - `album`: Y total entries unlocked in the full album.
+- **Auto-grant**: milestones with `autoClaim=true` deliver rewards immediately on unlock (via [item](../item) + [mail](../mail)) — no player action needed.
+- **Reward chain**: `claim` atomically validates the condition + calls itemService.grantItems + marks as claimed.
+
+## Composing with other modules
+
+- [item](../item): rewards source.
+- [mail](../mail): autoClaim rewards land via mail.
+- [activity](../activity): event-exclusive albums, archived when the event ends.
+
+## Events
+
+`collection.unlocked` / `collection.milestone_claimed`.
+
+---
+
+<Cards>
+  <Card href="../../api/collection/collection_get_albums" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

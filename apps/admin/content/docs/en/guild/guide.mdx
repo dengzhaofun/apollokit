@@ -1,0 +1,64 @@
+---
+title: Developer Guide
+description: Guild creation, member management, levels and experience, contribution tracking
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The guild module implements lobby-style persistent social organizations: players can create or join guilds, with leader / officer / member role tiers, leveling, join approval, and contribution tracking.
+
+## Data model
+
+- **guild_settings** (one row per org): guild creation conditions, base member cap, leveling rules, default join mode.
+- **guild_guilds**: a guild's base info — name / tag / leader / level / exp / joinMode.
+- **guild_members**: `(guildId, endUserId)` unique, includes role (leader / officer / member), contribution score, join timestamp.
+- **guild_join_requests**: join application flow (only produced when `joinMode=request`).
+- **guild_contribution_logs**: atomic contribution log per member (kills, gifts, activities) — source of truth for level-up exp.
+
+## Admin API
+
+```http
+PUT    /api/guild/settings
+POST   /api/guild/guilds
+GET    /api/guild/guilds
+PATCH  /api/guild/guilds/{id}
+DELETE /api/guild/guilds/{id}
+POST   /api/guild/guilds/{id}/transfer-leader
+```
+
+## Client API
+
+```http
+POST   /api/guild/end-user/create
+POST   /api/guild/end-user/{id}/join
+POST   /api/guild/end-user/{id}/request
+POST   /api/guild/end-user/{id}/approve/{requestId}
+POST   /api/guild/end-user/{id}/leave
+POST   /api/guild/end-user/{id}/contribute    body: { amount, reason }
+GET    /api/guild/end-user/{id}/members
+```
+
+## Business rules
+
+- **joinMode**: `open` (join immediately) / `request` (requires approval) / `closed` (invite only).
+- **Member cap**: base cap from settings; each level adds capacity via `level_rules`.
+- **Level / exp**: `contribute` atomically updates `member.contribution` + `guild.exp` + checks level threshold in a single statement using `xmax=0` to serialize concurrent contributions.
+- **Leader transfer**: `transfer-leader` is an atomic dual write — partial failure is impossible.
+- **Leave / kick**: leader departure triggers the configured rule — either transfer or disband.
+
+## Composing with other modules
+
+- [leaderboard](../leaderboard): `scope=guild` for contribution rankings within the guild.
+- [activity](../activity): guild-exclusive activities; guild service provides membership check.
+- [mail](../mail): guild-wide mail broadcast using the member list as recipients.
+
+## Events
+
+`guild.created` / `guild.joined` / `guild.left` / `guild.level_up` / `guild.disbanded`.
+
+---
+
+<Cards>
+  <Card href="../../api/guild/guild_get_settings" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

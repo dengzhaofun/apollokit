@@ -1,0 +1,60 @@
+---
+title: Developer Guide
+description: Invite codes, referral relationships, qualification gating, and rewards
+icon: Code
+---
+
+> This page is for engineering teams. For product context and use cases, see the [Product Overview](./index).
+
+The invite module implements referral rewards: each player has a unique invite code; new players bind with it on registration; when the new player meets qualification conditions, the referrer can claim their reward.
+
+## Data model
+
+- **invite_settings** (one row per org): reward config, qualification conditions, mutual-existence requirement, code length rules.
+- **invite_codes**: per-player invite codes (rotatable), `(orgId, code)` unique.
+- **invite_relationships**: inviter → invitee binding, includes `bound_at` / `qualified_at` / `reward_claimed_at`.
+
+## Admin API
+
+```http
+PUT /api/invite/settings
+GET /api/invite/settings
+GET /api/invite/relationships
+```
+
+## Client API
+
+```http
+GET  /api/invite/end-user/my-code
+POST /api/invite/end-user/rotate-code
+POST /api/invite/end-user/redeem           body: { code }
+POST /api/invite/end-user/mark-qualified
+POST /api/invite/end-user/claim-reward
+
+GET  /api/invite/end-user/my-invitees
+```
+
+## Business rules
+
+- **Single binding**: an invitee can only bind one inviter; `redeem` is idempotent — redeeming the same code twice returns already-bound.
+- **Self-referral prevention**: players cannot redeem their own code.
+- **Qualification gate**: `qualified_at` is set by business code when the condition is met (or via an event trigger). Without it, the referrer cannot claim.
+- **Idempotent claim**: `claim-reward` can only be claimed once per relationship; the service uses atomic `UPDATE ... WHERE reward_claimed_at IS NULL RETURNING` to prevent concurrent double-claims.
+- **Code rotation**: after a player rotates their code, the old code is immediately invalid but existing bound relationships are preserved.
+
+## Composing with other modules
+
+- [friend](../friend): optionally auto-friend on successful bind.
+- [item](../item) / [currency](../currency): reward delivery via these modules.
+- [task](../task): configure "invite N qualified players" as a task definition.
+- [mail](../mail): notify the referrer by mail when their invitee qualifies.
+
+## Events
+
+`invite.bound` / `invite.qualified` / `invite.reward_claimed`.
+
+---
+
+<Cards>
+  <Card href="../../api/invite/admin" title="API Reference" description="Full endpoint list with request/response schemas" />
+</Cards>

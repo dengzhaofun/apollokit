@@ -1,0 +1,5 @@
+{
+  "title": "组队",
+  "icon": "UsersRound",
+  "pages": ["index", "guide"]
+}

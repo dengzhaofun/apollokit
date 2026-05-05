@@ -1,0 +1,143 @@
+---
+title: Overview
+description: apollokit SDK entry point — which SDK to pick (server / client / Unity) and how to get started
+icon: PackageOpen
+full: true
+---
+
+apollokit ships two TypeScript SDKs with completely different auth models and use cases. **Never mix them.**
+
+<Cards>
+  <Card
+    title="@apollokit/server"
+    href="/docs/en/sdk/server-typescript"
+    description="Server-to-server calls — backend scripts, ops tools, data pipelines. Auth via ak_ admin API key (org-level)."
+  />
+  <Card
+    title="@apollokit/client"
+    href="/docs/en/sdk/client-typescript"
+    description="End-user scenarios — game frontend, H5, Electron. Auth via cpk_ publishable key + HMAC (per-user)."
+  />
+  <Card
+    title="Unity / C# (planned)"
+    href="/docs/en/sdk"
+    description="Same cpk_ + HMAC protocol as the client SDK. Not yet released — track plan §phase 4."
+  />
+  <Card
+    title="curl / other languages"
+    href="/docs/en/api"
+    description="Every API reference endpoint page has curl + TS multi-language tabs. For other languages (Python / Go), use the curl templates until native SDKs ship."
+  />
+</Cards>
+
+## Overall architecture
+
+```
+┌─────────────────────────────────┐    ┌──────────────────────────────────┐
+│  Trusted environment            │    │  apollokit Server                │
+│                                 │    │                                  │
+│  Your backend / cron / CLI      │ ─► │  /api/<module>/*                 │
+│  @apollokit/server              │    │  requireAdminOrApiKey            │
+│   x-api-key: ak_…               │    │                                  │
+│                                 │    │  /api/client/<module>/*          │
+└─────────────┬───────────────────┘    │  requireClientCredential         │
+              │                        │  + requireClientUser             │
+              │ signs userHash with csk_│                                  │
+              ▼                        └──────────────────────────────────┘
+┌─────────────────────────────────┐                    ▲
+│  Player-controlled              │                    │
+│                                 │                    │
+│  Game frontend / mini-program   │ ─────────────────────┘
+│  @apollokit/client              │  x-api-key: cpk_…
+│   only holds cpk_               │  + x-end-user-id
+│                                 │  + x-user-hash (HMAC)
+└─────────────────────────────────┘
+```
+
+`ak_` is never sent to player-controlled processes. `cpk_` is a public key that can be bundled; the companion `csk_` is backend-only — it's used to pre-sign `userHash` which the game client then passes along.
+
+## Which SDK do I pick?
+
+<Callout type="warn" title="Security boundary — server SDK must never run in client code">
+
+The `ak_` admin API key is an **org-level secret** capable of calling any admin route (create configs, modify items, grant rewards, etc.). If it leaks into a game client, H5 bundle, or version control, an attacker can forge any ops operation.
+
+If your code runs in Unity / a browser / a mini-program / any player-controlled process, **always use `@apollokit/client`** with `cpk_` and a backend-signed HMAC. `csk_` must also stay server-side.
+
+</Callout>
+
+| | Server SDK | Client SDK |
+|---|---|---|
+| **Package** | `@apollokit/server` | `@apollokit/client` |
+| **Auth** | `x-api-key: ak_…` | `x-api-key: cpk_…` + `x-end-user-id` + `x-user-hash` (HMAC-SHA256) |
+| **Route prefix** | `/api/*` (admin) | `/api/client/*` |
+| **End-user awareness** | None — operates on the whole org | Required — routes are scoped per endUserId |
+| **Typical use** | Node backend / cron / CLI / data export | Game client / mini-program / browser H5 |
+
+## 30-second preview
+
+Minimal server SDK usage. Note the **TS** hover in the code block — hovering `createServerClient` or `announcementAdminGetRoot` shows the full type signature (injected at build time by fumadocs-twoslash).
+
+```ts
+import {
+  createServerClient,
+  announcementAdminGetRoot,
+} from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.APOLLOKIT_ADMIN_KEY!, // "ak_..."
+})
+
+const { data } = await announcementAdminGetRoot({ throwOnError: true })
+//      ^?
+const announcements = data[200].data
+console.log(announcements.items.length)
+```
+
+## `createServerClient` options
+
+| Field | Type | Description |
+|---|---|---|
+| `baseUrl` | `string` | Server base URL (e.g. `https://api.example.com`) |
+| `apiKey` | `string` | Admin API key (`ak_…` prefix). Generate from the dashboard `/api-keys` page or `POST /api/auth/api-key` (`configId=admin`). Carries org-level full access. |
+
+## Error model
+
+All 4xx/5xx responses throw `ApolloKitApiError` when `throwOnError: true`:
+
+```ts
+import {
+  ApolloKitApiError,
+  checkInGetConfigs,
+  createServerClient,
+} from '@apollokit/server'
+
+createServerClient({
+  baseUrl: 'https://api.example.com',
+  apiKey: 'ak_demo',
+})
+
+try {
+  await checkInGetConfigs({ throwOnError: true })
+} catch (err) {
+  if (err instanceof ApolloKitApiError) {
+    // err.code      → "check_in.config_not_found", "validation_error", ...
+    // err.status    → HTTP status code
+    // err.requestId → paste into the trace panel to see the full request chain
+    console.error(`[${err.status}] ${err.code}: ${err.message}`)
+  }
+  throw err
+}
+```
+
+<Callout type="info" title="requestId for end-to-end tracing">
+
+`ApolloKitApiError.requestId` matches `http_requests.trace_id` in Tinybird on the server side. Include it when filing a bug — it pinpoints the full log, upstream/downstream chain, and timing breakdown for that specific request.
+
+</Callout>
+
+## Next steps
+
+- Full setup + per-module quickstart: [`@apollokit/server` guide](/docs/en/sdk/server-typescript)
+- Full API reference: [API Reference](/docs/en/api) — every endpoint has curl + TS dual tabs

@@ -1,0 +1,5 @@
+{
+  "title": "Exchange",
+  "icon": "ArrowLeftRight",
+  "pages": ["index", "guide"]
+}
