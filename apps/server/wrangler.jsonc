@@ -128,7 +128,7 @@
   "vars": {
     "APP_VERSION": "0.1.13",
     "ADMIN_URL": "https://apollokit-admin.limitless-ai.workers.dev",
-    "INVITE_FROM_ADDRESS": "invites@example.com",
+    "INVITE_FROM_ADDRESS": "invites@o-x-o.ai",
     "SENTRY_ENVIRONMENT": "production",
     // Cookie domain shared between server end-user auth and the pages
     // worker. Empty in dev (chrome accepts cookies on bare `localhost`

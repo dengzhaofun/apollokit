@@ -1,4 +1,4 @@
-import { MailQuestionIcon, MoreHorizontalIcon } from "lucide-react"
+import { MoreHorizontalIcon, RefreshCwIcon } from "lucide-react"
 import { toast } from "sonner"
 import * as m from "#/paraglide/messages.js"
 
@@ -24,6 +24,7 @@ import { cn } from "#/lib/utils"
 import {
   useCancelInvitation,
   useOrgInvitations,
+  useResendInvitation,
 } from "#/hooks/use-members"
 
 interface Props {
@@ -46,28 +47,22 @@ const STATUS_LABEL: Record<string, string> = {
   canceled: "已撤销",
 }
 
-/**
- * 邀请列表 — 当前只接 org-level Better Auth invitation。
- * 项目级邀请(scope="project")依赖自家 server endpoint,PR 4 接入。
- */
 export function InvitationsTable({ scope }: Props) {
   const { data: session } = authClient.useSession()
   const orgId = session?.session.activeOrganizationId ?? null
-  const orgInvitations = useOrgInvitations(scope === "org" ? orgId : null)
+  const activeTeamId = (session?.session as { activeTeamId?: string | null })?.activeTeamId ?? null
+
+  // Always fetch all org invitations; filter client-side for project scope.
+  const orgInvitations = useOrgInvitations(orgId)
   const cancel = useCancelInvitation()
+  const resend = useResendInvitation()
 
-  if (scope === "project") {
-    return (
-      <div className="rounded-md border p-12 text-center">
-        <MailQuestionIcon className="mx-auto size-8 text-muted-foreground/60" />
-        <p className="mt-2 text-sm text-muted-foreground">
-          项目级邀请后端正在接入中。当前可在 组织 → 邀请 中向项目邀请成员。
-        </p>
-      </div>
-    )
-  }
+  const allRows = orgInvitations.data ?? []
+  const rows =
+    scope === "project"
+      ? allRows.filter((r) => r.teamId === activeTeamId)
+      : allRows
 
-  const rows = orgInvitations.data ?? []
   const isLoading = orgInvitations.isLoading
 
   return (
@@ -113,6 +108,7 @@ export function InvitationsTable({ scope }: Props) {
                 ? new Date(row.expiresAt).toLocaleDateString()
                 : "—"
               const isPending = row.status === "pending"
+              const isBusy = cancel.isPending || resend.isPending
               return (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.email}</TableCell>
@@ -145,8 +141,23 @@ export function InvitationsTable({ scope }: Props) {
                       />
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
+                          disabled={isBusy}
+                          onClick={() =>
+                            resend.mutate(
+                              { invitation: row, organizationId: orgId! },
+                              {
+                                onSuccess: () => toast.success("已重新发送邀请"),
+                                onError: (err) => toast.error(err.message),
+                              },
+                            )
+                          }
+                        >
+                          <RefreshCwIcon className="size-4" />
+                          重新发送
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           variant="destructive"
-                          disabled={cancel.isPending}
+                          disabled={isBusy}
                           onClick={() =>
                             cancel.mutate(
                               { invitationId: row.id },
