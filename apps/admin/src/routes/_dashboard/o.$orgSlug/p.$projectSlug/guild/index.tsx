@@ -237,7 +237,7 @@ function GuildPage() {
             </div>
             <div className="grid gap-1.5">
               <Label>{m.guild_join_mode()}</Label>
-              <Select value={joinMode} onValueChange={setJoinMode}>
+              <Select value={joinMode} onValueChange={(v) => setJoinMode(v ?? "open")}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

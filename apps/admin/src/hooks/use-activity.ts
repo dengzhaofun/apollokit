@@ -317,6 +317,94 @@ export function useActivityAnalytics(key: string) {
   })
 }
 
+// ─── 360° overview — drives the activity data center panel ─────────
+
+export interface ActivityAnalyticsOverview {
+  acquisition: {
+    totalParticipants: number
+    currentActive: number
+    completionRate: number
+    dropRate: number
+    joinedSeries: Array<{ day: string; count: number }>
+  }
+  output: {
+    totalPoints: number
+    avgPoints: number
+    p50Points: number
+    maxPoints: number
+    completionDist: Array<{ status: string; count: number }>
+    pointsBuckets: Array<{ bucket: string; count: number }>
+  }
+  economy: {
+    totalRewardsGranted: number
+    byRewardKey: Array<{ key: string; count: number }>
+  }
+}
+
+/**
+ * 一次往返拉活动 360° 三块（参与 / 产出 / 经济）。`from` / `to` 留空时
+ * 后端用活动生命周期窗口（visibleAt → now）。
+ */
+export function useActivityAnalyticsOverview(args: {
+  key: string
+  from?: string | null
+  to?: string | null
+  enabled?: boolean
+}) {
+  return useQuery({
+    queryKey: [
+      "activity-analytics-overview",
+      args.key,
+      args.from ?? null,
+      args.to ?? null,
+    ],
+    queryFn: () => {
+      const qs = new URLSearchParams()
+      if (args.from) qs.set("from", args.from)
+      if (args.to) qs.set("to", args.to)
+      const url = `/api/v1/activity/${args.key}/analytics/overview${
+        qs.size > 0 ? `?${qs.toString()}` : ""
+      }`
+      return api.get<ActivityAnalyticsOverview>(url)
+    },
+    enabled: !!args.key && (args.enabled ?? true),
+  })
+}
+
+export interface ActivityNodesAnalyticsItem {
+  nodeId: string
+  alias: string | null
+  nodeType: string
+  refId: string | null
+  enabled: boolean
+  resourceActive: boolean
+  effectiveEnabled: boolean
+  completionCount: number | null
+  errorRate: number | null
+}
+
+export interface ActivityNodesAnalytics {
+  items: ActivityNodesAnalyticsItem[]
+}
+
+/**
+ * 节点配置健康（活动 360° §5）。完全走 PG，errorRate / uniqueUsers
+ * v1 留 null（v2 接 Tinybird fan-out）。
+ */
+export function useActivityNodesAnalytics(args: {
+  key: string
+  enabled?: boolean
+}) {
+  return useQuery({
+    queryKey: ["activity-analytics-nodes", args.key],
+    queryFn: () =>
+      api.get<ActivityNodesAnalytics>(
+        `/api/v1/activity/${args.key}/analytics/nodes`,
+      ),
+    enabled: !!args.key && (args.enabled ?? true),
+  })
+}
+
 // ─── Members (participants list + leave + queue redemption) ────────
 
 type MembersPage = {
@@ -380,5 +468,55 @@ export function useActivityTickRun() {
         errors: number
       }>("/api/v1/activity/tick/run"),
     onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
+// ─── Cross-activity summary (drives /analytics/activities) ──────────
+
+export interface ActivitySummaryItem {
+  activityId: string
+  alias: string
+  name: string
+  status: string
+  kind: string
+  participants: number
+  completed: number
+  dropped: number
+  completionRate: number
+  totalPointsGranted: number
+  totalRewardsGranted: number
+  /** v1 always null; v2 will populate via Tinybird fan-out. */
+  active24h: number | null
+  startAt: string | null
+  endAt: string | null
+  createdAt: string
+}
+
+export interface ActivitiesSummary {
+  items: ActivitySummaryItem[]
+  total: number
+}
+
+/**
+ * 全项目活动数据汇总（一表对比所有活动）。后端纯 PG 聚合，
+ * 不带活动级实时活跃度（v2 才接 Tinybird）。
+ */
+export function useActivitiesSummary(args: {
+  status?: string
+  limit?: number
+  enabled?: boolean
+} = {}) {
+  return useQuery({
+    queryKey: ["activities-summary", args.status ?? null, args.limit ?? 50],
+    queryFn: () => {
+      const qs = new URLSearchParams()
+      if (args.status) qs.set("status", args.status)
+      if (args.limit) qs.set("limit", String(args.limit))
+      const url = `/api/v1/activity/analytics/summary${
+        qs.size > 0 ? `?${qs.toString()}` : ""
+      }`
+      return api.get<ActivitiesSummary>(url)
+    },
+    enabled: args.enabled ?? true,
   })
 }

@@ -67,4 +67,7 @@ export type TenantPipeName =
   | "tenant_event_timeseries_fast"
   | "tenant_event_funnel"
   | "tenant_event_stream"
-  | "experiment_metric_breakdown";
+  | "experiment_metric_breakdown"
+  | "tenant_dau_timeseries"
+  | "tenant_event_user_distribution"
+  | "tenant_user_active_days_distribution";

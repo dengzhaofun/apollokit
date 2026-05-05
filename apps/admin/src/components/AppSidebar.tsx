@@ -25,6 +25,7 @@ import {
   Layers,
   LayoutDashboard,
   LineChart,
+  ListChecks,
   ListTodo,
   Medal,
   Megaphone,
@@ -119,9 +120,11 @@ import { getLocale, setLocale, type Locale } from "../paraglide/runtime.js"
 
 type NavRoute =
   | "/o/$orgSlug/p/$projectSlug/dashboard"
+  | "/o/$orgSlug/p/$projectSlug/analytics"
   | "/o/$orgSlug/p/$projectSlug/analytics/users"
   | "/o/$orgSlug/p/$projectSlug/analytics/modules"
-  | "/o/$orgSlug/p/$projectSlug/analytics/activity"
+  | "/o/$orgSlug/p/$projectSlug/analytics/events"
+  | "/o/$orgSlug/p/$projectSlug/analytics/activities"
   | "/o/$orgSlug/p/$projectSlug/analytics/logs"
   | "/o/$orgSlug/p/$projectSlug/analytics/explore"
   | "/o/$orgSlug/p/$projectSlug/analytics/funnel"
@@ -244,9 +247,11 @@ type RoutePermission = {
   visibility?: Visibility // defaults to "hidden"
 }
 const ROUTE_PERMISSIONS: Partial<Record<NavRoute, RoutePermission>> = {
+  "/o/$orgSlug/p/$projectSlug/analytics": { resource: "analytics" },
   "/o/$orgSlug/p/$projectSlug/analytics/users": { resource: "analytics" },
   "/o/$orgSlug/p/$projectSlug/analytics/modules": { resource: "analytics" },
-  "/o/$orgSlug/p/$projectSlug/analytics/activity": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/events": { resource: "analytics" },
+  "/o/$orgSlug/p/$projectSlug/analytics/activities": { resource: "analytics" },
   "/o/$orgSlug/p/$projectSlug/analytics/logs": { resource: "analytics" },
   "/o/$orgSlug/p/$projectSlug/analytics/explore": { resource: "analytics" },
   "/o/$orgSlug/p/$projectSlug/analytics/funnel": { resource: "analytics" },
@@ -360,6 +365,16 @@ function getNavGroups(): NavGroup[] {
       label: m.nav_group_analytics,
       icon: PieChart,
       items: [
+        {
+          title: m.nav_analytics_hub,
+          to: "/o/$orgSlug/p/$projectSlug/analytics",
+          icon: LayoutDashboard,
+        },
+        {
+          title: m.nav_activities_summary,
+          to: "/o/$orgSlug/p/$projectSlug/analytics/activities",
+          icon: ListChecks,
+        },
         { title: m.nav_user_analytics, to: "/o/$orgSlug/p/$projectSlug/analytics/users", icon: PieChart },
         {
           title: m.nav_module_analytics,
@@ -377,8 +392,8 @@ function getNavGroups(): NavGroup[] {
           icon: Workflow,
         },
         {
-          title: m.nav_activity_analytics,
-          to: "/o/$orgSlug/p/$projectSlug/analytics/activity",
+          title: m.nav_events_analytics,
+          to: "/o/$orgSlug/p/$projectSlug/analytics/events",
           icon: Activity,
         },
         { title: m.nav_logs, to: "/o/$orgSlug/p/$projectSlug/analytics/logs", icon: ScrollText },

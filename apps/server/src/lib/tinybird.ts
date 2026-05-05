@@ -824,6 +824,177 @@ export const tenantMauBreakdown = defineEndpoint("tenant_mau_breakdown", {
 export type TenantMauBreakdownParams = InferParams<typeof tenantMauBreakdown>;
 export type TenantMauBreakdownOutput = InferOutputRow<typeof tenantMauBreakdown>;
 
+/**
+ * Project-wide DAU / hourly-active-users time series. Reads
+ * `events_hourly_agg.users_state` (HyperLogLog) and merges across
+ * (event × source × outcome) so the result is a single
+ * "distinct end_user_id per bucket" series — independent of which
+ * event a user touched. This is what powers the project-level
+ * `/analytics/users` and `/analytics/overview` DAU charts.
+ *
+ * `bucket_seconds` defaults to 86400 (day). Caller can pass 3600
+ * for hourly. The materialized view's natural grain is hour, so
+ * sub-hour buckets must use the raw `events`-backed
+ * `tenant_event_timeseries` instead.
+ */
+export const tenantDauTimeseries = defineEndpoint("tenant_dau_timeseries", {
+  description:
+    "Per-tenant distinct end_user_id buckets (project-wide, all events). Day or hour grain.",
+  params: {
+    org_id: p.string(),
+    date_from: p.dateTime(),
+    date_to: p.dateTime(),
+    bucket_seconds: p.int32().optional(86400),
+  },
+  nodes: [
+    node({
+      name: "endpoint",
+      sql: `
+        SELECT
+          toStartOfInterval(hour, INTERVAL {{Int32(bucket_seconds, 86400)}} SECOND) AS bucket,
+          uniqMerge(users_state) AS dau
+        FROM events_hourly_agg
+        WHERE org_id = {{String(org_id, '', required=True)}}
+          AND hour BETWEEN parseDateTimeBestEffort({{String(date_from, '1970-01-01T00:00:00Z', required=True)}})
+                        AND parseDateTimeBestEffort({{String(date_to,   '2099-12-31T23:59:59Z', required=True)}})
+        GROUP BY bucket
+        ORDER BY bucket
+      `,
+    }),
+  ],
+  output: {
+    bucket: t.dateTime(),
+    dau: t.uint64(),
+  },
+});
+
+export type TenantDauTimeseriesParams = InferParams<typeof tenantDauTimeseries>;
+export type TenantDauTimeseriesOutput = InferOutputRow<typeof tenantDauTimeseries>;
+
+/**
+ * Top events ranked by distinct active users for a tenant.
+ * Returns (event, distinct_users, event_count) — distinct_users
+ * is uniqMerge of the HLL state, event_count is the raw count.
+ *
+ * Powers `/analytics/users`'s "most-engaged events" panel.
+ */
+export const tenantEventUserDistribution = defineEndpoint(
+  "tenant_event_user_distribution",
+  {
+    description:
+      "Per-tenant top events ranked by distinct end_user_id (with raw event_count).",
+    params: {
+      org_id: p.string(),
+      date_from: p.dateTime(),
+      date_to: p.dateTime(),
+      top: p.int32().optional(20),
+    },
+    nodes: [
+      node({
+        name: "endpoint",
+        sql: `
+          SELECT
+            event,
+            uniqMerge(users_state) AS distinct_users,
+            sum(event_count)       AS event_count
+          FROM events_hourly_agg
+          WHERE org_id = {{String(org_id, '', required=True)}}
+            AND hour BETWEEN parseDateTimeBestEffort({{String(date_from, '1970-01-01T00:00:00Z', required=True)}})
+                          AND parseDateTimeBestEffort({{String(date_to,   '2099-12-31T23:59:59Z', required=True)}})
+          GROUP BY event
+          ORDER BY distinct_users DESC
+          LIMIT {{Int32(top, 20)}}
+        `,
+      }),
+    ],
+    output: {
+      event: t.string(),
+      distinct_users: t.uint64(),
+      event_count: t.uint64(),
+    },
+  },
+);
+
+export type TenantEventUserDistributionParams = InferParams<
+  typeof tenantEventUserDistribution
+>;
+export type TenantEventUserDistributionOutput = InferOutputRow<
+  typeof tenantEventUserDistribution
+>;
+
+/**
+ * Distribution of users by how many distinct days they were active
+ * within a single calendar month. Reads raw `events` (not the
+ * hourly agg) because the inner aggregation is `uniq(toDate(ts))`
+ * keyed on `end_user_id` — the agg can't pre-materialize that
+ * shape (per-user × per-day cardinality is unbounded).
+ *
+ * Buckets: '1d' | '2-3d' | '4-7d' | '8-15d' | '16-30d'.
+ *
+ * Param `year_month` is a "YYYY-MM" string (matches the storage
+ * convention of `mau_active_player.year_month` in Postgres). The
+ * pipe converts it to a UTC date range.
+ */
+export const tenantUserActiveDaysDistribution = defineEndpoint(
+  "tenant_user_active_days_distribution",
+  {
+    description:
+      "Distribution of end-users by number of distinct active days within a calendar month.",
+    params: {
+      org_id: p.string(),
+      year_month: p.string(),
+    },
+    nodes: [
+      node({
+        name: "endpoint",
+        sql: `
+          WITH user_days AS (
+            SELECT
+              end_user_id,
+              uniqExact(toDate(timestamp)) AS active_days
+            FROM events
+            WHERE org_id = {{String(org_id, '', required=True)}}
+              AND end_user_id != ''
+              AND toYYYYMM(timestamp) = toUInt32(replaceAll({{String(year_month, '', required=True)}}, '-', ''))
+            GROUP BY end_user_id
+          )
+          SELECT
+            multiIf(
+              active_days = 1,    '1d',
+              active_days <= 3,   '2-3d',
+              active_days <= 7,   '4-7d',
+              active_days <= 15,  '8-15d',
+                                  '16-30d'
+            ) AS bucket,
+            count() AS users,
+            multiIf(
+              active_days = 1,    1,
+              active_days <= 3,   2,
+              active_days <= 7,   3,
+              active_days <= 15,  4,
+                                  5
+            ) AS sort_key
+          FROM user_days
+          GROUP BY bucket, sort_key
+          ORDER BY sort_key
+        `,
+      }),
+    ],
+    output: {
+      bucket: t.string(),
+      users: t.uint64(),
+      sort_key: t.uint8(),
+    },
+  },
+);
+
+export type TenantUserActiveDaysDistributionParams = InferParams<
+  typeof tenantUserActiveDaysDistribution
+>;
+export type TenantUserActiveDaysDistributionOutput = InferOutputRow<
+  typeof tenantUserActiveDaysDistribution
+>;
+
 // ============================================================================
 // Client factory
 // ============================================================================
@@ -845,6 +1016,9 @@ export const tinybirdResources = {
     eventsToHourlyAgg,
     experimentMetricBreakdown,
     tenantMauBreakdown,
+    tenantDauTimeseries,
+    tenantEventUserDistribution,
+    tenantUserActiveDaysDistribution,
   },
 } as const;
 
