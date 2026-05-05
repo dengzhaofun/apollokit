@@ -2,7 +2,7 @@ import { useTenantParams } from "#/hooks/use-tenant-params"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -56,7 +56,7 @@ function TriggersListPage() {
   const archive = useArchiveTriggerRule()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="触发器"
         actions={
@@ -67,7 +67,7 @@ function TriggersListPage() {
         }
       />
 
-      <main className="flex-1 space-y-4 p-6">
+      <PageBody>
       <p className="max-w-3xl text-sm text-muted-foreground">
         {m.triggers_description()}
       </p>
@@ -176,7 +176,7 @@ function TriggersListPage() {
           </Table>
         </div>
       )}
-    </main>
-    </>
+    </PageBody>
+    </PageShell>
   )
 }

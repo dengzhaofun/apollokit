@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { BadgeNodeForm } from "#/components/badge/BadgeNodeForm"
 import { BadgeTemplatePicker } from "#/components/badge/BadgeTemplatePicker"
 import { useBadgeNodeForm } from "#/components/badge/use-node-form"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import {
@@ -35,7 +35,7 @@ function BadgeCreatePage() {
   const existingKeys = (existing ?? []).map((n) => n.key)
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.badge_new()}
         actions={
@@ -51,7 +51,7 @@ function BadgeCreatePage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "template" | "custom")}>
             <TabsList>
@@ -103,8 +103,8 @@ function BadgeCreatePage() {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

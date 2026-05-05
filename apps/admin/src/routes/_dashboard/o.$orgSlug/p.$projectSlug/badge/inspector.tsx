@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
 import { BadgeInspector } from "#/components/badge/BadgeInspector"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import * as m from "#/paraglide/messages.js"
 
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/badg
 function BadgeInspectorPage() {
   const { orgSlug, projectSlug } = useTenantParams()
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.badge_inspector_title()}
         description={m.badge_inspector_subtitle()}
@@ -31,11 +31,11 @@ function BadgeInspectorPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-5xl">
           <BadgeInspector />
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

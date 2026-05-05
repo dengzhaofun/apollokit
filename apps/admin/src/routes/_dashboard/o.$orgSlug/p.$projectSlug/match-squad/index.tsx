@@ -7,7 +7,7 @@ import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
 import { DataTable } from "#/components/data-table/DataTable"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { MatchSquadConfigForm } from "#/components/match-squad/MatchSquadConfigForm"
 import { useMatchSquadConfigForm } from "#/components/match-squad/use-config-form"
 import { Badge } from "#/components/ui/badge"
@@ -103,7 +103,7 @@ function TeamPage() {
   const columns = useColumns()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="队伍配置"
         actions={
@@ -114,7 +114,7 @@ function TeamPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <DataTable
           columns={columns}
           data={list.items}
@@ -131,7 +131,7 @@ function TeamPage() {
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
         />
-      </main>
+      </PageBody>
 
       {modal === "create" ? (
         <CreateTeamConfigDialog onClose={closeModal} />
@@ -139,7 +139,7 @@ function TeamPage() {
       {modal === "edit" && editingId ? (
         <EditTeamConfigDialog id={editingId} onClose={closeModal} />
       ) : null}
-    </>
+    </PageShell>
   )
 }
 

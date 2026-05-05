@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDialog } from "#/components/ui/form-dialog"
 import { Can } from "#/components/auth/Can"
@@ -42,7 +42,7 @@ function ItemCategoriesPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.item_categories()}
         actions={
@@ -55,9 +55,9 @@ function ItemCategoriesPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <CategoryTable route={Route} />
-      </main>
+      </PageBody>
 
       {modal === "create" ? (
         <CreateCategoryDialog onClose={closeModal} />
@@ -65,7 +65,7 @@ function ItemCategoriesPage() {
       {modal === "edit" && editingId ? (
         <EditCategoryDialog id={editingId} onClose={closeModal} />
       ) : null}
-    </>
+    </PageShell>
   )
 }
 

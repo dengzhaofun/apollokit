@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { FlaskConical, Plus } from "lucide-react"
 
 import { BadgeNodeTable } from "#/components/badge/BadgeNodeTable"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { useBadgeNodes } from "#/hooks/use-badge"
 import * as m from "#/paraglide/messages.js"
@@ -17,7 +17,7 @@ function BadgeListPage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="徽章"
         actions={<>
@@ -42,7 +42,7 @@ function BadgeListPage() {
         </>}
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         {isPending ? (
           <div className="flex h-40 items-center justify-center text-muted-foreground">
             {m.common_loading()}
@@ -56,7 +56,7 @@ function BadgeListPage() {
             <BadgeNodeTable data={items ?? []} />
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { BadgeNodeForm } from "#/components/badge/BadgeNodeForm"
 import { useBadgeNodeForm } from "#/components/badge/use-node-form"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +54,7 @@ function BadgeDetailPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.badge_new()}
         actions={<>
@@ -79,7 +79,7 @@ function BadgeDetailPage() {
         </>}
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl">
           {isPending || !node ? (
             <div className="flex h-40 items-center justify-center text-muted-foreground">
@@ -104,7 +104,7 @@ function BadgeDetailPage() {
             />
           )}
         </div>
-      </main>
+      </PageBody>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
@@ -125,7 +125,7 @@ function BadgeDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageShell>
   )
 }
 

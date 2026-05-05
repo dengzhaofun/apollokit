@@ -8,7 +8,7 @@ import { Button } from "#/components/ui/button"
 import { useCreateEntitySchema } from "#/hooks/use-entity"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/entity/schemas/create")({
   component: SchemaCreatePage,
@@ -20,7 +20,7 @@ function SchemaCreatePage() {
   const { orgSlug, projectSlug } = useTenantParams()
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.entity_new_schema()}
         actions={
@@ -35,7 +35,7 @@ function SchemaCreatePage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <div className="mx-auto max-w-3xl rounded-xl border bg-card p-6 shadow-sm">
           <SchemaForm
             submitLabel={m.common_create()}
@@ -58,7 +58,7 @@ function SchemaCreatePage() {
             }}
           />
         </div>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

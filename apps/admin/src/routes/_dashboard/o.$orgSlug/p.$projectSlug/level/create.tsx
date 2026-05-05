@@ -12,7 +12,7 @@ import { Textarea } from "#/components/ui/textarea"
 import { useCreateLevelConfig } from "#/hooks/use-level"
 import { ApiError } from "#/lib/api-client"
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/level/create")({
   component: LevelCreatePage,
@@ -56,7 +56,7 @@ function LevelCreatePage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title={m.level_new_config()}
         actions={
@@ -71,7 +71,7 @@ function LevelCreatePage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <form
           onSubmit={handleSubmit}
           className="mx-auto max-w-3xl space-y-6 rounded-xl border bg-card p-6 shadow-sm"
@@ -151,7 +151,7 @@ function LevelCreatePage() {
             </Button>
           </div>
         </form>
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }

@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 
 import * as m from "#/paraglide/messages.js"
-import { confirm, PageHeader } from "#/components/patterns"
+import { confirm, PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
 import { Input } from "#/components/ui/input"
@@ -52,7 +52,7 @@ function CategoriesPage() {
   const [editing, setEditing] = useState<TaskCategory | null>(null)
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="任务分类"
         actions={
@@ -78,7 +78,7 @@ function CategoriesPage() {
         }
       />
 
-      <main className="flex-1 space-y-3 p-6">
+      <PageBody>
         <div className="rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
@@ -138,8 +138,8 @@ function CategoriesPage() {
             </Button>
           </div>
         )}
-      </main>
-    </>
+      </PageBody>
+    </PageShell>
   )
 }
 

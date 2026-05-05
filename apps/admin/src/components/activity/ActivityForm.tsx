@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 
+const TIMEZONES = Intl.supportedValuesOf("timeZone")
+
 import { FormGrid, FormSection, JsonEditor } from "#/components/patterns"
 import { RewardEntryEditor } from "#/components/rewards/RewardEntryEditor"
 import { Button } from "#/components/ui/button"
@@ -244,11 +246,11 @@ export function ActivityForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="generic">{m.activity_kind_generic()}</SelectItem>
-                    <SelectItem value="check_in_only">check_in_only</SelectItem>
-                    <SelectItem value="board_game">board_game</SelectItem>
-                    <SelectItem value="gacha">gacha</SelectItem>
-                    <SelectItem value="season_pass">season_pass</SelectItem>
-                    <SelectItem value="custom">custom</SelectItem>
+                    <SelectItem value="check_in_only">{m.activity_kind_check_in_only()}</SelectItem>
+                    <SelectItem value="board_game">{m.activity_kind_board_game()}</SelectItem>
+                    <SelectItem value="gacha">{m.activity_kind_gacha()}</SelectItem>
+                    <SelectItem value="season_pass">{m.activity_kind_season_pass()}</SelectItem>
+                    <SelectItem value="custom">{m.activity_kind_custom()}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -259,11 +261,21 @@ export function ActivityForm({
             {(field) => (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={field.name}>{m.activity_field_timezone_label()}</Label>
-                <Input
-                  id={field.name}
+                <Select
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                  onValueChange={(v) => field.handleChange(v ?? "")}
+                >
+                  <SelectTrigger id={field.name} className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </form.Field>

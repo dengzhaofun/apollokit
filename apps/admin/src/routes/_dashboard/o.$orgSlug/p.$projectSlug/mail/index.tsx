@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import * as m from "#/paraglide/messages.js"
-import { PageHeader } from "#/components/patterns"
+import { PageBody, PageHeader, PageShell } from "#/components/patterns"
 import { Button } from "#/components/ui/button"
 import { FormDrawerWithAssist } from "#/components/ui/form-drawer-with-assist"
 import { Can } from "#/components/auth/Can"
@@ -40,7 +40,7 @@ function MailListPage() {
   }
 
   return (
-    <>
+    <PageShell>
       <PageHeader
         title="邮件"
         actions={
@@ -53,12 +53,12 @@ function MailListPage() {
         }
       />
 
-      <main className="flex-1 p-6">
+      <PageBody>
         <MessageTable route={Route} />
-      </main>
+      </PageBody>
 
       {modal === "create" ? <CreateMailDrawer onClose={closeModal} /> : null}
-    </>
+    </PageShell>
   )
 }
 
