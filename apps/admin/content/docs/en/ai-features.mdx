@@ -1,0 +1,137 @@
+---
+title: AI-Powered Operations
+description: ApolloKit's built-in AI agent system — form-fill, global assistant, smart suggestions, all driving faster ops configuration
+icon: Sparkles
+---
+
+ApolloKit ships a complete **AI agent system** that covers the full loop — from configuring a new campaign to optimizing existing settings. Ops teams don't need to learn every field. Just describe the outcome you want, and the AI handles the rest.
+
+---
+
+## AI Form-Fill Agent
+
+<Callout type="info" title="Where to find it">
+When creating or editing any supported module configuration in the dashboard, an AI conversation panel appears on the right side of the screen (or at the bottom on mobile).
+</Callout>
+
+**What it does:** You describe what you want in plain language. The agent parses your intent and fills in all the relevant configuration fields. You review and confirm.
+
+### Example Conversations
+
+> **Ops:** "Create a 7-day consecutive check-in: 100 coins on day 3, a rare item on day 7"
+>
+> **AI:** Automatically identifies the day count, reward types, and quantities — fills the entire check-in config — ready for one-click save
+
+> **Ops:** "Set up a lottery with pity: guaranteed SR at 10 pulls, guaranteed SSR at 50"
+>
+> **AI:** Configures pool tiers, pity counters, and trigger thresholds automatically
+
+### Modules with AI Form-Fill (14 modules)
+
+| Module | Module | Module |
+|--------|--------|--------|
+| Check-in | Announcements | Currency |
+| Lottery | Carousel Banner | Leaderboard |
+| System Mail | Redemption Codes | Rank / Division |
+| Shop | Character | Team |
+| Assist Pool | Badge | |
+
+### @-Mentioning Existing Resources
+
+Type `@` in the AI conversation to reference existing resources in the dashboard, so the AI can reference them precisely:
+
+- `@coins` → references your defined currency
+- `@rare-item` → references a specific item definition
+- `@daily-task` → references an existing task config
+
+---
+
+## Global AI Assistant
+
+<Callout type="info" title="Where to find it">
+The sparkle button (✨) fixed in the bottom-right corner of the dashboard. Available from any page, any time.
+</Callout>
+
+The global assistant is context-aware — it knows which page you're on and tailors its suggestions accordingly.
+
+**What it can do:**
+
+- **Answer questions:** "How does the pity counter work?" "Can redemption codes be limited to one use per person?"
+- **Smart suggestions:** Proactively suggest improvements for the configuration on the current page
+- **Apply changes with one click:** When the assistant proposes a modification, it shows a confirmation card — you approve and it takes effect immediately
+- **Cross-module consulting:** "How should I structure a new-player onboarding task chain?"
+- **Navigation guidance:** "Where do I configure mail attachments?" → The assistant navigates you there
+
+### Context Awareness in Action
+
+The assistant knows where you are, so you don't need to repeat the context:
+
+- On the check-in list page asking "How do I create one?" → The assistant walks you through the creation flow
+- On an activity edit page asking "Is this reward value reasonable?" → The assistant reads the current config and gives an assessment
+
+---
+
+## AI-Powered Documentation Search
+
+The docs site (this page) has built-in AI conversational search — click the search bar in the top right to use it.
+
+It's not just keyword matching. Ask real questions:
+
+> "How do I configure different reward tiers for a check-in campaign?"
+> "What's the relationship between lottery pity and prize pool tiers?"
+
+---
+
+## A Complete AI-Assisted Workflow
+
+Here's a full end-to-end ops scenario showing AI woven throughout:
+
+<Steps>
+<Step>
+
+### Decide on the Campaign
+
+Ops wants to ship a Golden Week 7-day check-in event with escalating rewards and a big prize on day 7. Open the Check-in module → New Configuration.
+
+</Step>
+<Step>
+
+### AI Fills the Form
+
+In the right-side AI panel, type: "Golden Week 7-day check-in, rewards increase each day, final day gets 1000 coins and a holiday gift box."
+
+The AI fills in: day count, per-day reward type and quantity, cycle settings, and config alias.
+
+</Step>
+<Step>
+
+### Review and Tweak
+
+Check the AI-filled parameters. Day 3's reward feels light — edit it directly in the form, or continue the conversation: "Change day 3 to 200 coins."
+
+</Step>
+<Step>
+
+### Save and Ship
+
+Confirm everything looks good, hit Save. The campaign is live immediately. Engineering does nothing.
+
+</Step>
+</Steps>
+
+**Zero code. No engineering tickets. From idea to live in under 10 minutes.**
+
+---
+
+## AI vs. Manual Configuration
+
+| | Manual Configuration | AI-Assisted |
+|--|---------------------|-------------|
+| **Configure a check-in campaign** | Learn every field, fill each one individually | Describe it in a sentence; AI fills everything |
+| **Adjust a reward value** | Find the field → edit → save | Tell the AI: "Change day 3 to 200" |
+| **Unfamiliar module** | Read the docs to understand each field | Ask the AI or let it guide you |
+| **Modify existing configs** | Edit each config one by one | Global assistant suggests batch changes + one-click apply |
+
+<Callout type="info">
+Want to see AI-assisted workflows in practice? Check the step-by-step scenarios in [Operator Quick Start](./for-operators).
+</Callout>
