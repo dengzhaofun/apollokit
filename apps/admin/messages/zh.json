@@ -3245,5 +3245,13 @@
   "aria_more_actions": "更多操作",
   "aria_loading_chart": "图表加载中",
   "members_more_actions": "更多操作",
-  "invitations_more_actions": "更多操作"
+  "invitations_more_actions": "更多操作",
+  "nav_platform": "平台",
+  "nav_modules": "模块",
+  "nav_workflow": "工作流",
+  "nav_developer": "开发者",
+  "nav_pricing": "定价",
+  "nav_docs": "文档",
+  "auth_sign_in": "登录",
+  "auth_sign_up_cta": "免费开始"
 }
