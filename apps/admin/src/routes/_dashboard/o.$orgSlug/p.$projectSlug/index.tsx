@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "#/components/ui/avatar"
 import { Button } from "#/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card"
 import { Skeleton } from "#/components/ui/skeleton"
+import { getLocale } from "#/paraglide/runtime.js"
 import { resolveOrgBySlug, resolveTeamBySlug } from "#/lib/tenant"
 import { seo } from "#/lib/seo"
 
@@ -126,7 +127,7 @@ function ProjectOverviewPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              SDK 接入指南详见 <a href="/docs" className="text-primary underline-offset-4 hover:underline">文档中心</a>。
+              SDK 接入指南详见 <a href={`/docs/${getLocale()}`} className="text-primary underline-offset-4 hover:underline">文档中心</a>。
             </p>
           </CardContent>
         </Card>

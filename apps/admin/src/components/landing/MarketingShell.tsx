@@ -44,7 +44,7 @@ function getNavLinks() {
     { label: m.nav_workflow(), href: "/#workflow", type: "anchor" as const },
     { label: m.nav_developer(), href: "/#developer", type: "anchor" as const },
     { label: m.nav_pricing(), href: "/pricing", type: "route" as const },
-    { label: m.nav_docs(), href: "/docs", type: "route" as const },
+    { label: m.nav_docs(), href: `/docs/${getLocale()}`, type: "route" as const },
   ]
 }
 
@@ -126,7 +126,7 @@ function Footer() {
               </a>
             </li>
             <li>
-              <a href="/docs" className="hover:text-foreground">
+              <a href={`/docs/${getLocale()}`} className="hover:text-foreground">
                 {t("文档", "Docs")}
               </a>
             </li>

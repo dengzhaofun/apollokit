@@ -202,7 +202,14 @@ function FumadocsLink({ href, prefetch, ...props }: ComponentPropsWithRef<'a'> &
   const currentPathname = useRouterState({ select: (s) => s.location.pathname })
   let resolvedHref = href ?? '#'
   if (href && (href.startsWith('./') || href.startsWith('../'))) {
-    const base = currentPathname.endsWith('/') ? currentPathname : currentPathname + '/'
+    // Treat the current pathname as a "file" (no trailing slash) so that
+    // `./sibling` resolves to the parent directory, e.g.
+    // `./feature-map` on `/docs/zh/why-apollokit` → `/docs/zh/feature-map`.
+    // Adding a trailing slash would make it a "directory" and produce the
+    // wrong path `/docs/zh/why-apollokit/feature-map` (404).
+    const base = currentPathname.endsWith('/')
+      ? currentPathname.slice(0, -1)
+      : currentPathname
     resolvedHref = new URL(href, `https://x${base}`).pathname
   }
   return (
