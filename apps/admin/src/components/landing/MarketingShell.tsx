@@ -52,11 +52,11 @@ function TopNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 font-black tracking-tight">
+        <Link to="/" className="flex shrink-0 items-center gap-2 font-black tracking-tight">
           <span className="grid size-7 overflow-hidden place-items-center rounded-lg bg-white">
             <img src="/logo192.png" alt="ApolloKit" className="size-full object-contain" />
           </span>
-          <span>ApolloKit</span>
+          <span className="whitespace-nowrap">ApolloKit</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           {getNavLinks().map((l) => (
@@ -67,7 +67,7 @@ function TopNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
-          <ThemeToggle />
+          <span className="hidden sm:contents"><ThemeToggle /></span>
           <Button
             render={
               <Link to="/auth/$authView" params={{ authView: "sign-in" }}>
@@ -203,7 +203,7 @@ export default function MarketingShell({
   children: React.ReactNode
 }) {
   return (
-    <div className="ak-landing min-h-screen bg-background text-foreground">
+    <div className="ak-landing min-h-screen overflow-x-hidden bg-background text-foreground">
       <TopNav />
       {children}
       <Footer />

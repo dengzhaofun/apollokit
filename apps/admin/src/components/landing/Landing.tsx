@@ -9,6 +9,8 @@ import {
   BookOpen,
   CalendarCheck,
   Check,
+  Cloud,
+  Code2,
   Coins,
   Contact,
   Database,
@@ -17,6 +19,7 @@ import {
   GalleryHorizontal,
   Gift,
   Globe,
+  History,
   KeyRound,
   Layers,
   LayoutGrid,
@@ -42,7 +45,6 @@ import {
   Trophy,
   UserPlus,
   Users,
-  Wand2,
   WandSparkles,
   Webhook,
   Zap,
@@ -747,7 +749,7 @@ function AICopilot() {
         }}
       />
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-        <div>
+        <div className="min-w-0">
           <SectionEyebrow>{m.landing_copilot_eyebrow()}</SectionEyebrow>
           <SectionTitle>
             {m.landing_copilot_title_line1()}
@@ -800,7 +802,7 @@ function AICopilot() {
           </div>
         </div>
 
-        <CopilotMock />
+        <div className="min-w-0"><CopilotMock /></div>
       </div>
     </section>
   )
@@ -959,7 +961,7 @@ function AnalyticsPreview() {
         }}
       />
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-        <div>
+        <div className="min-w-0">
           <SectionEyebrow>{m.landing_analytics_eyebrow()}</SectionEyebrow>
           <SectionTitle>
             {m.landing_analytics_title_line1()}
@@ -988,7 +990,7 @@ function AnalyticsPreview() {
           </div>
         </div>
 
-        <AnalyticsMock />
+        <div className="min-w-0"><AnalyticsMock /></div>
       </div>
     </section>
   )
@@ -1159,7 +1161,7 @@ function CodeShowcase() {
   return (
     <section id="developer" className="relative py-24">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-        <div>
+        <div className="min-w-0">
           <SectionEyebrow>{m.landing_dev_eyebrow()}</SectionEyebrow>
           <SectionTitle>{m.landing_dev_title()}</SectionTitle>
           <p className="mt-5 max-w-xl text-muted-foreground">
@@ -1186,7 +1188,7 @@ function CodeShowcase() {
           </ul>
         </div>
 
-        <CodeWindow />
+        <div className="min-w-0"><CodeWindow /></div>
       </div>
     </section>
   )
@@ -1325,8 +1327,8 @@ function EventsAndWebhooks() {
         </div>
 
         <div className="mt-16 grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-center">
-          <EventFlowDiagram />
-          <WebhookCodeWindow />
+          <div className="min-w-0"><EventFlowDiagram /></div>
+          <div className="min-w-0"><WebhookCodeWindow /></div>
         </div>
       </div>
     </section>
@@ -1556,30 +1558,43 @@ function WebhookCodeWindow() {
 }
 
 function Stack() {
-  const items = [
+  type StackVariant = "featured" | "compact" | "strip"
+  const items: { icon: LucideIcon; k: string; d: string; variant: StackVariant }[] = [
     {
+      icon: Globe,
       k: m.landing_stack_global_title(),
       d: m.landing_stack_global_desc(),
+      variant: "featured",
     },
     {
+      icon: Cloud,
       k: m.landing_stack_serverless_title(),
       d: m.landing_stack_serverless_desc(),
+      variant: "compact",
     },
     {
+      icon: Code2,
       k: m.landing_stack_sdk_title(),
       d: m.landing_stack_sdk_desc(),
+      variant: "compact",
     },
     {
+      icon: KeyRound,
       k: m.landing_stack_auth_title(),
       d: m.landing_stack_auth_desc(),
+      variant: "compact",
     },
     {
+      icon: Sparkles,
       k: m.landing_stack_ai_title(),
       d: m.landing_stack_ai_desc(),
+      variant: "compact",
     },
     {
+      icon: History,
       k: m.landing_stack_audit_title(),
       d: m.landing_stack_audit_desc(),
+      variant: "strip",
     },
   ]
   return (
@@ -1591,19 +1606,63 @@ function Stack() {
           {m.landing_stack_desc()}
         </p>
 
-        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((it) => (
-            <div
-              key={it.k}
-              className="group flex items-start gap-4 rounded-2xl border border-border bg-card/60 p-5 transition-colors hover:border-foreground/30"
-            >
-              <Wand2 className="mt-0.5 size-5 shrink-0 text-[var(--ak-accent-2)]" strokeWidth={1.75} />
-              <div>
-                <div className="font-semibold">{it.k}</div>
-                <div className="text-sm text-muted-foreground">{it.d}</div>
+        {/* Bento: Globe hero (col-span-2) | 4 compact (col-span-1) | History strip (col-span-3) */}
+        <div className="mt-12 grid gap-3 lg:grid-cols-3">
+          {items.map((it) => {
+            const Icon = it.icon
+
+            if (it.variant === "featured") {
+              return (
+                <div
+                  key={it.k}
+                  className="group relative overflow-hidden rounded-2xl border border-border bg-card/60 p-7 transition-[border-color,box-shadow] hover:border-[var(--ak-accent-2)]/40 hover:shadow-[0_20px_60px_-20px_var(--ak-glow-2)] lg:col-span-2"
+                >
+                  <div
+                    className="absolute inset-x-0 top-0 h-px"
+                    style={{ background: "linear-gradient(90deg, transparent, var(--ak-accent-2), transparent)" }}
+                    aria-hidden
+                  />
+                  <div className="mb-6 grid size-12 place-items-center rounded-xl bg-[var(--ak-accent-2)]/10 text-[var(--ak-accent-2)] ring-1 ring-[var(--ak-accent-2)]/25 transition-colors group-hover:bg-[var(--ak-accent-2)]/15">
+                    <Icon className="size-6" strokeWidth={1.5} />
+                  </div>
+                  <div className="text-xl font-bold tracking-tight">{it.k}</div>
+                  <div className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{it.d}</div>
+                </div>
+              )
+            }
+
+            if (it.variant === "strip") {
+              return (
+                <div
+                  key={it.k}
+                  className="group flex items-center gap-5 rounded-2xl border border-border bg-card/60 px-6 py-5 transition-colors hover:border-foreground/30 lg:col-span-3"
+                >
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-foreground/5 text-[var(--ak-accent-2)] ring-1 ring-border transition-colors group-hover:bg-[var(--ak-accent-2)]/10">
+                    <Icon className="size-5" strokeWidth={1.75} />
+                  </div>
+                  <div>
+                    <div className="font-semibold">{it.k}</div>
+                    <div className="text-sm text-muted-foreground">{it.d}</div>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div
+                key={it.k}
+                className="group flex items-start gap-4 rounded-2xl border border-border bg-card/60 p-5 transition-colors hover:border-foreground/30 lg:flex-col lg:gap-5 lg:p-6"
+              >
+                <div className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-foreground/5 text-[var(--ak-accent-2)] ring-1 ring-border transition-colors group-hover:bg-[var(--ak-accent-2)]/10 lg:mt-0">
+                  <Icon className="size-4.5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <div className="font-semibold">{it.k}</div>
+                  <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{it.d}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>
