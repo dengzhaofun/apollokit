@@ -365,8 +365,8 @@ function RequestsTrendChart() {
       <ErrorState
         title={m.dashboard_tinybird_status_error()}
         description={t(
-          "请到 Settings → API Keys 检查 Tinybird 连接,或确认服务端 TINYBIRD_TOKEN 已配置",
-          "Check Settings → API Keys for Tinybird connection, or confirm the server-side TINYBIRD_TOKEN is set."
+          "数据分析服务暂时不可用,请联系管理员或稍后重试",
+          "Analytics service is temporarily unavailable. Please contact your administrator or try again later."
         )}
         onRetry={() => refetch()}
         retryLabel={t("重试", "Retry")}

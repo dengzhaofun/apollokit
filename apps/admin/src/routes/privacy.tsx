@@ -64,7 +64,7 @@ function PrivacyPage() {
         <li>{t("每个会话的 IP 地址 + User-Agent + 创建 / 过期时间", "Per-session IP + User-Agent + creation / expiry timestamps")}</li>
         <li>{t("你创建 / 操作的项目、配置、API key 等业务数据", "Projects, configs, API keys you create / operate")}</li>
       </ul>
-      <h3>{t("2.2 服务端运行日志(Tinybird)", "2.2 Server-side request logs (Tinybird)")}</h3>
+      <h3>{t("2.2 服务端运行日志", "2.2 Server-side request logs")}</h3>
       <p>
         {t(
           "为保障可观测性和安全审计,我们对每个 HTTP 请求记录:方法、路径、状态码、耗时、IP 国家(非完整 IP)、User-Agent、组织 ID、关联 actor。日志保留 ",
@@ -104,7 +104,7 @@ function PrivacyPage() {
       <h2>{t("4. 数据保留", "4. Retention")}</h2>
       <ul>
         <li>{t("账户数据:账户存续期间持续保留,删除账户后 30 天内清除(法定保留期除外)。", "Account data: kept for the lifetime of the account; purged within 30 days of account deletion (except where law requires otherwise).")}</li>
-        <li>{t("Tinybird 请求日志:180 天滚动。", "Tinybird request logs: 180-day rolling window.")}</li>
+        <li>{t("服务端请求日志:180 天滚动。", "Server-side request logs: 180-day rolling window.")}</li>
         <li>{t("发票 / 计费记录:按所在司法辖区财税法规定保留(通常 7 年)。", "Invoices / billing records: retained per applicable tax law (typically 7 years).")}</li>
       </ul>
 
