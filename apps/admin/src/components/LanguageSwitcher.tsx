@@ -1,31 +1,29 @@
 import { getLocale, setLocale } from '../paraglide/runtime.js'
 import type { Locale } from '../paraglide/runtime.js'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  zh: '中文',
-}
+const LOCALES: { value: Locale; label: string }[] = [
+  { value: 'en', label: 'EN' },
+  { value: 'zh', label: '中' },
+]
 
 export function LanguageSwitcher() {
+  const current = getLocale()
   return (
-    <Select value={getLocale()} onValueChange={(v) => setLocale(v as Locale)}>
-      <SelectTrigger className="w-[100px]">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {Object.entries(LOCALE_LABELS).map(([locale, label]) => (
-          <SelectItem key={locale} value={locale}>
-            {label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex shrink-0 items-center rounded-lg border border-border bg-background p-0.5 text-sm">
+      {LOCALES.map(({ value, label }) => (
+        <button
+          key={value}
+          onClick={() => setLocale(value)}
+          className={[
+            'rounded-md px-2.5 py-1 font-medium transition-colors whitespace-nowrap',
+            current === value
+              ? 'bg-foreground text-background'
+              : 'text-muted-foreground hover:text-foreground',
+          ].join(' ')}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
