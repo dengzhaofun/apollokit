@@ -56,6 +56,7 @@ export const auth = betterAuth({
         // (Better Auth apikey plugin only supports `user` / `organization` for
         // references — see plan §2.3 / spike report).
         references: "organization",
+        enableMetadata: true,
       },
     ]),
     // Block compromised passwords against haveibeenpwned (k-anonymous, no
