@@ -64,14 +64,18 @@ export function FilterBar({ search, filters = [], actions, className }: FilterBa
         </div>
       )}
 
-      {filters.map((filter) => (
+      {filters.map((filter) => {
+        const allOption = { value: filter.allValue ?? "all", label: filter.label }
+        const allOptions = [allOption, ...filter.options]
+        const displayLabel = allOptions.find((o) => o.value === filter.value)?.label ?? filter.label
+        return (
         <Select
           key={filter.key}
           value={filter.value}
           onValueChange={((v: string | null) => filter.onChange(v ?? filter.allValue ?? "all")) as SelectChangeHandler}
         >
           <SelectTrigger className="w-auto min-w-[120px] shrink-0">
-            <SelectValue placeholder={filter.label} />
+            <SelectValue>{displayLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={filter.allValue ?? "all"}>
@@ -84,7 +88,8 @@ export function FilterBar({ search, filters = [], actions, className }: FilterBa
             ))}
           </SelectContent>
         </Select>
-      ))}
+        )
+      })}
 
       {actions && (
         <div className="ml-auto flex shrink-0 items-center gap-2">

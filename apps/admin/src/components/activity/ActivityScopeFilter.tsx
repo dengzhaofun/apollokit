@@ -43,6 +43,13 @@ export function ActivityScopeFilter({
         ? ALL
         : value.activityId
 
+  const selectLabel =
+    value.kind === "standalone"
+      ? m.activity_scope_standalone()
+      : value.kind === "all"
+        ? m.activity_scope_all()
+        : (activities ?? []).find((a) => a.id === value.activityId)?.name ?? selectValue
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground">{label ?? m.activity_scope_label()}</span>
@@ -55,7 +62,7 @@ export function ActivityScopeFilter({
         }}
       >
         <SelectTrigger className="h-8 w-auto min-w-48">
-          <SelectValue />
+          <SelectValue>{selectLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={STANDALONE}>{m.activity_scope_standalone()}</SelectItem>

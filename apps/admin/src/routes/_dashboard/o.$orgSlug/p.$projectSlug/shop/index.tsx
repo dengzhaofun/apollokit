@@ -321,6 +321,7 @@ interface FilterSelectProps {
 }
 
 function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
+  const displayLabel = options.find((o) => o.value === value)?.label ?? label
   return (
     <div className="space-y-1">
       <label className="text-xs font-medium text-muted-foreground">
@@ -328,7 +329,7 @@ function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
       </label>
       <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
         <SelectTrigger className="w-44">
-          <SelectValue />
+          <SelectValue>{displayLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options.map((o) => (
