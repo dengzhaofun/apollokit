@@ -16,6 +16,7 @@ import type {
   WebhookEndpoint,
   WebhookEndpointWithSecret,
 } from "#/lib/types/webhooks"
+import * as m from "#/paraglide/messages.js"
 
 const ENDPOINTS_KEY = ["webhooks", "endpoints"] as const
 const deliveriesKey = (endpointId: string) =>
@@ -30,6 +31,7 @@ export function useWebhookEndpoints(route: AnyRoute) {
     route,
     queryKey: ENDPOINTS_KEY,
     filterDefs: WEBHOOK_ENDPOINT_FILTER_DEFS,
+    searchPlaceholder: m.webhook_endpoint_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<WebhookEndpoint>>(
         `/api/v1/webhooks/endpoints?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -40,19 +42,19 @@ export function useWebhookEndpoints(route: AnyRoute) {
 export const WEBHOOK_DELIVERY_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "pending", label: "Pending" },
-      { value: "in_flight", label: "In flight" },
-      { value: "success", label: "Success" },
-      { value: "failed", label: "Failed" },
-      { value: "dead", label: "Dead" },
+      { value: "pending", label: m.filter_opt_pending() },
+      { value: "in_flight", label: m.filter_opt_in_flight() },
+      { value: "success", label: m.filter_opt_success() },
+      { value: "failed", label: m.filter_opt_failed() },
+      { value: "dead", label: m.filter_opt_dead() },
     ],
   },
   {
     id: "eventType",
-    label: "Event type",
+    label: m.filter_label_event_type(),
     type: "select",
     options: [],
   },

@@ -118,6 +118,8 @@ interface Options<T> {
   initialPageSize?: number
   searchDebounceMs?: number
   enabled?: boolean
+  /** Module-specific placeholder for the search input (overrides "Search…"). */
+  searchPlaceholder?: string
 }
 
 export interface UseListSearchReturn<T> {
@@ -175,6 +177,7 @@ export interface UseListSearchReturn<T> {
     searchValue: string
     onSearchChange: (value: string) => void
     isLoading: boolean
+    searchPlaceholder?: string
   }
 }
 
@@ -332,6 +335,7 @@ export function useListSearch<T>({
   initialPageSize = DEFAULT_PAGE_SIZE,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
   enabled = true,
+  searchPlaceholder,
 }: Options<T>): UseListSearchReturn<T> {
   const search = route.useSearch() as ListSearch
   const navigate = useNavigate({ from: route.fullPath })
@@ -593,6 +597,7 @@ export function useListSearch<T>({
       searchValue: searchInput,
       onSearchChange: setSearchInput,
       isLoading: query.isPending,
+      searchPlaceholder,
     },
   }
 }

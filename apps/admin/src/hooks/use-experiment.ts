@@ -38,6 +38,7 @@ import type {
   UpdateExperimentInput,
   UpdateVariantInput,
 } from "#/lib/types/experiment"
+import * as m from "#/paraglide/messages.js"
 
 const EXPERIMENTS_KEY = ["experiments"] as const
 const EXPERIMENT_STATS_KEY = ["experiment-stats"] as const
@@ -70,6 +71,7 @@ export function useExperiments(
     route,
     queryKey: [...EXPERIMENTS_KEY, { status: status ?? null }],
     filterDefs: EXPERIMENT_FILTER_DEFS,
+    searchPlaceholder: m.experiment_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Experiment>>(
         `/api/v1/experiment/experiments?${buildQs({

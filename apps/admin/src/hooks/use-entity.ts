@@ -21,6 +21,7 @@ import type {
   UpdateFormationConfigInput,
 } from "#/lib/types/entity"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const SCHEMAS_KEY = ["entity-schemas"] as const
 const BLUEPRINTS_KEY = ["entity-blueprints"] as const
@@ -38,6 +39,7 @@ export function useEntitySchemas(route: AnyRoute) {
     route,
     queryKey: SCHEMAS_KEY,
     filterDefs: ENTITY_SCHEMA_FILTER_DEFS,
+    searchPlaceholder: m.entity_schema_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EntitySchema>>(
         `/api/v1/entity/schemas?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -112,6 +114,7 @@ export function useEntityBlueprints(
       { schemaId: schemaId ?? null, activityId: effectiveActivityId },
     ],
     filterDefs: ENTITY_BLUEPRINT_FILTER_DEFS,
+    searchPlaceholder: m.entity_blueprint_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EntityBlueprint>>(
         `/api/v1/entity/blueprints?${buildQs({
@@ -236,6 +239,7 @@ export function useEntityFormationConfigs(route: AnyRoute) {
     route,
     queryKey: FORMATION_CONFIGS_KEY,
     filterDefs: ENTITY_FORMATION_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.entity_formation_config_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EntityFormationConfig>>(
         `/api/v1/entity/formation-configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,

@@ -131,6 +131,8 @@ interface Props<T> {
   /** Current search term — controlled input so route can debounce. */
   searchValue?: string
   onSearchChange?: (value: string) => void
+  /** Override the default "Search…" placeholder with a module-specific hint. */
+  searchPlaceholder?: string
 
   // ─── Filters (faceted + advanced) ───────────────────────────────────
   /** Declarative filter spec — drives the toolbar's facets and the
@@ -194,6 +196,7 @@ export function DataTable<T>({
   showSearch = true,
   searchValue,
   onSearchChange,
+  searchPlaceholder,
   filters,
   filterValues,
   onFilterChange,
@@ -253,7 +256,7 @@ export function DataTable<T>({
               <Input
                 value={searchValue ?? ""}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={m.data_table_search_placeholder()}
+                placeholder={searchPlaceholder ?? m.data_table_search_placeholder()}
                 className="pl-8"
               />
             </div>

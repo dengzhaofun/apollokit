@@ -17,6 +17,7 @@ import type {
   WithdrawResult,
 } from "#/lib/types/storage-box"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["storage-box-configs"] as const
 const DEPOSITS_KEY = ["storage-box-deposits"] as const
@@ -32,6 +33,7 @@ export function useStorageBoxConfigs(route: AnyRoute) {
     route,
     queryKey: CONFIGS_KEY,
     filterDefs: STORAGE_BOX_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.storage_box_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<StorageBoxConfig>>(
         `/api/v1/storage-box/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,

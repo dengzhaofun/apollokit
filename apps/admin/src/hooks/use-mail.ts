@@ -13,10 +13,21 @@ import type {
   MailMessage,
   MailMessageWithStats,
 } from "#/lib/types/mail"
+import * as m from "#/paraglide/messages.js"
 
 const MESSAGES_KEY = ["mail-messages"] as const
 
-export const MAIL_MESSAGE_FILTER_DEFS: FilterDef[] = []
+export const MAIL_MESSAGE_FILTER_DEFS: FilterDef[] = [
+  {
+    id: "targetType",
+    label: m.mail_filter_target_type(),
+    type: "select",
+    options: [
+      { value: "broadcast", label: m.mail_filter_target_type_broadcast() },
+      { value: "multicast", label: m.mail_filter_target_type_multicast() },
+    ],
+  },
+]
 
 /** Paginated mail messages — URL-driven. */
  
@@ -25,6 +36,7 @@ export function useMailMessages(route: AnyRoute) {
     route,
     queryKey: MESSAGES_KEY,
     filterDefs: MAIL_MESSAGE_FILTER_DEFS,
+    searchPlaceholder: m.mail_message_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<MailMessage>>(
         `/api/v1/mail/messages?${buildQs({ cursor, limit, q, adv, ...filters })}`,

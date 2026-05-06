@@ -15,6 +15,7 @@ import type {
   SyncEndUserResponse,
   UpdateEndUserInput,
 } from "#/lib/types/end-user"
+import * as m from "#/paraglide/messages.js"
 
 const END_USERS_KEY = ["end-user"] as const
 
@@ -32,28 +33,28 @@ const END_USERS_KEY = ["end-user"] as const
 export const END_USER_FILTER_DEFS: FilterDef[] = [
   {
     id: "origin",
-    label: "Origin",
+    label: m.filter_label_origin(),
     type: "select",
     options: [
-      { value: "managed", label: "Managed" },
-      { value: "synced", label: "Synced" },
+      { value: "managed", label: m.filter_opt_managed() },
+      { value: "synced", label: m.filter_opt_synced() },
     ],
   },
   {
     id: "disabled",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "boolean",
-    trueLabel: "Disabled",
-    falseLabel: "Active",
+    trueLabel: m.filter_opt_disabled(),
+    falseLabel: m.filter_opt_active(),
   },
   {
     id: "emailVerified",
-    label: "Email verified",
+    label: m.filter_label_email_verified(),
     type: "boolean",
   },
   {
     id: "createdAt",
-    label: "Created",
+    label: m.filter_label_created(),
     type: "dateRange",
   },
 ]
@@ -73,6 +74,7 @@ export function useEndUsers(route: AnyRoute) {
     route,
     queryKey: [...END_USERS_KEY, "list"],
     filterDefs: END_USER_FILTER_DEFS,
+    searchPlaceholder: m.end_user_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<EndUser>>(
         `/api/v1/end-user?${buildQs({

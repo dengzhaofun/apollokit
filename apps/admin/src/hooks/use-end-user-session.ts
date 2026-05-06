@@ -4,6 +4,7 @@ import type { AnyRoute } from "@tanstack/react-router"
 import { api } from "#/lib/api-client"
 import { qs as buildQs, useListSearch, type FilterDef, type Page } from "#/hooks/use-list-search"
 import type { EndUserSession } from "#/lib/types/end-user"
+import * as m from "#/paraglide/messages.js"
 
 const KEY = ["end-user-session"] as const
 const END_USERS_KEY = ["end-user"] as const
@@ -15,6 +16,7 @@ export function useEndUserSessions(route: AnyRoute) {
     route,
     queryKey: [...KEY, "list"],
     filterDefs: END_USER_SESSION_FILTER_DEFS,
+    searchPlaceholder: m.end_user_session_search_placeholder(),
     fetchPage: ({ cursor, limit }) =>
       api.get<Page<EndUserSession>>(
         `/api/v1/end-user/sessions?${buildQs({ cursor, limit })}`,

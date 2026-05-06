@@ -36,6 +36,7 @@ import type {
   UpdateCampaignInput,
   UpdateSpotInput,
 } from "#/lib/types/offline-check-in"
+import * as m from "#/paraglide/messages.js"
 
 const CAMPAIGNS_KEY = ["offline-checkin-campaigns"] as const
 
@@ -51,6 +52,7 @@ export function useOfflineCheckInCampaigns(
     route,
     queryKey: [...CAMPAIGNS_KEY, { status: status ?? null }],
     filterDefs: OFFLINE_CHECKIN_CAMPAIGN_FILTER_DEFS,
+    searchPlaceholder: m.offline_check_in_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<OfflineCheckInCampaign>>(
         `/api/v1/offline-check-in/campaigns?${buildQs({

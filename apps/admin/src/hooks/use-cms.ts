@@ -17,6 +17,7 @@ import type {
   UpdateCmsEntryInput,
   UpdateCmsTypeInput,
 } from "#/lib/types/cms"
+import * as m from "#/paraglide/messages.js"
 
 const TYPES_KEY = ["cms-types"] as const
 const entriesKey = (typeAlias: string) => ["cms-entries", typeAlias] as const
@@ -26,11 +27,11 @@ const entriesKey = (typeAlias: string) => ["cms-entries", typeAlias] as const
 export const CMS_TYPE_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "active", label: "Active" },
-      { value: "archived", label: "Archived" },
+      { value: "active", label: m.filter_opt_active() },
+      { value: "archived", label: m.filter_opt_archived() },
     ],
   },
 ]
@@ -42,6 +43,7 @@ export function useCmsTypes(route: AnyRoute) {
     route,
     queryKey: TYPES_KEY,
     filterDefs: CMS_TYPE_FILTER_DEFS,
+    searchPlaceholder: m.cms_type_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsType>>(
         `/api/v1/cms/types?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -108,12 +110,12 @@ export function useDeleteCmsType() {
 export const CMS_ENTRY_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "draft", label: "Draft" },
-      { value: "published", label: "Published" },
-      { value: "archived", label: "Archived" },
+      { value: "draft", label: m.filter_opt_draft() },
+      { value: "published", label: m.filter_opt_published() },
+      { value: "archived", label: m.filter_opt_archived() },
     ],
   },
   // groupKey + tag are technically filterable on the server but the
@@ -142,6 +144,7 @@ export function useCmsEntries(
       { status: status ?? null, groupKey: groupKey ?? null, tag: tag ?? null },
     ],
     filterDefs: CMS_ENTRY_FILTER_DEFS,
+    searchPlaceholder: m.cms_entry_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CmsEntry>>(
         `/api/v1/cms/types/${typeAlias}/entries?${buildQs({

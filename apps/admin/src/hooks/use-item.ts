@@ -21,6 +21,7 @@ import type {
   DeductItemsInput,
 } from "#/lib/types/item"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const CATEGORIES_KEY = ["item-categories"] as const
 const DEFINITIONS_KEY = ["item-definitions"] as const
@@ -42,6 +43,7 @@ export function useItemCategories(route: AnyRoute) {
     route,
     queryKey: CATEGORIES_KEY,
     filterDefs: ITEM_CATEGORY_FILTER_DEFS,
+    searchPlaceholder: m.item_category_search_placeholder(),
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<ItemCategory>>(
         `/api/v1/item/categories?${qs({ cursor, limit, q })}`,
@@ -113,7 +115,7 @@ export function buildItemDefinitionFilterDefs(
   return [
     {
       id: "categoryId",
-      label: "Category",
+      label: m.filter_label_category(),
       type: "select",
       options: (categories ?? []).map((c) => ({
         value: c.id,
@@ -134,6 +136,7 @@ export function useItemDefinitions(route: AnyRoute, filterDefs: FilterDef[]) {
     route,
     queryKey: DEFINITIONS_KEY,
     filterDefs,
+    searchPlaceholder: m.item_definition_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ItemDefinition>>(
         `/api/v1/item/definitions?${qs({

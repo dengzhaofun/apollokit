@@ -14,6 +14,7 @@ import type {
   UpdateConfigInput,
 } from "#/lib/types/check-in"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["check-in-configs"] as const
 
@@ -37,6 +38,7 @@ export function useCheckInConfigs(
       { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: CHECK_IN_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.check_in_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CheckInConfig>>(
         `/api/v1/check-in/configs?${buildQs({

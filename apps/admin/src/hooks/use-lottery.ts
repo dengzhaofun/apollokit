@@ -26,6 +26,7 @@ import type {
   PullResult,
 } from "#/lib/types/lottery"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const POOLS_KEY = ["lottery-pools"] as const
 
@@ -53,6 +54,7 @@ export function useLotteryPools(
       { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: LOTTERY_POOL_FILTER_DEFS,
+    searchPlaceholder: m.lottery_pool_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPool>>(
         `/api/v1/lottery/pools?${buildQs({
@@ -133,6 +135,7 @@ export function useLotteryTiers(poolKey: string, route: AnyRoute) {
     route,
     queryKey: ["lottery-tiers", poolKey],
     filterDefs: LOTTERY_TIER_FILTER_DEFS,
+    searchPlaceholder: m.lottery_tier_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryTier>>(
         `/api/v1/lottery/pools/${poolKey}/tiers?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -202,6 +205,7 @@ export function useLotteryPrizes(poolKey: string, route: AnyRoute) {
     route,
     queryKey: ["lottery-prizes", poolKey],
     filterDefs: LOTTERY_PRIZE_FILTER_DEFS,
+    searchPlaceholder: m.lottery_prize_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPrize>>(
         `/api/v1/lottery/pools/${poolKey}/prizes?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -276,6 +280,7 @@ export function useLotteryPityRules(poolKey: string, route: AnyRoute) {
     route,
     queryKey: ["lottery-pity-rules", poolKey],
     filterDefs: LOTTERY_PITY_RULE_FILTER_DEFS,
+    searchPlaceholder: m.lottery_pity_rule_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LotteryPityRule>>(
         `/api/v1/lottery/pools/${poolKey}/pity-rules?${buildQs({ cursor, limit, q, adv, ...filters })}`,
