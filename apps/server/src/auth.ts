@@ -249,6 +249,7 @@ function buildAdminAuth() {
           configId: "admin",
           defaultPrefix: "ak_",
           references: "organization",
+          enableMetadata: true,
         },
       ]),
       // Platform-level admin (NOT to be confused with the per-tenant
