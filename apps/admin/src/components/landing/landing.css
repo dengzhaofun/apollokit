@@ -173,3 +173,24 @@
 .ak-pulse {
   animation: ak-pulse 2.4s ease-in-out infinite;
 }
+
+/* Module ticker infinite scroll */
+@keyframes ak-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ak-ticker {
+  animation: ak-marquee 48s linear infinite;
+  width: max-content;
+}
+
+.ak-ticker:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-ticker {
+    animation: none;
+  }
+}

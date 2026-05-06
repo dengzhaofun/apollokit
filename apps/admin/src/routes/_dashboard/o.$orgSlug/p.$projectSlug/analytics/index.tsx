@@ -10,7 +10,8 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { LayoutDashboard } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
+import { motion, useInView } from "motion/react"
 import {
   CartesianGrid,
   Line,
@@ -242,6 +243,8 @@ function FunnelBars({
   completed: number
   dropped: number
 }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, amount: 0.4 })
   const max = Math.max(joined, 1)
   const rows: Array<{ label: string; n: number; tone: string }> = [
     {
@@ -261,14 +264,16 @@ function FunnelBars({
     },
   ]
   return (
-    <div className="space-y-2">
-      {rows.map((r) => (
+    <div className="space-y-2" ref={ref}>
+      {rows.map((r, i) => (
         <div key={r.label} className="flex items-center gap-3 text-sm">
           <span className="w-24 text-muted-foreground">{r.label}</span>
-          <div className="relative h-5 flex-1 rounded bg-muted">
-            <div
+          <div className="relative h-5 flex-1 rounded bg-muted overflow-hidden">
+            <motion.div
               className={`absolute inset-y-0 left-0 rounded ${r.tone}`}
-              style={{ width: `${Math.max(2, (r.n / max) * 100)}%` }}
+              initial={{ width: 0 }}
+              animate={isInView ? { width: `${Math.max(2, (r.n / max) * 100)}%` } : { width: 0 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 }}
             />
           </div>
           <span className="w-16 text-right font-mono">
