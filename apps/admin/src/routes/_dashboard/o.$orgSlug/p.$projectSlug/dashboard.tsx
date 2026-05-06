@@ -429,7 +429,7 @@ function RequestsTrendChart() {
           stroke="var(--color-requests)"
           strokeWidth={2}
           dot={false}
-          isAnimationActive={false}
+          isAnimationActive={true}
         />
         <Line
           dataKey="errors"
@@ -437,7 +437,7 @@ function RequestsTrendChart() {
           stroke="var(--color-errors)"
           strokeWidth={2}
           dot={false}
-          isAnimationActive={false}
+          isAnimationActive={true}
         />
         <ChartLegend content={<ChartLegendContent />} />
       </LineChart>

@@ -1,4 +1,7 @@
+import { useRef } from "react";
 import { Link } from "@tanstack/react-router";
+import { motion, useInView, useMotionValue, useSpring, useTransform } from "motion/react";
+import { FractalDotGrid } from "#/components/ui/bg-animated-fractal-dot-grid";
 import {
   Activity,
   ArrowRight,
@@ -324,10 +327,28 @@ function Hero() {
             </a>
           </div>
 
-          <h1 className="mt-6 text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
-            {m.landing_hero_h1_line1()}
-            <br />
-            <span className="relative inline-block">
+          <motion.h1
+            className="mt-6 text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } } }}
+          >
+            <motion.span
+              className="block"
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+              }}
+            >
+              {m.landing_hero_h1_line1()}
+            </motion.span>
+            <motion.span
+              className="relative inline-block"
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+              }}
+            >
               <span className="bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)] bg-clip-text text-transparent">
                 {m.landing_hero_h1_line2()}
               </span>
@@ -345,8 +366,8 @@ function Hero() {
                   fill="none"
                 />
               </svg>
-            </span>
-          </h1>
+            </motion.span>
+          </motion.h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
             {m.landing_hero_desc({ count: "30" })}
@@ -426,8 +447,31 @@ function CapabilityCard({
   desc: string
   tag: string
 }) {
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const springX = useSpring(mouseX, { stiffness: 300, damping: 30 })
+  const springY = useSpring(mouseY, { stiffness: 300, damping: 30 })
+  const rotateX = useTransform(springY, [-0.5, 0.5], [6, -6])
+  const rotateY = useTransform(springX, [-0.5, 0.5], [-6, 6])
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+
+  function handleMouseLeave() {
+    mouseX.set(0)
+    mouseY.set(0)
+  }
+
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-[0_20px_60px_-20px_var(--ak-glow-1)]">
+    <motion.div
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-[border-color,box-shadow] hover:border-foreground/30 hover:shadow-[0_20px_60px_-20px_var(--ak-glow-1)]"
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       <div
         className="absolute inset-x-0 top-0 h-px"
         style={{
@@ -437,7 +481,7 @@ function CapabilityCard({
         aria-hidden
       />
       <div className="flex items-center gap-3">
-        <div className="grid size-10 place-items-center rounded-xl bg-foreground/5 text-foreground ring-1 ring-border group-hover:bg-[var(--ak-accent-2)]/10 group-hover:text-[var(--ak-accent-2)]">
+        <div className="grid size-10 place-items-center rounded-xl bg-foreground/5 text-foreground ring-1 ring-border group-hover:bg-[var(--ak-accent-2)]/10 group-hover:text-[var(--ak-accent-2)] transition-colors">
           <Icon className="size-5" strokeWidth={1.75} />
         </div>
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
@@ -446,6 +490,29 @@ function CapabilityCard({
       </div>
       <h3 className="mt-5 text-xl font-bold tracking-tight">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+    </motion.div>
+  )
+}
+
+function ModuleTicker() {
+  const items = getModuleGroups().flatMap((g) => g.items)
+  const doubled = [...items, ...items]
+  return (
+    <div
+      className="overflow-hidden border-y border-border/40 bg-background/50 py-3 backdrop-blur-sm"
+      aria-hidden
+    >
+      <div className="ak-ticker flex gap-10">
+        {doubled.map((item, i) => {
+          const Icon = item.icon
+          return (
+            <div key={i} className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground/70">
+              <Icon className="size-3.5 text-foreground/25" strokeWidth={1.75} />
+              <span className="whitespace-nowrap font-medium">{item.name}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -928,6 +995,9 @@ function AnalyticsPreview() {
 }
 
 function AnalyticsMock() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const inView = useInView(containerRef, { once: true, amount: 0.25 })
+  const ref = { containerRef, inView }
   const kpis = [
     { k: m.landing_analytics_mock_kpi_dau(), v: "12,481", d: "+8.4%" },
     { k: m.landing_analytics_mock_kpi_retention(), v: "38%", d: "+2.1pt" },
@@ -940,7 +1010,7 @@ function AnalyticsMock() {
     { name: m.landing_analytics_mock_funnel_d7(), pct: 38, count: "12,213" },
   ]
   return (
-    <div className="relative">
+    <div className="relative" ref={ref.containerRef}>
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card/60 shadow-[0_30px_80px_-30px_var(--ak-glow-1)] backdrop-blur-sm">
         <div className="flex items-center gap-2 border-b border-border/70 bg-background/40 px-4 py-3">
           <span className="size-3 rounded-full bg-red-400/80" />
@@ -956,12 +1026,15 @@ function AnalyticsMock() {
         </div>
 
         <div className="space-y-5 p-5">
-          {/* KPI cards */}
+          {/* KPI cards — staggered fade-in + slide-up */}
           <div className="grid grid-cols-3 gap-3">
-            {kpis.map((k) => (
-              <div
+            {kpis.map((k, i) => (
+              <motion.div
                 key={k.k}
                 className="rounded-xl border border-border bg-background/60 p-3"
+                initial={{ opacity: 0, y: 12 }}
+                animate={ref.inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.08 }}
               >
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   {k.k}
@@ -972,12 +1045,17 @@ function AnalyticsMock() {
                 <div className="mt-0.5 text-[11px] font-semibold text-emerald-500">
                   {k.d}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
-          {/* Sparkline */}
-          <div className="rounded-xl border border-border bg-background/60 p-4">
+          {/* Sparkline — SVG lines draw in from left */}
+          <motion.div
+            className="rounded-xl border border-border bg-background/60 p-4"
+            initial={{ opacity: 0, y: 8 }}
+            animate={ref.inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+          >
             <div className="mb-2 flex items-baseline justify-between">
               <div className="text-xs font-semibold">{m.landing_analytics_mock_chart_title()}</div>
               <div className="flex gap-3 font-mono text-[10px] text-muted-foreground">
@@ -997,46 +1075,49 @@ function AnalyticsMock() {
               preserveAspectRatio="none"
               aria-hidden
             >
-              {/* grid baseline */}
-              <line
-                x1="0"
-                y1="60"
-                x2="320"
-                y2="60"
-                stroke="currentColor"
-                strokeWidth="1"
-                opacity="0.08"
-                strokeDasharray="2 4"
+              <line x1="0" y1="60" x2="320" y2="60" stroke="currentColor" strokeWidth="1" opacity="0.08" strokeDasharray="2 4" />
+              {/* DAU area fill — fades in */}
+              <motion.path
+                d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18 L 320 80 L 0 80 Z"
+                fill="var(--ak-accent)"
+                initial={{ opacity: 0 }}
+                animate={ref.inView ? { opacity: 0.08 } : { opacity: 0 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
               />
-              {/* main curve (DAU) */}
-              <path
+              {/* DAU line — draws from left */}
+              <motion.path
                 d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18"
                 fill="none"
                 stroke="var(--ak-accent)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={ref.inView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                transition={{ duration: 0.9, ease: "easeOut", delay: 0.45 }}
               />
-              {/* DAU area fill */}
-              <path
-                d="M0 55 L 25 50 L 50 52 L 75 42 L 100 38 L 125 30 L 150 28 L 175 32 L 200 24 L 225 22 L 250 18 L 275 16 L 300 14 L 320 18 L 320 80 L 0 80 Z"
-                fill="var(--ak-accent)"
-                opacity="0.08"
-              />
-              {/* paying curve */}
-              <path
+              {/* Paying line — draws slightly after */}
+              <motion.path
                 d="M0 70 L 25 68 L 50 65 L 75 62 L 100 60 L 125 56 L 150 58 L 175 52 L 200 50 L 225 48 L 250 44 L 275 42 L 300 38 L 320 40"
                 fill="none"
                 stroke="var(--ak-accent-2)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={ref.inView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                transition={{ duration: 0.9, ease: "easeOut", delay: 0.6 }}
               />
             </svg>
-          </div>
+          </motion.div>
 
-          {/* Funnel */}
-          <div className="rounded-xl border border-border bg-background/60 p-4">
+          {/* Funnel — bars slide in from left, staggered */}
+          <motion.div
+            className="rounded-xl border border-border bg-background/60 p-4"
+            initial={{ opacity: 0, y: 8 }}
+            animate={ref.inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
+          >
             <div className="mb-3 flex items-baseline justify-between">
               <div className="text-xs font-semibold">{m.landing_analytics_mock_funnel_title()}</div>
               <div className="font-mono text-[10px] text-muted-foreground">
@@ -1044,15 +1125,17 @@ function AnalyticsMock() {
               </div>
             </div>
             <div className="space-y-2">
-              {funnel.map((s) => (
+              {funnel.map((s, i) => (
                 <div key={s.name} className="flex items-center gap-3">
                   <div className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">
                     {s.name}
                   </div>
                   <div className="relative h-5 flex-1 overflow-hidden rounded-md bg-foreground/5">
-                    <div
+                    <motion.div
                       className="absolute inset-y-0 left-0 rounded-md bg-gradient-to-r from-[var(--ak-accent)] via-[var(--ak-accent-2)] to-[var(--ak-accent-3)]/70"
-                      style={{ width: `${s.pct}%` }}
+                      initial={{ width: 0 }}
+                      animate={ref.inView ? { width: `${s.pct}%` } : { width: 0 }}
+                      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.65 + i * 0.09 }}
                     />
                     <div className="relative z-10 flex h-full items-center px-2 font-mono text-[10px] font-semibold text-foreground/90 mix-blend-luminosity">
                       {s.pct}%
@@ -1064,12 +1147,13 @@ function AnalyticsMock() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
   )
 }
+
 
 function CodeShowcase() {
   return (
@@ -1531,6 +1615,19 @@ function FinalCTA() {
     <section className="relative py-24">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-background via-background to-card px-8 py-14 text-center shadow-[0_40px_120px_-40px_var(--ak-glow-1)] md:px-12 md:py-20">
+          {/* Interactive fractal dot background */}
+          <div className="absolute inset-0 opacity-20 dark:opacity-30">
+            <FractalDotGrid
+              dotColor="oklch(0.72 0.18 258)"
+              glowColor="oklch(0.78 0.17 198)"
+              dotSize={2}
+              dotSpacing={28}
+              dotOpacity={0.6}
+              enableMouseGlow
+              waveIntensity={12}
+              waveRadius={100}
+            />
+          </div>
           <div
             className="ak-glow"
             style={{
@@ -1695,6 +1792,7 @@ export default function Landing() {
   return (
     <MarketingShell>
       <Hero />
+      <ModuleTicker />
       <Capabilities />
       <ModuleMatrix />
       <Workflow />

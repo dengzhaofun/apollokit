@@ -1,5 +1,6 @@
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import { motion } from "motion/react"
 
 import { Card, CardContent } from "#/components/ui/card"
 import { StatusBadge, type StatusValue } from "#/components/ui/status-badge"
@@ -46,7 +47,11 @@ export function StatCard({
   hint,
 }: StatCardProps) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-[0_1px_3px_oklch(0_0_0/0.06),0_0_0_1px_oklch(0_0_0/0.07)] dark:shadow-[0_1px_4px_oklch(0_0_0/0.35),0_0_0_1px_oklch(1_0_0/0.08)] transition-colors hover:border-border-strong",
         error && "border-dashed border-border",
@@ -86,7 +91,7 @@ export function StatCard({
       {trend && trend.length > 1 && !loading && !error && (
         <Sparkline values={trend} color={trendColor ?? "var(--brand)"} />
       )}
-    </div>
+    </motion.div>
   )
 }
 
