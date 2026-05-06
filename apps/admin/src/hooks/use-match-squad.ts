@@ -14,6 +14,7 @@ import type {
   MatchSquadConfig,
   UpdateMatchSquadConfigInput,
 } from "#/lib/types/match-squad"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["team-configs"] as const
 const TEAMS_KEY = ["teams"] as const
@@ -27,6 +28,7 @@ export function useMatchSquadConfigs(route: AnyRoute) {
     route,
     queryKey: CONFIGS_KEY,
     filterDefs: TEAM_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.match_squad_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<MatchSquadConfig>>(
         `/api/v1/match-squad/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -82,13 +84,13 @@ export function useDeleteMatchSquadConfig() {
 export const TEAM_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "open", label: "Open" },
-      { value: "closed", label: "Closed" },
-      { value: "in_game", label: "In game" },
-      { value: "dissolved", label: "Dissolved" },
+      { value: "open", label: m.filter_opt_open() },
+      { value: "closed", label: m.filter_opt_closed() },
+      { value: "in_game", label: m.filter_opt_in_game() },
+      { value: "dissolved", label: m.filter_opt_dissolved() },
     ],
   },
 ]

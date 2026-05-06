@@ -23,6 +23,7 @@ import type {
   UpdateRankSeasonInput,
   UpdateRankTierConfigInput,
 } from "#/lib/types/rank"
+import * as m from "#/paraglide/messages.js"
 
 const TIER_CONFIGS_KEY = ["rank", "tier-configs"] as const
 const SEASONS_KEY = ["rank", "seasons"] as const
@@ -95,17 +96,17 @@ export function useDeleteRankTierConfig() {
 export const RANK_SEASON_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "upcoming", label: "Upcoming" },
-      { value: "active", label: "Active" },
-      { value: "finished", label: "Finished" },
+      { value: "upcoming", label: m.filter_opt_upcoming() },
+      { value: "active", label: m.filter_opt_active() },
+      { value: "finished", label: m.filter_opt_finished() },
     ],
   },
   {
     id: "tierConfigId",
-    label: "Tier config",
+    label: m.filter_label_tier_config(),
     type: "select",
     options: [],
   },
@@ -118,6 +119,7 @@ export function useRankSeasons(route: AnyRoute) {
     route,
     queryKey: SEASONS_KEY,
     filterDefs: RANK_SEASON_FILTER_DEFS,
+    searchPlaceholder: m.rank_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<RankSeason>>(
         `/api/v1/rank/seasons?${buildQs({ cursor, limit, q, adv, ...filters })}`,

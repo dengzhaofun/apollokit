@@ -15,6 +15,7 @@ import type {
   CreateAssistPoolConfigInput,
   UpdateAssistPoolConfigInput,
 } from "#/lib/types/assist-pool"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["assist-pool-configs"] as const
 const INSTANCES_KEY = ["assist-pool-instances"] as const
@@ -38,6 +39,7 @@ export function useAssistPoolConfigs(
       { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: ASSIST_POOL_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.assist_pool_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<AssistPoolConfig>>(
         `/api/v1/assist-pool/configs?${buildQs({

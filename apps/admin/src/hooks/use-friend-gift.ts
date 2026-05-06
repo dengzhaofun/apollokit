@@ -19,6 +19,7 @@ import type {
   UpdateFriendGiftPackageInput,
   UpsertFriendGiftSettingsInput,
 } from "#/lib/types/friend-gift"
+import * as m from "#/paraglide/messages.js"
 
 const SETTINGS_KEY = ["friend-gift-settings"] as const
 const PACKAGES_KEY = ["friend-gift-packages"] as const
@@ -47,6 +48,7 @@ export function useFriendGiftPackages(route: AnyRoute) {
     route,
     queryKey: PACKAGES_KEY,
     filterDefs: FRIEND_GIFT_PACKAGE_FILTER_DEFS,
+    searchPlaceholder: m.friend_gift_search_placeholder(),
     fetchPage: ({ cursor, limit, q }) =>
       api.get<Page<FriendGiftPackage>>(
         `/api/v1/friend-gift/packages?${buildQs({ cursor, limit, q })}`,

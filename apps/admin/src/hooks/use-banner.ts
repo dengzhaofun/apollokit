@@ -17,6 +17,7 @@ import type {
   UpdateBannerGroupInput,
   UpdateBannerInput,
 } from "#/lib/types/banner"
+import * as m from "#/paraglide/messages.js"
 
 const GROUPS_KEY = ["banner-groups"] as const
 const bannersKey = (groupId: string) =>
@@ -43,6 +44,7 @@ export function useBannerGroups(
       { activityId: effectiveActivityId, includeActivity: !!includeActivity },
     ],
     filterDefs: BANNER_GROUP_FILTER_DEFS,
+    searchPlaceholder: m.banner_group_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<BannerGroup>>(
         `/api/v1/banner/groups?${buildQs({
@@ -128,6 +130,7 @@ export function useBanners(groupId: string, route: AnyRoute) {
     route,
     queryKey: bannersKey(groupId),
     filterDefs: BANNER_FILTER_DEFS,
+    searchPlaceholder: m.banner_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Banner>>(
         `/api/v1/banner/groups/${groupId}/banners?${buildQs({ cursor, limit, q, adv, ...filters })}`,

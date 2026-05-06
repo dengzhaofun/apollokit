@@ -19,6 +19,7 @@ import type {
   UpdateCategoryInput,
   UpdateDefinitionInput,
 } from "#/lib/types/task"
+import * as m from "#/paraglide/messages.js"
 
 const CATEGORIES_KEY = ["task-categories"] as const
 const categoryKey = (id: string) => ["task-category", id] as const
@@ -30,20 +31,20 @@ const definitionKey = (key: string) => ["task-definition", key] as const
 export const TASK_CATEGORY_FILTER_DEFS: FilterDef[] = [
   {
     id: "scope",
-    label: "Scope",
+    label: m.filter_label_scope(),
     type: "select",
     options: [
-      { value: "task", label: "Task" },
-      { value: "achievement", label: "Achievement" },
-      { value: "custom", label: "Custom" },
+      { value: "task", label: m.filter_opt_task() },
+      { value: "achievement", label: m.filter_opt_achievement() },
+      { value: "custom", label: m.filter_opt_custom() },
     ],
   },
   {
     id: "isActive",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "boolean",
-    trueLabel: "Active",
-    falseLabel: "Inactive",
+    trueLabel: m.filter_opt_active(),
+    falseLabel: m.filter_opt_inactive(),
   },
 ]
 
@@ -54,6 +55,7 @@ export function useTaskCategories(route: AnyRoute) {
     route,
     queryKey: CATEGORIES_KEY,
     filterDefs: TASK_CATEGORY_FILTER_DEFS,
+    searchPlaceholder: m.task_category_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<TaskCategory>>(
         `/api/v1/task/categories?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -114,47 +116,47 @@ export function useDeleteTaskCategory() {
 export const TASK_DEFINITION_FILTER_DEFS: FilterDef[] = [
   {
     id: "period",
-    label: "Period",
+    label: m.filter_label_period(),
     type: "select",
     options: [
-      { value: "daily", label: "Daily" },
-      { value: "weekly", label: "Weekly" },
-      { value: "monthly", label: "Monthly" },
-      { value: "none", label: "None" },
+      { value: "daily", label: m.filter_opt_daily() },
+      { value: "weekly", label: m.filter_opt_weekly() },
+      { value: "monthly", label: m.filter_opt_monthly() },
+      { value: "none", label: m.filter_opt_none() },
     ],
   },
   {
     id: "countingMethod",
-    label: "Counting method",
+    label: m.filter_label_counting_method(),
     type: "select",
     options: [
-      { value: "increment", label: "Increment" },
-      { value: "snapshot", label: "Snapshot" },
-      { value: "max", label: "Max" },
+      { value: "increment", label: m.filter_opt_increment() },
+      { value: "snapshot", label: m.filter_opt_snapshot() },
+      { value: "max", label: m.filter_opt_max() },
     ],
   },
   {
     id: "visibility",
-    label: "Visibility",
+    label: m.filter_label_visibility(),
     type: "select",
     options: [
-      { value: "broadcast", label: "Broadcast" },
-      { value: "assigned", label: "Assigned" },
+      { value: "broadcast", label: m.filter_opt_broadcast() },
+      { value: "assigned", label: m.filter_opt_assigned() },
     ],
   },
   {
     id: "isActive",
-    label: "Active",
+    label: m.filter_label_active(),
     type: "boolean",
   },
   {
     id: "isHidden",
-    label: "Hidden",
+    label: m.filter_label_hidden(),
     type: "boolean",
   },
   {
     id: "categoryId",
-    label: "Category",
+    label: m.filter_label_category(),
     type: "select",
     // Options are populated dynamically by the consumer if needed; the
     // hook only writes string values to the URL key.
@@ -195,6 +197,7 @@ export function useTaskDefinitions(
       },
     ],
     filterDefs: TASK_DEFINITION_FILTER_DEFS,
+    searchPlaceholder: m.task_definition_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<TaskDefinition>>(
         `/api/v1/task/definitions?${buildQs({

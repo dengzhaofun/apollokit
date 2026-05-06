@@ -13,6 +13,7 @@ import {
   type Page,
 } from "#/hooks/use-list-search"
 import type { AuditLog } from "#/lib/types/audit-log"
+import * as m from "#/paraglide/messages.js"
 
 const KEY = ["audit-logs"] as const
 
@@ -24,45 +25,45 @@ const KEY = ["audit-logs"] as const
 export const AUDIT_LOG_FILTER_DEFS_BASE: FilterDef[] = [
   {
     id: "actorType",
-    label: "Actor type",
+    label: m.filter_label_actor_type(),
     type: "select",
     options: [
-      { value: "user", label: "User" },
-      { value: "admin-api-key", label: "Admin API key" },
-      { value: "system", label: "System" },
+      { value: "user", label: m.filter_opt_user() },
+      { value: "admin-api-key", label: m.filter_opt_admin_api_key() },
+      { value: "system", label: m.filter_opt_system() },
     ],
   },
   {
     id: "actorId",
-    label: "Actor ID",
+    label: m.filter_label_actor_id(),
     type: "select",
     options: [], // free-form text input, no preset values
   },
   {
     id: "resourceType",
-    label: "Resource type",
+    label: m.filter_label_resource_type(),
     type: "select",
     options: [], // populated at runtime
   },
   {
     id: "resourceId",
-    label: "Resource ID",
+    label: m.filter_label_resource_id(),
     type: "select",
     options: [],
   },
   {
     id: "action",
-    label: "Action",
+    label: m.filter_label_action(),
     type: "select",
     options: [
-      { value: "create", label: "Create" },
-      { value: "update", label: "Update" },
-      { value: "delete", label: "Delete" },
+      { value: "create", label: m.filter_opt_create() },
+      { value: "update", label: m.filter_opt_update() },
+      { value: "delete", label: m.filter_opt_delete() },
     ],
   },
   {
     id: "method",
-    label: "Method",
+    label: m.filter_label_method(),
     type: "multiselect",
     options: [
       { value: "POST", label: "POST" },
@@ -73,7 +74,7 @@ export const AUDIT_LOG_FILTER_DEFS_BASE: FilterDef[] = [
   },
   {
     id: "ts",
-    label: "Time",
+    label: m.filter_label_time(),
     type: "dateRange",
   },
 ]
@@ -102,6 +103,7 @@ export function useAuditLogs(route: AnyRoute, filterDefs: FilterDef[]) {
     route,
     queryKey: [...KEY, "list"],
     filterDefs,
+    searchPlaceholder: m.audit_log_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<AuditLog>>(
         `/api/v1/audit-logs?${buildQs({ cursor, limit, q, adv, ...filters })}`,

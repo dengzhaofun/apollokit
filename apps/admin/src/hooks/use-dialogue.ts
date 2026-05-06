@@ -13,6 +13,7 @@ import type {
   DialogueScript,
   UpdateDialogueScriptInput,
 } from "#/lib/types/dialogue"
+import * as m from "#/paraglide/messages.js"
 
 const SCRIPTS_KEY = ["dialogue-scripts"] as const
 
@@ -25,6 +26,7 @@ export function useDialogueScripts(route: AnyRoute) {
     route,
     queryKey: SCRIPTS_KEY,
     filterDefs: DIALOGUE_SCRIPT_FILTER_DEFS,
+    searchPlaceholder: m.dialogue_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<DialogueScript>>(
         `/api/v1/dialogue/scripts?${buildQs({ cursor, limit, q, adv, ...filters })}`,

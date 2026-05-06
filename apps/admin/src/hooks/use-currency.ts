@@ -20,6 +20,7 @@ import type {
   WalletView,
 } from "#/lib/types/currency"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const DEFINITIONS_KEY = ["currency-definitions"] as const
 const WALLETS_KEY = ["currency-wallets"] as const
@@ -34,10 +35,10 @@ const LEDGER_KEY = ["currency-ledger"] as const
 export const CURRENCY_FILTER_DEFS: FilterDef[] = [
   {
     id: "isActive",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "boolean",
-    trueLabel: "Active",
-    falseLabel: "Inactive",
+    trueLabel: m.filter_opt_active(),
+    falseLabel: m.filter_opt_inactive(),
   },
 ]
 
@@ -56,6 +57,7 @@ export function useCurrencies(route: AnyRoute) {
     route,
     queryKey: DEFINITIONS_KEY,
     filterDefs: CURRENCY_FILTER_DEFS,
+    searchPlaceholder: m.currency_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CurrencyDefinition>>(
         `/api/v1/currency/definitions?${buildQs({

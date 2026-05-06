@@ -13,6 +13,7 @@ import type {
   CreateCharacterInput,
   UpdateCharacterInput,
 } from "#/lib/types/character"
+import * as m from "#/paraglide/messages.js"
 
 const CHARACTERS_KEY = ["characters"] as const
 
@@ -25,6 +26,7 @@ export function useCharacters(route: AnyRoute) {
     route,
     queryKey: CHARACTERS_KEY,
     filterDefs: CHARACTER_FILTER_DEFS,
+    searchPlaceholder: m.character_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Character>>(
         `/api/v1/character/characters?${buildQs({ cursor, limit, q, adv, ...filters })}`,

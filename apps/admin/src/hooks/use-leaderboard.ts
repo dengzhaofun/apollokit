@@ -15,6 +15,7 @@ import type {
   LeaderboardTop,
   UpdateLeaderboardInput,
 } from "#/lib/types/leaderboard"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["leaderboard-configs"] as const
 
@@ -27,6 +28,7 @@ export function useLeaderboardConfigs(route: AnyRoute) {
     route,
     queryKey: CONFIGS_KEY,
     filterDefs: LEADERBOARD_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.leaderboard_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<LeaderboardConfig>>(
         `/api/v1/leaderboard/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,

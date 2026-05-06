@@ -19,12 +19,17 @@ import {
   modalSearchSchema,
   openCreateModal,
 } from "#/lib/modal-search"
+import { z } from "zod"
 
 const FORM_ID = "mail-message-form"
 
+const mailFilterSchema = z.object({
+  targetType: z.enum(["broadcast", "multicast"]).optional(),
+})
+
 export const Route = createFileRoute("/_dashboard/o/$orgSlug/p/$projectSlug/mail/")({
   component: MailListPage,
-  validateSearch: modalSearchSchema.merge(listSearchSchema).passthrough(),
+  validateSearch: modalSearchSchema.merge(listSearchSchema).merge(mailFilterSchema).passthrough(),
 })
 
 function MailListPage() {

@@ -13,6 +13,7 @@ import type {
   CreateAnnouncementInput,
   UpdateAnnouncementInput,
 } from "#/lib/types/announcement"
+import * as m from "#/paraglide/messages.js"
 
 const KEY = ["announcements"] as const
 
@@ -23,29 +24,29 @@ const KEY = ["announcements"] as const
 export const ANNOUNCEMENT_FILTER_DEFS: FilterDef[] = [
   {
     id: "kind",
-    label: "Kind",
+    label: m.filter_label_kind(),
     type: "select",
     options: [
-      { value: "modal", label: "Modal" },
-      { value: "feed", label: "Feed" },
-      { value: "ticker", label: "Ticker" },
+      { value: "modal", label: m.filter_opt_modal() },
+      { value: "feed", label: m.filter_opt_feed() },
+      { value: "ticker", label: m.filter_opt_ticker() },
     ],
   },
   {
     id: "isActive",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "boolean",
-    trueLabel: "Active",
-    falseLabel: "Inactive",
+    trueLabel: m.filter_opt_active(),
+    falseLabel: m.filter_opt_inactive(),
   },
   {
     id: "severity",
-    label: "Severity",
+    label: m.filter_label_severity(),
     type: "select",
     options: [
-      { value: "info", label: "Info" },
-      { value: "warning", label: "Warning" },
-      { value: "urgent", label: "Urgent" },
+      { value: "info", label: m.filter_opt_info() },
+      { value: "warning", label: m.filter_opt_warning() },
+      { value: "urgent", label: m.filter_opt_urgent() },
     ],
   },
 ]
@@ -57,6 +58,7 @@ export function useAnnouncements(route: AnyRoute) {
     route,
     queryKey: KEY,
     filterDefs: ANNOUNCEMENT_FILTER_DEFS,
+    searchPlaceholder: m.announcement_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Announcement>>(
         `/api/v1/announcement?${buildQs({

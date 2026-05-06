@@ -30,6 +30,7 @@ import type {
   UpdateShopProductInput,
   UpdateShopTagInput,
 } from "#/lib/types/shop"
+import * as m from "#/paraglide/messages.js"
 
 const CATEGORIES_KEY = ["shop-categories"] as const
 const CATEGORY_TREE_KEY = ["shop-categories", "tree"] as const
@@ -113,6 +114,7 @@ export function useShopTags(route: AnyRoute) {
     route,
     queryKey: TAGS_KEY,
     filterDefs: SHOP_TAG_FILTER_DEFS,
+    searchPlaceholder: m.shop_tag_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ShopTag>>(
         `/api/v1/shop/tags?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -180,6 +182,7 @@ export function useShopProducts(
     route,
     queryKey: [...PRODUCTS_KEY, extraQuery],
     filterDefs: SHOP_PRODUCT_FILTER_DEFS,
+    searchPlaceholder: m.shop_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ShopProduct>>(
         `/api/v1/shop/products?${buildQs({

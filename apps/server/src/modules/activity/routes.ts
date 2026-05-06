@@ -43,6 +43,7 @@ import {
   UpdateActivitySchema,
   UpdateNodeSchema,
 } from "./validators";
+import { ACTIVITY_KINDS, ACTIVITY_STATES } from "./types";
 
 const TAG = "Activity";
 
@@ -152,7 +153,18 @@ activityRouter.openapi(
     path: "/",
     tags: [TAG],
     summary: "List activities",
-    request: { query: PaginationQuerySchema },
+    request: {
+      query: PaginationQuerySchema.merge(
+        z.object({
+          status: z.enum(ACTIVITY_STATES).optional().openapi({
+            param: { name: "status", in: "query" },
+          }),
+          kind: z.enum(ACTIVITY_KINDS).optional().openapi({
+            param: { name: "kind", in: "query" },
+          }),
+        }),
+      ),
+    },
     responses: {
       200: {
         description: "OK",

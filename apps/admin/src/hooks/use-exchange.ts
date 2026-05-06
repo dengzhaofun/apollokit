@@ -18,6 +18,7 @@ import type {
   ExecuteExchangeInput,
 } from "#/lib/types/exchange"
 import type { AnyRoute } from "@tanstack/react-router"
+import * as m from "#/paraglide/messages.js"
 
 const CONFIGS_KEY = ["exchange-configs"] as const
 
@@ -32,6 +33,7 @@ export function useExchangeConfigs(route: AnyRoute) {
     route,
     queryKey: CONFIGS_KEY,
     filterDefs: EXCHANGE_CONFIG_FILTER_DEFS,
+    searchPlaceholder: m.exchange_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<ExchangeConfig>>(
         `/api/v1/exchange/configs?${buildQs({ cursor, limit, q, adv, ...filters })}`,

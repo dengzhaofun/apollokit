@@ -15,6 +15,7 @@ import type {
   CreateBatchInput,
   UpdateBatchInput,
 } from "#/lib/types/cdkey"
+import * as m from "#/paraglide/messages.js"
 
 const BATCHES_KEY = ["cdkey-batches"] as const
 
@@ -29,6 +30,7 @@ export function useCdkeyBatches(route: AnyRoute) {
     route,
     queryKey: BATCHES_KEY,
     filterDefs: CDKEY_BATCH_FILTER_DEFS,
+    searchPlaceholder: m.cdkey_batch_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<CdkeyBatch>>(
         `/api/v1/cdkey/batches?${buildQs({ cursor, limit, q, adv, ...filters })}`,
@@ -75,13 +77,13 @@ export function useDeleteCdkeyBatch() {
 export const CDKEY_CODE_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "pending", label: "Pending" },
-      { value: "redeemed", label: "Redeemed" },
-      { value: "revoked", label: "Revoked" },
-      { value: "active", label: "Active" },
+      { value: "pending", label: m.filter_opt_pending() },
+      { value: "redeemed", label: m.filter_opt_redeemed() },
+      { value: "revoked", label: m.filter_opt_revoked() },
+      { value: "active", label: m.filter_opt_active() },
     ],
   },
 ]
@@ -130,11 +132,11 @@ export function useRevokeCdkeyCode() {
 export const CDKEY_LOG_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "success", label: "Success" },
-      { value: "failed", label: "Failed" },
+      { value: "success", label: m.filter_opt_success() },
+      { value: "failed", label: m.filter_opt_failed() },
     ],
   },
 ]

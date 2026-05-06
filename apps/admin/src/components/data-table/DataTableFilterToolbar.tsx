@@ -159,10 +159,10 @@ export function DataTableFilterToolbar({
             className="ml-auto h-8"
           >
             <ToggleGroupItem value="basic" className="h-8 px-3 text-xs">
-              Basic
+              {m.data_table_mode_basic()}
             </ToggleGroupItem>
             <ToggleGroupItem value="advanced" className="h-8 px-3 text-xs">
-              Advanced
+              {m.data_table_mode_advanced()}
             </ToggleGroupItem>
           </ToggleGroup>
         ) : null}
@@ -218,10 +218,10 @@ export function DataTableFilterToolbar({
           className="ml-auto h-8"
         >
           <ToggleGroupItem value="basic" className="h-8 px-3 text-xs">
-            Basic
+            {m.data_table_mode_basic()}
           </ToggleGroupItem>
           <ToggleGroupItem value="advanced" className="h-8 px-3 text-xs">
-            Advanced
+            {m.data_table_mode_advanced()}
           </ToggleGroupItem>
         </ToggleGroup>
       ) : null}
@@ -252,7 +252,7 @@ function FilterControl({
             <SelectValue placeholder={def.label} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">All</SelectItem>
+            <SelectItem value="__all__">{m.filter_option_all()}</SelectItem>
             {def.options.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -293,7 +293,7 @@ function FilterControl({
             <SelectValue placeholder={def.label} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all__">All</SelectItem>
+            <SelectItem value="__all__">{m.filter_option_all()}</SelectItem>
             <SelectItem value="true">{trueLabel}</SelectItem>
             <SelectItem value="false">{falseLabel}</SelectItem>
           </SelectContent>

@@ -22,34 +22,35 @@ import type {
   CreateScheduleInput,
   UpdateActivityInput,
 } from "#/lib/types/activity"
+import * as m from "#/paraglide/messages.js"
 
 const KEY = ["activities"] as const
 
 export const ACTIVITY_FILTER_DEFS: FilterDef[] = [
   {
     id: "status",
-    label: "Status",
+    label: m.filter_label_status(),
     type: "select",
     options: [
-      { value: "draft", label: "Draft" },
-      { value: "scheduled", label: "Scheduled" },
-      { value: "teasing", label: "Teasing" },
-      { value: "active", label: "Active" },
-      { value: "ended", label: "Ended" },
-      { value: "archived", label: "Archived" },
+      { value: "draft", label: m.filter_opt_draft() },
+      { value: "scheduled", label: m.filter_opt_scheduled() },
+      { value: "teasing", label: m.filter_opt_teasing() },
+      { value: "active", label: m.filter_opt_active() },
+      { value: "ended", label: m.filter_opt_ended() },
+      { value: "archived", label: m.filter_opt_archived() },
     ],
   },
   {
     id: "kind",
-    label: "Kind",
+    label: m.filter_label_kind(),
     type: "select",
     options: [
-      { value: "generic", label: "Generic" },
-      { value: "check_in_only", label: "Check-In Only" },
-      { value: "board_game", label: "Board Game" },
-      { value: "gacha", label: "Gacha" },
-      { value: "season_pass", label: "Season Pass" },
-      { value: "custom", label: "Custom" },
+      { value: "generic", label: m.filter_opt_generic() },
+      { value: "check_in_only", label: m.filter_opt_check_in_only() },
+      { value: "board_game", label: m.filter_opt_board_game() },
+      { value: "gacha", label: m.filter_opt_gacha() },
+      { value: "season_pass", label: m.filter_opt_season_pass() },
+      { value: "custom", label: m.filter_opt_custom() },
     ],
   },
 ]
@@ -61,6 +62,7 @@ export function useActivities(route: AnyRoute) {
     route,
     queryKey: KEY,
     filterDefs: ACTIVITY_FILTER_DEFS,
+    searchPlaceholder: m.activity_search_placeholder(),
     fetchPage: ({ cursor, limit, q, filters, adv }) =>
       api.get<Page<Activity>>(
         `/api/v1/activity?${buildQs({ cursor, limit, q, adv, ...filters })}`,
