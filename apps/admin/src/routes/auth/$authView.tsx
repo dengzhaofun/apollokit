@@ -105,7 +105,7 @@ function AuthViewPage() {
               </div>
               <div>
                 <div className="font-medium text-white">
-                  {t("Tinybird 实时分析", "Tinybird real-time analytics")}
+                  {t("实时分析", "Real-time analytics")}
                 </div>
                 <div className="text-xs text-white/60">
                   {t(
