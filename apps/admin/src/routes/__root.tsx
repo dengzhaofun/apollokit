@@ -194,27 +194,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   //  2. 避开 i18n context / useRouterState 在新旧 locale 之间的短暂抖动。
   //  3. 如果不在 docs 路径上(理论上不会走到,LanguageSelect 只在 DocsLayout
   //     里出现),降级成原地刷新。
-  // TanStack Router cannot resolve relative `to` paths (e.g. `./quickstart`)
-// from a splat route (/docs/$): it outputs the current URL unchanged instead
-// of the intended /docs/zh/quickstart. This wrapper resolves relative hrefs
-// against the current pathname before handing off to TanStack Router.
+  // Thin wrapper so fumadocs uses TanStack Router's <Link> for client-side
+// navigation. Relative hrefs (./foo, ../bar) are rewritten to absolute
+// docs paths at MDX compile time by remarkResolveDocsLinks in source.config.ts,
+// so this component only ever receives absolute paths or external URLs.
 function FumadocsLink({ href, prefetch, ...props }: ComponentPropsWithRef<'a'> & { prefetch?: boolean }) {
-  const currentPathname = useRouterState({ select: (s) => s.location.pathname })
-  let resolvedHref = href ?? '#'
-  if (href && (href.startsWith('./') || href.startsWith('../'))) {
-    // Treat the current pathname as a "file" (no trailing slash) so that
-    // `./sibling` resolves to the parent directory, e.g.
-    // `./feature-map` on `/docs/zh/why-apollokit` → `/docs/zh/feature-map`.
-    // Adding a trailing slash would make it a "directory" and produce the
-    // wrong path `/docs/zh/why-apollokit/feature-map` (404).
-    const base = currentPathname.endsWith('/')
-      ? currentPathname.slice(0, -1)
-      : currentPathname
-    resolvedHref = new URL(href, `https://x${base}`).pathname
-  }
   return (
     <Link
-      to={resolvedHref}
+      to={href ?? '#'}
       preload={prefetch ? 'intent' : false}
       {...(props as object)}
     />

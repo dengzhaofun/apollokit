@@ -8,6 +8,61 @@ import {
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { z } from 'zod';
 
+// Build-time remark plugin: rewrites relative hrefs (./foo, ../bar) to
+// absolute docs paths (/docs/en/foo) so FumadocsLink never has to guess
+// whether the current page is an index or a leaf.
+//
+// The rule is simple: the URL base equals the file's parent directory.
+//   content/docs/en/index.mdx          → base /docs/en/
+//   content/docs/en/currency/index.mdx → base /docs/en/currency/
+//   content/docs/en/why-apollokit.mdx  → base /docs/en/
+//
+// Handles both markdown link nodes ([text](./foo)) and MDX JSX attribute
+// hrefs (<Card href="./foo">) via a single recursive tree walk — no
+// unist-util-visit dependency needed.
+function remarkResolveDocsLinks() {
+  return function (tree: Record<string, unknown>, vfile: { path?: string; history?: string[] }) {
+    const rawPath = (vfile.path ?? vfile.history?.[0] ?? '').replace(/\\/g, '/')
+    const marker = '/content/docs/'
+    const markerIdx = rawPath.lastIndexOf(marker)
+    if (markerIdx === -1) return
+
+    // e.g. 'en/currency/index.mdx' or 'en/why-apollokit.mdx'
+    const relPath = rawPath.slice(markerIdx + marker.length)
+    const dirParts = relPath.split('/').slice(0, -1) // drop filename
+    // Always append trailing slash so ./sibling resolves into the directory
+    const urlBase = '/docs/' + (dirParts.length ? dirParts.join('/') + '/' : '')
+
+    function resolve(href: string): string {
+      if (!href.startsWith('./') && !href.startsWith('../')) return href
+      const hashIdx = href.indexOf('#')
+      const pathPart = hashIdx >= 0 ? href.slice(0, hashIdx) : href
+      const hash = hashIdx >= 0 ? href.slice(hashIdx) : ''
+      return new URL(pathPart, 'https://x' + urlBase).pathname + hash
+    }
+
+    function walk(node: Record<string, unknown>) {
+      const type = node.type as string
+      // Markdown links and images
+      if (type === 'link' || type === 'image' || type === 'definition') {
+        if (typeof node.url === 'string') node.url = resolve(node.url)
+      }
+      // MDX JSX: <Card href="./foo"> <Step href="../bar">
+      if (type === 'mdxJsxFlowElement' || type === 'mdxJsxTextElement') {
+        for (const attr of (node.attributes as Array<Record<string, unknown>>) ?? []) {
+          if (attr.type === 'mdxJsxAttribute' && attr.name === 'href' && typeof attr.value === 'string') {
+            attr.value = resolve(attr.value)
+          }
+        }
+      }
+      for (const child of (node.children as Array<Record<string, unknown>>) ?? []) {
+        walk(child)
+      }
+    }
+    walk(tree)
+  }
+}
+
 export const docs = defineDocs({
   dir: 'content/docs',
   docs: {
@@ -62,6 +117,7 @@ export const docs = defineDocs({
       );
 
       return applyMdxPreset({
+        remarkPlugins: [remarkResolveDocsLinks],
         rehypeCodeOptions: {
           ...rehypeCodeDefaultOptions,
           transformers: [
