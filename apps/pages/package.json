@@ -16,35 +16,35 @@
     "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "^1.35.0",
+    "@cloudflare/vite-plugin": "^1.39.1",
     "@repo/page-blocks": "workspace:*",
-    "@tailwindcss/vite": "^4.2.4",
-    "@tanstack/react-devtools": "^0.10.2",
-    "@tanstack/react-router": "^1.169.1",
-    "@tanstack/react-router-devtools": "^1.166.13",
-    "@tanstack/react-start": "^1.167.57",
-    "@tanstack/router-plugin": "^1.167.31",
-    "hono": "^4.10.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.4",
-    "zod": "^4.4.1"
+    "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/react-devtools": "^0.10.5",
+    "@tanstack/react-router": "^1.170.10",
+    "@tanstack/react-router-devtools": "^1.167.0",
+    "@tanstack/react-start": "^1.168.18",
+    "@tanstack/router-plugin": "^1.168.13",
+    "hono": "^4.12.23",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:^",
-    "@tanstack/devtools-vite": "^0.6.0",
+    "@tanstack/devtools-vite": "^0.6.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
-    "@types/node": "^22.19.17",
-    "@types/react": "^19.2.14",
+    "@types/node": "^22.19.19",
+    "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.4",
     "jsdom": "^28.1.0",
     "typescript": "5.9.2",
-    "vite": "^7.3.2",
+    "vite": "^7.3.5",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4",
-    "wrangler": "^4.87.0"
+    "vitest": "^3.2.6",
+    "wrangler": "^4.96.0"
   }
 }

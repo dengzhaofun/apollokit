@@ -9,7 +9,10 @@
       "types": "./src/index.ts"
     }
   },
-  "files": ["src", "scripts"],
+  "files": [
+    "src",
+    "scripts"
+  ],
   "scripts": {
     "extract": "tsx scripts/extract-openapi.ts",
     "split": "tsx scripts/split-spec.ts",
@@ -18,7 +21,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "tsx": "^4.21.0",
+    "tsx": "^4.22.4",
     "typescript": "5.9.2"
   }
 }
